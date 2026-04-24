@@ -3,6 +3,20 @@
 import { Canvas } from "@react-three/fiber";
 import { Component, type ErrorInfo, type ReactNode, Suspense, useState } from "react";
 
+declare global {
+  interface Window {
+    __MiraLithFirstUsableAt?: number;
+  }
+}
+
+function markFirstUsable() {
+  if (typeof window === "undefined" || window.__MiraLithFirstUsableAt) {
+    return;
+  }
+
+  window.__MiraLithFirstUsableAt = performance.now();
+}
+
 interface VisualCanvasErrorBoundaryProps {
   fallback: ReactNode;
   onError?: (error: Error) => void;
@@ -41,10 +55,12 @@ interface VisualCanvasProps {
 
 export function VisualCanvas({ ariaLabel, decorative = true, fallback, children }: VisualCanvasProps) {
   const [contextLost, setContextLost] = useState(false);
+  const forcedFallback =
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("visual") === "fallback";
   const preserveDrawingBuffer =
     typeof window !== "undefined" && new URLSearchParams(window.location.search).get("visualTest") === "pixels";
 
-  if (contextLost) {
+  if (forcedFallback || contextLost) {
     return <>{fallback}</>;
   }
 
@@ -61,6 +77,7 @@ export function VisualCanvas({ ariaLabel, decorative = true, fallback, children 
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance", preserveDrawingBuffer }}
           camera={{ fov: 42, position: [0, 2.8, 7.4], near: 0.1, far: 90 }}
           onCreated={({ gl }) => {
+            markFirstUsable();
             gl.domElement.addEventListener("webglcontextlost", (event) => {
               event.preventDefault();
               setContextLost(true);

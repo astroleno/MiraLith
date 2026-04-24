@@ -1,4 +1,20 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useEffect, type ReactNode } from "react";
+
+declare global {
+  interface Window {
+    __MiraLithFirstUsableAt?: number;
+  }
+}
+
+function markFirstUsable() {
+  if (typeof window === "undefined" || window.__MiraLithFirstUsableAt) {
+    return;
+  }
+
+  window.__MiraLithFirstUsableAt = performance.now();
+}
 
 interface VisualCanvasFallbackProps {
   scene: "lubirth";
@@ -8,6 +24,10 @@ interface VisualCanvasFallbackProps {
 }
 
 export function VisualCanvasFallback({ scene, posterSrc, label, children }: VisualCanvasFallbackProps) {
+  useEffect(() => {
+    markFirstUsable();
+  }, []);
+
   return (
     <div
       className="visual-canvas-fallback"

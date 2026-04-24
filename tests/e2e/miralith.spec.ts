@@ -62,3 +62,21 @@ test("production canvas renders nonblank pixels", async ({ page }) => {
 
   expect(await nonblank.jsonValue()).toBe(true);
 });
+
+test("forced visual fallback keeps DOM content available", async ({ page }) => {
+  await page.goto("/?visual=fallback");
+  await expect(page.locator("canvas")).toHaveCount(0);
+  await expect(page.locator('[data-visual-fallback="lubirth"]')).toBeVisible();
+  await expect(page.getByText("MiraLith")).toBeVisible();
+  await expect(page.getByText("LuBirth 地月人")).toBeVisible();
+  const marker = await page.waitForFunction(() => window.__MiraLithFirstUsableAt, null, { timeout: 3000 });
+  expect(await marker.jsonValue()).toBeLessThan(3000);
+});
+
+test("first usable viewport marker is under 3 seconds", async ({ page }) => {
+  await page.goto("/");
+  const marker = await page.waitForFunction(() => window.__MiraLithFirstUsableAt, null, { timeout: 3000 });
+  const value = await marker.jsonValue();
+  expect(typeof value).toBe("number");
+  expect(value).toBeLessThan(3000);
+});
