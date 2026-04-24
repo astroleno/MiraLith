@@ -1,5 +1,9 @@
 export { EarthMoonHero } from "./EarthMoonHero";
 export { EarthMoonScene } from "./EarthMoonScene";
+export { LandingAtmosphere } from "./LandingAtmosphere";
+export { LandingAurora } from "./LandingAurora";
+export { LandingEarth } from "./LandingEarth";
+export { LandingMoon } from "./LandingMoon";
 export { DEFAULT_LUBIRTH_ASSETS, resolveLandingAssets } from "./assetManifest";
 export { DEFAULT_LUBIRTH_DATE, DEFAULT_LUBIRTH_MOON_PHASE } from "./constants";
 export { LUBIRTH_PRESETS, resolveLandingPreset } from "./presets";
