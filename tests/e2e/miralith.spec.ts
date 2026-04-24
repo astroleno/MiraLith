@@ -24,3 +24,41 @@ test("opens and closes the LuBirth expanded view with keyboard flow", async ({ p
   await expect(dialog).toHaveCount(0);
   await expect(openButton).toBeFocused();
 });
+
+test("mobile landscape keeps LuBirth visual and project frame usable", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByLabel("Opening frame")).toBeVisible();
+  await expect(page.locator("canvas")).toHaveCount(1);
+
+  await page.evaluate(() => window.scrollTo({ top: window.innerHeight * 1.15, behavior: "instant" }));
+  await expect(page.locator('[data-screen-label="02 Project Window"]')).toBeInViewport();
+  await expect(page.getByRole("button", { name: "Open LuBirth expanded view" })).toBeVisible();
+});
+
+test("production canvas renders nonblank pixels", async ({ page }) => {
+  await page.goto("/?visualTest=pixels");
+  const nonblank = await page.waitForFunction(() => {
+    const source = document.querySelector("canvas");
+    if (!source) {
+      return false;
+    }
+
+    const sample = document.createElement("canvas");
+    sample.width = 64;
+    sample.height = 64;
+    const context = sample.getContext("2d");
+    if (!context) {
+      return false;
+    }
+    context.drawImage(source, 0, 0, 64, 64);
+    const pixels = context.getImageData(0, 0, 64, 64).data;
+    for (let index = 0; index < pixels.length; index += 4) {
+      if (pixels[index] + pixels[index + 1] + pixels[index + 2] > 18) {
+        return true;
+      }
+    }
+    return false;
+  });
+
+  expect(await nonblank.jsonValue()).toBe(true);
+});
