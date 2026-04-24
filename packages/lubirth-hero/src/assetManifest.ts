@@ -1,4 +1,4 @@
-import type { LandingAssetManifest } from "./types";
+import type { LandingAsset, LandingAssetManifest } from "./types";
 
 export const DEFAULT_LUBIRTH_ASSETS: LandingAssetManifest = {
   earthDay: {
@@ -33,4 +33,32 @@ export function resolveLandingAssets(assets: Partial<LandingAssetManifest> = {})
     ...DEFAULT_LUBIRTH_ASSETS,
     ...assets
   };
+}
+
+export const LUBIRTH_ASSET_BUDGET: LandingAsset[] = [
+  {
+    id: DEFAULT_LUBIRTH_ASSETS.earthDay.id,
+    kind: "texture",
+    tier: "critical",
+    src: DEFAULT_LUBIRTH_ASSETS.earthDay.src,
+    bytesBudget: 0,
+    preload: true,
+    requiredFor: ["field", "window", "zoomed", "expanded"]
+  },
+  {
+    id: DEFAULT_LUBIRTH_ASSETS.moonColor.id,
+    kind: "texture",
+    tier: "critical",
+    src: DEFAULT_LUBIRTH_ASSETS.moonColor.src,
+    bytesBudget: 0,
+    preload: true,
+    requiredFor: ["field", "window", "zoomed", "expanded"]
+  },
+  DEFAULT_LUBIRTH_ASSETS.fallbackPoster
+];
+
+export function getCriticalAssetBudget() {
+  return LUBIRTH_ASSET_BUDGET
+    .filter((asset) => asset.tier === "critical")
+    .reduce((total, asset) => total + asset.bytesBudget, 0);
 }

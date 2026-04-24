@@ -80,3 +80,26 @@ test("first usable viewport marker is under 3 seconds", async ({ page }) => {
   expect(typeof value).toBe("number");
   expect(value).toBeLessThan(3000);
 });
+
+test("first screen transfer budget stays below 3MB", async ({ page }) => {
+  const responseSizes: Promise<number>[] = [];
+
+  page.on("response", (response) => {
+    const url = new URL(response.url());
+    if (url.origin !== "http://127.0.0.1:3100") {
+      return;
+    }
+
+    responseSizes.push(
+      response
+        .body()
+        .then((body) => body.byteLength)
+        .catch(() => 0)
+    );
+  });
+
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+  const total = (await Promise.all(responseSizes)).reduce((sum, value) => sum + value, 0);
+  expect(total).toBeLessThanOrEqual(3_000_000);
+});
