@@ -1,6 +1,6 @@
 # MiraLith 接口文档
 
-状态：草案 v0.1  
+状态：MiraLith v1.0 LuBirth 前两屏已实现  
 日期：2026-04-24  
 范围：MiraLith 主站与视觉包之间的接口、LuBirth Hero 公共 API、资源和事件合约。
 
@@ -15,6 +15,7 @@
 - `packages/visual-core` 提供跨章节能力，不依赖 LuBirth。
 - 所有重资源和重交互都能被 quality tier 控制。
 - WebGL 不可用时，DOM 内容仍完整。
+- 生产首页只有一个 fixed Canvas，由 `apps/site` / `visual-core` 拥有；LuBirth 视觉以 `EarthMoonScene` 挂入。
 
 ## 2. Package Boundaries
 
@@ -34,6 +35,7 @@ packages/lubirth-hero
 packages/visual-core
   imports:
     zustand
+    @theatre/core where timeline binding is enabled
     three types where needed
 ```
 
@@ -52,22 +54,43 @@ packages/visual-core -> packages/lubirth-hero
 ```ts
 export { EarthMoonHero } from './EarthMoonHero';
 export { EarthMoonScene } from './EarthMoonScene';
+export { LandingAtmosphere } from './LandingAtmosphere';
+export { LandingAurora } from './LandingAurora';
+export { LandingEarth } from './LandingEarth';
+export { LandingMoon } from './LandingMoon';
+export {
+  DEFAULT_LUBIRTH_ASSETS,
+  LUBIRTH_ASSET_BUDGET,
+  getCriticalAssetBudget,
+  resolveLandingAssets,
+} from './assetManifest';
+export { DEFAULT_LUBIRTH_DATE, DEFAULT_LUBIRTH_MOON_PHASE } from './constants';
 export { LUBIRTH_PRESETS, resolveLandingPreset } from './presets';
 export type {
+  EarthMoonHeroError,
+  EarthMoonHeroEvent,
   EarthMoonHeroProps,
   EarthMoonHeroMode,
   EarthMoonHeroInteraction,
-  LandingComposition,
-  LandingPresetName,
-  LandingQuality,
+  EarthMoonSceneProps,
   LandingAssetManifest,
-  EarthMoonHeroEvent,
+  LandingComposition,
+  LandingCompositionOverrides,
+  LandingResolvedAssets,
+  LandingPresetName,
 } from './types';
 ```
 
+Implementation status:
+
+- Production homepage uses site-owned `VisualCanvas` plus `EarthMoonScene`; it does not mount `EarthMoonHero`.
+- `EarthMoonSceneProps.quality` is `QualityProfile`.
+- `EarthMoonHeroProps.onQualityChange` remains `(quality: ResolvedQualityTier) => void`.
+- `LandingComposition` uses the nested `camera / earth / moon / light / atmosphere / aurora / motion` contract below.
+
 ### `EarthMoonHero`
 
-Primary public component.
+Standalone wrapper for demos, isolated previews, simple embeds, and fallback pages. It may create its own Canvas, but it is not the production homepage default.
 
 ```ts
 type EarthMoonHeroMode = 'field' | 'window' | 'zoomed' | 'expanded';
@@ -89,11 +112,12 @@ interface EarthMoonHeroProps {
   interaction?: EarthMoonHeroInteraction;
   className?: string;
   style?: React.CSSProperties;
+  accessibility?: AccessibilityProps;
   reducedMotion?: boolean;
   paused?: boolean;
   posterSrc?: string;
   assets?: Partial<LandingAssetManifest>;
-  composition?: Partial<LandingComposition>;
+  composition?: LandingCompositionOverrides;
   onReady?: (event: EarthMoonHeroEvent) => void;
   onQualityChange?: (quality: ResolvedQualityTier) => void;
   onExpandChange?: (expanded: boolean) => void;
@@ -125,14 +149,14 @@ Second screen usage:
 
 ### `EarthMoonScene`
 
-Lower-level scene component used inside an existing Canvas. Use this when the page owns a shared fixed WebGL canvas.
+Production scene component used inside an existing Canvas. Use this when the page owns a shared fixed WebGL canvas.
 
 ```ts
 interface EarthMoonSceneProps {
   mode: EarthMoonHeroMode;
   composition: LandingComposition;
   assets: LandingResolvedAssets;
-  quality: ResolvedQualityTier;
+  quality: QualityProfile;
   scrollProgress?: number;
   sectionProgress?: number;
   reducedMotion?: boolean;
@@ -143,9 +167,37 @@ interface EarthMoonSceneProps {
 
 Rule:
 
-- `EarthMoonHero` may create its own Canvas.
+- Production homepage must use the shared fixed Canvas from `apps/site` / `visual-core`.
+- Production homepage mounts `EarthMoonScene`; it does not mount `EarthMoonHero`.
+- `EarthMoonHero` may create its own Canvas only for demo/dev standalone previews, isolated embeds, fallback preview pages, or visual regression fixtures.
 - `EarthMoonScene` must not create a Canvas.
-- MiraLith homepage long-term should prefer one shared fixed Canvas and mount `EarthMoonScene` inside it.
+- Multiple production Canvas instances are a blocking architecture violation.
+
+### Canvas Ownership Decision
+
+```text
+apps/site / visual-core
+  owns:
+    Fixed WebGL Canvas
+    Theatre scroll binding
+    section progress
+    quality tier
+    fallback trigger routing
+
+@miralith/lubirth-hero
+  owns:
+    EarthMoonScene
+    LandingEarth / LandingMoon / LandingAtmosphere / LandingAurora
+    presets
+    asset manifest contract
+    animatable scene props
+```
+
+The LuBirth package must not import Theatre.js directly. Theatre timeline values are resolved by `apps/site` / `visual-core` and passed down as props or resolved composition values.
+
+### PIP/FBO Decision
+
+MiraLith v1.0 does not implement FBO PIP. The moon is rendered in the same Canvas using screen-anchored positioning. This mirrors the usable LuBirth behavior and avoids an extra render target, extra camera, and extra memory pressure.
 
 ## 4. Landing Composition
 
@@ -220,6 +272,23 @@ interface LandingMoonConfig {
 }
 ```
 
+Default date:
+
+```ts
+const DEFAULT_LUBIRTH_DATE = '1993-08-01T12:00:00Z' as const;
+
+interface LandingMoonPhase {
+  date: typeof DEFAULT_LUBIRTH_DATE | string;
+  illumination: number;
+  phaseAngleRad: number;
+  sunDirection: [number, number, number];
+  positionAngleRad?: number;
+  source: 'precomputed' | 'runtime-ephemeris' | 'constant-vector';
+}
+```
+
+For v1.0, `fixed-date` mode defaults to precomputed constants for `1993-08-01T12:00:00Z`. Runtime ephemeris is optional and must not enter the first critical path.
+
 ### Light
 
 ```ts
@@ -286,14 +355,6 @@ type LandingPresetName =
   | 'fallback';
 ```
 
-```ts
-interface LandingPreset {
-  name: LandingPresetName;
-  composition: LandingComposition;
-  qualityOverrides?: Partial<Record<ResolvedQualityTierName, Partial<LandingComposition>>>;
-}
-```
-
 Required presets:
 
 | Preset | Use |
@@ -309,12 +370,10 @@ Required presets:
 Preset resolution:
 
 ```ts
-function resolveLandingPreset(input: {
-  mode: EarthMoonHeroMode;
-  viewport: ViewportInfo;
-  quality: ResolvedQualityTier;
-  overrides?: Partial<LandingComposition>;
-}): LandingComposition;
+function resolveLandingPreset(
+  preset?: LandingPresetName,
+  composition?: LandingCompositionOverrides
+): LandingComposition;
 ```
 
 ## 6. Asset Manifest
@@ -363,32 +422,13 @@ Rules:
 ## 7. Events
 
 ```ts
-type EarthMoonHeroEventType =
-  | 'init'
-  | 'assets-ready'
-  | 'scene-ready'
-  | 'quality-selected'
-  | 'expanded'
-  | 'collapsed'
-  | 'fallback'
-  | 'error';
-
 interface EarthMoonHeroEvent {
-  type: EarthMoonHeroEventType;
   mode: EarthMoonHeroMode;
-  quality: ResolvedQualityTierName;
-  timestamp: number;
+  quality: ResolvedQualityTier;
 }
 
 interface EarthMoonHeroError {
-  code:
-    | 'webgl-unavailable'
-    | 'asset-load-failed'
-    | 'shader-compile-failed'
-    | 'context-lost'
-    | 'unknown';
   message: string;
-  cause?: unknown;
 }
 ```
 
@@ -399,23 +439,29 @@ Events are callbacks only. Do not dispatch global `window` events from the packa
 ### Quality
 
 ```ts
-type ResolvedQualityTierName = 'high' | 'medium' | 'low' | 'fallback';
+type ResolvedQualityTier = 'high' | 'medium' | 'low' | 'fallback';
+type LandingQuality = 'auto' | ResolvedQualityTier;
 
-interface ResolvedQualityTier {
-  name: ResolvedQualityTierName;
+interface QualityProfile {
+  tier: ResolvedQualityTier;
   dpr: number;
-  enablePost: boolean;
-  enableAurora: boolean;
-  enableClouds: boolean;
-  maxTextureSize: number;
-  reason: 'user' | 'device' | 'fps' | 'webgl' | 'reduced-motion';
+  segments: number;
+  aurora: boolean;
+  stars: number;
+  reason: string;
 }
 
-function detectInitialQuality(options?: {
-  preferred?: LandingQuality;
-  viewport?: ViewportInfo;
+function resolveQualityTier(options?: {
+  requested?: LandingQuality;
   reducedMotion?: boolean;
-}): ResolvedQualityTier;
+  width?: number;
+  height?: number;
+  devicePixelRatio?: number;
+  hardwareConcurrency?: number;
+  deviceMemory?: number;
+}): QualityProfile;
+
+function useQualityTier(requested?: LandingQuality, reducedMotion?: boolean): QualityProfile;
 ```
 
 ### Viewport
@@ -452,6 +498,8 @@ interface VisualScrollStore {
 ```
 
 ### Theatre Binding
+
+Theatre binding belongs to `@miralith/visual-core` and the site orchestration layer, not `@miralith/lubirth-hero`.
 
 ```ts
 interface TheatreScrollBindingOptions {
@@ -541,7 +589,7 @@ type VisualSceneId =
 
 ## 11. Accessibility Contract
 
-`EarthMoonHero` must accept:
+Production accessibility belongs to the site-owned canvas layer: `apps/site` / `@miralith/visual-core` must expose accessibility props on `VisualCanvas` or the equivalent fixed Canvas wrapper. `EarthMoonScene` receives render state only and must not own DOM accessibility for the homepage. The standalone `EarthMoonHero` wrapper mirrors the same props only for demo/dev usage.
 
 ```ts
 interface AccessibilityProps {
@@ -553,10 +601,15 @@ interface AccessibilityProps {
 
 Rules:
 
-- If decorative is true, Canvas uses `aria-hidden`.
-- If decorative is false, Canvas gets a concise `aria-label`.
+- If `decorative` is true, the production `VisualCanvas` uses `aria-hidden`.
+- If `decorative` is false, the production `VisualCanvas` gets a concise `aria-label`.
+- `EarthMoonHero` applies the same behavior only when it creates its own standalone Canvas for demos, isolated previews, fallback pages, or visual regression fixtures.
 - DOM content must contain all meaningful copy.
 - Expanded modal traps focus and supports Esc.
+- Opening the expanded view moves focus into the expanded controls.
+- Closing expanded returns focus to the trigger that opened it.
+- Tab order never enters hidden canvas-only controls.
+- The fallback poster carries the same accessible label/description as the WebGL view.
 - reduced-motion disables scroll-driven camera flights.
 
 ## 12. Error and Fallback Contract
@@ -568,15 +621,19 @@ Fallback must activate when:
 - Critical texture fails.
 - User is in reduced-motion and quality resolves to fallback.
 - Device quality detection returns fallback.
+- Runtime shader compilation fails.
 
-Fallback rendering:
+Production fallback routing is owned by `apps/site` / `@miralith/visual-core`, not by `EarthMoonScene`.
 
 ```tsx
-<EarthMoonHero
-  quality="fallback"
+<VisualCanvasFallback
+  scene="lubirth"
   posterSrc="/assets/lubirth/poster-field.webp"
+  accessibility={accessibility}
 />
 ```
+
+The standalone `EarthMoonHero` wrapper may expose `quality="fallback"` and `posterSrc` for demo/dev previews. Homepage fallback must route through the site-owned DOM/poster layer.
 
 Fallback must show:
 
@@ -595,8 +652,88 @@ Known changes required during migration:
 - Do not import `SimpleTest`.
 - Do not import `LocalAudioPlayer`, `LocationSelector`, or auto test modules.
 - Keep astronomy runtime out of the first critical path unless strict phase accuracy is explicitly needed.
+- Do not implement `MoonPIP`, `WebGLRenderTarget`, or a second moon camera for v1.0.
 
-## 14. Versioning
+## 14. CoScroll Scene Interface Gate
+
+CoScroll is a v1.1 mainline chapter. The current shared types already reserve `HomeSectionId = 'coscroll'` and `VisualSceneId = 'coscroll'`, but that reservation is not an implementation-ready contract.
+
+### Shell Props
+
+The outer scene entry can stay small:
+
+```ts
+interface CoScrollSceneShellProps {
+  progress: number;
+  active: boolean;
+  quality: ResolvedQualityTier;
+  reducedMotion?: boolean;
+  mode?: 'spike' | 'chapter' | 'fallback';
+}
+```
+
+These props describe how MiraLith schedules the chapter. They do not fully describe the visual state needed by the CoScroll experience.
+
+### Visual State
+
+`docs/coscroll-scene-interface.md` must define whether these fields are props, adapter output, store values, or internal derived state:
+
+```ts
+interface CoScrollVisualState {
+  visualTime: number;
+  duration: number;
+  lyrics: CoScrollLyricSegment[];
+  currentAnchor: CoScrollAnchorId;
+  scrollVelocity: number;
+  assetManifest: CoScrollAssetManifest;
+}
+
+interface CoScrollLyricSegment {
+  id: string;
+  text: string;
+  start: number;
+  end: number;
+  layer: 'front' | 'back';
+}
+
+type CoScrollAnchorId = 'heart' | 'emptiness' | 'dao' | string;
+
+interface CoScrollAssetManifest {
+  anchorModels: Partial<Record<CoScrollAnchorId, string>>;
+  posterSrc?: string;
+  videoFallbackSrc?: string;
+  textTextureSrc?: string;
+}
+```
+
+Required mapping decisions:
+
+- `progress -> visualTime` mapping and easing.
+- How `duration` is chosen for the MiraLith chapter.
+- Which lyric/short-text subset replaces the full Heart Sutra timeline in the first version.
+- How `currentAnchor` switches, or whether v1.1 uses only one anchor.
+- How `scrollVelocity` affects front/back text layers without breaking reduced-motion.
+- Which assets load at each quality tier.
+
+### Canvas Rule
+
+Homepage mode must follow the shared fixed Canvas architecture:
+
+- `CoScrollScene` / `CoScrollSceneContent` must not create a Canvas.
+- CoScroll front/back occlusion must happen inside the same WebGL depth relationship as the anchor model.
+- `CoScrollStandaloneDemo` may create its own Canvas for spike, review, and debugging only.
+- DOM project copy, details links, and SEO content live in `apps/site/content`, not in `packages/coscroll-scene`.
+
+### Readiness Gate
+
+CoScroll implementation should not begin until these are complete:
+
+- Phase 1 scaffolding exists for `apps/site`, `packages/visual-core`, and `packages/coscroll-scene`.
+- `docs/coscroll-scene-interface.md` is written.
+- A visual spike proves one jade anchor, front/back text layers, compressed GLB assets, and fallback can preserve the core feeling.
+- Asset budget and fallback behavior are documented.
+
+## 15. Versioning
 
 Initial package version:
 
@@ -609,9 +746,8 @@ Initial package version:
 
 Breaking changes before first public release are allowed, but every API change must update this document.
 
-## 15. Open Questions
+## 16. Open Questions
 
-- Should `EarthMoonHero` create Canvas in production, or should homepage always own one shared Canvas?
-- Should exact moon phase use runtime astronomy or precomputed constants for `1993-08-01`?
 - Should KTX2 be required in M1, or introduced after WebP/AVIF baseline works?
-- Should Theatre.js be mandatory in `lubirth-hero`, or only used by `apps/site` orchestration?
+- Should exact moon phase beyond `1993-08-01T12:00:00Z` be supported in v1.0, or deferred until after launch?
+- For CoScroll v1.1, should the first anchor be fixed to `心`, or should the scene switch between `心 / 空 / 道` after the visual spike?
