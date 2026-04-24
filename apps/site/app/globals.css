@@ -127,3 +127,30 @@ a {
 .opening-screen__copy {
   max-width: 620px;
 }
+
+.project-window__preview {
+  cursor: zoom-in;
+}
+
+.expanded-view {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  background: rgba(4, 6, 10, 0.72);
+}
+
+.expanded-view__panel {
+  position: relative;
+  width: min(92vw, 1040px);
+  height: min(82vh, 720px);
+  border: 1px solid var(--line);
+  background: rgba(8, 10, 16, 0.62);
+}
+
+.expanded-view__close {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+}
