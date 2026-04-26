@@ -59,6 +59,9 @@ importers:
       '@theatre/r3f':
         specifier: 0.7.2
         version: 0.7.2(@react-three/fiber@9.6.0)(@theatre/core@0.7.2)(@theatre/studio@0.7.2)(react-dom@19.2.5)(react@19.2.5)(three@0.184.0)
+      gsap:
+        specifier: ^3.15.0
+        version: 3.15.0
       motion:
         specifier: 12.38.0
         version: 12.38.0(react-dom@19.2.5)(react@19.2.5)
@@ -2590,6 +2593,10 @@ packages:
 
   /graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
+    dev: false
+
+  /gsap@3.15.0:
+    resolution: {integrity: sha512-dMW4CWBTUK1AEEDeZc1g4xpPGIrSf9fJF960qbTZmN/QwZIWY5wgliS6JWl9/25fpTGJrMRtSjGtOmPnfjZB+A==}
     dev: false
 
   /has-bigints@1.1.0:

@@ -1,37 +1,62 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { createScrollProgressDriver } from "@miralith/visual-core";
-import type { EarthMoonHeroMode } from "@miralith/lubirth-hero";
-import { LuBirthExpandedView } from "./LuBirthExpandedView";
-import { LuBirthWindow } from "./LuBirthWindow";
+import { useEffect, useRef } from "react";
 import { VisualCanvas } from "../visual/VisualCanvas";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
 import { LuBirthSceneSlot } from "../visual/scenes/LuBirthSceneSlot";
 
 export function MiraLithHome() {
-  const [windowHovered, setWindowHovered] = useState(false);
-  const [expanded, setExpanded] = useState(false);
-  const [sectionProgress, setSectionProgress] = useState(0);
-  const expandButtonRef = useRef<HTMLButtonElement>(null);
-  const baseMode: EarthMoonHeroMode = sectionProgress > 0.55 ? "window" : "field";
-  const mode: EarthMoonHeroMode = expanded ? "expanded" : windowHovered ? "zoomed" : baseMode;
+  const shellRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const driver = createScrollProgressDriver({
-      startRatio: 0,
-      endRatio: 1.15,
-      onProgress: (progress) => {
-        window.__MiraLithOpeningProgress = progress;
-        setSectionProgress(progress);
-      }
-    });
+    let disposed = false;
+    let cleanup: (() => void) | undefined;
 
-    return () => driver.destroy();
+    const setProgress = (progress: number) => {
+      const nextProgress = Math.min(1, Math.max(0, progress));
+      window.__MiraLithOpeningProgress = nextProgress;
+    };
+
+    void (async () => {
+      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+        import("gsap"),
+        import("gsap/ScrollTrigger")
+      ]);
+
+      if (disposed || !shellRef.current) {
+        return;
+      }
+
+      gsap.registerPlugin(ScrollTrigger);
+      ScrollTrigger.getById("miralith-lubirth-opening")?.kill();
+      setProgress(0);
+
+      const scrollTrigger = ScrollTrigger.create({
+        id: "miralith-lubirth-opening",
+        trigger: shellRef.current,
+        start: "top top",
+        end: () => `+=${Math.round(window.innerHeight * 1.15)}`,
+        scrub: true,
+        invalidateOnRefresh: true,
+        onRefresh: (self) => setProgress(self.progress),
+        onUpdate: (self) => setProgress(self.progress)
+      });
+
+      cleanup = () => {
+        scrollTrigger.kill();
+      };
+
+      ScrollTrigger.refresh();
+    })();
+
+    return () => {
+      disposed = true;
+      cleanup?.();
+    };
   }, []);
 
   return (
-    <main className="site-shell" aria-label="MiraLith interface frame">
+    <main ref={shellRef} className="site-shell site-shell--lubirth" aria-label="LuBirth two-stage earth moon scene">
       <VisualCanvas
         decorative
         fallback={
@@ -42,35 +67,16 @@ export function MiraLithHome() {
           />
         }
       >
-        <LuBirthSceneSlot mode={mode} />
+        <LuBirthSceneSlot mode="field" />
       </VisualCanvas>
 
-      <section
-        className="opening-screen"
-        id="opening"
-        data-screen-label="01 Opening"
-        aria-label="Opening frame"
-      >
-        <div className="opening-screen__copy">
-          <p>MiraLith</p>
-          <h1>把看见之物，刻成作品。</h1>
-          <p>A personal field of vision, intelligence, and form.</p>
-        </div>
+      <section className="lubirth-scroll-stage" aria-label="LuBirth phase one">
+        <span className="sr-only">Phase one: moon above, earth below.</span>
       </section>
 
-      <section className="window-screen" aria-label="Project window frame">
-        <LuBirthWindow
-          onHoverChange={setWindowHovered}
-          onExpand={() => setExpanded(true)}
-          expandButtonRef={expandButtonRef}
-        />
+      <section className="lubirth-scroll-stage" aria-label="LuBirth phase two">
+        <span className="sr-only">Phase two: enlarged earth arc below the moon.</span>
       </section>
-
-      <LuBirthExpandedView
-        open={expanded}
-        onClose={() => setExpanded(false)}
-        returnFocusRef={expandButtonRef}
-      />
     </main>
   );
 }

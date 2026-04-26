@@ -2,8 +2,8 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
-import { AdditiveBlending, Mesh, MeshBasicMaterial } from "three";
-import type { QualityProfile } from "@miralith/visual-core";
+import { AdditiveBlending, BufferGeometry, Group, Line, LineBasicMaterial, Vector3 } from "three";
+import { getRuntimeOpeningProgress, type QualityProfile } from "@miralith/visual-core";
 import type { LandingComposition } from "./types";
 
 interface LandingAuroraProps {
@@ -13,44 +13,93 @@ interface LandingAuroraProps {
   paused?: boolean;
 }
 
+function createArcGeometry(width: number, y: number, z: number, lift: number) {
+  const points: Vector3[] = [];
+
+  for (let i = 0; i <= 96; i += 1) {
+    const t = i / 96;
+    const x = Math.sin((t - 0.5) * Math.PI) * 0.035;
+    const zPos = z + (t - 0.5) * width;
+    const wave = Math.sin(t * Math.PI) * lift + Math.sin(t * Math.PI * 5) * 0.008;
+    points.push(new Vector3(x, y + wave, zPos));
+  }
+
+  return new BufferGeometry().setFromPoints(points);
+}
+
 export function LandingAurora({ composition, quality, reducedMotion, paused }: LandingAuroraProps) {
-  const auroraNorth = useRef<Mesh>(null);
-  const auroraSouth = useRef<Mesh>(null);
-  const material = useMemo(
-    () =>
-      new MeshBasicMaterial({
-        color: "#76a99b",
+  const aurora = useRef<Group>(null);
+  const opacity = quality.aurora && composition.aurora.enabled ? composition.aurora.intensity : 0;
+  const geometries = useMemo(
+    () => [
+      createArcGeometry(1.55, 0.54, 0.53, 0.16),
+      createArcGeometry(1.28, 0.61, 0.48, 0.11),
+      createArcGeometry(0.92, 0.69, 0.42, 0.07)
+    ],
+    []
+  );
+  const lines = useMemo(() => {
+    const materials = [
+      new LineBasicMaterial({
+        color: "#7fd6a9",
         transparent: true,
-        opacity: quality.aurora && composition.aurora.enabled ? composition.aurora.intensity : 0,
+        opacity: opacity * 1.65,
         blending: AdditiveBlending,
+        depthTest: false,
         depthWrite: false
       }),
-    [composition.aurora.enabled, composition.aurora.intensity, quality.aurora]
-  );
-  const southMaterial = useMemo(() => material.clone(), [material]);
+      new LineBasicMaterial({
+        color: "#9fbf7a",
+        transparent: true,
+        opacity: opacity * 1.05,
+        blending: AdditiveBlending,
+        depthTest: false,
+        depthWrite: false
+      }),
+      new LineBasicMaterial({
+        color: "#82bfff",
+        transparent: true,
+        opacity: opacity * 0.76,
+        blending: AdditiveBlending,
+        depthTest: false,
+        depthWrite: false
+      })
+    ];
 
-  useFrame((state, delta) => {
-    if (!auroraNorth.current || !auroraSouth.current || paused || reducedMotion) {
+    return geometries.map((geometry, index) => {
+      const line = new Line(geometry, materials[index]);
+      line.renderOrder = 19 + index;
+      return line;
+    });
+  }, [geometries, opacity]);
+
+  useFrame((state) => {
+    if (!aurora.current) {
       return;
     }
 
-    auroraNorth.current.rotation.z += delta * composition.aurora.noiseSpeed;
-    auroraSouth.current.rotation.z -= delta * composition.aurora.noiseSpeed * 0.8;
-    const pulse = 0.65 + Math.sin(state.clock.elapsedTime * 0.8) * 0.18;
-    auroraNorth.current.scale.setScalar(pulse);
-    auroraSouth.current.scale.setScalar(0.78 + pulse * 0.22);
+    const reveal = Math.min(1, Math.max(0, (getRuntimeOpeningProgress(0) - 0.52) / 0.34));
+    const easedReveal = reveal * reveal * (3 - 2 * reveal);
+    const opacityMultipliers = [1.65, 1.05, 0.76];
+    aurora.current.children.forEach((child, index) => {
+      const material = (child as Line).material as LineBasicMaterial;
+      material.opacity = opacity * opacityMultipliers[index] * easedReveal;
+    });
+
+    if (paused || reducedMotion) {
+      return;
+    }
+
+    aurora.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.22) * 0.018;
+    aurora.current.position.x = Math.sin(state.clock.elapsedTime * 0.18) * 0.015;
+    aurora.current.position.y = Math.sin(state.clock.elapsedTime * 0.26) * 0.01;
   });
 
   return (
-    <>
-      <mesh ref={auroraNorth} position={[0.08, composition.earth.radius * 0.62, 0.1]} rotation={[1.28, 0.1, 0.2]}>
-        <torusGeometry args={[composition.earth.radius * 0.54, 0.012, 10, 120]} />
-        <primitive object={material} attach="material" />
-      </mesh>
-      <mesh ref={auroraSouth} position={[-0.08, -composition.earth.radius * 0.6, -0.05]} rotation={[1.82, -0.2, -0.1]}>
-        <torusGeometry args={[composition.earth.radius * 0.48, 0.01, 10, 120]} />
-        <primitive object={southMaterial} attach="material" />
-      </mesh>
-    </>
+    <group ref={aurora} position={[0.5, 0.38, -0.3]} rotation={[0.02, -0.1, -0.06]}>
+      <primitive object={lines[0]} />
+      <primitive object={lines[1]} />
+      <primitive object={lines[2]} />
+    </group>
   );
 }

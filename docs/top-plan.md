@@ -1,3 +1,5 @@
+> 2026-04-24 对齐说明：本文保留为长期首页叙事参考。当前 v1.0 范围锁定为 LuBirth 前两屏：Opening / LuBirth Ritual Field + LuBirth Zoomable Project Window；Radio Gaga、CoScroll、ArtBreeze、实验星群、商业作品、Now Building、About / Contact 进入 v1.1+。
+
 你说得对。
 我前面那个顺序太像“作品集信息架构”，不够像 **MiraLith 这种个人场域站**。你要参考 Shopify 那种体验，就不应该先讲“我是谁 / 我在做什么”，而应该先把人拖进一个场景。
 
@@ -538,7 +540,7 @@ packages/coscroll-scene
 低性能设备使用 poster 或短视频 fallback
 ```
 
-不要让 CoScroll 自己管理全局滚动和音频时间；它只消费 MiraLith 传入的章节进度。
+不要让 CoScroll 自己管理全局滚动和音频时间。它由 MiraLith 的章节进度驱动，但正式实现不能只依赖 `progress` 一个值；还需要通过 `docs/coscroll-scene-interface.md` 定义 `visualTime`、`lyrics`、`currentAnchor`、`scrollVelocity`、quality tier 和 fallback 的适配状态。
 
 ---
 

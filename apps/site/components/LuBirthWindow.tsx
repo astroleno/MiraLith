@@ -24,10 +24,20 @@ export function LuBirthWindow({ onHoverChange, onExpand, expandButtonRef }: LuBi
         type="button"
         aria-label="Open LuBirth expanded view"
         onClick={onExpand}
-      />
+      >
+        <span className="project-window__preview-frame" aria-hidden="true" />
+        <span className="project-window__preview-copy">
+          <span>LuBirth Field</span>
+          <span>Moon / Earth / You</span>
+        </span>
+      </button>
       <div className="project-window__meta">
-        <p>LuBirth 地月人</p>
+        <p>02 Project Window</p>
+        <h2>LuBirth 地月人</h2>
         <p>A cosmological interface for birth, time, and self-recognition.</p>
+        <button className="project-window__meta-action" type="button" onClick={onExpand}>
+          进入地月场
+        </button>
       </div>
     </article>
   );

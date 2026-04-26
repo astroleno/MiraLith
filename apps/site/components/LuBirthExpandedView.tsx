@@ -35,6 +35,11 @@ export function LuBirthExpandedView({ open, onClose, returnFocusRef }: LuBirthEx
   return (
     <div className="expanded-view" role="dialog" aria-modal="true" aria-label="LuBirth expanded view">
       <div className="expanded-view__panel">
+        <div className="expanded-view__copy">
+          <p>LuBirth</p>
+          <h2>Moon Earth You</h2>
+          <p>出生、时间、轨道与自我识别，被收束成同一块黑色宇宙界面。</p>
+        </div>
         <button
           ref={closeRef}
           className="expanded-view__close"

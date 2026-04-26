@@ -54,3 +54,26 @@ The right v1 path is:
 4. Budget every asset before it enters the app.
 5. Let source projects remain source projects.
 
+## 2026-04-24 Multi-Agent Source Scan Addendum
+
+The scan of ArtBreeze, Radio Gaga, and broader GitHub projects did not identify any need to change the v1.0 stack.
+
+Recommended v1.1+ intake:
+
+| Project | Intake |
+| --- | --- |
+| ArtBreeze | DOM vignette + poster fallback; do not import Chrome extension runtime |
+| Radio Gaga | Static case study + flow diagram + lightweight hardware/sound visual; do not import Vite frontend or Cloudflare/MCP runtime |
+| CoScroll | Lightweight digital-sutra scene or poster-backed scroll vignette |
+| Anicca | Later thinking-instrument graph / constellation |
+| SonoScope | Audio-visual systems node with still/video and architecture callout |
+| AeScape | Ambient browser ritual paired with ArtBreeze |
+| UGCFlow + fv_website | Now Building credibility section |
+| VoyaTide | Non-visual systems case study / artifact pipeline |
+
+Stack micro-adjustments:
+
+- Add project representation types.
+- Add media/demo asset pipeline.
+- Permit isolated GSAP only for visual-study modules.
+- Keep source app runtime and backend systems out of MiraLith.
