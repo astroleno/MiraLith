@@ -11,6 +11,7 @@ export interface OpeningTimelineFrame {
   earthScale: number;
   earthX: number;
   earthY: number;
+  earthPitchDeg: number;
   earthYawDeg: number;
   moonX: number;
   moonY: number;
@@ -41,8 +42,10 @@ const MIANYANG_XIU = {
   finalCameraElevationDeg: -16.4,
   lookAtDistanceRatio: 1.08,
   earthSize: 1.68,
+  initialEarthPitchDeg: 0,
+  earthPitchDeg: -28.5,
   initialEarthYawDeg: -106.6,
-  earthYawDeg: -106.6
+  earthYawDeg: -104.25
 };
 
 const THEATRE_OPENING_STATE = {
@@ -70,6 +73,7 @@ export function mapOpeningProgress(progressInput: number): OpeningTimelineFrame 
     earthScale: lerp(firstStageEarthScale, xiuEarthScale, eased),
     earthX: 0,
     earthY: lerp(-2.48, -1.18, eased),
+    earthPitchDeg: lerp(MIANYANG_XIU.initialEarthPitchDeg, MIANYANG_XIU.earthPitchDeg, eased),
     earthYawDeg: lerp(MIANYANG_XIU.initialEarthYawDeg, MIANYANG_XIU.earthYawDeg, eased),
     moonX: 0.5,
     moonY: 0.75,

@@ -2,7 +2,7 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import { Color, DirectionalLight, MathUtils, Group, Vector3 } from "three";
+import { Color, DirectionalLight, Euler, MathUtils, Group, Vector3 } from "three";
 import {
   getRuntimeOpeningProgress,
   mapOpeningProgress
@@ -24,7 +24,7 @@ const moonTargetPosition = new Vector3();
 const moonTargetScale = new Vector3();
 const fieldSunDirection = new Vector3(...DEFAULT_LUBIRTH_FIELD_SUN_DIRECTION).normalize();
 const finalSunDirection = new Vector3();
-const yAxis = new Vector3(0, 1, 0);
+const earthLightEuler = new Euler(0, 0, 0, "YXZ");
 const easeInOut = (value: number) => value * value * (3 - 2 * value);
 
 export function EarthMoonScene({ mode, composition, assets, quality, reducedMotion, paused, onSceneReady }: EarthMoonSceneProps) {
@@ -63,9 +63,11 @@ export function EarthMoonScene({ mode, composition, assets, quality, reducedMoti
     cameraTarget.set(0, frame.cameraLookAtY, 0);
     camera.lookAt(cameraTarget);
 
+    let earthPitchDeg = frame.earthPitchDeg;
     let earthYawDeg = frame.earthYawDeg;
     if (earthGroup.current) {
       if (mode === "expanded") {
+        earthPitchDeg = finalFrame.earthPitchDeg;
         earthYawDeg = finalFrame.earthYawDeg;
       } else if (progress <= 0.001) {
         scrollYawOriginDeg.current = null;
@@ -86,13 +88,23 @@ export function EarthMoonScene({ mode, composition, assets, quality, reducedMoti
       earthTargetScale.set(frame.earthScale, frame.earthScale, frame.earthScale);
       earthGroup.current.position.copy(earthTargetPosition);
       earthGroup.current.scale.copy(earthTargetScale);
-      earthGroup.current.rotation.y = MathUtils.degToRad(earthYawDeg);
+      earthGroup.current.rotation.set(
+        MathUtils.degToRad(earthPitchDeg),
+        MathUtils.degToRad(earthYawDeg),
+        0,
+        "YXZ"
+      );
     }
 
     finalSunDirection
       .set(...composition.light.fixedSunDir)
       .normalize()
-      .applyAxisAngle(yAxis, -MathUtils.degToRad(earthYawDeg));
+      .applyEuler(earthLightEuler.set(
+        -MathUtils.degToRad(earthPitchDeg),
+        -MathUtils.degToRad(earthYawDeg),
+        0,
+        "YXZ"
+      ));
     const sunProgress = mode === "expanded" ? 1 : easeInOut(MathUtils.clamp((progress - 0.08) / 0.72, 0, 1));
     sceneLightDirection.copy(fieldSunDirection).lerp(finalSunDirection, sunProgress).normalize();
     if (directionalLightRef.current) {
