@@ -280,16 +280,26 @@ export function LandingAurora({ composition, quality, sceneLightDirection, reduc
   const activeRibbonCount = Math.min(RIBBONS.length, Math.max(0, composition.aurora.sampleCount));
   const enabled = quality.aurora && composition.aurora.enabled && composition.aurora.intensity > 0 && activeRibbonCount > 0;
   const geometries = useMemo(
-    () => RIBBONS.map((ribbon) =>
-      createRibbonGeometry(
-        ribbon,
-        Math.max(48, Math.min(112, quality.segments + 16)),
-        quality.tier === "high" ? 9 : 6
-      )
-    ),
-    [quality.segments, quality.tier]
+    () => {
+      if (!enabled) {
+        return [];
+      }
+
+      return RIBBONS.slice(0, activeRibbonCount).map((ribbon) =>
+        createRibbonGeometry(
+          ribbon,
+          Math.max(48, Math.min(112, quality.segments + 16)),
+          quality.tier === "high" ? 9 : 6
+        )
+      );
+    },
+    [activeRibbonCount, enabled, quality.segments, quality.tier]
   );
   const ribbons = useMemo(() => {
+    if (!enabled) {
+      return [];
+    }
+
     return geometries.map((geometry, index) => {
       const mesh = new Mesh(
         geometry,
@@ -298,7 +308,7 @@ export function LandingAurora({ composition, quality, sceneLightDirection, reduc
       mesh.renderOrder = 18 + index;
       return mesh;
     });
-  }, [composition, geometries]);
+  }, [composition, enabled, geometries]);
 
   useFrame((state) => {
     if (!aurora.current) {
