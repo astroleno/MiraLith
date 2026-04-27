@@ -448,22 +448,22 @@ export function LandingAtmosphere({ composition, quality, sceneLightDirection }:
 
   useFrame(() => {
     const progress = getRuntimeOpeningProgress(0);
+    const closeStage = 1 - smoothstep(0.18, 0.86, progress);
     if (sceneLightDirection) {
       frameLightDirection.copy(sceneLightDirection).normalize();
     } else {
       frameLightDirection.set(...composition.light.fixedSunDir).normalize();
     }
-    const stage = smoothstep(0.26, 0.86, progress);
     mainMaterial.uniforms.lightDir.value.copy(frameLightDirection);
     nearMaterial.uniforms.lightDir.value.copy(frameLightDirection);
     karmanLineMaterial.uniforms.lightDir.value.copy(frameLightDirection);
-    mainMaterial.uniforms.intensity.value = baseMainIntensity * stage;
-    nearMaterial.uniforms.intensity.value = baseNearIntensity * smoothstep(0.2, 0.78, progress);
+    mainMaterial.uniforms.intensity.value = baseMainIntensity * (0.32 + closeStage * 0.68);
+    nearMaterial.uniforms.intensity.value = baseNearIntensity * (0.24 + closeStage * 0.76);
     outerHaloMaterial.uniforms.lightDir.value.copy(frameLightDirection);
-    outerHaloMaterial.uniforms.intensity.value = baseMainIntensity * smoothstep(0.18, 0.92, progress) * 0.22;
-    karmanLineMaterial.uniforms.intensity.value = baseMainIntensity * (0.16 + smoothstep(0.18, 0.86, progress) * 0.62);
+    outerHaloMaterial.uniforms.intensity.value = baseMainIntensity * (0.08 + closeStage * 0.14);
+    karmanLineMaterial.uniforms.intensity.value = baseMainIntensity * (0.22 + closeStage * 0.56);
 
-    const karmanStage = 0.26 + smoothstep(0.18, 0.9, progress) * 0.74;
+    const karmanStage = 0.26 + closeStage * 0.74;
     const targetOpacities = composition.atmosphere.karmanGlow
       ? [0.055 * karmanStage, 0.04 * karmanStage, 0.025 * karmanStage]
       : [0, 0, 0];

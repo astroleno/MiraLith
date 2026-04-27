@@ -32,20 +32,30 @@ const lerp = (from: number, to: number, progress: number) => from + (to - from) 
 const degToRad = (value: number) => (value * Math.PI) / 180;
 
 export const OPENING_TIMELINE_DURATION = 7.2;
+export const OPENING_FIELD_AUTO_ROTATE_START = 0.96;
 
 const ORIGINAL_CAMERA_DISTANCE = 15;
 const ORIGINAL_CAMERA_FOV = 45;
 const ORIGINAL_WORLD_UNIT = ORIGINAL_CAMERA_DISTANCE * Math.tan(degToRad(ORIGINAL_CAMERA_FOV) / 2);
-const MIANYANG_XIU = {
+const FIELD_FRAME = {
+  cameraElevationDeg: 3.46402,
+  lookAtDistanceRatio: 0,
+  earthSize: 0.33,
+  earthY: -2.48,
+  earthPitchDeg: 0,
+  earthYawDeg: -106.6,
+  moonScale: 1
+};
+
+const CLOSE_FRAME = {
   cameraAzimuthDeg: 88.1438565849,
-  initialCameraElevationDeg: 3.46402,
-  finalCameraElevationDeg: -16.4,
+  cameraElevationDeg: -16.4,
   lookAtDistanceRatio: 1.08,
   earthSize: 1.68,
-  initialEarthPitchDeg: 0,
+  earthY: -1.18,
   earthPitchDeg: -28.5,
-  initialEarthYawDeg: -106.6,
-  earthYawDeg: -104.25
+  earthYawDeg: -104.25,
+  moonScale: 1.15
 };
 
 const THEATRE_OPENING_STATE = {
@@ -57,29 +67,33 @@ const THEATRE_OPENING_STATE = {
 export function mapOpeningProgress(progressInput: number): OpeningTimelineFrame {
   const progress = clamp01(progressInput);
   const eased = easeInOut(progress);
-  const firstStageEarthScale = 0.33 * ORIGINAL_WORLD_UNIT;
-  const xiuEarthScale = MIANYANG_XIU.earthSize * ORIGINAL_WORLD_UNIT;
+  const fieldEarthScale = FIELD_FRAME.earthSize * ORIGINAL_WORLD_UNIT;
+  const closeEarthScale = CLOSE_FRAME.earthSize * ORIGINAL_WORLD_UNIT;
 
   return {
     progress,
     cameraDistance: ORIGINAL_CAMERA_DISTANCE,
-    cameraAzimuth: degToRad(MIANYANG_XIU.cameraAzimuthDeg),
+    cameraAzimuth: degToRad(CLOSE_FRAME.cameraAzimuthDeg),
     cameraElevation: degToRad(lerp(
-      MIANYANG_XIU.initialCameraElevationDeg,
-      MIANYANG_XIU.finalCameraElevationDeg,
+      CLOSE_FRAME.cameraElevationDeg,
+      FIELD_FRAME.cameraElevationDeg,
       eased
     )),
-    cameraLookAtY: lerp(0, MIANYANG_XIU.lookAtDistanceRatio * ORIGINAL_CAMERA_DISTANCE, eased),
-    earthScale: lerp(firstStageEarthScale, xiuEarthScale, eased),
+    cameraLookAtY: lerp(
+      CLOSE_FRAME.lookAtDistanceRatio * ORIGINAL_CAMERA_DISTANCE,
+      FIELD_FRAME.lookAtDistanceRatio * ORIGINAL_CAMERA_DISTANCE,
+      eased
+    ),
+    earthScale: lerp(closeEarthScale, fieldEarthScale, eased),
     earthX: 0,
-    earthY: lerp(-2.48, -1.18, eased),
-    earthPitchDeg: lerp(MIANYANG_XIU.initialEarthPitchDeg, MIANYANG_XIU.earthPitchDeg, eased),
-    earthYawDeg: lerp(MIANYANG_XIU.initialEarthYawDeg, MIANYANG_XIU.earthYawDeg, eased),
+    earthY: lerp(CLOSE_FRAME.earthY, FIELD_FRAME.earthY, eased),
+    earthPitchDeg: lerp(CLOSE_FRAME.earthPitchDeg, FIELD_FRAME.earthPitchDeg, eased),
+    earthYawDeg: lerp(CLOSE_FRAME.earthYawDeg, FIELD_FRAME.earthYawDeg, eased),
     moonX: 0.5,
     moonY: 0.75,
-    moonScale: lerp(1, 1.15, eased),
+    moonScale: lerp(CLOSE_FRAME.moonScale, FIELD_FRAME.moonScale, eased),
     lightIntensity: lerp(2.45, 2.45, eased),
-    windowOpacity: clamp01((progress - 0.42) / 0.28)
+    windowOpacity: 1 - clamp01((progress - 0.3) / 0.28)
   };
 }
 

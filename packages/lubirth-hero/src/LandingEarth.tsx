@@ -15,7 +15,7 @@ import {
   TextureLoader,
   Vector3
 } from "three";
-import type { QualityProfile } from "@miralith/visual-core";
+import { OPENING_FIELD_AUTO_ROTATE_START, type QualityProfile } from "@miralith/visual-core";
 import type { LandingComposition, LandingResolvedAssets } from "./types";
 import { createEarthTexture } from "./textures";
 
@@ -303,7 +303,7 @@ export function LandingEarth({ composition, assets, quality, reducedMotion, paus
     earthMaterial.uniforms.nightBoost.value = composition.earth.nightIntensity;
     earthMaterial.uniforms.cloudOpacity.value = composition.earth.useClouds ? composition.earth.cloudOpacity : 0;
     const progress = typeof window === "undefined" ? 1 : Math.min(1, Math.max(0, window.__MiraLithOpeningProgress ?? 0));
-    if (!paused && !reducedMotion && progress < 0.001) {
+    if (!paused && !reducedMotion && progress >= OPENING_FIELD_AUTO_ROTATE_START) {
       earthMaterial.uniforms.cloudOffset.value = (earthMaterial.uniforms.cloudOffset.value + delta * 0.0045) % 1;
     }
     earthMaterial.uniforms.rimStrength.value = composition.earth.rimStrength;

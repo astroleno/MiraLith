@@ -4,6 +4,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { Color, DirectionalLight, Euler, MathUtils, Group, Vector3 } from "three";
 import {
+  OPENING_FIELD_AUTO_ROTATE_START,
   getRuntimeOpeningProgress,
   mapOpeningProgress
 } from "@miralith/visual-core";
@@ -31,7 +32,6 @@ export function EarthMoonScene({ mode, composition, assets, quality, reducedMoti
   const earthGroup = useRef<Group>(null);
   const directionalLightRef = useRef<DirectionalLight>(null);
   const autoEarthYawDeg = useRef(0);
-  const scrollYawOriginDeg = useRef<number | null>(null);
   const { camera, size } = useThree();
   const sceneLightDirection = useMemo(() => fieldSunDirection.clone(), []);
 
@@ -69,19 +69,22 @@ export function EarthMoonScene({ mode, composition, assets, quality, reducedMoti
       if (mode === "expanded") {
         earthPitchDeg = finalFrame.earthPitchDeg;
         earthYawDeg = finalFrame.earthYawDeg;
-      } else if (progress <= 0.001) {
-        scrollYawOriginDeg.current = null;
-        if (!paused && !reducedMotion && composition.motion.autoRotate && composition.earth.rotationSpeedDegPerSec > 0) {
-          autoEarthYawDeg.current += composition.earth.rotationSpeedDegPerSec * delta;
-        }
-        earthYawDeg = frame.earthYawDeg + autoEarthYawDeg.current;
-      } else {
-        scrollYawOriginDeg.current ??= mapOpeningProgress(0).earthYawDeg + autoEarthYawDeg.current;
-        earthYawDeg = MathUtils.lerp(
-          scrollYawOriginDeg.current,
-          finalFrame.earthYawDeg,
-          easeInOut(progress)
-        );
+      }
+
+      const autoRotateProgress = mode === "expanded"
+        ? 1
+        : easeInOut(MathUtils.clamp((progress - OPENING_FIELD_AUTO_ROTATE_START) / (1 - OPENING_FIELD_AUTO_ROTATE_START), 0, 1));
+      const canAutoRotate =
+        autoRotateProgress > 0 &&
+        !paused &&
+        !reducedMotion &&
+        composition.motion.autoRotate &&
+        composition.earth.rotationSpeedDegPerSec > 0;
+      if (canAutoRotate) {
+        autoEarthYawDeg.current += composition.earth.rotationSpeedDegPerSec * delta * autoRotateProgress;
+        earthYawDeg += autoEarthYawDeg.current;
+      } else if (progress < OPENING_FIELD_AUTO_ROTATE_START) {
+        autoEarthYawDeg.current = 0;
       }
 
       earthTargetPosition.set(frame.earthX, frame.earthY, 0);
@@ -105,8 +108,8 @@ export function EarthMoonScene({ mode, composition, assets, quality, reducedMoti
         0,
         "YXZ"
       ));
-    const sunProgress = mode === "expanded" ? 1 : easeInOut(MathUtils.clamp((progress - 0.08) / 0.72, 0, 1));
-    sceneLightDirection.copy(fieldSunDirection).lerp(finalSunDirection, sunProgress).normalize();
+    const fieldSunProgress = mode === "expanded" ? 1 : easeInOut(MathUtils.clamp((progress - 0.18) / 0.74, 0, 1));
+    sceneLightDirection.copy(finalSunDirection).lerp(fieldSunDirection, fieldSunProgress).normalize();
     if (directionalLightRef.current) {
       directionalLightRef.current.position.copy(sceneLightDirection);
     }

@@ -78,7 +78,8 @@ export function LandingAurora({ composition, quality, reducedMotion, paused }: L
       return;
     }
 
-    const reveal = Math.min(1, Math.max(0, (getRuntimeOpeningProgress(0) - 0.52) / 0.34));
+    const progress = getRuntimeOpeningProgress(0);
+    const reveal = 1 - Math.min(1, Math.max(0, (progress - 0.18) / 0.37));
     const easedReveal = reveal * reveal * (3 - 2 * reveal);
     const opacityMultipliers = [1.65, 1.05, 0.76];
     aurora.current.children.forEach((child, index) => {

@@ -56,13 +56,13 @@ export function MiraLithHome() {
   }, []);
 
   return (
-    <main ref={shellRef} className="site-shell site-shell--lubirth" aria-label="LuBirth two-stage earth moon scene">
+    <main ref={shellRef} className="site-shell site-shell--lubirth" aria-label="LuBirth near-earth pullback scene">
       <VisualCanvas
         decorative
         fallback={
           <VisualCanvasFallback
             scene="lubirth"
-            label="LuBirth earth and moon field"
+            label="LuBirth near-earth arc and moon field"
             posterSrc="/assets/lubirth/poster-field.webp"
           />
         }
@@ -70,12 +70,12 @@ export function MiraLithHome() {
         <LuBirthSceneSlot mode="field" />
       </VisualCanvas>
 
-      <section className="lubirth-scroll-stage" aria-label="LuBirth phase one">
-        <span className="sr-only">Phase one: moon above, earth below.</span>
+      <section className="lubirth-scroll-stage" aria-label="LuBirth near-earth phase">
+        <span className="sr-only">Phase one: near-earth daylight arc over Mianyang.</span>
       </section>
 
-      <section className="lubirth-scroll-stage" aria-label="LuBirth phase two">
-        <span className="sr-only">Phase two: enlarged earth arc below the moon.</span>
+      <section className="lubirth-scroll-stage" aria-label="LuBirth pullback phase">
+        <span className="sr-only">Phase two: pull back to the full moon and earth field.</span>
       </section>
     </main>
   );
