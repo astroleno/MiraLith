@@ -33,6 +33,14 @@ export const DEFAULT_LUBIRTH_ASSETS: LandingAssetManifest = {
     format: "jpg",
     colorSpace: "srgb"
   },
+  spaceBackground: {
+    id: "stars-milky-way-8k",
+    src: "/assets/lubirth/backgrounds/8k_stars_milky_way.webp",
+    width: 8192,
+    height: 4096,
+    format: "webp",
+    colorSpace: "srgb"
+  },
   fallbackPoster: {
     id: "lubirth-poster-field",
     kind: "poster",
@@ -51,48 +59,68 @@ export function resolveLandingAssets(assets: Partial<LandingAssetManifest> = {})
   };
 }
 
-export const LUBIRTH_ASSET_BUDGET: LandingAsset[] = [
-  {
-    id: DEFAULT_LUBIRTH_ASSETS.earthDay.id,
+function textureBudget(
+  texture: LandingAssetManifest["earthDay"],
+  bytesBudget: number,
+  tier: LandingAsset["tier"],
+  preload: boolean
+): LandingAsset {
+  return {
+    id: texture.id,
     kind: "texture",
-    tier: "critical",
-    src: DEFAULT_LUBIRTH_ASSETS.earthDay.src,
-    bytesBudget: 2_400_000,
-    preload: true,
+    tier,
+    src: texture.src,
+    bytesBudget,
+    preload,
     requiredFor: ["field", "window", "zoomed", "expanded"]
-  },
-  {
-    id: DEFAULT_LUBIRTH_ASSETS.earthNight?.id ?? "earth-night-8k",
-    kind: "texture",
-    tier: "critical",
-    src: DEFAULT_LUBIRTH_ASSETS.earthNight?.src ?? "/assets/lubirth/textures/earth-night-8k.webp",
-    bytesBudget: 1_300_000,
-    preload: true,
-    requiredFor: ["field", "window", "zoomed", "expanded"]
-  },
-  {
-    id: DEFAULT_LUBIRTH_ASSETS.earthClouds?.id ?? "earth-clouds-8k",
-    kind: "texture",
-    tier: "critical",
-    src: DEFAULT_LUBIRTH_ASSETS.earthClouds?.src ?? "/assets/lubirth/textures/earth-clouds-8k.webp",
-    bytesBudget: 8_100_000,
-    preload: true,
-    requiredFor: ["field", "window", "zoomed", "expanded"]
-  },
-  {
-    id: DEFAULT_LUBIRTH_ASSETS.moonColor.id,
-    kind: "texture",
-    tier: "critical",
-    src: DEFAULT_LUBIRTH_ASSETS.moonColor.src,
-    bytesBudget: 1_060_000,
-    preload: true,
-    requiredFor: ["field", "window", "zoomed", "expanded"]
-  },
-  DEFAULT_LUBIRTH_ASSETS.fallbackPoster
-];
+  };
+}
 
-export function getCriticalAssetBudget() {
-  return LUBIRTH_ASSET_BUDGET
+export function getLandingAssetBudget(assets: Partial<LandingAssetManifest> = {}): LandingAsset[] {
+  const resolvedAssets = resolveLandingAssets(assets);
+  const budget = [
+    textureBudget(resolvedAssets.earthDay, 2_400_000, "critical", true),
+    textureBudget(
+      resolvedAssets.earthNight ?? DEFAULT_LUBIRTH_ASSETS.earthNight ?? {
+        id: "earth-night-8k",
+        src: "/assets/lubirth/textures/earth-night-8k.webp",
+        width: 8192,
+        height: 4096,
+        format: "webp",
+        colorSpace: "srgb"
+      },
+      1_300_000,
+      "critical",
+      true
+    ),
+    textureBudget(
+      resolvedAssets.earthClouds ?? DEFAULT_LUBIRTH_ASSETS.earthClouds ?? {
+        id: "earth-clouds-8k",
+        src: "/assets/lubirth/textures/earth-clouds-8k.webp",
+        width: 8192,
+        height: 4096,
+        format: "webp",
+        colorSpace: "srgb"
+      },
+      8_100_000,
+      "critical",
+      true
+    ),
+    textureBudget(resolvedAssets.moonColor, 1_060_000, "critical", true),
+    resolvedAssets.fallbackPoster
+  ];
+
+  if (resolvedAssets.spaceBackground) {
+    budget.push(textureBudget(resolvedAssets.spaceBackground, 700_000, "idle", false));
+  }
+
+  return budget;
+}
+
+export const LUBIRTH_ASSET_BUDGET: LandingAsset[] = getLandingAssetBudget();
+
+export function getCriticalAssetBudget(assets: Partial<LandingAssetManifest> = {}) {
+  return getLandingAssetBudget(assets)
     .filter((asset) => asset.tier === "critical")
     .reduce((total, asset) => total + asset.bytesBudget, 0);
 }

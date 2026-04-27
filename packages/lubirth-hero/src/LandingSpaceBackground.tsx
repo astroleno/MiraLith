@@ -1,19 +1,25 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AdditiveBlending,
   BackSide,
   BufferAttribute,
   BufferGeometry,
   Color,
+  MeshBasicMaterial,
   PointsMaterial,
-  ShaderMaterial
+  SRGBColorSpace,
+  ShaderMaterial,
+  Texture,
+  TextureLoader
 } from "three";
 import type { QualityProfile } from "@miralith/visual-core";
+import type { TextureRef } from "./types";
 
 interface LandingSpaceBackgroundProps {
   quality: QualityProfile;
+  spaceBackground?: TextureRef;
 }
 
 function random(seed: number) {
@@ -21,7 +27,47 @@ function random(seed: number) {
   return x - Math.floor(x);
 }
 
-export function LandingSpaceBackground({ quality }: LandingSpaceBackgroundProps) {
+export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpaceBackgroundProps) {
+  const [backgroundTexture, setBackgroundTexture] = useState<Texture | null>(null);
+  const [backgroundFailed, setBackgroundFailed] = useState(false);
+
+  useEffect(() => {
+    setBackgroundTexture(null);
+    setBackgroundFailed(false);
+
+    if (!spaceBackground?.src) {
+      return undefined;
+    }
+
+    let disposed = false;
+    let loadedTexture: Texture | null = null;
+    const loader = new TextureLoader();
+    loader.load(
+      spaceBackground.src,
+      (texture) => {
+        if (disposed) {
+          texture.dispose();
+          return;
+        }
+
+        texture.colorSpace = spaceBackground.colorSpace === "srgb" ? SRGBColorSpace : texture.colorSpace;
+        loadedTexture = texture;
+        setBackgroundTexture(texture);
+      },
+      undefined,
+      () => {
+        if (!disposed) {
+          setBackgroundFailed(true);
+        }
+      }
+    );
+
+    return () => {
+      disposed = true;
+      loadedTexture?.dispose();
+    };
+  }, [spaceBackground?.colorSpace, spaceBackground?.src]);
+
   const starGeometry = useMemo(() => {
     const count = Math.max(quality.stars, quality.tier === "high" ? 720 : 360);
     const positions = new Float32Array(count * 3);
@@ -94,12 +140,28 @@ export function LandingSpaceBackground({ quality }: LandingSpaceBackgroundProps)
     });
   }, []);
 
+  const textureMaterial = useMemo(() => {
+    if (!backgroundTexture || backgroundFailed) {
+      return null;
+    }
+
+    return new MeshBasicMaterial({
+      map: backgroundTexture,
+      color: new Color("#d8e8ff"),
+      side: BackSide,
+      depthWrite: false,
+      depthTest: false
+    });
+  }, [backgroundFailed, backgroundTexture]);
+
+  const useTextureBackdrop = Boolean(textureMaterial && !backgroundFailed);
+
   return (
     <>
-      <mesh material={skyMaterial} renderOrder={-60}>
+      <mesh material={useTextureBackdrop ? textureMaterial ?? skyMaterial : skyMaterial} renderOrder={-60}>
         <sphereGeometry args={[46, 32, 18]} />
       </mesh>
-      <points geometry={starGeometry} material={starMaterial} renderOrder={-50} />
+      {useTextureBackdrop ? null : <points geometry={starGeometry} material={starMaterial} renderOrder={-50} />}
     </>
   );
 }

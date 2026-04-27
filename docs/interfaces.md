@@ -406,6 +406,7 @@ interface LandingAssetManifest {
   earthNight?: TextureRef;
   earthClouds?: TextureRef;
   moonColor: TextureRef;
+  spaceBackground?: TextureRef;
   fallbackPoster: LandingAsset;
   expandedEarthDay?: TextureRef;
   expandedMoonColor?: TextureRef;
@@ -416,6 +417,7 @@ Rules:
 
 - `critical` assets must keep first screen under 3MB.
 - `expanded` assets must never preload before user intent.
+- `spaceBackground` defaults to `/assets/lubirth/backgrounds/8k_stars_milky_way.webp`; it must stay `idle` and non-preloaded.
 - `fallbackPoster` is required.
 - Every asset must declare a byte budget before implementation.
 

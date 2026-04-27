@@ -196,7 +196,7 @@ export function EarthMoonScene({ mode, composition, assets, quality, debugMianya
     <>
       <color attach="background" args={["#000307"]} />
       <fog attach="fog" args={["#000307", 16, 48]} />
-      <LandingSpaceBackground quality={quality} />
+      <LandingSpaceBackground quality={quality} spaceBackground={assets.spaceBackground} />
       <ambientLight intensity={composition.light.ambientIntensity} color="#d9e2e4" />
       <directionalLight
         ref={directionalLightRef}

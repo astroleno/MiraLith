@@ -35,6 +35,7 @@ export interface LandingAssetManifest {
   earthNight?: TextureRef;
   earthClouds?: TextureRef;
   moonColor: TextureRef;
+  spaceBackground?: TextureRef;
   fallbackPoster: LandingAsset;
   expandedEarthDay?: TextureRef;
   expandedMoonColor?: TextureRef;

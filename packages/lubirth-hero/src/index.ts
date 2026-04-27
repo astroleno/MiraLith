@@ -9,6 +9,7 @@ export {
   DEFAULT_LUBIRTH_ASSETS,
   LUBIRTH_ASSET_BUDGET,
   getCriticalAssetBudget,
+  getLandingAssetBudget,
   resolveLandingAssets
 } from "./assetManifest";
 export {
