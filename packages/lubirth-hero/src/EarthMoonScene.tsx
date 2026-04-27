@@ -215,7 +215,13 @@ export function EarthMoonScene({ mode, composition, assets, quality, debugMianya
           sceneLightDirection={sceneLightDirection}
         />
         <LandingAtmosphere composition={composition} quality={quality} sceneLightDirection={sceneLightDirection} />
-        <LandingAurora composition={composition} quality={quality} reducedMotion={reducedMotion} paused={paused} />
+        <LandingAurora
+          composition={composition}
+          quality={quality}
+          sceneLightDirection={sceneLightDirection}
+          reducedMotion={reducedMotion}
+          paused={paused}
+        />
         {debugMianyang ? <MianyangDebugMarker radius={composition.earth.radius} /> : null}
       </group>
 
