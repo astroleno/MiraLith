@@ -55,7 +55,7 @@ const CLOSE_FRAME = {
   earthY: -1.18,
   earthPitchDeg: -28.5,
   earthYawDeg: -104.25,
-  moonScale: 1.15
+  moonScale: 1.5
 };
 
 const THEATRE_OPENING_STATE = {
