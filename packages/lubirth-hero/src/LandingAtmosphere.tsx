@@ -8,6 +8,7 @@ import {
   BackSide,
   Color,
   CustomBlending,
+  FrontSide,
   OneFactor,
   ShaderMaterial,
   SrcAlphaFactor,
@@ -394,14 +395,26 @@ export function LandingAtmosphere({ composition, quality, sceneLightDirection }:
         lightDir: { value: lightDirection.set(...composition.light.fixedSunDir).normalize().clone() },
         blue: { value: new Color(0.36, 0.78, 1.0) },
         white: { value: new Color(0.9, 0.98, 1.0) },
-        intensity: { value: 0 }
+        sunset: { value: new Color(1.0, 0.44, 0.16) },
+        intensity: { value: 0 },
+        closeStage: { value: 1 },
+        earthRadius: { value: composition.earth.radius }
       },
       vertexShader: `
+        uniform float earthRadius;
         varying vec3 vNormalW;
+        varying vec3 vWorldPos;
+        varying vec3 vPlanetCenterW;
+        varying float vWorldRadius;
         varying float vFresnel;
 
         void main() {
           vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+          vec4 centerWorld = modelMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+          vec3 radiusAxis = (modelMatrix * vec4(earthRadius, 0.0, 0.0, 0.0)).xyz;
+          vWorldPos = worldPosition.xyz;
+          vPlanetCenterW = centerWorld.xyz;
+          vWorldRadius = max(length(radiusAxis), 1e-5);
           vNormalW = normalize(mat3(modelMatrix) * normal);
           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
           vec3 viewDirection = normalize(-mvPosition.xyz);
@@ -414,25 +427,148 @@ export function LandingAtmosphere({ composition, quality, sceneLightDirection }:
         uniform vec3 lightDir;
         uniform vec3 blue;
         uniform vec3 white;
+        uniform vec3 sunset;
         uniform float intensity;
+        uniform float closeStage;
 
         varying vec3 vNormalW;
+        varying vec3 vWorldPos;
+        varying vec3 vPlanetCenterW;
+        varying float vWorldRadius;
         varying float vFresnel;
+
+        const float PI = 3.14159265359;
+        const float FAR_HIT = 10000.0;
+        const int PRIMARY_STEPS = 8;
+        const int LIGHT_STEPS = 2;
+
+        vec2 rayVsSphere(vec3 origin, vec3 direction, float radius) {
+          float b = dot(origin, direction);
+          float c = dot(origin, origin) - radius * radius;
+          float d = b * b - c;
+          if (d < 0.0) {
+            return vec2(FAR_HIT, -FAR_HIT);
+          }
+
+          float root = sqrt(d);
+          return vec2(-b - root, -b + root);
+        }
+
+        float phaseRay(float cos2Theta) {
+          return (3.0 / (16.0 * PI)) * (1.0 + cos2Theta);
+        }
+
+        float phaseMie(float g, float cosTheta, float cos2Theta) {
+          float g2 = g * g;
+          float denom = 1.0 + g2 - 2.0 * g * cosTheta;
+          denom *= sqrt(max(denom, 1e-5));
+          return (3.0 / (8.0 * PI)) * ((1.0 - g2) * (1.0 + cos2Theta)) / max((2.0 + g2) * denom, 1e-5);
+        }
+
+        float densityAt(vec3 position, float planetRadius, float scaleHeight) {
+          float height = max(length(position) - planetRadius, 0.0);
+          return exp(-height / max(scaleHeight, 1e-5));
+        }
+
+        float opticDepth(vec3 origin, vec3 direction, float atmosphereRadius, float planetRadius, float scaleHeight) {
+          vec2 hit = rayVsSphere(origin, direction, atmosphereRadius);
+          float rayLength = max(hit.y, 0.0);
+          float stepLength = rayLength / float(LIGHT_STEPS);
+          vec3 samplePoint = origin + direction * (stepLength * 0.5);
+          float sum = 0.0;
+
+          for (int i = 0; i < LIGHT_STEPS; i++) {
+            float belowSurface = 1.0 - smoothstep(planetRadius * 0.998, planetRadius * 1.002, length(samplePoint));
+            sum += mix(densityAt(samplePoint, planetRadius, scaleHeight), 18.0, belowSurface);
+            samplePoint += direction * stepLength;
+          }
+
+          return sum * stepLength;
+        }
+
+        vec3 closeScatter(vec3 origin, vec3 direction, vec2 interval, vec3 sunDirection, float planetRadius, float atmosphereRadius) {
+          float rayScaleHeight = planetRadius * mix(0.026, 0.014, closeStage);
+          float mieScaleHeight = planetRadius * mix(0.012, 0.006, closeStage);
+          vec3 rayBeta = vec3(0.045, 0.13, 0.36);
+          vec3 mieBeta = vec3(0.082);
+          float stepLength = max(interval.y - interval.x, 0.0) / float(PRIMARY_STEPS);
+          vec3 samplePoint = origin + direction * (interval.x + stepLength * 0.5);
+          vec3 raySum = vec3(0.0);
+          vec3 mieSum = vec3(0.0);
+          float rayDepth = 0.0;
+          float mieDepth = 0.0;
+
+          for (int i = 0; i < PRIMARY_STEPS; i++) {
+            float rayDensity = densityAt(samplePoint, planetRadius, rayScaleHeight) * stepLength;
+            float mieDensity = densityAt(samplePoint, planetRadius, mieScaleHeight) * stepLength;
+            rayDepth += rayDensity;
+            mieDepth += mieDensity;
+
+            float rayLight = opticDepth(samplePoint, sunDirection, atmosphereRadius, planetRadius, rayScaleHeight);
+            float mieLight = opticDepth(samplePoint, sunDirection, atmosphereRadius, planetRadius, mieScaleHeight);
+            vec3 attenuation = exp(-(rayDepth + rayLight) * rayBeta - (mieDepth + mieLight) * mieBeta * 1.22);
+            raySum += rayDensity * attenuation;
+            mieSum += mieDensity * attenuation;
+            samplePoint += direction * stepLength;
+          }
+
+          float cosTheta = dot(direction, -sunDirection);
+          float cos2Theta = cosTheta * cosTheta;
+          return raySum * rayBeta * phaseRay(cos2Theta) + mieSum * mieBeta * phaseMie(-0.78, cosTheta, cos2Theta);
+        }
 
         void main() {
           vec3 n = normalize(vNormalW);
-          float ndl = dot(n, normalize(lightDir));
+          vec3 sunDirection = normalize(lightDir);
+          float ndl = dot(n, sunDirection);
           float rim = clamp(vFresnel, 0.0, 1.0);
-          float whiteLine = smoothstep(0.91, 0.965, rim) * (1.0 - smoothstep(0.969, 0.992, rim));
-          float blueLine = smoothstep(0.84, 0.955, rim) * (1.0 - smoothstep(0.975, 1.0, rim));
-          float day = 0.32 + 0.68 * smoothstep(-0.08, 0.34, ndl);
-          float twilight = 1.0 - smoothstep(0.0, 0.34, abs(ndl));
-          vec3 color = white * whiteLine * 1.5 + blue * blueLine * 0.42 + vec3(1.0, 0.36, 0.14) * twilight * whiteLine * 0.16;
-          float alpha = (whiteLine * 0.32 + blueLine * 0.13) * day * intensity;
-          if (alpha < 0.004) {
+          float closeNarrow = smoothstep(0.25, 1.0, closeStage);
+          vec3 origin = cameraPosition - vPlanetCenterW;
+          vec3 direction = normalize(vWorldPos - cameraPosition);
+          float planetRadius = vWorldRadius;
+          float impact = length(cross(origin, direction)) / planetRadius;
+          float heightOverSurface = impact - 1.0;
+          float whiteHeight = smoothstep(-0.004, 0.0004, heightOverSurface)
+            * (1.0 - smoothstep(mix(0.008, 0.0032, closeNarrow), mix(0.014, 0.0056, closeNarrow), heightOverSurface));
+          float blueHeight = smoothstep(mix(0.0008, 0.0015, closeNarrow), mix(0.006, 0.0032, closeNarrow), heightOverSurface)
+            * (1.0 - smoothstep(mix(0.018, 0.0068, closeNarrow), mix(0.026, 0.0108, closeNarrow), heightOverSurface));
+          float heightFade = 1.0 - smoothstep(mix(0.02, 0.0072, closeNarrow), mix(0.03, 0.012, closeNarrow), heightOverSurface);
+          float whiteLine = smoothstep(mix(0.80, 0.9, closeNarrow), mix(0.94, 0.972, closeNarrow), rim) * whiteHeight;
+          float blueLine = smoothstep(mix(0.68, 0.78, closeNarrow), mix(0.88, 0.94, closeNarrow), rim) * blueHeight;
+          float horizonGate = smoothstep(mix(0.68, 0.78, closeNarrow), mix(0.88, 0.94, closeNarrow), rim) * heightFade;
+          float farFade = 1.0 - smoothstep(0.996, 1.0, rim);
+          float atmosphereRadius = planetRadius * mix(1.038, 1.018, closeStage);
+          vec2 atmosphereHit = rayVsSphere(origin, direction, atmosphereRadius);
+          vec2 groundHit = rayVsSphere(origin, direction, planetRadius * 1.002);
+          atmosphereHit.x = max(atmosphereHit.x, 0.0);
+          if (groundHit.x > 0.0) {
+            atmosphereHit.y = min(atmosphereHit.y, groundHit.x);
+          }
+
+          vec3 scatter = vec3(0.0);
+          if (atmosphereHit.x <= atmosphereHit.y) {
+            scatter = closeScatter(origin, direction, atmosphereHit, sunDirection, planetRadius, atmosphereRadius);
+          }
+
+          float day = 0.18 + 0.82 * smoothstep(-0.12, 0.36, ndl);
+          float twilight = 1.0 - smoothstep(0.0, 0.42, abs(ndl));
+          float scatterLuma = dot(scatter, vec3(0.2126, 0.7152, 0.0722));
+          vec3 scatterColor = scatter * vec3(0.62, 0.88, 1.35) * 4.8 * horizonGate;
+          vec3 color =
+            scatterColor +
+            white * whiteLine * mix(0.66, 1.16, closeStage) +
+            blue * blueLine * mix(0.22, 0.48, closeStage) +
+            sunset * twilight * whiteLine * 0.09;
+          float alpha = intensity * day * farFade * horizonGate * (
+            whiteLine * mix(0.12, 0.22, closeStage) +
+            blueLine * mix(0.045, 0.09, closeStage) +
+            scatterLuma * mix(0.18, 0.36, closeStage)
+          );
+
+          if (alpha < 0.003) {
             discard;
           }
-          gl_FragColor = vec4(color * alpha * 2.15, clamp(alpha, 0.0, 0.46));
+          gl_FragColor = vec4(color, clamp(alpha, 0.0, 0.48));
         }
       `,
       transparent: true,
@@ -440,11 +576,11 @@ export function LandingAtmosphere({ composition, quality, sceneLightDirection }:
       blendEquation: AddEquation,
       blendSrc: SrcAlphaFactor,
       blendDst: OneFactor,
-      side: BackSide,
+      side: FrontSide,
       depthWrite: false,
       depthTest: true
     });
-  }, [composition.light.fixedSunDir]);
+  }, [composition.earth.radius, composition.light.fixedSunDir]);
 
   useFrame(() => {
     const progress = getRuntimeOpeningProgress(0);
@@ -457,11 +593,12 @@ export function LandingAtmosphere({ composition, quality, sceneLightDirection }:
     mainMaterial.uniforms.lightDir.value.copy(frameLightDirection);
     nearMaterial.uniforms.lightDir.value.copy(frameLightDirection);
     karmanLineMaterial.uniforms.lightDir.value.copy(frameLightDirection);
-    mainMaterial.uniforms.intensity.value = baseMainIntensity * (0.32 + closeStage * 0.68);
-    nearMaterial.uniforms.intensity.value = baseNearIntensity * (0.24 + closeStage * 0.76);
+    mainMaterial.uniforms.intensity.value = baseMainIntensity * (0.14 + closeStage * 0.24);
+    nearMaterial.uniforms.intensity.value = baseNearIntensity * (0.1 + closeStage * 0.28);
     outerHaloMaterial.uniforms.lightDir.value.copy(frameLightDirection);
-    outerHaloMaterial.uniforms.intensity.value = baseMainIntensity * (0.08 + closeStage * 0.14);
-    karmanLineMaterial.uniforms.intensity.value = baseMainIntensity * (0.22 + closeStage * 0.56);
+    outerHaloMaterial.uniforms.intensity.value = baseMainIntensity * (0.025 + closeStage * 0.04);
+    karmanLineMaterial.uniforms.intensity.value = baseMainIntensity * (0.16 + closeStage * 0.72);
+    karmanLineMaterial.uniforms.closeStage.value = closeStage;
 
     const karmanStage = 0.26 + closeStage * 0.74;
     const targetOpacities = composition.atmosphere.karmanGlow
@@ -479,7 +616,7 @@ export function LandingAtmosphere({ composition, quality, sceneLightDirection }:
       <mesh material={outerHaloMaterial} renderOrder={4}>
         <sphereGeometry
           args={[
-            composition.earth.radius * 1.026,
+            composition.earth.radius * 1.012,
             quality.segments,
             quality.segments
           ]}
@@ -506,7 +643,7 @@ export function LandingAtmosphere({ composition, quality, sceneLightDirection }:
       <mesh material={karmanLineMaterial} renderOrder={7}>
         <sphereGeometry
           args={[
-            composition.earth.radius * 1.018,
+            composition.earth.radius * 1.026,
             quality.segments,
             quality.segments
           ]}
