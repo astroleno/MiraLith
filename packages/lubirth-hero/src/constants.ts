@@ -6,6 +6,32 @@ export const DEFAULT_LUBIRTH_LOCATION = {
 } as const;
 
 const rad = Math.PI / 180;
+const TWO_PI = Math.PI * 2;
+
+function geodeticToTextureVector(latitudeDeg: number, longitudeDeg: number) {
+  const phi = ((longitudeDeg + 180) / 360) * TWO_PI;
+  const theta = (90 - latitudeDeg) * rad;
+
+  return [
+    -Math.cos(phi) * Math.sin(theta),
+    Math.cos(theta),
+    Math.sin(phi) * Math.sin(theta)
+  ] as const;
+}
+
+export const DEFAULT_LUBIRTH_LOCATION_VECTOR = geodeticToTextureVector(
+  DEFAULT_LUBIRTH_LOCATION.latitudeDeg,
+  DEFAULT_LUBIRTH_LOCATION.longitudeDeg
+);
+
+export const DEFAULT_LUBIRTH_LOCATION_TARGET = {
+  desktopReferenceWidth: 2048,
+  desktopReferenceHeight: 1159,
+  x: 1029,
+  y: 941,
+  toleranceX: 24,
+  toleranceY: 28
+} as const;
 
 function dayOfYearUtc(dateUtc: Date) {
   const start = Date.UTC(dateUtc.getUTCFullYear(), 0, 1);

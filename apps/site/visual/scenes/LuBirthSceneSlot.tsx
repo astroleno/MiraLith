@@ -8,10 +8,11 @@ import type { LandingQuality } from "@miralith/visual-core";
 interface LuBirthSceneSlotProps {
   mode: EarthMoonHeroMode;
   quality?: LandingQuality;
+  debugMianyang?: boolean;
   paused?: boolean;
 }
 
-export function LuBirthSceneSlot({ mode, quality = "auto", paused = false }: LuBirthSceneSlotProps) {
+export function LuBirthSceneSlot({ mode, quality = "auto", debugMianyang = false, paused = false }: LuBirthSceneSlotProps) {
   const reducedMotion = useReducedMotionPreference();
   const qualityProfile = useQualityTier(quality, reducedMotion);
   const composition = resolveLandingPreset(mode);
@@ -27,6 +28,7 @@ export function LuBirthSceneSlot({ mode, quality = "auto", paused = false }: LuB
       composition={composition}
       assets={assets}
       quality={qualityProfile}
+      debugMianyang={debugMianyang}
       reducedMotion={reducedMotion}
       paused={paused}
     />

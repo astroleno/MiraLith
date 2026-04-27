@@ -528,12 +528,12 @@ export function LandingAtmosphere({ composition, quality, sceneLightDirection }:
           float planetRadius = vWorldRadius;
           float impact = length(cross(origin, direction)) / planetRadius;
           float heightOverSurface = impact - 1.0;
-          float whiteHeight = smoothstep(-0.004, 0.0004, heightOverSurface)
-            * (1.0 - smoothstep(mix(0.008, 0.0032, closeNarrow), mix(0.014, 0.0056, closeNarrow), heightOverSurface));
+          float whiteHeight = smoothstep(-0.003, 0.00025, heightOverSurface)
+            * (1.0 - smoothstep(mix(0.006, 0.0018, closeNarrow), mix(0.01, 0.0036, closeNarrow), heightOverSurface));
           float blueHeight = smoothstep(mix(0.0008, 0.0015, closeNarrow), mix(0.006, 0.0032, closeNarrow), heightOverSurface)
-            * (1.0 - smoothstep(mix(0.018, 0.0068, closeNarrow), mix(0.026, 0.0108, closeNarrow), heightOverSurface));
-          float heightFade = 1.0 - smoothstep(mix(0.02, 0.0072, closeNarrow), mix(0.03, 0.012, closeNarrow), heightOverSurface);
-          float whiteLine = smoothstep(mix(0.80, 0.9, closeNarrow), mix(0.94, 0.972, closeNarrow), rim) * whiteHeight;
+            * (1.0 - smoothstep(mix(0.014, 0.0048, closeNarrow), mix(0.021, 0.0084, closeNarrow), heightOverSurface));
+          float heightFade = 1.0 - smoothstep(mix(0.016, 0.0056, closeNarrow), mix(0.026, 0.0094, closeNarrow), heightOverSurface);
+          float whiteLine = smoothstep(mix(0.84, 0.92, closeNarrow), mix(0.955, 0.98, closeNarrow), rim) * whiteHeight;
           float blueLine = smoothstep(mix(0.68, 0.78, closeNarrow), mix(0.88, 0.94, closeNarrow), rim) * blueHeight;
           float horizonGate = smoothstep(mix(0.68, 0.78, closeNarrow), mix(0.88, 0.94, closeNarrow), rim) * heightFade;
           float farFade = 1.0 - smoothstep(0.996, 1.0, rim);
@@ -556,12 +556,12 @@ export function LandingAtmosphere({ composition, quality, sceneLightDirection }:
           vec3 scatterColor = scatter * vec3(0.62, 0.88, 1.35) * 4.8 * horizonGate;
           vec3 color =
             scatterColor +
-            white * whiteLine * mix(0.66, 1.16, closeStage) +
-            blue * blueLine * mix(0.22, 0.48, closeStage) +
+            white * whiteLine * mix(0.74, 1.34, closeStage) +
+            blue * blueLine * mix(0.16, 0.34, closeStage) +
             sunset * twilight * whiteLine * 0.09;
           float alpha = intensity * day * farFade * horizonGate * (
-            whiteLine * mix(0.12, 0.22, closeStage) +
-            blueLine * mix(0.045, 0.09, closeStage) +
+            whiteLine * mix(0.11, 0.2, closeStage) +
+            blueLine * mix(0.036, 0.068, closeStage) +
             scatterLuma * mix(0.18, 0.36, closeStage)
           );
 
@@ -593,11 +593,11 @@ export function LandingAtmosphere({ composition, quality, sceneLightDirection }:
     mainMaterial.uniforms.lightDir.value.copy(frameLightDirection);
     nearMaterial.uniforms.lightDir.value.copy(frameLightDirection);
     karmanLineMaterial.uniforms.lightDir.value.copy(frameLightDirection);
-    mainMaterial.uniforms.intensity.value = baseMainIntensity * (0.14 + closeStage * 0.24);
-    nearMaterial.uniforms.intensity.value = baseNearIntensity * (0.1 + closeStage * 0.28);
+    mainMaterial.uniforms.intensity.value = baseMainIntensity * (0.1 + closeStage * 0.18);
+    nearMaterial.uniforms.intensity.value = baseNearIntensity * (0.075 + closeStage * 0.2);
     outerHaloMaterial.uniforms.lightDir.value.copy(frameLightDirection);
     outerHaloMaterial.uniforms.intensity.value = baseMainIntensity * (0.025 + closeStage * 0.04);
-    karmanLineMaterial.uniforms.intensity.value = baseMainIntensity * (0.16 + closeStage * 0.72);
+    karmanLineMaterial.uniforms.intensity.value = baseMainIntensity * (0.14 + closeStage * 0.76);
     karmanLineMaterial.uniforms.closeStage.value = closeStage;
 
     const karmanStage = 0.26 + closeStage * 0.74;

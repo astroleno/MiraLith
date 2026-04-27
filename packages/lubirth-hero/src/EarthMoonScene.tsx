@@ -8,7 +8,11 @@ import {
   getRuntimeOpeningProgress,
   mapOpeningProgress
 } from "@miralith/visual-core";
-import { DEFAULT_LUBIRTH_FIELD_SUN_DIRECTION } from "./constants";
+import {
+  DEFAULT_LUBIRTH_FIELD_SUN_DIRECTION,
+  DEFAULT_LUBIRTH_LOCATION_TARGET,
+  DEFAULT_LUBIRTH_LOCATION_VECTOR
+} from "./constants";
 import { LandingAtmosphere } from "./LandingAtmosphere";
 import { LandingAurora } from "./LandingAurora";
 import { LandingEarth } from "./LandingEarth";
@@ -27,8 +31,45 @@ const fieldSunDirection = new Vector3(...DEFAULT_LUBIRTH_FIELD_SUN_DIRECTION).no
 const finalSunDirection = new Vector3();
 const earthLightEuler = new Euler(0, 0, 0, "YXZ");
 const easeInOut = (value: number) => value * value * (3 - 2 * value);
+const mianyangLocalDirection = new Vector3(...DEFAULT_LUBIRTH_LOCATION_VECTOR);
+const mianyangSurfacePosition = new Vector3();
+const mianyangWorldPosition = new Vector3();
+const mianyangProjectedPosition = new Vector3();
 
-export function EarthMoonScene({ mode, composition, assets, quality, reducedMotion, paused, onSceneReady }: EarthMoonSceneProps) {
+declare global {
+  interface Window {
+    __MiraLithMianyangProjection?: {
+      progress: number;
+      x: number;
+      y: number;
+      targetX: number;
+      targetY: number;
+      withinTolerance: boolean;
+    };
+  }
+}
+
+function MianyangDebugMarker({ radius }: { radius: number }) {
+  const position = useMemo(
+    () => mianyangLocalDirection.clone().multiplyScalar(radius * 1.014),
+    [radius]
+  );
+
+  return (
+    <group position={position} renderOrder={80}>
+      <mesh renderOrder={81}>
+        <sphereGeometry args={[radius * 0.008, 16, 16]} />
+        <meshBasicMaterial color="#ff4545" depthTest={false} depthWrite={false} />
+      </mesh>
+      <mesh renderOrder={82}>
+        <sphereGeometry args={[radius * 0.014, 16, 16]} />
+        <meshBasicMaterial color="#ff4545" transparent opacity={0.22} depthTest={false} depthWrite={false} />
+      </mesh>
+    </group>
+  );
+}
+
+export function EarthMoonScene({ mode, composition, assets, quality, debugMianyang, reducedMotion, paused, onSceneReady }: EarthMoonSceneProps) {
   const earthGroup = useRef<Group>(null);
   const directionalLightRef = useRef<DirectionalLight>(null);
   const autoEarthYawDeg = useRef(0);
@@ -97,6 +138,30 @@ export function EarthMoonScene({ mode, composition, assets, quality, reducedMoti
         0,
         "YXZ"
       );
+
+      if (debugMianyang && typeof window !== "undefined") {
+        mianyangSurfacePosition
+          .copy(mianyangLocalDirection)
+          .multiplyScalar(composition.earth.radius);
+        earthGroup.current.updateMatrixWorld();
+        mianyangWorldPosition
+          .copy(mianyangSurfacePosition)
+          .applyMatrix4(earthGroup.current.matrixWorld);
+        mianyangProjectedPosition.copy(mianyangWorldPosition).project(camera);
+
+        const x = (mianyangProjectedPosition.x * 0.5 + 0.5) * size.width;
+        const y = (-mianyangProjectedPosition.y * 0.5 + 0.5) * size.height;
+        window.__MiraLithMianyangProjection = {
+          progress,
+          x,
+          y,
+          targetX: DEFAULT_LUBIRTH_LOCATION_TARGET.x,
+          targetY: DEFAULT_LUBIRTH_LOCATION_TARGET.y,
+          withinTolerance:
+            Math.abs(x - DEFAULT_LUBIRTH_LOCATION_TARGET.x) <= DEFAULT_LUBIRTH_LOCATION_TARGET.toleranceX &&
+            Math.abs(y - DEFAULT_LUBIRTH_LOCATION_TARGET.y) <= DEFAULT_LUBIRTH_LOCATION_TARGET.toleranceY
+        };
+      }
     }
 
     finalSunDirection
@@ -151,6 +216,7 @@ export function EarthMoonScene({ mode, composition, assets, quality, reducedMoti
         />
         <LandingAtmosphere composition={composition} quality={quality} sceneLightDirection={sceneLightDirection} />
         <LandingAurora composition={composition} quality={quality} reducedMotion={reducedMotion} paused={paused} />
+        {debugMianyang ? <MianyangDebugMarker radius={composition.earth.radius} /> : null}
       </group>
 
       <LandingMoon

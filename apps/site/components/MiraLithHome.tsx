@@ -1,12 +1,25 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { VisualCanvas } from "../visual/VisualCanvas";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
 import { LuBirthSceneSlot } from "../visual/scenes/LuBirthSceneSlot";
 
+function subscribeDebugQuery(_onStoreChange: () => void) {
+  return () => undefined;
+}
+
+function getDebugQuerySnapshot() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return new URLSearchParams(window.location.search).get("lubirthDebug") === "mianyang";
+}
+
 export function MiraLithHome() {
   const shellRef = useRef<HTMLElement>(null);
+  const debugMianyang = useSyncExternalStore(subscribeDebugQuery, getDebugQuerySnapshot, () => false);
 
   useEffect(() => {
     let disposed = false;
@@ -67,8 +80,14 @@ export function MiraLithHome() {
           />
         }
       >
-        <LuBirthSceneSlot mode="field" />
+        <LuBirthSceneSlot mode="field" debugMianyang={debugMianyang} />
       </VisualCanvas>
+
+      {debugMianyang ? (
+        <div className="lubirth-debug-target" aria-hidden="true">
+          <span>1029, 941</span>
+        </div>
+      ) : null}
 
       <section className="lubirth-scroll-stage" aria-label="LuBirth near-earth phase">
         <span className="sr-only">Phase one: near-earth daylight arc over Mianyang.</span>

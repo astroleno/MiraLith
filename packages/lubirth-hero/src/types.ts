@@ -159,6 +159,7 @@ export interface EarthMoonSceneProps {
   quality: QualityProfile;
   scrollProgress?: number;
   sectionProgress?: number;
+  debugMianyang?: boolean;
   reducedMotion?: boolean;
   paused?: boolean;
   onSceneReady?: () => void;

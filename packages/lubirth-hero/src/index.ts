@@ -11,7 +11,12 @@ export {
   getCriticalAssetBudget,
   resolveLandingAssets
 } from "./assetManifest";
-export { DEFAULT_LUBIRTH_DATE, DEFAULT_LUBIRTH_MOON_PHASE } from "./constants";
+export {
+  DEFAULT_LUBIRTH_DATE,
+  DEFAULT_LUBIRTH_LOCATION_TARGET,
+  DEFAULT_LUBIRTH_LOCATION_VECTOR,
+  DEFAULT_LUBIRTH_MOON_PHASE
+} from "./constants";
 export { LUBIRTH_PRESETS, resolveLandingPreset } from "./presets";
 export type {
   EarthMoonHeroError,
