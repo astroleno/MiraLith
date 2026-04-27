@@ -29,6 +29,10 @@ interface LandingEarthProps {
 }
 
 const lightDirection = new Vector3();
+const smoothstep = (edge0: number, edge1: number, value: number) => {
+  const t = Math.min(1, Math.max(0, (value - edge0) / Math.max(edge1 - edge0, 1e-5)));
+  return t * t * (3 - 2 * t);
+};
 
 export function LandingEarth({ composition, assets, quality, reducedMotion, paused, sceneLightDirection }: LandingEarthProps) {
   const earth = useRef<Mesh>(null);
@@ -162,7 +166,8 @@ export function LandingEarth({ composition, assets, quality, reducedMotion, paus
           cloudOpacity: { value: composition.earth.useClouds ? composition.earth.cloudOpacity : 0 },
           cloudOffset: { value: 0 },
           rimStrength: { value: composition.earth.rimStrength },
-          rimWidth: { value: composition.earth.rimWidth }
+          rimWidth: { value: composition.earth.rimWidth },
+          closeStage: { value: 1 }
         },
         vertexShader: `
           varying vec2 vUv;
@@ -191,6 +196,7 @@ export function LandingEarth({ composition, assets, quality, reducedMotion, paus
           uniform float cloudOffset;
           uniform float rimStrength;
           uniform float rimWidth;
+          uniform float closeStage;
 
           varying vec2 vUv;
           varying vec3 vNormalW;
@@ -219,8 +225,8 @@ export function LandingEarth({ composition, assets, quality, reducedMotion, paus
             float cloudCore = smoothstep(0.38, 0.84, cloudRaw) * cloudOpacity;
             float cloudShadow = smoothstep(0.24, 0.72, texture2D(cloudMap, cloudUv + vec2(-0.0048, 0.0032)).r)
               * cloudOpacity * (0.16 + dayW * 0.28);
-            vec3 cloudCol = mix(vec3(0.48, 0.54, 0.58), vec3(1.0, 0.985, 0.93), cloudRaw);
-            cloudCol += vec3(0.34, 0.38, 0.4) * max(cloudRelief, 0.0);
+            vec3 cloudCol = mix(vec3(0.46, 0.52, 0.56), vec3(0.92, 0.91, 0.86), cloudRaw);
+            cloudCol += vec3(0.2, 0.23, 0.25) * max(cloudRelief, 0.0);
             vec3 shadowedDay = dayTex * (1.0 - cloudShadow);
             vec3 daySurface = mix(shadowedDay, max(shadowedDay, cloudCol), cloudMask);
             float dayLight = pow(max(ndl, 0.0), 0.82);
@@ -258,9 +264,12 @@ export function LandingEarth({ composition, assets, quality, reducedMotion, paus
             float rimEffect = (innerRim * 0.7 + outerRim * 0.3) * rimStrength;
             float dayNightRim = 0.28 + 0.72 * max(ndl, 0.0);
             rimEffect *= dayNightRim;
-            vec3 rimCol = mix(vec3(0.08, 0.26, 0.56), vec3(0.28, 0.62, 0.92), innerRim) * rimEffect * 0.82;
+            vec3 rimCol = mix(vec3(0.04, 0.17, 0.42), vec3(0.16, 0.44, 0.78), innerRim) * rimEffect * 0.58;
+            float horizonNeedle = pow(fresnel, 13.5) * (0.28 + 0.72 * dayW) * closeStage;
+            vec3 needleCol = vec3(0.92, 0.96, 1.0) * horizonNeedle * 0.32;
 
-            vec3 color = dayCol + cityCol + moonlitLand + moonlitClouds + terminatorCol + rimCol;
+            vec3 color = dayCol + cityCol + moonlitLand + moonlitClouds + terminatorCol + rimCol + needleCol;
+            color = color / (1.0 + max(color - vec3(0.78), vec3(0.0)) * 0.82);
             color = pow(max(color, vec3(0.0)), vec3(1.08));
             color *= 0.96 + (grain(gl_FragCoord.xy) - 0.5) * 0.026;
             gl_FragColor = vec4(color, 1.0);
@@ -303,6 +312,7 @@ export function LandingEarth({ composition, assets, quality, reducedMotion, paus
     earthMaterial.uniforms.nightBoost.value = composition.earth.nightIntensity;
     earthMaterial.uniforms.cloudOpacity.value = composition.earth.useClouds ? composition.earth.cloudOpacity : 0;
     const progress = typeof window === "undefined" ? 1 : Math.min(1, Math.max(0, window.__MiraLithOpeningProgress ?? 0));
+    earthMaterial.uniforms.closeStage.value = 1 - smoothstep(0.18, 0.86, progress);
     if (!paused && !reducedMotion && progress >= OPENING_FIELD_AUTO_ROTATE_START) {
       earthMaterial.uniforms.cloudOffset.value = (earthMaterial.uniforms.cloudOffset.value + delta * 0.0045) % 1;
     }

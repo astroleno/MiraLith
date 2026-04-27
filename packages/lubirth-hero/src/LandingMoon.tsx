@@ -121,6 +121,8 @@ export function LandingMoon({ composition, assets, quality, position, targetScal
             vec3 color = mix(edgeFloor, lit, visibleDisk);
             color = mix(color, color * vec3(0.92, 0.98, 1.08), 0.28);
             color *= 1.0 + fullness * 0.08;
+            color = color / (1.0 + max(color - vec3(0.82), vec3(0.0)) * 0.62);
+            color = min(color, vec3(0.94));
             gl_FragColor = vec4(color, 1.0);
           }
         `,
