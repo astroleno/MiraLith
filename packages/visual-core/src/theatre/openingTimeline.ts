@@ -52,7 +52,7 @@ const CLOSE_FRAME = {
   cameraElevationDeg: -16.4,
   lookAtDistanceRatio: 1.08,
   earthSize: 1.68,
-  earthY: -1.18,
+  earthY: -1.42,
   earthPitchDeg: -28.5,
   earthYawDeg: -104.25,
   moonScale: 1.5

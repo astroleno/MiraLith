@@ -25,49 +25,51 @@ interface LandingAuroraProps {
 }
 
 interface RibbonPreset {
-  width: number;
-  baseY: number;
-  baseZ: number;
-  lift: number;
-  height: number;
-  driftX: number;
+  lonCenterDeg: number;
+  lonSpanDeg: number;
+  latOffsetDeg: number;
+  latWaveDeg: number;
+  lonWaveDeg: number;
+  radialHeight: number;
   phase: number;
   opacity: number;
 }
 
 const colorA = new Color();
 const colorB = new Color();
+const DEG_TO_RAD = Math.PI / 180;
+const TWO_PI = Math.PI * 2;
 
 const RIBBONS: RibbonPreset[] = [
   {
-    width: 1.78,
-    baseY: 0.56,
-    baseZ: 0.52,
-    lift: 0.16,
-    height: 0.16,
-    driftX: 0.05,
+    lonCenterDeg: 104,
+    lonSpanDeg: 360,
+    latOffsetDeg: -0.6,
+    latWaveDeg: 1.8,
+    lonWaveDeg: 3.4,
+    radialHeight: 0.044,
     phase: 0.12,
     opacity: 1
   },
   {
-    width: 1.36,
-    baseY: 0.63,
-    baseZ: 0.45,
-    lift: 0.1,
-    height: 0.12,
-    driftX: 0.035,
+    lonCenterDeg: 104,
+    lonSpanDeg: 360,
+    latOffsetDeg: 2.2,
+    latWaveDeg: 1.2,
+    lonWaveDeg: 2.6,
+    radialHeight: 0.034,
     phase: 1.36,
-    opacity: 0.72
+    opacity: 0.55
   },
   {
-    width: 0.98,
-    baseY: 0.7,
-    baseZ: 0.38,
-    lift: 0.06,
-    height: 0.09,
-    driftX: 0.025,
+    lonCenterDeg: 104,
+    lonSpanDeg: 360,
+    latOffsetDeg: -3.1,
+    latWaveDeg: 1.0,
+    lonWaveDeg: 2.0,
+    radialHeight: 0.026,
     phase: 2.18,
-    opacity: 0.54
+    opacity: 0.36
   }
 ];
 
@@ -76,12 +78,31 @@ function smoothstep(edge0: number, edge1: number, value: number) {
   return t * t * (3 - 2 * t);
 }
 
-function createRibbonGeometry(preset: RibbonPreset, arcSegments: number, heightSegments: number) {
+function sphericalDirection(latitudeDeg: number, longitudeDeg: number) {
+  const phi = ((longitudeDeg + 180) / 360) * TWO_PI;
+  const theta = (90 - latitudeDeg) * DEG_TO_RAD;
+
+  return new Vector3(
+    -Math.cos(phi) * Math.sin(theta),
+    Math.cos(theta),
+    Math.sin(phi) * Math.sin(theta)
+  );
+}
+
+function createRibbonGeometry(
+  preset: RibbonPreset,
+  latitudeBandDeg: [number, number],
+  arcSegments: number,
+  heightSegments: number
+) {
   const vertexCount = (arcSegments + 1) * (heightSegments + 1);
   const positions = new Float32Array(vertexCount * 3);
   const normals = new Float32Array(vertexCount * 3);
   const uvs = new Float32Array(vertexCount * 2);
   const indices: number[] = [];
+  const bandCenter = (latitudeBandDeg[0] + latitudeBandDeg[1]) * 0.5;
+  const bandMin = Math.min(latitudeBandDeg[0], latitudeBandDeg[1]);
+  const bandMax = Math.max(latitudeBandDeg[0], latitudeBandDeg[1]);
 
   for (let y = 0; y <= heightSegments; y += 1) {
     const v = y / heightSegments;
@@ -89,17 +110,19 @@ function createRibbonGeometry(preset: RibbonPreset, arcSegments: number, heightS
 
     for (let x = 0; x <= arcSegments; x += 1) {
       const u = x / arcSegments;
-      const arc = Math.sin((u - 0.5) * Math.PI);
-      const crest = Math.sin(u * Math.PI);
-      const ripple = Math.sin(u * Math.PI * 5 + preset.phase) * 0.008;
-      const xPos = arc * preset.driftX + Math.sin(u * Math.PI * 2 + preset.phase) * 0.018 * verticalEase;
-      const yPos = preset.baseY + crest * preset.lift + ripple + verticalEase * preset.height;
-      const zPos =
-        preset.baseZ +
-        (u - 0.5) * preset.width +
-        Math.sin(u * Math.PI * 2 + preset.phase) * 0.035 * verticalEase;
-      const position = new Vector3(xPos, yPos, zPos);
-      const normal = position.clone().normalize();
+      const wave = Math.sin(u * Math.PI * 2 + preset.phase);
+      const fineWave = Math.sin(u * Math.PI * 7.0 + preset.phase * 1.7) * 0.45;
+      const latitude = Math.min(
+        bandMax,
+        Math.max(bandMin, bandCenter + preset.latOffsetDeg + (wave + fineWave) * preset.latWaveDeg)
+      );
+      const longitude =
+        preset.lonCenterDeg +
+        (u - 0.5) * preset.lonSpanDeg +
+        Math.sin(u * Math.PI * 3 + preset.phase) * preset.lonWaveDeg * (0.35 + verticalEase * 0.65);
+      const normal = sphericalDirection(latitude, longitude);
+      const radius = 1.04 + verticalEase * preset.radialHeight;
+      const position = normal.clone().multiplyScalar(radius);
       const index = y * (arcSegments + 1) + x;
 
       positions[index * 3] = position.x;
@@ -220,51 +243,44 @@ function createAuroraMaterial(composition: LandingComposition, opacityScale: num
         vec3 normal = normalize(vWorldNormal);
         vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
         float facing = dot(normal, viewDirection);
-        float horizonGate = 1.0 - smoothstep(0.16, 0.56, facing);
-        float frontGate = smoothstep(-0.22, -0.02, facing);
+        float limbGate = 1.0 - smoothstep(0.015, 0.38, abs(facing));
         float ndl = dot(normal, normalize(lightDirection));
-        float nightGate = 1.0 - smoothstep(0.02, 0.38, ndl);
-        float twilightGate = 1.0 - smoothstep(0.0, 0.36, abs(ndl));
-        float lightGate = 0.62 + max(nightGate, twilightGate * 0.52) * 0.38;
+        float nightGate = 1.0 - smoothstep(-0.08, 0.34, ndl);
+        float twilightGate = 1.0 - smoothstep(0.0, 0.52, abs(ndl));
+        float lightGate = 0.52 + max(nightGate, twilightGate * 0.72) * 0.48;
         float verticalFade =
-          smoothstep(0.0, 0.06, vUv.y) *
-          (1.0 - smoothstep(0.9, 1.0, vUv.y));
+          smoothstep(0.0, 0.08, vUv.y) *
+          (1.0 - smoothstep(0.72, 1.0, vUv.y));
         float horizontalFade =
-          smoothstep(0.0, 0.08, vUv.x) *
-          (1.0 - smoothstep(0.92, 1.0, vUv.x));
+          smoothstep(0.0, 0.12, vUv.x) *
+          (1.0 - smoothstep(0.88, 1.0, vUv.x));
 
         vec2 noiseUv = vec2(
-          vUv.x * noiseScale * 2.8 + layerSeed * 3.7,
-          vUv.y * 3.4 - time * noiseSpeed * 0.7
+          vUv.x * noiseScale * 4.2 + layerSeed * 3.7,
+          vUv.y * 4.8 - time * noiseSpeed * 0.7
         );
         float sheet = triNoise2d(noiseUv, noiseSpeed);
-        float strand = 1.0 - smoothstep(
-          0.035,
-          0.18,
-          abs(fract((vUv.x + sheet * 0.11 + layerSeed * 0.07) * 26.0) - 0.5)
-        );
-        float curtain = (0.16 + smoothstep(0.015, 0.32, sheet) * 0.84) * (0.58 + strand * 0.42);
-        float lowerGlow = 1.0 - smoothstep(0.52, 1.0, vUv.y);
+        float strandCell = abs(fract((vUv.x + sheet * 0.08 + layerSeed * 0.07) * 46.0) - 0.5);
+        float strand = pow(1.0 - smoothstep(0.016, 0.16, strandCell), 1.45);
+        float lowerGlow = (1.0 - smoothstep(0.08, 0.38, vUv.y)) * 0.18;
+        float veil = verticalFade * smoothstep(0.025, 0.32, sheet) * (0.18 + strand * 0.52);
         float alpha =
           intensity *
           opacityScale *
           reveal *
-          (0.48 + horizonGate * 0.52) *
-          (0.68 + frontGate * 0.32) *
+          limbGate *
           lightGate *
-          verticalFade *
           horizontalFade *
-          curtain *
-          (0.54 + lowerGlow * 0.46);
+          (lowerGlow + veil * 1.65);
 
         if (alpha < 0.0012) {
           discard;
         }
 
         vec3 auroraColor = mix(colorA, colorB, smoothstep(0.15, 0.92, vUv.y));
-        auroraColor = mix(auroraColor, vec3(0.58, 0.84, 1.0), strand * 0.18);
-        auroraColor *= 0.74 + sheet * 1.2 + strand * 0.22;
-        gl_FragColor = vec4(auroraColor, clamp(alpha, 0.0, 0.22));
+        auroraColor = mix(auroraColor, vec3(0.5, 0.9, 0.96), strand * 0.12);
+        auroraColor *= 0.95 + sheet * 1.05 + strand * 0.34 + lowerGlow * 0.35;
+        gl_FragColor = vec4(auroraColor, clamp(alpha, 0.0, 0.18));
       }
     `,
     transparent: true,
@@ -288,12 +304,13 @@ export function LandingAurora({ composition, quality, sceneLightDirection, reduc
       return RIBBONS.slice(0, activeRibbonCount).map((ribbon) =>
         createRibbonGeometry(
           ribbon,
+          composition.aurora.latitudeBandDeg,
           Math.max(48, Math.min(112, quality.segments + 16)),
-          quality.tier === "high" ? 9 : 6
+          quality.tier === "high" ? 11 : 7
         )
       );
     },
-    [activeRibbonCount, enabled, quality.segments, quality.tier]
+    [activeRibbonCount, composition.aurora.latitudeBandDeg, enabled, quality.segments, quality.tier]
   );
   const ribbons = useMemo(() => {
     if (!enabled) {
@@ -329,11 +346,6 @@ export function LandingAurora({ composition, quality, sceneLightDirection, reduc
       material.visible = enabled && index < activeRibbonCount;
     });
 
-    if (paused || reducedMotion) {
-      return;
-    }
-
-    aurora.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.12) * 0.006;
   });
 
   if (!enabled) {
@@ -341,7 +353,7 @@ export function LandingAurora({ composition, quality, sceneLightDirection, reduc
   }
 
   return (
-    <group ref={aurora} position={[0.48, 0.42, -0.34]} rotation={[0.02, -0.1, -0.06]}>
+    <group ref={aurora}>
       {ribbons.map((ribbon, index) => (
         <primitive key={index} object={ribbon} />
       ))}

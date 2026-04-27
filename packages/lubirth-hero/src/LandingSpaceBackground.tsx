@@ -7,8 +7,10 @@ import {
   BufferAttribute,
   BufferGeometry,
   Color,
-  MeshBasicMaterial,
+  ClampToEdgeWrapping,
+  MathUtils,
   PointsMaterial,
+  RepeatWrapping,
   SRGBColorSpace,
   ShaderMaterial,
   Texture,
@@ -51,6 +53,11 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
         }
 
         texture.colorSpace = spaceBackground.colorSpace === "srgb" ? SRGBColorSpace : texture.colorSpace;
+        texture.wrapS = RepeatWrapping;
+        texture.wrapT = ClampToEdgeWrapping;
+        texture.center.set(0.5, 0.5);
+        texture.repeat.set(2, 1);
+        texture.needsUpdate = true;
         loadedTexture = texture;
         setBackgroundTexture(texture);
       },
@@ -69,7 +76,7 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
   }, [spaceBackground?.colorSpace, spaceBackground?.src]);
 
   const starGeometry = useMemo(() => {
-    const count = Math.max(quality.stars, quality.tier === "high" ? 720 : 360);
+    const count = Math.max(quality.stars, quality.tier === "high" ? 1200 : 700);
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
 
@@ -87,7 +94,7 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
       positions[i3 + 2] = Math.sin(theta) * band * radius;
 
       const cool = 0.72 + random(index + 143) * 0.28;
-      const brightness = random(index + 251) > 0.94 ? 1 : 0.42 + random(index + 271) * 0.32;
+      const brightness = random(index + 251) > 0.93 ? 1 : 0.5 + random(index + 271) * 0.34;
       colors[i3] = brightness * cool;
       colors[i3 + 1] = brightness * (0.86 + cool * 0.1);
       colors[i3 + 2] = brightness;
@@ -101,17 +108,17 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
 
   const starMaterial = useMemo(() => {
     return new PointsMaterial({
-      size: quality.tier === "high" ? 0.032 : 0.04,
+      size: quality.tier === "high" ? 0.046 : 0.052,
       sizeAttenuation: true,
       vertexColors: true,
       color: new Color("#d8e8ff"),
       transparent: true,
-      opacity: 0.46,
+      opacity: backgroundTexture ? 0.36 : 0.5,
       blending: AdditiveBlending,
       depthWrite: false,
       depthTest: false
     });
-  }, [quality.tier]);
+  }, [backgroundTexture, quality.tier]);
 
   const skyMaterial = useMemo(() => {
     return new ShaderMaterial({
@@ -145,23 +152,63 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
       return null;
     }
 
-    return new MeshBasicMaterial({
-      map: backgroundTexture,
-      color: new Color("#d8e8ff"),
+    return new ShaderMaterial({
+      uniforms: {
+        map: { value: backgroundTexture },
+        exposure: { value: quality.tier === "high" ? 1.72 : 1.5 },
+        hazeLift: { value: quality.tier === "high" ? 0.24 : 0.18 }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        varying vec3 vDir;
+
+        void main() {
+          vUv = uv;
+          vDir = normalize(position);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D map;
+        uniform float exposure;
+        uniform float hazeLift;
+
+        varying vec2 vUv;
+        varying vec3 vDir;
+
+        void main() {
+          vec2 skyUv = vec2(vUv.x, clamp(vUv.y, 0.0, 1.0));
+          vec3 tex = texture2D(map, skyUv).rgb;
+          float luma = max(max(tex.r, tex.g), tex.b);
+          float haze = smoothstep(0.035, 0.32, luma);
+          float star = smoothstep(0.5, 0.96, luma);
+          vec3 deepSky = mix(vec3(0.0, 0.002, 0.006), vec3(0.004, 0.011, 0.022), smoothstep(-0.3, 0.75, vDir.y));
+          vec3 lifted = pow(max(tex, vec3(0.0)), vec3(0.78)) * exposure;
+          vec3 coolHaze = lifted * (0.3 + haze * hazeLift);
+          vec3 pinStars = vec3(0.72, 0.84, 1.0) * star * 0.22;
+
+          gl_FragColor = vec4(min(deepSky + coolHaze + pinStars, vec3(0.3)), 1.0);
+        }
+      `,
       side: BackSide,
       depthWrite: false,
       depthTest: false
     });
-  }, [backgroundFailed, backgroundTexture]);
+  }, [backgroundFailed, backgroundTexture, quality.tier]);
 
   const useTextureBackdrop = Boolean(textureMaterial && !backgroundFailed);
+  const showPointStars = quality.stars > 0;
 
   return (
     <>
-      <mesh material={useTextureBackdrop ? textureMaterial ?? skyMaterial : skyMaterial} renderOrder={-60}>
+      <mesh
+        material={useTextureBackdrop ? textureMaterial ?? skyMaterial : skyMaterial}
+        renderOrder={-60}
+        rotation={[0, MathUtils.degToRad(-61), 0]}
+      >
         <sphereGeometry args={[46, 32, 18]} />
       </mesh>
-      {useTextureBackdrop ? null : <points geometry={starGeometry} material={starMaterial} renderOrder={-50} />}
+      {showPointStars ? <points geometry={starGeometry} material={starMaterial} renderOrder={-50} /> : null}
     </>
   );
 }
