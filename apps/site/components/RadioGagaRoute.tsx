@@ -6,6 +6,10 @@ import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
 import { RadioGagaSceneSlot } from "../visual/scenes/RadioGagaSceneSlot";
 import { RadioGagaCopyLayer } from "./RadioGagaCopyLayer";
 
+const radioGagaModelAssets = ["/model/radio_gaga.glb", "/model/xiaozhi_esp32.glb"] as const;
+
+type RadioGagaAssetState = "checking" | "ready" | "failed";
+
 function subscribeForcedVisualFallback(_onStoreChange: () => void) {
   return () => undefined;
 }
@@ -21,6 +25,7 @@ function getForcedVisualFallbackSnapshot() {
 export function RadioGagaRoute() {
   const routeRef = useRef<HTMLElement>(null);
   const [progress, setProgress] = useState(0);
+  const [assetState, setAssetState] = useState<RadioGagaAssetState>("checking");
   const forcedVisualFallback = useSyncExternalStore(
     subscribeForcedVisualFallback,
     getForcedVisualFallbackSnapshot,
@@ -65,24 +70,62 @@ export function RadioGagaRoute() {
     };
   }, []);
 
+  useEffect(() => {
+    if (forcedVisualFallback) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    void (async () => {
+      try {
+        const responses = await Promise.all(
+          radioGagaModelAssets.map((assetPath) =>
+            fetch(assetPath, {
+              cache: "force-cache",
+              method: "HEAD",
+              signal: controller.signal
+            })
+          )
+        );
+
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        setAssetState(responses.every((response) => response.ok) ? "ready" : "failed");
+      } catch {
+        if (!controller.signal.aborted) {
+          setAssetState("failed");
+        }
+      }
+    })();
+
+    return () => controller.abort();
+  }, [forcedVisualFallback]);
+
+  const fallback = (
+    <VisualCanvasFallback scene="radio-gaga" label="radioGAGA care radio fallback">
+      <div className="radio-gaga-fallback-copy">
+        <p>02 - Care</p>
+        <h1>radioGAGA</h1>
+        <p>A small machine for staying close.</p>
+        <p>一台让距离变近的小机器。</p>
+      </div>
+    </VisualCanvasFallback>
+  );
+  const showFallback = forcedVisualFallback || assetState !== "ready";
+
   return (
     <main ref={routeRef} className="radio-gaga-route" aria-label="radioGAGA care radio scene">
-      <VisualCanvas
-        decorative
-        fallback={
-          <VisualCanvasFallback scene="radio-gaga" label="radioGAGA care radio fallback">
-            <div className="radio-gaga-fallback-copy">
-              <p>02 - Care</p>
-              <h1>radioGAGA</h1>
-              <p>A small machine for staying close.</p>
-              <p>一台让距离变近的小机器。</p>
-            </div>
-          </VisualCanvasFallback>
-        }
-      >
-        <RadioGagaSceneSlot progress={progress} active />
-      </VisualCanvas>
-      {forcedVisualFallback ? null : <RadioGagaCopyLayer progress={progress} />}
+      {showFallback ? (
+        fallback
+      ) : (
+        <VisualCanvas decorative fallback={fallback}>
+          <RadioGagaSceneSlot progress={progress} active />
+        </VisualCanvas>
+      )}
+      {showFallback ? null : <RadioGagaCopyLayer progress={progress} />}
       <div className="sr-only">
         02 - Care. radioGAGA. A radio of local news, family memory, and my own voice.
         I filter local news through my own perspective, then let it return home in my voice.
