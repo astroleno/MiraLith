@@ -220,6 +220,8 @@ From signal to script, from script to voice.
 - LuBirth 轨道线转为声波。
 - 比赛奖项作为角标，不抢主叙事。
 
+RadioGAGA is the planned second act, but first ships as an isolated `/radio-gaga` route branch. Homepage integration is gated by visual review, fallback/reduced-motion behavior, route e2e tests, and product validation that the chapter strengthens the LuBirth -> family/care transition.
+
 ### 04 CoScroll
 
 用途：进入数字仪式。

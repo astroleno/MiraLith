@@ -249,6 +249,10 @@ fallback
 4. 空闲时根据 quality tier 加载 aurora/post effect/更高质量资源。
 5. 用户进入 expanded 大图时再提升画质。
 
+### RadioGAGA route branch 资产边界
+
+RadioGAGA route branch loads `radio_gaga.glb` and `xiaozhi_esp32.glb` only on `/radio-gaga`. Future homepage integration must lazy-load both the scene slot and copy layer near the second act; these assets must not enter the LuBirth first-screen transfer budget.
+
 ## 7. CoScroll 接入策略
 
 CoScroll 在 MiraLith 中作为 **v1.1 主线章节** 接入，而不是首页第二屏，也不是 iframe/全量应用迁移。
