@@ -23,7 +23,7 @@ export function RadioGagaCopyLayer({ progress }: RadioGagaCopyLayerProps) {
 
   return (
     <div className="radio-gaga-copy" aria-hidden="true">
-      <div className="radio-gaga-copy__panel" style={{ opacity: Math.max(frame.titleOpacity, frame.bodyOpacity) }}>
+      <div className="radio-gaga-copy__panel" style={{ opacity: frame.titleOpacity }}>
         <p className="radio-gaga-copy__eyebrow">{radioGagaCopy.eyebrow}</p>
         <h1>{radioGagaCopy.title}</h1>
         <p>{radioGagaCopy.subtitleEn}</p>

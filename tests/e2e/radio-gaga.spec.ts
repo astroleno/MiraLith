@@ -3,10 +3,14 @@ import { expect, test } from "@playwright/test";
 test("renders radioGAGA route in one production canvas", async ({ page }) => {
   await page.goto("/radio-gaga");
 
+  const titlePanel = page.locator(".radio-gaga-copy__panel").first();
   await expect(page.locator(".radio-gaga-copy h1")).toHaveText("radioGAGA");
   await expect(page.locator(".radio-gaga-copy").getByText("一台装着本地新闻、父母记忆与我自己声音的收音机")).toBeVisible();
   await expect(page.locator("canvas")).toHaveCount(1);
   await expect(page.locator(".visual-canvas")).toHaveCount(1);
+  await expect
+    .poll(() => titlePanel.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity)))
+    .toBeGreaterThan(0.85);
 });
 
 test("radioGAGA fallback keeps chapter readable", async ({ page }) => {
@@ -48,6 +52,30 @@ test("radioGAGA canvas renders nonblank pixels", async ({ page }) => {
   });
 
   expect(await nonblank.jsonValue()).toBe(true);
+});
+
+test("radioGAGA core phase exits earlier copy groups", async ({ page }, testInfo) => {
+  await page.goto("/radio-gaga");
+  await page.evaluate(() => window.scrollTo({ top: window.innerHeight * 2.25, behavior: "instant" }));
+
+  const titlePanel = page.locator(".radio-gaga-copy__panel").first();
+  const voicePanel = page.locator(".radio-gaga-copy__voice");
+  const corePanel = page.locator(".radio-gaga-copy__core");
+
+  await expect
+    .poll(() => corePanel.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity)))
+    .toBeGreaterThan(0.4);
+  await expect
+    .poll(() => titlePanel.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity)))
+    .toBeLessThan(0.08);
+  await expect
+    .poll(() => voicePanel.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity)))
+    .toBeLessThan(0.08);
+
+  if (testInfo.project.name !== "desktop") {
+    await expect(page.locator(".radio-gaga-copy__floating")).toHaveCSS("display", "none");
+    await expect(page.locator(".radio-gaga-copy__fragments")).toHaveCSS("display", "none");
+  }
 });
 
 test("radioGAGA falls back when the radio model fails to load", async ({ page }) => {
