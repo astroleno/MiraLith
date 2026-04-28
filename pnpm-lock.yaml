@@ -41,6 +41,9 @@ importers:
       '@miralith/lubirth-hero':
         specifier: workspace:*
         version: link:../../packages/lubirth-hero
+      '@miralith/radio-gaga-scene':
+        specifier: workspace:*
+        version: link:../../packages/radio-gaga-scene
       '@miralith/visual-core':
         specifier: workspace:*
         version: link:../../packages/visual-core
@@ -107,6 +110,34 @@ importers:
       three:
         specifier: 0.184.0
         version: 0.184.0
+
+  packages/radio-gaga-scene:
+    dependencies:
+      '@miralith/visual-core':
+        specifier: workspace:*
+        version: link:../visual-core
+      '@react-three/drei':
+        specifier: 10.7.7
+        version: 10.7.7(@react-three/fiber@9.6.0)(@types/react@19.2.14)(@types/three@0.184.0)(react-dom@19.2.5)(react@19.2.5)(three@0.184.0)
+      '@react-three/fiber':
+        specifier: 9.6.0
+        version: 9.6.0(@types/react@19.2.14)(react-dom@19.2.5)(react@19.2.5)(three@0.184.0)
+      react:
+        specifier: 19.2.5
+        version: 19.2.5
+      three:
+        specifier: 0.184.0
+        version: 0.184.0
+    devDependencies:
+      '@types/react':
+        specifier: latest
+        version: 19.2.14
+      '@types/three':
+        specifier: 0.184.0
+        version: 0.184.0
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
 
   packages/visual-core:
     dependencies:
