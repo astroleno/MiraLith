@@ -636,27 +636,27 @@ export function LandingAtmosphere({ composition, quality, sceneLightDirection }:
           float day = smoothstep(-0.18, 0.36, sun);
           float twilight = 1.0 - smoothstep(0.0, 0.46, abs(sun));
           float close = smoothstep(0.08, 0.9, closeStage);
-          float horizon = smoothstep(0.78, 0.972, rim);
+          float horizon = smoothstep(0.82, 0.975, rim);
           float surfaceLock = smoothstep(-0.04, 0.12, facing);
-          float whiteNeedle = smoothstep(0.94, 0.986, rim) * (1.0 - smoothstep(0.989, 1.0, rim));
-          float blueShelf = smoothstep(0.82, 0.954, rim) * (1.0 - smoothstep(0.982, 1.0, rim));
-          float lowHaze = smoothstep(0.72, 0.91, rim) * (1.0 - smoothstep(0.96, 1.0, rim));
+          float whiteNeedle = smoothstep(0.952, 0.987, rim) * (1.0 - smoothstep(0.99, 1.0, rim));
+          float blueShelf = smoothstep(0.862, 0.958, rim) * (1.0 - smoothstep(0.982, 1.0, rim));
+          float lowHaze = smoothstep(0.78, 0.918, rim) * (1.0 - smoothstep(0.958, 1.0, rim));
           vec3 color =
-            white * whiteNeedle * 1.08 +
-            blue * blueShelf * 0.24 +
-            lowBlue * lowHaze * 0.12 +
-            amber * twilight * whiteNeedle * 0.18;
+            white * whiteNeedle * 0.94 +
+            blue * blueShelf * 0.18 +
+            lowBlue * lowHaze * 0.08 +
+            amber * twilight * whiteNeedle * 0.14;
           float alpha = intensity * close * surfaceLock * horizon * (
-            whiteNeedle * (0.28 + day * 0.14) +
-            blueShelf * 0.07 +
-            lowHaze * 0.034
+            whiteNeedle * (0.22 + day * 0.1) +
+            blueShelf * 0.05 +
+            lowHaze * 0.02
           );
 
           if (alpha < 0.0025) {
             discard;
           }
 
-          gl_FragColor = vec4(min(color, vec3(0.9)), clamp(alpha, 0.0, 0.28));
+          gl_FragColor = vec4(min(color, vec3(0.86)), clamp(alpha, 0.0, 0.2));
         }
       `,
       transparent: true,
@@ -666,7 +666,7 @@ export function LandingAtmosphere({ composition, quality, sceneLightDirection }:
       blendDst: OneFactor,
       side: FrontSide,
       depthWrite: false,
-      depthTest: false
+      depthTest: true
     });
   }, [composition.light.fixedSunDir]);
 
@@ -688,12 +688,12 @@ export function LandingAtmosphere({ composition, quality, sceneLightDirection }:
     outerHaloMaterial.uniforms.intensity.value = baseMainIntensity * (0.012 + closeStage * 0.04);
     karmanLineMaterial.uniforms.intensity.value = baseMainIntensity * (0.055 + closeStage * 0.36);
     karmanLineMaterial.uniforms.closeStage.value = closeStage;
-    closeAirglowMaterial.uniforms.intensity.value = baseMainIntensity * (0.26 + closeStage * 0.38);
+    closeAirglowMaterial.uniforms.intensity.value = baseMainIntensity * (0.18 + closeStage * 0.3);
     closeAirglowMaterial.uniforms.closeStage.value = closeStage;
 
     const karmanStage = closeStage * closeStage * (3 - 2 * closeStage);
     const targetOpacities = composition.atmosphere.karmanGlow
-      ? [0.026 * karmanStage, 0.018 * karmanStage, 0.008 * karmanStage]
+      ? [0.014 * karmanStage, 0.01 * karmanStage, 0.004 * karmanStage]
       : [0, 0, 0];
     karmanMats.current.forEach((material, index) => {
       if (material) {
@@ -740,10 +740,10 @@ export function LandingAtmosphere({ composition, quality, sceneLightDirection }:
           ]}
         />
       </mesh>
-      <mesh material={closeAirglowMaterial} renderOrder={19}>
+      <mesh material={closeAirglowMaterial} renderOrder={8}>
         <sphereGeometry
           args={[
-            composition.earth.radius * 1.018,
+            composition.earth.radius * 1.014,
             quality.segments,
             quality.segments
           ]}

@@ -42,34 +42,34 @@ const TWO_PI = Math.PI * 2;
 
 const RIBBONS: RibbonPreset[] = [
   {
-    lonCenterDeg: 104,
-    lonSpanDeg: 360,
+    lonCenterDeg: 82,
+    lonSpanDeg: 132,
     latOffsetDeg: -0.6,
     latWaveDeg: 1.8,
-    lonWaveDeg: 3.4,
+    lonWaveDeg: 7.4,
     radialHeight: 0.044,
     phase: 0.12,
     opacity: 1
   },
   {
-    lonCenterDeg: 104,
-    lonSpanDeg: 360,
+    lonCenterDeg: 122,
+    lonSpanDeg: 96,
     latOffsetDeg: 2.2,
     latWaveDeg: 1.2,
-    lonWaveDeg: 2.6,
+    lonWaveDeg: 6.2,
     radialHeight: 0.034,
     phase: 1.36,
-    opacity: 0.55
+    opacity: 0.48
   },
   {
-    lonCenterDeg: 104,
-    lonSpanDeg: 360,
+    lonCenterDeg: 42,
+    lonSpanDeg: 74,
     latOffsetDeg: -3.1,
     latWaveDeg: 1.0,
-    lonWaveDeg: 2.0,
+    lonWaveDeg: 5.4,
     radialHeight: 0.026,
     phase: 2.18,
-    opacity: 0.36
+    opacity: 0.32
   }
 ];
 
@@ -252,8 +252,8 @@ function createAuroraMaterial(composition: LandingComposition, opacityScale: num
           smoothstep(0.0, 0.08, vUv.y) *
           (1.0 - smoothstep(0.72, 1.0, vUv.y));
         float horizontalFade =
-          smoothstep(0.0, 0.12, vUv.x) *
-          (1.0 - smoothstep(0.88, 1.0, vUv.x));
+          smoothstep(0.0, 0.16, vUv.x) *
+          (1.0 - smoothstep(0.84, 1.0, vUv.x));
 
         vec2 noiseUv = vec2(
           vUv.x * noiseScale * 4.2 + layerSeed * 3.7,
@@ -262,6 +262,10 @@ function createAuroraMaterial(composition: LandingComposition, opacityScale: num
         float sheet = triNoise2d(noiseUv, noiseSpeed);
         float strandCell = abs(fract((vUv.x + sheet * 0.08 + layerSeed * 0.07) * 46.0) - 0.5);
         float strand = pow(1.0 - smoothstep(0.016, 0.16, strandCell), 1.45);
+        float breakNoise = triNoise2d(vec2(vUv.x * 5.2 + layerSeed * 1.6, 0.42 + layerSeed), 0.0);
+        float patchWindow =
+          smoothstep(0.0, 0.22, sin((vUv.x + layerSeed * 0.03) * 19.0) * 0.5 + 0.5) *
+          smoothstep(0.02, 0.18, breakNoise + strand * 0.16);
         float lowerGlow = (1.0 - smoothstep(0.08, 0.38, vUv.y)) * 0.18;
         float veil = verticalFade * smoothstep(0.025, 0.32, sheet) * (0.18 + strand * 0.52);
         float alpha =
@@ -271,6 +275,7 @@ function createAuroraMaterial(composition: LandingComposition, opacityScale: num
           limbGate *
           lightGate *
           horizontalFade *
+          patchWindow *
           (lowerGlow + veil * 1.65);
 
         if (alpha < 0.0012) {
