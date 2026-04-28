@@ -1,8 +1,9 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Color, DirectionalLight, Vector3 } from "three";
+import type { Scene } from "three";
 import { mapRadioGagaProgress } from "./radioGagaTimeline";
 import { RadioGagaCore } from "./RadioGagaCore";
 import { RadioGagaModel } from "./RadioGagaModel";
@@ -10,6 +11,7 @@ import { RadioGagaVoiceLines } from "./RadioGagaVoiceLines";
 import type { RadioGagaSceneProps } from "./types";
 
 const cameraTarget = new Vector3(0, -0.08, 0);
+type SceneEnvironment = Pick<Scene, "background" | "fog">;
 
 export function RadioGagaSceneContent({
   progress,
@@ -20,10 +22,11 @@ export function RadioGagaSceneContent({
   const frame = mapRadioGagaProgress(progress);
   const readyRef = useRef(false);
   const keyLight = useRef<DirectionalLight>(null);
+  const previousSceneEnvironment = useRef<SceneEnvironment | null>(null);
   const { camera, scene } = useThree();
   const backgroundColor = useMemo(() => new Color("#050302"), []);
 
-  useEffect(() => {
+  const handleModelReady = useCallback(() => {
     if (readyRef.current) {
       return;
     }
@@ -31,12 +34,31 @@ export function RadioGagaSceneContent({
     onReady?.();
   }, [onReady]);
 
+  useEffect(() => {
+    if (!active) {
+      return;
+    }
+    previousSceneEnvironment.current = {
+      background: scene.background,
+      fog: scene.fog
+    };
+    scene.background = backgroundColor;
+    scene.fog = null;
+
+    return () => {
+      if (!previousSceneEnvironment.current) {
+        return;
+      }
+      scene.background = previousSceneEnvironment.current.background;
+      scene.fog = previousSceneEnvironment.current.fog;
+      previousSceneEnvironment.current = null;
+    };
+  }, [active, backgroundColor, scene]);
+
   useFrame(() => {
     if (!active) {
       return;
     }
-    scene.background = backgroundColor;
-    scene.fog = null;
     camera.position.set(0, 0.25, frame.cameraZ);
     camera.lookAt(cameraTarget);
     if (keyLight.current) {
@@ -52,7 +74,7 @@ export function RadioGagaSceneContent({
     <>
       <ambientLight color="#f1e4c8" intensity={0.38} />
       <directionalLight ref={keyLight} color="#d9b06a" position={[2.4, 2.2, 3.4]} intensity={0.8} />
-      <RadioGagaModel frame={frame} />
+      <RadioGagaModel frame={frame} onReady={handleModelReady} />
       <RadioGagaCore frame={frame} reducedMotion={reducedMotion} />
       <RadioGagaVoiceLines frame={frame} reducedMotion={reducedMotion} />
     </>

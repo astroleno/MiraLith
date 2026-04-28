@@ -1,8 +1,8 @@
 "use client";
 
 import { useGLTF } from "@react-three/drei";
-import { useMemo } from "react";
-import { Mesh, MeshPhysicalMaterial } from "three";
+import { useEffect, useLayoutEffect, useMemo } from "react";
+import { Material, Mesh, MeshPhysicalMaterial, Object3D } from "three";
 import type { RadioGagaFrame } from "./types";
 
 const RADIO_POSITION: [number, number, number] = [0, -0.2, 0];
@@ -13,11 +13,44 @@ const ESP32_SCALE = 0.92;
 
 interface RadioGagaModelProps {
   frame: RadioGagaFrame;
+  onReady?: () => void;
 }
 
-export function RadioGagaModel({ frame }: RadioGagaModelProps) {
+const cloneSceneWithMaterials = (scene: Object3D) => {
+  const materials: Material[] = [];
+  const clone = scene.clone(true);
+
+  clone.traverse((child) => {
+    if (child instanceof Mesh) {
+      child.material = Array.isArray(child.material)
+        ? child.material.map((material) => {
+            const cloneMaterial = material.clone();
+            materials.push(cloneMaterial);
+            return cloneMaterial;
+          })
+        : (() => {
+            const cloneMaterial = child.material.clone();
+            materials.push(cloneMaterial);
+            return cloneMaterial;
+          })();
+    }
+  });
+
+  return { materials, scene: clone };
+};
+
+const applyOpacity = (materials: Material[], opacity: number) => {
+  materials.forEach((material) => {
+    material.transparent = opacity < 0.999;
+    material.opacity = opacity;
+    material.depthWrite = opacity > 0.98;
+    material.needsUpdate = true;
+  });
+};
+
+export function RadioGagaModel({ frame, onReady }: RadioGagaModelProps) {
   const radio = useGLTF("/model/radio_gaga.glb");
-  const esp32 = useGLTF("/model/xiaozhi_esp32.glb");
+  const esp32Gltf = useGLTF("/model/xiaozhi_esp32.glb");
   const ghostMaterial = useMemo(
     () =>
       new MeshPhysicalMaterial({
@@ -31,19 +64,7 @@ export function RadioGagaModel({ frame }: RadioGagaModelProps) {
       }),
     []
   );
-  ghostMaterial.opacity = frame.radioGhostOpacity;
-
-  const solidRadioScene = useMemo(() => {
-    const clone = radio.scene.clone(true);
-    clone.traverse((child) => {
-      if (child instanceof Mesh) {
-        child.material = Array.isArray(child.material)
-          ? child.material.map((material) => material.clone())
-          : child.material.clone();
-      }
-    });
-    return clone;
-  }, [radio.scene]);
+  const solidRadio = useMemo(() => cloneSceneWithMaterials(radio.scene), [radio.scene]);
   const ghostRadioScene = useMemo(() => {
     const clone = radio.scene.clone(true);
     clone.traverse((child) => {
@@ -53,17 +74,34 @@ export function RadioGagaModel({ frame }: RadioGagaModelProps) {
     });
     return clone;
   }, [ghostMaterial, radio.scene]);
-  const esp32Scene = useMemo(() => esp32.scene.clone(true), [esp32.scene]);
-  solidRadioScene.traverse((child) => {
-    if (child instanceof Mesh) {
-      const materials = Array.isArray(child.material) ? child.material : [child.material];
-      materials.forEach((material) => {
-        material.transparent = frame.radioOpacity < 0.999;
-        material.opacity = frame.radioOpacity;
-        material.depthWrite = frame.radioOpacity > 0.98;
-      });
-    }
-  });
+  const esp32Model = useMemo(() => cloneSceneWithMaterials(esp32Gltf.scene), [esp32Gltf.scene]);
+
+  useLayoutEffect(() => {
+    applyOpacity(solidRadio.materials, frame.radioOpacity);
+    applyOpacity(esp32Model.materials, frame.esp32Opacity);
+    ghostMaterial.opacity = frame.radioGhostOpacity;
+    ghostMaterial.needsUpdate = true;
+  }, [
+    esp32Model.materials,
+    frame.esp32Opacity,
+    frame.radioGhostOpacity,
+    frame.radioOpacity,
+    ghostMaterial,
+    solidRadio.materials
+  ]);
+
+  useEffect(() => {
+    onReady?.();
+  }, [onReady]);
+
+  useEffect(
+    () => () => {
+      solidRadio.materials.forEach((material) => material.dispose());
+      esp32Model.materials.forEach((material) => material.dispose());
+      ghostMaterial.dispose();
+    },
+    [esp32Model.materials, ghostMaterial, solidRadio.materials]
+  );
 
   return (
     <group
@@ -72,7 +110,7 @@ export function RadioGagaModel({ frame }: RadioGagaModelProps) {
       rotation={[0, frame.radioRotationY, 0]}
     >
       <group visible={frame.radioOpacity > 0.01}>
-        <primitive object={solidRadioScene} />
+        <primitive object={solidRadio.scene} />
       </group>
       <group visible={frame.radioGhostOpacity > 0.01}>
         <primitive object={ghostRadioScene} />
@@ -83,7 +121,7 @@ export function RadioGagaModel({ frame }: RadioGagaModelProps) {
         scale={ESP32_SCALE}
         visible={frame.esp32Opacity > 0.01}
       >
-        <primitive object={esp32Scene} />
+        <primitive object={esp32Model.scene} />
       </group>
     </group>
   );
