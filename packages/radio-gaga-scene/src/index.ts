@@ -4,3 +4,4 @@ export type {
   RadioGagaSceneProps
 } from "./types";
 export { mapRadioGagaProgress } from "./radioGagaTimeline";
+export { RadioGagaSceneContent } from "./RadioGagaSceneContent";
