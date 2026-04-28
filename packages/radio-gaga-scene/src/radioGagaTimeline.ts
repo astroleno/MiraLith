@@ -18,7 +18,7 @@ export function mapRadioGagaProgress(progressInput: number): RadioGagaFrame {
   return {
     progress,
     radioOpacity: core > 0 ? lerp(1, 0, core) : appear,
-    radioGhostOpacity: core > 0 ? lerp(0.42, 0.65, settle) : lerp(0, 0.42, core),
+    radioGhostOpacity: core > 0 ? lerp(0, 0.42, core) + lerp(0, 0.23, settle) : 0,
     radioScale: lerp(0.94, 1, appear),
     radioRotationY: lerp(-0.18, -0.24, voice),
     esp32Opacity: lerp(0, 1, core) * lerp(1, 0.65, settle),
