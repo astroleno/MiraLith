@@ -3,3 +3,4 @@ export type {
   RadioGagaQualityProfile,
   RadioGagaSceneProps
 } from "./types";
+export { mapRadioGagaProgress } from "./radioGagaTimeline";
