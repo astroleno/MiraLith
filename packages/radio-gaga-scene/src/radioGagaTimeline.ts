@@ -18,6 +18,8 @@ export function mapRadioGagaProgress(progressInput: number): RadioGagaFrame {
   const titleIntroOpacity = lerp(0.94, 1, appear);
   const titleExit = smooth(range(progress, 0.22, 0.42));
   const voiceExit = smooth(range(progress, 0.48, 0.58));
+  const memoryExit = smooth(range(progress, 0.52, 0.64));
+  const coreCopy = smooth(range(progress, 0.5, 0.72));
 
   return {
     progress,
@@ -30,10 +32,10 @@ export function mapRadioGagaProgress(progressInput: number): RadioGagaFrame {
     signatureMomentProgress: core,
     speakerGlow: lerp(0, 0.45, voice) + lerp(0, 0.2, memory) - lerp(0, 0.4, settle),
     voiceLinesOpacity: lerp(0, 0.65, voice) * lerp(1, 0.38, settle),
-    memoryLayerOpacity: lerp(0, 0.7, memory) * lerp(1, 0.82, settle),
+    memoryLayerOpacity: lerp(0, 0.58, memory) * lerp(1, 0.14, memoryExit) * lerp(1, 0.6, settle),
     titleOpacity: titleIntroOpacity * lerp(1, 0, titleExit),
     bodyOpacity: lerp(0, 1, voice) * lerp(1, 0, voiceExit),
-    calloutOpacity: lerp(0, 1, core) * lerp(1, 0, settle),
+    calloutOpacity: coreCopy * lerp(1, 0, settle),
     finalLineOpacity: settle,
     cameraZ: progress < 0.8
       ? lerp(5.2, 4.3, smooth(range(progress, 0, 0.8)))
