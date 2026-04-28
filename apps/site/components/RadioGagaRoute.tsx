@@ -1,14 +1,31 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { VisualCanvas } from "../visual/VisualCanvas";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
 import { RadioGagaSceneSlot } from "../visual/scenes/RadioGagaSceneSlot";
 import { RadioGagaCopyLayer } from "./RadioGagaCopyLayer";
 
+function subscribeForcedVisualFallback(_onStoreChange: () => void) {
+  return () => undefined;
+}
+
+function getForcedVisualFallbackSnapshot() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return new URLSearchParams(window.location.search).get("visual") === "fallback";
+}
+
 export function RadioGagaRoute() {
   const routeRef = useRef<HTMLElement>(null);
   const [progress, setProgress] = useState(0);
+  const forcedVisualFallback = useSyncExternalStore(
+    subscribeForcedVisualFallback,
+    getForcedVisualFallbackSnapshot,
+    () => false
+  );
 
   useEffect(() => {
     let disposed = false;
@@ -65,7 +82,7 @@ export function RadioGagaRoute() {
       >
         <RadioGagaSceneSlot progress={progress} active />
       </VisualCanvas>
-      <RadioGagaCopyLayer progress={progress} />
+      {forcedVisualFallback ? null : <RadioGagaCopyLayer progress={progress} />}
       <div className="sr-only">
         02 - Care. radioGAGA. A radio of local news, family memory, and my own voice.
         I filter local news through my own perspective, then let it return home in my voice.
