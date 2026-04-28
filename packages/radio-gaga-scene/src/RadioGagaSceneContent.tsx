@@ -22,6 +22,7 @@ export function RadioGagaSceneContent({
   const frame = mapRadioGagaProgress(progress);
   const readyRef = useRef(false);
   const keyLight = useRef<DirectionalLight>(null);
+  const openingFill = useRef<DirectionalLight>(null);
   const previousSceneEnvironment = useRef<SceneEnvironment | null>(null);
   const { camera, scene } = useThree();
   const backgroundColor = useMemo(() => new Color("#050302"), []);
@@ -64,6 +65,9 @@ export function RadioGagaSceneContent({
     if (keyLight.current) {
       keyLight.current.intensity = 0.45 + frame.backgroundWarmth * 0.65;
     }
+    if (openingFill.current) {
+      openingFill.current.intensity = 0.14 * (1 - frame.signatureMomentProgress);
+    }
   }, -1);
 
   if (!active) {
@@ -74,6 +78,7 @@ export function RadioGagaSceneContent({
     <>
       <ambientLight color="#f1e4c8" intensity={0.38} />
       <directionalLight ref={keyLight} color="#d9b06a" position={[2.4, 2.2, 3.4]} intensity={0.8} />
+      <directionalLight ref={openingFill} color="#f3c884" position={[-2.2, 1.3, 2.8]} intensity={0.14} />
       <RadioGagaModel frame={frame} onReady={handleModelReady} />
       <RadioGagaCore frame={frame} reducedMotion={reducedMotion} />
       <RadioGagaVoiceLines frame={frame} reducedMotion={reducedMotion} />

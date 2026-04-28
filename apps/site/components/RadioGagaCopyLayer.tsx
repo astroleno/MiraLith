@@ -20,6 +20,7 @@ const floatingWordSlots = [
 
 export function RadioGagaCopyLayer({ progress }: RadioGagaCopyLayerProps) {
   const frame = mapRadioGagaProgress(progress);
+  const decorativeExitOpacity = Math.max(0, 1 - frame.calloutOpacity * 3.5);
 
   return (
     <div className="radio-gaga-copy" aria-hidden="true">
@@ -43,7 +44,7 @@ export function RadioGagaCopyLayer({ progress }: RadioGagaCopyLayerProps) {
         <p>{radioGagaCopy.finalEn}</p>
         <p>{radioGagaCopy.finalZh}</p>
       </div>
-      <div className="radio-gaga-copy__floating" style={{ opacity: frame.voiceLinesOpacity }}>
+      <div className="radio-gaga-copy__floating" style={{ opacity: frame.voiceLinesOpacity * decorativeExitOpacity }}>
         {radioGagaFloatingWords.map((word, index) => (
           <span
             key={word.en}
@@ -58,7 +59,7 @@ export function RadioGagaCopyLayer({ progress }: RadioGagaCopyLayerProps) {
           </span>
         ))}
       </div>
-      <div className="radio-gaga-copy__fragments" style={{ opacity: frame.memoryLayerOpacity }}>
+      <div className="radio-gaga-copy__fragments" style={{ opacity: frame.memoryLayerOpacity * decorativeExitOpacity }}>
         {radioGagaMemoryFragments.map((fragment, index) => (
           <span key={fragment} data-fragment-index={index}>
             {fragment}

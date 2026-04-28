@@ -61,6 +61,7 @@ test("radioGAGA core phase exits earlier copy groups", async ({ page }, testInfo
   const titlePanel = page.locator(".radio-gaga-copy__panel").first();
   const voicePanel = page.locator(".radio-gaga-copy__voice");
   const corePanel = page.locator(".radio-gaga-copy__core");
+  const floatingLayer = page.locator(".radio-gaga-copy__floating");
   const fragmentLayer = page.locator(".radio-gaga-copy__fragments");
 
   await expect
@@ -74,12 +75,15 @@ test("radioGAGA core phase exits earlier copy groups", async ({ page }, testInfo
     .toBeLessThan(0.08);
 
   if (testInfo.project.name !== "desktop") {
-    await expect(page.locator(".radio-gaga-copy__floating")).toHaveCSS("display", "none");
+    await expect(floatingLayer).toHaveCSS("display", "none");
     await expect(fragmentLayer).toHaveCSS("display", "none");
   } else {
     await expect
+      .poll(() => floatingLayer.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity)))
+      .toBeLessThan(0.04);
+    await expect
       .poll(() => fragmentLayer.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity)))
-      .toBeLessThan(0.18);
+      .toBeLessThan(0.04);
   }
 });
 
