@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@miralith/lubirth-hero": "workspace:*",
+    "@miralith/radio-gaga-scene": "workspace:*",
     "@miralith/visual-core": "workspace:*",
     "@react-three/drei": "10.7.7",
     "@react-three/fiber": "9.6.0",
