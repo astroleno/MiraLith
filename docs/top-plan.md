@@ -144,6 +144,7 @@ An AI podcast system made for parents.
 * core 段表达为“收音机外壳变透明，内部 ESP32 / board / chip 核心浮现”。
 * fallback 保留静态 radio silhouette，避免 WebGL 或模型失败时变成空黑页。
 * 进入首页时，RadioGaga 应延续这个硬件照护叙事，而不是降级成普通项目卡片。
+* 后续 review / 待做交接见 `docs/radio-gaga/post-review-plan.md`。
 
 ---
 

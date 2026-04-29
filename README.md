@@ -43,6 +43,8 @@ It is not planned as a normal portfolio. The first goal is to establish taste an
 - [LuBirth migration plan](docs/migration-plan.md)
 - [CoScroll integration brief](docs/coscroll-integration-brief.md)
 - [CoScroll scene interface](docs/coscroll-scene-interface.md)
+- [RadioGaga route implementation plan](docs/radio-gaga/implementation-plan.md)
+- [RadioGaga post-review follow-up plan](docs/radio-gaga/post-review-plan.md)
 - [Shopify reference](reference/shopify.md)
 
 ## Next Build Step
