@@ -180,7 +180,7 @@ button {
   border: 1px solid var(--line-strong);
   border-radius: 14px;
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
   cursor: zoom-in;
   color: var(--fg);
   background:
@@ -542,6 +542,32 @@ body::before {
   opacity: var(--radio-gaga-memory-opacity);
 }
 
+.radio-gaga-copy__home-line {
+  margin-top: 18px;
+  padding: 14px 16px 15px;
+  border-left: 1px solid rgba(217, 183, 117, 0.36);
+  background: linear-gradient(90deg, rgba(5, 3, 2, 0.58), rgba(5, 3, 2, 0.18));
+}
+
+.radio-gaga-copy__home-line strong,
+.radio-gaga-copy__home-line span {
+  display: block;
+}
+
+.radio-gaga-copy__home-line strong {
+  color: rgba(247, 239, 227, 0.94);
+  font-size: 17px;
+  line-height: 1.55;
+  font-weight: 600;
+}
+
+.radio-gaga-copy__home-line span {
+  margin-top: 7px;
+  color: rgba(247, 239, 227, 0.56);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
 .radio-gaga-copy__process {
   position: absolute;
   right: min(7vw, 96px);
@@ -729,9 +755,9 @@ body::before {
 
 .visual-canvas-fallback[data-visual-fallback="radio-gaga"] {
   background:
-    radial-gradient(circle at 72% 46%, rgba(189, 42, 32, 0.42), transparent 28%),
-    radial-gradient(circle at 58% 54%, rgba(217, 183, 117, 0.2), transparent 24%),
-    linear-gradient(90deg, rgba(5, 3, 2, 0.95) 0%, rgba(5, 3, 2, 0.72) 46%, rgba(5, 3, 2, 0.98) 100%);
+    radial-gradient(circle at 70% 44%, rgba(135, 54, 45, 0.3), transparent 30%),
+    radial-gradient(circle at 56% 54%, rgba(217, 183, 117, 0.16), transparent 26%),
+    linear-gradient(90deg, rgba(5, 3, 2, 0.97) 0%, rgba(5, 3, 2, 0.76) 48%, rgba(5, 3, 2, 0.98) 100%);
 }
 
 .radio-gaga-fallback-poster {
@@ -742,13 +768,19 @@ body::before {
   width: min(520px, 46vw);
   aspect-ratio: 1.18;
   transform: translateY(-50%) rotate(-2deg);
-  border-radius: 32px 32px 44px 44px;
+  overflow: hidden;
+  border-radius: 26px 26px 38px 38px;
   background:
-    radial-gradient(circle at 28% 54%, rgba(5, 3, 2, 0.94) 0 13%, rgba(248, 210, 149, 0.14) 13.5% 16%, transparent 16.5%),
-    radial-gradient(circle at 28% 54%, transparent 0 22%, rgba(5, 3, 2, 0.72) 22.5% 32%, transparent 32.5%),
-    linear-gradient(145deg, #b92622, #6d1615 62%, #2e0908);
-  box-shadow: 0 42px 120px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 222, 165, 0.24);
-  opacity: 0.9;
+    linear-gradient(0deg, rgba(235, 214, 170, 0.08), transparent 28%),
+    repeating-linear-gradient(90deg, rgba(248, 232, 196, 0.045) 0 1px, transparent 1px 7px),
+    radial-gradient(circle at 28% 56%, rgba(5, 3, 2, 0.92) 0 13%, rgba(231, 196, 132, 0.16) 13.5% 16%, transparent 16.5%),
+    radial-gradient(circle at 28% 56%, transparent 0 22%, rgba(5, 3, 2, 0.68) 22.5% 32%, transparent 32.5%),
+    linear-gradient(145deg, #87352d, #501d1a 62%, #25100d);
+  box-shadow:
+    0 42px 120px rgba(0, 0, 0, 0.62),
+    inset 0 1px 0 rgba(255, 229, 176, 0.2),
+    inset 0 -22px 50px rgba(5, 3, 2, 0.28);
+  opacity: 0.88;
 }
 
 .radio-gaga-fallback-poster::before {
@@ -757,9 +789,12 @@ body::before {
   left: 10%;
   right: 12%;
   top: 12%;
-  height: 18%;
+  height: 17%;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(5, 3, 2, 0.54), rgba(248, 210, 149, 0.16), rgba(5, 3, 2, 0.48));
+  background:
+    repeating-linear-gradient(90deg, rgba(61, 37, 24, 0.68) 0 1px, transparent 1px 18px),
+    linear-gradient(90deg, rgba(231, 213, 174, 0.22), rgba(236, 215, 173, 0.48), rgba(231, 213, 174, 0.2));
+  box-shadow: inset 0 0 0 1px rgba(5, 3, 2, 0.22);
 }
 
 .radio-gaga-fallback-poster::after {
@@ -771,11 +806,11 @@ body::before {
   height: 34%;
   border-radius: 14px;
   background:
-    repeating-linear-gradient(90deg, rgba(248, 210, 149, 0.24) 0 2px, transparent 2px 8px),
-    rgba(5, 3, 2, 0.52);
+    repeating-linear-gradient(90deg, rgba(231, 196, 132, 0.2) 0 2px, transparent 2px 8px),
+    rgba(5, 3, 2, 0.5);
 }
 
-.radio-gaga-fallback-poster span {
+.radio-gaga-fallback-poster__antenna {
   position: absolute;
   left: 14%;
   top: -34%;
@@ -784,6 +819,21 @@ body::before {
   transform: rotate(-25deg);
   transform-origin: bottom;
   background: rgba(248, 210, 149, 0.68);
+}
+
+.radio-gaga-fallback-poster__dial {
+  position: absolute;
+  left: 20%;
+  bottom: 17%;
+  width: 14%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 42% 36%, rgba(236, 215, 173, 0.52), transparent 0 18%),
+    radial-gradient(circle, rgba(231, 196, 132, 0.22), rgba(5, 3, 2, 0.7) 68%);
+  box-shadow:
+    inset 0 0 0 1px rgba(231, 196, 132, 0.2),
+    0 10px 22px rgba(0, 0, 0, 0.32);
 }
 
 .radio-gaga-fallback-copy {
@@ -809,6 +859,35 @@ body::before {
   color: rgba(247, 239, 227, 0.76);
   font-size: 15px;
   line-height: 1.7;
+}
+
+.radio-gaga-fallback-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 22px;
+  color: rgba(217, 183, 117, 0.62);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.radio-gaga-fallback-flow span {
+  position: relative;
+  white-space: nowrap;
+}
+
+.radio-gaga-fallback-flow span + span {
+  padding-left: 24px;
+}
+
+.radio-gaga-fallback-flow span + span::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 14px;
+  height: 1px;
+  background: rgba(217, 183, 117, 0.48);
 }
 
 @media (min-width: 820px) {
@@ -869,6 +948,15 @@ body::before {
     line-height: 1.55;
   }
 
+  .radio-gaga-copy__home-line {
+    margin-top: 14px;
+    padding: 12px 14px;
+  }
+
+  .radio-gaga-copy__home-line strong {
+    font-size: 15px;
+  }
+
   .radio-gaga-copy__memory {
     top: 52px;
     bottom: auto;
@@ -911,9 +999,30 @@ body::before {
   }
 
   .radio-gaga-copy__core {
-    right: 28px;
-    top: 42px;
-    width: 34vw;
+    left: 28px;
+    right: auto;
+    top: 24px;
+    width: min(286px, 34vw);
+    padding: 14px 16px 16px;
+    border-left: 1px solid rgba(217, 183, 117, 0.38);
+    background: linear-gradient(90deg, rgba(5, 3, 2, 0.84), rgba(5, 3, 2, 0.24));
+    box-shadow: 0 18px 58px rgba(5, 3, 2, 0.34);
+  }
+
+  .radio-gaga-copy__core-title {
+    font-size: 12px;
+    line-height: 1.35;
+    letter-spacing: 0.14em;
+  }
+
+  .radio-gaga-copy__core-title-zh {
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .radio-gaga-copy__core-note {
+    display: none;
   }
 
   .radio-gaga-copy__memory {

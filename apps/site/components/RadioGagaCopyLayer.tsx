@@ -13,8 +13,8 @@ export function RadioGagaCopyLayer() {
       </div>
       <div className="radio-gaga-copy__process-hint">
         <span>local news</span>
-        <span>rewritten voice</span>
-        <span>radio at home</span>
+        <span>my voice</span>
+        <span>{"parents' radio"}</span>
       </div>
       <div className="radio-gaga-copy__panel radio-gaga-copy__voice">
         <p>{radioGagaCopy.voiceEn.join(" ")}</p>
@@ -23,6 +23,10 @@ export function RadioGagaCopyLayer() {
       <div className="radio-gaga-copy__memory">
         <p>{radioGagaCopy.memoryEn.join(" ")}</p>
         <p>{radioGagaCopy.memoryZh.join("")}</p>
+        <div className="radio-gaga-copy__home-line">
+          <strong>{radioGagaCopy.homeLineZh}</strong>
+          <span>{radioGagaCopy.homeLineEn}</span>
+        </div>
       </div>
       <div className="radio-gaga-copy__process">
         <div className="radio-gaga-copy__process-track">

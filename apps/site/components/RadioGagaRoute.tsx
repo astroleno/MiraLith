@@ -162,13 +162,19 @@ export function RadioGagaRoute() {
   const fallback = (
     <VisualCanvasFallback scene="radio-gaga" label="radioGAGA care radio fallback">
       <div className="radio-gaga-fallback-poster" aria-hidden="true">
-        <span />
+        <span className="radio-gaga-fallback-poster__antenna" />
+        <span className="radio-gaga-fallback-poster__dial" />
       </div>
       <div className="radio-gaga-fallback-copy">
         <p>02 - Care</p>
         <h1>radioGAGA</h1>
         <p>A small machine for staying close.</p>
         <p>一台让距离变近的小机器。</p>
+        <div className="radio-gaga-fallback-flow" aria-hidden="true">
+          <span>local news</span>
+          <span>my voice</span>
+          <span>radio at home</span>
+        </div>
       </div>
     </VisualCanvasFallback>
   );
@@ -188,6 +194,7 @@ export function RadioGagaRoute() {
         02 - Care. radioGAGA. A radio of local news, family memory, and my own voice.
         I filter local news through my own perspective, then let it return home in my voice.
         It translates the news into a daily language my parents can hold.
+        妈，社区门口那条路明天施工，出门绕一下。
         Inside, a small core of care. ESP32 is only the path that lets a voice arrive.
         A small machine for staying close.
       </div>

@@ -70,9 +70,12 @@ export function RadioGagaSceneContent({
     const mobilePullback = isMobile
       ? 1.2 + nextFrame.signatureMomentProgress * 0.64 + nextFrame.finalLineOpacity * 0.36
       : 0;
+    const shortLandscapePullback = isShortLandscape ? 0.72 + nextFrame.signatureMomentProgress * 0.22 : 0;
+    const careStillness = 1 - nextFrame.signatureMomentProgress * 0.75;
+    const finalStillness = 1 - nextFrame.finalLineOpacity * 0.92;
     const motionStrength = reducedMotion || isMobile
       ? 0
-      : (0.35 + (1 - nextFrame.signatureMomentProgress) * 0.65) * (1 - nextFrame.finalLineOpacity * 0.2);
+      : Math.max(0, careStillness * finalStillness);
     const targetRotationY =
       Math.sin(clock.elapsedTime * 0.55) * 0.018 * motionStrength + pointer.x * 0.045 * motionStrength;
     const targetRotationX = -pointer.y * 0.018 * motionStrength;
@@ -83,7 +86,7 @@ export function RadioGagaSceneContent({
     camera.position.set(
       isMobile ? -0.08 * nextFrame.finalLineOpacity : 0,
       isMobile ? 0.18 : 0.25,
-      nextFrame.cameraZ + mobilePullback + (isShortLandscape ? 0.5 : 0)
+      nextFrame.cameraZ + mobilePullback + shortLandscapePullback
     );
     camera.lookAt(cameraTarget);
     if (keyLight.current) {

@@ -27,6 +27,8 @@ export const radioGagaCopy = {
     "它不是把新闻读出来，",
     "而是把新闻翻译成父母能够接住的日常。"
   ],
+  homeLineEn: "Mom, the road by the community gate is closed tomorrow. Take the other way out.",
+  homeLineZh: "妈，社区门口那条路明天施工，出门绕一下。",
   coreTitleEn: "Inside, a small core of care",
   coreTitleZh: "内里，是一颗照护的核心",
   coreBodyEn: [
@@ -43,8 +45,8 @@ export const radioGagaCopy = {
 
 export const radioGagaProcessSteps = [
   { en: "local news", zh: "本地新闻" },
-  { en: "curation", zh: "筛选" },
-  { en: "rewritten script", zh: "改写成日常" },
+  { en: "I choose what matters", zh: "我替他们筛一遍" },
+  { en: "say it plainly", zh: "说成家常话" },
   { en: "my voice", zh: "我的声音" },
-  { en: "radio at home", zh: "家里的收音机" }
+  { en: "parents' radio", zh: "爸妈家的收音机" }
 ] as const;

@@ -67,7 +67,7 @@ test("radioGAGA memory phase renders process copy", async ({ page }, testInfo) =
     .toBeGreaterThan(0.28);
 
   if (testInfo.project.name === "desktop") {
-    await expect(processLayer.getByText("rewritten script")).toBeVisible();
+    await expect(processLayer.getByText("say it plainly")).toBeVisible();
     await expect
       .poll(() => processLayer.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity)))
       .toBeGreaterThan(0.2);
