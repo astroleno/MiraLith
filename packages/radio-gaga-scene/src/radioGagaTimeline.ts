@@ -27,10 +27,10 @@ export function mapRadioGagaProgress(progressInput: number): RadioGagaFrame {
 
   return {
     progress,
-    radioOpacity: shellReveal > 0 ? lerp(1, 0.12, shellReveal) * lerp(1, 0.58, settle) : radioIntroOpacity,
-    radioGhostOpacity: shellReveal > 0 ? lerp(0, 0.42, shellReveal) + lerp(0, 0.12, settle) : 0,
-    radioScale: lerp(0.94, 1, appear),
-    radioRotationY: lerp(-0.18, -0.24, voice),
+    radioOpacity: shellReveal > 0 ? lerp(1, 0.008, shellReveal) * lerp(1, 0.48, settle) : radioIntroOpacity,
+    radioGhostOpacity: shellReveal > 0 ? lerp(0, 0.18, shellReveal) + lerp(0, 0.06, settle) : 0,
+    radioScale: lerp(0.88, 0.96, appear) * lerp(1, 0.9, core),
+    radioRotationY: lerp(-1.34, -1.46, core),
     esp32Opacity: lerp(0, 1, esp32Reveal) * lerp(1, 0.68, settle),
     coreLightIntensity: lerp(0, 1, esp32Reveal) * lerp(1, 0.48, settle),
     signatureMomentProgress: core,
@@ -42,8 +42,8 @@ export function mapRadioGagaProgress(progressInput: number): RadioGagaFrame {
     calloutOpacity: coreCopy * lerp(1, 0, coreFinalExit),
     finalLineOpacity: settle,
     cameraZ: progress < 0.8
-      ? lerp(5.2, 4.3, smooth(range(progress, 0, 0.8)))
-      : lerp(4.3, 4.8, settle),
+      ? lerp(5.8, 5, smooth(range(progress, 0, 0.8)))
+      : lerp(5, 5.25, settle),
     backgroundWarmth: lerp(0.38, 0.9, memory) * lerp(1, 0.78, settle)
   };
 }

@@ -67,7 +67,7 @@ export function RadioGagaSceneContent({
     const isMobile = size.width < 720;
     const isShortLandscape = size.height < 520 && size.width > size.height;
     const mobilePullback = isMobile
-      ? nextFrame.signatureMomentProgress * 0.84 + nextFrame.finalLineOpacity * 0.48
+      ? 1.2 + nextFrame.signatureMomentProgress * 0.64 + nextFrame.finalLineOpacity * 0.36
       : 0;
 
     frameRef.current = nextFrame;

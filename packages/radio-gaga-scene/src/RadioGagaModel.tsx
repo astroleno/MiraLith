@@ -9,7 +9,7 @@ import type { RadioGagaFrame, RadioGagaFrameRef } from "./types";
 const RADIO_POSITION: [number, number, number] = [0.18, -0.32, 0];
 const RADIO_SCALE = 3.4;
 const ESP32_POSITION: [number, number, number] = [0, -0.08, 0.04];
-const ESP32_ROTATION: [number, number, number] = [0, -0.18, 0];
+const ESP32_ROTATION: [number, number, number] = [0, 1.34, 0];
 const ESP32_SCALE = 0.92;
 
 interface RadioGagaModelProps {
