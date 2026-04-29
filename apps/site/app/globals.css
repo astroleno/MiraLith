@@ -736,34 +736,43 @@ body::before {
 .lubirth-revised__home-loading-contour-path {
   fill: none;
   opacity: 0;
-  stroke: rgba(246, 241, 232, 0.72);
+  filter:
+    drop-shadow(0 0 8px rgba(246, 241, 232, 0.46))
+    drop-shadow(0 0 28px rgba(246, 241, 232, 0.22));
+  stroke: rgba(255, 249, 235, 0.98);
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.1;
+  stroke-width: 2.15;
   vector-effect: non-scaling-stroke;
 }
 
 .lubirth-revised__home-loading-contour-path--gold {
-  stroke: rgba(199, 176, 107, 0.32);
-  stroke-width: 2.2;
+  filter:
+    drop-shadow(0 0 10px rgba(214, 190, 118, 0.48))
+    drop-shadow(0 0 32px rgba(214, 190, 118, 0.24));
+  stroke: rgba(231, 205, 128, 0.9);
+  stroke-width: 5.2;
 }
 
 .lubirth-revised__home-loading-moon-path {
   fill: none;
   opacity: 0;
-  stroke: rgba(246, 241, 232, 0.42);
+  filter:
+    drop-shadow(0 0 8px rgba(246, 241, 232, 0.42))
+    drop-shadow(0 0 24px rgba(246, 241, 232, 0.2));
+  stroke: rgba(255, 249, 235, 0.92);
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1;
+  stroke-width: 1.35;
   vector-effect: non-scaling-stroke;
 }
 
 .lubirth-revised__home-loading-moon-path--projection {
-  stroke: rgba(246, 241, 232, 0.46);
+  stroke: rgba(246, 241, 232, 0.74);
 }
 
 .lubirth-revised__loading-vignette {
@@ -1400,16 +1409,12 @@ body::before {
   color: var(--lubirth-revised-faint);
 }
 
-.lubirth-revised[data-home-loading="active"] .lubirth-revised__home-loading {
-  animation: lubirth-home-loading-fade 0.55s 3.1s ease-in-out forwards;
-}
-
 .lubirth-revised[data-home-loading="active"] .lubirth-revised__home-loading-contour-path--gold {
-  animation: lubirth-home-contour 1.35s 0.08s ease-in-out forwards;
+  animation: lubirth-home-contour 1.45s 0.08s ease-in-out forwards;
 }
 
 .lubirth-revised[data-home-loading="active"] .lubirth-revised__home-loading-contour-path:not(.lubirth-revised__home-loading-contour-path--gold) {
-  animation: lubirth-home-contour 1.25s 0.12s ease-in-out forwards;
+  animation: lubirth-home-contour 1.35s 0.14s ease-in-out forwards;
 }
 
 .lubirth-revised[data-home-loading="active"] .lubirth-revised__home-loading-moon-path--projection {
@@ -1435,7 +1440,11 @@ body::before {
     stroke-dashoffset: 1;
   }
 
-  18% {
+  14% {
+    opacity: 0.72;
+  }
+
+  58% {
     opacity: 1;
   }
 
@@ -1447,16 +1456,20 @@ body::before {
 
 @keyframes lubirth-home-moon-projection {
   0% {
-    opacity: 1;
+    opacity: 0;
     stroke-dashoffset: 1;
   }
 
-  16% {
+  14% {
+    opacity: 0.68;
+  }
+
+  64% {
     opacity: 1;
   }
 
   100% {
-    opacity: 1;
+    opacity: 0.94;
     stroke-dashoffset: 0;
   }
 }

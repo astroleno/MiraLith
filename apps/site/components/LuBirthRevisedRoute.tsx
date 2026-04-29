@@ -20,6 +20,10 @@ const SCROLL_TRIGGER_ID_PREFIX = "miralith-lubirth-opening";
 const HOME_PROJECTION_FALLBACK_DEADLINE_MS = 1900;
 const HOME_LOADING_REVEAL_DELAY_MS = 2400;
 const HOME_LOADING_SCROLL_DELAY_MS = 3300;
+const HOME_LOADING_MIN_REVEAL_AFTER_READY_MS = 1200;
+const HOME_LOADING_MIN_COMPLETE_AFTER_READY_MS = 2600;
+const HOME_PROJECT_ACCESS_PROGRESS = 0.34;
+const HOME_RAIL_ACCESS_PROGRESS = 0.52;
 
 type HomeProjectionSource = "pending" | "scene" | "fallback";
 type ReadyHomeProjectionSource = Exclude<HomeProjectionSource, "pending">;
@@ -617,9 +621,9 @@ export function LuBirthRevisedRoute({
         setIfPresent(".lubirth-revised__scroll-hint", { autoAlpha: 0, y: 8 });
         setIfPresent(".lubirth-revised__atmosphere", { autoAlpha: 0 });
         setIfPresent(".lubirth-revised__world-mark", { autoAlpha: 0, y: -8 });
-        setIfPresent(".lubirth-revised__title-rail", { autoAlpha: 0, y: isHome ? 0 : 16 });
+        setIfPresent(".lubirth-revised__title-rail", { autoAlpha: 0, y: isHome ? 18 : 16 });
         if (isHome) {
-          setIfPresent(".lubirth-revised__title-rail li", { autoAlpha: 0, x: -6 });
+          setIfPresent(".lubirth-revised__title-rail li", { autoAlpha: 0, x: -14, y: 6 });
           setIfPresent(".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-copy", {
             autoAlpha: 0
           });
@@ -635,8 +639,8 @@ export function LuBirthRevisedRoute({
 
         if (screenshotDebug.fixedProgress !== null) {
           setSceneEnabled(true);
-          const homeRailVisible = screenshotDebug.fixedProgress >= 0.62;
-          const homeProjectVisible = screenshotDebug.fixedProgress >= 0.34;
+          const homeRailVisible = screenshotDebug.fixedProgress >= HOME_RAIL_ACCESS_PROGRESS;
+          const homeProjectVisible = screenshotDebug.fixedProgress >= HOME_PROJECT_ACCESS_PROGRESS;
           setCopyInteractive(!screenshotDebug.copyHidden && (!isHome || homeRailVisible));
           setProjectInteractive(!screenshotDebug.copyHidden && (!isHome || homeProjectVisible));
           setHomeIntroComplete(true);
@@ -650,7 +654,7 @@ export function LuBirthRevisedRoute({
             setIfPresent(".lubirth-revised__hero-copy", { autoAlpha: isHome ? 0 : 1, y: 0, scale: 1 });
             setIfPresent(".lubirth-revised__world-mark", { autoAlpha: isHome ? 0 : 1, y: 0 });
             setIfPresent(".lubirth-revised__title-rail", { autoAlpha: isHome && homeRailVisible ? 1 : 0, y: 0 });
-            setIfPresent(".lubirth-revised__title-rail li", { autoAlpha: isHome && homeRailVisible ? 1 : 0, x: 0 });
+            setIfPresent(".lubirth-revised__title-rail li", { autoAlpha: isHome && homeRailVisible ? 1 : 0, x: 0, y: 0 });
             setIfPresent(".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-copy", {
               autoAlpha: isHome && homeRailVisible ? 1 : 0
             });
@@ -717,8 +721,8 @@ export function LuBirthRevisedRoute({
             return;
           }
 
-          const nextRailAccess = progress >= 0.62;
-          const nextProjectAccess = progress >= 0.34;
+          const nextRailAccess = progress >= HOME_RAIL_ACCESS_PROGRESS;
+          const nextProjectAccess = progress >= HOME_PROJECT_ACCESS_PROGRESS;
           if (nextRailAccess !== railAccess) {
             railAccess = nextRailAccess;
             setCopyInteractive(nextRailAccess);
@@ -766,18 +770,18 @@ export function LuBirthRevisedRoute({
                   xPercent: 0,
                   yPercent: 0,
                   scale: () => getOpeningTitleTarget().scale,
-                  duration: 0.001,
-                  ease: "none"
+                  duration: 0.34,
+                  ease: "power2.inOut"
                 },
-                0.08
+                0.04
               )
-              .to(selector(".lubirth-revised__title-rail"), { autoAlpha: 1, y: 0, duration: 0.12 }, 0.18)
+              .to(selector(".lubirth-revised__title-rail"), { autoAlpha: 1, y: 0, duration: 0.22, ease: "power2.out" }, 0.14)
               .to(
                 selector(".lubirth-revised__title-rail li[data-active='true']"),
-                { autoAlpha: 1, x: 0, duration: 0.12 },
-                0.22
+                { autoAlpha: 1, x: 0, y: 0, duration: 0.2, ease: "power2.out" },
+                0.18
               )
-              .to(selector(".lubirth-revised__mobile-title-bar"), { autoAlpha: 1, y: 0, duration: 0.14 }, 0.22)
+              .to(selector(".lubirth-revised__mobile-title-bar"), { autoAlpha: 1, y: 0, duration: 0.18, ease: "power2.out" }, 0.3)
               .to(selector(".lubirth-revised__project-intro"), { autoAlpha: 1, y: 0, duration: 0.18 }, 0.36)
               .to(
                 selector(
@@ -788,8 +792,8 @@ export function LuBirthRevisedRoute({
               )
               .to(
                 selector(".lubirth-revised__title-rail li:not([data-active='true'])"),
-                { autoAlpha: 1, x: 0, duration: 0.2, stagger: 0.03, ease: "power2.out" },
-                0.62
+                { autoAlpha: 1, x: 0, y: 0, duration: 0.24, stagger: 0.035, ease: "power2.out" },
+                0.46
               );
 
             return timeline;
@@ -846,14 +850,23 @@ export function LuBirthRevisedRoute({
               window.__MiraLithFirstUsableAt = performance.now();
             }
           };
-          const completeHomeIntro = () => {
+          const completeHomeIntro = (immediate = false) => {
             if (introCompleted || disposed) {
               return;
             }
 
             introCompleted = true;
             revealHomeIntro();
-            setIfPresent(".lubirth-revised__home-loading", { autoAlpha: 0 });
+            if (immediate) {
+              setIfPresent(".lubirth-revised__home-loading", { autoAlpha: 0 });
+            } else {
+              gsap.to(selector(".lubirth-revised__home-loading"), {
+                autoAlpha: 0,
+                duration: 0.62,
+                ease: "power2.inOut",
+                overwrite: true
+              });
+            }
             setHomeIntroComplete(true);
             setCopyInteractive(false);
             setProjectInteractive(false);
@@ -871,7 +884,7 @@ export function LuBirthRevisedRoute({
             if (homeProjectionSourceRef.current === "pending") {
               markHomeLoadingReady("fallback");
             }
-            completeHomeIntro();
+            completeHomeIntro(true);
           };
           const scheduleHomePostReady = () => {
             if (postReadyScheduled || disposed) {
@@ -879,16 +892,19 @@ export function LuBirthRevisedRoute({
             }
 
             postReadyScheduled = true;
-            const remainingDelay = (delay: number) => Math.max(0, delay - (performance.now() - homeAnimationStartedAt));
+            const now = performance.now();
+            const readyStartedAt = window.__MiraLithHomeLoadingReadyAt ?? now;
+            const remainingDelay = (delay: number, minimumAfterReady: number) =>
+              Math.max(0, delay - (now - homeAnimationStartedAt), minimumAfterReady - (now - readyStartedAt));
             homeLoadTimeouts.push(
               window.setTimeout(() => {
                 if (!disposed) {
                   revealHomeIntro();
                 }
-              }, remainingDelay(HOME_LOADING_REVEAL_DELAY_MS)),
+              }, remainingDelay(HOME_LOADING_REVEAL_DELAY_MS, HOME_LOADING_MIN_REVEAL_AFTER_READY_MS)),
               window.setTimeout(() => {
                 completeHomeIntro();
-              }, remainingDelay(HOME_LOADING_SCROLL_DELAY_MS))
+              }, remainingDelay(HOME_LOADING_SCROLL_DELAY_MS, HOME_LOADING_MIN_COMPLETE_AFTER_READY_MS))
             );
           };
           const handleSkipInput = (event: KeyboardEvent | WheelEvent | TouchEvent) => {
