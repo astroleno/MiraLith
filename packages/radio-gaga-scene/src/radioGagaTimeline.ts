@@ -22,7 +22,7 @@ export function mapRadioGagaProgress(progressInput: number): RadioGagaFrame {
   const voiceExit = smooth(range(progress, 0.38, 0.5));
   const memoryExit = smooth(range(progress, 0.52, 0.63));
   const memoryCoreExit = smooth(range(progress, 0.56, 0.66));
-  const coreCopy = smooth(range(progress, 0.58, 0.74));
+  const coreCopy = smooth(range(progress, 0.62, 0.76));
   const coreFinalExit = smooth(range(progress, 0.8, 0.88));
 
   return {

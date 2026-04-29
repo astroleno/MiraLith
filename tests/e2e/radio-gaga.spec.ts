@@ -78,7 +78,7 @@ test("radioGAGA memory phase renders process copy", async ({ page }, testInfo) =
 
 test("radioGAGA core phase exits earlier copy groups", async ({ page }, testInfo) => {
   await page.goto("/radio-gaga");
-  await page.evaluate(() => window.scrollTo({ top: window.innerHeight * 2.25, behavior: "instant" }));
+  await page.evaluate(() => window.scrollTo({ top: window.innerHeight * 2.45, behavior: "instant" }));
 
   const titlePanel = page.locator(".radio-gaga-copy__panel").first();
   const voicePanel = page.locator(".radio-gaga-copy__voice");
