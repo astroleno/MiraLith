@@ -50,3 +50,11 @@ export const radioGagaProcessSteps = [
   { en: "my voice", zh: "我的声音" },
   { en: "parents' radio", zh: "爸妈家的收音机" }
 ] as const;
+
+export const radioGagaStages = [
+  { count: "01 / 05", en: "Old radio", zh: "旧收音机" },
+  { count: "02 / 05", en: "Voice", zh: "我的声音" },
+  { count: "03 / 05", en: "Memory", zh: "父母能接住的日常" },
+  { count: "04 / 05", en: "Core", zh: "照护的核心" },
+  { count: "05 / 05", en: "Home", zh: "回到家里" }
+] as const;

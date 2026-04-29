@@ -1,6 +1,6 @@
 "use client";
 
-import { radioGagaCopy, radioGagaProcessSteps } from "../content/radioGaga";
+import { radioGagaCopy, radioGagaProcessSteps, radioGagaStages } from "../content/radioGaga";
 
 export function RadioGagaCopyLayer() {
   return (
@@ -11,11 +11,6 @@ export function RadioGagaCopyLayer() {
         <p>{radioGagaCopy.subtitleEn}</p>
         <p>{radioGagaCopy.subtitleZh}</p>
       </div>
-      <div className="radio-gaga-copy__process-hint">
-        <span>local news</span>
-        <span>my voice</span>
-        <span>{"parents' radio"}</span>
-      </div>
       <div className="radio-gaga-copy__panel radio-gaga-copy__voice">
         <p>{radioGagaCopy.voiceEn.join(" ")}</p>
         <p>{radioGagaCopy.voiceZh.join("")}</p>
@@ -23,20 +18,30 @@ export function RadioGagaCopyLayer() {
       <div className="radio-gaga-copy__memory">
         <p>{radioGagaCopy.memoryEn.join(" ")}</p>
         <p>{radioGagaCopy.memoryZh.join("")}</p>
-        <div className="radio-gaga-copy__home-line">
-          <strong>{radioGagaCopy.homeLineZh}</strong>
-          <span>{radioGagaCopy.homeLineEn}</span>
-        </div>
       </div>
-      <div className="radio-gaga-copy__process">
-        <div className="radio-gaga-copy__process-track">
+      <div className="radio-gaga-step-marker">
+        <p>02 — Care</p>
+        {radioGagaStages.map((stage, index) => (
+          <div className="radio-gaga-step-marker__stage" data-radio-gaga-stage={index + 1} key={stage.count}>
+            <span>{stage.count}</span>
+            <strong>{stage.en}</strong>
+            <em>{stage.zh}</em>
+          </div>
+        ))}
+      </div>
+      <div className="radio-gaga-instrument">
+        <div className="radio-gaga-instrument__scale">
           {radioGagaProcessSteps.map((step, index) => (
-            <div className="radio-gaga-copy__process-step" key={step.en}>
+            <div className="radio-gaga-instrument__step" data-radio-gaga-dial={index + 1} key={step.en}>
               <span>{String(index + 1).padStart(2, "0")}</span>
               <strong>{step.en}</strong>
               <em>{step.zh}</em>
             </div>
           ))}
+        </div>
+        <div className="radio-gaga-instrument__broadcast">
+          <strong>{radioGagaCopy.homeLineZh}</strong>
+          <span>{radioGagaCopy.homeLineEn}</span>
         </div>
       </div>
       <div className="radio-gaga-copy__core">
