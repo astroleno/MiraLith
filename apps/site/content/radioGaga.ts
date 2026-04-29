@@ -41,20 +41,10 @@ export const radioGagaCopy = {
   finalZh: "一台让距离变近的小机器。"
 } as const;
 
-export const radioGagaFloatingWords = [
+export const radioGagaProcessSteps = [
   { en: "local news", zh: "本地新闻" },
-  { en: "family memory", zh: "父母记忆" },
+  { en: "curation", zh: "筛选" },
+  { en: "rewritten script", zh: "改写成日常" },
   { en: "my voice", zh: "我的声音" },
-  { en: "for my parents", zh: "给家人的讯息" }
-] as const;
-
-export const radioGagaMemoryFragments = [
-  "weather at dinner",
-  "community news",
-  "market voices",
-  "home routines",
-  "晚饭时的天气",
-  "社区新闻",
-  "菜市场的声音",
-  "家里的日常"
+  { en: "radio at home", zh: "家里的收音机" }
 ] as const;

@@ -2,8 +2,13 @@ import type { QualityProfile } from "@miralith/visual-core";
 
 export type RadioGagaQualityProfile = QualityProfile;
 
+export interface RadioGagaProgressRef {
+  current: number;
+}
+
 export interface RadioGagaSceneProps {
   progress: number;
+  progressRef?: RadioGagaProgressRef;
   active: boolean;
   quality: RadioGagaQualityProfile;
   reducedMotion?: boolean;
@@ -29,4 +34,8 @@ export interface RadioGagaFrame {
   finalLineOpacity: number;
   cameraZ: number;
   backgroundWarmth: number;
+}
+
+export interface RadioGagaFrameRef {
+  current: RadioGagaFrame;
 }

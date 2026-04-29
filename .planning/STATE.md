@@ -8,7 +8,9 @@ See: `.planning/PROJECT.md` (updated 2026-04-24)
 
 ## Current Status
 
-Initialized planning for a greenfield implementation with existing product docs as source material. Git has been initialized on `main`, GSD config exists in `.planning/config.json`, and the initial requirements / roadmap are drafted from the repository docs.
+The repository now has a working pnpm / Next.js implementation in `apps/site`, shared visual packages, and an independent RadioGaga route on `codex/radio-gaga-route-branch`.
+
+RadioGaga is implemented at `/radio-gaga` as the first v1.1 standalone case-page slice. It includes memory copy, process artifact, transparent radio shell, ESP32 care-core reveal, mobile composition handling, fallback radio silhouette, and Playwright coverage.
 
 User decisions locked on 2026-04-24:
 
@@ -19,13 +21,13 @@ User decisions locked on 2026-04-24:
 ## Workspace Notes
 
 - Existing docs are strong enough to act as PRD source material.
-- Current repository has no application code yet.
+- Current worktree contains application code, visual packages, and RadioGaga e2e tests.
 - Adjacent source projects are available under `/Users/aitoshuu/Documents/GitHub`.
 - LuBirth and CoScroll contain valuable visual source material but also heavy assets and unrelated runtime concerns.
 
 ## Recommended Next Step
 
-Start Phase 1 scaffolding with the locked decisions above: Next.js / pnpm workspace, typed content, visual-core contracts, and Theatre-ready scroll orchestration.
+Move the RadioGaga route through PR / integration review, then decide whether to link it from the homepage now or keep it standalone while the LuBirth-first entry remains primary.
 
 ## Open Questions
 
@@ -35,4 +37,4 @@ Start Phase 1 scaffolding with the locked decisions above: Next.js / pnpm worksp
 
 ## Last Updated
 
-2026-04-24 after scope/language/motion alignment.
+2026-04-29 after RadioGaga standalone route implementation and verification.

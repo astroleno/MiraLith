@@ -4,6 +4,8 @@
 
 MiraLith now has a narrower and sharper v1.0: make the LuBirth first two screens exceptional before expanding the rest of the personal field site. The first milestone should prove the architecture, taste, and performance discipline: Chinese-primary copy, a lightweight earth-moon visual kernel, and a Theatre.js-controlled Opening -> LuBirth Window transition.
 
+2026-04-29 update: RadioGaga has landed as the first v1.1 standalone case-page slice on `/radio-gaga`. It should move through PR / integration review before deciding whether to surface it from the homepage flow.
+
 ## Phases
 
 - [ ] **Phase 1: Foundation and Motion Spine** - Scaffold the app, content model, design tokens, visual-core contracts, and Theatre-ready orchestration.
@@ -99,7 +101,7 @@ MiraLith now has a narrower and sharper v1.0: make the LuBirth first two screens
 **Requirements**: SECT-01..07, GROW-01..06  
 **Success Criteria**:
 
-1. Radio Gaga, CoScroll, and ArtBreeze land as lightweight chapters or poster-backed scenes.
+1. Radio Gaga, CoScroll, and ArtBreeze land as lightweight chapters, standalone routes, or poster-backed scenes.
 2. Experiment constellation groups smaller projects without becoming a generic grid.
 3. Selected commissions and now-building sections add credibility without hijacking the tone.
 4. About / Contact supports collaboration, client, and hiring intent.
@@ -108,12 +110,19 @@ MiraLith now has a narrower and sharper v1.0: make the LuBirth first two screens
 
 **Plans**: 6 plans
 
-- [ ] 05-01: Implement Radio Gaga chapter shell and content.
+- [x] 05-01: Implement RadioGaga standalone route, content, process artifact, core reveal, fallback, and e2e coverage.
 - [ ] 05-02: Implement CoScroll scene interface or first fallback-backed version.
 - [ ] 05-03: Implement ArtBreeze chapter shell and content.
 - [ ] 05-04: Implement experiment constellation, selected commissions, and now-building.
 - [ ] 05-05: Implement source project media/demo pipeline and representation types.
 - [ ] 05-06: Implement about/contact and project detail expansion.
+
+**Completed 2026-04-29**:
+
+- `/radio-gaga` production route renders the RadioGaga case independently.
+- The scene reads as red radio -> memory/process -> transparent shell -> ESP32 care core -> final line.
+- Fallback uses a static radio silhouette and keeps the chapter readable without WebGL/model assets.
+- Verification: `pnpm build`; `pnpm exec playwright test tests/e2e/radio-gaga.spec.ts` with 18 passing tests.
 
 ## Progress
 
@@ -123,7 +132,7 @@ MiraLith now has a narrower and sharper v1.0: make the LuBirth first two screens
 | 2. LuBirth Visual Kernel | v1.0 | 0/3 | Not started | - |
 | 3. Theatre Opening Experience | v1.0 | 0/4 | Not started | - |
 | 4. v1.0 Hardening and Launch | v1.0 | 0/4 | Not started | - |
-| 5. v1.1 Field-Site Expansion | v1.1 | 0/6 | Deferred | - |
+| 5. v1.1 Field-Site Expansion | v1.1 | 1/6 | In progress | 05-01 RadioGaga standalone route |
 
 ## Long-Term Direction
 

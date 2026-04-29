@@ -4,11 +4,20 @@ MiraLith is a personal field site for Zuobowen Li: a visual narrative space that
 
 It is not planned as a normal portfolio. The first goal is to establish taste and memory through a Shopify Editions-like experience: fixed visual layer, DOM content layer, scroll-driven scenes, strict performance budgets, and graceful fallback.
 
+## Current Implementation
+
+- `apps/site` is a Next.js App Router app in the pnpm workspace.
+- `/` carries the LuBirth-led visual field foundation.
+- `/radio-gaga` is implemented as an independent RadioGaga case page on `codex/radio-gaga-route-branch`.
+- RadioGaga includes the 3D radio scene, memory copy, tuned process artifact, ESP32 core reveal, mobile compositions, WebGL/model fallback, and e2e coverage.
+- Latest verified RadioGaga checks: `pnpm build` and `pnpm exec playwright test tests/e2e/radio-gaga.spec.ts` with 18 passing tests.
+
 ## Current Direction
 
 - **Primary reference**: Shopify Editions-style interactive release pages.
-- **Core metaphor**: LuBirth as the origin field, followed by family systems, digital ritual, ambient browser work, experiment constellations, commissions, current building, and contact.
+- **Core metaphor**: LuBirth as the origin field, followed by RadioGaga's family-care hardware story, digital ritual, ambient browser work, experiment constellations, commissions, current building, and contact.
 - **v1.0 release scope**: make the LuBirth first two screens feel exceptional before expanding the full homepage.
+- **v1.1 first slice**: RadioGaga now exists as a standalone route that can move through PR / integration review.
 - **Language rhythm**: Chinese primary copy with English secondary lines.
 - **Motion strategy**: Theatre.js participates from the start for the opening field-to-window timeline, while simple hover / idle motion stays outside Theatre.
 - **Primary audience**: collaborators, clients, hiring / partnership contacts, creative technologists, designers, and people curious about AI-native visual products.
@@ -38,4 +47,4 @@ It is not planned as a normal portfolio. The first goal is to establish taste an
 
 ## Next Build Step
 
-Start Phase 1: scaffold the Next.js / pnpm workspace, typed content, visual-core contracts, and Theatre-ready scroll orchestration for the LuBirth opening release.
+Move the RadioGaga route through PR / integration review, then decide whether to surface it from the homepage or keep it as the first standalone case page while LuBirth remains the primary entry.

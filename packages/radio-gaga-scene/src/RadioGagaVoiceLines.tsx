@@ -2,9 +2,9 @@
 
 import { Line } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
-import { Group, Vector3 } from "three";
-import type { RadioGagaFrame } from "./types";
+import { useCallback, useLayoutEffect, useMemo, useRef } from "react";
+import { Group, Object3D, Vector3 } from "three";
+import type { RadioGagaFrame, RadioGagaFrameRef } from "./types";
 
 const lines = [
   { y: -0.18, width: 0.78, phase: 0 },
@@ -16,11 +16,31 @@ const lines = [
 
 interface RadioGagaVoiceLinesProps {
   frame: RadioGagaFrame;
+  frameRef?: RadioGagaFrameRef;
   reducedMotion?: boolean;
 }
 
-export function RadioGagaVoiceLines({ frame, reducedMotion = false }: RadioGagaVoiceLinesProps) {
+interface LineMaterialLike {
+  opacity: number;
+  transparent: boolean;
+  depthWrite: boolean;
+}
+
+function setLineOpacity(line: Object3D | null | undefined, opacity: number) {
+  const material = (line as unknown as { material?: LineMaterialLike } | undefined)?.material;
+
+  if (!material) {
+    return;
+  }
+
+  material.opacity = opacity;
+  material.transparent = opacity < 0.999;
+  material.depthWrite = false;
+}
+
+export function RadioGagaVoiceLines({ frame, frameRef, reducedMotion = false }: RadioGagaVoiceLinesProps) {
   const groupRef = useRef<Group>(null);
+  const lineRefs = useRef<Array<Object3D | null>>([]);
   const points = useMemo(
     () =>
       lines.map((line) => [
@@ -33,18 +53,35 @@ export function RadioGagaVoiceLines({ frame, reducedMotion = false }: RadioGagaV
     []
   );
 
-  useFrame(({ clock }) => {
-    if (!groupRef.current || reducedMotion) {
+  const updateVoiceLines = useCallback((nextFrame: RadioGagaFrame, elapsedTime = 0) => {
+    if (!groupRef.current) {
       return;
     }
-    groupRef.current.position.y = Math.sin(clock.elapsedTime * 1.2) * 0.012;
+    const bob = reducedMotion ? 0 : Math.sin(elapsedTime * 1.2) * 0.012;
+
+    groupRef.current.visible = nextFrame.voiceLinesOpacity > 0.01;
+    groupRef.current.position.set(0.36, -0.14 + bob, 0.72);
+    lineRefs.current.forEach((line, index) => {
+      setLineOpacity(line, nextFrame.voiceLinesOpacity * (1 - index * 0.08));
+    });
+  }, [reducedMotion]);
+
+  useLayoutEffect(() => {
+    updateVoiceLines(frame);
+  }, [frame, updateVoiceLines]);
+
+  useFrame(({ clock }) => {
+    updateVoiceLines(frameRef?.current ?? frame, clock.elapsedTime);
   });
 
   return (
-    <group ref={groupRef} position={[0.18, -0.02, 0.72]} visible={frame.voiceLinesOpacity > 0.01}>
+    <group ref={groupRef} position={[0.36, -0.14, 0.72]} visible={frame.voiceLinesOpacity > 0.01}>
       {points.map((linePoints, index) => (
         <Line
           key={index}
+          ref={(line) => {
+            lineRefs.current[index] = line;
+          }}
           points={linePoints}
           color="#f1e4c8"
           transparent

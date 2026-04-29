@@ -19,6 +19,7 @@ test("radioGAGA fallback keeps chapter readable", async ({ page }) => {
   await expect(page.locator("canvas")).toHaveCount(0);
   const fallback = page.locator('[data-visual-fallback="radio-gaga"]');
   await expect(fallback).toBeVisible();
+  await expect(fallback.locator(".radio-gaga-fallback-poster")).toBeVisible();
   await expect(fallback.getByRole("heading", { name: "radioGAGA" })).toBeVisible();
   await expect(fallback.getByText("一台让距离变近的小机器。")).toBeVisible();
 });
@@ -54,15 +55,36 @@ test("radioGAGA canvas renders nonblank pixels", async ({ page }) => {
   expect(await nonblank.jsonValue()).toBe(true);
 });
 
+test("radioGAGA memory phase renders process copy", async ({ page }, testInfo) => {
+  await page.goto("/radio-gaga");
+  await page.evaluate(() => window.scrollTo({ top: window.innerHeight * 1.7, behavior: "instant" }));
+
+  const memoryPanel = page.locator(".radio-gaga-copy__memory");
+  const processLayer = page.locator(".radio-gaga-copy__process");
+  await expect(page.locator(".radio-gaga-copy").getByText("它不是把新闻读出来，而是把新闻翻译成父母能够接住的日常。")).toBeVisible();
+  await expect
+    .poll(() => memoryPanel.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity)))
+    .toBeGreaterThan(0.28);
+
+  if (testInfo.project.name === "desktop") {
+    await expect(processLayer.getByText("rewritten script")).toBeVisible();
+    await expect
+      .poll(() => processLayer.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity)))
+      .toBeGreaterThan(0.2);
+  } else {
+    await expect(processLayer).toHaveCSS("display", "none");
+  }
+});
+
 test("radioGAGA core phase exits earlier copy groups", async ({ page }, testInfo) => {
   await page.goto("/radio-gaga");
   await page.evaluate(() => window.scrollTo({ top: window.innerHeight * 2.25, behavior: "instant" }));
 
   const titlePanel = page.locator(".radio-gaga-copy__panel").first();
   const voicePanel = page.locator(".radio-gaga-copy__voice");
+  const memoryPanel = page.locator(".radio-gaga-copy__memory");
   const corePanel = page.locator(".radio-gaga-copy__core");
-  const floatingLayer = page.locator(".radio-gaga-copy__floating");
-  const fragmentLayer = page.locator(".radio-gaga-copy__fragments");
+  const processLayer = page.locator(".radio-gaga-copy__process");
 
   await expect
     .poll(() => corePanel.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity)))
@@ -73,16 +95,15 @@ test("radioGAGA core phase exits earlier copy groups", async ({ page }, testInfo
   await expect
     .poll(() => voicePanel.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity)))
     .toBeLessThan(0.08);
+  await expect
+    .poll(() => memoryPanel.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity)))
+    .toBeLessThan(0.08);
 
   if (testInfo.project.name !== "desktop") {
-    await expect(floatingLayer).toHaveCSS("display", "none");
-    await expect(fragmentLayer).toHaveCSS("display", "none");
+    await expect(processLayer).toHaveCSS("display", "none");
   } else {
     await expect
-      .poll(() => floatingLayer.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity)))
-      .toBeLessThan(0.04);
-    await expect
-      .poll(() => fragmentLayer.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity)))
+      .poll(() => processLayer.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity)))
       .toBeLessThan(0.04);
   }
 });
@@ -93,6 +114,7 @@ test("radioGAGA falls back when the radio model fails to load", async ({ page })
 
   const fallback = page.locator('[data-visual-fallback="radio-gaga"]');
   await expect(fallback).toBeVisible();
+  await expect(fallback.locator(".radio-gaga-fallback-poster")).toBeVisible();
   await expect(fallback.getByRole("heading", { name: "radioGAGA" })).toBeVisible();
   await expect(fallback.getByText("一台让距离变近的小机器。")).toBeVisible();
 });

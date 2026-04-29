@@ -15,16 +15,19 @@ type SceneEnvironment = Pick<Scene, "background" | "fog">;
 
 export function RadioGagaSceneContent({
   progress,
+  progressRef,
   active,
   reducedMotion,
   onReady
 }: RadioGagaSceneProps) {
-  const frame = mapRadioGagaProgress(progress);
+  const frame = mapRadioGagaProgress(progressRef?.current ?? progress);
+  const frameRef = useRef(frame);
+  frameRef.current = frame;
   const readyRef = useRef(false);
   const keyLight = useRef<DirectionalLight>(null);
   const openingFill = useRef<DirectionalLight>(null);
   const previousSceneEnvironment = useRef<SceneEnvironment | null>(null);
-  const { camera, scene } = useThree();
+  const { camera, scene, size } = useThree();
   const backgroundColor = useMemo(() => new Color("#050302"), []);
 
   const handleModelReady = useCallback(() => {
@@ -60,13 +63,25 @@ export function RadioGagaSceneContent({
     if (!active) {
       return;
     }
-    camera.position.set(0, 0.25, frame.cameraZ);
+    const nextFrame = mapRadioGagaProgress(progressRef?.current ?? progress);
+    const isMobile = size.width < 720;
+    const isShortLandscape = size.height < 520 && size.width > size.height;
+    const mobilePullback = isMobile
+      ? nextFrame.signatureMomentProgress * 0.84 + nextFrame.finalLineOpacity * 0.48
+      : 0;
+
+    frameRef.current = nextFrame;
+    camera.position.set(
+      isMobile ? -0.08 * nextFrame.finalLineOpacity : 0,
+      isMobile ? 0.18 : 0.25,
+      nextFrame.cameraZ + mobilePullback + (isShortLandscape ? 0.5 : 0)
+    );
     camera.lookAt(cameraTarget);
     if (keyLight.current) {
-      keyLight.current.intensity = 0.45 + frame.backgroundWarmth * 0.65;
+      keyLight.current.intensity = 0.45 + nextFrame.backgroundWarmth * 0.65;
     }
     if (openingFill.current) {
-      openingFill.current.intensity = 0.14 * (1 - frame.signatureMomentProgress);
+      openingFill.current.intensity = 0.14 * (1 - nextFrame.signatureMomentProgress);
     }
   }, -1);
 
@@ -79,9 +94,9 @@ export function RadioGagaSceneContent({
       <ambientLight color="#f1e4c8" intensity={0.38} />
       <directionalLight ref={keyLight} color="#d9b06a" position={[2.4, 2.2, 3.4]} intensity={0.8} />
       <directionalLight ref={openingFill} color="#f3c884" position={[-2.2, 1.3, 2.8]} intensity={0.14} />
-      <RadioGagaModel frame={frame} onReady={handleModelReady} />
-      <RadioGagaCore frame={frame} reducedMotion={reducedMotion} />
-      <RadioGagaVoiceLines frame={frame} reducedMotion={reducedMotion} />
+      <RadioGagaModel frame={frame} frameRef={frameRef} onReady={handleModelReady} />
+      <RadioGagaCore frame={frame} frameRef={frameRef} reducedMotion={reducedMotion} />
+      <RadioGagaVoiceLines frame={frame} frameRef={frameRef} reducedMotion={reducedMotion} />
     </>
   );
 }

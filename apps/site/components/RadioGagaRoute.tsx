@@ -1,5 +1,6 @@
 "use client";
 
+import { mapRadioGagaProgress } from "@miralith/radio-gaga-scene";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { VisualCanvas } from "../visual/VisualCanvas";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
@@ -22,9 +23,29 @@ function getForcedVisualFallbackSnapshot() {
   return new URLSearchParams(window.location.search).get("visual") === "fallback";
 }
 
+function setOpacityVariable(element: HTMLElement, name: string, value: number) {
+  element.style.setProperty(name, Math.max(0, Math.min(1, value)).toFixed(4));
+}
+
+function applyRadioGagaProgressStyles(element: HTMLElement, progress: number) {
+  const frame = mapRadioGagaProgress(progress);
+  const decorativeExitOpacity = Math.max(0, 1 - frame.calloutOpacity * 4.2);
+  const heroHintOpacity = Math.max(0, 1 - progress / 0.24) * 0.72;
+  const mobileScrimOpacity = Math.min(0.84, frame.calloutOpacity * 0.54 + frame.finalLineOpacity * 0.76);
+
+  setOpacityVariable(element, "--radio-gaga-title-opacity", frame.titleOpacity);
+  setOpacityVariable(element, "--radio-gaga-voice-opacity", frame.bodyOpacity);
+  setOpacityVariable(element, "--radio-gaga-memory-opacity", frame.memoryLayerOpacity);
+  setOpacityVariable(element, "--radio-gaga-process-opacity", frame.memoryLayerOpacity * decorativeExitOpacity);
+  setOpacityVariable(element, "--radio-gaga-core-opacity", frame.calloutOpacity);
+  setOpacityVariable(element, "--radio-gaga-final-opacity", frame.finalLineOpacity);
+  setOpacityVariable(element, "--radio-gaga-hint-opacity", heroHintOpacity);
+  setOpacityVariable(element, "--radio-gaga-mobile-scrim-opacity", mobileScrimOpacity);
+}
+
 export function RadioGagaRoute() {
   const routeRef = useRef<HTMLElement>(null);
-  const [progress, setProgress] = useState(0);
+  const progressRef = useRef(0);
   const [assetState, setAssetState] = useState<RadioGagaAssetState>("checking");
   const forcedVisualFallback = useSyncExternalStore(
     subscribeForcedVisualFallback,
@@ -35,6 +56,17 @@ export function RadioGagaRoute() {
   useEffect(() => {
     let disposed = false;
     let cleanup: (() => void) | undefined;
+    const updateProgress = (nextProgress: number) => {
+      progressRef.current = nextProgress;
+
+      if (routeRef.current) {
+        applyRadioGagaProgressStyles(routeRef.current, nextProgress);
+      }
+    };
+
+    if (routeRef.current) {
+      applyRadioGagaProgressStyles(routeRef.current, progressRef.current);
+    }
 
     void (async () => {
       const [{ gsap }, { ScrollTrigger }] = await Promise.all([
@@ -56,8 +88,8 @@ export function RadioGagaRoute() {
         end: () => `+=${Math.round(window.innerHeight * 3.4)}`,
         scrub: true,
         invalidateOnRefresh: true,
-        onRefresh: (self) => setProgress(self.progress),
-        onUpdate: (self) => setProgress(self.progress)
+        onRefresh: (self) => updateProgress(self.progress),
+        onUpdate: (self) => updateProgress(self.progress)
       });
 
       cleanup = () => scrollTrigger.kill();
@@ -106,6 +138,9 @@ export function RadioGagaRoute() {
 
   const fallback = (
     <VisualCanvasFallback scene="radio-gaga" label="radioGAGA care radio fallback">
+      <div className="radio-gaga-fallback-poster" aria-hidden="true">
+        <span />
+      </div>
       <div className="radio-gaga-fallback-copy">
         <p>02 - Care</p>
         <h1>radioGAGA</h1>
@@ -122,10 +157,10 @@ export function RadioGagaRoute() {
         fallback
       ) : (
         <VisualCanvas decorative fallback={fallback}>
-          <RadioGagaSceneSlot progress={progress} active />
+          <RadioGagaSceneSlot progressRef={progressRef} active />
         </VisualCanvas>
       )}
-      {showFallback ? null : <RadioGagaCopyLayer progress={progress} />}
+      {showFallback ? null : <RadioGagaCopyLayer />}
       <div className="sr-only">
         02 - Care. radioGAGA. A radio of local news, family memory, and my own voice.
         I filter local news through my own perspective, then let it return home in my voice.
