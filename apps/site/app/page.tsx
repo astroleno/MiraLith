@@ -1,5 +1,5 @@
-import { MiraLithHome } from "../components/MiraLithHome";
+import { LuBirthRevisedRoute } from "../components/LuBirthRevisedRoute";
 
 export default function HomePage() {
-  return <MiraLithHome />;
+  return <LuBirthRevisedRoute variant="home" />;
 }

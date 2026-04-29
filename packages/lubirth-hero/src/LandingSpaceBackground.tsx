@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AdditiveBlending,
   BackSide,
@@ -8,6 +9,7 @@ import {
   BufferGeometry,
   Color,
   ClampToEdgeWrapping,
+  Group,
   MathUtils,
   PointsMaterial,
   RepeatWrapping,
@@ -30,6 +32,8 @@ function random(seed: number) {
 }
 
 export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpaceBackgroundProps) {
+  const fixedSky = useRef<Group>(null);
+  const { camera } = useThree();
   const [backgroundTexture, setBackgroundTexture] = useState<Texture | null>(null);
   const [backgroundFailed, setBackgroundFailed] = useState(false);
 
@@ -76,7 +80,7 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
   }, [spaceBackground?.colorSpace, spaceBackground?.src]);
 
   const starGeometry = useMemo(() => {
-    const count = Math.max(quality.stars, quality.tier === "high" ? 1200 : 700);
+    const count = quality.stars;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
 
@@ -93,8 +97,8 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
       positions[i3 + 1] = y * radius;
       positions[i3 + 2] = Math.sin(theta) * band * radius;
 
-      const cool = 0.72 + random(index + 143) * 0.28;
-      const brightness = random(index + 251) > 0.93 ? 1 : 0.5 + random(index + 271) * 0.34;
+      const cool = 0.68 + random(index + 143) * 0.22;
+      const brightness = random(index + 251) > 0.94 ? 0.82 : 0.34 + random(index + 271) * 0.28;
       colors[i3] = brightness * cool;
       colors[i3 + 1] = brightness * (0.86 + cool * 0.1);
       colors[i3 + 2] = brightness;
@@ -108,12 +112,12 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
 
   const starMaterial = useMemo(() => {
     return new PointsMaterial({
-      size: quality.tier === "high" ? 0.046 : 0.052,
+      size: quality.tier === "high" ? 0.044 : 0.05,
       sizeAttenuation: true,
       vertexColors: true,
       color: new Color("#d8e8ff"),
       transparent: true,
-      opacity: backgroundTexture ? 0.36 : 0.5,
+      opacity: backgroundTexture ? 0.46 : 0.54,
       blending: AdditiveBlending,
       depthWrite: false,
       depthTest: false
@@ -135,9 +139,9 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
 
         void main() {
           float upperBlue = smoothstep(-0.22, 0.72, vDir.y);
-          float galacticHaze = exp(-pow((vDir.y - 0.18) * 3.2, 2.0)) * 0.42;
-          vec3 base = mix(vec3(0.0, 0.002, 0.006), vec3(0.004, 0.018, 0.04), upperBlue);
-          base += vec3(0.005, 0.014, 0.026) * galacticHaze;
+          float galacticHaze = exp(-pow((vDir.y - 0.18) * 3.2, 2.0)) * 0.56;
+          vec3 base = mix(vec3(0.0, 0.003, 0.008), vec3(0.006, 0.022, 0.048), upperBlue);
+          base += vec3(0.007, 0.018, 0.034) * galacticHaze;
           gl_FragColor = vec4(base, 1.0);
         }
       `,
@@ -155,8 +159,8 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
     return new ShaderMaterial({
       uniforms: {
         map: { value: backgroundTexture },
-        exposure: { value: quality.tier === "high" ? 1.72 : 1.5 },
-        hazeLift: { value: quality.tier === "high" ? 0.24 : 0.18 }
+        exposure: { value: quality.tier === "high" ? 1.78 : 1.58 },
+        hazeLift: { value: quality.tier === "high" ? 0.26 : 0.22 }
       },
       vertexShader: `
         varying vec2 vUv;
@@ -182,12 +186,12 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
           float luma = max(max(tex.r, tex.g), tex.b);
           float haze = smoothstep(0.035, 0.32, luma);
           float star = smoothstep(0.5, 0.96, luma);
-          vec3 deepSky = mix(vec3(0.0, 0.002, 0.006), vec3(0.004, 0.011, 0.022), smoothstep(-0.3, 0.75, vDir.y));
+          vec3 deepSky = mix(vec3(0.0, 0.003, 0.008), vec3(0.006, 0.015, 0.03), smoothstep(-0.3, 0.75, vDir.y));
           vec3 lifted = pow(max(tex, vec3(0.0)), vec3(0.78)) * exposure;
-          vec3 coolHaze = lifted * (0.3 + haze * hazeLift);
-          vec3 pinStars = vec3(0.72, 0.84, 1.0) * star * 0.22;
+          vec3 coolHaze = lifted * (0.38 + haze * hazeLift);
+          vec3 pinStars = vec3(0.72, 0.84, 1.0) * star * 0.36;
 
-          gl_FragColor = vec4(min(deepSky + coolHaze + pinStars, vec3(0.3)), 1.0);
+          gl_FragColor = vec4(min(deepSky + coolHaze + pinStars, vec3(0.42)), 1.0);
         }
       `,
       side: BackSide,
@@ -199,8 +203,17 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
   const useTextureBackdrop = Boolean(textureMaterial && !backgroundFailed);
   const showPointStars = quality.stars > 0;
 
+  useFrame(() => {
+    if (!fixedSky.current) {
+      return;
+    }
+
+    fixedSky.current.position.copy(camera.position);
+    fixedSky.current.quaternion.copy(camera.quaternion);
+  }, -10);
+
   return (
-    <>
+    <group ref={fixedSky}>
       <mesh
         material={useTextureBackdrop ? textureMaterial ?? skyMaterial : skyMaterial}
         renderOrder={-60}
@@ -209,6 +222,6 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
         <sphereGeometry args={[46, 32, 18]} />
       </mesh>
       {showPointStars ? <points geometry={starGeometry} material={starMaterial} renderOrder={-50} /> : null}
-    </>
+    </group>
   );
 }

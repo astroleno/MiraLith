@@ -41,7 +41,7 @@ const FIELD_FRAME = {
   cameraElevationDeg: 3.46402,
   lookAtDistanceRatio: 0,
   earthSize: 0.33,
-  earthY: -2.48,
+  earthY: -2.66,
   earthPitchDeg: 0,
   earthYawDeg: -106.6,
   moonScale: 1
@@ -52,7 +52,7 @@ const CLOSE_FRAME = {
   cameraElevationDeg: -16.4,
   lookAtDistanceRatio: 1.08,
   earthSize: 1.68,
-  earthY: -1.42,
+  earthY: -1.53,
   earthPitchDeg: -28.5,
   earthYawDeg: -104.25,
   moonScale: 1.5

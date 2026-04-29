@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import type { LandingQuality, QualityProfile, ResolvedQualityTier } from "@miralith/visual-core";
 
 export type EarthMoonHeroMode = "field" | "window" | "zoomed" | "expanded";
+export type LandingVisualDebugLayer = "all" | "stars" | "clouds" | "atmosphere" | "aurora";
 export type LandingPresetName =
   | "field"
   | "window"
@@ -80,6 +81,8 @@ export interface LandingMoonPhase {
   source: "precomputed" | "runtime-ephemeris" | "constant-vector";
 }
 
+export type LandingMoonLightingMode = "birthPhase" | "sceneLit" | "mixed";
+
 export interface LandingMoonConfig {
   visible: boolean;
   date: string;
@@ -94,6 +97,7 @@ export interface LandingMoonConfig {
   lonDeg: number;
   latDeg: number;
   nightLift: number;
+  lightingMode: LandingMoonLightingMode;
 }
 
 export interface LandingLightConfig {
@@ -161,9 +165,22 @@ export interface EarthMoonSceneProps {
   scrollProgress?: number;
   sectionProgress?: number;
   debugMianyang?: boolean;
+  visualDebugLayer?: LandingVisualDebugLayer;
   reducedMotion?: boolean;
   paused?: boolean;
   onSceneReady?: () => void;
+  onProjectionFrame?: (frame: LuBirthProjectionFrame) => void;
+}
+
+export interface LuBirthProjectionFrame {
+  width: number;
+  height: number;
+  earthHorizonPath: string;
+  moon: {
+    x: number;
+    y: number;
+    radius: number;
+  };
 }
 
 export type EarthMoonHeroInteraction =

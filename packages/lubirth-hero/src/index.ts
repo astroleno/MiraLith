@@ -2,6 +2,7 @@ export { EarthMoonHero } from "./EarthMoonHero";
 export { EarthMoonScene } from "./EarthMoonScene";
 export { LandingAtmosphere } from "./LandingAtmosphere";
 export { LandingAurora } from "./LandingAurora";
+export { LandingCloudLayer } from "./LandingCloudLayer";
 export { LandingEarth } from "./LandingEarth";
 export { LandingMoon } from "./LandingMoon";
 export { LandingSpaceBackground } from "./LandingSpaceBackground";
@@ -29,6 +30,9 @@ export type {
   LandingAssetManifest,
   LandingComposition,
   LandingCompositionOverrides,
+  LandingMoonLightingMode,
   LandingResolvedAssets,
-  LandingPresetName
+  LandingPresetName,
+  LandingVisualDebugLayer,
+  LuBirthProjectionFrame
 } from "./types";
