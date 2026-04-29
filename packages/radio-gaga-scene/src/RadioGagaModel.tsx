@@ -4,7 +4,7 @@ import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Group, Material, Mesh, MeshPhysicalMaterial, Object3D } from "three";
-import type { RadioGagaFrame, RadioGagaFrameRef } from "./types";
+import type { RadioGagaFrame, RadioGagaFrameRef, RadioGagaSceneMotionRef } from "./types";
 
 const RADIO_POSITION: [number, number, number] = [0.18, -0.32, 0];
 const RADIO_SCALE = 3.4;
@@ -15,6 +15,7 @@ const ESP32_SCALE = 0.92;
 interface RadioGagaModelProps {
   frame: RadioGagaFrame;
   frameRef?: RadioGagaFrameRef;
+  motionRef?: RadioGagaSceneMotionRef;
   onReady?: () => void;
 }
 
@@ -57,7 +58,7 @@ const applyOpacity = (materials: Material[], opacity: number) => {
   });
 };
 
-export function RadioGagaModel({ frame, frameRef, onReady }: RadioGagaModelProps) {
+export function RadioGagaModel({ frame, frameRef, motionRef, onReady }: RadioGagaModelProps) {
   const radio = useGLTF("/model/radio_gaga.glb");
   const esp32Gltf = useGLTF("/model/xiaozhi_esp32.glb");
   const radioGroup = useRef<Group>(null);
@@ -70,9 +71,9 @@ export function RadioGagaModel({ frame, frameRef, onReady }: RadioGagaModelProps
         color: "#d9b06a",
         transparent: true,
         opacity: 0,
-        roughness: 0.42,
+        roughness: 0.58,
         metalness: 0,
-        transmission: 0.2,
+        transmission: 0.12,
         depthWrite: false
       }),
     []
@@ -96,8 +97,14 @@ export function RadioGagaModel({ frame, frameRef, onReady }: RadioGagaModelProps
     ghostMaterial.needsUpdate = true;
 
     if (radioGroup.current) {
+      const motion = motionRef?.current;
+
       radioGroup.current.scale.setScalar(nextFrame.radioScale * RADIO_SCALE);
-      radioGroup.current.rotation.set(0, nextFrame.radioRotationY, 0);
+      radioGroup.current.rotation.set(
+        motion?.rotationX ?? 0,
+        nextFrame.radioRotationY + (motion?.rotationY ?? 0),
+        0
+      );
     }
     if (solidGroup.current) {
       solidGroup.current.visible = nextFrame.radioOpacity > 0.01;
@@ -115,6 +122,7 @@ export function RadioGagaModel({ frame, frameRef, onReady }: RadioGagaModelProps
   }, [
     esp32Model.materials,
     ghostMaterial,
+    motionRef,
     solidRadio.materials
   ]);
 

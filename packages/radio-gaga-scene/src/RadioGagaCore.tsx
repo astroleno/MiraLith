@@ -3,15 +3,16 @@
 import { useFrame } from "@react-three/fiber";
 import { useCallback, useLayoutEffect, useRef } from "react";
 import { Group, MeshBasicMaterial, PointLight } from "three";
-import type { RadioGagaFrame, RadioGagaFrameRef } from "./types";
+import type { RadioGagaFrame, RadioGagaFrameRef, RadioGagaSceneMotionRef } from "./types";
 
 interface RadioGagaCoreProps {
   frame: RadioGagaFrame;
   frameRef?: RadioGagaFrameRef;
+  motionRef?: RadioGagaSceneMotionRef;
   reducedMotion?: boolean;
 }
 
-export function RadioGagaCore({ frame, frameRef, reducedMotion = false }: RadioGagaCoreProps) {
+export function RadioGagaCore({ frame, frameRef, motionRef, reducedMotion = false }: RadioGagaCoreProps) {
   const rootGroup = useRef<Group>(null);
   const coreGroup = useRef<Group>(null);
   const boardGroup = useRef<Group>(null);
@@ -26,8 +27,14 @@ export function RadioGagaCore({ frame, frameRef, reducedMotion = false }: RadioG
     const nextScale = reducedMotion ? 1 : 0.96 + nextFrame.signatureMomentProgress * 0.08;
 
     if (rootGroup.current) {
+      const motion = motionRef?.current;
+
       rootGroup.current.scale.setScalar(nextFrame.radioScale * 3.4);
-      rootGroup.current.rotation.set(0, nextFrame.radioRotationY, 0);
+      rootGroup.current.rotation.set(
+        motion?.rotationX ?? 0,
+        nextFrame.radioRotationY + (motion?.rotationY ?? 0),
+        0
+      );
     }
     if (coreGroup.current) {
       coreGroup.current.visible = nextFrame.esp32Opacity > 0.01;
@@ -35,7 +42,7 @@ export function RadioGagaCore({ frame, frameRef, reducedMotion = false }: RadioG
       coreGroup.current.scale.setScalar(1.08 * nextScale);
     }
     if (boardGroup.current) {
-      boardGroup.current.rotation.z = reducedMotion ? 0 : Math.sin(nextFrame.signatureMomentProgress * Math.PI) * 0.04;
+      boardGroup.current.rotation.z = reducedMotion ? 0 : Math.sin(nextFrame.signatureMomentProgress * Math.PI) * 0.025;
     }
     if (coreLight.current) {
       coreLight.current.intensity = nextFrame.coreLightIntensity * 1.35;
@@ -53,7 +60,7 @@ export function RadioGagaCore({ frame, frameRef, reducedMotion = false }: RadioG
     traceMaterials.current.forEach((material) => {
       material.opacity = nextFrame.esp32Opacity * 0.78;
     });
-  }, [reducedMotion]);
+  }, [motionRef, reducedMotion]);
 
   useLayoutEffect(() => {
     updateCore(frame);
@@ -70,16 +77,16 @@ export function RadioGagaCore({ frame, frameRef, reducedMotion = false }: RadioG
         <group ref={boardGroup} position={[0, 0, -0.01]}>
           <mesh>
             <boxGeometry args={[0.5, 0.34, 0.018]} />
-            <meshBasicMaterial ref={boardMaterial} color="#78966e" transparent opacity={frame.esp32Opacity * 0.68} />
+            <meshBasicMaterial ref={boardMaterial} color="#6f8063" transparent opacity={frame.esp32Opacity * 0.68} />
           </mesh>
           <mesh position={[0.06, 0.01, 0.014]}>
             <boxGeometry args={[0.16, 0.12, 0.018]} />
-            <meshBasicMaterial ref={chipMaterial} color="#151914" transparent opacity={frame.esp32Opacity * 0.84} />
+            <meshBasicMaterial ref={chipMaterial} color="#161d15" transparent opacity={frame.esp32Opacity * 0.84} />
           </mesh>
         </group>
         <mesh>
           <sphereGeometry args={[0.07, 24, 24]} />
-          <meshBasicMaterial ref={coreMaterial} color="#d9b06a" transparent opacity={frame.esp32Opacity * 0.86} />
+          <meshBasicMaterial ref={coreMaterial} color="#d0ad66" transparent opacity={frame.esp32Opacity * 0.86} />
         </mesh>
         {[-0.12, 0, 0.12].map((offset, index) => (
           <mesh key={offset} position={[offset, -0.1, 0.02]} rotation={[0, 0, Math.PI / 2]}>
@@ -90,7 +97,7 @@ export function RadioGagaCore({ frame, frameRef, reducedMotion = false }: RadioG
                   traceMaterials.current[index] = material;
                 }
               }}
-              color="#9caf88"
+              color="#aab38a"
               transparent
               opacity={frame.esp32Opacity * 0.78}
             />

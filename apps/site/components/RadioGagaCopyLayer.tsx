@@ -36,10 +36,12 @@ export function RadioGagaCopyLayer() {
         </div>
       </div>
       <div className="radio-gaga-copy__core">
-        <p className="radio-gaga-copy__eyebrow">{radioGagaCopy.coreTitleEn}</p>
-        <p>{radioGagaCopy.coreTitleZh}</p>
-        <p>{radioGagaCopy.coreBodyEn.join(" ")}</p>
-        <p>{radioGagaCopy.coreBodyZh.join("")}</p>
+        <p className="radio-gaga-copy__core-title">{radioGagaCopy.coreTitleEn}</p>
+        <p className="radio-gaga-copy__core-title-zh">{radioGagaCopy.coreTitleZh}</p>
+        <div className="radio-gaga-copy__core-note">
+          <p>{radioGagaCopy.coreBodyEn.join(" ")}</p>
+          <p>{radioGagaCopy.coreBodyZh.join("")}</p>
+        </div>
       </div>
       <div className="radio-gaga-copy__final">
         <p>{radioGagaCopy.finalEn}</p>

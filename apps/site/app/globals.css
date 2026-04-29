@@ -662,6 +662,40 @@ body::before {
   opacity: var(--radio-gaga-core-opacity);
 }
 
+.radio-gaga-copy__core-title {
+  margin: 0;
+  color: rgba(247, 239, 227, 0.9);
+  font-size: 22px;
+  line-height: 1.36;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.radio-gaga-copy__core-title-zh {
+  margin: 18px 0 0;
+  color: rgba(247, 239, 227, 0.88);
+  font-size: 18px;
+  line-height: 1.55;
+  font-weight: 600;
+}
+
+.radio-gaga-copy__core-note {
+  margin-top: 12px;
+  padding-left: 14px;
+  border-left: 1px solid rgba(217, 183, 117, 0.28);
+}
+
+.radio-gaga-copy__core-note p {
+  margin: 0;
+  color: rgba(247, 239, 227, 0.58);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.radio-gaga-copy__core-note p + p {
+  margin-top: 4px;
+}
+
 .radio-gaga-copy__final {
   position: absolute;
   left: min(8vw, 104px);
@@ -817,6 +851,22 @@ body::before {
 
   .radio-gaga-copy__core {
     width: min(340px, calc(100vw - 48px));
+  }
+
+  .radio-gaga-copy__core-title {
+    font-size: 17px;
+    line-height: 1.45;
+    letter-spacing: 0.16em;
+  }
+
+  .radio-gaga-copy__core-title-zh {
+    margin-top: 16px;
+    font-size: 16px;
+  }
+
+  .radio-gaga-copy__core-note p {
+    font-size: 12px;
+    line-height: 1.55;
   }
 
   .radio-gaga-copy__memory {

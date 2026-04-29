@@ -27,18 +27,41 @@ function setOpacityVariable(element: HTMLElement, name: string, value: number) {
   element.style.setProperty(name, Math.max(0, Math.min(1, value)).toFixed(4));
 }
 
+const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
+const range = (value: number, start: number, end: number) =>
+  clamp01((value - start) / Math.max(end - start, 0.0001));
+const smooth = (value: number) => value * value * (3 - 2 * value);
+const mobilePhase = (progress: number, enterStart: number, enterEnd: number, exitStart: number, exitEnd: number) =>
+  smooth(range(progress, enterStart, enterEnd)) * (1 - smooth(range(progress, exitStart, exitEnd)));
+
 function applyRadioGagaProgressStyles(element: HTMLElement, progress: number) {
   const frame = mapRadioGagaProgress(progress);
+  const isMobileCopy = typeof window !== "undefined" && window.matchMedia("(max-width: 820px)").matches;
   const decorativeExitOpacity = Math.max(0, 1 - frame.calloutOpacity * 4.2);
   const heroHintOpacity = Math.max(0, 1 - progress / 0.24) * 0.72;
   const mobileScrimOpacity = Math.min(0.84, frame.calloutOpacity * 0.54 + frame.finalLineOpacity * 0.76);
+  const titleOpacity = isMobileCopy
+    ? frame.titleOpacity * (1 - smooth(range(progress, 0.14, 0.24)))
+    : frame.titleOpacity;
+  const voiceOpacity = isMobileCopy
+    ? mobilePhase(progress, 0.2, 0.28, 0.36, 0.46)
+    : frame.bodyOpacity;
+  const memoryOpacity = isMobileCopy
+    ? mobilePhase(progress, 0.42, 0.5, 0.55, 0.62)
+    : frame.memoryLayerOpacity;
+  const coreOpacity = isMobileCopy
+    ? mobilePhase(progress, 0.64, 0.7, 0.8, 0.86)
+    : frame.calloutOpacity;
+  const finalOpacity = isMobileCopy
+    ? smooth(range(progress, 0.86, 0.94))
+    : frame.finalLineOpacity;
 
-  setOpacityVariable(element, "--radio-gaga-title-opacity", frame.titleOpacity);
-  setOpacityVariable(element, "--radio-gaga-voice-opacity", frame.bodyOpacity);
-  setOpacityVariable(element, "--radio-gaga-memory-opacity", frame.memoryLayerOpacity);
+  setOpacityVariable(element, "--radio-gaga-title-opacity", titleOpacity);
+  setOpacityVariable(element, "--radio-gaga-voice-opacity", voiceOpacity);
+  setOpacityVariable(element, "--radio-gaga-memory-opacity", memoryOpacity);
   setOpacityVariable(element, "--radio-gaga-process-opacity", frame.memoryLayerOpacity * decorativeExitOpacity);
-  setOpacityVariable(element, "--radio-gaga-core-opacity", frame.calloutOpacity);
-  setOpacityVariable(element, "--radio-gaga-final-opacity", frame.finalLineOpacity);
+  setOpacityVariable(element, "--radio-gaga-core-opacity", coreOpacity);
+  setOpacityVariable(element, "--radio-gaga-final-opacity", finalOpacity);
   setOpacityVariable(element, "--radio-gaga-hint-opacity", heroHintOpacity);
   setOpacityVariable(element, "--radio-gaga-mobile-scrim-opacity", mobileScrimOpacity);
 }

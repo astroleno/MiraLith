@@ -39,3 +39,12 @@ export interface RadioGagaFrame {
 export interface RadioGagaFrameRef {
   current: RadioGagaFrame;
 }
+
+export interface RadioGagaSceneMotion {
+  rotationX: number;
+  rotationY: number;
+}
+
+export interface RadioGagaSceneMotionRef {
+  current: RadioGagaSceneMotion;
+}
