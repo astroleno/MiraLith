@@ -31,6 +31,7 @@ interface LandingEarthProps {
 
 const lightDirection = new Vector3();
 const SURFACE_CLOUD_OPACITY_MULTIPLIER = 0.36;
+const SURFACE_CLOUD_SHADOW_MULTIPLIER = 0.32;
 
 const smoothstep = (edge0: number, edge1: number, value: number) => {
   const t = Math.min(1, Math.max(0, (value - edge0) / Math.max(edge1 - edge0, 1e-5)));
@@ -112,6 +113,11 @@ export function LandingEarth({
               ? composition.earth.cloudOpacity * SURFACE_CLOUD_OPACITY_MULTIPLIER
               : 0
           },
+          cloudShadowOpacity: {
+            value: composition.earth.useClouds
+              ? composition.earth.cloudOpacity * SURFACE_CLOUD_SHADOW_MULTIPLIER
+              : 0
+          },
           cloudOffset: { value: 0 },
           rimStrength: { value: composition.earth.rimStrength },
           rimWidth: { value: composition.earth.rimWidth },
@@ -141,6 +147,7 @@ export function LandingEarth({
           uniform float edge;
           uniform float nightBoost;
           uniform float cloudOpacity;
+          uniform float cloudShadowOpacity;
           uniform float cloudOffset;
           uniform float rimStrength;
           uniform float rimWidth;
@@ -176,7 +183,7 @@ export function LandingEarth({
             float cloudCore = smoothstep(0.28, 0.7, cloudRaw) * cloudOpacity;
             float cloudAltitude = pow(fresnel, 2.35) * cloudMask * (0.38 + closeStage * 0.78);
             float cloudShadow = smoothstep(0.17, 0.62, texture2D(cloudMap, cloudUv + vec2(-0.008, 0.0052)).r)
-              * cloudOpacity * (0.32 + dayW * 0.52);
+              * cloudShadowOpacity * (0.36 + dayW * 0.56);
             vec3 cloudCol = mix(vec3(0.38, 0.45, 0.52), vec3(0.98, 0.97, 0.9), cloudRaw);
             cloudCol += vec3(0.58, 0.64, 0.7) * max(cloudRelief, 0.0);
             cloudCol += vec3(0.2, 0.3, 0.48) * cloudAltitude;
@@ -293,6 +300,10 @@ export function LandingEarth({
     earthMaterial.uniforms.cloudOpacity.value =
       composition.earth.useClouds && showTextureClouds
         ? composition.earth.cloudOpacity * SURFACE_CLOUD_OPACITY_MULTIPLIER
+        : 0;
+    earthMaterial.uniforms.cloudShadowOpacity.value =
+      composition.earth.useClouds
+        ? composition.earth.cloudOpacity * SURFACE_CLOUD_SHADOW_MULTIPLIER
         : 0;
     const progress = typeof window === "undefined" ? 1 : Math.min(1, Math.max(0, window.__MiraLithOpeningProgress ?? 0));
     if (!shouldLoadNightTexture && progress > 0.28) {

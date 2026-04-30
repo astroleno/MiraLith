@@ -1,4 +1,5 @@
 import type { LandingAsset, LandingAssetManifest } from "./types";
+import { LUBIRTH_CLOUD_DECK_TEXTURE } from "./cloudDeckTexture";
 
 export const DEFAULT_LUBIRTH_ASSETS: LandingAssetManifest = {
   earthDay: {
@@ -25,6 +26,7 @@ export const DEFAULT_LUBIRTH_ASSETS: LandingAssetManifest = {
     format: "jpg",
     colorSpace: "srgb"
   },
+  earthCloudDeck: LUBIRTH_CLOUD_DECK_TEXTURE,
   moonColor: {
     id: "moon-2k",
     src: "/assets/lubirth/textures/moon-2k.jpg",
@@ -95,6 +97,12 @@ export function getLandingAssetBudget(assets: Partial<LandingAssetManifest> = {}
         colorSpace: "srgb"
       },
       680_000,
+      "critical",
+      true
+    ),
+    textureBudget(
+      resolvedAssets.earthCloudDeck ?? LUBIRTH_CLOUD_DECK_TEXTURE,
+      560_000,
       "critical",
       true
     ),

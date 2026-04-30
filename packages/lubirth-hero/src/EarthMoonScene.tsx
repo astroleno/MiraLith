@@ -15,6 +15,7 @@ import {
 } from "./constants";
 import { LandingAtmosphere } from "./LandingAtmosphere";
 import { LandingAurora } from "./LandingAurora";
+import { LandingCloudDeck } from "./LandingCloudDeck";
 import { LandingCloudLayer } from "./LandingCloudLayer";
 import { LandingEarth } from "./LandingEarth";
 import { LandingMoon } from "./LandingMoon";
@@ -105,7 +106,7 @@ export function EarthMoonScene({
   const showClouds = visualDebugLayer === "all" || visualDebugLayer === "clouds";
   const showAtmosphere = visualDebugLayer === "all" || visualDebugLayer === "atmosphere";
   const showAurora = visualDebugLayer === "all" || visualDebugLayer === "aurora";
-  const showSurfaceTextureClouds = visualDebugLayer === "all";
+  const showSurfaceTextureClouds = false;
   const useHeroAuroraProfile = visualDebugLayer === "all" || auroraProfile === "hero";
   const auroraVisibilityBoost = visualDebugLayer === "aurora"
     ? (auroraProfile === "debug" ? 5.0 : 3.1)
@@ -319,15 +320,27 @@ export function EarthMoonScene({
           />
         ) : null}
         {showClouds ? (
-          <LandingCloudLayer
-            composition={composition}
-            assets={assets}
-            quality={quality}
-            sceneLightDirection={sceneLightDirection}
-            emphasis={visualDebugLayer === "clouds"}
-            reducedMotion={reducedMotion}
-            paused={paused}
-          />
+          assets.earthCloudDeck ? (
+            <LandingCloudDeck
+              composition={composition}
+              assets={assets}
+              quality={quality}
+              sceneLightDirection={sceneLightDirection}
+              emphasis={visualDebugLayer === "clouds"}
+              reducedMotion={reducedMotion}
+              paused={paused}
+            />
+          ) : (
+            <LandingCloudLayer
+              composition={composition}
+              assets={assets}
+              quality={quality}
+              sceneLightDirection={sceneLightDirection}
+              emphasis={visualDebugLayer === "clouds"}
+              reducedMotion={reducedMotion}
+              paused={paused}
+            />
+          )
         ) : null}
         {showAtmosphere ? (
           <LandingAtmosphere

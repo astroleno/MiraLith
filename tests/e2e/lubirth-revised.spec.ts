@@ -1,5 +1,15 @@
 import { expect, test } from "@playwright/test";
 
+declare global {
+  interface Window {
+    __MiraLithLuBirthAuroraEnabled?: boolean;
+    __MiraLithLuBirthAuroraProfile?: string;
+    __MiraLithLuBirthCloudDeckActive?: boolean;
+    __MiraLithLuBirthCloudDeckTexture?: string;
+    __MiraLithLuBirthQualityTier?: string;
+  }
+}
+
 test("renders the revised LuBirth route in the production-owned canvas", async ({ page }) => {
   await page.goto("/lubirth-revised?visualTest=pixels&copy=visible");
 
@@ -66,6 +76,9 @@ test("keeps revised route clear of 8K LuBirth texture requests", async ({ page }
   await expect
     .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-day")), { timeout: 25_000 })
     .toBe(true);
+  await expect
+    .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-cloud-deck-2k.png")), { timeout: 25_000 })
+    .toBe(true);
 
   const heavyRequests = Array.from(assetRequests).filter(
     (path) =>
@@ -76,6 +89,29 @@ test("keeps revised route clear of 8K LuBirth texture requests", async ({ page }
   );
 
   expect(heavyRequests).toEqual([]);
+});
+
+test("uses the CloudDeck pass for high quality cloud review", async ({ page }) => {
+  const assetRequests = new Set<string>();
+
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.pathname.includes("/assets/lubirth/")) {
+      assetRequests.add(url.pathname);
+    }
+  });
+
+  await page.goto("/lubirth-revised?progress=0&copy=hidden&debug=clouds&quality=high&visualTest=pixels");
+  await expect(page.locator("canvas")).toHaveCount(1);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudDeckActive), { timeout: 25_000 })
+    .toBe(true);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudDeckTexture), { timeout: 25_000 })
+    .toContain("earth-cloud-deck-2k.png");
+  await expect
+    .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-cloud-deck-2k.png")), { timeout: 25_000 })
+    .toBe(true);
 });
 
 test("honors LuBirth quality URL overrides for aurora debugging", async ({ page }) => {
