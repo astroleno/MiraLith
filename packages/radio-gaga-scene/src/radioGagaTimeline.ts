@@ -41,7 +41,7 @@ export function mapRadioGagaProgress(progressInput: number): RadioGagaFrame {
     signatureMomentProgress: core,
     speakerGlow: lerp(0, 0.45, voice) + lerp(0, 0.2, memory) - lerp(0, 0.4, settle),
     voiceLinesOpacity: lerp(0, 0.65, voice) * lerp(1, 0.05, homeReturn) + lerp(0, 0.11, homeReturn),
-    memoryLayerOpacity: lerp(0, 0.58, memory) * lerp(1, 0.08, memoryExit) * lerp(1, 0, memoryCoreExit),
+    memoryLayerOpacity: lerp(0, 0.64, memory) * lerp(1, 0.08, memoryExit) * lerp(1, 0, memoryCoreExit),
     titleOpacity: titleIntroOpacity * lerp(1, 0, titleExit),
     bodyOpacity: lerp(0, 1, voice) * lerp(1, 0, voiceExit),
     calloutOpacity: coreCopy * lerp(1, 0, coreFinalExit),

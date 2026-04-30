@@ -674,6 +674,7 @@ body::before {
   align-items: baseline;
   padding-top: 14px;
   opacity: 0.24;
+  transform: translateX(-5px);
 }
 
 .radio-gaga-instrument__step + .radio-gaga-instrument__step {
@@ -692,22 +693,27 @@ body::before {
 
 .radio-gaga-instrument__step[data-radio-gaga-dial="1"] {
   opacity: calc(0.18 + var(--radio-gaga-dial-1-opacity) * 0.72);
+  transform: translateX(calc((1 - var(--radio-gaga-dial-1-opacity)) * -5px));
 }
 
 .radio-gaga-instrument__step[data-radio-gaga-dial="2"] {
   opacity: calc(0.18 + var(--radio-gaga-dial-2-opacity) * 0.72);
+  transform: translateX(calc((1 - var(--radio-gaga-dial-2-opacity)) * -5px));
 }
 
 .radio-gaga-instrument__step[data-radio-gaga-dial="3"] {
   opacity: calc(0.18 + var(--radio-gaga-dial-3-opacity) * 0.72);
+  transform: translateX(calc((1 - var(--radio-gaga-dial-3-opacity)) * -5px));
 }
 
 .radio-gaga-instrument__step[data-radio-gaga-dial="4"] {
   opacity: calc(0.18 + var(--radio-gaga-dial-4-opacity) * 0.72);
+  transform: translateX(calc((1 - var(--radio-gaga-dial-4-opacity)) * -5px));
 }
 
 .radio-gaga-instrument__step[data-radio-gaga-dial="5"] {
   opacity: calc(0.18 + var(--radio-gaga-dial-5-opacity) * 0.72);
+  transform: translateX(calc((1 - var(--radio-gaga-dial-5-opacity)) * -5px));
 }
 
 .radio-gaga-instrument__step span {
@@ -740,7 +746,9 @@ body::before {
   border-left: 1px solid rgba(217, 183, 117, 0.38);
   background: linear-gradient(90deg, rgba(5, 3, 2, 0.66), rgba(5, 3, 2, 0.12));
   opacity: var(--radio-gaga-broadcast-opacity);
-  transform: translateY(calc((1 - var(--radio-gaga-broadcast-opacity)) * 10px));
+  transform:
+    translateX(calc((1 - var(--radio-gaga-broadcast-opacity)) * -16px))
+    translateY(calc((1 - var(--radio-gaga-broadcast-opacity)) * 8px));
 }
 
 .radio-gaga-instrument__broadcast strong,
@@ -835,6 +843,10 @@ body::before {
   line-height: 1.75;
 }
 
+.radio-gaga-copy__memory p {
+  color: rgba(247, 239, 227, 0.86);
+}
+
 .visual-canvas-fallback[data-visual-fallback="radio-gaga"] {
   background:
     radial-gradient(circle at 70% 44%, rgba(135, 54, 45, 0.3), transparent 30%),
@@ -852,7 +864,10 @@ body::before {
   transform: translateY(-50%) rotate(-2deg);
   overflow: hidden;
   border-radius: 26px 26px 38px 38px;
+  outline: 1px solid rgba(231, 196, 132, 0.1);
   background:
+    linear-gradient(90deg, transparent 0 66%, rgba(217, 183, 117, 0.16) 66.5% 67%, transparent 67.5%),
+    linear-gradient(90deg, transparent 0 71%, rgba(135, 54, 45, 0.5) 71% 72.2%, transparent 72.6%),
     linear-gradient(0deg, rgba(235, 214, 170, 0.08), transparent 28%),
     repeating-linear-gradient(90deg, rgba(248, 232, 196, 0.045) 0 1px, transparent 1px 7px),
     radial-gradient(circle at 28% 56%, rgba(5, 3, 2, 0.92) 0 13%, rgba(231, 196, 132, 0.16) 13.5% 16%, transparent 16.5%),
@@ -860,6 +875,7 @@ body::before {
     linear-gradient(145deg, #87352d, #501d1a 62%, #25100d);
   box-shadow:
     0 42px 120px rgba(0, 0, 0, 0.62),
+    inset 0 0 0 1px rgba(255, 225, 170, 0.06),
     inset 0 1px 0 rgba(255, 229, 176, 0.2),
     inset 0 -22px 50px rgba(5, 3, 2, 0.28);
   opacity: 0.88;
@@ -916,6 +932,26 @@ body::before {
   box-shadow:
     inset 0 0 0 1px rgba(231, 196, 132, 0.2),
     0 10px 22px rgba(0, 0, 0, 0.32);
+}
+
+.radio-gaga-fallback-poster__dial::before,
+.radio-gaga-fallback-poster__dial::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+}
+
+.radio-gaga-fallback-poster__dial::before {
+  inset: -9%;
+  border: 1px solid rgba(231, 196, 132, 0.24);
+}
+
+.radio-gaga-fallback-poster__dial::after {
+  right: 8%;
+  top: 28%;
+  width: 18%;
+  aspect-ratio: 1;
+  background: rgba(135, 54, 45, 0.82);
 }
 
 .radio-gaga-fallback-copy {

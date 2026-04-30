@@ -202,7 +202,7 @@ export function RadioGagaRoute({ initialForcedVisualFallback = false }: RadioGag
         <div className="radio-gaga-fallback-flow" aria-hidden="true">
           <span>local news</span>
           <span>my voice</span>
-          <span>radio at home</span>
+          <span>{"parents' radio"}</span>
         </div>
       </div>
     </VisualCanvasFallback>

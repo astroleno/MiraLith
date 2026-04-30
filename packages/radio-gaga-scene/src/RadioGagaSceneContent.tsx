@@ -27,6 +27,7 @@ export function RadioGagaSceneContent({
   const readyRef = useRef(false);
   const keyLight = useRef<DirectionalLight>(null);
   const openingFill = useRef<DirectionalLight>(null);
+  const rimLight = useRef<DirectionalLight>(null);
   const previousSceneEnvironment = useRef<SceneEnvironment | null>(null);
   const { camera, scene, size } = useThree();
   const backgroundColor = useMemo(() => new Color("#050302"), []);
@@ -70,7 +71,7 @@ export function RadioGagaSceneContent({
     const mobilePullback = isMobile
       ? 1.2 + nextFrame.signatureMomentProgress * 0.64 + nextFrame.finalLineOpacity * 0.36
       : 0;
-    const shortLandscapePullback = isShortLandscape ? 0.72 + nextFrame.signatureMomentProgress * 0.22 : 0;
+    const shortLandscapePullback = isShortLandscape ? 0.6 + nextFrame.signatureMomentProgress * 0.22 : 0;
     const careStillness = 1 - nextFrame.signatureMomentProgress * 0.75;
     const finalStillness = 1 - nextFrame.finalLineOpacity * 0.92;
     const motionStrength = reducedMotion || isMobile
@@ -93,7 +94,10 @@ export function RadioGagaSceneContent({
       keyLight.current.intensity = 0.45 + nextFrame.backgroundWarmth * 0.65;
     }
     if (openingFill.current) {
-      openingFill.current.intensity = 0.14 * (1 - nextFrame.signatureMomentProgress);
+      openingFill.current.intensity = 0.2 * (1 - nextFrame.signatureMomentProgress);
+    }
+    if (rimLight.current) {
+      rimLight.current.intensity = 0.16 * (1 - nextFrame.signatureMomentProgress * 0.65);
     }
   }, -1);
 
@@ -103,9 +107,10 @@ export function RadioGagaSceneContent({
 
   return (
     <>
-      <ambientLight color="#f1e4c8" intensity={0.38} />
+      <ambientLight color="#f1e4c8" intensity={0.42} />
       <directionalLight ref={keyLight} color="#d9b06a" position={[2.4, 2.2, 3.4]} intensity={0.8} />
-      <directionalLight ref={openingFill} color="#f3c884" position={[-2.2, 1.3, 2.8]} intensity={0.14} />
+      <directionalLight ref={openingFill} color="#f3c884" position={[-2.2, 1.3, 2.8]} intensity={0.2} />
+      <directionalLight ref={rimLight} color="#d7a25f" position={[-3.2, 1.4, -1.8]} intensity={0.16} />
       <RadioGagaModel frame={frame} frameRef={frameRef} motionRef={motionRef} onReady={handleModelReady} />
       <RadioGagaCore frame={frame} frameRef={frameRef} motionRef={motionRef} reducedMotion={reducedMotion} />
       <RadioGagaVoiceLines frame={frame} frameRef={frameRef} reducedMotion={reducedMotion} />

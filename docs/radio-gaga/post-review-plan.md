@@ -14,7 +14,7 @@
 
 - Branch: `codex/radio-gaga-route-branch`
 - Base implementation commit for this follow-up: `28d60e6403a1a9c701aedf93039c758e65bc5d2e`
-- Current follow-up state: post-review merge fixes are applied in the working tree and not yet committed.
+- Current follow-up state: post-review merge fixes are committed on branch HEAD `5d1a9df fix(radio-gaga): harden review path`.
 - Route: `/radio-gaga`
 - Build status after follow-up: `pnpm build` passed and route list included dynamic server-rendered `/radio-gaga`.
 - E2E status after follow-up: `pnpm exec playwright test tests/e2e/radio-gaga.spec.ts` passed with `30 passed`.
@@ -47,7 +47,8 @@ Resolved in this follow-up:
 
 Remaining review work:
 
-- Human visual approval passed for screenshots in `screenshots/radio-gaga-visual-review/`: desktop top, desktop memory/broadcast, desktop core reveal, desktop finale, mobile landscape memory, and desktop forced fallback.
+- Human visual approval passed for screenshots in `screenshots/radio-gaga-visual-review/final-skill-review/`: desktop top, desktop memory/broadcast, desktop core reveal, desktop finale, mobile landscape memory, and desktop forced fallback.
+- PR attachments should use the final screenshots from `screenshots/radio-gaga-visual-review/final-skill-review/`; keep that directory as local review evidence unless the team explicitly decides to add binary screenshots to the repository.
 - Homepage surfacing is undecided: keep `/radio-gaga` standalone for PR, or add a visible homepage path.
 
 ## Guardrails
