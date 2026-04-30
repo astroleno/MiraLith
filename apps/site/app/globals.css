@@ -1138,9 +1138,19 @@ body::before {
 
   .radio-gaga-copy__memory {
     left: 28px;
-    top: auto;
-    bottom: 28px;
-    width: 38vw;
+    top: 68px;
+    bottom: auto;
+    width: min(300px, 34vw);
+  }
+
+  .radio-gaga-copy__memory p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .radio-gaga-copy__memory p + p {
+    margin-top: 8px;
   }
 
   .radio-gaga-copy__final {
@@ -1162,8 +1172,8 @@ body::before {
   .radio-gaga-instrument__broadcast {
     left: 28px;
     top: auto;
-    bottom: 72px;
-    width: min(330px, 40vw);
+    bottom: 24px;
+    width: min(320px, 35vw);
     padding: 10px 12px;
   }
 

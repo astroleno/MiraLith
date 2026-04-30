@@ -13,11 +13,14 @@
 ## Current Baseline
 
 - Branch: `codex/radio-gaga-route-branch`
-- Latest implementation commit: `8ae601b feat: ship radio gaga case route`
+- Base implementation commit for this follow-up: `28d60e6403a1a9c701aedf93039c758e65bc5d2e`
+- Current follow-up state: post-review merge fixes are applied in the working tree and not yet committed.
 - Route: `/radio-gaga`
-- Build status at review handoff: `pnpm build` passed and route list included `/radio-gaga`.
-- E2E status at review handoff: `pnpm exec playwright test tests/e2e/radio-gaga.spec.ts` passed with `18 passed`.
-- Test server status at handoff: stopped.
+- Build status after follow-up: `pnpm build` passed and route list included dynamic server-rendered `/radio-gaga`.
+- E2E status after follow-up: `pnpm exec playwright test tests/e2e/radio-gaga.spec.ts` passed with `30 passed`.
+- Additional static checks after follow-up: `pnpm --filter @miralith/site lint`, `pnpm --filter @miralith/radio-gaga-scene typecheck`, and `pnpm --filter @miralith/site typecheck` all exited 0.
+- Dev hydration status after follow-up: `/radio-gaga?visual=fallback` was checked on a dev server at port `3099`; `canvasCount=0`, `fallbackCount=1`, and no hydration-related console/pageerror messages were reported.
+- Test server status after follow-up: ports `3100` and `3099` had no leftover listener after verification.
 - Known uncommitted generated file at handoff: `apps/site/next-env.d.ts` can flip between `.next/dev/types/routes.d.ts` and `.next/types/routes.d.ts` after dev/build. Do not include it in RadioGaga feature commits unless the team intentionally normalizes the generated import.
 
 ## Review Summary
@@ -33,11 +36,19 @@ The current route is good enough for PR / integration review:
 - Fallback has a static radio silhouette and is no longer an empty black text page.
 - Mobile portrait, mobile landscape, desktop, and fallback states have been visually checked.
 
-Remaining non-blocking polish:
+Resolved in this follow-up:
 
-- Around progress `0.62`, mobile can still show a very faint previous-copy residue under the entering core copy.
+- `assetState === "checking"` no longer displays the fallback poster or hides the normal RadioGaga copy layer.
+- Forced fallback and failed model preflight still render the readable fallback.
+- Forced fallback now receives its initial state from server `searchParams`, so SSR and hydration both start on fallback DOM for `/radio-gaga?visual=fallback`.
+- Mobile landscape memory copy, broadcast copy, and step marker are separated and covered by bbox e2e.
+- Finale completion is covered by e2e: final English / Chinese lines reach high opacity and earlier copy groups exit.
+- The ghost radio material no longer sets `needsUpdate` every frame while only opacity changes.
+
+Remaining review work:
+
+- Human visual approval passed for screenshots in `screenshots/radio-gaga-visual-review/`: desktop top, desktop memory/broadcast, desktop core reveal, desktop finale, mobile landscape memory, and desktop forced fallback.
 - Homepage surfacing is undecided: keep `/radio-gaga` standalone for PR, or add a visible homepage path.
-- PR screenshots should be regenerated from the final branch state before review.
 
 ## Guardrails
 
@@ -57,6 +68,8 @@ Likely follow-up files:
 ```text
 packages/radio-gaga-scene/src/radioGagaTimeline.ts
 apps/site/app/globals.css
+apps/site/app/radio-gaga/page.tsx
+apps/site/components/RadioGagaRoute.tsx
 tests/e2e/radio-gaga.spec.ts
 README.md
 docs/top-plan.md
@@ -70,84 +83,39 @@ apps/site/components/MiraLithHome.tsx
 tests/e2e/miralith.spec.ts
 ```
 
-## Task 1: Remove the Last Core-Entry Ghosting
+## Completed Background: Core-Entry Ghosting Timing
 
 **Files:**
 
-- Modify: `packages/radio-gaga-scene/src/radioGagaTimeline.ts`
-- Modify: `tests/e2e/radio-gaga.spec.ts`
+- Already updated before this follow-up: `packages/radio-gaga-scene/src/radioGagaTimeline.ts`
+- Already updated before this follow-up: `tests/e2e/radio-gaga.spec.ts`
 
-- [ ] **Step 1: Shift core copy entry slightly later**
+- [x] **Step 1: Shift core copy entry slightly later**
 
-In `packages/radio-gaga-scene/src/radioGagaTimeline.ts`, change:
-
-```ts
-const coreCopy = smooth(range(progress, 0.58, 0.74));
-```
-
-to:
+In `packages/radio-gaga-scene/src/radioGagaTimeline.ts`, `coreCopy` is already:
 
 ```ts
 const coreCopy = smooth(range(progress, 0.62, 0.76));
 ```
 
-Expected effect: memory/process get a cleaner exit before core copy becomes readable.
+Status: this is completed baseline as of `28d60e6403a1a9c701aedf93039c758e65bc5d2e`, not an open task.
 
-- [ ] **Step 2: Keep the core e2e check in the core phase**
+- [x] **Step 2: Keep the core e2e check in the core phase**
 
-In `tests/e2e/radio-gaga.spec.ts`, find:
+The core e2e check now scrolls via the shared `scrollRadioGagaTo(page, 0.72)` helper, which keeps the assertion in the settled core phase after the later copy entrance.
 
-```ts
-await page.evaluate(() => window.scrollTo({ top: window.innerHeight * 2.25, behavior: "instant" }));
-```
+- [x] **Step 3: Run full RadioGaga e2e**
 
-Inside the `radioGAGA core phase exits earlier copy groups` test, change it to:
+Latest result: `pnpm exec playwright test tests/e2e/radio-gaga.spec.ts` exited 0 with `30 passed`.
 
-```ts
-await page.evaluate(() => window.scrollTo({ top: window.innerHeight * 2.45, behavior: "instant" }));
-```
-
-Expected effect: the assertion still measures the settled core phase after the later copy entrance.
-
-- [ ] **Step 3: Run focused e2e**
-
-Run:
-
-```bash
-pnpm exec playwright test tests/e2e/radio-gaga.spec.ts --project=mobile-portrait
-```
-
-Expected: all mobile portrait RadioGaga tests pass.
-
-- [ ] **Step 4: Run full RadioGaga e2e**
-
-Run:
-
-```bash
-pnpm exec playwright test tests/e2e/radio-gaga.spec.ts
-```
-
-Expected: `18 passed`.
-
-- [ ] **Step 5: Commit if this polish is accepted**
-
-Run:
-
-```bash
-git add packages/radio-gaga-scene/src/radioGagaTimeline.ts tests/e2e/radio-gaga.spec.ts
-git commit -m "fix: delay radio gaga core copy entrance"
-```
-
-Expected: a focused commit containing only the timing polish and test adjustment.
-
-## Task 2: Regenerate Review Screenshots
+## Completed Visual Review Screenshots
 
 **Files:**
 
 - No repo file changes required.
-- Output directory: `/tmp/miralith-radiogaga-review-ready`
+- Output directory: `screenshots/radio-gaga-visual-review/`
 
-- [ ] **Step 1: Build production bundle**
+- [x] **Step 1: Build production bundle**
 
 Run:
 
@@ -157,7 +125,7 @@ pnpm build
 
 Expected: build succeeds and route list includes `/radio-gaga`.
 
-- [ ] **Step 2: Start production server**
+- [x] **Step 2: Start production server**
 
 Run:
 
@@ -167,7 +135,7 @@ pnpm --filter @miralith/site exec next start -H 127.0.0.1 -p 3021
 
 Expected: Next reports `Ready` at `http://127.0.0.1:3021`.
 
-- [ ] **Step 3: Capture review states**
+- [x] **Step 3: Capture review states**
 
 Run this from another terminal:
 
@@ -176,7 +144,7 @@ node --input-type=module <<'EOF'
 import { chromium } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 
-const out = '/tmp/miralith-radiogaga-review-ready';
+const out = 'screenshots/radio-gaga-visual-review';
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch();
 const states = [
@@ -212,9 +180,9 @@ console.log(out);
 EOF
 ```
 
-Expected: screenshots exist in `/tmp/miralith-radiogaga-review-ready`.
+Actual: screenshots exist in `screenshots/radio-gaga-visual-review/`.
 
-- [ ] **Step 4: Stop production server**
+- [x] **Step 4: Stop production server**
 
 Stop the `next start` process with `Ctrl-C`.
 
@@ -224,7 +192,7 @@ Run:
 lsof -nP -iTCP:3021 -sTCP:LISTEN || true
 ```
 
-Expected: no process is listening on port `3021`.
+Expected: no process is listening on the review server port.
 
 ## Task 3: Decide Homepage Surfacing
 
@@ -287,6 +255,7 @@ Run:
 
 ```bash
 pnpm --filter @miralith/site lint
+pnpm --filter @miralith/radio-gaga-scene typecheck
 pnpm --filter @miralith/site typecheck
 pnpm build
 pnpm exec playwright test tests/e2e/radio-gaga.spec.ts
@@ -296,9 +265,10 @@ Expected:
 
 ```text
 lint exits 0
+radio-gaga-scene typecheck exits 0
 typecheck exits 0
 build exits 0 and includes /radio-gaga
-RadioGaga e2e exits 0 with 18 passed
+RadioGaga e2e exits 0 with 30 passed
 ```
 
 - [ ] **Step 3: Confirm no servers are left running**
@@ -322,12 +292,16 @@ Use this summary:
 - Ships `/radio-gaga` as a standalone RadioGaga case route.
 - Adds memory/process DOM copy, radio tuning artifact, ESP32 care-core reveal, and static fallback silhouette.
 - Moves scroll progress off React state into refs/CSS variables and keeps R3F updates in frame.
-- Updates RadioGaga e2e coverage across desktop, mobile portrait, mobile landscape, and fallback.
+- Keeps pending/checking asset preflight on the normal route copy instead of flashing fallback.
+- Passes forced fallback from server search params to avoid SSR hydration mismatch on `/radio-gaga?visual=fallback`.
+- Separates mobile landscape memory/broadcast/step-marker layout and removes ghost material per-frame `needsUpdate`.
+- Updates RadioGaga e2e coverage across desktop, mobile portrait, mobile landscape, pending preflight, finale, bbox, and fallback.
 - Updates README, roadmap, state, and top-plan docs with the new route status.
 
 ## Verification
 
 - pnpm --filter @miralith/site lint
+- pnpm --filter @miralith/radio-gaga-scene typecheck
 - pnpm --filter @miralith/site typecheck
 - pnpm build
 - pnpm exec playwright test tests/e2e/radio-gaga.spec.ts
@@ -340,5 +314,5 @@ Expected: PR description is ready without reconstructing conversation context.
 If a future session starts from this file, use this prompt:
 
 ```text
-Continue the RadioGaga route from docs/radio-gaga/post-review-plan.md. Start by reading the Current Baseline and Review Summary. Do not reopen solved visual choices. First decide whether to apply Task 1's core-entry ghosting polish, then run the listed verification commands.
+Continue the RadioGaga route from docs/radio-gaga/post-review-plan.md. Start by reading the Current Baseline and Review Summary. Do not reopen solved visual choices. Core-entry ghosting, checking fallback, forced-fallback hydration, mobile landscape overlap, finale e2e, and ghost material needsUpdate have already been addressed; next decide homepage surfacing or prepare the PR.
 ```

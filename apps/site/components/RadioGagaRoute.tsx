@@ -91,14 +91,18 @@ function applyRadioGagaProgressStyles(element: HTMLElement, progress: number) {
   });
 }
 
-export function RadioGagaRoute() {
+interface RadioGagaRouteProps {
+  initialForcedVisualFallback?: boolean;
+}
+
+export function RadioGagaRoute({ initialForcedVisualFallback = false }: RadioGagaRouteProps) {
   const routeRef = useRef<HTMLElement>(null);
   const progressRef = useRef(0);
   const [assetState, setAssetState] = useState<RadioGagaAssetState>("checking");
   const forcedVisualFallback = useSyncExternalStore(
     subscribeForcedVisualFallback,
     getForcedVisualFallbackSnapshot,
-    () => false
+    () => initialForcedVisualFallback
   );
 
   useEffect(() => {
@@ -203,7 +207,7 @@ export function RadioGagaRoute() {
       </div>
     </VisualCanvasFallback>
   );
-  const showFallback = forcedVisualFallback || assetState !== "ready";
+  const showFallback = forcedVisualFallback || assetState === "failed";
 
   return (
     <main ref={routeRef} className="radio-gaga-route" aria-label="radioGAGA care radio scene">

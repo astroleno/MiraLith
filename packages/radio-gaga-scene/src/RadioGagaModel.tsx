@@ -94,7 +94,6 @@ export function RadioGagaModel({ frame, frameRef, motionRef, onReady }: RadioGag
     applyOpacity(solidRadio.materials, nextFrame.radioOpacity);
     applyOpacity(esp32Model.materials, nextFrame.esp32Opacity);
     ghostMaterial.opacity = nextFrame.radioGhostOpacity;
-    ghostMaterial.needsUpdate = true;
 
     if (radioGroup.current) {
       const motion = motionRef?.current;
