@@ -8,7 +8,10 @@ export { LandingCloudLayer } from "./LandingCloudLayer";
 export { LandingCloudDeck } from "./LandingCloudDeck";
 export { LandingCloudDeckV2 } from "./LandingCloudDeckV2";
 export { LandingEarth } from "./LandingEarth";
+export { LandingHorizonAuroraRibbon } from "./LandingHorizonAuroraRibbon";
+export { LandingHorizonCloudBelt } from "./LandingHorizonCloudBelt";
 export { LandingLimbAirglowV2 } from "./LandingLimbAirglowV2";
+export { LandingLimbScatteringLook } from "./LandingLimbScatteringLook";
 export { LandingMoon } from "./LandingMoon";
 export { LandingSpaceBackground } from "./LandingSpaceBackground";
 export {
@@ -20,6 +23,7 @@ export {
 } from "./assetManifest";
 export {
   DEFAULT_LUBIRTH_DATE,
+  DEFAULT_LUBIRTH_FIELD_SUN_DIRECTION,
   DEFAULT_LUBIRTH_LOCATION_TARGET,
   DEFAULT_LUBIRTH_LOCATION_VECTOR,
   DEFAULT_LUBIRTH_MOON_PHASE

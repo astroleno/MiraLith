@@ -21,6 +21,7 @@ import { LandingCloudDeck } from "./LandingCloudDeck";
 import { LandingCloudDeckV2 } from "./LandingCloudDeckV2";
 import { LandingCloudLayer } from "./LandingCloudLayer";
 import { LandingEarth } from "./LandingEarth";
+import { LandingHorizonAuroraRibbon } from "./LandingHorizonAuroraRibbon";
 import { LandingLimbAirglowV2 } from "./LandingLimbAirglowV2";
 import { LandingMoon } from "./LandingMoon";
 import { LandingSpaceBackground } from "./LandingSpaceBackground";
@@ -98,9 +99,12 @@ export function EarthMoonScene({
   onSceneReady,
   onProjectionFrame,
   onVisualReadyEnough,
+  onMoonTextureReady,
   useCloudDeckV2 = true,
   useAirglowV2 = true,
-  useAuroraOval = true
+  useAuroraOval = false,
+  useHorizonAuroraRibbon = true,
+  showAuroraInAll = false
 }: EarthMoonSceneProps) {
   const earthGroup = useRef<Group>(null);
   const directionalLightRef = useRef<DirectionalLight>(null);
@@ -112,7 +116,7 @@ export function EarthMoonScene({
   const showMoon = visualDebugLayer === "all";
   const showClouds = visualDebugLayer === "all" || visualDebugLayer === "clouds";
   const showAtmosphere = visualDebugLayer === "all" || visualDebugLayer === "atmosphere";
-  const showAurora = visualDebugLayer === "all" || visualDebugLayer === "aurora";
+  const showAurora = visualDebugLayer === "aurora" || (showAuroraInAll && visualDebugLayer === "all");
   const showSurfaceTextureClouds =
     showClouds &&
     quality.tier !== "low" &&
@@ -365,7 +369,18 @@ export function EarthMoonScene({
           )
         ) : null}
         {showAurora ? (
-          useAuroraOval ? (
+          useHorizonAuroraRibbon ? (
+            <LandingHorizonAuroraRibbon
+              composition={composition}
+              quality={quality}
+              sceneLightDirection={sceneLightDirection}
+              visibilityBoost={auroraVisibilityBoost}
+              moonColumnAvoidance={visualDebugLayer === "all" ? 1 : 0}
+              debugProfile={auroraProfile === "debug"}
+              reducedMotion={reducedMotion}
+              paused={paused}
+            />
+          ) : useAuroraOval ? (
             <LandingAuroraOval
               composition={composition}
               quality={quality}
@@ -428,6 +443,7 @@ export function EarthMoonScene({
           sceneLightDirection={sceneLightDirection}
           position={moonTargetPosition}
           targetScale={moonTargetScale}
+          onTextureReady={onMoonTextureReady}
         />
       ) : null}
     </>

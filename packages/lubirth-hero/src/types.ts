@@ -174,9 +174,12 @@ export interface EarthMoonSceneProps {
   onSceneReady?: () => void;
   onProjectionFrame?: (frame: LuBirthProjectionFrame) => void;
   onVisualReadyEnough?: () => void;
+  onMoonTextureReady?: () => void;
   useCloudDeckV2?: boolean;
   useAirglowV2?: boolean;
   useAuroraOval?: boolean;
+  useHorizonAuroraRibbon?: boolean;
+  showAuroraInAll?: boolean;
 }
 
 export interface LuBirthProjectionFrame {

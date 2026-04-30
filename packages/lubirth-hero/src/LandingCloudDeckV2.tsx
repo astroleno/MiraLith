@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import {
   AddEquation,
@@ -43,6 +43,15 @@ const smoothstep = (edge0: number, edge1: number, value: number) => {
   const t = Math.min(1, Math.max(0, (value - edge0) / Math.max(edge1 - edge0, 1e-5)));
   return t * t * (3 - 2 * t);
 };
+
+function shouldArmCloudDeckImmediately() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  return params.has("progress") || params.get("visualTest") === "pixels";
+}
 
 function createCloudDeckV2Material(composition: LandingComposition) {
   return new ShaderMaterial({
@@ -232,12 +241,14 @@ export function LandingCloudDeckV2({
   paused
 }: LandingCloudDeckV2Props) {
   const cloud = useRef<Mesh>(null);
+  const [cloudDeckArmed, setCloudDeckArmed] = useState(shouldArmCloudDeckImmediately);
   const cloudDeckAsset = assets.earthCloudDeck;
   const shouldLoadCloudDeck =
     composition.earth.useClouds &&
     composition.earth.cloudOpacity > 0 &&
     quality.tier !== "fallback" &&
-    quality.tier !== "low";
+    quality.tier !== "low" &&
+    (cloudDeckArmed || emphasis);
   const { texture: cloudDeckTexture, failed: cloudDeckTextureFailed } = useLandingTexture(
     shouldLoadCloudDeck ? cloudDeckAsset?.src : undefined,
     {
@@ -269,11 +280,15 @@ export function LandingCloudDeckV2({
   }, [cloudDeckAsset?.src, enabled]);
 
   useFrame((state) => {
+    const progress = getRuntimeOpeningProgress(0);
+    if (!cloudDeckArmed && progress > 0.08) {
+      setCloudDeckArmed(true);
+    }
+
     if (!cloud.current || !enabled || !cloudDeckTexture) {
       return;
     }
 
-    const progress = getRuntimeOpeningProgress(0);
     const closeStage = 1 - smoothstep(0.18, 0.86, progress);
     const elapsed = paused || reducedMotion ? 0 : state.clock.elapsedTime;
     const activeLightDirection = sceneLightDirection ?? lightDirection.set(...composition.light.fixedSunDir).normalize();
