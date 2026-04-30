@@ -114,6 +114,28 @@ test("uses the CloudDeck pass for high quality cloud review", async ({ page }) =
     .toBe(true);
 });
 
+test("does not request CloudDeck in low quality cloud review", async ({ page }) => {
+  const assetRequests = new Set<string>();
+
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.pathname.includes("/assets/lubirth/")) {
+      assetRequests.add(url.pathname);
+    }
+  });
+
+  await page.goto("/lubirth-revised?progress=0&copy=hidden&debug=clouds&quality=low&visualTest=pixels");
+  await expect(page.locator("canvas")).toHaveCount(1);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthQualityTier), { timeout: 25_000 })
+    .toBe("low");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudDeckActive), { timeout: 25_000 })
+    .toBe(false);
+  await page.waitForTimeout(900);
+  expect(Array.from(assetRequests).filter((path) => path.includes("earth-cloud-deck-2k.png"))).toEqual([]);
+});
+
 test("honors LuBirth quality URL overrides for aurora debugging", async ({ page }) => {
   await page.goto("/lubirth-revised?progress=0&copy=hidden&debug=aurora&quality=low&visualTest=pixels");
   await expect(page.locator("canvas")).toHaveCount(1);

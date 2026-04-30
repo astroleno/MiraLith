@@ -37,7 +37,7 @@ declare global {
 
 const lightDirection = new Vector3();
 const color = new Color();
-const CLOUD_DECK_RADIUS = 1.031;
+const CLOUD_DECK_RADIUS = 1.014;
 
 const smoothstep = (edge0: number, edge1: number, value: number) => {
   const t = Math.min(1, Math.max(0, (value - edge0) / Math.max(edge1 - edge0, 1e-5)));
@@ -222,18 +222,23 @@ export function LandingCloudDeck({
 }: LandingCloudDeckProps) {
   const cloud = useRef<Mesh>(null);
   const cloudDeckAsset = assets.earthCloudDeck;
-  const { texture: cloudDeckTexture, failed: cloudDeckTextureFailed } = useLandingTexture(cloudDeckAsset?.src, {
-    colorSpace: cloudDeckAsset?.colorSpace,
-    wrapS: RepeatWrapping,
-    wrapT: RepeatWrapping,
-    anisotropy: quality.tier === "high" ? 16 : 8
-  });
-  const material = useMemo(() => createCloudDeckMaterial(composition), [composition]);
-  const enabled =
+  const shouldLoadCloudDeck =
     composition.earth.useClouds &&
     composition.earth.cloudOpacity > 0 &&
     quality.tier !== "fallback" &&
-    quality.tier !== "low" &&
+    quality.tier !== "low";
+  const { texture: cloudDeckTexture, failed: cloudDeckTextureFailed } = useLandingTexture(
+    shouldLoadCloudDeck ? cloudDeckAsset?.src : undefined,
+    {
+      colorSpace: cloudDeckAsset?.colorSpace,
+      wrapS: RepeatWrapping,
+      wrapT: RepeatWrapping,
+      anisotropy: quality.tier === "high" ? 16 : 8
+    }
+  );
+  const material = useMemo(() => createCloudDeckMaterial(composition), [composition]);
+  const enabled =
+    shouldLoadCloudDeck &&
     Boolean(cloudDeckTexture) &&
     !cloudDeckTextureFailed;
 

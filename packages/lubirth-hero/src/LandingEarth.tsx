@@ -30,8 +30,8 @@ interface LandingEarthProps {
 }
 
 const lightDirection = new Vector3();
-const SURFACE_CLOUD_OPACITY_MULTIPLIER = 0.36;
-const SURFACE_CLOUD_SHADOW_MULTIPLIER = 0.32;
+const SURFACE_CLOUD_OPACITY_MULTIPLIER = 0.12;
+const SURFACE_CLOUD_SHADOW_MULTIPLIER = 0.1;
 
 const smoothstep = (edge0: number, edge1: number, value: number) => {
   const t = Math.min(1, Math.max(0, (value - edge0) / Math.max(edge1 - edge0, 1e-5)));

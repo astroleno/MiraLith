@@ -120,7 +120,7 @@ await sharp(output, {
     channels: 4
   }
 })
-  .png({ compressionLevel: 9, adaptiveFiltering: true, palette: true, colours: 256, effort: 10 })
+  .png({ compressionLevel: 9, adaptiveFiltering: false, palette: false, effort: 10 })
   .toFile(outputPath);
 
 console.log(`Generated ${path.relative(repoRoot, outputPath)} from ${path.relative(repoRoot, inputPath)}`);

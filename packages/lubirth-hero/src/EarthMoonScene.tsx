@@ -106,7 +106,10 @@ export function EarthMoonScene({
   const showClouds = visualDebugLayer === "all" || visualDebugLayer === "clouds";
   const showAtmosphere = visualDebugLayer === "all" || visualDebugLayer === "atmosphere";
   const showAurora = visualDebugLayer === "all" || visualDebugLayer === "aurora";
-  const showSurfaceTextureClouds = false;
+  const showSurfaceTextureClouds =
+    showClouds &&
+    quality.tier !== "low" &&
+    quality.tier !== "fallback";
   const useHeroAuroraProfile = visualDebugLayer === "all" || auroraProfile === "hero";
   const auroraVisibilityBoost = visualDebugLayer === "aurora"
     ? (auroraProfile === "debug" ? 5.0 : 3.1)
