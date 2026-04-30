@@ -2,7 +2,7 @@ import { DEFAULT_LUBIRTH_DATE, DEFAULT_LUBIRTH_MOON_PHASE, DEFAULT_LUBIRTH_SUN_D
 import type { LandingComposition, LandingCompositionOverrides, LandingPresetName } from "./types";
 
 const field: LandingComposition = {
-  camera: { distance: 15, fov: 45, azimuthDeg: 0, elevationDeg: 0, lookAt: [0, 0, 0], viewOffsetY: 0, dpr: [1, 1.25] },
+  camera: { distance: 15, fov: 45, azimuthDeg: 0, elevationDeg: 0, lookAt: [0, 0, 0], viewOffsetY: 0, dpr: [1, 1.1] },
   earth: { radius: 1, segments: 144, yawDeg: 0, rotationSpeedDegPerSec: 2.2, useNightMap: true, useClouds: true, cloudOpacity: 0.94, terminatorSoftness: 0.13, nightIntensity: 0.38, specularStrength: 0.08, rimStrength: 1.22, rimWidth: 1.78 },
   moon: { visible: true, date: DEFAULT_LUBIRTH_DATE, radius: 0.68, screenX: 0.5, screenY: 0.75, screenSize: 0.18, anchorDistance: 14, phaseMode: "fixed-date", fixedPhase: DEFAULT_LUBIRTH_MOON_PHASE, yawDeg: -90, lonDeg: -90, latDeg: 90, nightLift: 0.08, lightingMode: "mixed" },
   light: { mode: "fixed-sun", fixedSunDir: DEFAULT_LUBIRTH_SUN_DIRECTION, intensity: 2.45, color: [1, 0.94, 0.78], ambientIntensity: 0.006 },

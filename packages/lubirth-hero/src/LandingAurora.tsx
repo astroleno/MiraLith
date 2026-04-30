@@ -1,7 +1,6 @@
 "use client";
 
-import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   AdditiveBlending,
   BufferAttribute,
@@ -13,6 +12,7 @@ import {
   ShaderMaterial,
   Vector3
 } from "three";
+import { useFrame } from "@react-three/fiber";
 import { getRuntimeOpeningProgress, type QualityProfile } from "@miralith/visual-core";
 import type { LandingComposition } from "./types";
 
@@ -45,17 +45,11 @@ const eastTangent = new Vector3();
 const northTangent = new Vector3();
 const position = new Vector3();
 
-const MAIN_CURTAIN: AuroraCurtainLayer = {
-  lonCenterDeg: -118,
-  lonSpanDeg: 72,
-  latCenterDeg: 58,
-  latWaveDeg: 4.8,
-  baseRadius: 1.016,
-  height: 0.126,
-  phase: 0.72,
-  opacity: 0.72,
-  foldScale: 5.2
-};
+const CURTAINS: AuroraCurtainLayer[] = [
+  { lonCenterDeg: -112, lonSpanDeg: 62, latCenterDeg: 56, latWaveDeg: 4.4, baseRadius: 1.016, height: 0.15, phase: 0.72, opacity: 0.56, foldScale: 6.0 },
+  { lonCenterDeg: -82, lonSpanDeg: 46, latCenterDeg: 61, latWaveDeg: 3.4, baseRadius: 1.018, height: 0.13, phase: 2.18, opacity: 0.38, foldScale: 7.8 },
+  { lonCenterDeg: -142, lonSpanDeg: 40, latCenterDeg: 53, latWaveDeg: 3.8, baseRadius: 1.014, height: 0.11, phase: 4.4, opacity: 0.28, foldScale: 5.4 }
+];
 
 const smoothstep = (edge0: number, edge1: number, value: number) => {
   const t = Math.min(1, Math.max(0, (value - edge0) / Math.max(edge1 - edge0, 1e-5)));
@@ -98,15 +92,15 @@ function createCurtainGeometry(layer: AuroraCurtainLayer, arcSegments: number, h
     for (let x = 0; x <= arcSegments; x += 1) {
       const u = x / arcSegments;
       const fold = Math.sin(u * Math.PI * layer.foldScale + layer.phase);
-      const highFold = Math.sin(u * Math.PI * 15.0 + layer.phase * 1.7);
+      const highFold = Math.sin(u * Math.PI * 15 + layer.phase * 1.7);
       const lon =
         centerLon +
         (u - 0.5) * lonSpan +
-        Math.sin(u * Math.PI * 4.0 + layer.phase) * 0.028 * vertical;
+        Math.sin(u * Math.PI * 4 + layer.phase) * 0.022 * vertical;
       const lat =
         baseLat +
-        Math.sin(u * Math.PI * 2.0 + layer.phase) * latWave +
-        Math.sin(u * Math.PI * 7.0 + layer.phase) * latWave * 0.16 * (1 - vertical);
+        Math.sin(u * Math.PI * 2 + layer.phase) * latWave +
+        Math.sin(u * Math.PI * 7 + layer.phase) * latWave * 0.16 * (1 - vertical);
       const height = layer.height * vertical * (0.84 + Math.max(fold, 0) * 0.18 + highFold * 0.035);
       const radius = layer.baseRadius + height;
       const index = y * (arcSegments + 1) + x;
@@ -116,8 +110,8 @@ function createCurtainGeometry(layer: AuroraCurtainLayer, arcSegments: number, h
       position
         .copy(localNormal)
         .multiplyScalar(radius)
-        .addScaledVector(eastTangent, fold * 0.012 * vertical)
-        .addScaledVector(northTangent, highFold * 0.004 * vertical);
+        .addScaledVector(eastTangent, fold * 0.01 * vertical)
+        .addScaledVector(northTangent, highFold * 0.0035 * vertical);
 
       positions[index * 3] = position.x;
       positions[index * 3 + 1] = position.y;
@@ -149,17 +143,16 @@ function createCurtainGeometry(layer: AuroraCurtainLayer, arcSegments: number, h
   return geometry;
 }
 
-function createAuroraMaterial(composition: LandingComposition, layer: AuroraCurtainLayer, lowCost: boolean) {
+function createAuroraMaterial(composition: LandingComposition, layer: AuroraCurtainLayer) {
   colorA.setRGB(...composition.aurora.colorA);
   colorB.setRGB(...composition.aurora.colorB);
 
   return new ShaderMaterial({
     uniforms: {
       time: { value: 0 },
-      reveal: { value: 1 },
       fieldLift: { value: 0 },
       intensity: { value: composition.aurora.intensity },
-      opacityScale: { value: layer.opacity * (lowCost ? 0.92 : 1.0) },
+      opacityScale: { value: layer.opacity },
       layerSeed: { value: layer.phase },
       foldScale: { value: layer.foldScale },
       colorA: { value: colorA.clone() },
@@ -186,7 +179,6 @@ function createAuroraMaterial(composition: LandingComposition, layer: AuroraCurt
     `,
     fragmentShader: `
       uniform float time;
-      uniform float reveal;
       uniform float intensity;
       uniform float opacityScale;
       uniform float layerSeed;
@@ -200,44 +192,73 @@ function createAuroraMaterial(composition: LandingComposition, layer: AuroraCurt
       varying vec3 vWorldNormal;
       varying vec3 vPlanetCenterW;
 
+      float hash21(vec2 p) {
+        p = fract(p * vec2(123.34, 345.45));
+        p += dot(p, p + 34.345);
+        return fract(p.x * p.y);
+      }
+
+      float noise2(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        float a = hash21(i);
+        float b = hash21(i + vec2(1.0, 0.0));
+        float c = hash21(i + vec2(0.0, 1.0));
+        float d = hash21(i + vec2(1.0, 1.0));
+        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+      }
+
+      float tri(float value) {
+        return abs(fract(value) - 0.5) * 2.0;
+      }
+
+      float triNoise(vec2 p) {
+        float n = tri(noise2(p) + p.x * 0.12);
+        n += tri(noise2(p * 2.03 + layerSeed) + p.y * 0.18) * 0.5;
+        n += tri(noise2(p * 4.07 - layerSeed) + p.x * 0.05) * 0.25;
+        return clamp(n / 1.75, 0.0, 1.0);
+      }
+
       void main() {
         float arc = vUv.x;
         float vertical = vUv.y;
         vec3 planetNormal = normalize(vWorldPosition - vPlanetCenterW);
         vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
         float facing = dot(planetNormal, viewDirection);
-        float frontGate = smoothstep(-0.18, 0.02, facing);
-        float limbGate = frontGate * (1.0 - smoothstep(0.62, 0.92, facing));
+        float frontGate = smoothstep(-0.42, 0.06, facing);
+        float limbGate = frontGate * (1.0 - smoothstep(0.74, 0.98, facing));
 
         vec3 sunDirection = normalize(lightDirection);
-        float night = 1.0 - smoothstep(-0.08, 0.34, dot(normalize(vWorldNormal), sunDirection));
-        float lightGate = 0.68 + night * 0.32;
+        float sunSide = dot(normalize(vWorldNormal), sunDirection);
+        float nightGate = 0.32 + 0.68 * (1.0 - smoothstep(-0.04, 0.4, sunSide));
 
-        float sideFeather = smoothstep(0.0, 0.08, arc) * (1.0 - smoothstep(0.92, 1.0, arc));
-        float root = 1.0 - smoothstep(0.02, 0.18, vertical);
-        float topFade = 1.0 - smoothstep(0.48, 0.88, vertical);
-        float sheetBand = smoothstep(0.08, 0.22, vertical) * topFade;
+        float sideFeather = smoothstep(0.0, 0.09, arc) * (1.0 - smoothstep(0.91, 1.0, arc));
+        float root = 1.0 - smoothstep(0.02, 0.2, vertical);
+        float topFade = 1.0 - smoothstep(0.68, 0.98, vertical);
+        float sheetBand = smoothstep(0.06, 0.22, vertical) * topFade;
 
         float drift = sin(vertical * 4.4 + layerSeed * 2.0) * 0.025;
-        float broad = 0.5 + 0.5 * sin((arc + drift) * 6.28318530718 * 2.0 + time * 0.08 + layerSeed);
-        float fold = 0.5 + 0.5 * sin((arc + drift * 0.45) * 6.28318530718 * foldScale + sin(vertical * 4.0 + time * 0.06) * 0.36 + layerSeed);
-        float strand = pow(fold, 3.35);
-        float breakUp = 0.62 + 0.38 * broad;
-        float rootBand = root * (0.58 + broad * 0.28);
-        float curtain = sheetBand * (0.16 + strand * 0.54 + pow(broad, 2.0) * 0.2) * breakUp;
-        float density = sideFeather * limbGate * lightGate * (rootBand * 0.38 + curtain * 0.54);
-        float alpha = density * intensity * opacityScale * reveal;
+        float broad = 0.5 + 0.5 * sin((arc + drift) * 6.28318530718 * 1.8 + time * 0.05 + layerSeed);
+        float folded = 0.5 + 0.5 * sin((arc + drift * 0.45) * 6.28318530718 * foldScale + sin(vertical * 4.0 + time * 0.035) * 0.34 + layerSeed);
+        float strands = pow(folded, 3.6);
+        float breakup = triNoise(vec2(arc * foldScale * 1.4 + time * 0.014, vertical * 5.2 + layerSeed));
+        float strandGate = smoothstep(0.18, 0.74, breakup);
+        float rootBand = root * (0.52 + broad * 0.26);
+        float curtain = sheetBand * (0.1 + strands * 0.84 + pow(broad, 2.0) * 0.18) * (0.36 + strandGate * 0.64);
+        float density = sideFeather * limbGate * nightGate * (rootBand * 0.34 + curtain * 0.92);
+        float alpha = density * intensity * opacityScale * 1.72;
 
         if (alpha < 0.0015) {
           discard;
         }
 
         vec3 auroraColor = mix(colorA, colorB, smoothstep(0.1, 0.78, vertical));
-        auroraColor = mix(auroraColor, vec3(0.58, 0.98, 0.78), rootBand * 0.28 + strand * 0.08);
-        vec3 highRed = vec3(0.55, 0.13, 0.08) * smoothstep(0.48, 0.9, vertical) * curtain * 0.12;
-        vec3 finalColor = auroraColor * density * (2.1 + strand * 0.52 + rootBand * 0.38) + highRed;
+        auroraColor = mix(auroraColor, vec3(0.58, 0.98, 0.78), rootBand * 0.24 + strands * 0.1);
+        vec3 highRed = vec3(0.5, 0.12, 0.08) * smoothstep(0.5, 0.92, vertical) * curtain * 0.08;
+        vec3 finalColor = auroraColor * density * (3.25 + strands * 0.7 + rootBand * 0.46) + highRed;
 
-        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, 0.22));
+        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, 0.34));
       }
     `,
     transparent: true,
@@ -260,51 +281,65 @@ export function LandingAurora({
   const enabled =
     quality.tier !== "fallback" &&
     quality.aurora &&
+    !reducedMotion &&
     composition.aurora.enabled &&
     composition.aurora.intensity > 0 &&
     composition.aurora.sampleCount > 0;
-  const lowCostAurora = quality.tier === "low";
-  const curtain = useMemo(() => {
+  const curtains = useMemo(() => {
     if (!enabled) {
-      return null;
+      return [];
     }
 
-    const geometry = createCurtainGeometry(
-      MAIN_CURTAIN,
-      quality.tier === "high" ? 80 : lowCostAurora ? 48 : 64,
-      quality.tier === "high" ? 18 : lowCostAurora ? 10 : 14
-    );
-    const material = createAuroraMaterial(composition, MAIN_CURTAIN, lowCostAurora);
-    return { geometry, material };
-  }, [composition, enabled, lowCostAurora, quality.tier]);
+    const activeLayers = quality.tier === "high" ? CURTAINS : CURTAINS.slice(0, 2);
+    return activeLayers.map((layer) => ({
+      geometry: createCurtainGeometry(
+        layer,
+        quality.tier === "high" ? 76 : 56,
+        quality.tier === "high" ? 16 : 12
+      ),
+      material: createAuroraMaterial(composition, layer)
+    }));
+  }, [composition, enabled, quality.tier]);
+
+  useEffect(() => {
+    return () => {
+      curtains.forEach(({ geometry, material }) => {
+        geometry.dispose();
+        material.dispose();
+      });
+    };
+  }, [curtains]);
 
   useFrame((state) => {
-    if (!aurora.current || !curtain) {
+    if (!aurora.current || curtains.length === 0) {
       return;
     }
 
     const progress = getRuntimeOpeningProgress(0);
-    const reveal = 0.72 + 0.28 * (1 - smoothstep(0.28, 0.9, progress));
-    const fieldBoost = 1 + smoothstep(0.62, 1, progress) * 4;
+    const nearFade = 1 - smoothstep(0.2, 0.62, progress);
+    const farFloor = 0.12;
     const elapsed = paused || reducedMotion ? 0 : state.clock.elapsedTime;
+    const intensity = composition.aurora.intensity * visibilityBoost * Math.max(farFloor, nearFade);
+
     aurora.current.children.forEach((child) => {
       const material = (child as Mesh).material as ShaderMaterial;
       material.uniforms.time.value = elapsed;
-      material.uniforms.reveal.value = reveal;
-      material.uniforms.fieldLift.value = smoothstep(0.62, 1, progress) * composition.earth.radius * 0.18;
-      material.uniforms.intensity.value = composition.aurora.intensity * visibilityBoost * fieldBoost;
+      material.uniforms.fieldLift.value = smoothstep(0.62, 1, progress) * composition.earth.radius * 0.018;
+      material.uniforms.intensity.value = intensity;
       material.uniforms.lightDirection.value.copy(sceneLightDirection);
       material.visible = enabled;
     });
   });
 
-  if (!enabled || !curtain) {
+  if (!enabled || curtains.length === 0) {
     return null;
   }
 
   return (
     <group ref={aurora}>
-      <mesh geometry={curtain.geometry} material={curtain.material} renderOrder={12} />
+      {curtains.map(({ geometry, material }, index) => (
+        <mesh key={index} geometry={geometry} material={material} renderOrder={12 + index} />
+      ))}
     </group>
   );
 }

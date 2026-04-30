@@ -27,26 +27,26 @@ interface ResolveQualityInput {
 const PROFILES: Record<ResolvedQualityTier, QualityProfile> = {
   high: {
     tier: "high",
-    dpr: 1.25,
+    dpr: 1.1,
     segments: 72,
     aurora: true,
-    stars: 620,
+    stars: 560,
     reason: "desktop-capable"
   },
   medium: {
     tier: "medium",
-    dpr: 1.1,
-    segments: 64,
+    dpr: 1,
+    segments: 56,
     aurora: true,
-    stars: 380,
+    stars: 420,
     reason: "balanced"
   },
   low: {
     tier: "low",
     dpr: 1,
-    segments: 44,
+    segments: 36,
     aurora: false,
-    stars: 180,
+    stars: 150,
     reason: "mobile-or-reduced"
   },
   fallback: {

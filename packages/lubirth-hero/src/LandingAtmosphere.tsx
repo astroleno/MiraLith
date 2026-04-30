@@ -1,21 +1,17 @@
 "use client";
 
-import { useFrame, useThree } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import {
   AddEquation,
-  BufferAttribute,
-  BufferGeometry,
+  BackSide,
   Color,
   CustomBlending,
-  DoubleSide,
-  Group,
   OneFactor,
-  Quaternion,
   ShaderMaterial,
   SrcAlphaFactor,
   Vector3
 } from "three";
+import { useFrame } from "@react-three/fiber";
 import { getRuntimeOpeningProgress, type QualityProfile } from "@miralith/visual-core";
 import type { LandingComposition } from "./types";
 
@@ -23,10 +19,9 @@ interface LandingAtmosphereProps {
   composition: LandingComposition;
   quality: QualityProfile;
   sceneLightDirection?: Vector3;
+  emphasis?: boolean;
 }
 
-const parentQuaternion = new Quaternion();
-const cameraLocalQuaternion = new Quaternion();
 const lightDirection = new Vector3();
 
 const smoothstep = (edge0: number, edge1: number, value: number) => {
@@ -34,117 +29,101 @@ const smoothstep = (edge0: number, edge1: number, value: number) => {
   return t * t * (3 - 2 * t);
 };
 
-function createHorizonRibbonGeometry(radius: number, width: number, arcSegments: number, radialSegments: number) {
-  const vertexCount = (arcSegments + 1) * (radialSegments + 1);
-  const positions = new Float32Array(vertexCount * 3);
-  const uvs = new Float32Array(vertexCount * 2);
-  const indices: number[] = [];
-  const startAngle = Math.PI * 0.012;
-  const endAngle = Math.PI * 0.988;
-
-  for (let y = 0; y <= radialSegments; y += 1) {
-    const v = y / radialSegments;
-    const r = radius + width * v;
-
-    for (let x = 0; x <= arcSegments; x += 1) {
-      const u = x / arcSegments;
-      const angle = startAngle + (endAngle - startAngle) * u;
-      const index = y * (arcSegments + 1) + x;
-
-      positions[index * 3] = Math.cos(angle) * r;
-      positions[index * 3 + 1] = Math.sin(angle) * r;
-      positions[index * 3 + 2] = 0;
-      uvs[index * 2] = u;
-      uvs[index * 2 + 1] = v;
-    }
-  }
-
-  for (let y = 0; y < radialSegments; y += 1) {
-    for (let x = 0; x < arcSegments; x += 1) {
-      const a = y * (arcSegments + 1) + x;
-      const b = a + 1;
-      const c = a + arcSegments + 1;
-      const d = c + 1;
-      indices.push(a, c, b, b, c, d);
-    }
-  }
-
-  const geometry = new BufferGeometry();
-  geometry.setAttribute("position", new BufferAttribute(positions, 3));
-  geometry.setAttribute("uv", new BufferAttribute(uvs, 2));
-  geometry.setIndex(indices);
-  geometry.computeBoundingSphere();
-  return geometry;
-}
-
-function createHorizonRibbonMaterial(composition: LandingComposition) {
+function createAtmosphereMaterial(composition: LandingComposition) {
   return new ShaderMaterial({
     uniforms: {
       closeStage: { value: 1 },
       intensity: { value: composition.atmosphere.intensity },
+      debugBoost: { value: 0 },
       lightDir: { value: lightDirection.set(...composition.light.fixedSunDir).normalize().clone() },
-      white: { value: new Color(0.9, 0.98, 1.0) },
-      blue: { value: new Color(0.2, 0.56, 0.94) },
-      mist: { value: new Color(0.025, 0.14, 0.42) }
+      white: { value: new Color(0.92, 0.98, 1.0) },
+      blue: { value: new Color(0.17, 0.54, 0.96) },
+      mist: { value: new Color(0.025, 0.16, 0.46) },
+      sunset: { value: new Color(1.0, 0.48, 0.16) },
+      nightGlow: { value: new Color(0.06, 0.7, 0.9) }
     },
     vertexShader: `
-      varying vec2 vUv;
-      varying vec3 vArcNormal;
+      varying vec3 vWorldPosition;
+      varying vec3 vWorldNormal;
 
       void main() {
-        vUv = uv;
-        vArcNormal = normalize(position);
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+        vWorldPosition = worldPosition.xyz;
+        vWorldNormal = normalize(mat3(modelMatrix) * normal);
+        gl_Position = projectionMatrix * viewMatrix * worldPosition;
       }
     `,
     fragmentShader: `
       uniform float closeStage;
       uniform float intensity;
+      uniform float debugBoost;
       uniform vec3 lightDir;
       uniform vec3 white;
       uniform vec3 blue;
       uniform vec3 mist;
+      uniform vec3 sunset;
+      uniform vec3 nightGlow;
 
-      varying vec2 vUv;
-      varying vec3 vArcNormal;
+      varying vec3 vWorldPosition;
+      varying vec3 vWorldNormal;
 
       void main() {
-        float u = vUv.x;
-        float r = vUv.y;
-        float arc = pow(max(sin(u * 3.14159265359), 0.0), 0.48);
-        arc *= smoothstep(0.0, 0.045, u) * (1.0 - smoothstep(0.955, 1.0, u));
+        vec3 n = normalize(vWorldNormal);
+        vec3 v = normalize(cameraPosition - vWorldPosition);
+        vec3 l = normalize(lightDir);
+        float limb = 1.0 - max(dot(n, v), 0.0);
+        float sun = dot(n, l);
+        float day = smoothstep(-0.28, 0.34, sun);
+        float night = 1.0 - smoothstep(-0.18, 0.18, sun);
+        float twilight = 1.0 - smoothstep(0.02, 0.42, abs(sun));
+        float farHold = mix(0.64, 0.96, closeStage);
+        float boost = 1.0 + debugBoost * 0.18;
 
-        float close = 0.68 + 0.32 * smoothstep(0.0, 0.94, closeStage);
-        float sun = dot(normalize(vArcNormal), normalize(lightDir));
-        float daySide = 0.72 + 0.28 * smoothstep(-0.34, 0.28, sun);
-
-        float whiteNeedle = 1.0 - smoothstep(0.0, 0.024, r);
-        whiteNeedle *= 1.0 - smoothstep(0.034, 0.052, r);
+        float whiteNeedle =
+          smoothstep(0.91, 0.968, limb) *
+          (1.0 - smoothstep(0.986, 0.998, limb));
+        whiteNeedle *= 0.68 + day * 0.48;
 
         float blueBand =
-          smoothstep(0.018, 0.058, r) *
-          (1.0 - smoothstep(0.13, 0.22, r));
+          smoothstep(0.72, 0.86, limb) *
+          (1.0 - smoothstep(0.932, 0.985, limb));
+        blueBand *= 0.38 + day * 0.62;
 
         float outerMist =
-          smoothstep(0.12, 0.28, r) *
-          (1.0 - smoothstep(0.74, 1.0, r));
-        outerMist *= 0.74 + 0.26 * sin(u * 18.8495559 + closeStage * 0.7);
+          smoothstep(0.66, 0.8, limb) *
+          (1.0 - smoothstep(0.88, 0.968, limb));
+        outerMist *= 0.12 + closeStage * 0.08;
 
-        vec3 color =
-          white * whiteNeedle * 1.04 +
-          blue * blueBand * 0.62 +
-          mist * outerMist * 0.5;
+        float sunsetEdge =
+          twilight *
+          smoothstep(0.5, 0.88, limb) *
+          (1.0 - smoothstep(0.98, 1.0, limb));
+
+        float nightAirglow =
+          night *
+          smoothstep(0.58, 0.92, limb) *
+          (1.0 - smoothstep(0.985, 1.0, limb));
+
+        vec3 finalColor =
+          white * whiteNeedle * 0.76 +
+          blue * blueBand * 0.44 +
+          mist * outerMist * 0.08 +
+          sunset * sunsetEdge * 0.1 +
+          nightGlow * nightAirglow * 0.04;
+
         float alpha =
-          whiteNeedle * 0.25 +
-          blueBand * 0.095 +
-          outerMist * 0.026;
-        alpha *= arc * close * daySide * intensity;
+          whiteNeedle * 0.082 +
+          blueBand * 0.034 +
+          outerMist * 0.003 +
+          sunsetEdge * 0.024 +
+          nightAirglow * 0.014;
+        alpha *= intensity * farHold * boost;
 
-        if (alpha < 0.002) {
+        if (alpha < 0.0015) {
           discard;
         }
 
-        gl_FragColor = vec4(min(color * close * daySide * intensity, vec3(0.96)), clamp(alpha, 0.0, 0.32));
+        gl_FragColor = vec4(min(finalColor * intensity * farHold * boost, vec3(0.98)), clamp(alpha, 0.0, 0.28));
       }
     `,
     transparent: true,
@@ -152,41 +131,28 @@ function createHorizonRibbonMaterial(composition: LandingComposition) {
     blendEquation: AddEquation,
     blendSrc: SrcAlphaFactor,
     blendDst: OneFactor,
-    side: DoubleSide,
-    depthTest: false,
+    side: BackSide,
+    depthTest: true,
     depthWrite: false
   });
 }
 
-export function LandingAtmosphere({ composition, quality, sceneLightDirection }: LandingAtmosphereProps) {
-  const ribbon = useRef<Group>(null);
-  const { camera } = useThree();
-  const material = useMemo(() => createHorizonRibbonMaterial(composition), [composition]);
-  const geometry = useMemo(
-    () => createHorizonRibbonGeometry(
-      composition.earth.radius * 1.001,
-      composition.earth.radius * 0.064,
-      quality.tier === "low" ? 128 : 176,
-      quality.tier === "low" ? 10 : 14
-    ),
-    [composition.earth.radius, quality.tier]
-  );
+export function LandingAtmosphere({
+  composition,
+  quality,
+  sceneLightDirection,
+  emphasis = false
+}: LandingAtmosphereProps) {
+  const material = useMemo(() => createAtmosphereMaterial(composition), [composition]);
+  const radius = composition.earth.radius * (1 + composition.atmosphere.thickness * 0.42);
+
+  useEffect(() => {
+    return () => material.dispose();
+  }, [material]);
 
   useFrame(() => {
-    if (!ribbon.current) {
-      return;
-    }
-
     const progress = getRuntimeOpeningProgress(0);
     const closeStage = 1 - smoothstep(0.18, 0.86, progress);
-    const parent = ribbon.current.parent;
-    if (parent) {
-      parent.getWorldQuaternion(parentQuaternion);
-      cameraLocalQuaternion.copy(parentQuaternion).invert().multiply(camera.quaternion);
-      ribbon.current.quaternion.copy(cameraLocalQuaternion);
-    } else {
-      ribbon.current.quaternion.copy(camera.quaternion);
-    }
 
     if (sceneLightDirection) {
       material.uniforms.lightDir.value.copy(sceneLightDirection).normalize();
@@ -195,6 +161,7 @@ export function LandingAtmosphere({ composition, quality, sceneLightDirection }:
     }
     material.uniforms.closeStage.value = closeStage;
     material.uniforms.intensity.value = composition.atmosphere.enabled ? composition.atmosphere.intensity : 0;
+    material.uniforms.debugBoost.value = emphasis ? 1 : 0;
   });
 
   if (!composition.atmosphere.enabled) {
@@ -202,8 +169,14 @@ export function LandingAtmosphere({ composition, quality, sceneLightDirection }:
   }
 
   return (
-    <group ref={ribbon} renderOrder={14}>
-      <mesh geometry={geometry} material={material} renderOrder={14} />
-    </group>
+    <mesh material={material} renderOrder={14}>
+      <sphereGeometry
+        args={[
+          radius,
+          quality.tier === "high" ? Math.max(72, quality.segments) : quality.tier === "medium" ? 56 : 36,
+          quality.tier === "high" ? 40 : quality.tier === "medium" ? 30 : 22
+        ]}
+      />
+    </mesh>
   );
 }

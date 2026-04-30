@@ -23,7 +23,7 @@ test("keeps route copy readable in visual fallback", async ({ page }) => {
 
 test("reduced motion skips pinned scroll choreography", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/lubirth-revised");
+  await page.goto("/lubirth-revised?copy=visible");
 
   await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-motion", "reduced");
   await expect(page.getByRole("heading", { name: "LuBirth" })).toBeVisible();
@@ -40,6 +40,42 @@ test("exposes every LuBirth visual debug layer", async ({ page }) => {
     await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-debug-layer", layer);
     await expect(page.locator("canvas")).toHaveCount(1);
   }
+});
+
+test("defaults the study route to an earth-moon only view", async ({ page }) => {
+  await page.goto("/lubirth-revised?progress=0&debug=all");
+
+  await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-copy", "hidden");
+  await expect(page.locator(".lubirth-revised__hero-copy")).toHaveCount(0);
+  await expect(page.locator(".lubirth-revised__title-rail")).toHaveCount(0);
+  await expect(page.locator("canvas")).toHaveCount(1);
+});
+
+test("keeps revised route clear of 8K LuBirth texture requests", async ({ page }) => {
+  const assetRequests = new Set<string>();
+
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.pathname.includes("/assets/lubirth/")) {
+      assetRequests.add(url.pathname);
+    }
+  });
+
+  await page.goto("/lubirth-revised?progress=0&copy=hidden&debug=all&visualTest=pixels");
+  await expect(page.locator("canvas")).toHaveCount(1);
+  await expect
+    .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-day")), { timeout: 25_000 })
+    .toBe(true);
+
+  const heavyRequests = Array.from(assetRequests).filter(
+    (path) =>
+      path.includes("earth-day-8k") ||
+      path.includes("earth-night-8k") ||
+      path.includes("earth-clouds-8k") ||
+      path.includes("8k_stars_milky_way")
+  );
+
+  expect(heavyRequests).toEqual([]);
 });
 
 test("visual pixel mode hides visible copy without fake future chapter anchors", async ({ page }) => {

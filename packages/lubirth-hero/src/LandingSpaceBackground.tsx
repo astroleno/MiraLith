@@ -41,43 +41,68 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
     setBackgroundTexture(null);
     setBackgroundFailed(false);
 
-    if (!spaceBackground?.src) {
+    if (!spaceBackground?.src || quality.tier !== "high") {
       return undefined;
     }
 
     let disposed = false;
     let loadedTexture: Texture | null = null;
+    let idleHandle: number | null = null;
+    let timeoutHandle: number | null = null;
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
     const loader = new TextureLoader();
-    loader.load(
-      spaceBackground.src,
-      (texture) => {
-        if (disposed) {
-          texture.dispose();
-          return;
-        }
 
-        texture.colorSpace = spaceBackground.colorSpace === "srgb" ? SRGBColorSpace : texture.colorSpace;
-        texture.wrapS = RepeatWrapping;
-        texture.wrapT = ClampToEdgeWrapping;
-        texture.center.set(0.5, 0.5);
-        texture.repeat.set(2, 1);
-        texture.needsUpdate = true;
-        loadedTexture = texture;
-        setBackgroundTexture(texture);
-      },
-      undefined,
-      () => {
-        if (!disposed) {
-          setBackgroundFailed(true);
-        }
+    const load = () => {
+      if (disposed) {
+        return;
       }
-    );
+
+      loader.load(
+        spaceBackground.src,
+        (texture) => {
+          if (disposed) {
+            texture.dispose();
+            return;
+          }
+
+          texture.colorSpace = spaceBackground.colorSpace === "srgb" ? SRGBColorSpace : texture.colorSpace;
+          texture.wrapS = RepeatWrapping;
+          texture.wrapT = ClampToEdgeWrapping;
+          texture.center.set(0.5, 0.5);
+          texture.repeat.set(2, 1);
+          texture.needsUpdate = true;
+          loadedTexture = texture;
+          setBackgroundTexture(texture);
+        },
+        undefined,
+        () => {
+          if (!disposed) {
+            setBackgroundFailed(true);
+          }
+        }
+      );
+    };
+
+    if (idleWindow.requestIdleCallback) {
+      idleHandle = idleWindow.requestIdleCallback(load, { timeout: 2500 });
+    } else {
+      timeoutHandle = window.setTimeout(load, 2500);
+    }
 
     return () => {
       disposed = true;
+      if (idleHandle !== null && idleWindow.cancelIdleCallback) {
+        idleWindow.cancelIdleCallback(idleHandle);
+      }
+      if (timeoutHandle !== null) {
+        window.clearTimeout(timeoutHandle);
+      }
       loadedTexture?.dispose();
     };
-  }, [spaceBackground?.colorSpace, spaceBackground?.src]);
+  }, [quality.tier, spaceBackground?.colorSpace, spaceBackground?.src]);
 
   const starGeometry = useMemo(() => {
     const count = quality.stars;
@@ -98,10 +123,10 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
       positions[i3 + 2] = Math.sin(theta) * band * radius;
 
       const cool = 0.68 + random(index + 143) * 0.22;
-      const brightness = random(index + 251) > 0.94 ? 0.82 : 0.34 + random(index + 271) * 0.28;
+      const brightness = random(index + 251) > 0.9 ? 1.22 : 0.6 + random(index + 271) * 0.42;
       colors[i3] = brightness * cool;
-      colors[i3 + 1] = brightness * (0.86 + cool * 0.1);
-      colors[i3 + 2] = brightness;
+      colors[i3 + 1] = brightness * (0.9 + cool * 0.12);
+      colors[i3 + 2] = brightness * 1.12;
     }
 
     const geometry = new BufferGeometry();
@@ -112,12 +137,12 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
 
   const starMaterial = useMemo(() => {
     return new PointsMaterial({
-      size: quality.tier === "high" ? 0.044 : 0.05,
+      size: quality.tier === "high" ? 0.07 : 0.064,
       sizeAttenuation: true,
       vertexColors: true,
       color: new Color("#d8e8ff"),
       transparent: true,
-      opacity: backgroundTexture ? 0.46 : 0.54,
+      opacity: backgroundTexture ? 0.64 : 0.98,
       blending: AdditiveBlending,
       depthWrite: false,
       depthTest: false
@@ -139,9 +164,9 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
 
         void main() {
           float upperBlue = smoothstep(-0.22, 0.72, vDir.y);
-          float galacticHaze = exp(-pow((vDir.y - 0.18) * 3.2, 2.0)) * 0.56;
-          vec3 base = mix(vec3(0.0, 0.003, 0.008), vec3(0.006, 0.022, 0.048), upperBlue);
-          base += vec3(0.007, 0.018, 0.034) * galacticHaze;
+          float galacticHaze = exp(-pow((vDir.y - 0.18) * 3.2, 2.0)) * 0.68;
+          vec3 base = mix(vec3(0.0, 0.004, 0.01), vec3(0.008, 0.026, 0.056), upperBlue);
+          base += vec3(0.012, 0.028, 0.052) * galacticHaze;
           gl_FragColor = vec4(base, 1.0);
         }
       `,

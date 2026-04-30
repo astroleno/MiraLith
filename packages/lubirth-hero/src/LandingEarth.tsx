@@ -1,10 +1,9 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Color,
-  LinearFilter,
   LinearMipmapLinearFilter,
   MathUtils,
   Mesh,
@@ -12,12 +11,12 @@ import {
   ShaderMaterial,
   SRGBColorSpace,
   Texture,
-  TextureLoader,
   Vector3
 } from "three";
 import { OPENING_FIELD_AUTO_ROTATE_START, type QualityProfile } from "@miralith/visual-core";
 import type { LandingComposition, LandingResolvedAssets } from "./types";
 import { createEarthTexture } from "./textures";
+import { useLandingTexture } from "./useLandingTexture";
 
 interface LandingEarthProps {
   composition: LandingComposition;
@@ -49,101 +48,27 @@ export function LandingEarth({
     () => createEarthTexture(quality.tier === "high" ? 1024 : 512),
     [quality.tier]
   );
-  const [dayTexture, setDayTexture] = useState<Texture | null>(null);
-  const [nightTexture, setNightTexture] = useState<Texture | null>(null);
-  const [cloudTexture, setCloudTexture] = useState<Texture | null>(null);
+  const [shouldLoadNightTexture, setShouldLoadNightTexture] = useState(
+    () => typeof window !== "undefined" && (window.__MiraLithOpeningProgress ?? 0) > 0.28
+  );
+  const { texture: dayTexture } = useLandingTexture(assets.earthDay.src, {
+    colorSpace: assets.earthDay.colorSpace,
+    wrapS: RepeatWrapping,
+    wrapT: RepeatWrapping
+  });
+  const { texture: nightTexture } = useLandingTexture(shouldLoadNightTexture ? assets.earthNight?.src : undefined, {
+    colorSpace: assets.earthNight?.colorSpace,
+    wrapS: RepeatWrapping,
+    wrapT: RepeatWrapping
+  });
+  const { texture: cloudTexture } = useLandingTexture(assets.earthClouds?.src, {
+    colorSpace: assets.earthClouds?.colorSpace,
+    wrapS: RepeatWrapping,
+    wrapT: RepeatWrapping
+  });
   const activeDayTexture = dayTexture ?? proceduralDayTexture;
   const activeNightTexture = nightTexture ?? activeDayTexture;
   const activeCloudTexture = cloudTexture ?? activeDayTexture;
-
-  useEffect(() => {
-    let active = true;
-    const loader = new TextureLoader();
-    loader.load(
-      assets.earthDay.src,
-      (texture) => {
-        if (!active) {
-          texture.dispose();
-          return;
-        }
-        texture.colorSpace = SRGBColorSpace;
-        texture.wrapS = RepeatWrapping;
-        texture.magFilter = LinearFilter;
-        texture.minFilter = LinearMipmapLinearFilter;
-        texture.anisotropy = 16;
-        setDayTexture(texture);
-      },
-      undefined,
-      () => setDayTexture(null)
-    );
-
-    return () => {
-      active = false;
-    };
-  }, [assets.earthDay.src]);
-
-  useEffect(() => {
-    if (!assets.earthNight?.src) {
-      setNightTexture(null);
-      return;
-    }
-
-    let active = true;
-    const loader = new TextureLoader();
-    loader.load(
-      assets.earthNight.src,
-      (texture) => {
-        if (!active) {
-          texture.dispose();
-          return;
-        }
-        texture.colorSpace = SRGBColorSpace;
-        texture.wrapS = RepeatWrapping;
-        texture.magFilter = LinearFilter;
-        texture.minFilter = LinearMipmapLinearFilter;
-        texture.anisotropy = 16;
-        setNightTexture(texture);
-      },
-      undefined,
-      () => setNightTexture(null)
-    );
-
-    return () => {
-      active = false;
-    };
-  }, [assets.earthNight?.src]);
-
-  useEffect(() => {
-    if (!assets.earthClouds?.src) {
-      setCloudTexture(null);
-      return;
-    }
-
-    let active = true;
-    const loader = new TextureLoader();
-    loader.load(
-      assets.earthClouds.src,
-      (texture) => {
-        if (!active) {
-          texture.dispose();
-          return;
-        }
-        texture.colorSpace = SRGBColorSpace;
-        texture.wrapS = RepeatWrapping;
-        texture.wrapT = RepeatWrapping;
-        texture.magFilter = LinearFilter;
-        texture.minFilter = LinearMipmapLinearFilter;
-        texture.anisotropy = 16;
-        setCloudTexture(texture);
-      },
-      undefined,
-      () => setCloudTexture(null)
-    );
-
-    return () => {
-      active = false;
-    };
-  }, [assets.earthClouds?.src]);
 
   const material = useMemo(
     () => {
@@ -302,9 +227,9 @@ export function LandingEarth({
             float rimEffect = (innerRim * 0.7 + outerRim * 0.3) * rimStrength;
             float dayNightRim = 0.28 + 0.72 * max(ndl, 0.0);
             rimEffect *= dayNightRim;
-            vec3 rimCol = mix(vec3(0.04, 0.18, 0.46), vec3(0.18, 0.5, 0.86), innerRim) * rimEffect * 0.74;
+            vec3 rimCol = mix(vec3(0.04, 0.18, 0.46), vec3(0.18, 0.5, 0.86), innerRim) * rimEffect * 0.34;
             float horizonNeedle = pow(fresnel, 13.5) * (0.28 + 0.72 * dayW) * closeStage;
-            vec3 needleCol = vec3(0.92, 0.97, 1.0) * horizonNeedle * 0.44;
+            vec3 needleCol = vec3(0.92, 0.97, 1.0) * horizonNeedle * 0.14;
 
             vec3 color = dayCol + cityCol + moonlitLand + moonlitClouds + twilightFill + terminatorCol + rimCol + needleCol;
             color = color / (1.0 + max(color - vec3(0.78), vec3(0.0)) * 0.82);
@@ -352,6 +277,9 @@ export function LandingEarth({
     earthMaterial.uniforms.cloudOpacity.value =
       composition.earth.useClouds && showTextureClouds ? composition.earth.cloudOpacity * 0.54 : 0;
     const progress = typeof window === "undefined" ? 1 : Math.min(1, Math.max(0, window.__MiraLithOpeningProgress ?? 0));
+    if (!shouldLoadNightTexture && progress > 0.28) {
+      setShouldLoadNightTexture(true);
+    }
     earthMaterial.uniforms.closeStage.value = 1 - smoothstep(0.18, 0.86, progress);
     if (!paused && !reducedMotion && progress >= OPENING_FIELD_AUTO_ROTATE_START) {
       earthMaterial.uniforms.cloudOffset.value = (earthMaterial.uniforms.cloudOffset.value + delta * 0.0045) % 1;

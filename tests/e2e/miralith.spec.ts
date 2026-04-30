@@ -11,10 +11,11 @@ declare global {
 test("homepage keeps readable SSR fallback text before runtime animations", async ({ page }) => {
   await page.goto("/?visual=fallback", { waitUntil: "domcontentloaded" });
 
-  await expect(page.locator(".lubirth-revised__home-loading-title")).toBeVisible({ timeout: 2_000 });
-  await expect(page.locator(".lubirth-revised__home-loading-subtitle")).toBeVisible({ timeout: 2_000 });
+  await expect(page.locator(".lubirth-revised__home-loading-prelude")).toBeVisible({ timeout: 2_000 });
+  await expect(page.locator(".lubirth-revised__home-loading-title")).toBeHidden({ timeout: 2_000 });
+  await expect(page.locator(".lubirth-revised__home-loading-subtitle")).toBeHidden({ timeout: 2_000 });
   await expect(page.getByText("MiraLith").first()).toBeVisible({ timeout: 2_000 });
-  await expect(page.getByLabel("LuBirth opening status")).toContainText("LuBirth");
+  await expect(page.getByLabel("MiraLith opening loading")).toContainText("MiraLith");
 });
 
 test("homepage exits loading within the entry budget", async ({ page }) => {
@@ -55,23 +56,34 @@ test("homepage loading holds contour animation until projection readiness or fal
       ".lubirth-revised__home-loading-contour-path:not(.lubirth-revised__home-loading-contour-path--gold)"
     );
 
-    if (!root || !overlay || !contour) {
+    const prelude = document.querySelector<HTMLElement>(".lubirth-revised__home-loading-prelude");
+    const title = document.querySelector<HTMLElement>(".lubirth-revised__home-loading-title");
+
+    if (!root || !overlay || !contour || !prelude || !title) {
       return null;
     }
+
+    const contourStyle = window.getComputedStyle(contour);
+    const titleStyle = window.getComputedStyle(title);
+    const preludeStyle = window.getComputedStyle(prelude);
 
     return {
       animationName: window.getComputedStyle(contour).animationName,
       loadingState: root.dataset.homeLoading,
+      preludeVisible: preludeStyle.visibility !== "hidden" && Number.parseFloat(preludeStyle.opacity) > 0.2,
       projection: overlay.dataset.projection,
-      ready: root.dataset.homeLoadingReady
+      ready: root.dataset.homeLoadingReady,
+      titleVisible: titleStyle.visibility !== "hidden" && Number.parseFloat(titleStyle.opacity) > 0.2
     };
   });
 
   expect(await holdState.jsonValue()).toEqual({
     animationName: "none",
     loadingState: "hold",
+    preludeVisible: true,
     projection: "pending",
-    ready: "false"
+    ready: "false",
+    titleVisible: false
   });
 
   const fallbackState = await page.waitForFunction(() => {
@@ -81,25 +93,43 @@ test("homepage loading holds contour animation until projection readiness or fal
       ".lubirth-revised__home-loading-contour-path:not(.lubirth-revised__home-loading-contour-path--gold)"
     );
 
-    if (!root || !overlay || !contour || root.dataset.homeProjection !== "fallback") {
+    const prelude = document.querySelector<HTMLElement>(".lubirth-revised__home-loading-prelude");
+    const title = document.querySelector<HTMLElement>(".lubirth-revised__home-loading-title");
+
+    if (!root || !overlay || !contour || !prelude || !title || root.dataset.homeProjection !== "fallback") {
+      return null;
+    }
+
+    const contourStyle = window.getComputedStyle(contour);
+    const preludeStyle = window.getComputedStyle(prelude);
+    const titleStyle = window.getComputedStyle(title);
+    const preludeVisible = preludeStyle.visibility !== "hidden" && Number.parseFloat(preludeStyle.opacity) > 0.2;
+
+    if (preludeVisible) {
       return null;
     }
 
     return {
-      animationName: window.getComputedStyle(contour).animationName,
+      animationDuration: contourStyle.animationDuration,
+      animationName: contourStyle.animationName,
       loadingState: root.dataset.homeLoading,
+      preludeVisible,
       projection: overlay.dataset.projection,
       ready: root.dataset.homeLoadingReady,
-      source: window.__MiraLithHomeLoadingReadySource
+      source: window.__MiraLithHomeLoadingReadySource,
+      titleAnimation: titleStyle.animationName
     };
   });
 
-  expect(await fallbackState.jsonValue()).toEqual({
+  expect(await fallbackState.jsonValue()).toMatchObject({
     animationName: "lubirth-home-contour",
+    animationDuration: "2.6s",
     loadingState: "active",
+    preludeVisible: false,
     projection: "fallback",
     ready: "true",
-    source: "fallback"
+    source: "fallback",
+    titleAnimation: "lubirth-home-title"
   });
 });
 
@@ -199,39 +229,65 @@ test("homepage scroll moves LuBirth into the title list and reveals the project 
   await page.waitForFunction(() => document.documentElement.scrollHeight > window.innerHeight * 2, null, {
     timeout: 35_000
   });
-  await page.evaluate(() => window.scrollTo({ top: window.innerHeight * 1.45, behavior: "instant" }));
-  await page.waitForFunction(() => (window.__MiraLithOpeningProgress ?? 0) > 0.64);
+  await page.evaluate(() => window.scrollTo({ top: window.innerHeight * 1.9, behavior: "instant" }));
+  await page.waitForFunction(() => (window.__MiraLithOpeningProgress ?? 0) > 0.82);
+  await page.waitForFunction(() => {
+    const activeCopy = document.querySelector<HTMLElement>(
+      ".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-copy"
+    );
+    const opening = document.querySelector<HTMLElement>(".lubirth-revised__opening-title");
 
-  const dockedTitle = await page.evaluate(() => {
-    const title = document.querySelector<HTMLElement>(".lubirth-revised__opening-title");
-    const target =
-      window.innerWidth >= 768
-        ? document.querySelector<HTMLElement>(
-            ".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-title"
-          )
-        : document.querySelector<HTMLElement>(".lubirth-revised__mobile-title-title");
+    if (!activeCopy || !opening) {
+      return false;
+    }
 
-    if (!title || !target) {
+    return (
+      Number.parseFloat(window.getComputedStyle(activeCopy).opacity) > 0.85 &&
+      window.getComputedStyle(opening).visibility === "hidden"
+    );
+  });
+
+  const railHandoff = await page.evaluate(() => {
+    const opening = document.querySelector<HTMLElement>(".lubirth-revised__opening-title");
+    const activeTitle = window.innerWidth >= 768
+      ? document.querySelector<HTMLElement>(
+          ".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-title"
+        )
+      : document.querySelector<HTMLElement>(".lubirth-revised__mobile-title-title");
+    const activeMeta = document.querySelector<HTMLElement>(
+      ".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-meta"
+    );
+    const inactiveTitle = document.querySelector<HTMLElement>(
+      ".lubirth-revised__title-rail li:not([data-active='true']) .lubirth-revised__rail-title"
+    );
+    const activeCopy = document.querySelector<HTMLElement>(
+      ".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-copy"
+    );
+
+    if (!opening || !activeTitle || !inactiveTitle || !activeCopy) {
       return null;
     }
 
-    const titleBounds = title.getBoundingClientRect();
-    const targetBounds = target.getBoundingClientRect();
-    const titleStyle = window.getComputedStyle(title);
+    const openingStyle = window.getComputedStyle(opening);
+    const activeTitleStyle = window.getComputedStyle(activeTitle);
+    const inactiveTitleStyle = window.getComputedStyle(inactiveTitle);
+    const activeCopyStyle = window.getComputedStyle(activeCopy);
 
     return {
-      left: titleBounds.left,
-      leftDelta: Math.abs(titleBounds.left - targetBounds.left),
-      topDelta: Math.abs(titleBounds.top - targetBounds.top),
-      visible: titleStyle.visibility !== "hidden" && Number.parseFloat(titleStyle.opacity) > 0.8
+      activeCopyOpacity: Number.parseFloat(activeCopyStyle.opacity),
+      activeFontSize: activeTitleStyle.fontSize,
+      inactiveFontSize: inactiveTitleStyle.fontSize,
+      metaText: activeMeta?.textContent?.replace(/\s+/g, " ").trim(),
+      openingOpacity: Number.parseFloat(openingStyle.opacity),
+      openingVisibility: openingStyle.visibility
     };
   });
-  expect(dockedTitle).not.toBeNull();
-  expect(dockedTitle?.left).toBeLessThan(140);
-  expect(dockedTitle?.leftDelta).toBeLessThanOrEqual(8);
-  expect(dockedTitle?.topDelta).toBeLessThanOrEqual(8);
-  expect(dockedTitle?.visible).toBe(true);
-  await expect(page.locator(".lubirth-revised__opening-title").getByRole("heading", { name: "LuBirth" })).toBeVisible();
+  expect(railHandoff).not.toBeNull();
+  expect(railHandoff?.activeCopyOpacity).toBeGreaterThan(0.85);
+  expect(railHandoff?.activeFontSize).toBe(railHandoff?.inactiveFontSize);
+  expect(railHandoff?.metaText).toBe("出生时刻的地月合影 / Birth-Time Earth-Moon Portrait");
+  expect(railHandoff?.openingOpacity).toBeLessThan(0.08);
+  expect(railHandoff?.openingVisibility).toBe("hidden");
   if (usesDesktopRail) {
     await expect(page.locator(".lubirth-revised__title-rail")).toBeVisible();
     await expect(page.locator(".lubirth-revised__title-rail").getByText("Radio Gaga")).toBeVisible();
@@ -253,6 +309,11 @@ test("homepage intro can be skipped with keyboard input", async ({ page }) => {
   await page.goto("/", { waitUntil: "domcontentloaded" });
 
   await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-runtime", "ready");
+  await page.waitForFunction(() => {
+    const root = document.querySelector<HTMLElement>(".lubirth-revised");
+    return root?.dataset.homeSkipReady === "true" && root.dataset.homeIntroComplete === "false";
+  });
+  await expect(page.locator(".lubirth-revised__home-loading")).toHaveCount(1);
   await page.keyboard.press("Enter");
   await expect(page.locator(".lubirth-revised__home-loading")).toBeHidden({ timeout: 1_500 });
   await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-home-intro-complete", "true");

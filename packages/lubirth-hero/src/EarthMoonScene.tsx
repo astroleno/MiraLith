@@ -314,6 +314,7 @@ export function EarthMoonScene({
         {showClouds ? (
           <LandingCloudLayer
             composition={composition}
+            assets={assets}
             quality={quality}
             sceneLightDirection={sceneLightDirection}
             emphasis={visualDebugLayer === "clouds"}
@@ -322,14 +323,19 @@ export function EarthMoonScene({
           />
         ) : null}
         {showAtmosphere ? (
-          <LandingAtmosphere composition={composition} quality={quality} sceneLightDirection={sceneLightDirection} />
+          <LandingAtmosphere
+            composition={composition}
+            quality={quality}
+            sceneLightDirection={sceneLightDirection}
+            emphasis={visualDebugLayer === "atmosphere"}
+          />
         ) : null}
         {showAurora ? (
           <LandingAurora
             composition={composition}
             quality={quality}
             sceneLightDirection={sceneLightDirection}
-            visibilityBoost={visualDebugLayer === "aurora" ? 2.4 : 1.8}
+            visibilityBoost={visualDebugLayer === "aurora" ? 5.0 : 1.75}
             reducedMotion={reducedMotion}
             paused={paused}
           />

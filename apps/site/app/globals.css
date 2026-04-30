@@ -715,6 +715,64 @@ body::before {
     linear-gradient(180deg, rgba(246, 241, 232, 0.018), transparent 46%);
 }
 
+.lubirth-revised__home-loading-prelude {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  width: min(360px, calc(100vw - 48px));
+  color: rgba(246, 241, 232, 0.76);
+  text-align: center;
+  transform: translate(-50%, -50%);
+  transition: opacity 420ms ease, transform 420ms ease, visibility 0s linear 420ms;
+}
+
+.lubirth-revised[data-home-loading="active"] .lubirth-revised__home-loading-prelude {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, calc(-50% - 10px));
+}
+
+.lubirth-revised__home-loading-prelude-track {
+  position: relative;
+  width: min(220px, 58vw);
+  height: 1px;
+  margin-bottom: 28px;
+  overflow: hidden;
+  background: rgba(246, 241, 232, 0.12);
+}
+
+.lubirth-revised__home-loading-prelude-track span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -44%;
+  width: 44%;
+  background: linear-gradient(90deg, transparent, rgba(246, 241, 232, 0.84), transparent);
+  animation: lubirth-home-prelude-scan 1.45s ease-in-out infinite;
+}
+
+.lubirth-revised__home-loading-prelude-title,
+.lubirth-revised__home-loading-prelude-status {
+  margin: 0;
+}
+
+.lubirth-revised__home-loading-prelude-title {
+  color: rgba(246, 241, 232, 0.86);
+  font-size: 0.76rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.lubirth-revised__home-loading-prelude-status {
+  margin-top: 12px;
+  color: rgba(246, 241, 232, 0.46);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+}
+
 .lubirth-revised__home-loading-contour {
   position: absolute;
   inset: 0;
@@ -860,9 +918,10 @@ body::before {
   font-weight: 400;
   line-height: 0.86;
   letter-spacing: 0;
-  opacity: 1;
-  clip-path: inset(0 0 0 0);
-  transform: translateY(0);
+  opacity: 0;
+  visibility: hidden;
+  clip-path: inset(0 100% 0 0);
+  transform: translateY(14px);
   will-change: clip-path, opacity, transform;
 }
 
@@ -874,17 +933,16 @@ body::before {
   font-weight: 300;
   line-height: 1;
   letter-spacing: 0.48em;
-  opacity: 1;
-  clip-path: inset(0 0 0 0);
-  transform: translateY(0);
+  opacity: 0;
+  visibility: hidden;
+  clip-path: inset(0 100% 0 0);
+  transform: translateY(14px);
   will-change: clip-path, opacity, transform;
 }
 
-.lubirth-revised[data-runtime="ready"][data-home-loading="active"] .lubirth-revised__home-loading-title,
-.lubirth-revised[data-runtime="ready"][data-home-loading="active"] .lubirth-revised__home-loading-subtitle {
-  opacity: 0;
-  clip-path: inset(0 100% 0 0);
-  transform: translateY(14px);
+.lubirth-revised[data-home-loading="active"] .lubirth-revised__home-loading-title,
+.lubirth-revised[data-home-loading="active"] .lubirth-revised__home-loading-subtitle {
+  visibility: visible;
 }
 
 .lubirth-revised__loading-subtitle {
@@ -1352,13 +1410,13 @@ body::before {
   align-items: flex-end;
   gap: 16px;
   color: var(--lubirth-revised-dim);
-  opacity: 1;
-  transform: translateY(0);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
 }
 
-.lubirth-revised[data-runtime="ready"][data-home-loading="active"] .lubirth-revised__home-loading-hint {
-  opacity: 0;
-  transform: translateY(8px);
+.lubirth-revised[data-home-loading="active"] .lubirth-revised__home-loading-hint {
+  visibility: visible;
 }
 
 .lubirth-revised__scroll-hint > div:first-child {
@@ -1410,28 +1468,42 @@ body::before {
 }
 
 .lubirth-revised[data-home-loading="active"] .lubirth-revised__home-loading-contour-path--gold {
-  animation: lubirth-home-contour 1.45s 0.08s ease-in-out forwards;
+  animation: lubirth-home-contour 2.8s 0.28s ease-in-out forwards;
 }
 
 .lubirth-revised[data-home-loading="active"] .lubirth-revised__home-loading-contour-path:not(.lubirth-revised__home-loading-contour-path--gold) {
-  animation: lubirth-home-contour 1.35s 0.14s ease-in-out forwards;
+  animation: lubirth-home-contour 2.6s 0.34s ease-in-out forwards;
 }
 
 .lubirth-revised[data-home-loading="active"] .lubirth-revised__home-loading-moon-path--projection {
   opacity: 1;
-  animation: lubirth-home-moon-projection 1s 0.02s ease-in-out forwards;
+  animation: lubirth-home-moon-projection 2.1s 0.26s ease-in-out forwards;
 }
 
 .lubirth-revised[data-home-loading="active"] .lubirth-revised__home-loading-title {
-  animation: lubirth-home-title 0.8s 1.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: lubirth-home-title 0.95s 0.78s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .lubirth-revised[data-home-loading="active"] .lubirth-revised__home-loading-subtitle {
-  animation: lubirth-home-title 0.62s 1.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: lubirth-home-title 0.72s 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .lubirth-revised[data-home-loading="active"] .lubirth-revised__home-loading-hint {
-  animation: lubirth-home-hint 0.55s 2.35s ease-out forwards;
+  animation: lubirth-home-hint 0.55s 3.14s ease-out forwards;
+}
+
+@keyframes lubirth-home-prelude-scan {
+  0% {
+    left: -44%;
+  }
+
+  52% {
+    left: 100%;
+  }
+
+  100% {
+    left: 100%;
+  }
 }
 
 @keyframes lubirth-home-contour {

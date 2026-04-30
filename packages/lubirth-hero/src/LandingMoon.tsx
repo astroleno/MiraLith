@@ -2,10 +2,11 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Color, MathUtils, Mesh, ShaderMaterial, SRGBColorSpace, Texture, TextureLoader, Vector3 } from "three";
-import type { QualityProfile } from "@miralith/visual-core";
+import { Color, MathUtils, Mesh, ShaderMaterial, SRGBColorSpace, Vector3 } from "three";
+import { getRuntimeOpeningProgress, type QualityProfile } from "@miralith/visual-core";
 import type { EarthMoonHeroMode, LandingComposition, LandingResolvedAssets } from "./types";
 import { createMoonTexture } from "./textures";
+import { useLandingTexture } from "./useLandingTexture";
 
 interface LandingMoonProps {
   mode: EarthMoonHeroMode;
@@ -40,37 +41,30 @@ function setBirthPhaseLightDirection(target: Vector3, phaseAngleRad: number) {
   return target.set(Math.sin(phaseAngleRad), 0, Math.cos(phaseAngleRad)).normalize();
 }
 
-export function LandingMoon({ composition, assets, quality, sceneLightDirection, position, targetScale }: LandingMoonProps) {
+export function LandingMoon({ mode, composition, assets, quality, sceneLightDirection, position, targetScale }: LandingMoonProps) {
   const moon = useRef<Mesh>(null);
   const { camera } = useThree();
   const proceduralMoonTexture = useMemo(
     () => createMoonTexture(quality.tier === "high" ? 512 : 256),
     [quality.tier]
   );
-  const [loadedMoonTexture, setLoadedMoonTexture] = useState<Texture | null>(null);
+  const [shouldLoadMoonTexture, setShouldLoadMoonTexture] = useState(
+    () => mode !== "field" || getRuntimeOpeningProgress(0) > 0.34
+  );
+  const { texture: loadedMoonTexture } = useLandingTexture(
+    shouldLoadMoonTexture ? assets.moonColor.src : undefined,
+    { colorSpace: assets.moonColor.colorSpace }
+  );
   const moonTexture = loadedMoonTexture ?? proceduralMoonTexture;
 
   useEffect(() => {
-    let active = true;
-    const loader = new TextureLoader();
-    loader.load(
-      assets.moonColor.src,
-      (texture) => {
-        if (!active) {
-          texture.dispose();
-          return;
-        }
-        texture.colorSpace = SRGBColorSpace;
-        setLoadedMoonTexture(texture);
-      },
-      undefined,
-      () => setLoadedMoonTexture(null)
-    );
+    if (shouldLoadMoonTexture || mode !== "field") {
+      return undefined;
+    }
 
-    return () => {
-      active = false;
-    };
-  }, [assets.moonColor.src]);
+    const timeout = window.setTimeout(() => setShouldLoadMoonTexture(true), 3200);
+    return () => window.clearTimeout(timeout);
+  }, [mode, shouldLoadMoonTexture]);
 
   const material = useMemo(
     () => {
@@ -150,7 +144,7 @@ export function LandingMoon({ composition, assets, quality, sceneLightDirection,
             float limbLight = 0.72 + 0.28 * pow(viewerFacing, 0.45);
             float terrainContrast = 0.82 + luma * 0.22;
 
-            vec3 moonLight = mix(lightColor, vec3(0.82, 0.88, 1.0), 0.38);
+            vec3 moonLight = mix(lightColor, vec3(0.74, 0.8, 0.95), 0.72);
             float exposure = sunIntensity * mix(0.32, 0.44, fullness);
             vec3 lit = base * moonLight * exposure * (0.26 + directLight * 0.78 + grazingLight * 0.16)
               * limbLight * terrainContrast;
@@ -188,6 +182,10 @@ export function LandingMoon({ composition, assets, quality, sceneLightDirection,
       return;
     }
 
+    const progress = getRuntimeOpeningProgress(mode === "field" ? 0 : 1);
+    if (!shouldLoadMoonTexture && progress > 0.34) {
+      setShouldLoadMoonTexture(true);
+    }
     scaledTarget.copy(targetScale);
     moon.current.position.copy(position);
     moon.current.scale.copy(scaledTarget);

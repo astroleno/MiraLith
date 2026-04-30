@@ -2,27 +2,27 @@ import type { LandingAsset, LandingAssetManifest } from "./types";
 
 export const DEFAULT_LUBIRTH_ASSETS: LandingAssetManifest = {
   earthDay: {
-    id: "earth-day-8k",
-    src: "/assets/lubirth/textures/earth-day-8k.webp",
-    width: 8192,
-    height: 4096,
-    format: "webp",
+    id: "earth-day-2k",
+    src: "/assets/lubirth/textures/earth-day-2k.jpg",
+    width: 2048,
+    height: 1024,
+    format: "jpg",
     colorSpace: "srgb"
   },
   earthNight: {
-    id: "earth-night-8k",
-    src: "/assets/lubirth/textures/earth-night-8k.webp",
-    width: 8192,
-    height: 4096,
-    format: "webp",
+    id: "earth-night-2k",
+    src: "/assets/lubirth/textures/earth-night-2k.jpg",
+    width: 2048,
+    height: 1024,
+    format: "jpg",
     colorSpace: "srgb"
   },
   earthClouds: {
-    id: "earth-clouds-8k",
-    src: "/assets/lubirth/textures/earth-clouds-8k.webp",
-    width: 8192,
-    height: 4096,
-    format: "webp",
+    id: "earth-clouds-2k-light",
+    src: "/assets/lubirth/textures/earth-clouds-2k-light.jpg",
+    width: 2048,
+    height: 1024,
+    format: "jpg",
     colorSpace: "srgb"
   },
   moonColor: {
@@ -31,14 +31,6 @@ export const DEFAULT_LUBIRTH_ASSETS: LandingAssetManifest = {
     width: 2048,
     height: 1024,
     format: "jpg",
-    colorSpace: "srgb"
-  },
-  spaceBackground: {
-    id: "stars-milky-way-8k",
-    src: "/assets/lubirth/backgrounds/8k_stars_milky_way.webp",
-    width: 8192,
-    height: 4096,
-    format: "webp",
     colorSpace: "srgb"
   },
   fallbackPoster: {
@@ -79,34 +71,34 @@ function textureBudget(
 export function getLandingAssetBudget(assets: Partial<LandingAssetManifest> = {}): LandingAsset[] {
   const resolvedAssets = resolveLandingAssets(assets);
   const budget = [
-    textureBudget(resolvedAssets.earthDay, 2_400_000, "critical", true),
+    textureBudget(resolvedAssets.earthDay, 520_000, "critical", true),
     textureBudget(
       resolvedAssets.earthNight ?? DEFAULT_LUBIRTH_ASSETS.earthNight ?? {
-        id: "earth-night-8k",
-        src: "/assets/lubirth/textures/earth-night-8k.webp",
-        width: 8192,
-        height: 4096,
-        format: "webp",
+        id: "earth-night-2k",
+        src: "/assets/lubirth/textures/earth-night-2k.jpg",
+        width: 2048,
+        height: 1024,
+        format: "jpg",
         colorSpace: "srgb"
       },
-      1_300_000,
+      320_000,
       "critical",
       true
     ),
     textureBudget(
       resolvedAssets.earthClouds ?? DEFAULT_LUBIRTH_ASSETS.earthClouds ?? {
-        id: "earth-clouds-8k",
-        src: "/assets/lubirth/textures/earth-clouds-8k.webp",
-        width: 8192,
-        height: 4096,
-        format: "webp",
+        id: "earth-clouds-2k-light",
+        src: "/assets/lubirth/textures/earth-clouds-2k-light.jpg",
+        width: 2048,
+        height: 1024,
+        format: "jpg",
         colorSpace: "srgb"
       },
-      8_100_000,
+      680_000,
       "critical",
       true
     ),
-    textureBudget(resolvedAssets.moonColor, 1_060_000, "critical", true),
+    textureBudget(resolvedAssets.moonColor, 1_100_000, "critical", true),
     resolvedAssets.fallbackPoster
   ];
 

@@ -73,7 +73,7 @@ export function VisualCanvas({ ariaLabel, decorative = true, fallback, children 
     >
       <VisualCanvasErrorBoundary fallback={fallback}>
         <Canvas
-          dpr={[1, 1.25]}
+          dpr={[1, 1.1]}
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance", preserveDrawingBuffer }}
           camera={{ fov: 42, position: [0, 2.8, 7.4], near: 0.1, far: 90 }}
           onCreated={({ gl }) => {
