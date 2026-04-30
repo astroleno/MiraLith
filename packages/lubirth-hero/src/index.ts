@@ -3,9 +3,12 @@ export { EarthMoonScene } from "./EarthMoonScene";
 export { LandingAirglow } from "./LandingAirglow";
 export { LandingAtmosphere } from "./LandingAtmosphere";
 export { LandingAurora } from "./LandingAurora";
+export { LandingAuroraOval } from "./LandingAuroraOval";
 export { LandingCloudLayer } from "./LandingCloudLayer";
 export { LandingCloudDeck } from "./LandingCloudDeck";
+export { LandingCloudDeckV2 } from "./LandingCloudDeckV2";
 export { LandingEarth } from "./LandingEarth";
+export { LandingLimbAirglowV2 } from "./LandingLimbAirglowV2";
 export { LandingMoon } from "./LandingMoon";
 export { LandingSpaceBackground } from "./LandingSpaceBackground";
 export {

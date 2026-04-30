@@ -16,9 +16,12 @@ import {
 import { LandingAirglow } from "./LandingAirglow";
 import { LandingAtmosphere } from "./LandingAtmosphere";
 import { LandingAurora } from "./LandingAurora";
+import { LandingAuroraOval } from "./LandingAuroraOval";
 import { LandingCloudDeck } from "./LandingCloudDeck";
+import { LandingCloudDeckV2 } from "./LandingCloudDeckV2";
 import { LandingCloudLayer } from "./LandingCloudLayer";
 import { LandingEarth } from "./LandingEarth";
+import { LandingLimbAirglowV2 } from "./LandingLimbAirglowV2";
 import { LandingMoon } from "./LandingMoon";
 import { LandingSpaceBackground } from "./LandingSpaceBackground";
 import type { EarthMoonSceneProps, LuBirthProjectionFrame } from "./types";
@@ -94,7 +97,10 @@ export function EarthMoonScene({
   paused,
   onSceneReady,
   onProjectionFrame,
-  onVisualReadyEnough
+  onVisualReadyEnough,
+  useCloudDeckV2 = true,
+  useAirglowV2 = true,
+  useAuroraOval = true
 }: EarthMoonSceneProps) {
   const earthGroup = useRef<Group>(null);
   const directionalLightRef = useRef<DirectionalLight>(null);
@@ -325,15 +331,27 @@ export function EarthMoonScene({
         ) : null}
         {showClouds ? (
           assets.earthCloudDeck ? (
-            <LandingCloudDeck
-              composition={composition}
-              assets={assets}
-              quality={quality}
-              sceneLightDirection={sceneLightDirection}
-              emphasis={visualDebugLayer === "clouds"}
-              reducedMotion={reducedMotion}
-              paused={paused}
-            />
+            useCloudDeckV2 ? (
+              <LandingCloudDeckV2
+                composition={composition}
+                assets={assets}
+                quality={quality}
+                sceneLightDirection={sceneLightDirection}
+                emphasis={visualDebugLayer === "clouds"}
+                reducedMotion={reducedMotion}
+                paused={paused}
+              />
+            ) : (
+              <LandingCloudDeck
+                composition={composition}
+                assets={assets}
+                quality={quality}
+                sceneLightDirection={sceneLightDirection}
+                emphasis={visualDebugLayer === "clouds"}
+                reducedMotion={reducedMotion}
+                paused={paused}
+              />
+            )
           ) : (
             <LandingCloudLayer
               composition={composition}
@@ -347,24 +365,46 @@ export function EarthMoonScene({
           )
         ) : null}
         {showAurora ? (
-          <LandingAurora
-            composition={composition}
-            quality={quality}
-            sceneLightDirection={sceneLightDirection}
-            visibilityBoost={auroraVisibilityBoost}
-            moonColumnAvoidance={visualDebugLayer === "all" ? 1 : 0}
-            lowProfile={useHeroAuroraProfile}
-            reducedMotion={reducedMotion}
-            paused={paused}
-          />
+          useAuroraOval ? (
+            <LandingAuroraOval
+              composition={composition}
+              quality={quality}
+              sceneLightDirection={sceneLightDirection}
+              visibilityBoost={auroraVisibilityBoost}
+              moonColumnAvoidance={visualDebugLayer === "all" ? 1 : 0}
+              lowProfile={useHeroAuroraProfile}
+              reducedMotion={reducedMotion}
+              paused={paused}
+            />
+          ) : (
+            <LandingAurora
+              composition={composition}
+              quality={quality}
+              sceneLightDirection={sceneLightDirection}
+              visibilityBoost={auroraVisibilityBoost}
+              moonColumnAvoidance={visualDebugLayer === "all" ? 1 : 0}
+              lowProfile={useHeroAuroraProfile}
+              reducedMotion={reducedMotion}
+              paused={paused}
+            />
+          )
         ) : null}
         {showAtmosphere ? (
-          <LandingAirglow
-            composition={composition}
-            quality={quality}
-            sceneLightDirection={sceneLightDirection}
-            emphasis={visualDebugLayer === "atmosphere"}
-          />
+          useAirglowV2 ? (
+            <LandingLimbAirglowV2
+              composition={composition}
+              quality={quality}
+              sceneLightDirection={sceneLightDirection}
+              emphasis={visualDebugLayer === "atmosphere"}
+            />
+          ) : (
+            <LandingAirglow
+              composition={composition}
+              quality={quality}
+              sceneLightDirection={sceneLightDirection}
+              emphasis={visualDebugLayer === "atmosphere"}
+            />
+          )
         ) : null}
         {showAtmosphere ? (
           <LandingAtmosphere
