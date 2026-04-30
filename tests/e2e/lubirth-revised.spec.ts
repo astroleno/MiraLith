@@ -4,6 +4,7 @@ declare global {
   interface Window {
     __MiraLithLuBirthAuroraEnabled?: boolean;
     __MiraLithLuBirthAuroraProfile?: string;
+    __MiraLithLuBirthAirglowActive?: boolean;
     __MiraLithLuBirthCloudDeckActive?: boolean;
     __MiraLithLuBirthCloudDeckTexture?: string;
     __MiraLithLuBirthQualityTier?: string;
@@ -111,6 +112,14 @@ test("uses the CloudDeck pass for high quality cloud review", async ({ page }) =
     .toContain("earth-cloud-deck-2k.png");
   await expect
     .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-cloud-deck-2k.png")), { timeout: 25_000 })
+    .toBe(true);
+});
+
+test("uses the Airglow pass for atmosphere review", async ({ page }) => {
+  await page.goto("/lubirth-revised?progress=0&copy=hidden&debug=atmosphere&quality=high&visualTest=pixels");
+  await expect(page.locator("canvas")).toHaveCount(1);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthAirglowActive), { timeout: 25_000 })
     .toBe(true);
 });
 

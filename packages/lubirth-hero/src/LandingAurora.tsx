@@ -55,9 +55,10 @@ const northTangent = new Vector3();
 const position = new Vector3();
 
 const CURTAINS: AuroraCurtainLayer[] = [
-  { lonCenterDeg: -118, lonSpanDeg: 56, latCenterDeg: 56, latWaveDeg: 5.2, baseRadius: 1.016, height: 0.17, heroHeight: 0.1, phase: 0.72, opacity: 0.5, foldScale: 5.4, rootWidth: 0.14, topFeatherStart: 0.62, rootGlow: 1.28, topMist: 0.7 },
-  { lonCenterDeg: -78, lonSpanDeg: 52, latCenterDeg: 60.5, latWaveDeg: 2.8, baseRadius: 1.019, height: 0.105, heroHeight: 0.078, phase: 2.68, opacity: 0.34, foldScale: 8.9, rootWidth: 0.1, topFeatherStart: 0.52, rootGlow: 1.42, topMist: 0.52 },
-  { lonCenterDeg: -148, lonSpanDeg: 34, latCenterDeg: 53.4, latWaveDeg: 4.6, baseRadius: 1.013, height: 0.2, heroHeight: 0.116, phase: 4.15, opacity: 0.22, foldScale: 4.7, rootWidth: 0.18, topFeatherStart: 0.7, rootGlow: 1.18, topMist: 0.82 }
+  { lonCenterDeg: -112, lonSpanDeg: 118, latCenterDeg: 58, latWaveDeg: 1.8, baseRadius: 1.012, height: 0.082, heroHeight: 0.052, phase: 1.34, opacity: 0.14, foldScale: 2.4, rootWidth: 0.26, topFeatherStart: 0.44, rootGlow: 0.82, topMist: 0.32 },
+  { lonCenterDeg: -118, lonSpanDeg: 68, latCenterDeg: 56, latWaveDeg: 5.2, baseRadius: 1.016, height: 0.17, heroHeight: 0.1, phase: 0.72, opacity: 0.42, foldScale: 5.4, rootWidth: 0.14, topFeatherStart: 0.62, rootGlow: 1.28, topMist: 0.7 },
+  { lonCenterDeg: -78, lonSpanDeg: 64, latCenterDeg: 60.5, latWaveDeg: 2.8, baseRadius: 1.019, height: 0.105, heroHeight: 0.078, phase: 2.68, opacity: 0.28, foldScale: 8.9, rootWidth: 0.1, topFeatherStart: 0.52, rootGlow: 1.42, topMist: 0.52 },
+  { lonCenterDeg: -148, lonSpanDeg: 48, latCenterDeg: 53.4, latWaveDeg: 4.6, baseRadius: 1.013, height: 0.2, heroHeight: 0.116, phase: 4.15, opacity: 0.18, foldScale: 4.7, rootWidth: 0.18, topFeatherStart: 0.7, rootGlow: 1.18, topMist: 0.82 }
 ];
 
 const smoothstep = (edge0: number, edge1: number, value: number) => {
@@ -271,7 +272,7 @@ function createAuroraMaterial(composition: LandingComposition, layer: AuroraCurt
 
         vec3 sunDirection = normalize(lightDirection);
         float sunSide = dot(normalize(vWorldNormal), sunDirection);
-        float nightGate = 0.32 + 0.68 * (1.0 - smoothstep(-0.04, 0.4, sunSide));
+        float nightGate = 0.16 + 0.84 * (1.0 - smoothstep(-0.06, 0.28, sunSide));
 
         float sideFeather = smoothstep(0.0, 0.09, arc) * (1.0 - smoothstep(0.91, 1.0, arc));
         float root = 1.0 - smoothstep(0.012, rootWidth, vertical);
@@ -291,7 +292,7 @@ function createAuroraMaterial(composition: LandingComposition, layer: AuroraCurt
         float screenX = gl_FragCoord.x / max(screenSize.x, 1.0);
         float moonColumn = 1.0 - smoothstep(0.055, 0.19, abs(screenX - moonColumnCenter));
         density *= mix(1.0, 0.46, moonColumn * moonColumnAvoidance);
-        float alpha = density * intensity * opacityScale * 1.62;
+        float alpha = density * intensity * opacityScale * 1.46;
 
         if (alpha < 0.0015) {
           discard;
@@ -300,8 +301,8 @@ function createAuroraMaterial(composition: LandingComposition, layer: AuroraCurt
         vec3 auroraColor = mix(colorA, colorB, smoothstep(0.1, 0.78, vertical));
         auroraColor = mix(auroraColor, vec3(0.5, 0.86, 0.72), rootBand * 0.2 + strands * 0.08);
         auroraColor = mix(auroraColor, vec3(0.34, 0.46, 0.42), smoothstep(0.58, 0.98, vertical) * 0.3);
-        vec3 highRed = vec3(0.42, 0.1, 0.07) * smoothstep(0.5, 0.92, vertical) * curtain * 0.07;
-        vec3 finalColor = auroraColor * density * (2.88 + strands * 0.56 + rootBand * 0.82) + highRed;
+        vec3 highRed = vec3(0.36, 0.07, 0.055) * smoothstep(0.64, 0.96, vertical) * curtain * 0.035;
+        vec3 finalColor = auroraColor * density * (2.56 + strands * 0.44 + rootBand * 0.72) + highRed;
 
         gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, 0.34));
       }
@@ -370,7 +371,7 @@ export function LandingAurora({
 
     const progress = getRuntimeOpeningProgress(0);
     const nearFade = 1 - smoothstep(0.2, 0.62, progress);
-    const farFloor = 0.06;
+    const farFloor = lowProfile ? 0.1 : 0.14;
     const elapsed = paused || reducedMotion ? 0 : state.clock.elapsedTime;
     const intensity = composition.aurora.intensity * visibilityBoost * Math.max(farFloor, nearFade);
 
@@ -394,7 +395,7 @@ export function LandingAurora({
   return (
     <group ref={aurora}>
       {curtains.map(({ geometry, material }, index) => (
-        <mesh key={index} geometry={geometry} material={material} renderOrder={12 + index} />
+        <mesh key={index} geometry={geometry} material={material} renderOrder={12} />
       ))}
     </group>
   );

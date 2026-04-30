@@ -1,5 +1,6 @@
 export { EarthMoonHero } from "./EarthMoonHero";
 export { EarthMoonScene } from "./EarthMoonScene";
+export { LandingAirglow } from "./LandingAirglow";
 export { LandingAtmosphere } from "./LandingAtmosphere";
 export { LandingAurora } from "./LandingAurora";
 export { LandingCloudLayer } from "./LandingCloudLayer";

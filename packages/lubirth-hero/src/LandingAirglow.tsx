@@ -1,27 +1,33 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import { useFrame } from "@react-three/fiber";
 import {
   AddEquation,
   BackSide,
-  Color,
   CustomBlending,
   OneFactor,
   ShaderMaterial,
   SrcAlphaFactor,
   Vector3
 } from "three";
-import { useFrame } from "@react-three/fiber";
 import { getRuntimeOpeningProgress, type QualityProfile } from "@miralith/visual-core";
 import type { LandingComposition } from "./types";
 
-interface LandingAtmosphereProps {
+interface LandingAirglowProps {
   composition: LandingComposition;
   quality: QualityProfile;
   sceneLightDirection?: Vector3;
   emphasis?: boolean;
 }
 
+declare global {
+  interface Window {
+    __MiraLithLuBirthAirglowActive?: boolean;
+  }
+}
+
+const AIRGLOW_RADIUS = 1.021;
 const lightDirection = new Vector3();
 
 const smoothstep = (edge0: number, edge1: number, value: number) => {
@@ -29,17 +35,13 @@ const smoothstep = (edge0: number, edge1: number, value: number) => {
   return t * t * (3 - 2 * t);
 };
 
-function createAtmosphereMaterial(composition: LandingComposition) {
+function createAirglowMaterial(composition: LandingComposition) {
   return new ShaderMaterial({
     uniforms: {
       closeStage: { value: 1 },
       intensity: { value: composition.atmosphere.intensity },
       debugBoost: { value: 0 },
-      lightDir: { value: lightDirection.set(...composition.light.fixedSunDir).normalize().clone() },
-      white: { value: new Color(0.92, 0.98, 1.0) },
-      blue: { value: new Color(0.17, 0.54, 0.96) },
-      mist: { value: new Color(0.025, 0.16, 0.46) },
-      sunset: { value: new Color(1.0, 0.48, 0.16) }
+      lightDir: { value: lightDirection.set(...composition.light.fixedSunDir).normalize().clone() }
     },
     vertexShader: `
       varying vec3 vWorldPosition;
@@ -57,10 +59,6 @@ function createAtmosphereMaterial(composition: LandingComposition) {
       uniform float intensity;
       uniform float debugBoost;
       uniform vec3 lightDir;
-      uniform vec3 white;
-      uniform vec3 blue;
-      uniform vec3 mist;
-      uniform vec3 sunset;
 
       varying vec3 vWorldPosition;
       varying vec3 vWorldNormal;
@@ -71,49 +69,40 @@ function createAtmosphereMaterial(composition: LandingComposition) {
         vec3 l = normalize(lightDir);
         float limb = 1.0 - max(dot(n, v), 0.0);
         float sun = dot(n, l);
-        float day = smoothstep(-0.28, 0.34, sun);
-        float twilight = 1.0 - smoothstep(0.02, 0.42, abs(sun));
-        float farHold = mix(0.64, 0.96, closeStage);
-        float boost = 1.0 + debugBoost * 0.18;
+        float day = smoothstep(-0.24, 0.32, sun);
+        float night = 1.0 - smoothstep(-0.16, 0.22, sun);
+        float twilight = 1.0 - smoothstep(0.0, 0.38, abs(sun));
+        float boost = 1.0 + debugBoost * 0.32;
+        float farHold = mix(0.76, 1.0, closeStage);
 
-        float whiteNeedle =
-          smoothstep(0.91, 0.968, limb) *
-          (1.0 - smoothstep(0.986, 0.998, limb));
-        whiteNeedle *= 0.68 + day * 0.48;
-
-        float blueBand =
-          smoothstep(0.72, 0.86, limb) *
-          (1.0 - smoothstep(0.932, 0.985, limb));
-        blueBand *= 0.38 + day * 0.62;
-
-        float outerMist =
-          smoothstep(0.66, 0.8, limb) *
-          (1.0 - smoothstep(0.88, 0.968, limb));
-        outerMist *= 0.12 + closeStage * 0.08;
-
-        float sunsetEdge =
+        float oxygenBand =
+          night *
+          smoothstep(0.7, 0.88, limb) *
+          (1.0 - smoothstep(0.925, 0.985, limb));
+        float amberBand =
           twilight *
-          smoothstep(0.5, 0.88, limb) *
-          (1.0 - smoothstep(0.98, 1.0, limb));
+          smoothstep(0.58, 0.82, limb) *
+          (1.0 - smoothstep(0.91, 0.988, limb));
+        float cyanHaze =
+          smoothstep(0.5, 0.8, limb) *
+          (1.0 - smoothstep(0.92, 0.995, limb)) *
+          (0.18 + day * 0.18 + night * 0.14);
 
-        vec3 finalColor =
-          white * whiteNeedle * 0.76 +
-          blue * blueBand * 0.44 +
-          mist * outerMist * 0.08 +
-          sunset * sunsetEdge * 0.035;
-
+        vec3 color =
+          vec3(0.34, 0.78, 0.58) * oxygenBand * 0.22 +
+          vec3(1.0, 0.48, 0.18) * amberBand * 0.1 +
+          vec3(0.08, 0.42, 0.72) * cyanHaze * 0.12;
         float alpha =
-          whiteNeedle * 0.082 +
-          blueBand * 0.034 +
-          outerMist * 0.003 +
-          sunsetEdge * 0.008;
+          oxygenBand * 0.032 +
+          amberBand * 0.024 +
+          cyanHaze * 0.014;
         alpha *= intensity * farHold * boost;
 
-        if (alpha < 0.0015) {
+        if (alpha < 0.0012) {
           discard;
         }
 
-        gl_FragColor = vec4(min(finalColor * intensity * farHold * boost, vec3(0.98)), clamp(alpha, 0.0, 0.28));
+        gl_FragColor = vec4(min(color * intensity * farHold * boost, vec3(0.72)), clamp(alpha, 0.0, 0.12));
       }
     `,
     transparent: true,
@@ -127,18 +116,26 @@ function createAtmosphereMaterial(composition: LandingComposition) {
   });
 }
 
-export function LandingAtmosphere({
+export function LandingAirglow({
   composition,
   quality,
   sceneLightDirection,
   emphasis = false
-}: LandingAtmosphereProps) {
-  const material = useMemo(() => createAtmosphereMaterial(composition), [composition]);
-  const radius = composition.earth.radius * (1 + composition.atmosphere.thickness * 0.42);
+}: LandingAirglowProps) {
+  const material = useMemo(() => createAirglowMaterial(composition), [composition]);
 
   useEffect(() => {
-    return () => material.dispose();
-  }, [material]);
+    if (typeof window !== "undefined") {
+      window.__MiraLithLuBirthAirglowActive = composition.atmosphere.enabled;
+    }
+
+    return () => {
+      material.dispose();
+      if (typeof window !== "undefined") {
+        window.__MiraLithLuBirthAirglowActive = false;
+      }
+    };
+  }, [composition.atmosphere.enabled, material]);
 
   useFrame(() => {
     const progress = getRuntimeOpeningProgress(0);
@@ -159,10 +156,10 @@ export function LandingAtmosphere({
   }
 
   return (
-    <mesh material={material} renderOrder={14}>
+    <mesh material={material} renderOrder={13}>
       <sphereGeometry
         args={[
-          radius,
+          composition.earth.radius * AIRGLOW_RADIUS,
           quality.tier === "high" ? Math.max(72, quality.segments) : quality.tier === "medium" ? 56 : 36,
           quality.tier === "high" ? 40 : quality.tier === "medium" ? 30 : 22
         ]}

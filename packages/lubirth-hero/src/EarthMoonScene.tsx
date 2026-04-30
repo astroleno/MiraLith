@@ -13,6 +13,7 @@ import {
   DEFAULT_LUBIRTH_LOCATION_TARGET,
   DEFAULT_LUBIRTH_LOCATION_VECTOR
 } from "./constants";
+import { LandingAirglow } from "./LandingAirglow";
 import { LandingAtmosphere } from "./LandingAtmosphere";
 import { LandingAurora } from "./LandingAurora";
 import { LandingCloudDeck } from "./LandingCloudDeck";
@@ -112,8 +113,8 @@ export function EarthMoonScene({
     quality.tier !== "fallback";
   const useHeroAuroraProfile = visualDebugLayer === "all" || auroraProfile === "hero";
   const auroraVisibilityBoost = visualDebugLayer === "aurora"
-    ? (auroraProfile === "debug" ? 5.0 : 3.1)
-    : 1.22;
+    ? (auroraProfile === "debug" ? 5.2 : 4.0)
+    : 1.08;
 
   const lightColor = useMemo(
     () => new Color(composition.light.color[0], composition.light.color[1], composition.light.color[2]),
@@ -345,14 +346,6 @@ export function EarthMoonScene({
             />
           )
         ) : null}
-        {showAtmosphere ? (
-          <LandingAtmosphere
-            composition={composition}
-            quality={quality}
-            sceneLightDirection={sceneLightDirection}
-            emphasis={visualDebugLayer === "atmosphere"}
-          />
-        ) : null}
         {showAurora ? (
           <LandingAurora
             composition={composition}
@@ -363,6 +356,22 @@ export function EarthMoonScene({
             lowProfile={useHeroAuroraProfile}
             reducedMotion={reducedMotion}
             paused={paused}
+          />
+        ) : null}
+        {showAtmosphere ? (
+          <LandingAirglow
+            composition={composition}
+            quality={quality}
+            sceneLightDirection={sceneLightDirection}
+            emphasis={visualDebugLayer === "atmosphere"}
+          />
+        ) : null}
+        {showAtmosphere ? (
+          <LandingAtmosphere
+            composition={composition}
+            quality={quality}
+            sceneLightDirection={sceneLightDirection}
+            emphasis={visualDebugLayer === "atmosphere"}
           />
         ) : null}
         {debugMianyang && showEarth ? <MianyangDebugMarker radius={composition.earth.radius} /> : null}
