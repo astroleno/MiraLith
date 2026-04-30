@@ -87,10 +87,12 @@ export function EarthMoonScene({
   quality,
   debugMianyang,
   visualDebugLayer = "all",
+  auroraProfile = "hero",
   reducedMotion,
   paused,
   onSceneReady,
-  onProjectionFrame
+  onProjectionFrame,
+  onVisualReadyEnough
 }: EarthMoonSceneProps) {
   const earthGroup = useRef<Group>(null);
   const directionalLightRef = useRef<DirectionalLight>(null);
@@ -104,6 +106,10 @@ export function EarthMoonScene({
   const showAtmosphere = visualDebugLayer === "all" || visualDebugLayer === "atmosphere";
   const showAurora = visualDebugLayer === "all" || visualDebugLayer === "aurora";
   const showSurfaceTextureClouds = visualDebugLayer === "all";
+  const useHeroAuroraProfile = visualDebugLayer === "all" || auroraProfile === "hero";
+  const auroraVisibilityBoost = visualDebugLayer === "aurora"
+    ? (auroraProfile === "debug" ? 5.0 : 3.1)
+    : 1.22;
 
   const lightColor = useMemo(
     () => new Color(composition.light.color[0], composition.light.color[1], composition.light.color[2]),
@@ -309,6 +315,7 @@ export function EarthMoonScene({
             reducedMotion={reducedMotion}
             paused={paused}
             sceneLightDirection={sceneLightDirection}
+            onDayTextureReady={onVisualReadyEnough}
           />
         ) : null}
         {showClouds ? (
@@ -335,7 +342,9 @@ export function EarthMoonScene({
             composition={composition}
             quality={quality}
             sceneLightDirection={sceneLightDirection}
-            visibilityBoost={visualDebugLayer === "aurora" ? 5.0 : 1.75}
+            visibilityBoost={auroraVisibilityBoost}
+            moonColumnAvoidance={visualDebugLayer === "all" ? 1 : 0}
+            lowProfile={useHeroAuroraProfile}
             reducedMotion={reducedMotion}
             paused={paused}
           />

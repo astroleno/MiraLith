@@ -3,6 +3,7 @@ import type { LandingQuality, QualityProfile, ResolvedQualityTier } from "@miral
 
 export type EarthMoonHeroMode = "field" | "window" | "zoomed" | "expanded";
 export type LandingVisualDebugLayer = "all" | "stars" | "clouds" | "atmosphere" | "aurora";
+export type LandingAuroraProfile = "hero" | "debug";
 export type LandingPresetName =
   | "field"
   | "window"
@@ -166,10 +167,12 @@ export interface EarthMoonSceneProps {
   sectionProgress?: number;
   debugMianyang?: boolean;
   visualDebugLayer?: LandingVisualDebugLayer;
+  auroraProfile?: LandingAuroraProfile;
   reducedMotion?: boolean;
   paused?: boolean;
   onSceneReady?: () => void;
   onProjectionFrame?: (frame: LuBirthProjectionFrame) => void;
+  onVisualReadyEnough?: () => void;
 }
 
 export interface LuBirthProjectionFrame {

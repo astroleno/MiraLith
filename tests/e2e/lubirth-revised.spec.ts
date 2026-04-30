@@ -78,6 +78,29 @@ test("keeps revised route clear of 8K LuBirth texture requests", async ({ page }
   expect(heavyRequests).toEqual([]);
 });
 
+test("honors LuBirth quality URL overrides for aurora debugging", async ({ page }) => {
+  await page.goto("/lubirth-revised?progress=0&copy=hidden&debug=aurora&quality=low&visualTest=pixels");
+  await expect(page.locator("canvas")).toHaveCount(1);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthQualityTier), { timeout: 25_000 })
+    .toBe("low");
+  await expect.poll(() => page.evaluate(() => window.__MiraLithLuBirthAuroraEnabled)).toBe(false);
+
+  await page.goto("/lubirth-revised?progress=0&copy=hidden&debug=aurora&quality=high&visualTest=pixels");
+  await expect(page.locator("canvas")).toHaveCount(1);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthQualityTier), { timeout: 25_000 })
+    .toBe("high");
+  await expect.poll(() => page.evaluate(() => window.__MiraLithLuBirthAuroraEnabled)).toBe(true);
+  await expect.poll(() => page.evaluate(() => window.__MiraLithLuBirthAuroraProfile)).toBe("hero");
+
+  await page.goto("/lubirth-revised?progress=0&copy=hidden&debug=aurora&quality=high&auroraProfile=debug&visualTest=pixels");
+  await expect(page.locator("canvas")).toHaveCount(1);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthAuroraProfile), { timeout: 25_000 })
+    .toBe("debug");
+});
+
 test("visual pixel mode hides visible copy without fake future chapter anchors", async ({ page }) => {
   await page.goto("/lubirth-revised?visualTest=pixels#miralith-chapter-now-building");
 

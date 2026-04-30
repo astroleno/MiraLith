@@ -5,16 +5,16 @@ import { Component, type ErrorInfo, type ReactNode, Suspense, useState } from "r
 
 declare global {
   interface Window {
-    __MiraLithFirstUsableAt?: number;
+    __MiraLithCanvasCreatedAt?: number;
   }
 }
 
-function markFirstUsable() {
-  if (typeof window === "undefined" || window.__MiraLithFirstUsableAt) {
+function markCanvasCreated() {
+  if (typeof window === "undefined" || window.__MiraLithCanvasCreatedAt) {
     return;
   }
 
-  window.__MiraLithFirstUsableAt = performance.now();
+  window.__MiraLithCanvasCreatedAt = performance.now();
 }
 
 interface VisualCanvasErrorBoundaryProps {
@@ -77,7 +77,7 @@ export function VisualCanvas({ ariaLabel, decorative = true, fallback, children 
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance", preserveDrawingBuffer }}
           camera={{ fov: 42, position: [0, 2.8, 7.4], near: 0.1, far: 90 }}
           onCreated={({ gl }) => {
-            markFirstUsable();
+            markCanvasCreated();
             gl.domElement.addEventListener("webglcontextlost", (event) => {
               event.preventDefault();
               setContextLost(true);

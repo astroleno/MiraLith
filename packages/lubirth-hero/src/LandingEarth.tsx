@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Color,
   LinearMipmapLinearFilter,
@@ -26,9 +26,12 @@ interface LandingEarthProps {
   reducedMotion?: boolean;
   paused?: boolean;
   sceneLightDirection?: Vector3;
+  onDayTextureReady?: () => void;
 }
 
 const lightDirection = new Vector3();
+const SURFACE_CLOUD_OPACITY_MULTIPLIER = 0.36;
+
 const smoothstep = (edge0: number, edge1: number, value: number) => {
   const t = Math.min(1, Math.max(0, (value - edge0) / Math.max(edge1 - edge0, 1e-5)));
   return t * t * (3 - 2 * t);
@@ -41,7 +44,8 @@ export function LandingEarth({
   showTextureClouds = true,
   reducedMotion,
   paused,
-  sceneLightDirection
+  sceneLightDirection,
+  onDayTextureReady
 }: LandingEarthProps) {
   const earth = useRef<Mesh>(null);
   const proceduralDayTexture = useMemo(
@@ -69,6 +73,12 @@ export function LandingEarth({
   const activeDayTexture = dayTexture ?? proceduralDayTexture;
   const activeNightTexture = nightTexture ?? activeDayTexture;
   const activeCloudTexture = cloudTexture ?? activeDayTexture;
+
+  useEffect(() => {
+    if (dayTexture) {
+      onDayTextureReady?.();
+    }
+  }, [dayTexture, onDayTextureReady]);
 
   const material = useMemo(
     () => {
@@ -98,7 +108,9 @@ export function LandingEarth({
           edge: { value: composition.earth.terminatorSoftness },
           nightBoost: { value: composition.earth.nightIntensity },
           cloudOpacity: {
-            value: composition.earth.useClouds && showTextureClouds ? composition.earth.cloudOpacity * 0.54 : 0
+            value: composition.earth.useClouds && showTextureClouds
+              ? composition.earth.cloudOpacity * SURFACE_CLOUD_OPACITY_MULTIPLIER
+              : 0
           },
           cloudOffset: { value: 0 },
           rimStrength: { value: composition.earth.rimStrength },
@@ -228,8 +240,12 @@ export function LandingEarth({
             float dayNightRim = 0.28 + 0.72 * max(ndl, 0.0);
             rimEffect *= dayNightRim;
             vec3 rimCol = mix(vec3(0.04, 0.18, 0.46), vec3(0.18, 0.5, 0.86), innerRim) * rimEffect * 0.34;
-            float horizonNeedle = pow(fresnel, 13.5) * (0.28 + 0.72 * dayW) * closeStage;
-            vec3 needleCol = vec3(0.92, 0.97, 1.0) * horizonNeedle * 0.14;
+            float horizonNeedle = pow(fresnel, 24.0) * (0.18 + 0.82 * dayW) * closeStage;
+            float surfaceNeedle = pow(fresnel, 64.0) * (0.24 + 0.76 * dayW) * closeStage;
+            float needleCut = 1.0 - smoothstep(0.995, 1.0, fresnel);
+            vec3 needleCol =
+              vec3(0.62, 0.82, 1.0) * horizonNeedle * 0.035 +
+              vec3(0.95, 0.985, 1.0) * surfaceNeedle * needleCut * 0.78;
 
             vec3 color = dayCol + cityCol + moonlitLand + moonlitClouds + twilightFill + terminatorCol + rimCol + needleCol;
             color = color / (1.0 + max(color - vec3(0.78), vec3(0.0)) * 0.82);
@@ -275,7 +291,9 @@ export function LandingEarth({
     earthMaterial.uniforms.edge.value = composition.earth.terminatorSoftness;
     earthMaterial.uniforms.nightBoost.value = composition.earth.nightIntensity;
     earthMaterial.uniforms.cloudOpacity.value =
-      composition.earth.useClouds && showTextureClouds ? composition.earth.cloudOpacity * 0.54 : 0;
+      composition.earth.useClouds && showTextureClouds
+        ? composition.earth.cloudOpacity * SURFACE_CLOUD_OPACITY_MULTIPLIER
+        : 0;
     const progress = typeof window === "undefined" ? 1 : Math.min(1, Math.max(0, window.__MiraLithOpeningProgress ?? 0));
     if (!shouldLoadNightTexture && progress > 0.28) {
       setShouldLoadNightTexture(true);

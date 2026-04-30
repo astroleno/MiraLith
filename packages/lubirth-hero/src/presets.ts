@@ -7,7 +7,7 @@ const field: LandingComposition = {
   moon: { visible: true, date: DEFAULT_LUBIRTH_DATE, radius: 0.68, screenX: 0.5, screenY: 0.75, screenSize: 0.18, anchorDistance: 14, phaseMode: "fixed-date", fixedPhase: DEFAULT_LUBIRTH_MOON_PHASE, yawDeg: -90, lonDeg: -90, latDeg: 90, nightLift: 0.08, lightingMode: "mixed" },
   light: { mode: "fixed-sun", fixedSunDir: DEFAULT_LUBIRTH_SUN_DIRECTION, intensity: 2.45, color: [1, 0.94, 0.78], ambientIntensity: 0.006 },
   atmosphere: { enabled: true, intensity: 1.54, thickness: 0.068, color: [0.43, 0.68, 1], fresnelPower: 2.55, nearShell: true, nearStrength: 0.86, karmanGlow: true },
-  aurora: { enabled: true, intensity: 0.9, latitudeBandDeg: [58, 74], colorA: [0.32, 0.86, 0.68], colorB: [0.66, 0.88, 0.56], noiseScale: 2.18, noiseSpeed: 0.04, sampleCount: 4 },
+  aurora: { enabled: true, intensity: 0.9, latitudeBandDeg: [58, 74], colorA: [0.28, 0.78, 0.66], colorB: [0.5, 0.76, 0.55], noiseScale: 2.18, noiseSpeed: 0.04, sampleCount: 4 },
   motion: { autoRotate: true, hoverSlowdown: true, scrollDriven: true, transitionDurationMs: 1100 }
 };
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import type { LandingVisualDebugLayer, LuBirthProjectionFrame } from "@miralith/lubirth-hero";
 import { VisualCanvas } from "../visual/VisualCanvas";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
@@ -8,25 +9,32 @@ import { LuBirthSceneSlot } from "../visual/scenes/LuBirthSceneSlot";
 
 declare global {
   interface Window {
+    __MiraLithCanvasCreatedAt?: number;
     __MiraLithOpeningProgress?: number;
     __MiraLithFirstUsableAt?: number;
     __MiraLithHomeIntroCompleteAt?: number;
     __MiraLithHomeLoadingReadyAt?: number;
     __MiraLithHomeLoadingReadySource?: ReadyHomeProjectionSource;
+    __MiraLithHomeMemoryImageReadyAt?: number;
+    __MiraLithHomeVisualReadyAt?: number;
+    __MiraLithHomeVisualReadySource?: HomeVisualReadySource;
   }
 }
 
 const SCROLL_TRIGGER_ID_PREFIX = "miralith-lubirth-opening";
-const HOME_PROJECTION_FALLBACK_DEADLINE_MS = 1900;
-const HOME_LOADING_REVEAL_DELAY_MS = 4200;
-const HOME_LOADING_SCROLL_DELAY_MS = 5000;
-const HOME_LOADING_MIN_REVEAL_AFTER_READY_MS = 2600;
-const HOME_LOADING_MIN_COMPLETE_AFTER_READY_MS = 3600;
+const LUBIRTH_PROJECT_INTRO_ANCHOR_ID = "lubirth-project-intro-anchor";
+const HOME_PROJECTION_FALLBACK_DEADLINE_MS = 900;
+const HOME_VISUAL_GRACE_DEADLINE_MS = 700;
+const HOME_LOADING_REVEAL_DELAY_MS = 1300;
+const HOME_LOADING_SCROLL_DELAY_MS = 2700;
+const HOME_LOADING_MIN_REVEAL_AFTER_READY_MS = 900;
+const HOME_LOADING_MIN_COMPLETE_AFTER_READY_MS = 1900;
 const HOME_PROJECT_ACCESS_PROGRESS = 0.34;
 const HOME_RAIL_ACCESS_PROGRESS = 0.52;
 
 type HomeProjectionSource = "pending" | "scene" | "fallback";
 type ReadyHomeProjectionSource = Exclude<HomeProjectionSource, "pending">;
+type HomeVisualReadySource = "day-texture" | "grace";
 
 type LuBirthRevisedRouteVariant = "home" | "study";
 
@@ -80,7 +88,7 @@ const copy = {
 const chapters = [
   {
     index: "01",
-    targetId: "lubirth-project-intro-title",
+    targetId: LUBIRTH_PROJECT_INTRO_ANCHOR_ID,
     title: "LuBirth",
     zh: "出生时刻的地月合影",
     en: "Birth-Time Earth-Moon Portrait",
@@ -88,7 +96,6 @@ const chapters = [
   },
   {
     index: "02",
-    targetId: "miralith-chapter-radio-gaga",
     title: "Radio Gaga",
     zh: "照护",
     en: "Care",
@@ -96,7 +103,6 @@ const chapters = [
   },
   {
     index: "03",
-    targetId: "miralith-chapter-coscroll",
     title: "CoScroll",
     zh: "赛博转经筒",
     en: "Devotion",
@@ -104,7 +110,6 @@ const chapters = [
   },
   {
     index: "04",
-    targetId: "miralith-chapter-artbreeze",
     title: "ArtBreeze",
     zh: "艺息",
     en: "Art Flow",
@@ -112,7 +117,6 @@ const chapters = [
   },
   {
     index: "05",
-    targetId: "miralith-chapter-floating-constellation",
     title: "Floating Constellation",
     zh: "群星项目",
     en: "Project Field",
@@ -120,7 +124,6 @@ const chapters = [
   },
   {
     index: "06",
-    targetId: "miralith-chapter-client-works",
     title: "Client Works",
     zh: "商业作品",
     en: "Commissioned Systems",
@@ -128,7 +131,6 @@ const chapters = [
   },
   {
     index: "07",
-    targetId: "miralith-chapter-now-building",
     title: "Now Building",
     zh: "主业与关于",
     en: "Work / About",
@@ -139,16 +141,6 @@ const chapters = [
 type Chapter = (typeof chapters)[number];
 
 const activeChapter = chapters.find((chapter) => chapter.active) ?? chapters[0];
-
-function ChapterTargets() {
-  return (
-    <div className="lubirth-revised__chapter-targets" aria-hidden="true">
-      {chapters.map((chapter) => (
-        <span key={chapter.targetId} id={chapter.targetId} />
-      ))}
-    </div>
-  );
-}
 
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value));
@@ -221,11 +213,13 @@ function LoadingOverlay() {
 function HomeLoadingOverlay({
   projection,
   projectionSource,
-  introComplete
+  introComplete,
+  onMemoryImageReady
 }: {
   projection: LuBirthProjectionFrame | null;
   projectionSource: HomeProjectionSource;
   introComplete: boolean;
+  onMemoryImageReady: () => void;
 }) {
   const visibleProjectionSource =
     projectionSource === "scene" && projection ? "scene" : projectionSource === "fallback" ? "fallback" : "pending";
@@ -235,7 +229,7 @@ function HomeLoadingOverlay({
     ? {
         left: `${projection.moon.x}px`,
         top: `${projection.moon.y}px`,
-        width: `${Math.max(52, Math.min(168, projection.moon.radius * 2.12))}px`
+        width: `${Math.max(52, Math.min(168, projection.moon.radius * 2.31))}px`
       }
     : undefined;
 
@@ -251,6 +245,7 @@ function HomeLoadingOverlay({
           ? "MiraLith opening is loading."
           : "MiraLith opening. LuBirth 地月人 is ready. Scroll, press Enter, or press Space to enter."}
       </p>
+      <div className="lubirth-revised__home-loading-curtain" aria-hidden="true" />
       <div className="lubirth-revised__home-loading-prelude" aria-hidden="true">
         <div className="lubirth-revised__home-loading-prelude-track">
           <span />
@@ -265,25 +260,53 @@ function HomeLoadingOverlay({
         aria-hidden="true"
         style={moonStyle}
       >
-        <path
+        <circle
           className="lubirth-revised__home-loading-moon-path lubirth-revised__home-loading-moon-path--projection"
+          cx="60"
+          cy="60"
+          r="52"
           pathLength={1}
-          d="M60 8 A52 52 0 1 1 60 112 A52 52 0 1 1 60 8"
+          transform="rotate(-90 60 60)"
         />
       </svg>
 
       <svg className="lubirth-revised__home-loading-contour" viewBox={contourViewBox} focusable="false" aria-hidden="true">
         <path
-          className="lubirth-revised__home-loading-contour-path lubirth-revised__home-loading-contour-path--gold"
+          className="lubirth-revised__home-loading-contour-path lubirth-revised__home-loading-contour-path--aura"
           pathLength={1}
           d={contourPath}
         />
         <path
-          className="lubirth-revised__home-loading-contour-path"
+          className="lubirth-revised__home-loading-contour-path lubirth-revised__home-loading-contour-path--line"
+          pathLength={1}
+          d={contourPath}
+        />
+        <path
+          className="lubirth-revised__home-loading-contour-path lubirth-revised__home-loading-contour-path--segment lubirth-revised__home-loading-contour-path--segment-left"
+          pathLength={1}
+          d={contourPath}
+        />
+        <path
+          className="lubirth-revised__home-loading-contour-path lubirth-revised__home-loading-contour-path--segment lubirth-revised__home-loading-contour-path--segment-right"
           pathLength={1}
           d={contourPath}
         />
       </svg>
+
+      <div className="lubirth-revised__home-loading-memory" aria-hidden="true">
+        <Image
+          src="/img/mainPerosna.png"
+          alt=""
+          width={1280}
+          height={720}
+          priority
+          unoptimized
+          sizes="100vw"
+          decoding="async"
+          onLoad={onMemoryImageReady}
+          onError={onMemoryImageReady}
+        />
+      </div>
 
       <div className="lubirth-revised__home-loading-mark">
         <p className="lubirth-revised__home-loading-title">{copy.lubirth.title}</p>
@@ -375,6 +398,7 @@ function ProjectIntro({ interactive = true }: { interactive?: boolean }) {
       aria-hidden={interactive ? undefined : "true"}
       inert={interactive ? undefined : true}
     >
+      <span id={LUBIRTH_PROJECT_INTRO_ANCHOR_ID} className="lubirth-revised__project-anchor" aria-hidden="true" />
       <p className="lubirth-revised__project-kicker">
         {copy.lubirth.index} / {copy.lubirth.eyebrowZh} / {copy.lubirth.eyebrowEn}
       </p>
@@ -403,22 +427,38 @@ function TitleRail({ activeChapter, interactive }: { activeChapter: Chapter; int
         {chapters.map((chapter) => {
           const isActive = chapter.index === activeChapter.index;
 
+          const linkContent = (
+            <>
+              <span className="lubirth-revised__rail-index">{chapter.index}</span>
+              <span className="lubirth-revised__rail-copy">
+                <span className="lubirth-revised__rail-title">{chapter.title}</span>
+                <span className="lubirth-revised__rail-meta">
+                  {chapter.zh} / <span>{chapter.en}</span>
+                </span>
+              </span>
+            </>
+          );
+
           return (
             <li key={chapter.index} data-active={isActive ? "true" : "false"}>
-              <a
-                className="lubirth-revised__rail-link"
-                href={`#${chapter.targetId}`}
-                aria-current={isActive ? "page" : undefined}
-                tabIndex={interactive ? undefined : -1}
-              >
-                <span className="lubirth-revised__rail-index">{chapter.index}</span>
-                <span className="lubirth-revised__rail-copy">
-                  <span className="lubirth-revised__rail-title">{chapter.title}</span>
-                  <span className="lubirth-revised__rail-meta">
-                    {chapter.zh} / <span>{chapter.en}</span>
-                  </span>
+              {isActive ? (
+                <a
+                  className="lubirth-revised__rail-link"
+                  href={`#${LUBIRTH_PROJECT_INTRO_ANCHOR_ID}`}
+                  aria-current="page"
+                  tabIndex={interactive ? undefined : -1}
+                >
+                  {linkContent}
+                </a>
+              ) : (
+                <span
+                  className="lubirth-revised__rail-link"
+                  aria-disabled="true"
+                  tabIndex={-1}
+                >
+                  {linkContent}
                 </span>
-              </a>
+              )}
             </li>
           );
         })}
@@ -435,7 +475,7 @@ function MobileTitleBar({ activeChapter, interactive }: { activeChapter: Chapter
       aria-hidden={interactive ? undefined : "true"}
       inert={interactive ? undefined : true}
     >
-      <a href={`#${activeChapter.targetId}`} aria-current="page" tabIndex={interactive ? undefined : -1}>
+      <a href={`#${LUBIRTH_PROJECT_INTRO_ANCHOR_ID}`} aria-current="page" tabIndex={interactive ? undefined : -1}>
         <span className="lubirth-revised__mobile-title-main">
           <span>{activeChapter.index}</span>
           <span className="lubirth-revised__mobile-title-title">{activeChapter.title}</span>
@@ -473,17 +513,24 @@ export function LuBirthRevisedRoute({
   const [homeIntroComplete, setHomeIntroComplete] = useState(() => variant !== "home");
   const [homeProjection, setHomeProjection] = useState<LuBirthProjectionFrame | null>(null);
   const [homeProjectionSource, setHomeProjectionSource] = useState<HomeProjectionSource>("pending");
+  const [homeVisualReadySource, setHomeVisualReadySource] = useState<HomeVisualReadySource | "pending">("pending");
   const [homeSkipReady, setHomeSkipReady] = useState(() => variant !== "home");
   const [debugOptions, setDebugOptions] = useState<ScreenshotDebugOptions>(() =>
     readScreenshotDebugOptions(variant !== "home")
   );
   const homeProjectionSourceRef = useRef<HomeProjectionSource>("pending");
+  const homeVisualReadySourceRef = useRef<HomeVisualReadySource | "pending">("pending");
+  const homeDayTextureReadyRef = useRef(false);
+  const homeMemoryImageReadyRef = useRef(false);
   const homeReadinessHandlersRef = useRef(new Set<(source: ReadyHomeProjectionSource) => void>());
+  const homeVisualReadinessHandlersRef = useRef(new Set<(source: HomeVisualReadySource) => void>());
   const homeReadinessDispatchedRef = useRef(false);
+  const homeVisualReadinessDispatchedRef = useRef(false);
   const showCopy = !debugOptions.copyHidden;
   const isScreenshotMode = debugOptions.fixedProgress !== null;
   const homeLoadingReady = homeProjectionSource !== "pending";
   const homeLoadingProjection = homeProjectionSource === "scene" ? homeProjection : null;
+  const homeVisualReady = homeVisualReadySource !== "pending";
   const markHomeLoadingReady = useCallback((source: ReadyHomeProjectionSource) => {
     if (!isHome || homeProjectionSourceRef.current !== "pending") {
       return;
@@ -496,7 +543,46 @@ export function LuBirthRevisedRoute({
       window.__MiraLithHomeLoadingReadyAt = performance.now();
       window.__MiraLithHomeLoadingReadySource = source;
     }
+    homeReadinessDispatchedRef.current = true;
+    homeReadinessHandlersRef.current.forEach((handler) => handler(source));
   }, [isHome]);
+  const markHomeVisualReady = useCallback((source: HomeVisualReadySource) => {
+    if (!isHome || homeVisualReadySourceRef.current !== "pending") {
+      return;
+    }
+
+    homeVisualReadySourceRef.current = source;
+    setHomeVisualReadySource(source);
+
+    if (typeof window !== "undefined") {
+      window.__MiraLithHomeVisualReadyAt = performance.now();
+      window.__MiraLithHomeVisualReadySource = source;
+    }
+    homeVisualReadinessDispatchedRef.current = true;
+    homeVisualReadinessHandlersRef.current.forEach((handler) => handler(source));
+  }, [isHome]);
+  const markHomeVisualAssetReady = useCallback((asset: "day-texture" | "memory-image") => {
+    if (!isHome) {
+      return;
+    }
+
+    if (asset === "day-texture") {
+      homeDayTextureReadyRef.current = true;
+    } else {
+      homeMemoryImageReadyRef.current = true;
+      if (typeof window !== "undefined" && !window.__MiraLithHomeMemoryImageReadyAt) {
+        window.__MiraLithHomeMemoryImageReadyAt = performance.now();
+      }
+    }
+
+    if (homeVisualReadySourceRef.current !== "pending") {
+      return;
+    }
+
+    if (homeDayTextureReadyRef.current && homeMemoryImageReadyRef.current) {
+      markHomeVisualReady("day-texture");
+    }
+  }, [isHome, markHomeVisualReady]);
   const handleProjectionFrame = useCallback((frame: LuBirthProjectionFrame) => {
     setHomeProjection((current) => {
       if (
@@ -526,9 +612,19 @@ export function LuBirthRevisedRoute({
   }, [homeLoadingReady, homeProjectionSource, isHome]);
 
   useEffect(() => {
+    if (!isHome || homeVisualReadySource === "pending" || homeVisualReadinessDispatchedRef.current) {
+      return;
+    }
+
+    homeVisualReadinessDispatchedRef.current = true;
+    homeVisualReadinessHandlersRef.current.forEach((handler) => handler(homeVisualReadySource));
+  }, [homeVisualReady, homeVisualReadySource, isHome]);
+
+  useEffect(() => {
     let disposed = false;
     let cleanupAnimations: (() => void) | undefined;
     let cleanupHomeReadyHandler: (() => void) | undefined;
+    let restoreHomeScrollLock: (() => void) | undefined;
     const homeAnimationStartedAt =
       typeof performance !== "undefined" ? performance.now() : 0;
 
@@ -805,13 +901,13 @@ export function LuBirthRevisedRoute({
               )
               .to(
                 selector(".lubirth-revised__opening-title"),
-                { autoAlpha: 0, duration: 0.12, ease: "power1.out" },
-                0.38
+                { autoAlpha: 0, duration: 0.1, ease: "power1.out" },
+                0.34
               )
               .to(
                 selector(".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-copy"),
                 { autoAlpha: 1, duration: 0.2, ease: "power2.out" },
-                0.4
+                0.36
               )
               .to(selector(".lubirth-revised__mobile-title-bar"), { autoAlpha: 1, y: 0, duration: 0.18, ease: "power2.out" }, 0.3)
               .to(selector(".lubirth-revised__project-intro"), { autoAlpha: 1, y: 0, duration: 0.18 }, 0.36)
@@ -871,18 +967,65 @@ export function LuBirthRevisedRoute({
 
         if (isHome) {
           setSceneEnabled(true);
-          let postReadyScheduled = false;
+          let revealScheduled = false;
+          let completionScheduled = false;
           let introCompleted = false;
+          let introFinalized = false;
+          let scrollLocked = false;
+          const previousHtmlOverflow = document.documentElement.style.overflow;
+          const previousBodyOverflow = document.body.style.overflow;
+          const lockHomeScroll = () => {
+            if (scrollLocked) {
+              return;
+            }
+
+            scrollLocked = true;
+            window.scrollTo(0, 0);
+            document.documentElement.style.overflow = "hidden";
+            document.body.style.overflow = "hidden";
+          };
+          const unlockHomeScroll = () => {
+            if (!scrollLocked) {
+              return;
+            }
+
+            scrollLocked = false;
+            document.documentElement.style.overflow = previousHtmlOverflow;
+            document.body.style.overflow = previousBodyOverflow;
+            window.scrollTo(0, 0);
+          };
+          restoreHomeScrollLock = unlockHomeScroll;
+          lockHomeScroll();
           const revealHomeIntro = () => {
             setIfPresent(".lubirth-revised__atmosphere", { autoAlpha: 1 });
             setIfPresent(".lubirth-revised__opening-title", { autoAlpha: 1 });
             setIfPresent(".lubirth-revised__home-signature", { autoAlpha: 1, y: 0 });
             setIfPresent(".lubirth-revised__scroll-hint", { autoAlpha: 1, y: 0 });
-            if (typeof window !== "undefined" && !window.__MiraLithFirstUsableAt) {
-              window.__MiraLithFirstUsableAt = performance.now();
-            }
           };
-          const completeHomeIntro = (immediate = false, fadeDuration = 0.62) => {
+          const finalizeHomeIntro = () => {
+            if (introFinalized || disposed) {
+              return;
+            }
+
+            introFinalized = true;
+            setIfPresent(".lubirth-revised__home-loading", { autoAlpha: 0 });
+            setHomeIntroComplete(true);
+            setCopyInteractive(false);
+            setProjectInteractive(false);
+            unlockHomeScroll();
+            if (typeof window !== "undefined") {
+              const now = performance.now();
+              window.__MiraLithHomeIntroCompleteAt = now;
+              window.__MiraLithFirstUsableAt = now;
+            }
+            scrollTimeline = createScrollTimeline();
+            window.requestAnimationFrame(() => {
+              if (!disposed) {
+                ScrollTrigger.refresh();
+              }
+            });
+          };
+          const completeHomeIntro = (immediate = false, fadeDuration = 0.88) => {
             if (introCompleted || disposed) {
               return;
             }
@@ -891,34 +1034,33 @@ export function LuBirthRevisedRoute({
             revealHomeIntro();
             if (immediate) {
               setIfPresent(".lubirth-revised__home-loading", { autoAlpha: 0 });
+              finalizeHomeIntro();
             } else {
-              gsap.to(selector(".lubirth-revised__home-loading"), {
-                autoAlpha: 0,
-                duration: fadeDuration,
-                ease: "power2.inOut",
-                overwrite: true,
-                onComplete: () => {
-                  if (!disposed) {
-                    setIfPresent(".lubirth-revised__home-loading", { autoAlpha: 0 });
-                  }
+              gsap.to(
+                selector(
+                  ".lubirth-revised__home-loading-curtain, .lubirth-revised__home-loading-contour, .lubirth-revised__home-loading-moon, .lubirth-revised__home-loading-mark, .lubirth-revised__home-loading-hint, .lubirth-revised__home-loading-prelude"
+                ),
+                {
+                  autoAlpha: 0,
+                  duration: Math.max(0.4, fadeDuration * 0.7),
+                  ease: "power2.inOut",
+                  overwrite: true
                 }
+              );
+              gsap.to(selector(".lubirth-revised__home-loading-memory"), {
+                autoAlpha: 0,
+                y: -10,
+                duration: Math.max(0.46, fadeDuration * 0.82),
+                delay: Math.max(0.08, fadeDuration * 0.2),
+                ease: "power2.inOut",
+                overwrite: true
               });
               homeLoadTimeouts.push(
                 window.setTimeout(() => {
-                  if (!disposed) {
-                    setIfPresent(".lubirth-revised__home-loading", { autoAlpha: 0 });
-                  }
+                  finalizeHomeIntro();
                 }, fadeDuration * 1000 + 80)
               );
             }
-            setHomeIntroComplete(true);
-            setCopyInteractive(false);
-            setProjectInteractive(false);
-            if (typeof window !== "undefined") {
-              window.__MiraLithHomeIntroCompleteAt = performance.now();
-            }
-            scrollTimeline = createScrollTimeline();
-            ScrollTrigger.refresh();
           };
           const skipHomeIntro = () => {
             if (introCompleted || disposed) {
@@ -928,24 +1070,39 @@ export function LuBirthRevisedRoute({
             if (homeProjectionSourceRef.current === "pending") {
               markHomeLoadingReady("fallback");
             }
-            completeHomeIntro(false, 0.42);
+            if (homeVisualReadySourceRef.current === "pending") {
+              markHomeVisualReady("grace");
+            }
+            window.scrollTo(0, 0);
+            completeHomeIntro(false, 0.52);
           };
           const scheduleHomePostReady = () => {
-            if (postReadyScheduled || disposed) {
+            if (disposed || homeProjectionSourceRef.current === "pending") {
               return;
             }
 
-            postReadyScheduled = true;
             const now = performance.now();
-            const readyStartedAt = window.__MiraLithHomeLoadingReadyAt ?? now;
+            const projectionReadyStartedAt = window.__MiraLithHomeLoadingReadyAt ?? now;
             const remainingDelay = (delay: number, minimumAfterReady: number) =>
-              Math.max(0, delay - (now - homeAnimationStartedAt), minimumAfterReady - (now - readyStartedAt));
+              Math.max(0, delay - (now - homeAnimationStartedAt), minimumAfterReady - (now - projectionReadyStartedAt));
+
+            if (!revealScheduled) {
+              revealScheduled = true;
+              homeLoadTimeouts.push(
+                window.setTimeout(() => {
+                  if (!disposed) {
+                    revealHomeIntro();
+                  }
+                }, remainingDelay(HOME_LOADING_REVEAL_DELAY_MS, HOME_LOADING_MIN_REVEAL_AFTER_READY_MS))
+              );
+            }
+
+            if (completionScheduled || homeVisualReadySourceRef.current === "pending") {
+              return;
+            }
+
+            completionScheduled = true;
             homeLoadTimeouts.push(
-              window.setTimeout(() => {
-                if (!disposed) {
-                  revealHomeIntro();
-                }
-              }, remainingDelay(HOME_LOADING_REVEAL_DELAY_MS, HOME_LOADING_MIN_REVEAL_AFTER_READY_MS)),
               window.setTimeout(() => {
                 completeHomeIntro();
               }, remainingDelay(HOME_LOADING_SCROLL_DELAY_MS, HOME_LOADING_MIN_COMPLETE_AFTER_READY_MS))
@@ -956,21 +1113,33 @@ export function LuBirthRevisedRoute({
               return;
             }
 
+            if (event.cancelable) {
+              event.preventDefault();
+            }
+            window.scrollTo(0, 0);
             skipHomeIntro();
           };
           const handleHomeReady = () => scheduleHomePostReady();
-          window.addEventListener("wheel", handleSkipInput, { passive: true });
-          window.addEventListener("touchstart", handleSkipInput, { passive: true });
+          const handleHomeVisualReady = () => scheduleHomePostReady();
+          window.addEventListener("wheel", handleSkipInput, { passive: false });
+          window.addEventListener("touchstart", handleSkipInput, { passive: false });
           window.addEventListener("keydown", handleSkipInput);
+          document.addEventListener("keydown", handleSkipInput);
           setHomeSkipReady(true);
           homeReadinessHandlersRef.current.add(handleHomeReady);
+          homeVisualReadinessHandlersRef.current.add(handleHomeVisualReady);
           cleanupHomeReadyHandler = () => {
             window.removeEventListener("wheel", handleSkipInput);
             window.removeEventListener("touchstart", handleSkipInput);
             window.removeEventListener("keydown", handleSkipInput);
+            document.removeEventListener("keydown", handleSkipInput);
             homeReadinessHandlersRef.current.delete(handleHomeReady);
+            homeVisualReadinessHandlersRef.current.delete(handleHomeVisualReady);
           };
           if (homeProjectionSourceRef.current !== "pending") {
+            scheduleHomePostReady();
+          }
+          if (homeVisualReadySourceRef.current !== "pending") {
             scheduleHomePostReady();
           }
           homeLoadTimeouts.push(
@@ -980,7 +1149,14 @@ export function LuBirthRevisedRoute({
               }
 
               markHomeLoadingReady("fallback");
-            }, HOME_PROJECTION_FALLBACK_DEADLINE_MS)
+            }, Math.max(0, HOME_PROJECTION_FALLBACK_DEADLINE_MS - (performance.now() - homeAnimationStartedAt))),
+            window.setTimeout(() => {
+              if (disposed) {
+                return;
+              }
+
+              markHomeVisualReady("grace");
+            }, Math.max(0, HOME_VISUAL_GRACE_DEADLINE_MS - (performance.now() - homeAnimationStartedAt)))
           );
           return;
         }
@@ -1027,6 +1203,7 @@ export function LuBirthRevisedRoute({
 
       cleanupAnimations = () => {
         cleanupHomeReadyHandler?.();
+        restoreHomeScrollLock?.();
         homeLoadTimeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
         loadTimeline?.kill();
         scrollTimeline?.kill();
@@ -1039,7 +1216,7 @@ export function LuBirthRevisedRoute({
       disposed = true;
       cleanupAnimations?.();
     };
-  }, [isHome, markHomeLoadingReady, triggerId, variant]);
+  }, [isHome, markHomeLoadingReady, markHomeVisualReady, triggerId, variant]);
 
   return (
     <main
@@ -1051,6 +1228,7 @@ export function LuBirthRevisedRoute({
       data-project-interactive={projectInteractive ? "true" : "false"}
       data-home-loading={isHome ? (homeLoadingReady ? "active" : "hold") : undefined}
       data-home-loading-ready={isHome ? String(homeLoadingReady) : undefined}
+      data-home-visual-ready={isHome ? String(homeVisualReady) : undefined}
       data-home-skip-ready={isHome ? String(homeSkipReady) : undefined}
       data-home-intro-complete={isHome ? String(homeIntroComplete) : undefined}
       data-home-projection={isHome ? homeProjectionSource : undefined}
@@ -1061,7 +1239,6 @@ export function LuBirthRevisedRoute({
         aria-label={stageLabel ?? (isHome ? "MiraLith LuBirth opening frame" : "LuBirth revised opening frame")}
       >
         <AtmosphereOverlay />
-        {isHome ? <ChapterTargets /> : null}
         {showCopy && isHome ? <HomeSignature /> : null}
         {showCopy ? isHome ? <OpeningTitle /> : <WorldMark /> : null}
         {showCopy ? isHome ? (
@@ -1069,6 +1246,7 @@ export function LuBirthRevisedRoute({
             projection={homeLoadingProjection}
             projectionSource={homeProjectionSource}
             introComplete={homeIntroComplete}
+            onMemoryImageReady={() => markHomeVisualAssetReady("memory-image")}
           />
         ) : (
           <LoadingOverlay />
@@ -1096,6 +1274,7 @@ export function LuBirthRevisedRoute({
             paused={isScreenshotMode}
             visualDebugLayer={debugOptions.visualDebugLayer}
             onProjectionFrame={isHome ? handleProjectionFrame : undefined}
+            onVisualReadyEnough={isHome ? () => markHomeVisualAssetReady("day-texture") : undefined}
           />
         </VisualCanvas>
       ) : null}

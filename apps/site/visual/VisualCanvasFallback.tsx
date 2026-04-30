@@ -4,16 +4,16 @@ import { useEffect, type ReactNode } from "react";
 
 declare global {
   interface Window {
-    __MiraLithFirstUsableAt?: number;
+    __MiraLithVisualFallbackCreatedAt?: number;
   }
 }
 
-function markFirstUsable() {
-  if (typeof window === "undefined" || window.__MiraLithFirstUsableAt) {
+function markVisualFallbackCreated() {
+  if (typeof window === "undefined" || window.__MiraLithVisualFallbackCreatedAt) {
     return;
   }
 
-  window.__MiraLithFirstUsableAt = performance.now();
+  window.__MiraLithVisualFallbackCreatedAt = performance.now();
 }
 
 interface VisualCanvasFallbackProps {
@@ -25,7 +25,7 @@ interface VisualCanvasFallbackProps {
 
 export function VisualCanvasFallback({ scene, posterSrc, label, children }: VisualCanvasFallbackProps) {
   useEffect(() => {
-    markFirstUsable();
+    markVisualFallbackCreated();
   }, []);
 
   return (

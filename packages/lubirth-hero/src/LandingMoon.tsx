@@ -41,6 +41,16 @@ function setBirthPhaseLightDirection(target: Vector3, phaseAngleRad: number) {
   return target.set(Math.sin(phaseAngleRad), 0, Math.cos(phaseAngleRad)).normalize();
 }
 
+function shouldLoadMoonTextureImmediately(mode: EarthMoonHeroMode) {
+  if (mode !== "field" || typeof window === "undefined") {
+    return mode !== "field";
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const fixedProgress = params.get("progress");
+  return params.get("visualTest") === "pixels" || (fixedProgress !== null && Number.isFinite(Number.parseFloat(fixedProgress)));
+}
+
 export function LandingMoon({ mode, composition, assets, quality, sceneLightDirection, position, targetScale }: LandingMoonProps) {
   const moon = useRef<Mesh>(null);
   const { camera } = useThree();
@@ -49,7 +59,7 @@ export function LandingMoon({ mode, composition, assets, quality, sceneLightDire
     [quality.tier]
   );
   const [shouldLoadMoonTexture, setShouldLoadMoonTexture] = useState(
-    () => mode !== "field" || getRuntimeOpeningProgress(0) > 0.34
+    () => shouldLoadMoonTextureImmediately(mode) || getRuntimeOpeningProgress(0) > 0.34
   );
   const { texture: loadedMoonTexture } = useLandingTexture(
     shouldLoadMoonTexture ? assets.moonColor.src : undefined,
@@ -163,7 +173,7 @@ export function LandingMoon({ mode, composition, assets, quality, sceneLightDire
           }
         `,
         depthTest: true,
-        depthWrite: false
+        depthWrite: true
       });
     },
     [

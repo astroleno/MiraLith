@@ -28,6 +28,7 @@ export type {
   EarthMoonHeroProps,
   EarthMoonSceneProps,
   LandingAssetManifest,
+  LandingAuroraProfile,
   LandingComposition,
   LandingCompositionOverrides,
   LandingMoonLightingMode,

@@ -17,3 +17,6 @@ test-results/
 *.log
 *.tsbuildinfo
 
+reference/
+.codex/
+

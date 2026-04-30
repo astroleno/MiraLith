@@ -30,6 +30,17 @@ const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 const easeInOut = (value: number) => value * value * (3 - 2 * value);
 const lerp = (from: number, to: number, progress: number) => from + (to - from) * progress;
 const degToRad = (value: number) => (value * Math.PI) / 180;
+const stagedShotProgress = (progress: number) => {
+  if (progress < 0.22) {
+    return easeInOut(progress / 0.22) * 0.05;
+  }
+
+  if (progress < 0.68) {
+    return lerp(0.05, 0.88, easeInOut((progress - 0.22) / 0.46));
+  }
+
+  return lerp(0.88, 1, easeInOut((progress - 0.68) / 0.32));
+};
 
 export const OPENING_TIMELINE_DURATION = 7.2;
 export const OPENING_FIELD_AUTO_ROTATE_START = 0.96;
@@ -40,10 +51,11 @@ const ORIGINAL_WORLD_UNIT = ORIGINAL_CAMERA_DISTANCE * Math.tan(degToRad(ORIGINA
 const FIELD_FRAME = {
   cameraElevationDeg: 3.46402,
   lookAtDistanceRatio: 0,
-  earthSize: 0.33,
+  earthSize: 0.36,
   earthY: -2.66,
   earthPitchDeg: 0,
   earthYawDeg: -106.6,
+  moonX: 0.5,
   moonScale: 1
 };
 
@@ -51,10 +63,11 @@ const CLOSE_FRAME = {
   cameraAzimuthDeg: 88.1438565849,
   cameraElevationDeg: -16.4,
   lookAtDistanceRatio: 1.08,
-  earthSize: 1.68,
+  earthSize: 1.58,
   earthY: -1.53,
   earthPitchDeg: -28.5,
   earthYawDeg: -104.25,
+  moonX: 0.5,
   moonScale: 1.5
 };
 
@@ -66,7 +79,7 @@ const THEATRE_OPENING_STATE = {
 
 export function mapOpeningProgress(progressInput: number): OpeningTimelineFrame {
   const progress = clamp01(progressInput);
-  const eased = easeInOut(progress);
+  const eased = stagedShotProgress(progress);
   const fieldEarthScale = FIELD_FRAME.earthSize * ORIGINAL_WORLD_UNIT;
   const closeEarthScale = CLOSE_FRAME.earthSize * ORIGINAL_WORLD_UNIT;
 
@@ -89,7 +102,7 @@ export function mapOpeningProgress(progressInput: number): OpeningTimelineFrame 
     earthY: lerp(CLOSE_FRAME.earthY, FIELD_FRAME.earthY, eased),
     earthPitchDeg: lerp(CLOSE_FRAME.earthPitchDeg, FIELD_FRAME.earthPitchDeg, eased),
     earthYawDeg: lerp(CLOSE_FRAME.earthYawDeg, FIELD_FRAME.earthYawDeg, eased),
-    moonX: 0.5,
+    moonX: lerp(CLOSE_FRAME.moonX, FIELD_FRAME.moonX, eased),
     moonY: 0.75,
     moonScale: lerp(CLOSE_FRAME.moonScale, FIELD_FRAME.moonScale, eased),
     lightIntensity: lerp(2.45, 2.45, eased),
