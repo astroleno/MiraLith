@@ -24,9 +24,7 @@ import { LandingEarth } from "./LandingEarth";
 import { LandingHorizonAuroraRibbon } from "./LandingHorizonAuroraRibbon";
 import { LandingLimbAirglowV2 } from "./LandingLimbAirglowV2";
 import { LandingMoon } from "./LandingMoon";
-import { LandingProjectedAuroraCurtain } from "./LandingProjectedAuroraCurtain";
-import { LandingProjectedHorizonCloudPlate } from "./LandingProjectedHorizonCloudPlate";
-import { LandingProjectedLimbScattering } from "./LandingProjectedLimbScattering";
+import { LandingProjectedHorizonComposite } from "./LandingProjectedHorizonComposite";
 import { LandingSpaceBackground } from "./LandingSpaceBackground";
 import type { EarthMoonSceneProps, LandingProjectedEarthFrame, LuBirthProjectionFrame } from "./types";
 
@@ -139,12 +137,10 @@ export function EarthMoonScene({
   const showClouds = visualDebugLayer === "all" || visualDebugLayer === "clouds";
   const showAtmosphere = visualDebugLayer === "all" || visualDebugLayer === "atmosphere";
   const showAurora = visualDebugLayer === "aurora" || (showAuroraInAll && visualDebugLayer === "all");
-  const showProjectedClouds = useProjectedHorizonPasses && showClouds;
-  const showProjectedAtmosphere = useProjectedHorizonPasses && showAtmosphere;
-  const showProjectedAurora = useProjectedHorizonPasses && showAurora;
-  const showLegacyClouds = showClouds && !showProjectedClouds;
-  const showLegacyAtmosphere = showAtmosphere && !showProjectedAtmosphere;
-  const showLegacyAurora = showAurora && !showProjectedAurora;
+  const showProjectedHorizonComposite = useProjectedHorizonPasses && (showClouds || showAtmosphere || showAurora);
+  const showLegacyClouds = showClouds && !showProjectedHorizonComposite;
+  const showLegacyAtmosphere = showAtmosphere && !showProjectedHorizonComposite;
+  const showLegacyAurora = showAurora && !showProjectedHorizonComposite;
   const showSurfaceTextureClouds =
     showClouds &&
     quality.tier !== "low" &&
@@ -501,32 +497,15 @@ export function EarthMoonScene({
         {debugMianyang && showEarth ? <MianyangDebugMarker radius={composition.earth.radius} /> : null}
       </group>
 
-      {showProjectedClouds ? (
-        <LandingProjectedHorizonCloudPlate
+      {showProjectedHorizonComposite ? (
+        <LandingProjectedHorizonComposite
           composition={composition}
           assets={assets}
           quality={quality}
           projection={projectedEarthFrame}
-          emphasis={visualDebugLayer === "clouds"}
-          reducedMotion={reducedMotion}
-          paused={paused}
-        />
-      ) : null}
-      {showProjectedAtmosphere ? (
-        <LandingProjectedLimbScattering
-          composition={composition}
-          quality={quality}
-          projection={projectedEarthFrame}
-          emphasis={visualDebugLayer === "atmosphere"}
-        />
-      ) : null}
-      {showProjectedAurora ? (
-        <LandingProjectedAuroraCurtain
-          composition={composition}
-          quality={quality}
-          projection={projectedEarthFrame}
-          debugProfile={auroraProfile === "debug"}
-          visibilityBoost={visualDebugLayer === "aurora" ? 3.0 : 0.42}
+          layer={visualDebugLayer}
+          auroraProfile={auroraProfile}
+          showAuroraInAll={showAuroraInAll}
           reducedMotion={reducedMotion}
           paused={paused}
         />

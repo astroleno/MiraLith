@@ -10,6 +10,9 @@ declare global {
     __MiraLithLuBirthProjectedAuroraCurtainActive?: boolean;
     __MiraLithLuBirthProjectedCloudPlateActive?: boolean;
     __MiraLithLuBirthProjectedCloudPlateTexture?: string;
+    __MiraLithLuBirthProjectedHorizonCompositeActive?: boolean;
+    __MiraLithLuBirthProjectedHorizonCompositeLayer?: string;
+    __MiraLithLuBirthProjectedHorizonCompositeTexture?: string;
     __MiraLithLuBirthProjectedLimbScatteringActive?: boolean;
     __MiraLithLuBirthQualityTier?: string;
   }
@@ -82,7 +85,7 @@ test("keeps revised route clear of 8K LuBirth texture requests", async ({ page }
     .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-day")), { timeout: 25_000 })
     .toBe(true);
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedCloudPlateActive), { timeout: 25_000 })
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedHorizonCompositeActive), { timeout: 25_000 })
     .toBe(true);
 
   const heavyRequests = Array.from(assetRequests).filter(
@@ -96,7 +99,7 @@ test("keeps revised route clear of 8K LuBirth texture requests", async ({ page }
   expect(heavyRequests).toEqual([]);
 });
 
-test("uses the projected cloud plate for high quality cloud review", async ({ page }) => {
+test("uses the projected horizon composite for high quality cloud review", async ({ page }) => {
   const assetRequests = new Set<string>();
 
   page.on("request", (request) => {
@@ -109,13 +112,19 @@ test("uses the projected cloud plate for high quality cloud review", async ({ pa
   await page.goto("/lubirth-revised?progress=0&copy=hidden&debug=clouds&quality=high&visualTest=pixels");
   await expect(page.locator("canvas")).toHaveCount(1);
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedCloudPlateActive), { timeout: 25_000 })
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedHorizonCompositeActive), { timeout: 25_000 })
     .toBe(true);
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedCloudPlateTexture), { timeout: 25_000 })
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedHorizonCompositeLayer), { timeout: 25_000 })
+    .toBe("clouds");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedHorizonCompositeTexture), { timeout: 25_000 })
     .toContain("earth-horizon-cloud-strip-2k.png");
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudDeckActive ?? false), { timeout: 25_000 })
+    .toBe(false);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedCloudPlateActive ?? false), { timeout: 25_000 })
     .toBe(false);
   await expect
     .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-horizon-cloud-strip-2k.png")), { timeout: 25_000 })
@@ -124,23 +133,35 @@ test("uses the projected cloud plate for high quality cloud review", async ({ pa
   expect(Array.from(assetRequests).filter((path) => path.includes("earth-cloud-deck-2k.png"))).toEqual([]);
 });
 
-test("uses the projected limb scattering pass for atmosphere review", async ({ page }) => {
+test("uses the projected horizon composite for atmosphere review", async ({ page }) => {
   await page.goto("/lubirth-revised?progress=0&copy=hidden&debug=atmosphere&quality=high&visualTest=pixels");
   await expect(page.locator("canvas")).toHaveCount(1);
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedLimbScatteringActive), { timeout: 25_000 })
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedHorizonCompositeActive), { timeout: 25_000 })
     .toBe(true);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedHorizonCompositeLayer), { timeout: 25_000 })
+    .toBe("atmosphere");
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthAirglowActive ?? false), { timeout: 25_000 })
     .toBe(false);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedLimbScatteringActive ?? false), { timeout: 25_000 })
+    .toBe(false);
 });
 
-test("uses the projected aurora curtain for high quality aurora debug", async ({ page }) => {
+test("uses the projected horizon composite for high quality aurora debug", async ({ page }) => {
   await page.goto("/lubirth-revised?progress=0&copy=hidden&debug=aurora&quality=high&visualTest=pixels");
   await expect(page.locator("canvas")).toHaveCount(1);
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedAuroraCurtainActive), { timeout: 25_000 })
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedHorizonCompositeActive), { timeout: 25_000 })
     .toBe(true);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedHorizonCompositeLayer), { timeout: 25_000 })
+    .toBe("aurora");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedAuroraCurtainActive ?? false), { timeout: 25_000 })
+    .toBe(false);
 });
 
 test("does not request CloudDeck in low quality cloud review", async ({ page }) => {
@@ -162,7 +183,7 @@ test("does not request CloudDeck in low quality cloud review", async ({ page }) 
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudDeckActive ?? false), { timeout: 25_000 })
     .toBe(false);
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedCloudPlateActive ?? false), { timeout: 25_000 })
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedHorizonCompositeActive ?? false), { timeout: 25_000 })
     .toBe(false);
   await page.waitForTimeout(900);
   expect(Array.from(assetRequests).filter((path) => path.includes("earth-cloud-deck-2k.png"))).toEqual([]);
@@ -183,7 +204,7 @@ test("honors LuBirth quality URL overrides for aurora debugging", async ({ page 
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthQualityTier), { timeout: 25_000 })
     .toBe("high");
   await expect.poll(() => page.evaluate(() => window.__MiraLithLuBirthAuroraEnabled)).toBe(true);
-  await expect.poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedAuroraCurtainActive)).toBe(true);
+  await expect.poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedHorizonCompositeActive)).toBe(true);
   await expect.poll(() => page.evaluate(() => window.__MiraLithLuBirthAuroraProfile)).toBe("hero");
 
   await page.goto("/lubirth-revised?progress=0&copy=hidden&debug=aurora&quality=high&auroraProfile=debug&visualTest=pixels");

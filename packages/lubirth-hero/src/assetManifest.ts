@@ -124,8 +124,8 @@ export function getLandingAssetBudget(assets: Partial<LandingAssetManifest> = {}
         colorSpace: "linear"
       },
       720_000,
-      "critical",
-      true
+      "idle",
+      false
     ),
     textureBudget(resolvedAssets.moonColor, 1_100_000, "critical", true),
     resolvedAssets.fallbackPoster

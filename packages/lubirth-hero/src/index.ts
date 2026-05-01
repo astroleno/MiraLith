@@ -15,6 +15,7 @@ export { LandingLimbScatteringLook } from "./LandingLimbScatteringLook";
 export { LandingMoon } from "./LandingMoon";
 export { LandingProjectedAuroraCurtain } from "./LandingProjectedAuroraCurtain";
 export { LandingProjectedHorizonCloudPlate } from "./LandingProjectedHorizonCloudPlate";
+export { LandingProjectedHorizonComposite } from "./LandingProjectedHorizonComposite";
 export { LandingProjectedLimbScattering } from "./LandingProjectedLimbScattering";
 export { LandingSpaceBackground } from "./LandingSpaceBackground";
 export {
