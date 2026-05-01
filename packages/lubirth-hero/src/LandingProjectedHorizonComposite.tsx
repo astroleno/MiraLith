@@ -240,162 +240,150 @@ function createCompositeMaterial(composition: LandingComposition) {
       }
 
       CloudResult evalCloud(vec2 edgeNormal, float signedInside, float sunDot, float angle) {
-        float upperArc = smoothstep(0.05, 0.38, edgeNormal.y);
-        float sideWindow = smoothstep(-0.96, -0.56, edgeNormal.x) * (1.0 - smoothstep(0.58, 0.98, edgeNormal.x));
-        float insideClip = smoothstep(-10.0, 8.0, signedInside);
-        float outsideFeather = 1.0 - smoothstep(24.0, 48.0, -signedInside);
-        float day = smoothstep(-0.24, 0.36, sunDot);
-        float twilight = 1.0 - smoothstep(0.0, 0.34, abs(sunDot));
-        float closeStage = 1.0 - smoothstep(0.12, 0.78, progress);
         float debugBoost = mode == 1 ? 1.0 : 0.0;
+        float upperArc = smoothstep(0.03, 0.34, edgeNormal.y);
+        float sideWindow = smoothstep(-0.98, -0.58, edgeNormal.x) * (1.0 - smoothstep(0.6, 1.0, edgeNormal.x));
+        float day = smoothstep(-0.32, 0.34, sunDot);
+        float twilight = 1.0 - smoothstep(0.0, 0.32, abs(sunDot));
+        float closeStage = 1.0 - smoothstep(0.12, 0.74, progress);
 
-        float band = smoothstep(-8.0, 10.0, signedInside) * (1.0 - smoothstep(68.0, 116.0, signedInside));
-        float horizonCore = smoothstep(-1.0, 18.0, signedInside) * (1.0 - smoothstep(42.0, 88.0, signedInside));
-        float cloudDepth01 = clamp((signedInside + 8.0) / 116.0, 0.0, 1.0);
+        float band = smoothstep(-5.0, 8.0, signedInside) * (1.0 - smoothstep(72.0, 118.0, signedInside));
+        float horizonCore = smoothstep(-1.0, 18.0, signedInside) * (1.0 - smoothstep(38.0, 82.0, signedInside));
+        float cloudDepth01 = clamp((signedInside + 5.0) / 112.0, 0.0, 1.0);
         float arc = angle / 3.14159265;
-        vec2 cloudUv = vec2(arc * 7.2 + time * 0.004, signedInside * 0.018 - time * 0.0015);
-        vec4 strip = texture2D(cloudStripMap, vec2(fract(arc * 3.8 + time * 0.002), cloudDepth01));
-        float broad = fbm(cloudUv + vec2(1.7, 0.2));
-        float detail = fbm(cloudUv * vec2(3.4, 2.2) + vec2(4.0, 8.0));
-        float streak = fbm(vec2(arc * 22.0 - time * 0.006, signedInside * 0.045));
-        float voids = fbm(cloudUv * vec2(1.9, 1.15) + vec2(8.4, 2.2));
+        vec2 baseUv = vec2(fract(arc * 3.55 + time * 0.0012), cloudDepth01);
 
-        float stripCoverage = strip.r;
-        float stripHeight = strip.g;
-        float stripShadow = strip.b;
-        float stripTop = strip.a;
-        float silhouette = smoothstep(
-          0.24,
-          0.7,
-          stripCoverage * 0.58 + broad * 0.24 + detail * 0.18 + horizonCore * 0.16 - voids * 0.16
-        );
-        float brokenEdge = mix(0.08, 1.0, smoothstep(0.28, 0.84, stripCoverage + detail * 0.32 + streak * 0.22 - voids * 0.28));
-        float coverage = silhouette * mix(0.45, 1.0, horizonCore) * brokenEdge;
-        float topHighlight = exp(-pow((cloudDepth01 - 0.14) * 4.8, 2.0)) * (0.42 + stripTop * 0.42) * day;
-        float midBody = smoothstep(0.1, 0.42, cloudDepth01) * (1.0 - smoothstep(0.62, 0.9, cloudDepth01));
-        float underside = smoothstep(0.44, 0.96, cloudDepth01) * (0.54 + stripShadow * 0.6);
-        float topCap = smoothstep(0.48, 0.9, stripTop * 0.72 + stripHeight * 0.4 + detail * 0.12 + horizonCore * 0.18);
-        float baseShadow = underside * smoothstep(0.42, 0.9, stripShadow + broad * 0.26 + streak * 0.18);
+        vec4 strip0 = texture2D(cloudStripMap, baseUv);
+        vec4 strip1 = texture2D(cloudStripMap, vec2(fract(baseUv.x + 0.006), clamp(baseUv.y + 0.018, 0.0, 1.0)));
+        vec4 strip2 = texture2D(cloudStripMap, vec2(fract(baseUv.x - 0.008), clamp(baseUv.y - 0.022, 0.0, 1.0)));
+        vec4 strip3 = texture2D(cloudStripMap, vec2(fract(baseUv.x + 0.017), clamp(baseUv.y + 0.055, 0.0, 1.0)));
+        vec4 strip4 = texture2D(cloudStripMap, vec2(fract(baseUv.x - 0.019), clamp(baseUv.y + 0.09, 0.0, 1.0)));
+        vec4 strip = strip0 * 0.42 + strip1 * 0.2 + strip2 * 0.18 + strip3 * 0.12 + strip4 * 0.08;
 
-        vec3 topCol = vec3(0.92, 0.96, 0.98);
-        vec3 bodyCol = vec3(0.48, 0.58, 0.68);
-        vec3 bottomCol = vec3(0.08, 0.13, 0.22);
+        float microBreak = fbm(vec2(arc * 24.0 - time * 0.002, cloudDepth01 * 5.6 + 3.1));
+        float voids = fbm(vec2(arc * 11.0 + 8.0, cloudDepth01 * 3.4 - time * 0.001));
+        float coverage = smoothstep(0.1, 0.58, strip.r * 0.86 + strip.g * 0.16 + microBreak * 0.06 - voids * 0.07);
+        coverage *= mix(0.62, 1.0, horizonCore);
+        coverage *= smoothstep(0.06, 0.24, strip.r + strip.g * 0.18);
+
+        float cloudHeight = clamp(strip.g * 0.8 + strip.a * 0.22, 0.0, 1.0);
+        float shadowMap = clamp(strip.b * 0.92 + voids * 0.12, 0.0, 1.0);
+        float topMap = clamp(strip.a * 0.86 + cloudHeight * 0.18, 0.0, 1.0);
+        float topRim = exp(-pow((cloudDepth01 - 0.13) * 5.8, 2.0)) * (0.48 + topMap * 0.62);
+        float body = smoothstep(0.08, 0.34, cloudDepth01) * (1.0 - smoothstep(0.58, 0.9, cloudDepth01));
+        float underside = smoothstep(0.36, 0.95, cloudDepth01) * (0.56 + shadowMap * 0.62);
+        float farHaze = smoothstep(0.56, 1.0, cloudDepth01);
+
+        vec3 topCol = vec3(0.94, 0.965, 0.965);
+        vec3 bodyCol = vec3(0.43, 0.53, 0.63);
+        vec3 bottomCol = vec3(0.055, 0.095, 0.17);
+        vec3 atmosphericBlue = vec3(0.12, 0.25, 0.42);
         vec3 color =
-          topCol * topHighlight * (0.48 + day * 0.52) +
-          bodyCol * midBody * (0.6 + day * 0.32) +
+          topCol * topRim * (0.52 + day * 0.56) +
+          bodyCol * body * (0.68 + day * 0.3) +
           bottomCol * underside;
-        color += topCol * topHighlight * 0.22;
-        color *= mix(vec3(1.0), vec3(0.42, 0.55, 0.72), clamp(underside * 0.65, 0.0, 0.86));
-        color = mix(color, color * vec3(0.32, 0.42, 0.58), clamp(baseShadow * 0.72, 0.0, 0.86));
-        color += vec3(0.9, 0.97, 1.0) * topCap * horizonCore * (0.08 + day * 0.14);
-        color += vec3(0.95, 0.55, 0.24) * twilight * topHighlight * 0.08;
-        color = mix(color, vec3(0.06, 0.12, 0.22), smoothstep(0.74, 1.0, cloudDepth01) * 0.22);
+        color = mix(color, color * vec3(0.38, 0.52, 0.72), clamp(underside * 0.74, 0.0, 0.92));
+        color = mix(color, atmosphericBlue, farHaze * 0.22);
+        color += vec3(0.94, 0.58, 0.3) * twilight * topRim * 0.055;
+        color *= mix(0.72, 1.08, coverage);
 
-        float alpha = coverage * band * upperArc * sideWindow * insideClip * outsideFeather;
-        float materialAlpha = topHighlight * 0.3 + midBody * 0.48 + underside * 0.22;
-        float centerSuppression = 1.0 - smoothstep(68.0, 124.0, signedInside);
-        alpha *= mix(0.68, 1.0, horizonCore) * centerSuppression;
-        alpha *= materialAlpha * cloudOpacity * (0.82 + closeStage * 0.12 + debugBoost * 0.14);
-        alpha = clamp(alpha, 0.0, mix(0.24, 0.4, debugBoost));
+        float materialAlpha = topRim * 0.32 + body * 0.56 + underside * 0.28;
+        float centerSuppression = 1.0 - smoothstep(78.0, 132.0, signedInside);
+        float alpha = coverage * band * upperArc * sideWindow * materialAlpha * centerSuppression;
+        alpha *= cloudOpacity * (0.92 + closeStage * 0.08 + debugBoost * 0.32);
+        alpha = clamp(alpha, 0.0, mix(0.24, 0.42, debugBoost));
 
-        return CloudResult(color, alpha, topHighlight, midBody, underside);
+        return CloudResult(color, alpha, topRim, body, underside);
       }
 
       LimbResult evalLimb(vec2 edgeNormal, float signedOutside, float sunDot, float cloudAlpha, float angle) {
         float debugBoost = mode == 2 ? 1.0 : 0.0;
-        float upperArc = smoothstep(0.02, 0.34, edgeNormal.y);
+        float upperArc = smoothstep(0.02, 0.32, edgeNormal.y);
         float sideWindow = smoothstep(-0.98, -0.62, edgeNormal.x) * (1.0 - smoothstep(0.62, 0.98, edgeNormal.x));
-        float day = smoothstep(-0.2, 0.34, sunDot);
-        float night = 1.0 - smoothstep(-0.18, 0.18, sunDot);
-        float twilight = 1.0 - smoothstep(0.0, 0.28, abs(sunDot));
-        float closeStage = 1.0 - smoothstep(0.12, 0.78, progress);
+        float day = smoothstep(-0.24, 0.34, sunDot);
+        float night = 1.0 - smoothstep(-0.16, 0.16, sunDot);
+        float twilight = 1.0 - smoothstep(0.0, 0.22, abs(sunDot));
+        float closeStage = 1.0 - smoothstep(0.12, 0.76, progress);
         float arc = angle / 3.14159265;
-        float airglowBreakup = smoothstep(0.46, 0.84, fbm(vec2(arc * 11.0 + 4.2, 7.0)));
+        float airglowBreakup = smoothstep(0.48, 0.9, fbm(vec2(arc * 13.0 + 4.2, 5.0)));
 
-        float whiteNeedle = (1.0 - smoothstep(0.0, mix(1.5, 2.3, debugBoost), abs(signedOutside + 0.35))) *
-          (0.2 + day * 0.62);
-        float insideBlue = smoothstep(-4.5, -1.0, signedOutside) *
-          (1.0 - smoothstep(0.0, 3.6, signedOutside)) *
-          (0.045 + day * 0.07);
-        float blueThickness = smoothstep(0.0, mix(3.6, 7.6, debugBoost), signedOutside) *
-          (1.0 - smoothstep(mix(12.0, 26.0, debugBoost), mix(28.0, 64.0, debugBoost), signedOutside)) *
-          (0.052 + day * 0.075);
-        float oxygenGreen = smoothstep(1.0, mix(5.6, 8.0, debugBoost), signedOutside) *
-          (1.0 - smoothstep(mix(10.0, 18.0, debugBoost), mix(24.0, 42.0, debugBoost), signedOutside)) *
+        float whiteNeedle = (1.0 - smoothstep(0.0, mix(1.25, 1.9, debugBoost), abs(signedOutside + 0.2))) *
+          (0.18 + day * 0.58);
+        float insideBlue = smoothstep(-3.2, -0.8, signedOutside) *
+          (1.0 - smoothstep(0.0, 2.4, signedOutside)) *
+          (0.028 + day * 0.052);
+        float blueThickness = smoothstep(0.0, mix(2.8, 5.8, debugBoost), signedOutside) *
+          (1.0 - smoothstep(mix(8.0, 18.0, debugBoost), mix(21.0, 48.0, debugBoost), signedOutside)) *
+          (0.034 + day * 0.058);
+        float oxygenGreen = smoothstep(1.0, mix(4.0, 7.0, debugBoost), signedOutside) *
+          (1.0 - smoothstep(mix(8.0, 15.0, debugBoost), mix(20.0, 36.0, debugBoost), signedOutside)) *
           night *
-          mix(0.025 * airglowBreakup, 0.13, debugBoost);
-        float amberTwilight = smoothstep(1.0, mix(6.0, 9.0, debugBoost), signedOutside) *
-          (1.0 - smoothstep(mix(10.0, 18.0, debugBoost), mix(24.0, 38.0, debugBoost), signedOutside)) *
+          airglowBreakup *
+          mix(0.012, 0.08, debugBoost);
+        float amberTwilight = smoothstep(0.8, mix(4.2, 7.0, debugBoost), signedOutside) *
+          (1.0 - smoothstep(mix(7.0, 14.0, debugBoost), mix(18.0, 32.0, debugBoost), signedOutside)) *
           twilight *
-          mix(0.036, 0.11, debugBoost);
-        float outerCyan = smoothstep(12.0, mix(26.0, 42.0, debugBoost), signedOutside) *
-          (1.0 - smoothstep(mix(48.0, 80.0, debugBoost), mix(86.0, 138.0, debugBoost), signedOutside)) *
-          mix(0.0028, 0.014, debugBoost);
+          mix(0.018, 0.07, debugBoost);
+        float outerCyan = smoothstep(10.0, mix(18.0, 34.0, debugBoost), signedOutside) *
+          (1.0 - smoothstep(mix(38.0, 62.0, debugBoost), mix(72.0, 116.0, debugBoost), signedOutside)) *
+          mix(0.0012, 0.009, debugBoost);
 
-        float cloudCut = cloudAlpha * mix(0.72, 0.38, debugBoost);
+        float cloudCut = cloudAlpha * mix(0.82, 0.46, debugBoost);
         whiteNeedle *= 1.0 - cloudCut;
-        insideBlue *= 1.0 - cloudCut * 0.72;
-        blueThickness *= 1.0 - cloudCut * 0.58;
-        oxygenGreen *= 1.0 - cloudAlpha * 0.34;
-        amberTwilight *= 1.0 - cloudAlpha * 0.28;
+        insideBlue *= 1.0 - cloudCut * 0.76;
+        blueThickness *= 1.0 - cloudCut * 0.66;
+        oxygenGreen *= 1.0 - cloudAlpha * 0.42;
+        amberTwilight *= 1.0 - cloudAlpha * 0.34;
 
         vec3 color =
-          vec3(0.95, 0.985, 1.0) * whiteNeedle +
-          vec3(0.13, 0.4, 0.86) * (insideBlue + blueThickness) +
-          vec3(0.12, 0.52, 0.36) * oxygenGreen +
-          vec3(0.86, 0.38, 0.14) * amberTwilight +
-          vec3(0.07, 0.34, 0.56) * outerCyan;
+          vec3(0.96, 0.988, 1.0) * whiteNeedle +
+          vec3(0.1, 0.3, 0.68) * (insideBlue + blueThickness) +
+          vec3(0.08, 0.32, 0.26) * oxygenGreen +
+          vec3(0.7, 0.28, 0.12) * amberTwilight +
+          vec3(0.04, 0.22, 0.36) * outerCyan;
 
         float alpha = whiteNeedle + insideBlue + blueThickness + oxygenGreen + amberTwilight + outerCyan;
         float arcMask = upperArc * sideWindow;
-        float gain = atmosphereIntensity * (0.56 + closeStage * 0.08) * (1.0 + debugBoost * 0.24);
-        return LimbResult(color * arcMask * gain, clamp(alpha * arcMask * gain, 0.0, mix(0.16, 0.28, debugBoost)), whiteNeedle * arcMask);
+        float gain = atmosphereIntensity * (0.5 + closeStage * 0.05) * (1.0 + debugBoost * 0.18);
+        return LimbResult(color * arcMask * gain, clamp(alpha * arcMask * gain, 0.0, mix(0.105, 0.22, debugBoost)), whiteNeedle * arcMask);
       }
 
       AuroraResult evalAurora(vec2 edgeNormal, float signedOutside, float sunDot, float cloudAlpha, float limbWhiteAlpha, float angle) {
         float debugGain = auroraDebug;
-        float upperArc = smoothstep(0.08, 0.36, edgeNormal.y);
-        float sideWindow = smoothstep(-0.82, -0.46, edgeNormal.x) * (1.0 - smoothstep(0.18, 0.56, edgeNormal.x));
-        float night = 1.0 - smoothstep(-0.28, 0.1, sunDot);
-        float twilight = 1.0 - smoothstep(0.0, 0.3, abs(sunDot));
-        float arcWindow = mix(max(night, twilight * 0.28), 1.0, debugGain * 0.6);
-        float rootMask = (1.0 - smoothstep(0.0, 3.0, abs(signedOutside - 1.0))) * mix(0.12, 0.22, debugGain);
-        float outside = smoothstep(3.0, 15.0, signedOutside);
-        float topFade = 1.0 - smoothstep(mix(58.0, 118.0, debugGain), mix(124.0, 220.0, debugGain), signedOutside);
-        float body = outside * topFade;
+        float upperArc = smoothstep(0.1, 0.36, edgeNormal.y);
+        float sideWindow = smoothstep(-0.78, -0.48, edgeNormal.x) * (1.0 - smoothstep(0.08, 0.44, edgeNormal.x));
+        float night = 1.0 - smoothstep(-0.26, 0.08, sunDot);
+        float twilight = 1.0 - smoothstep(0.0, 0.28, abs(sunDot));
+        float arcWindow = mix(max(night, twilight * 0.18), 1.0, debugGain * 0.56);
+        float height = max(signedOutside, 0.0);
+        float outside = smoothstep(2.0, 12.0, signedOutside);
+        float rootMask = (1.0 - smoothstep(0.0, 2.2, abs(signedOutside - 1.1))) * mix(0.055, 0.2, debugGain);
+        float vertical01 = clamp((height - 2.0) / mix(112.0, 178.0, debugGain), 0.0, 1.0);
+        float topFade = 1.0 - smoothstep(mix(0.46, 0.62, debugGain), 1.0, vertical01);
 
         float arc = angle / 3.14159265;
-        float height = max(signedOutside, 0.0);
-        vec2 curtainUv = vec2(arc * 16.0 + time * 0.006, height * 0.028 - time * 0.012);
-        float folds = sin(arc * 88.0 + fbm(vec2(arc * 19.0, height * 0.035 + time * 0.018)) * 3.8) * 0.5 + 0.5;
-        float fineFolds = sin(arc * 184.0 + height * 0.026 + fbm(vec2(arc * 42.0, 1.7)) * 4.2 + time * 0.016) * 0.5 + 0.5;
-        float columnNoise = fbm(curtainUv + vec2(3.2, 1.1));
-        float columnHeight = smoothstep(0.24, 0.82, fbm(vec2(arc * 21.0 - time * 0.006, 2.0)));
-        float verticalLimit = 1.0 - smoothstep(54.0 + columnHeight * 92.0, 124.0 + columnHeight * 128.0, height);
-        float rootLift = smoothstep(3.0, 24.0, height);
-        float strandCore =
-          pow(folds, mix(8.0, 9.5, debugGain)) * 0.72 +
-          pow(fineFolds, 14.0) * 0.42 +
-          columnNoise * 0.04;
-        float strands = smoothstep(0.08, 0.38, strandCore);
-        float breakup = smoothstep(0.42, 0.82, fbm(vec2(arc * 45.0 - time * 0.01, height * 0.04)));
-        float curtain = body * rootLift * strands * breakup * verticalLimit * mix(0.64, 1.0, debugGain);
+        float columnEnvelope = smoothstep(0.42, 0.86, fbm(vec2(arc * 18.0 - time * 0.004, 2.0)));
+        float folds = sin(arc * 128.0 + fbm(vec2(arc * 22.0, height * 0.018 + time * 0.012)) * 2.4) * 0.5 + 0.5;
+        float fineFolds = sin(arc * 236.0 + height * 0.032 + fbm(vec2(arc * 58.0, 1.2)) * 3.0 + time * 0.012) * 0.5 + 0.5;
+        float strandCore = pow(folds, mix(12.0, 14.0, debugGain)) * 0.68 + pow(fineFolds, 24.0) * 0.54;
+        float strands = smoothstep(0.12, 0.5, strandCore) * columnEnvelope;
+        float verticalVeil = exp(-vertical01 * mix(2.55, 1.72, debugGain)) * topFade * smoothstep(0.01, 0.16, vertical01);
+        float curtain = outside * strands * verticalVeil;
         float closeStage = 1.0 - smoothstep(0.16, 0.74, progress);
-        float density = (rootMask * 0.16 + curtain * 1.18) * upperArc * sideWindow * arcWindow;
-        float gain = auroraIntensity * auroraVisible * (0.38 + closeStage * 0.14 + debugGain * 1.12);
+        float density = (rootMask + curtain * mix(0.92, 1.5, debugGain)) * upperArc * sideWindow * arcWindow;
+        float gain = auroraIntensity * auroraVisible * (0.22 + closeStage * 0.1 + debugGain * 1.12);
         float alpha = density * gain;
-        alpha *= 1.0 - cloudAlpha * mix(0.55, 0.38, debugGain);
-        alpha *= 1.0 - limbWhiteAlpha * 0.35;
+        alpha *= 1.0 - cloudAlpha * mix(0.64, 0.44, debugGain);
+        alpha *= 1.0 - limbWhiteAlpha * 0.42;
 
-        vec3 rootGreen = mix(vec3(0.06, 0.44, 0.26), vec3(0.1, 0.62, 0.32), debugGain);
-        vec3 grayGreen = vec3(0.07, 0.22, 0.2);
-        vec3 redUpper = vec3(0.22, 0.05, 0.08);
-        float topMix = smoothstep(58.0, 180.0, height);
-        vec3 color = mix(rootGreen, grayGreen, smoothstep(24.0, 92.0, height));
-        color = mix(color, redUpper, topMix * 0.36);
-        color *= density * (1.12 + curtain * 0.76 + debugGain * 0.52);
+        vec3 rootGreen = mix(vec3(0.045, 0.28, 0.18), vec3(0.075, 0.48, 0.26), debugGain);
+        vec3 grayGreen = vec3(0.055, 0.18, 0.17);
+        vec3 redUpper = vec3(0.14, 0.035, 0.055);
+        vec3 color = mix(rootGreen, grayGreen, smoothstep(0.12, 0.56, vertical01));
+        color = mix(color, redUpper, smoothstep(0.48, 0.94, vertical01) * 0.26);
+        color *= density * (0.82 + curtain * 0.72 + debugGain * 0.46);
 
-        return AuroraResult(min(color, mix(vec3(0.08, 0.32, 0.28), vec3(0.14, 0.62, 0.48), debugGain)), clamp(alpha, 0.0, mix(0.08, 0.24, debugGain)));
+        return AuroraResult(min(color, mix(vec3(0.05, 0.18, 0.16), vec3(0.1, 0.45, 0.34), debugGain)), clamp(alpha, 0.0, mix(0.035, 0.23, debugGain)));
       }
 
       void main() {
