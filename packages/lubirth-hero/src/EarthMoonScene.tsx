@@ -2,7 +2,7 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import { Color, DirectionalLight, Euler, MathUtils, Group, Vector3 } from "three";
+import { type Camera, Color, DirectionalLight, Euler, MathUtils, Group, Vector2, Vector3 } from "three";
 import {
   OPENING_FIELD_AUTO_ROTATE_START,
   getRuntimeOpeningProgress,
@@ -24,8 +24,11 @@ import { LandingEarth } from "./LandingEarth";
 import { LandingHorizonAuroraRibbon } from "./LandingHorizonAuroraRibbon";
 import { LandingLimbAirglowV2 } from "./LandingLimbAirglowV2";
 import { LandingMoon } from "./LandingMoon";
+import { LandingProjectedAuroraCurtain } from "./LandingProjectedAuroraCurtain";
+import { LandingProjectedHorizonCloudPlate } from "./LandingProjectedHorizonCloudPlate";
+import { LandingProjectedLimbScattering } from "./LandingProjectedLimbScattering";
 import { LandingSpaceBackground } from "./LandingSpaceBackground";
-import type { EarthMoonSceneProps, LuBirthProjectionFrame } from "./types";
+import type { EarthMoonSceneProps, LandingProjectedEarthFrame, LuBirthProjectionFrame } from "./types";
 
 const cameraTarget = new Vector3(0, 0, 0);
 const nextCameraPosition = new Vector3();
@@ -48,6 +51,9 @@ const projectionCameraUp = new Vector3();
 const projectionWorldPosition = new Vector3();
 const projectionScreenPosition = new Vector3();
 const projectionMoonEdgePosition = new Vector3();
+const projectedEarthScreenCenter = new Vector2();
+const projectedEarthScreenRight = new Vector2();
+const projectedEarthScreenUp = new Vector2();
 
 declare global {
   interface Window {
@@ -64,6 +70,15 @@ declare global {
 
 function formatProjectionNumber(value: number) {
   return Number.isFinite(value) ? Number(value.toFixed(2)) : 0;
+}
+
+function projectToBottomLeftScreen(point: Vector3, camera: Camera, width: number, height: number, out: Vector2) {
+  projectionScreenPosition.copy(point).project(camera);
+  out.set(
+    (projectionScreenPosition.x * 0.5 + 0.5) * width,
+    (projectionScreenPosition.y * 0.5 + 0.5) * height
+  );
+  return out;
 }
 
 function MianyangDebugMarker({ radius }: { radius: number }) {
@@ -104,9 +119,16 @@ export function EarthMoonScene({
   useAirglowV2 = true,
   useAuroraOval = false,
   useHorizonAuroraRibbon = true,
-  showAuroraInAll = false
+  showAuroraInAll = false,
+  useProjectedHorizonPasses = true
 }: EarthMoonSceneProps) {
   const earthGroup = useRef<Group>(null);
+  const projectedEarthFrame = useRef<LandingProjectedEarthFrame>({
+    center: new Vector2(0, 0),
+    sunDirection: new Vector2(0, 1),
+    radius: 1,
+    progress: 0
+  });
   const directionalLightRef = useRef<DirectionalLight>(null);
   const autoEarthYawDeg = useRef(0);
   const lastProjectionSignature = useRef("");
@@ -117,6 +139,12 @@ export function EarthMoonScene({
   const showClouds = visualDebugLayer === "all" || visualDebugLayer === "clouds";
   const showAtmosphere = visualDebugLayer === "all" || visualDebugLayer === "atmosphere";
   const showAurora = visualDebugLayer === "aurora" || (showAuroraInAll && visualDebugLayer === "all");
+  const showProjectedClouds = useProjectedHorizonPasses && showClouds;
+  const showProjectedAtmosphere = useProjectedHorizonPasses && showAtmosphere;
+  const showProjectedAurora = useProjectedHorizonPasses && showAurora;
+  const showLegacyClouds = showClouds && !showProjectedClouds;
+  const showLegacyAtmosphere = showAtmosphere && !showProjectedAtmosphere;
+  const showLegacyAurora = showAurora && !showProjectedAurora;
   const showSurfaceTextureClouds =
     showClouds &&
     quality.tier !== "low" &&
@@ -229,6 +257,47 @@ export function EarthMoonScene({
       directionalLightRef.current.position.copy(sceneLightDirection);
     }
 
+    if (earthGroup.current) {
+      camera.updateMatrixWorld();
+      earthGroup.current.updateMatrixWorld();
+      earthGroup.current.getWorldPosition(projectionEarthCenter);
+      projectionCameraRight.set(1, 0, 0).applyQuaternion(camera.quaternion).normalize();
+      projectionCameraUp.set(0, 1, 0).applyQuaternion(camera.quaternion).normalize();
+
+      const earthRadius = composition.earth.radius * earthGroup.current.scale.x;
+      const centerScreen = projectToBottomLeftScreen(projectionEarthCenter, camera, size.width, size.height, projectedEarthScreenCenter);
+      projectedEarthFrame.current.center.copy(centerScreen);
+      const rightScreen = projectToBottomLeftScreen(
+        projectionWorldPosition.copy(projectionEarthCenter).addScaledVector(projectionCameraRight, earthRadius),
+        camera,
+        size.width,
+        size.height,
+        projectedEarthScreenRight
+      );
+      const upScreen = projectToBottomLeftScreen(
+        projectionWorldPosition.copy(projectionEarthCenter).addScaledVector(projectionCameraUp, earthRadius),
+        camera,
+        size.width,
+        size.height,
+        projectedEarthScreenUp
+      );
+      projectedEarthFrame.current.radius = Math.max(
+        centerScreen.distanceTo(rightScreen),
+        centerScreen.distanceTo(upScreen),
+        1
+      );
+      projectedEarthFrame.current.progress = progress;
+      projectedEarthFrame.current.sunDirection.set(
+        sceneLightDirection.dot(projectionCameraRight),
+        sceneLightDirection.dot(projectionCameraUp)
+      );
+      if (projectedEarthFrame.current.sunDirection.lengthSq() < 0.001) {
+        projectedEarthFrame.current.sunDirection.set(0, 1);
+      } else {
+        projectedEarthFrame.current.sunDirection.normalize();
+      }
+    }
+
     const anchorDistance = composition.moon.anchorDistance;
     const viewHeight = 2 * anchorDistance * Math.tan((fov * Math.PI) / 360);
     const viewWidth = viewHeight * (size.width / Math.max(size.height, 1));
@@ -333,7 +402,7 @@ export function EarthMoonScene({
             onDayTextureReady={onVisualReadyEnough}
           />
         ) : null}
-        {showClouds ? (
+        {showLegacyClouds ? (
           assets.earthCloudDeck ? (
             useCloudDeckV2 ? (
               <LandingCloudDeckV2
@@ -368,7 +437,7 @@ export function EarthMoonScene({
             />
           )
         ) : null}
-        {showAurora ? (
+        {showLegacyAurora ? (
           useHorizonAuroraRibbon ? (
             <LandingHorizonAuroraRibbon
               composition={composition}
@@ -404,7 +473,7 @@ export function EarthMoonScene({
             />
           )
         ) : null}
-        {showAtmosphere ? (
+        {showLegacyAtmosphere ? (
           useAirglowV2 ? (
             <LandingLimbAirglowV2
               composition={composition}
@@ -421,7 +490,7 @@ export function EarthMoonScene({
             />
           )
         ) : null}
-        {showAtmosphere ? (
+        {showLegacyAtmosphere ? (
           <LandingAtmosphere
             composition={composition}
             quality={quality}
@@ -431,6 +500,36 @@ export function EarthMoonScene({
         ) : null}
         {debugMianyang && showEarth ? <MianyangDebugMarker radius={composition.earth.radius} /> : null}
       </group>
+
+      {showProjectedClouds ? (
+        <LandingProjectedHorizonCloudPlate
+          composition={composition}
+          quality={quality}
+          projection={projectedEarthFrame}
+          emphasis={visualDebugLayer === "clouds"}
+          reducedMotion={reducedMotion}
+          paused={paused}
+        />
+      ) : null}
+      {showProjectedAtmosphere ? (
+        <LandingProjectedLimbScattering
+          composition={composition}
+          quality={quality}
+          projection={projectedEarthFrame}
+          emphasis={visualDebugLayer === "atmosphere"}
+        />
+      ) : null}
+      {showProjectedAurora ? (
+        <LandingProjectedAuroraCurtain
+          composition={composition}
+          quality={quality}
+          projection={projectedEarthFrame}
+          debugProfile={auroraProfile === "debug"}
+          visibilityBoost={visualDebugLayer === "aurora" ? 3.0 : 0.42}
+          reducedMotion={reducedMotion}
+          paused={paused}
+        />
+      ) : null}
 
       {showMoon ? (
         <LandingMoon

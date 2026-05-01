@@ -181,6 +181,7 @@ export interface EarthMoonSceneProps {
   useAuroraOval?: boolean;
   useHorizonAuroraRibbon?: boolean;
   showAuroraInAll?: boolean;
+  useProjectedHorizonPasses?: boolean;
 }
 
 export interface LuBirthProjectionFrame {

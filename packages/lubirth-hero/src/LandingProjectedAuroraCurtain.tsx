@@ -24,6 +24,12 @@ interface LandingProjectedAuroraCurtainProps {
   paused?: boolean;
 }
 
+declare global {
+  interface Window {
+    __MiraLithLuBirthProjectedAuroraCurtainActive?: boolean;
+  }
+}
+
 const forward = new Vector3();
 
 function fitOverlayToCamera(mesh: Mesh, camera: PerspectiveCamera, aspect: number) {
@@ -103,43 +109,48 @@ function createAuroraCurtainMaterial(composition: LandingComposition) {
         float twilight = 1.0 - smoothstep(0.0, 0.3, abs(sunDot));
         float arcWindow = mix(max(night, twilight * 0.32), 1.0, debugGain * 0.62);
 
-        float rootMask = (1.0 - smoothstep(0.0, 7.0, abs(signedOutside - 2.0))) * 0.95;
-        float outside = smoothstep(-3.0, 8.0, signedOutside);
+        float rootMask = (1.0 - smoothstep(0.0, 3.2, abs(signedOutside - 1.0))) * mix(0.18, 0.28, debugGain);
+        float outside = smoothstep(2.0, 14.0, signedOutside);
         float topFade = 1.0 - smoothstep(mix(64.0, 126.0, debugGain), mix(132.0, 236.0, debugGain), signedOutside);
-        float body = outside * topFade * smoothstep(-22.0, -4.0, signedOutside);
+        float body = outside * topFade;
 
         float angle = atan(edgeNormal.y, edgeNormal.x) / 3.14159265;
         float height = max(signedOutside, 0.0);
         vec2 curtainUv = vec2(angle * 16.0 + time * 0.006, height * 0.028 - time * 0.012);
         float folds =
-          sin(angle * 92.0 + fbm(vec2(angle * 19.0, height * 0.035 + time * 0.018)) * 4.0) * 0.32 +
-          sin(angle * 181.0 + height * 0.052 + time * 0.016) * 0.1;
+          sin(angle * 88.0 + fbm(vec2(angle * 19.0, height * 0.035 + time * 0.018)) * 3.8) * 0.5 + 0.5;
+        float fineFolds =
+          sin(angle * 184.0 + height * 0.026 + fbm(vec2(angle * 42.0, 1.7)) * 4.2 + time * 0.016) * 0.5 + 0.5;
         float columnNoise = fbm(curtainUv + vec2(3.2, 1.1));
         float columnHeight = smoothstep(0.24, 0.82, fbm(vec2(angle * 21.0 - time * 0.006, 2.0)));
         float verticalLimit = 1.0 - smoothstep(54.0 + columnHeight * 92.0, 124.0 + columnHeight * 128.0, height);
-        float strands = smoothstep(0.52, 0.9, 0.52 + folds + columnNoise * 0.2);
-        float breakup = smoothstep(0.24, 0.82, fbm(vec2(angle * 45.0 - time * 0.01, height * 0.04)));
-        float curtain = body * strands * breakup * verticalLimit * mix(0.62, 1.0, debugGain);
+        float rootLift = smoothstep(3.0, 24.0, height);
+        float strandCore = pow(folds, mix(4.6, 6.2, debugGain)) * 0.82 +
+          pow(fineFolds, 9.0) * 0.28 +
+          columnNoise * 0.1;
+        float strands = smoothstep(0.16, 0.58, strandCore);
+        float breakup = smoothstep(0.28, 0.76, fbm(vec2(angle * 45.0 - time * 0.01, height * 0.04)));
+        float curtain = body * rootLift * strands * breakup * verticalLimit * mix(0.64, 1.0, debugGain);
 
         float closeStage = 1.0 - smoothstep(0.16, 0.74, progress);
-        float density = (rootMask * 0.72 + curtain * 0.86) * upperArc * sideWindow * arcWindow;
-        float gain = intensity * (0.42 + closeStage * 0.22 + debugGain * 1.34);
+        float density = (rootMask * 0.18 + curtain * 1.26) * upperArc * sideWindow * arcWindow;
+        float gain = intensity * (0.42 + closeStage * 0.18 + debugGain * 1.2);
         float alpha = density * gain;
 
-        vec3 rootGreen = vec3(0.18, 0.92, 0.42);
-        vec3 grayGreen = vec3(0.18, 0.5, 0.42);
-        vec3 redUpper = vec3(0.48, 0.11, 0.2);
+        vec3 rootGreen = mix(vec3(0.1, 0.72, 0.38), vec3(0.16, 0.86, 0.42), debugGain);
+        vec3 grayGreen = vec3(0.12, 0.36, 0.3);
+        vec3 redUpper = vec3(0.32, 0.07, 0.1);
         float topMix = smoothstep(58.0, 180.0, height);
         vec3 color = mix(rootGreen, grayGreen, smoothstep(24.0, 92.0, height));
         color = mix(color, redUpper, topMix * 0.48);
-        color *= density * (1.65 + rootMask * 1.25 + curtain * 0.52 + debugGain * 0.68);
-        color = min(color, vec3(0.2, 0.86, 0.68));
+        color *= density * (1.35 + rootMask * 0.58 + curtain * 0.86 + debugGain * 0.58);
+        color = min(color, mix(vec3(0.14, 0.5, 0.42), vec3(0.18, 0.78, 0.6), debugGain));
 
         if (alpha < 0.0012) {
           discard;
         }
 
-        gl_FragColor = vec4(color, clamp(alpha, 0.0, mix(0.14, 0.34, debugGain)));
+        gl_FragColor = vec4(color, clamp(alpha, 0.0, mix(0.12, 0.3, debugGain)));
       }
     `,
     transparent: true,
@@ -173,6 +184,17 @@ export function LandingProjectedAuroraCurtain({
   useEffect(() => {
     return () => material.dispose();
   }, [material]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    window.__MiraLithLuBirthProjectedAuroraCurtainActive = enabled;
+    return () => {
+      window.__MiraLithLuBirthProjectedAuroraCurtainActive = false;
+    };
+  }, [enabled]);
 
   useFrame((state) => {
     if (!overlay.current || !enabled || !("fov" in camera)) {
