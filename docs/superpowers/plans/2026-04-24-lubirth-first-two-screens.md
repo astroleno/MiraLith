@@ -8,6 +8,8 @@
 
 **Tech Stack:** Next.js App Router, React 19, TypeScript strict, pnpm workspace, three, @react-three/fiber, @react-three/drei, Theatre helpers in `@miralith/visual-core`, Playwright.
 
+**Current visual blockers (2026-04-29):** Before treating this plan as visually complete, resolve the issues recorded in `docs/lubirth-earthmoon-visual-gap-review.md`: scroll jank, starfield moving with scroll / too-dark background, invisible rotating code-cloud shell, missing Karman-line atmosphere glow, and barely visible aurora.
+
 ---
 
 ## File Structure

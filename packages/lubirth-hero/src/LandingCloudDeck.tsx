@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import {
   AddEquation,
@@ -221,12 +221,14 @@ export function LandingCloudDeck({
   paused
 }: LandingCloudDeckProps) {
   const cloud = useRef<Mesh>(null);
+  const [cloudDeckArmed, setCloudDeckArmed] = useState(false);
   const cloudDeckAsset = assets.earthCloudDeck;
   const shouldLoadCloudDeck =
     composition.earth.useClouds &&
     composition.earth.cloudOpacity > 0 &&
     quality.tier !== "fallback" &&
-    quality.tier !== "low";
+    quality.tier !== "low" &&
+    (cloudDeckArmed || emphasis);
   const { texture: cloudDeckTexture, failed: cloudDeckTextureFailed } = useLandingTexture(
     shouldLoadCloudDeck ? cloudDeckAsset?.src : undefined,
     {
@@ -263,11 +265,15 @@ export function LandingCloudDeck({
   }, [cloudDeckAsset?.src, enabled]);
 
   useFrame((state) => {
+    const progress = getRuntimeOpeningProgress(0);
+    if (!cloudDeckArmed && progress > 0.08) {
+      setCloudDeckArmed(true);
+    }
+
     if (!cloud.current || !enabled || !cloudDeckTexture) {
       return;
     }
 
-    const progress = getRuntimeOpeningProgress(0);
     const closeStage = 1 - smoothstep(0.18, 0.86, progress);
     const elapsed = paused || reducedMotion ? 0 : state.clock.elapsedTime;
     if (sceneLightDirection) {

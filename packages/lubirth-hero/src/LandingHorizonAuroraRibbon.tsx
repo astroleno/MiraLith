@@ -175,6 +175,7 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
         float vertical = vUv.y;
         float arc = vUv.x;
         float sideFeather = smoothstep(0.018, 0.1, arc) * (1.0 - smoothstep(0.9, 0.982, arc));
+        float bottomFeather = smoothstep(0.018, 0.095, vertical);
         float rootLine = 1.0 - smoothstep(0.01, 0.068, vertical);
         float rootBreakup = smoothstep(0.14, 0.72, fbm(vec2(arc * 34.0 + time * 0.01, 0.7)));
         float root = rootLine * mix(0.72, 1.0, rootBreakup);
@@ -189,7 +190,7 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
         float verticalFalloff = 1.0 - smoothstep(0.34 + columnHeight * 0.32, 0.96, vertical);
         float curtainBreakup = smoothstep(0.18, 0.78, fbm(vec2(arc * 40.0 - time * 0.009, vertical * 6.0 + 2.0)));
         float curtain = body * strands * curtainBreakup * verticalFalloff;
-        float density = sideFeather * (root * 0.82 + curtain * 0.92 + topMist * curtainBreakup * 0.1);
+        float density = sideFeather * bottomFeather * (root * 0.82 + curtain * 0.92 + topMist * curtainBreakup * 0.1);
 
         float screenX = gl_FragCoord.x / max(screenSize.x, 1.0);
         float moonColumn = 1.0 - smoothstep(0.055, 0.19, abs(screenX - moonColumnCenter));

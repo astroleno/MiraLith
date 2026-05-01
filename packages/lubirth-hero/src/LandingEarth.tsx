@@ -38,6 +38,18 @@ const smoothstep = (edge0: number, edge1: number, value: number) => {
   return t * t * (3 - 2 * t);
 };
 
+function resolveEarthSegments(composition: LandingComposition, quality: QualityProfile) {
+  if (quality.tier === "high") {
+    return Math.max(composition.earth.segments, quality.segments);
+  }
+
+  if (quality.tier === "medium") {
+    return Math.max(96, quality.segments);
+  }
+
+  return quality.segments;
+}
+
 export function LandingEarth({
   composition,
   assets,
@@ -49,6 +61,7 @@ export function LandingEarth({
   onDayTextureReady
 }: LandingEarthProps) {
   const earth = useRef<Mesh>(null);
+  const earthSegments = resolveEarthSegments(composition, quality);
   const proceduralDayTexture = useMemo(
     () => createEarthTexture(quality.tier === "high" ? 1024 : 512),
     [quality.tier]
@@ -109,6 +122,7 @@ export function LandingEarth({
           ambient: { value: composition.light.ambientIntensity },
           edge: { value: composition.earth.terminatorSoftness },
           nightBoost: { value: composition.earth.nightIntensity },
+          specularStrength: { value: composition.earth.specularStrength },
           cloudOpacity: {
             value: shouldUseTextureClouds
               ? composition.earth.cloudOpacity * SURFACE_CLOUD_OPACITY_MULTIPLIER
@@ -122,6 +136,17 @@ export function LandingEarth({
           cloudOffset: { value: 0 },
           rimStrength: { value: composition.earth.rimStrength },
           rimWidth: { value: composition.earth.rimWidth },
+          edgeLightStrength: { value: composition.earth.edgeLightStrength },
+          edgeLightWidth: { value: composition.earth.edgeLightWidth },
+          edgeLightColor: {
+            value: new Color(
+              composition.earth.edgeLightColor[0],
+              composition.earth.edgeLightColor[1],
+              composition.earth.edgeLightColor[2]
+            )
+          },
+          edgeNeedleStrength: { value: composition.earth.edgeNeedleStrength },
+          edgeShadowSoftness: { value: composition.earth.edgeShadowSoftness },
           closeStage: { value: 1 }
         },
         vertexShader: `
@@ -147,11 +172,17 @@ export function LandingEarth({
           uniform float ambient;
           uniform float edge;
           uniform float nightBoost;
+          uniform float specularStrength;
           uniform float cloudOpacity;
           uniform float cloudShadowOpacity;
           uniform float cloudOffset;
           uniform float rimStrength;
           uniform float rimWidth;
+          uniform float edgeLightStrength;
+          uniform float edgeLightWidth;
+          uniform vec3 edgeLightColor;
+          uniform float edgeNeedleStrength;
+          uniform float edgeShadowSoftness;
           uniform float closeStage;
 
           varying vec2 vUv;
@@ -175,7 +206,17 @@ export function LandingEarth({
             float nightW = 1.0 - dayW;
             float deepNightW = 1.0 - smoothstep(-transitionWidth * 2.7, -transitionWidth * 0.86, ndl);
 
-            vec3 dayTex = pow(texture2D(dayMap, vUv).rgb, vec3(1.06));
+            vec3 rawDayTex = texture2D(dayMap, vUv).rgb;
+            vec2 detailStep = vec2(0.0009, 0.00045);
+            vec3 dayBlur = (
+              texture2D(dayMap, vUv + detailStep).rgb +
+              texture2D(dayMap, vUv - detailStep).rgb +
+              texture2D(dayMap, vUv + detailStep.yx).rgb +
+              texture2D(dayMap, vUv - detailStep.yx).rgb
+            ) * 0.25;
+            float surfaceDetail = dot(rawDayTex - dayBlur, vec3(0.299, 0.587, 0.114));
+            vec3 dayTex = rawDayTex + (rawDayTex - dayBlur) * 0.38 + surfaceDetail * 0.075;
+            dayTex = pow(clamp(dayTex, vec3(0.0), vec3(1.08)), vec3(1.04));
             vec3 nightTex = pow(texture2D(nightMap, vUv).rgb, vec3(0.9));
             vec2 cloudUv = vec2(fract(vUv.x + cloudOffset), fract(vUv.y + cloudOffset * 0.18));
             float cloudRaw = texture2D(cloudMap, cloudUv).r;
@@ -203,6 +244,11 @@ export function LandingEarth({
               1.32
             ) * (1.0 - smoothstep(transitionWidth * 0.55, transitionWidth * 2.4, abs(ndl)));
             vec3 dayCol = daySurface * lightColor * (ambient * 0.5 + (dayLight + grazingSun * 0.22) * sunIntensity) * dayW * 0.55;
+            vec3 halfDir = normalize(l + v);
+            float oceanSignal = dayTex.b - max(dayTex.r, dayTex.g) * 0.52;
+            float oceanMask = smoothstep(0.035, 0.18, oceanSignal) * (1.0 - clamp(max(cloudMask, cloudCore) * 0.9, 0.0, 0.92));
+            float oceanGlint = pow(max(dot(n, halfDir), 0.0), 88.0) * oceanMask * dayW * specularStrength * (0.34 + closeStage * 0.28);
+            vec3 oceanSpecular = vec3(0.74, 0.86, 1.0) * oceanGlint;
             vec2 glowStep = vec2(0.0024, 0.0012);
             vec3 nightGlowTex = (
               texture2D(nightMap, vUv).rgb +
@@ -242,20 +288,26 @@ export function LandingEarth({
               cloudBreak *
               mix(0.82, 0.42, closeStage);
 
-            float innerRim = pow(fresnel, max(rimWidth * 1.5, 0.8));
-            float outerRim = pow(fresnel, max(rimWidth * 0.8, 0.3));
-            float rimEffect = (innerRim * 0.7 + outerRim * 0.3) * rimStrength;
-            float dayNightRim = 0.28 + 0.72 * max(ndl, 0.0);
-            rimEffect *= dayNightRim;
-            vec3 rimCol = mix(vec3(0.04, 0.18, 0.46), vec3(0.18, 0.5, 0.86), innerRim) * rimEffect * 0.34;
-            float horizonNeedle = pow(fresnel, 24.0) * (0.18 + 0.82 * dayW) * closeStage;
-            float surfaceNeedle = pow(fresnel, 64.0) * (0.24 + 0.76 * dayW) * closeStage;
-            float needleCut = 1.0 - smoothstep(0.995, 1.0, fresnel);
-            vec3 needleCol =
-              vec3(0.62, 0.82, 1.0) * horizonNeedle * 0.035 +
-              vec3(0.95, 0.985, 1.0) * surfaceNeedle * needleCut * 0.78;
+            float legacyInnerRim = pow(fresnel, max(rimWidth * 1.5, 0.8));
+            float legacyOuterRim = pow(fresnel, max(rimWidth * 0.8, 0.3));
+            float legacyRim = (legacyInnerRim * 0.7 + legacyOuterRim * 0.3) * rimStrength;
+            legacyRim *= 0.24 + 0.76 * max(ndl, 0.0);
 
-            vec3 color = dayCol + cityCol + moonlitLand + moonlitClouds + twilightFill + terminatorCol + rimCol + needleCol;
+            float sunRim = smoothstep(-edgeShadowSoftness, 0.58, ndl);
+            float edgeRim = pow(fresnel, max(edgeLightWidth, 0.4)) * sunRim;
+            float innerNeedle = pow(fresnel, 42.0) * sunRim;
+            float surfaceNeedle = pow(fresnel, 72.0) * (0.22 + 0.78 * dayW) * closeStage;
+            float needleCut = 1.0 - smoothstep(0.995, 1.0, fresnel);
+            vec3 rimCol =
+              mix(vec3(0.035, 0.14, 0.34), vec3(0.16, 0.44, 0.82), legacyInnerRim) *
+              legacyRim *
+              0.26;
+            vec3 edgeLight =
+              edgeLightColor * edgeRim * edgeLightStrength +
+              vec3(0.94, 0.98, 1.0) * innerNeedle * edgeNeedleStrength +
+              vec3(0.95, 0.985, 1.0) * surfaceNeedle * needleCut * edgeNeedleStrength * 0.72;
+
+            vec3 color = dayCol + oceanSpecular + cityCol + moonlitLand + moonlitClouds + twilightFill + terminatorCol + rimCol + edgeLight;
             color = color / (1.0 + max(color - vec3(0.78), vec3(0.0)) * 0.82);
             color = pow(max(color, vec3(0.0)), vec3(1.08));
             color *= 0.96 + (grain(gl_FragCoord.xy) - 0.5) * 0.026;
@@ -266,9 +318,15 @@ export function LandingEarth({
     },
     [
       composition.earth.nightIntensity,
+      composition.earth.specularStrength,
       composition.earth.cloudOpacity,
       composition.earth.rimStrength,
       composition.earth.rimWidth,
+      composition.earth.edgeLightStrength,
+      composition.earth.edgeLightWidth,
+      composition.earth.edgeLightColor,
+      composition.earth.edgeNeedleStrength,
+      composition.earth.edgeShadowSoftness,
       composition.earth.terminatorSoftness,
       shouldUseTextureClouds,
       composition.light.ambientIntensity,
@@ -297,6 +355,7 @@ export function LandingEarth({
     earthMaterial.uniforms.ambient.value = composition.light.ambientIntensity;
     earthMaterial.uniforms.edge.value = composition.earth.terminatorSoftness;
     earthMaterial.uniforms.nightBoost.value = composition.earth.nightIntensity;
+    earthMaterial.uniforms.specularStrength.value = composition.earth.specularStrength;
     earthMaterial.uniforms.cloudOpacity.value =
       shouldUseTextureClouds
         ? composition.earth.cloudOpacity * SURFACE_CLOUD_OPACITY_MULTIPLIER
@@ -315,6 +374,15 @@ export function LandingEarth({
     }
     earthMaterial.uniforms.rimStrength.value = composition.earth.rimStrength;
     earthMaterial.uniforms.rimWidth.value = composition.earth.rimWidth;
+    earthMaterial.uniforms.edgeLightStrength.value = composition.earth.edgeLightStrength;
+    earthMaterial.uniforms.edgeLightWidth.value = composition.earth.edgeLightWidth;
+    earthMaterial.uniforms.edgeLightColor.value.set(
+      composition.earth.edgeLightColor[0],
+      composition.earth.edgeLightColor[1],
+      composition.earth.edgeLightColor[2]
+    );
+    earthMaterial.uniforms.edgeNeedleStrength.value = composition.earth.edgeNeedleStrength;
+    earthMaterial.uniforms.edgeShadowSoftness.value = composition.earth.edgeShadowSoftness;
 
     earth.current.rotation.x = 0;
     earth.current.rotation.y = MathUtils.degToRad(composition.earth.yawDeg);
@@ -322,7 +390,7 @@ export function LandingEarth({
 
   return (
     <mesh ref={earth} material={material}>
-      <sphereGeometry args={[composition.earth.radius, quality.segments, quality.segments]} />
+      <sphereGeometry args={[composition.earth.radius, earthSegments, earthSegments]} />
     </mesh>
   );
 }

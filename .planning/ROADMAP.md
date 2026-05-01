@@ -4,6 +4,8 @@
 
 MiraLith now has a narrower and sharper v1.0: make the LuBirth first two screens exceptional before expanding the rest of the personal field site. The first milestone should prove the architecture, taste, and performance discipline: Chinese-primary copy, a lightweight earth-moon visual kernel, and a Theatre.js-controlled Opening -> LuBirth Window transition.
 
+Current visual blocker, recorded 2026-04-29: LuBirth's earth-moon kernel must resolve scroll jank, a fixed/readable starfield, visible rotating code-cloud shells, Karman-line atmosphere glow, and aurora curtain visibility before v1.0 can be considered visually locked. See `../docs/lubirth-earthmoon-visual-gap-review.md`.
+
 ## Phases
 
 - [ ] **Phase 1: Foundation and Motion Spine** - Scaffold the app, content model, design tokens, visual-core contracts, and Theatre-ready orchestration.
@@ -44,6 +46,7 @@ MiraLith now has a narrower and sharper v1.0: make the LuBirth first two screens
 2. Field and window presets render without importing LuBirth `SimpleTest` or unrelated modules.
 3. Low-resolution earth / moon placeholder assets are budgeted and load through a manifest.
 4. The package exposes animatable props for app-level Theatre binding without requiring Theatre internally.
+5. Starfield, code-cloud shells, atmosphere/Karman glow, and aurora each have a visible debug mode and pass screenshot review.
 
 **Plans**: 3 plans
 
@@ -63,6 +66,7 @@ MiraLith now has a narrower and sharper v1.0: make the LuBirth first two screens
 3. Scroll progress binds to Theatre position without per-frame React state updates.
 4. Desktop hover zoom and mobile tap expansion work.
 5. Expanded state can close through explicit control and Escape.
+6. Scroll-driven motion keeps the starfield visually stable while the earth, moon, cloud layer, atmosphere, and aurora remain readable.
 
 **Plans**: 4 plans
 

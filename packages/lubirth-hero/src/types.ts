@@ -4,6 +4,13 @@ import type { LandingQuality, QualityProfile, ResolvedQualityTier } from "@miral
 
 export type EarthMoonHeroMode = "field" | "window" | "zoomed" | "expanded";
 export type LandingVisualDebugLayer = "all" | "stars" | "clouds" | "atmosphere" | "aurora";
+export type LandingRenderProfile =
+  | "clean"
+  | "nasa"
+  | "debug-stars"
+  | "debug-clouds"
+  | "debug-atmosphere"
+  | "debug-aurora";
 export type LandingAuroraProfile = "hero" | "debug";
 export type LandingPresetName =
   | "field"
@@ -74,6 +81,11 @@ export interface LandingEarthConfig {
   specularStrength: number;
   rimStrength: number;
   rimWidth: number;
+  edgeLightStrength: number;
+  edgeLightWidth: number;
+  edgeLightColor: [number, number, number];
+  edgeNeedleStrength: number;
+  edgeShadowSoftness: number;
 }
 
 export interface LandingMoonPhase {
@@ -121,6 +133,10 @@ export interface LandingAtmosphereConfig {
   nearShell: boolean;
   nearStrength: number;
   karmanGlow: boolean;
+  innerWhiteStrength: number;
+  blueThicknessStrength: number;
+  karmanStrength: number;
+  outerHaloStrength: number;
 }
 
 export interface LandingAuroraConfig {
@@ -170,6 +186,7 @@ export interface EarthMoonSceneProps {
   sectionProgress?: number;
   debugMianyang?: boolean;
   visualDebugLayer?: LandingVisualDebugLayer;
+  renderProfile?: LandingRenderProfile;
   auroraProfile?: LandingAuroraProfile;
   reducedMotion?: boolean;
   paused?: boolean;

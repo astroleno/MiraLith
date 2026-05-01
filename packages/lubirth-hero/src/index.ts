@@ -4,6 +4,7 @@ export { LandingAirglow } from "./LandingAirglow";
 export { LandingAtmosphere } from "./LandingAtmosphere";
 export { LandingAurora } from "./LandingAurora";
 export { LandingAuroraOval } from "./LandingAuroraOval";
+export { LandingAtmosphereStack } from "./LandingAtmosphereStack";
 export { LandingCloudLayer } from "./LandingCloudLayer";
 export { LandingCloudDeck } from "./LandingCloudDeck";
 export { LandingCloudDeckV2 } from "./LandingCloudDeckV2";
@@ -45,6 +46,7 @@ export type {
   LandingComposition,
   LandingCompositionOverrides,
   LandingMoonLightingMode,
+  LandingRenderProfile,
   LandingResolvedAssets,
   LandingPresetName,
   LandingProjectedEarthFrame,

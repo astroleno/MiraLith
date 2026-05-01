@@ -1,5 +1,7 @@
 > 2026-04-24 对齐说明：本文保留为长期首页叙事参考。当前 v1.0 范围锁定为 LuBirth 前两屏：Opening / LuBirth Ritual Field + LuBirth Zoomable Project Window；Radio Gaga、CoScroll、ArtBreeze、实验星群、商业作品、Now Building、About / Contact 进入 v1.1+。
 
+> 2026-04-29 落地复查：当前首页已经进入 LuBirth-first 实装阶段。home loading 不再依赖手写 orbit path，而是优先使用 Three 场景投影出的地球上缘和月亮位置；本地生产预览 desktop/mobile 都能拿到 `data-projection="scene"`。下一步不应继续扩章节，而应先按 [Home LuBirth next-stage plan](home-lubirth-next-stage-plan.md) 把 loading readiness、地月视觉层和滚动性能打稳。
+
 你说得对。
 我前面那个顺序太像“作品集信息架构”，不够像 **MiraLith 这种个人场域站**。你要参考 Shopify 那种体验，就不应该先讲“我是谁 / 我在做什么”，而应该先把人拖进一个场景。
 
@@ -84,6 +86,18 @@ A cosmological interface for birth, time, and self-recognition.
 ```
 
 这个项目不是“作品 01”，而是 **MiraLith 的入口神话**。
+
+#### 2026-04-29 地月视觉阻塞项
+
+当前 LuBirth 起源场的首要推进项不是继续加文字或章节，而是先把地月视觉核打实。详见 [LuBirth 地月视觉差距复查](lubirth-earthmoon-visual-gap-review.md)。
+
+必须同时解决：
+
+* 滚动性能：当前滚动体感偏卡，固定视觉层不能让所有 shader 和 DOM 动画在滚动中互相拖累。
+* 星空背景：星空应该是稳定深空场，不应明显跟着滚动漂移；当前背景也过暗。
+* 代码云层：必须能看出有厚度的云层 shell，并且在正式页面里持续旋转。
+* 地弧渐变光：近地帧要有清晰的白线、蓝带、外雾三层，最终地月同框也要保留低强度蓝边。
+* 极光：不能只存在于 shader 代码里，必须在截图和实滚中看见有结构的极区帘幕或 airglow。
 
 ---
 

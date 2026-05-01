@@ -4,13 +4,42 @@ import { useEffect } from "react";
 import { EarthMoonScene, resolveLandingAssets, resolveLandingPreset } from "@miralith/lubirth-hero";
 import { useQualityTier, useReducedMotionPreference } from "@miralith/visual-core";
 import type {
+  LandingAssetManifest,
   LandingAuroraProfile,
   EarthMoonHeroMode,
   LandingMoonLightingMode,
+  LandingRenderProfile,
   LandingVisualDebugLayer,
   LuBirthProjectionFrame
 } from "@miralith/lubirth-hero";
 import type { LandingQuality } from "@miralith/visual-core";
+
+const HIGH_DETAIL_EARTH_ASSETS: Partial<LandingAssetManifest> = {
+  earthDay: {
+    id: "earth-day-8k",
+    src: "/assets/lubirth/textures/earth-day-8k.webp",
+    width: 8192,
+    height: 4096,
+    format: "webp",
+    colorSpace: "srgb"
+  },
+  earthNight: {
+    id: "earth-night-8k",
+    src: "/assets/lubirth/textures/earth-night-8k.webp",
+    width: 8192,
+    height: 4096,
+    format: "webp",
+    colorSpace: "srgb"
+  },
+  earthClouds: {
+    id: "earth-clouds-8k",
+    src: "/assets/lubirth/textures/earth-clouds-8k.webp",
+    width: 8192,
+    height: 4096,
+    format: "webp",
+    colorSpace: "srgb"
+  }
+};
 
 declare global {
   interface Window {
@@ -25,9 +54,11 @@ interface LuBirthSceneSlotProps {
   quality?: LandingQuality;
   debugMianyang?: boolean;
   visualDebugLayer?: LandingVisualDebugLayer;
+  renderProfile?: LandingRenderProfile;
   paused?: boolean;
   onProjectionFrame?: (frame: LuBirthProjectionFrame) => void;
   onVisualReadyEnough?: () => void;
+  onMoonTextureReady?: () => void;
 }
 
 function readMoonLightingMode(): LandingMoonLightingMode | undefined {
@@ -57,25 +88,50 @@ function readAuroraProfile(): LandingAuroraProfile {
   return profile === "debug" ? "debug" : "hero";
 }
 
+function readRenderProfileOverride(): LandingRenderProfile | undefined {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+
+  const profile = new URLSearchParams(window.location.search).get("profile");
+  if (
+    profile === "clean" ||
+    profile === "nasa" ||
+    profile === "debug-stars" ||
+    profile === "debug-clouds" ||
+    profile === "debug-atmosphere" ||
+    profile === "debug-aurora"
+  ) {
+    return profile;
+  }
+
+  return undefined;
+}
+
 export function LuBirthSceneSlot({
   mode,
   quality = "auto",
   debugMianyang = false,
   visualDebugLayer = "all",
+  renderProfile,
   paused = false,
   onProjectionFrame,
-  onVisualReadyEnough
+  onVisualReadyEnough,
+  onMoonTextureReady
 }: LuBirthSceneSlotProps) {
   const reducedMotion = useReducedMotionPreference();
   const qualityOverride = readQualityOverride();
   const auroraProfile = readAuroraProfile();
+  const renderProfileOverride = readRenderProfileOverride();
+  const activeRenderProfile = renderProfileOverride ?? renderProfile;
   const qualityProfile = useQualityTier(qualityOverride ?? quality, reducedMotion);
   const moonLightingMode = readMoonLightingMode();
   const composition = resolveLandingPreset(
     mode,
     moonLightingMode ? { moon: { lightingMode: moonLightingMode } } : undefined
   );
-  const assets = resolveLandingAssets();
+  const useHighDetailEarthAssets = qualityProfile.tier === "high" && activeRenderProfile !== "clean";
+  const assets = resolveLandingAssets(useHighDetailEarthAssets ? HIGH_DETAIL_EARTH_ASSETS : undefined);
 
   useEffect(() => {
     window.__MiraLithLuBirthQualityTier = qualityProfile.tier;
@@ -95,11 +151,13 @@ export function LuBirthSceneSlot({
       quality={qualityProfile}
       debugMianyang={debugMianyang}
       visualDebugLayer={visualDebugLayer}
+      renderProfile={activeRenderProfile}
       auroraProfile={auroraProfile}
       reducedMotion={reducedMotion}
       paused={paused}
       onProjectionFrame={onProjectionFrame}
       onVisualReadyEnough={onVisualReadyEnough}
+      onMoonTextureReady={onMoonTextureReady}
     />
   );
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import type { LandingVisualDebugLayer, LuBirthProjectionFrame } from "@miralith/lubirth-hero";
+import type { LandingRenderProfile, LandingVisualDebugLayer, LuBirthProjectionFrame } from "@miralith/lubirth-hero";
 import { VisualCanvas } from "../visual/VisualCanvas";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
 import { LuBirthSceneSlot } from "../visual/scenes/LuBirthSceneSlot";
@@ -16,8 +16,10 @@ declare global {
     __MiraLithHomeLoadingReadyAt?: number;
     __MiraLithHomeLoadingReadySource?: ReadyHomeProjectionSource;
     __MiraLithHomeMemoryImageReadyAt?: number;
+    __MiraLithHomeMoonTextureReadyAt?: number;
     __MiraLithHomeVisualReadyAt?: number;
     __MiraLithHomeVisualReadySource?: HomeVisualReadySource;
+    __MiraLithHomeProjectionFrame?: LuBirthProjectionFrame;
   }
 }
 
@@ -26,9 +28,9 @@ const LUBIRTH_PROJECT_INTRO_ANCHOR_ID = "lubirth-project-intro-anchor";
 const HOME_PROJECTION_FALLBACK_DEADLINE_MS = 900;
 const HOME_VISUAL_GRACE_DEADLINE_MS = 700;
 const HOME_LOADING_REVEAL_DELAY_MS = 1300;
-const HOME_LOADING_SCROLL_DELAY_MS = 2700;
+const HOME_LOADING_SCROLL_DELAY_MS = 3900;
 const HOME_LOADING_MIN_REVEAL_AFTER_READY_MS = 900;
-const HOME_LOADING_MIN_COMPLETE_AFTER_READY_MS = 1900;
+const HOME_LOADING_MIN_COMPLETE_AFTER_READY_MS = 3000;
 const HOME_PROJECT_ACCESS_PROGRESS = 0.34;
 const HOME_RAIL_ACCESS_PROGRESS = 0.52;
 
@@ -42,6 +44,7 @@ interface ScreenshotDebugOptions {
   fixedProgress: number | null;
   copyHidden: boolean;
   visualDebugLayer: LandingVisualDebugLayer;
+  renderProfile: LandingRenderProfile;
 }
 
 interface LuBirthRevisedRouteProps {
@@ -53,7 +56,8 @@ interface LuBirthRevisedRouteProps {
 const DEFAULT_SCREENSHOT_DEBUG_OPTIONS: ScreenshotDebugOptions = {
   fixedProgress: null,
   copyHidden: false,
-  visualDebugLayer: "all"
+  visualDebugLayer: "all",
+  renderProfile: "nasa"
 };
 
 const copy = {
@@ -173,13 +177,34 @@ function readScreenshotDebugOptions(defaultCopyHidden = false): ScreenshotDebugO
     debugParam === "all"
       ? debugParam
       : "all";
+  const profileParam = params.get("profile");
+  const profileFromQuery: LandingRenderProfile | undefined =
+    profileParam === "clean" ||
+    profileParam === "nasa" ||
+    profileParam === "debug-stars" ||
+    profileParam === "debug-clouds" ||
+    profileParam === "debug-atmosphere" ||
+    profileParam === "debug-aurora"
+      ? profileParam
+      : undefined;
+  const profileFromDebug: LandingRenderProfile =
+    visualDebugLayer === "stars"
+      ? "debug-stars"
+      : visualDebugLayer === "clouds"
+        ? "debug-clouds"
+        : visualDebugLayer === "atmosphere"
+          ? "debug-atmosphere"
+          : visualDebugLayer === "aurora"
+            ? "debug-aurora"
+            : "nasa";
 
   return {
     fixedProgress: Number.isFinite(parsedProgress) ? clamp01(parsedProgress) : null,
     copyHidden: copyMode === "visible"
       ? false
       : defaultCopyHidden || copyMode === "hidden" || (visualPixelMode && copyMode !== "visible"),
-    visualDebugLayer
+    visualDebugLayer,
+    renderProfile: profileFromQuery ?? profileFromDebug
   };
 }
 
@@ -225,11 +250,12 @@ function HomeLoadingOverlay({
     projectionSource === "scene" && projection ? "scene" : projectionSource === "fallback" ? "fallback" : "pending";
   const contourViewBox = projection ? `0 0 ${projection.width} ${projection.height}` : "0 0 1200 800";
   const contourPath = projection?.earthHorizonPath ?? "M -60 570 Q 600 390 1260 570";
+  const moonOutlineSize = projection ? projection.moon.radius * 2 * (120 / 104) : null;
   const moonStyle = projection
     ? {
         left: `${projection.moon.x}px`,
         top: `${projection.moon.y}px`,
-        width: `${Math.max(52, Math.min(168, projection.moon.radius * 2.31))}px`
+        width: `${moonOutlineSize}px`
       }
     : undefined;
 
@@ -261,12 +287,18 @@ function HomeLoadingOverlay({
         style={moonStyle}
       >
         <circle
-          className="lubirth-revised__home-loading-moon-path lubirth-revised__home-loading-moon-path--projection"
+          className="lubirth-revised__home-loading-moon-path lubirth-revised__home-loading-moon-path--draw"
           cx="60"
           cy="60"
           r="52"
           pathLength={1}
           transform="rotate(-90 60 60)"
+        />
+        <circle
+          className="lubirth-revised__home-loading-moon-path lubirth-revised__home-loading-moon-path--complete"
+          cx="60"
+          cy="60"
+          r="52"
         />
       </svg>
 
@@ -300,13 +332,14 @@ function HomeLoadingOverlay({
           width={1280}
           height={720}
           priority
-          unoptimized
+          quality={70}
           sizes="100vw"
           decoding="async"
           onLoad={onMemoryImageReady}
           onError={onMemoryImageReady}
         />
       </div>
+      <div className="lubirth-revised__home-loading-helmet" aria-hidden="true" />
 
       <div className="lubirth-revised__home-loading-mark">
         <p className="lubirth-revised__home-loading-title">{copy.lubirth.title}</p>
@@ -522,6 +555,7 @@ export function LuBirthRevisedRoute({
   const homeVisualReadySourceRef = useRef<HomeVisualReadySource | "pending">("pending");
   const homeDayTextureReadyRef = useRef(false);
   const homeMemoryImageReadyRef = useRef(false);
+  const homeMoonTextureReadyRef = useRef(false);
   const homeReadinessHandlersRef = useRef(new Set<(source: ReadyHomeProjectionSource) => void>());
   const homeVisualReadinessHandlersRef = useRef(new Set<(source: HomeVisualReadySource) => void>());
   const homeReadinessDispatchedRef = useRef(false);
@@ -529,7 +563,9 @@ export function LuBirthRevisedRoute({
   const showCopy = !debugOptions.copyHidden;
   const isScreenshotMode = debugOptions.fixedProgress !== null;
   const homeLoadingReady = homeProjectionSource !== "pending";
-  const homeLoadingProjection = homeProjectionSource === "scene" ? homeProjection : null;
+  const homeLoadingProjection = homeProjection;
+  const homeLoadingProjectionSource =
+    homeProjection ? "scene" : homeProjectionSource;
   const homeVisualReady = homeVisualReadySource !== "pending";
   const markHomeLoadingReady = useCallback((source: ReadyHomeProjectionSource) => {
     if (!isHome || homeProjectionSourceRef.current !== "pending") {
@@ -561,17 +597,22 @@ export function LuBirthRevisedRoute({
     homeVisualReadinessDispatchedRef.current = true;
     homeVisualReadinessHandlersRef.current.forEach((handler) => handler(source));
   }, [isHome]);
-  const markHomeVisualAssetReady = useCallback((asset: "day-texture" | "memory-image") => {
+  const markHomeVisualAssetReady = useCallback((asset: "day-texture" | "memory-image" | "moon-texture") => {
     if (!isHome) {
       return;
     }
 
     if (asset === "day-texture") {
       homeDayTextureReadyRef.current = true;
-    } else {
+    } else if (asset === "memory-image") {
       homeMemoryImageReadyRef.current = true;
       if (typeof window !== "undefined" && !window.__MiraLithHomeMemoryImageReadyAt) {
         window.__MiraLithHomeMemoryImageReadyAt = performance.now();
+      }
+    } else {
+      homeMoonTextureReadyRef.current = true;
+      if (typeof window !== "undefined" && !window.__MiraLithHomeMoonTextureReadyAt) {
+        window.__MiraLithHomeMoonTextureReadyAt = performance.now();
       }
     }
 
@@ -579,11 +620,15 @@ export function LuBirthRevisedRoute({
       return;
     }
 
-    if (homeDayTextureReadyRef.current && homeMemoryImageReadyRef.current) {
+    if (homeDayTextureReadyRef.current && homeMemoryImageReadyRef.current && homeMoonTextureReadyRef.current) {
       markHomeVisualReady("day-texture");
     }
   }, [isHome, markHomeVisualReady]);
   const handleProjectionFrame = useCallback((frame: LuBirthProjectionFrame) => {
+    if (typeof window !== "undefined") {
+      window.__MiraLithHomeProjectionFrame = frame;
+    }
+
     setHomeProjection((current) => {
       if (
         current &&
@@ -625,9 +670,6 @@ export function LuBirthRevisedRoute({
     let cleanupAnimations: (() => void) | undefined;
     let cleanupHomeReadyHandler: (() => void) | undefined;
     let restoreHomeScrollLock: (() => void) | undefined;
-    const homeAnimationStartedAt =
-      typeof performance !== "undefined" ? performance.now() : 0;
-
     void (async () => {
       const root = rootRef.current;
       if (!root) {
@@ -661,6 +703,7 @@ export function LuBirthRevisedRoute({
         : "debug";
       rootElement.dataset.variant = variant;
       rootElement.dataset.debugLayer = screenshotDebug.visualDebugLayer;
+      rootElement.dataset.renderProfile = screenshotDebug.renderProfile;
       if (forcedFallback || isHome || screenshotDebug.copyHidden) {
         setSceneEnabled(true);
       }
@@ -877,9 +920,61 @@ export function LuBirthRevisedRoute({
           }
 
           if (isHome) {
+            if (window.innerWidth < 768) {
+              timeline
+                .to(selector(".lubirth-revised__scroll-hint"), { autoAlpha: 0, y: 12, duration: 0.12 }, 0)
+                .to(
+                  selector(".lubirth-revised__home-signature"),
+                  { autoAlpha: 0, y: -8, duration: 0.22, ease: "power1.out" },
+                  0.06
+                )
+                .to(selector(".lubirth-revised__opening-title p"), { autoAlpha: 0, y: -4, duration: 0.14 }, 0.02)
+                .to(
+                  selector(".lubirth-revised__opening-title"),
+                  { y: -28, scale: 0.88, duration: 0.22, ease: "power2.inOut" },
+                  0
+                )
+                .to(
+                  selector(".lubirth-revised__opening-title"),
+                  { autoAlpha: 0, duration: 0.16, ease: "power1.out" },
+                  0.14
+                )
+                .to(
+                  selector(".lubirth-revised__mobile-title-bar"),
+                  { autoAlpha: 1, y: 0, duration: 0.22, ease: "power2.out" },
+                  0.2
+                )
+                .to(selector(".lubirth-revised__project-intro"), { autoAlpha: 1, y: 0, duration: 0.28 }, 0.26)
+                .to(
+                  selector(
+                    ".lubirth-revised__project-kicker, .lubirth-revised__project-intro h2, .lubirth-revised__project-subtitle, .lubirth-revised__project-body p"
+                  ),
+                  { autoAlpha: 1, y: 0, duration: 0.3, stagger: 0.035, ease: "power2.out" },
+                  0.32
+                )
+                .to(selector(".lubirth-revised__title-rail"), { autoAlpha: 0, y: 0, duration: 0.01 }, 0)
+                .to(
+                  selector(".lubirth-revised__title-rail li[data-active='true']"),
+                  { autoAlpha: 1, x: 0, y: 0, duration: 0.2, ease: "power2.out" },
+                  0.58
+                )
+                .to(
+                  selector(".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-copy"),
+                  { autoAlpha: 1, duration: 0.28, ease: "power2.out" },
+                  0.62
+                )
+                .to(
+                  selector(".lubirth-revised__title-rail li:not([data-active='true'])"),
+                  { autoAlpha: 1, x: 0, y: 0, duration: 0.26, stagger: 0.035, ease: "power2.out" },
+                  0.62
+                );
+
+              return timeline;
+            }
+
             timeline
               .to(selector(".lubirth-revised__scroll-hint"), { autoAlpha: 0, y: 12, duration: 0.12 }, 0)
-              .to(selector(".lubirth-revised__opening-title p"), { autoAlpha: 0, y: -4, duration: 0.14 }, 0.04)
+              .to(selector(".lubirth-revised__opening-title p"), { autoAlpha: 0, y: -4, duration: 0.14 }, 0.02)
               .to(
                 selector(".lubirth-revised__opening-title"),
                 {
@@ -888,40 +983,40 @@ export function LuBirthRevisedRoute({
                   xPercent: 0,
                   yPercent: 0,
                   scale: () => getOpeningTitleTarget().scale,
-                  duration: 0.42,
+                  duration: 0.52,
                   ease: "power2.inOut"
                 },
-                0.04
+                0
               )
-              .to(selector(".lubirth-revised__title-rail"), { autoAlpha: 1, y: 0, duration: 0.22, ease: "power2.out" }, 0.14)
+              .to(selector(".lubirth-revised__title-rail"), { autoAlpha: 1, y: 0, duration: 0.28, ease: "power2.out" }, 0.14)
               .to(
                 selector(".lubirth-revised__title-rail li[data-active='true']"),
                 { autoAlpha: 1, x: 0, y: 0, duration: 0.2, ease: "power2.out" },
-                0.18
+                0.58
               )
               .to(
                 selector(".lubirth-revised__opening-title"),
-                { autoAlpha: 0, duration: 0.1, ease: "power1.out" },
-                0.34
+                { autoAlpha: 0, duration: 0.12, ease: "power1.out" },
+                0.52
               )
               .to(
                 selector(".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-copy"),
-                { autoAlpha: 1, duration: 0.2, ease: "power2.out" },
-                0.36
+                { autoAlpha: 1, duration: 0.28, ease: "power2.out" },
+                0.62
               )
-              .to(selector(".lubirth-revised__mobile-title-bar"), { autoAlpha: 1, y: 0, duration: 0.18, ease: "power2.out" }, 0.3)
-              .to(selector(".lubirth-revised__project-intro"), { autoAlpha: 1, y: 0, duration: 0.18 }, 0.36)
+              .to(selector(".lubirth-revised__mobile-title-bar"), { autoAlpha: 1, y: 0, duration: 0.24, ease: "power2.out" }, 0.58)
+              .to(selector(".lubirth-revised__project-intro"), { autoAlpha: 1, y: 0, duration: 0.24 }, 0.28)
               .to(
                 selector(
                   ".lubirth-revised__project-kicker, .lubirth-revised__project-intro h2, .lubirth-revised__project-subtitle, .lubirth-revised__project-body p"
                 ),
-                { autoAlpha: 1, y: 0, duration: 0.22, stagger: 0.045, ease: "power2.out" },
-                0.38
+                { autoAlpha: 1, y: 0, duration: 0.28, stagger: 0.035, ease: "power2.out" },
+                0.34
               )
               .to(
                 selector(".lubirth-revised__title-rail li:not([data-active='true'])"),
-                { autoAlpha: 1, x: 0, y: 0, duration: 0.24, stagger: 0.035, ease: "power2.out" },
-                0.46
+                { autoAlpha: 1, x: 0, y: 0, duration: 0.26, stagger: 0.035, ease: "power2.out" },
+                0.62
               );
 
             return timeline;
@@ -1008,6 +1103,8 @@ export function LuBirthRevisedRoute({
             }
 
             introFinalized = true;
+            cleanupHomeReadyHandler?.();
+            cleanupHomeReadyHandler = undefined;
             setIfPresent(".lubirth-revised__home-loading", { autoAlpha: 0 });
             setHomeIntroComplete(true);
             setCopyInteractive(false);
@@ -1025,7 +1122,7 @@ export function LuBirthRevisedRoute({
               }
             });
           };
-          const completeHomeIntro = (immediate = false, fadeDuration = 0.88) => {
+          const completeHomeIntro = (immediate = false, fadeDuration = 0.62) => {
             if (introCompleted || disposed) {
               return;
             }
@@ -1042,23 +1139,36 @@ export function LuBirthRevisedRoute({
                 ),
                 {
                   autoAlpha: 0,
-                  duration: Math.max(0.4, fadeDuration * 0.7),
+                  duration: Math.max(0.34, fadeDuration * 0.68),
                   ease: "power2.inOut",
                   overwrite: true
                 }
               );
+              const memoryFadeDelay = Math.max(0.03, fadeDuration * 0.06);
+              const memoryFadeDuration = Math.max(0.58, fadeDuration * 0.94);
+              const helmetFadeDelay = Math.max(0.08, fadeDuration * 0.12);
+              const helmetFadeDuration = Math.max(0.62, fadeDuration);
               gsap.to(selector(".lubirth-revised__home-loading-memory"), {
                 autoAlpha: 0,
-                y: -10,
-                duration: Math.max(0.46, fadeDuration * 0.82),
-                delay: Math.max(0.08, fadeDuration * 0.2),
+                y: -4,
+                duration: memoryFadeDuration,
+                delay: memoryFadeDelay,
+                ease: "power2.inOut",
+                overwrite: true
+              });
+              gsap.to(selector(".lubirth-revised__home-loading-helmet"), {
+                autoAlpha: 0,
+                y: -8,
+                scale: 1.01,
+                duration: helmetFadeDuration,
+                delay: helmetFadeDelay,
                 ease: "power2.inOut",
                 overwrite: true
               });
               homeLoadTimeouts.push(
                 window.setTimeout(() => {
                   finalizeHomeIntro();
-                }, fadeDuration * 1000 + 80)
+                }, Math.max(memoryFadeDelay + memoryFadeDuration, helmetFadeDelay + helmetFadeDuration) * 1000 + 50)
               );
             }
           };
@@ -1084,7 +1194,7 @@ export function LuBirthRevisedRoute({
             const now = performance.now();
             const projectionReadyStartedAt = window.__MiraLithHomeLoadingReadyAt ?? now;
             const remainingDelay = (delay: number, minimumAfterReady: number) =>
-              Math.max(0, delay - (now - homeAnimationStartedAt), minimumAfterReady - (now - projectionReadyStartedAt));
+              Math.max(0, delay - now, minimumAfterReady - (now - projectionReadyStartedAt));
 
             if (!revealScheduled) {
               revealScheduled = true;
@@ -1109,6 +1219,10 @@ export function LuBirthRevisedRoute({
             );
           };
           const handleSkipInput = (event: KeyboardEvent | WheelEvent | TouchEvent) => {
+            if (introCompleted || introFinalized || disposed) {
+              return;
+            }
+
             if (event instanceof KeyboardEvent && event.key !== "Enter" && event.key !== " ") {
               return;
             }
@@ -1149,14 +1263,14 @@ export function LuBirthRevisedRoute({
               }
 
               markHomeLoadingReady("fallback");
-            }, Math.max(0, HOME_PROJECTION_FALLBACK_DEADLINE_MS - (performance.now() - homeAnimationStartedAt))),
+            }, Math.max(0, HOME_PROJECTION_FALLBACK_DEADLINE_MS - performance.now())),
             window.setTimeout(() => {
               if (disposed) {
                 return;
               }
 
               markHomeVisualReady("grace");
-            }, Math.max(0, HOME_VISUAL_GRACE_DEADLINE_MS - (performance.now() - homeAnimationStartedAt)))
+            }, Math.max(0, HOME_VISUAL_GRACE_DEADLINE_MS - performance.now()))
           );
           return;
         }
@@ -1232,6 +1346,7 @@ export function LuBirthRevisedRoute({
       data-home-skip-ready={isHome ? String(homeSkipReady) : undefined}
       data-home-intro-complete={isHome ? String(homeIntroComplete) : undefined}
       data-home-projection={isHome ? homeProjectionSource : undefined}
+      data-home-projection-visual={isHome ? homeLoadingProjectionSource : undefined}
       aria-label={ariaLabel ?? (isHome ? "MiraLith LuBirth opening" : "LuBirth revised opening route")}
     >
       <section
@@ -1244,7 +1359,7 @@ export function LuBirthRevisedRoute({
         {showCopy ? isHome ? (
           <HomeLoadingOverlay
             projection={homeLoadingProjection}
-            projectionSource={homeProjectionSource}
+            projectionSource={homeLoadingProjectionSource}
             introComplete={homeIntroComplete}
             onMemoryImageReady={() => markHomeVisualAssetReady("memory-image")}
           />
@@ -1273,8 +1388,10 @@ export function LuBirthRevisedRoute({
             quality={isScreenshotMode ? "high" : "auto"}
             paused={isScreenshotMode}
             visualDebugLayer={debugOptions.visualDebugLayer}
+            renderProfile={debugOptions.renderProfile}
             onProjectionFrame={isHome ? handleProjectionFrame : undefined}
             onVisualReadyEnough={isHome ? () => markHomeVisualAssetReady("day-texture") : undefined}
+            onMoonTextureReady={isHome ? () => markHomeVisualAssetReady("moon-texture") : undefined}
           />
         </VisualCanvas>
       ) : null}
