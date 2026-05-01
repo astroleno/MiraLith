@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import type { Vector2 } from "three";
 import type { LandingQuality, QualityProfile, ResolvedQualityTier } from "@miralith/visual-core";
 
 export type EarthMoonHeroMode = "field" | "window" | "zoomed" | "expanded";
@@ -191,6 +192,13 @@ export interface LuBirthProjectionFrame {
     y: number;
     radius: number;
   };
+}
+
+export interface LandingProjectedEarthFrame {
+  center: Vector2;
+  sunDirection: Vector2;
+  radius: number;
+  progress: number;
 }
 
 export type EarthMoonHeroInteraction =

@@ -13,6 +13,9 @@ export { LandingHorizonCloudBelt } from "./LandingHorizonCloudBelt";
 export { LandingLimbAirglowV2 } from "./LandingLimbAirglowV2";
 export { LandingLimbScatteringLook } from "./LandingLimbScatteringLook";
 export { LandingMoon } from "./LandingMoon";
+export { LandingProjectedAuroraCurtain } from "./LandingProjectedAuroraCurtain";
+export { LandingProjectedHorizonCloudPlate } from "./LandingProjectedHorizonCloudPlate";
+export { LandingProjectedLimbScattering } from "./LandingProjectedLimbScattering";
 export { LandingSpaceBackground } from "./LandingSpaceBackground";
 export {
   DEFAULT_LUBIRTH_ASSETS,
@@ -43,6 +46,7 @@ export type {
   LandingMoonLightingMode,
   LandingResolvedAssets,
   LandingPresetName,
+  LandingProjectedEarthFrame,
   LandingVisualDebugLayer,
   LuBirthProjectionFrame
 } from "./types";
