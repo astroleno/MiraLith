@@ -20,10 +20,12 @@ import {
   type PerspectiveCamera
 } from "three";
 import { type QualityProfile } from "@miralith/visual-core";
-import type { LandingComposition, LandingProjectedEarthFrame } from "./types";
+import type { LandingComposition, LandingProjectedEarthFrame, LandingResolvedAssets } from "./types";
+import { useLandingTexture } from "./useLandingTexture";
 
 interface LandingProjectedHorizonCloudPlateProps {
   composition: LandingComposition;
+  assets: LandingResolvedAssets;
   quality: QualityProfile;
   projection: RefObject<LandingProjectedEarthFrame>;
   emphasis?: boolean;
@@ -34,6 +36,7 @@ interface LandingProjectedHorizonCloudPlateProps {
 declare global {
   interface Window {
     __MiraLithLuBirthProjectedCloudPlateActive?: boolean;
+    __MiraLithLuBirthProjectedCloudPlateTexture?: string;
   }
 }
 
@@ -201,9 +204,9 @@ function createCloudPlateMaterial(composition: LandingComposition) {
         float day = smoothstep(-0.24, 0.36, sunDot);
         float twilight = 1.0 - smoothstep(0.0, 0.34, abs(sunDot));
         float closeStage = 1.0 - smoothstep(0.12, 0.78, progress);
-        float band = smoothstep(-10.0, 12.0, signedEdge) * (1.0 - smoothstep(86.0, 142.0, signedEdge));
-        float horizonCore = smoothstep(-2.0, 22.0, signedEdge) * (1.0 - smoothstep(56.0, 112.0, signedEdge));
-        float cloudDepth01 = clamp((signedEdge + 10.0) / 132.0, 0.0, 1.0);
+        float band = smoothstep(-8.0, 10.0, signedEdge) * (1.0 - smoothstep(68.0, 116.0, signedEdge));
+        float horizonCore = smoothstep(-1.0, 18.0, signedEdge) * (1.0 - smoothstep(42.0, 88.0, signedEdge));
+        float cloudDepth01 = clamp((signedEdge + 8.0) / 116.0, 0.0, 1.0);
 
         float angle = atan(edgeNormal.y, edgeNormal.x);
         float arc = angle / 3.14159265;
@@ -218,36 +221,38 @@ function createCloudPlateMaterial(composition: LandingComposition) {
         float stripShadow = strip.b;
         float stripTop = strip.a;
         float silhouette = smoothstep(
-          0.36,
-          0.82,
-          stripCoverage * 0.5 + broad * 0.28 + detail * 0.18 + horizonCore * 0.16 - voids * 0.2
+          0.24,
+          0.7,
+          stripCoverage * 0.58 + broad * 0.24 + detail * 0.18 + horizonCore * 0.16 - voids * 0.16
         );
         float brokenEdge = mix(0.08, 1.0, smoothstep(0.28, 0.84, stripCoverage + detail * 0.32 + streak * 0.22 - voids * 0.28));
         float coverage = silhouette * mix(0.45, 1.0, horizonCore) * brokenEdge;
-        float topHighlight = exp(-pow((cloudDepth01 - 0.14) * 4.8, 2.0)) * (0.56 + stripTop * 0.54) * day;
+        float topHighlight = exp(-pow((cloudDepth01 - 0.14) * 4.8, 2.0)) * (0.42 + stripTop * 0.42) * day;
         float midBody = smoothstep(0.1, 0.42, cloudDepth01) * (1.0 - smoothstep(0.62, 0.9, cloudDepth01));
         float underside = smoothstep(0.44, 0.96, cloudDepth01) * (0.54 + stripShadow * 0.6);
         float topCap = smoothstep(0.48, 0.9, stripTop * 0.72 + stripHeight * 0.4 + detail * 0.12 + horizonCore * 0.18);
         float baseShadow = underside * smoothstep(0.42, 0.9, stripShadow + broad * 0.26 + streak * 0.18);
 
-        vec3 topCol = vec3(1.05, 1.03, 0.96);
-        vec3 bodyCol = vec3(0.62, 0.72, 0.82);
-        vec3 bottomCol = vec3(0.13, 0.2, 0.32);
+        vec3 topCol = vec3(0.92, 0.96, 0.98);
+        vec3 bodyCol = vec3(0.48, 0.58, 0.68);
+        vec3 bottomCol = vec3(0.08, 0.13, 0.22);
         vec3 color =
           topCol * topHighlight * (0.48 + day * 0.52) +
           bodyCol * midBody * (0.6 + day * 0.32) +
           bottomCol * underside;
+        color += topCol * topHighlight * 0.22;
+        color *= mix(vec3(1.0), vec3(0.42, 0.55, 0.72), clamp(underside * 0.65, 0.0, 0.86));
         color = mix(color, color * vec3(0.32, 0.42, 0.58), clamp(baseShadow * 0.72, 0.0, 0.86));
         color += vec3(0.9, 0.97, 1.0) * topCap * horizonCore * (0.08 + day * 0.14);
         color += vec3(0.95, 0.55, 0.24) * twilight * topHighlight * 0.08;
         color = mix(color, vec3(0.06, 0.12, 0.22), smoothstep(0.74, 1.0, cloudDepth01) * 0.22);
 
         float alpha = coverage * band * upperArc * sideWindow * insideClip * outsideFeather;
-        float materialAlpha = topHighlight * 0.24 + midBody * 0.42 + underside * 0.16;
-        float centerSuppression = 1.0 - smoothstep(92.0, 154.0, signedEdge);
+        float materialAlpha = topHighlight * 0.3 + midBody * 0.48 + underside * 0.22;
+        float centerSuppression = 1.0 - smoothstep(68.0, 124.0, signedEdge);
         alpha *= mix(0.68, 1.0, horizonCore) * centerSuppression;
         alpha *= materialAlpha * opacity * (0.82 + closeStage * 0.12 + debugBoost * 0.14);
-        alpha = clamp(alpha, 0.0, mix(0.28, 0.48, debugBoost));
+        alpha = clamp(alpha, 0.0, mix(0.26, 0.42, debugBoost));
 
         if (alpha < 0.002) {
           discard;
@@ -269,6 +274,7 @@ function createCloudPlateMaterial(composition: LandingComposition) {
 
 export function LandingProjectedHorizonCloudPlate({
   composition,
+  assets,
   quality,
   projection,
   emphasis = false,
@@ -278,19 +284,32 @@ export function LandingProjectedHorizonCloudPlate({
   const overlay = useRef<Mesh>(null);
   const { camera, size } = useThree();
   const material = useMemo(() => createCloudPlateMaterial(composition), [composition]);
-  const cloudStripTexture = useMemo(() => createCloudStripTexture(), []);
+  const fallbackCloudStripTexture = useMemo(() => createCloudStripTexture(), []);
+  const cloudStripAsset = assets.earthHorizonCloudStrip;
   const enabled =
     composition.earth.useClouds &&
     composition.earth.cloudOpacity > 0 &&
     quality.tier !== "fallback" &&
     quality.tier !== "low";
+  const { texture: cloudStripTexture, failed: cloudStripTextureFailed } = useLandingTexture(
+    enabled ? cloudStripAsset?.src : undefined,
+    {
+      colorSpace: cloudStripAsset?.colorSpace,
+      wrapS: RepeatWrapping,
+      wrapT: ClampToEdgeWrapping,
+      anisotropy: quality.tier === "high" ? 16 : 8
+    }
+  );
+  const activeCloudStripTexture = cloudStripTexture && !cloudStripTextureFailed
+    ? cloudStripTexture
+    : fallbackCloudStripTexture;
 
   useEffect(() => {
     return () => {
       material.dispose();
-      cloudStripTexture.dispose();
+      fallbackCloudStripTexture.dispose();
     };
-  }, [cloudStripTexture, material]);
+  }, [fallbackCloudStripTexture, material]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -298,10 +317,13 @@ export function LandingProjectedHorizonCloudPlate({
     }
 
     window.__MiraLithLuBirthProjectedCloudPlateActive = enabled;
+    window.__MiraLithLuBirthProjectedCloudPlateTexture =
+      enabled && cloudStripTexture && !cloudStripTextureFailed ? cloudStripAsset?.src : "procedural-fallback";
     return () => {
       window.__MiraLithLuBirthProjectedCloudPlateActive = false;
+      window.__MiraLithLuBirthProjectedCloudPlateTexture = undefined;
     };
-  }, [enabled]);
+  }, [cloudStripAsset?.src, cloudStripTexture, cloudStripTextureFailed, enabled]);
 
   useFrame((state) => {
     if (!overlay.current || !enabled || !("fov" in camera)) {
@@ -309,7 +331,7 @@ export function LandingProjectedHorizonCloudPlate({
     }
 
     fitOverlayToCamera(overlay.current, camera, size.width / Math.max(size.height, 1));
-    material.uniforms.cloudStripMap.value = cloudStripTexture;
+    material.uniforms.cloudStripMap.value = activeCloudStripTexture;
     material.uniforms.screenSize.value.set(size.width, size.height);
     material.uniforms.earthCenter.value.copy(projection.current.center);
     material.uniforms.earthRadius.value = projection.current.radius;

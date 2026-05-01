@@ -103,7 +103,7 @@ function createAuroraCurtainMaterial(composition: LandingComposition) {
         vec2 edgeNormal = distanceToCenter > 0.001 ? fromCenter / distanceToCenter : vec2(0.0, 1.0);
         float signedOutside = distanceToCenter - earthRadius;
         float upperArc = smoothstep(0.08, 0.36, edgeNormal.y);
-        float sideWindow = smoothstep(-0.94, -0.48, edgeNormal.x) * (1.0 - smoothstep(0.5, 0.96, edgeNormal.x));
+        float sideWindow = smoothstep(-0.82, -0.46, edgeNormal.x) * (1.0 - smoothstep(0.18, 0.56, edgeNormal.x));
         float sunDot = dot(edgeNormal, normalize(sunDirection));
         float night = 1.0 - smoothstep(-0.28, 0.1, sunDot);
         float twilight = 1.0 - smoothstep(0.0, 0.3, abs(sunDot));
@@ -125,11 +125,12 @@ function createAuroraCurtainMaterial(composition: LandingComposition) {
         float columnHeight = smoothstep(0.24, 0.82, fbm(vec2(angle * 21.0 - time * 0.006, 2.0)));
         float verticalLimit = 1.0 - smoothstep(54.0 + columnHeight * 92.0, 124.0 + columnHeight * 128.0, height);
         float rootLift = smoothstep(3.0, 24.0, height);
-        float strandCore = pow(folds, mix(4.6, 6.2, debugGain)) * 0.82 +
-          pow(fineFolds, 9.0) * 0.28 +
-          columnNoise * 0.1;
-        float strands = smoothstep(0.16, 0.58, strandCore);
-        float breakup = smoothstep(0.28, 0.76, fbm(vec2(angle * 45.0 - time * 0.01, height * 0.04)));
+        float strandCore =
+          pow(folds, mix(8.0, 9.5, debugGain)) * 0.72 +
+          pow(fineFolds, 14.0) * 0.42 +
+          columnNoise * 0.04;
+        float strands = smoothstep(0.08, 0.38, strandCore);
+        float breakup = smoothstep(0.42, 0.82, fbm(vec2(angle * 45.0 - time * 0.01, height * 0.04)));
         float curtain = body * rootLift * strands * breakup * verticalLimit * mix(0.64, 1.0, debugGain);
 
         float closeStage = 1.0 - smoothstep(0.16, 0.74, progress);
@@ -137,8 +138,8 @@ function createAuroraCurtainMaterial(composition: LandingComposition) {
         float gain = intensity * (0.42 + closeStage * 0.18 + debugGain * 1.2);
         float alpha = density * gain;
 
-        vec3 rootGreen = mix(vec3(0.1, 0.72, 0.38), vec3(0.16, 0.86, 0.42), debugGain);
-        vec3 grayGreen = vec3(0.12, 0.36, 0.3);
+        vec3 rootGreen = mix(vec3(0.07, 0.55, 0.3), vec3(0.11, 0.68, 0.34), debugGain);
+        vec3 grayGreen = vec3(0.08, 0.26, 0.22);
         vec3 redUpper = vec3(0.32, 0.07, 0.1);
         float topMix = smoothstep(58.0, 180.0, height);
         vec3 color = mix(rootGreen, grayGreen, smoothstep(24.0, 92.0, height));

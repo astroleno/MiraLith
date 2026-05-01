@@ -114,6 +114,7 @@ function createLimbScatteringMaterial(composition: LandingComposition) {
           smoothstep(-6.0, 8.0, signedOutside) *
           (1.0 - smoothstep(18.0, 44.0, signedOutside)) *
           0.34;
+        float airglowBreakup = smoothstep(0.46, 0.84, fbm(vec2(angle * 11.0 + 4.2, 7.0)));
 
         float whiteNeedle = (1.0 - smoothstep(0.0, mix(1.6, 2.4, debugBoost), abs(signedOutside + 0.4))) *
           (0.22 + day * 0.62);
@@ -134,6 +135,10 @@ function createLimbScatteringMaterial(composition: LandingComposition) {
         float outerCyan = smoothstep(12.0, mix(28.0, 42.0, debugBoost), signedOutside) *
           (1.0 - smoothstep(mix(54.0, 80.0, debugBoost), mix(96.0, 138.0, debugBoost), signedOutside)) *
           mix(0.006, 0.018, debugBoost);
+        blueThickness *= mix(0.75, 1.0, debugBoost);
+        oxygenGreen *= mix(0.45 * airglowBreakup, 1.0, debugBoost);
+        amberTwilight *= mix(0.55, 1.0, debugBoost);
+        outerCyan *= mix(0.45, 1.0, debugBoost);
         whiteNeedle *= 1.0 - cloudOcclusion;
         insideBlue *= 1.0 - cloudOcclusion * 0.72;
         blueThickness *= 1.0 - cloudOcclusion * 0.58;

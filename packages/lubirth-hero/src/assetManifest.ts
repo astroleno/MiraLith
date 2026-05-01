@@ -27,6 +27,14 @@ export const DEFAULT_LUBIRTH_ASSETS: LandingAssetManifest = {
     colorSpace: "srgb"
   },
   earthCloudDeck: LUBIRTH_CLOUD_DECK_TEXTURE,
+  earthHorizonCloudStrip: {
+    id: "earth-horizon-cloud-strip-2k",
+    src: "/assets/lubirth/textures/earth-horizon-cloud-strip-2k.png",
+    width: 2048,
+    height: 256,
+    format: "png",
+    colorSpace: "linear"
+  },
   moonColor: {
     id: "moon-2k",
     src: "/assets/lubirth/textures/moon-2k.jpg",
@@ -103,6 +111,19 @@ export function getLandingAssetBudget(assets: Partial<LandingAssetManifest> = {}
     textureBudget(
       resolvedAssets.earthCloudDeck ?? LUBIRTH_CLOUD_DECK_TEXTURE,
       560_000,
+      "critical",
+      true
+    ),
+    textureBudget(
+      resolvedAssets.earthHorizonCloudStrip ?? DEFAULT_LUBIRTH_ASSETS.earthHorizonCloudStrip ?? {
+        id: "earth-horizon-cloud-strip-2k",
+        src: "/assets/lubirth/textures/earth-horizon-cloud-strip-2k.png",
+        width: 2048,
+        height: 256,
+        format: "png",
+        colorSpace: "linear"
+      },
+      720_000,
       "critical",
       true
     ),

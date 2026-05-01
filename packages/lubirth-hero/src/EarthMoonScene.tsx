@@ -504,6 +504,7 @@ export function EarthMoonScene({
       {showProjectedClouds ? (
         <LandingProjectedHorizonCloudPlate
           composition={composition}
+          assets={assets}
           quality={quality}
           projection={projectedEarthFrame}
           emphasis={visualDebugLayer === "clouds"}

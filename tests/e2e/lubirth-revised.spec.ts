@@ -9,6 +9,7 @@ declare global {
     __MiraLithLuBirthCloudDeckTexture?: string;
     __MiraLithLuBirthProjectedAuroraCurtainActive?: boolean;
     __MiraLithLuBirthProjectedCloudPlateActive?: boolean;
+    __MiraLithLuBirthProjectedCloudPlateTexture?: string;
     __MiraLithLuBirthProjectedLimbScatteringActive?: boolean;
     __MiraLithLuBirthQualityTier?: string;
   }
@@ -111,8 +112,14 @@ test("uses the projected cloud plate for high quality cloud review", async ({ pa
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedCloudPlateActive), { timeout: 25_000 })
     .toBe(true);
   await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedCloudPlateTexture), { timeout: 25_000 })
+    .toContain("earth-horizon-cloud-strip-2k.png");
+  await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudDeckActive ?? false), { timeout: 25_000 })
     .toBe(false);
+  await expect
+    .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-horizon-cloud-strip-2k.png")), { timeout: 25_000 })
+    .toBe(true);
   await page.waitForTimeout(900);
   expect(Array.from(assetRequests).filter((path) => path.includes("earth-cloud-deck-2k.png"))).toEqual([]);
 });
@@ -159,6 +166,7 @@ test("does not request CloudDeck in low quality cloud review", async ({ page }) 
     .toBe(false);
   await page.waitForTimeout(900);
   expect(Array.from(assetRequests).filter((path) => path.includes("earth-cloud-deck-2k.png"))).toEqual([]);
+  expect(Array.from(assetRequests).filter((path) => path.includes("earth-horizon-cloud-strip-2k.png"))).toEqual([]);
 });
 
 test("honors LuBirth quality URL overrides for aurora debugging", async ({ page }) => {

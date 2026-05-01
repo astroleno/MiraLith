@@ -269,6 +269,7 @@ function LookdevScene({ pass, quality, reducedMotion, paused = false }: LookdevS
       {showProjectedClouds ? (
         <LandingProjectedHorizonCloudPlate
           composition={composition}
+          assets={assets}
           quality={quality}
           projection={projectionRef}
           emphasis={projectionLayer === "clouds"}
