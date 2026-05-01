@@ -85,14 +85,23 @@ test("keeps revised route clear of 8K LuBirth texture requests", async ({ page }
     .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-day")), { timeout: 25_000 })
     .toBe(true);
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedHorizonCompositeActive), { timeout: 25_000 })
-    .toBe(true);
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedHorizonCompositeActive ?? false), { timeout: 25_000 })
+    .toBe(false);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudDeckActive ?? false), { timeout: 25_000 })
+    .toBe(false);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthAirglowActive ?? false), { timeout: 25_000 })
+    .toBe(false);
+  await page.waitForTimeout(900);
 
   const heavyRequests = Array.from(assetRequests).filter(
     (path) =>
       path.includes("earth-day-8k") ||
       path.includes("earth-night-8k") ||
       path.includes("earth-clouds-8k") ||
+      path.includes("earth-clouds-2k") ||
+      path.includes("earth-horizon-cloud-strip-2k") ||
       path.includes("8k_stars_milky_way")
   );
 

@@ -66,7 +66,8 @@ export function LandingEarth({
     wrapS: RepeatWrapping,
     wrapT: RepeatWrapping
   });
-  const { texture: cloudTexture } = useLandingTexture(assets.earthClouds?.src, {
+  const shouldUseTextureClouds = composition.earth.useClouds && showTextureClouds;
+  const { texture: cloudTexture } = useLandingTexture(shouldUseTextureClouds ? assets.earthClouds?.src : undefined, {
     colorSpace: assets.earthClouds?.colorSpace,
     wrapS: RepeatWrapping,
     wrapT: RepeatWrapping
@@ -109,12 +110,12 @@ export function LandingEarth({
           edge: { value: composition.earth.terminatorSoftness },
           nightBoost: { value: composition.earth.nightIntensity },
           cloudOpacity: {
-            value: composition.earth.useClouds && showTextureClouds
+            value: shouldUseTextureClouds
               ? composition.earth.cloudOpacity * SURFACE_CLOUD_OPACITY_MULTIPLIER
               : 0
           },
           cloudShadowOpacity: {
-            value: composition.earth.useClouds
+            value: shouldUseTextureClouds
               ? composition.earth.cloudOpacity * SURFACE_CLOUD_SHADOW_MULTIPLIER
               : 0
           },
@@ -269,8 +270,7 @@ export function LandingEarth({
       composition.earth.rimStrength,
       composition.earth.rimWidth,
       composition.earth.terminatorSoftness,
-      composition.earth.useClouds,
-      showTextureClouds,
+      shouldUseTextureClouds,
       composition.light.ambientIntensity,
       composition.light.color,
       composition.light.fixedSunDir,
@@ -298,11 +298,11 @@ export function LandingEarth({
     earthMaterial.uniforms.edge.value = composition.earth.terminatorSoftness;
     earthMaterial.uniforms.nightBoost.value = composition.earth.nightIntensity;
     earthMaterial.uniforms.cloudOpacity.value =
-      composition.earth.useClouds && showTextureClouds
+      shouldUseTextureClouds
         ? composition.earth.cloudOpacity * SURFACE_CLOUD_OPACITY_MULTIPLIER
         : 0;
     earthMaterial.uniforms.cloudShadowOpacity.value =
-      composition.earth.useClouds
+      shouldUseTextureClouds
         ? composition.earth.cloudOpacity * SURFACE_CLOUD_SHADOW_MULTIPLIER
         : 0;
     const progress = typeof window === "undefined" ? 1 : Math.min(1, Math.max(0, window.__MiraLithOpeningProgress ?? 0));

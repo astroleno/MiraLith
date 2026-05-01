@@ -134,9 +134,9 @@ export function EarthMoonScene({
   const sceneLightDirection = useMemo(() => fieldSunDirection.clone(), []);
   const showEarth = visualDebugLayer !== "stars";
   const showMoon = visualDebugLayer === "all";
-  const showClouds = visualDebugLayer === "all" || visualDebugLayer === "clouds";
-  const showAtmosphere = visualDebugLayer === "all" || visualDebugLayer === "atmosphere";
-  const showAurora = visualDebugLayer === "aurora" || (showAuroraInAll && visualDebugLayer === "all");
+  const showClouds = visualDebugLayer === "clouds";
+  const showAtmosphere = visualDebugLayer === "atmosphere";
+  const showAurora = visualDebugLayer === "aurora";
   const showProjectedHorizonComposite = useProjectedHorizonPasses && (showClouds || showAtmosphere || showAurora);
   const showLegacyClouds = showClouds && !showProjectedHorizonComposite;
   const showLegacyAtmosphere = showAtmosphere && !showProjectedHorizonComposite;
@@ -145,7 +145,7 @@ export function EarthMoonScene({
     showClouds &&
     quality.tier !== "low" &&
     quality.tier !== "fallback";
-  const useHeroAuroraProfile = visualDebugLayer === "all" || auroraProfile === "hero";
+  const useHeroAuroraProfile = auroraProfile === "hero";
   const auroraVisibilityBoost = visualDebugLayer === "aurora"
     ? (auroraProfile === "debug" ? 5.2 : 4.0)
     : 1.08;
@@ -440,7 +440,7 @@ export function EarthMoonScene({
               quality={quality}
               sceneLightDirection={sceneLightDirection}
               visibilityBoost={auroraVisibilityBoost}
-              moonColumnAvoidance={visualDebugLayer === "all" ? 1 : 0}
+              moonColumnAvoidance={0}
               debugProfile={auroraProfile === "debug"}
               reducedMotion={reducedMotion}
               paused={paused}
@@ -451,7 +451,7 @@ export function EarthMoonScene({
               quality={quality}
               sceneLightDirection={sceneLightDirection}
               visibilityBoost={auroraVisibilityBoost}
-              moonColumnAvoidance={visualDebugLayer === "all" ? 1 : 0}
+              moonColumnAvoidance={0}
               lowProfile={useHeroAuroraProfile}
               reducedMotion={reducedMotion}
               paused={paused}
@@ -462,7 +462,7 @@ export function EarthMoonScene({
               quality={quality}
               sceneLightDirection={sceneLightDirection}
               visibilityBoost={auroraVisibilityBoost}
-              moonColumnAvoidance={visualDebugLayer === "all" ? 1 : 0}
+              moonColumnAvoidance={0}
               lowProfile={useHeroAuroraProfile}
               reducedMotion={reducedMotion}
               paused={paused}
