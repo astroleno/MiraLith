@@ -175,6 +175,17 @@ function createCloudDeckV2Material(composition: LandingComposition) {
         float ao = clamp(deck.b * 0.82 + (tap0.b + tap1.b) * 0.12, 0.0, 1.0);
         float highCap = clamp(deck.a * 0.74 + (tap4.a + tap5.a + tap6.a) * 0.1, 0.0, 1.0);
         float shearDepth = clamp(max(tap0.g + tap1.g - tap5.g - tap6.g, 0.0) * 0.5 + abs(tap2.r - tap4.r) * 0.45, 0.0, 1.0);
+        float normalStep = mix(0.0014, 0.0022, pathVolume);
+        float hC = texture2D(cloudDeckMap, uv).g;
+        float hX = texture2D(cloudDeckMap, uv + vec2(normalStep, 0.0)).g;
+        float hY = texture2D(cloudDeckMap, uv + vec2(0.0, normalStep)).g;
+        vec3 cloudNormal = normalize(vec3((hC - hX) * 5.5, (hC - hY) * 5.5, 1.0));
+        vec3 tangentSun = normalize(vec3(
+          dot(sunDirection, normalize(vWorldTangentA)),
+          dot(sunDirection, normalize(vWorldTangentB)),
+          max(ndl, 0.0) + 0.08
+        ));
+        float cloudTopNdl = clamp(dot(cloudNormal, tangentSun), 0.0, 1.0);
         float microBreakup =
           noise2(baseUv * vec2(617.0, 293.0) + vec2(time * 0.003, 3.1)) * 0.62 +
           noise2(baseUv * vec2(1249.0, 571.0) + vec2(9.3, time * 0.002)) * 0.38;
@@ -196,8 +207,15 @@ function createCloudDeckV2Material(composition: LandingComposition) {
         float edgeBreak = mix(1.0, mix(0.2, 1.0, brokenSilhouette), extremeRim * (0.72 - debugBoost * 0.18));
 
         float sideMass = thickness * pathVolume * (0.44 + coverage * 0.38 + shearDepth * 0.28);
-        float lowerShadow = clamp(ao * (0.34 + sideMass * 1.22) + shearDepth * pathVolume * 0.66, 0.0, 1.0);
-        float topLight = highCap * day * (0.38 + limb * 0.74 + pathVolume * 0.22);
+        float lowerShadow = clamp(
+          ao * (0.34 + sideMass * 1.22) +
+          shearDepth * pathVolume * 0.66 +
+          (1.0 - cloudTopNdl) * highCap * day * 0.22,
+          0.0,
+          1.0
+        );
+        float directionalTop = mix(0.28, 1.0, cloudTopNdl);
+        float topLight = highCap * day * directionalTop * (0.32 + limb * 0.72 + pathVolume * 0.22);
         float aerialLift = smoothstep(0.18, 0.68, coverage + highCap * 0.28);
 
         vec3 cloudBase = mix(vec3(0.045, 0.07, 0.12), vec3(0.58, 0.66, 0.75), clamp(day * 0.68 + aerialLift * 0.24, 0.0, 1.0));
@@ -205,14 +223,14 @@ function createCloudDeckV2Material(composition: LandingComposition) {
         vec3 finalColor = mix(cloudBase, cloudTop, clamp(highCap * 0.55 + coverage * 0.12 + day * 0.16, 0.0, 1.0));
         finalColor *= lightColor * (0.2 + day * 0.92 + twilight * 0.09);
         finalColor = mix(finalColor, finalColor * vec3(0.28, 0.39, 0.58), clamp(lowerShadow * (0.62 + pathVolume * 0.32), 0.0, 0.9));
-        finalColor += vec3(0.82, 0.9, 0.96) * topLight * 0.16;
+        finalColor += vec3(0.82, 0.9, 0.96) * topLight * 0.18;
         finalColor += vec3(0.08, 0.22, 0.46) * sideMass * (0.16 + day * 0.16 + night * 0.12);
         finalColor += vec3(0.95, 0.48, 0.2) * twilight * highCap * 0.04;
         float closeOnlyStage = smoothstep(0.74, 1.0, closeStage);
         finalColor *= (0.94 + microBreakup * 0.07 + fineFilament * 0.035) * mix(1.0, 0.68, closeStage) * mix(1.0, 0.78, closeOnlyStage);
 
         float productionSoftness = mix(0.7, 1.0, debugBoost);
-        float centerAlpha = coverage * opacity * (0.026 + closeStage * 0.006) * (0.66 + highCap * 0.34) * productionSoftness;
+        float centerAlpha = coverage * opacity * (0.032 + closeStage * 0.014) * (0.66 + highCap * 0.34) * productionSoftness;
         float limbAlpha = (coverage * 0.46 + thickness * 0.36 + highCap * 0.18) *
           opacity *
           (0.105 + closeStage * 0.07 + debugBoost * 0.18) *

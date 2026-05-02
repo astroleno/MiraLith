@@ -156,7 +156,7 @@ function createLimbScatteringMaterial(composition: LandingComposition) {
         float brightCore = exp(-pow((lineCore - 1.25) / mix(3.2, 4.8, debugBoost), 2.0)) *
           (0.42 + day * 0.72) *
           tangentMask;
-        float whiteNeedle = brightCore * mix(0.035, 0.22, debugBoost);
+        float whiteNeedle = brightCore * mix(0.0315, 0.198, debugBoost);
         float surfaceGlow = exp(-pow(max(glowOutside, 0.0) / mix(18.0, 24.0, debugBoost), 1.2)) *
           smoothstep(-0.6, 5.0, glowOutside) *
           (0.044 + day * 0.066);
@@ -175,7 +175,7 @@ function createLimbScatteringMaterial(composition: LandingComposition) {
         float oxygenGreen = smoothstep(2.0, mix(10.0, 16.0, debugBoost), glowOutside) *
           (1.0 - smoothstep(mix(24.0, 38.0, debugBoost), mix(62.0, 92.0, debugBoost), glowOutside)) *
           night *
-          mix(0.04, 0.12, debugBoost);
+          mix(0.07, 0.12, debugBoost);
         float amberTwilight = smoothstep(2.0, mix(12.0, 18.0, debugBoost), glowOutside) *
           (1.0 - smoothstep(mix(28.0, 42.0, debugBoost), mix(72.0, 104.0, debugBoost), glowOutside)) *
           twilight *
@@ -187,7 +187,7 @@ function createLimbScatteringMaterial(composition: LandingComposition) {
         blueThickness *= mix(0.92, 1.0, debugBoost);
         diffuseBlue *= mix(0.58, 1.0, debugBoost);
         wideBloom *= mix(0.5, 1.0, debugBoost);
-        oxygenGreen *= mix(0.38 * airglowBreakup, 1.0, debugBoost);
+        oxygenGreen *= mix(0.55 * airglowBreakup, 1.0, debugBoost);
         amberTwilight *= mix(0.55, 1.0, debugBoost);
         outerCyan *= mix(0.62, 1.0, debugBoost);
         whiteNeedle *= 1.0 - cloudOcclusion;

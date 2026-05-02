@@ -31,7 +31,7 @@ interface LandingEarthProps {
 
 const lightDirection = new Vector3();
 const SURFACE_CLOUD_OPACITY_MULTIPLIER = 0.14;
-const SURFACE_CLOUD_SHADOW_MULTIPLIER = 0.22;
+const SURFACE_CLOUD_SHADOW_MULTIPLIER = 0.3;
 const SURFACE_CLOUD_SCROLL_SPEED = 0.022;
 
 const smoothstep = (edge0: number, edge1: number, value: number) => {
@@ -204,6 +204,28 @@ export function LandingEarth({
             return fract(sin(dot(uv, vec2(12.9898, 78.233))) * 43758.5453);
           }
 
+          float noise2(vec2 p) {
+            vec2 i = floor(p);
+            vec2 f = fract(p);
+            f = f * f * (3.0 - 2.0 * f);
+            float a = grain(i);
+            float b = grain(i + vec2(1.0, 0.0));
+            float c = grain(i + vec2(0.0, 1.0));
+            float d = grain(i + vec2(1.0, 1.0));
+            return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+          }
+
+          float fbmTerrain(vec2 p) {
+            float value = 0.0;
+            float amplitude = 0.5;
+            for (int i = 0; i < 4; i += 1) {
+              value += noise2(p) * amplitude;
+              p = p * 2.03 + vec2(7.1, 3.7);
+              amplitude *= 0.5;
+            }
+            return value;
+          }
+
           void main() {
             vec3 n = normalize(vNormalW);
             vec3 l = normalize(lightDir);
@@ -292,11 +314,17 @@ export function LandingEarth({
               shadowRaw * 0.56 +
               texture2D(cloudMap, shadowUv + lightTangentUv * 0.0025).r * 0.24 +
               texture2D(cloudMap, shadowUv - lightTangentUv * 0.004).r * 0.2;
-            float cloudShadow = smoothstep(0.2, 0.66, shadowSoft * mix(0.92, 1.08, cloudMicro))
+            float hardCloudShadow = smoothstep(0.34, 0.72, shadowSoft * mix(0.92, 1.08, cloudMicro))
               * cloudShadowOpacity
               * dayW
-              * (0.54 + lowSunShadow * 0.62)
-              * (0.62 + smoothstep(0.36, 0.8, cloudSharp) * 0.54);
+              * (0.72 + lowSunShadow * 0.9)
+              * smoothstep(0.42, 0.82, cloudSharp);
+            float softCloudShadow = smoothstep(0.18, 0.58, shadowSoft)
+              * cloudShadowOpacity
+              * 0.42
+              * dayW
+              * (0.72 + lowSunShadow * 0.28);
+            float cloudShadow = min(hardCloudShadow + softCloudShadow, 0.34);
             vec3 cloudCol = mix(vec3(0.38, 0.45, 0.52), vec3(0.98, 0.97, 0.9), cloudSharp);
             cloudCol += vec3(0.58, 0.64, 0.7) * max(cloudRelief, 0.0);
             cloudCol += vec3(0.2, 0.3, 0.48) * cloudAltitude;
@@ -319,6 +347,13 @@ export function LandingEarth({
             daySurface += landFineDetail * exposedSurface * (0.34 + dryLandSignal * 0.42);
             daySurface += (microGrain - 0.5) * closeStage * 0.02 * (0.28 + daySurfaceLuma);
             daySurface += (orthoTextureDetail - 0.5) * closeStage * 0.026 * exposedSurface * (0.36 + dryLandSignal * 0.58);
+            float terrainDetail =
+              fbmTerrain(vUv * vec2(96.0, 48.0) + vec2(3.2, 1.7)) * 0.58 +
+              fbmTerrain(vUv * vec2(384.0, 192.0) + vec2(11.3, 8.1)) * 0.42;
+            float terrainRidge = abs(terrainDetail - 0.5) * 2.0;
+            float dryCloseDetail = exposedSurface * closeStage * dryLandSignal * dayW;
+            daySurface += (terrainDetail - 0.5) * dryCloseDetail * 0.055;
+            daySurface += (terrainRidge - 0.38) * dryCloseDetail * 0.032;
             daySurface *= mix(1.0, 0.82, dryLandSignal * closeStage);
             daySurface *= mix(1.0, 0.68, smoothstep(0.46, 0.88, daySurfaceLuma) * closeStage);
             float dayLight = pow(max(ndl, 0.0), 0.82);

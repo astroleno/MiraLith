@@ -39,6 +39,8 @@ const colorA = new Color();
 const colorB = new Color();
 const cameraWorldQuaternion = new Quaternion();
 const parentWorldQuaternion = new Quaternion();
+const inverseParentWorldQuaternion = new Quaternion();
+const localLightDirection = new Vector3();
 
 const smoothstep = (edge0: number, edge1: number, value: number) => {
   const t = Math.min(1, Math.max(0, (value - edge0) / Math.max(edge1 - edge0, 1e-5)));
@@ -127,9 +129,11 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
     },
     vertexShader: `
       varying vec2 vUv;
+      varying vec3 vLocalPosition;
 
       void main() {
         vUv = uv;
+        vLocalPosition = position;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
@@ -145,6 +149,7 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
       uniform float debugGain;
 
       varying vec2 vUv;
+      varying vec3 vLocalPosition;
       const vec3 rootGreen = vec3(0.18, 0.92, 0.42);
       const vec3 hazeGreen = vec3(0.18, 0.58, 0.46);
       const vec3 nitrogenRed = vec3(0.48, 0.13, 0.22);
@@ -197,6 +202,12 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
         float curtainBreakup = smoothstep(0.18, 0.78, fbm(vec2(arc * 40.0 - time * 0.009, vertical * 6.0 + 2.0)));
         float curtain = body * strands * curtainBreakup * verticalFalloff;
         float density = sideFeather * bottomFeather * (root * 0.82 + curtain * 0.92 + topMist * curtainBreakup * 0.1);
+        vec3 horizonNormal = normalize(vLocalPosition);
+        float lightSide = dot(normalize(lightDirection), horizonNormal);
+        float nightGate = 1.0 - smoothstep(-0.08, 0.26, lightSide);
+        float twilightGate = 1.0 - smoothstep(0.1, 0.38, abs(lightSide));
+        float horizonGate = max(nightGate, twilightGate * 0.65);
+        density *= mix(mix(0.25, 1.0, horizonGate), 1.0, debugGain);
 
         float screenX = gl_FragCoord.x / max(screenSize.x, 1.0);
         float moonColumn = 1.0 - smoothstep(0.055, 0.19, abs(screenX - moonColumnCenter));
@@ -214,7 +225,7 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
         auroraColor = mix(auroraColor, vec3(0.28, 0.4, 0.34), smoothstep(0.54, 0.98, vertical) * 0.26);
         vec3 finalColor = auroraColor * density * gain * (1.62 + root * 1.18 + curtain * 0.36);
 
-        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.075, 0.18, debugGain)));
+        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.105, 0.18, debugGain)));
       }
     `,
     transparent: true,
@@ -278,20 +289,23 @@ export function LandingHorizonAuroraRibbon({
     state.camera.getWorldQuaternion(cameraWorldQuaternion);
     if (aurora.current.parent) {
       aurora.current.parent.getWorldQuaternion(parentWorldQuaternion);
+      inverseParentWorldQuaternion.copy(parentWorldQuaternion).invert();
       aurora.current.quaternion.copy(parentWorldQuaternion.invert().multiply(cameraWorldQuaternion));
     } else {
       aurora.current.quaternion.copy(cameraWorldQuaternion);
+      inverseParentWorldQuaternion.identity();
     }
 
     const progress = getRuntimeOpeningProgress(0);
     const nearFade = 1 - smoothstep(0.12, 0.52, progress);
-    const farFloor = debugProfile ? 0.14 : 0.015;
+    const farFloor = debugProfile ? 0.14 : 0.045;
     const elapsed = paused || reducedMotion ? 0 : state.clock.elapsedTime;
     const intensity = composition.aurora.intensity * visibilityBoost * Math.max(farFloor, nearFade);
+    localLightDirection.copy(sceneLightDirection).applyQuaternion(inverseParentWorldQuaternion).normalize();
 
     ribbon.material.uniforms.time.value = elapsed;
     ribbon.material.uniforms.intensity.value = intensity;
-    ribbon.material.uniforms.lightDirection.value.copy(sceneLightDirection).normalize();
+    ribbon.material.uniforms.lightDirection.value.copy(localLightDirection);
     ribbon.material.uniforms.moonColumnAvoidance.value = moonColumnAvoidance;
     ribbon.material.uniforms.moonColumnCenter.value = moonColumnCenter;
     ribbon.material.uniforms.screenSize.value.set(size.width, size.height);
