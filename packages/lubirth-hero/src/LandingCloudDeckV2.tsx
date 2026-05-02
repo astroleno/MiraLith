@@ -35,7 +35,7 @@ declare global {
   }
 }
 
-const CLOUD_DECK_V2_RADIUS = 1.0055;
+const CLOUD_DECK_V2_RADIUS = 1.0065;
 const lightDirection = new Vector3();
 const lightColor = new Color();
 
@@ -146,8 +146,8 @@ function createCloudDeckV2Material(composition: LandingComposition) {
         vec3 sunDirection = normalize(lightDir);
         float viewDot = max(dot(n, viewDirection), 0.001);
         float rim = clamp(vRim, 0.0, 1.0);
-        float pathLength = clamp(1.0 / (0.26 + viewDot * 2.05), 0.42, 3.25);
-        float pathVolume = smoothstep(0.82, 2.65, pathLength);
+        float pathLength = clamp(1.0 / (0.24 + viewDot * 1.9), 0.42, 3.7);
+        float pathVolume = smoothstep(0.72, 2.45, pathLength);
         float limb = smoothstep(0.48, 0.92, rim);
         float extremeRim = smoothstep(0.86, 0.996, rim);
         float ndl = dot(n, sunDirection);
@@ -195,9 +195,9 @@ function createCloudDeckV2Material(composition: LandingComposition) {
         );
         float edgeBreak = mix(1.0, mix(0.2, 1.0, brokenSilhouette), extremeRim * (0.72 - debugBoost * 0.18));
 
-        float sideMass = thickness * pathVolume * (0.36 + coverage * 0.34 + shearDepth * 0.2);
-        float lowerShadow = clamp(ao * (0.28 + sideMass * 1.05) + shearDepth * pathVolume * 0.5, 0.0, 1.0);
-        float topLight = highCap * day * (0.46 + limb * 0.92 + pathVolume * 0.34);
+        float sideMass = thickness * pathVolume * (0.44 + coverage * 0.38 + shearDepth * 0.28);
+        float lowerShadow = clamp(ao * (0.34 + sideMass * 1.22) + shearDepth * pathVolume * 0.66, 0.0, 1.0);
+        float topLight = highCap * day * (0.38 + limb * 0.74 + pathVolume * 0.22);
         float aerialLift = smoothstep(0.18, 0.68, coverage + highCap * 0.28);
 
         vec3 cloudBase = mix(vec3(0.045, 0.07, 0.12), vec3(0.58, 0.66, 0.75), clamp(day * 0.68 + aerialLift * 0.24, 0.0, 1.0));
@@ -205,21 +205,21 @@ function createCloudDeckV2Material(composition: LandingComposition) {
         vec3 finalColor = mix(cloudBase, cloudTop, clamp(highCap * 0.55 + coverage * 0.12 + day * 0.16, 0.0, 1.0));
         finalColor *= lightColor * (0.2 + day * 0.92 + twilight * 0.09);
         finalColor = mix(finalColor, finalColor * vec3(0.28, 0.39, 0.58), clamp(lowerShadow * (0.62 + pathVolume * 0.32), 0.0, 0.9));
-        finalColor += vec3(0.82, 0.9, 0.96) * topLight * 0.22;
+        finalColor += vec3(0.82, 0.9, 0.96) * topLight * 0.16;
         finalColor += vec3(0.08, 0.22, 0.46) * sideMass * (0.16 + day * 0.16 + night * 0.12);
         finalColor += vec3(0.95, 0.48, 0.2) * twilight * highCap * 0.04;
         float closeOnlyStage = smoothstep(0.74, 1.0, closeStage);
         finalColor *= (0.94 + microBreakup * 0.07 + fineFilament * 0.035) * mix(1.0, 0.68, closeStage) * mix(1.0, 0.78, closeOnlyStage);
 
         float productionSoftness = mix(0.7, 1.0, debugBoost);
-        float centerAlpha = coverage * opacity * (0.04 + closeStage * 0.014) * (0.66 + highCap * 0.34) * productionSoftness;
+        float centerAlpha = coverage * opacity * (0.026 + closeStage * 0.006) * (0.66 + highCap * 0.34) * productionSoftness;
         float limbAlpha = (coverage * 0.46 + thickness * 0.36 + highCap * 0.18) *
           opacity *
-          (0.085 + closeStage * 0.055 + debugBoost * 0.18) *
+          (0.105 + closeStage * 0.07 + debugBoost * 0.18) *
           pathVolume *
           edgeBreak *
           mix(0.74, 1.0, qualityMix);
-        float massAlpha = sideMass * opacity * (0.052 + closeStage * 0.028 + debugBoost * 0.08) * edgeBreak;
+        float massAlpha = sideMass * opacity * (0.074 + closeStage * 0.036 + debugBoost * 0.08) * edgeBreak;
         float alpha = centerAlpha + limbAlpha + massAlpha;
         alpha *= (0.8 + closeStage * 0.16) * mix(0.9, 1.08, microBreakup) * mix(0.94, 1.06, fineFilament) * mix(1.0, 0.8, closeOnlyStage);
         alpha = clamp(alpha, 0.0, mix(0.24, 0.68, debugBoost));

@@ -31,7 +31,7 @@ interface LandingEarthProps {
 
 const lightDirection = new Vector3();
 const SURFACE_CLOUD_OPACITY_MULTIPLIER = 0.14;
-const SURFACE_CLOUD_SHADOW_MULTIPLIER = 0.12;
+const SURFACE_CLOUD_SHADOW_MULTIPLIER = 0.22;
 const SURFACE_CLOUD_SCROLL_SPEED = 0.022;
 
 const smoothstep = (edge0: number, edge1: number, value: number) => {
@@ -154,12 +154,20 @@ export function LandingEarth({
           varying vec2 vUv;
           varying vec3 vNormalW;
           varying vec3 vViewW;
+          varying vec3 vWorldTangentA;
+          varying vec3 vWorldTangentB;
 
           void main() {
             vUv = uv;
+            vec3 localNormal = normalize(position);
+            vec3 localUp = abs(localNormal.y) > 0.96 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
+            vec3 tangentA = normalize(cross(localUp, localNormal));
+            vec3 tangentB = normalize(cross(localNormal, tangentA));
             vec4 worldPosition = modelMatrix * vec4(position, 1.0);
             vNormalW = normalize(mat3(modelMatrix) * normal);
             vViewW = normalize(cameraPosition - worldPosition.xyz);
+            vWorldTangentA = normalize(mat3(modelMatrix) * tangentA);
+            vWorldTangentB = normalize(mat3(modelMatrix) * tangentB);
             gl_Position = projectionMatrix * viewMatrix * worldPosition;
           }
         `,
@@ -189,6 +197,8 @@ export function LandingEarth({
           varying vec2 vUv;
           varying vec3 vNormalW;
           varying vec3 vViewW;
+          varying vec3 vWorldTangentA;
+          varying vec3 vWorldTangentB;
 
           float grain(vec2 uv) {
             return fract(sin(dot(uv, vec2(12.9898, 78.233))) * 43758.5453);
@@ -268,8 +278,25 @@ export function LandingEarth({
             float cloudMask = smoothstep(0.13, 0.54, cloudSharp * cloudEdgeBreak) * cloudOpacity;
             float cloudCore = smoothstep(0.3, 0.72, cloudSharp * mix(0.9, 1.08, cloudMicro)) * cloudOpacity;
             float cloudAltitude = pow(fresnel, 2.35) * cloudMask * (0.28 + closeStage * 0.46);
-            float cloudShadow = smoothstep(0.17, 0.62, texture2D(cloudMap, cloudUv + vec2(-0.008, 0.0052)).r)
-              * cloudShadowOpacity * (0.36 + dayW * 0.56);
+            vec2 lightTangentUv = vec2(dot(l, normalize(vWorldTangentA)), dot(l, normalize(vWorldTangentB)));
+            float lightTangentLen = max(length(lightTangentUv), 0.001);
+            lightTangentUv /= lightTangentLen;
+            float lowSunShadow = 1.0 - smoothstep(0.22, 0.78, max(ndl, 0.0));
+            float shadowOffset = (0.0042 + lowSunShadow * 0.009 + closeStage * 0.003) * (0.45 + lightTangentLen * 0.55);
+            vec2 shadowUv = vec2(
+              fract(cloudUv.x - lightTangentUv.x * shadowOffset),
+              fract(cloudUv.y - lightTangentUv.y * shadowOffset * 0.62)
+            );
+            float shadowRaw = texture2D(cloudMap, shadowUv).r;
+            float shadowSoft =
+              shadowRaw * 0.56 +
+              texture2D(cloudMap, shadowUv + lightTangentUv * 0.0025).r * 0.24 +
+              texture2D(cloudMap, shadowUv - lightTangentUv * 0.004).r * 0.2;
+            float cloudShadow = smoothstep(0.2, 0.66, shadowSoft * mix(0.92, 1.08, cloudMicro))
+              * cloudShadowOpacity
+              * dayW
+              * (0.54 + lowSunShadow * 0.62)
+              * (0.62 + smoothstep(0.36, 0.8, cloudSharp) * 0.54);
             vec3 cloudCol = mix(vec3(0.38, 0.45, 0.52), vec3(0.98, 0.97, 0.9), cloudSharp);
             cloudCol += vec3(0.58, 0.64, 0.7) * max(cloudRelief, 0.0);
             cloudCol += vec3(0.2, 0.3, 0.48) * cloudAltitude;

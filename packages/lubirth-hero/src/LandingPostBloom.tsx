@@ -68,9 +68,9 @@ export function LandingPostBloom({ quality, emphasis = false }: LandingPostBloom
     const nextRenderPass = new RenderPass(scene, camera);
     const nextBloomPass = new UnrealBloomPass(
       new Vector2(size.width, size.height),
-      emphasis ? 0.16 : 0.12,
-      emphasis ? 0.56 : 0.48,
-      emphasis ? 0.88 : 0.905
+      emphasis ? 0.12 : 0.072,
+      emphasis ? 0.48 : 0.38,
+      emphasis ? 0.9 : 0.925
     );
     const nextSharpenPass = new ShaderPass(SHARPEN_SHADER);
     nextComposer.addPass(nextRenderPass);
@@ -119,15 +119,15 @@ export function LandingPostBloom({ quality, emphasis = false }: LandingPostBloom
     const closeStage = 1 - smoothstep(0.18, 0.86, progress);
     const emphasisLift = emphasis ? 1 : 0;
     bloomPass.strength = (
-      0.12 +
-      fieldStage * 0.052 +
-      emphasisLift * (0.028 + fieldStage * 0.02)
+      0.072 +
+      fieldStage * 0.032 +
+      emphasisLift * (0.022 + fieldStage * 0.014)
     );
-    bloomPass.radius = 0.48 + fieldStage * 0.075 + emphasisLift * 0.035;
-    bloomPass.threshold = 0.905 - fieldStage * 0.032 - emphasisLift * 0.024;
+    bloomPass.radius = 0.38 + fieldStage * 0.055 + emphasisLift * 0.03;
+    bloomPass.threshold = 0.925 - fieldStage * 0.018 - emphasisLift * 0.018;
     sharpenPass.uniforms.strength.value =
       quality.tier === "high"
-        ? 0.018 + closeStage * 0.07 + emphasisLift * 0.012
+        ? 0.016 + closeStage * 0.062 + emphasisLift * 0.01
         : 0.012 + closeStage * 0.04;
     renderPass.scene = scene;
     renderPass.camera = camera;

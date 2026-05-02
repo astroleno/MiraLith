@@ -196,7 +196,7 @@ export function EarthMoonScene({
   const showMoon = isNasaProfile || isCleanProfile;
   const showClouds = isNasaProfile || debugClouds;
   const showAtmosphere = isNasaProfile || debugAtmosphere;
-  const showAurora = debugAurora;
+  const showAurora = debugAurora || (isNasaProfile && quality.aurora);
   const showProjectedHorizonComposite = false;
   const showProjectedLimbScattering = showAtmosphere && quality.tier !== "fallback";
   const showVolumetricClouds =
@@ -212,7 +212,7 @@ export function EarthMoonScene({
   const useHeroAuroraProfile = auroraProfile === "hero";
   const auroraVisibilityBoost = debugAurora
     ? (auroraProfile === "debug" ? 2.6 : 1.7)
-    : 0.72;
+    : 0.42;
 
   const lightColor = useMemo(
     () => new Color(composition.light.color[0], composition.light.color[1], composition.light.color[2]),

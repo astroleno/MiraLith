@@ -154,6 +154,7 @@ export function LandingMoon({
 
             float waxing = smoothstep(-0.08, 0.08, phaseAngle);
             float crescent = 1.0 - smoothstep(0.18, 0.58, fullness);
+            float lowPhase = 1.0 - smoothstep(0.25, 0.7, fullness);
             float gibbousWarmth = smoothstep(0.48, 0.96, fullness);
             vec3 coolPhaseTint = vec3(0.76, 0.86, 1.08);
             vec3 neutralPhaseTint = vec3(0.94, 0.96, 1.0);
@@ -166,8 +167,8 @@ export function LandingMoon({
             float exposure = sunIntensity * mix(0.2, 0.34, fullness);
             vec3 lit = base * moonLight * exposure * (0.26 + directLight * 0.78 + grazingLight * 0.16)
               * limbLight * terrainContrast;
-            vec3 night = base * mix(vec3(0.16, 0.22, 0.36), vec3(0.26, 0.22, 0.18), gibbousWarmth * 0.28) * (0.18 + nightLift * 0.9);
-            float earthshine = pow(viewerFacing, 1.8) * (1.0 - daySide) * (0.038 + nightLift * 0.16);
+            vec3 night = base * mix(vec3(0.16, 0.22, 0.36), vec3(0.26, 0.22, 0.18), gibbousWarmth * 0.28) * (0.18 + nightLift * 0.9 + lowPhase * 0.065);
+            float earthshine = pow(viewerFacing, 1.8) * (1.0 - daySide) * (0.038 + nightLift * 0.16 + lowPhase * 0.055);
             vec3 color = mix(night, lit, daySide);
             color += base * vec3(0.32, 0.42, 0.62) * earthshine;
             color += vec3(0.08, 0.12, 0.18) * pow(1.0 - viewerFacing, 2.4) * visibleDisk * (0.1 + daySide * 0.14);

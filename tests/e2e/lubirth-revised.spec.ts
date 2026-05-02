@@ -8,6 +8,7 @@ declare global {
     __MiraLithLuBirthAtmosphereStackActive?: boolean;
     __MiraLithLuBirthCloudDeckActive?: boolean;
     __MiraLithLuBirthCloudDeckTexture?: string;
+    __MiraLithLuBirthHorizonAuroraRibbonActive?: boolean;
     __MiraLithLuBirthPostBloomActive?: boolean;
     __MiraLithLuBirthMoonPhase?: { date: string; source: string; phaseAngleRad: number };
     __MiraLithLuBirthProjectedAuroraCurtainActive?: boolean;
@@ -137,6 +138,9 @@ test("uses high-detail Earth and sky assets for the nasa profile without project
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomActive ?? false), { timeout: 25_000 })
     .toBe(true);
   await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthHorizonAuroraRibbonActive ?? false), { timeout: 25_000 })
+    .toBe(true);
+  await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthAirglowActive ?? false), { timeout: 25_000 })
     .toBe(false);
   await page.waitForTimeout(900);
@@ -261,6 +265,9 @@ test("uses the horizon aurora ribbon for high quality aurora debug", async ({ pa
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedAuroraCurtainActive ?? false), { timeout: 25_000 })
     .toBe(false);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthHorizonAuroraRibbonActive ?? false), { timeout: 25_000 })
+    .toBe(true);
 });
 
 test("does not request CloudDeck in low quality cloud review", async ({ page }) => {

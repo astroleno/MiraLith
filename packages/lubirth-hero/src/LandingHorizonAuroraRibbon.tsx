@@ -29,6 +29,12 @@ interface LandingHorizonAuroraRibbonProps {
   paused?: boolean;
 }
 
+declare global {
+  interface Window {
+    __MiraLithLuBirthHorizonAuroraRibbonActive?: boolean;
+  }
+}
+
 const colorA = new Color();
 const colorB = new Color();
 const cameraWorldQuaternion = new Quaternion();
@@ -48,10 +54,10 @@ function createRibbonGeometry(composition: LandingComposition, debugProfile: boo
   const uvs = new Float32Array(vertexCount * 2);
   const indices: number[] = [];
   const radius = composition.earth.radius;
-  const ribbonWidth = radius * 1.42;
-  const baseY = radius * 0.84;
-  const baseZ = radius * -0.045;
-  const maxHeight = radius * (debugProfile ? 0.082 : 0.052);
+  const ribbonWidth = radius * 1.36;
+  const baseY = radius * 0.892;
+  const baseZ = radius * -0.025;
+  const maxHeight = radius * (debugProfile ? 0.092 : 0.06);
 
   for (let y = 0; y <= heightSegments; y += 1) {
     const v = y / heightSegments;
@@ -60,7 +66,7 @@ function createRibbonGeometry(composition: LandingComposition, debugProfile: boo
     for (let x = 0; x <= arcSegments; x += 1) {
       const u = x / arcSegments;
       const side = (u - 0.5) * 2.0;
-      const horizonCurve = (1.0 - side * side) * radius * 0.072;
+      const horizonCurve = (1.0 - side * side) * radius * 0.056;
       const scallop =
         Math.sin(u * Math.PI * 6.0 + 0.5) * radius * 0.004 +
         Math.sin(u * Math.PI * 13.0) * radius * 0.002;
@@ -195,7 +201,7 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
         float screenX = gl_FragCoord.x / max(screenSize.x, 1.0);
         float moonColumn = 1.0 - smoothstep(0.055, 0.19, abs(screenX - moonColumnCenter));
         density *= mix(1.0, 0.55, moonColumn * moonColumnAvoidance);
-        float gain = mix(0.54, 1.02, debugGain);
+        float gain = mix(0.46, 1.02, debugGain);
         float alpha = density * intensity * gain * 1.18;
 
         if (alpha < 0.0012) {
@@ -208,7 +214,7 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
         auroraColor = mix(auroraColor, vec3(0.28, 0.4, 0.34), smoothstep(0.54, 0.98, vertical) * 0.26);
         vec3 finalColor = auroraColor * density * gain * (1.62 + root * 1.18 + curtain * 0.36);
 
-        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.09, 0.18, debugGain)));
+        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.075, 0.18, debugGain)));
       }
     `,
     transparent: true,
@@ -251,11 +257,18 @@ export function LandingHorizonAuroraRibbon({
   }, [composition, debugProfile, enabled]);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.__MiraLithLuBirthHorizonAuroraRibbonActive = enabled;
+    }
+
     return () => {
+      if (typeof window !== "undefined") {
+        window.__MiraLithLuBirthHorizonAuroraRibbonActive = false;
+      }
       ribbon?.geometry.dispose();
       ribbon?.material.dispose();
     };
-  }, [ribbon]);
+  }, [enabled, ribbon]);
 
   useFrame((state) => {
     if (!aurora.current || !ribbon) {
@@ -271,8 +284,8 @@ export function LandingHorizonAuroraRibbon({
     }
 
     const progress = getRuntimeOpeningProgress(0);
-    const nearFade = 1 - smoothstep(0.18, 0.66, progress);
-    const farFloor = debugProfile ? 0.14 : 0.08;
+    const nearFade = 1 - smoothstep(0.12, 0.52, progress);
+    const farFloor = debugProfile ? 0.14 : 0.015;
     const elapsed = paused || reducedMotion ? 0 : state.clock.elapsedTime;
     const intensity = composition.aurora.intensity * visibilityBoost * Math.max(farFloor, nearFade);
 
