@@ -43,6 +43,14 @@ export const DEFAULT_LUBIRTH_ASSETS: LandingAssetManifest = {
     format: "jpg",
     colorSpace: "srgb"
   },
+  spaceBackground: {
+    id: "8k-stars-milky-way",
+    src: "/assets/lubirth/backgrounds/8k_stars_milky_way.webp",
+    width: 8192,
+    height: 4096,
+    format: "webp",
+    colorSpace: "srgb"
+  },
   fallbackPoster: {
     id: "lubirth-poster-field",
     kind: "poster",

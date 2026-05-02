@@ -29,6 +29,7 @@ const HOME_PROJECTION_FALLBACK_DEADLINE_MS = 900;
 const HOME_VISUAL_GRACE_DEADLINE_MS = 700;
 const HOME_LOADING_REVEAL_DELAY_MS = 1300;
 const HOME_LOADING_SCROLL_DELAY_MS = 3900;
+const HOME_LOADING_HARD_COMPLETE_DEADLINE_MS = 5200;
 const HOME_LOADING_MIN_REVEAL_AFTER_READY_MS = 900;
 const HOME_LOADING_MIN_COMPLETE_AFTER_READY_MS = 3000;
 const HOME_PROJECT_ACCESS_PROGRESS = 0.34;
@@ -360,6 +361,7 @@ function HomeLoadingOverlay({
 function AtmosphereOverlay() {
   return (
     <div className="lubirth-revised__atmosphere" aria-hidden="true">
+      <div className="lubirth-revised__focus-vignette" />
       <div className="lubirth-revised__readability-wash" />
       <div className="lubirth-revised__bottom-wash" />
       <div className="lubirth-revised__star lubirth-revised__star--a" />
@@ -1122,7 +1124,7 @@ export function LuBirthRevisedRoute({
               }
             });
           };
-          const completeHomeIntro = (immediate = false, fadeDuration = 0.62) => {
+          const completeHomeIntro = (immediate = false, fadeDuration = 0.62, finalizeDelayOverrideMs?: number) => {
             if (introCompleted || disposed) {
               return;
             }
@@ -1165,10 +1167,13 @@ export function LuBirthRevisedRoute({
                 ease: "power2.inOut",
                 overwrite: true
               });
+              const finalizeDelayMs =
+                finalizeDelayOverrideMs ??
+                Math.max(memoryFadeDelay + memoryFadeDuration, helmetFadeDelay + helmetFadeDuration) * 1000 + 50;
               homeLoadTimeouts.push(
                 window.setTimeout(() => {
                   finalizeHomeIntro();
-                }, Math.max(memoryFadeDelay + memoryFadeDuration, helmetFadeDelay + helmetFadeDuration) * 1000 + 50)
+                }, finalizeDelayMs)
               );
             }
           };
@@ -1184,7 +1189,7 @@ export function LuBirthRevisedRoute({
               markHomeVisualReady("grace");
             }
             window.scrollTo(0, 0);
-            completeHomeIntro(false, 0.52);
+            completeHomeIntro(false, 0.48, 760);
           };
           const scheduleHomePostReady = () => {
             if (disposed || homeProjectionSourceRef.current === "pending") {
@@ -1219,7 +1224,7 @@ export function LuBirthRevisedRoute({
             );
           };
           const handleSkipInput = (event: KeyboardEvent | WheelEvent | TouchEvent) => {
-            if (introCompleted || introFinalized || disposed) {
+            if (introFinalized || disposed) {
               return;
             }
 
@@ -1231,6 +1236,10 @@ export function LuBirthRevisedRoute({
               event.preventDefault();
             }
             window.scrollTo(0, 0);
+            if (introCompleted) {
+              return;
+            }
+
             skipHomeIntro();
           };
           const handleHomeReady = () => scheduleHomePostReady();
@@ -1270,7 +1279,20 @@ export function LuBirthRevisedRoute({
               }
 
               markHomeVisualReady("grace");
-            }, Math.max(0, HOME_VISUAL_GRACE_DEADLINE_MS - performance.now()))
+            }, Math.max(0, HOME_VISUAL_GRACE_DEADLINE_MS - performance.now())),
+            window.setTimeout(() => {
+              if (disposed || introCompleted) {
+                return;
+              }
+
+              if (homeProjectionSourceRef.current === "pending") {
+                markHomeLoadingReady("fallback");
+              }
+              if (homeVisualReadySourceRef.current === "pending") {
+                markHomeVisualReady("grace");
+              }
+              completeHomeIntro();
+            }, Math.max(0, HOME_LOADING_HARD_COMPLETE_DEADLINE_MS - performance.now()))
           );
           return;
         }
@@ -1375,6 +1397,7 @@ export function LuBirthRevisedRoute({
       {sceneEnabled ? (
         <VisualCanvas
           decorative
+          dpr={isScreenshotMode ? [1, 2] : [1, 1.6]}
           fallback={
             <VisualCanvasFallback
               scene="lubirth"

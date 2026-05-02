@@ -30,8 +30,9 @@ interface LandingEarthProps {
 }
 
 const lightDirection = new Vector3();
-const SURFACE_CLOUD_OPACITY_MULTIPLIER = 0.12;
-const SURFACE_CLOUD_SHADOW_MULTIPLIER = 0.1;
+const SURFACE_CLOUD_OPACITY_MULTIPLIER = 0.14;
+const SURFACE_CLOUD_SHADOW_MULTIPLIER = 0.12;
+const SURFACE_CLOUD_SCROLL_SPEED = 0.022;
 
 const smoothstep = (edge0: number, edge1: number, value: number) => {
   const t = Math.min(1, Math.max(0, (value - edge0) / Math.max(edge1 - edge0, 1e-5)));
@@ -199,55 +200,110 @@ export function LandingEarth({
             vec3 v = normalize(vViewW);
             float ndl = dot(n, l);
             float fresnel = 1.0 - max(dot(n, v), 0.0);
-            float closeTransition = clamp(edge * 0.32, 0.04, 0.058);
-            float fieldTransition = clamp(edge * 1.16, 0.13, 0.18);
+            float closeTransition = clamp(edge * 0.68, 0.07, 0.11);
+            float fieldTransition = clamp(edge * 2.05, 0.24, 0.34);
             float transitionWidth = mix(fieldTransition, closeTransition, closeStage);
+            float midTransitionStage = 1.0 - abs(closeStage * 2.0 - 1.0);
+            transitionWidth *= 1.0 + midTransitionStage * 0.48;
             float dayW = smoothstep(-transitionWidth * 1.12, transitionWidth * 1.18, ndl);
             float nightW = 1.0 - dayW;
             float deepNightW = 1.0 - smoothstep(-transitionWidth * 2.7, -transitionWidth * 0.86, ndl);
 
             vec3 rawDayTex = texture2D(dayMap, vUv).rgb;
-            vec2 detailStep = vec2(0.0009, 0.00045);
+            vec2 detailStep = vec2(0.00062, 0.00031);
             vec3 dayBlur = (
               texture2D(dayMap, vUv + detailStep).rgb +
               texture2D(dayMap, vUv - detailStep).rgb +
               texture2D(dayMap, vUv + detailStep.yx).rgb +
               texture2D(dayMap, vUv - detailStep.yx).rgb
             ) * 0.25;
+            vec2 microStep = vec2(0.00018, 0.000095);
+            vec3 dayMicroBlur = (
+              texture2D(dayMap, vUv + microStep).rgb +
+              texture2D(dayMap, vUv - microStep).rgb +
+              texture2D(dayMap, vUv + microStep.yx).rgb +
+              texture2D(dayMap, vUv - microStep.yx).rgb
+            ) * 0.25;
             float surfaceDetail = dot(rawDayTex - dayBlur, vec3(0.299, 0.587, 0.114));
-            vec3 dayTex = rawDayTex + (rawDayTex - dayBlur) * 0.38 + surfaceDetail * 0.075;
-            dayTex = pow(clamp(dayTex, vec3(0.0), vec3(1.08)), vec3(1.04));
+            float microGrain =
+              grain(vUv * vec2(4096.0, 2048.0)) * 0.58 +
+              grain(vUv * vec2(8192.0, 4096.0) + vec2(17.0)) * 0.42;
+            float orthoTextureDetail =
+              grain(vUv * vec2(12288.0, 6144.0) + vec2(5.7, 2.1)) * 0.5 +
+              grain(vUv * vec2(24576.0, 12288.0) + vec2(13.2, 8.4)) * 0.5;
+            vec3 dayTex =
+              rawDayTex +
+              (rawDayTex - dayBlur) * (0.46 + closeStage * 0.16) +
+              (rawDayTex - dayMicroBlur) * (0.18 + closeStage * 0.3) +
+              surfaceDetail * 0.086;
+            float dayTexLuma = dot(dayTex, vec3(0.299, 0.587, 0.114));
+            dayTex += (microGrain - 0.5) * (0.012 + closeStage * 0.038) * (0.42 + dayTexLuma);
+            dayTex += (orthoTextureDetail - 0.5) * closeStage * 0.036 * smoothstep(0.2, 0.76, dayTexLuma);
+            dayTex = mix(vec3(dayTexLuma), dayTex, 0.95);
+            dayTex = pow(clamp(dayTex, vec3(0.0), vec3(1.18)), vec3(mix(0.98, 1.08, closeStage)));
+            float closeDayHighlight = smoothstep(0.42, 0.86, dayTexLuma) * closeStage;
+            dayTex *= mix(1.0, 0.76, closeDayHighlight);
             vec3 nightTex = pow(texture2D(nightMap, vUv).rgb, vec3(0.9));
             vec2 cloudUv = vec2(fract(vUv.x + cloudOffset), fract(vUv.y + cloudOffset * 0.18));
+            float closeExposureDiscipline = mix(1.0, 0.43, closeStage);
+            float closeCloudDiscipline = mix(1.0, 0.56, closeStage);
             float cloudRaw = texture2D(cloudMap, cloudUv).r;
-            float cloudRelief = (cloudRaw - texture2D(cloudMap, cloudUv + vec2(0.0064, -0.0042)).r) * 1.38;
-            float cloudMask = smoothstep(0.13, 0.54, cloudRaw) * cloudOpacity;
-            float cloudCore = smoothstep(0.28, 0.7, cloudRaw) * cloudOpacity;
-            float cloudAltitude = pow(fresnel, 2.35) * cloudMask * (0.38 + closeStage * 0.78);
+            vec2 cloudDetailStep = vec2(0.0015, 0.00078);
+            float cloudBlur = (
+              texture2D(cloudMap, cloudUv + cloudDetailStep).r +
+              texture2D(cloudMap, cloudUv - cloudDetailStep).r +
+              texture2D(cloudMap, cloudUv + cloudDetailStep.yx).r +
+              texture2D(cloudMap, cloudUv - cloudDetailStep.yx).r
+            ) * 0.25;
+            float cloudSharp = clamp(
+              cloudRaw + (cloudRaw - cloudBlur) * (0.38 + closeStage * 0.42),
+              0.0,
+              1.0
+            );
+            float cloudRelief = (cloudSharp - texture2D(cloudMap, cloudUv + vec2(0.0064, -0.0042)).r) * 1.54;
+            float cloudMicro =
+              grain(cloudUv * vec2(8192.0, 4096.0) + vec2(1.3, 4.7)) * 0.58 +
+              grain(cloudUv * vec2(16384.0, 8192.0) + vec2(11.2, 0.8)) * 0.42;
+            float cloudEdgeBreak = mix(0.84, 1.16, cloudMicro);
+            float cloudMask = smoothstep(0.13, 0.54, cloudSharp * cloudEdgeBreak) * cloudOpacity;
+            float cloudCore = smoothstep(0.3, 0.72, cloudSharp * mix(0.9, 1.08, cloudMicro)) * cloudOpacity;
+            float cloudAltitude = pow(fresnel, 2.35) * cloudMask * (0.28 + closeStage * 0.46);
             float cloudShadow = smoothstep(0.17, 0.62, texture2D(cloudMap, cloudUv + vec2(-0.008, 0.0052)).r)
               * cloudShadowOpacity * (0.36 + dayW * 0.56);
-            vec3 cloudCol = mix(vec3(0.38, 0.45, 0.52), vec3(0.98, 0.97, 0.9), cloudRaw);
+            vec3 cloudCol = mix(vec3(0.38, 0.45, 0.52), vec3(0.98, 0.97, 0.9), cloudSharp);
             cloudCol += vec3(0.58, 0.64, 0.7) * max(cloudRelief, 0.0);
             cloudCol += vec3(0.2, 0.3, 0.48) * cloudAltitude;
             cloudCol -= vec3(0.25, 0.29, 0.36) * max(-cloudRelief, 0.0);
+            cloudCol *= closeCloudDiscipline;
             vec3 shadowedDay = dayTex * (1.0 - cloudShadow * 1.02);
-            float cloudLitEdge = smoothstep(0.44, 0.86, cloudRaw) * smoothstep(-0.1, 0.3, ndl);
-            vec3 cloudWarmEdge = vec3(1.0, 0.82, 0.54) * cloudLitEdge * (0.2 + cloudAltitude * 0.3);
+            float cloudLitEdge = smoothstep(0.44, 0.86, cloudSharp) * smoothstep(-0.1, 0.3, ndl);
+            vec3 cloudWarmEdge = vec3(1.0, 0.82, 0.54) * cloudLitEdge * (0.12 + cloudAltitude * 0.18);
+            float dryLandSignal = smoothstep(0.06, 0.26, max(dayTex.r, dayTex.g) - dayTex.b) *
+              smoothstep(0.42, 0.82, dayTexLuma);
             vec3 daySurface = mix(
               shadowedDay,
               max(shadowedDay, cloudCol + cloudWarmEdge),
               clamp(cloudMask * (1.14 + cloudCore * 0.24), 0.0, 1.0)
             );
+            float daySurfaceLuma = dot(daySurface, vec3(0.299, 0.587, 0.114));
+            vec3 landFineDetail = (rawDayTex - dayMicroBlur) * (0.16 + closeStage * 0.34);
+            float exposedSurface = 1.0 - clamp(max(cloudMask, cloudCore) * 1.12, 0.0, 1.0);
+            daySurface = mix(vec3(daySurfaceLuma), daySurface, 0.94);
+            daySurface += landFineDetail * exposedSurface * (0.34 + dryLandSignal * 0.42);
+            daySurface += (microGrain - 0.5) * closeStage * 0.02 * (0.28 + daySurfaceLuma);
+            daySurface += (orthoTextureDetail - 0.5) * closeStage * 0.026 * exposedSurface * (0.36 + dryLandSignal * 0.58);
+            daySurface *= mix(1.0, 0.82, dryLandSignal * closeStage);
+            daySurface *= mix(1.0, 0.68, smoothstep(0.46, 0.88, daySurfaceLuma) * closeStage);
             float dayLight = pow(max(ndl, 0.0), 0.82);
             float grazingSun = pow(
               clamp((ndl + transitionWidth * 1.45) / max(transitionWidth * 2.7, 0.001), 0.0, 1.0),
               1.32
             ) * (1.0 - smoothstep(transitionWidth * 0.55, transitionWidth * 2.4, abs(ndl)));
-            vec3 dayCol = daySurface * lightColor * (ambient * 0.5 + (dayLight + grazingSun * 0.22) * sunIntensity) * dayW * 0.55;
+            vec3 dayCol = daySurface * lightColor * (ambient * 1.34 + (dayLight + grazingSun * 0.25) * sunIntensity) * dayW * 0.78 * closeExposureDiscipline;
             vec3 halfDir = normalize(l + v);
             float oceanSignal = dayTex.b - max(dayTex.r, dayTex.g) * 0.52;
             float oceanMask = smoothstep(0.035, 0.18, oceanSignal) * (1.0 - clamp(max(cloudMask, cloudCore) * 0.9, 0.0, 0.92));
-            float oceanGlint = pow(max(dot(n, halfDir), 0.0), 88.0) * oceanMask * dayW * specularStrength * (0.34 + closeStage * 0.28);
+            float oceanGlint = pow(max(dot(n, halfDir), 0.0), 78.0) * oceanMask * dayW * specularStrength * (0.46 + closeStage * 0.38);
             vec3 oceanSpecular = vec3(0.74, 0.86, 1.0) * oceanGlint;
             vec2 glowStep = vec2(0.0024, 0.0012);
             vec3 nightGlowTex = (
@@ -258,11 +314,19 @@ export function LandingEarth({
               texture2D(nightMap, vUv - glowStep.yx).rgb
             ) * 0.2;
             nightGlowTex = pow(nightGlowTex, vec3(0.92));
-            vec3 cityCore = nightTex * vec3(1.0, 0.76, 0.42) * nightBoost * pow(nightW, 1.18) * 2.65;
-            vec3 cityHalo = nightGlowTex * vec3(0.95, 0.48, 0.18) * nightBoost * pow(nightW, 0.62) * 0.95;
+            float cityLuma = max(max(nightTex.r, nightTex.g), nightTex.b);
+            float citySparkle = smoothstep(0.08, 0.62, cityLuma) * smoothstep(0.34, 0.98, grain(vUv * vec2(16384.0, 8192.0)));
+            float cityFineSparkle =
+              smoothstep(0.04, 0.32, cityLuma) *
+              smoothstep(0.7, 0.995, grain(vUv * vec2(32768.0, 16384.0) + vec2(6.0)));
+            vec3 cityCore = nightTex * vec3(1.0, 0.76, 0.42) * nightBoost * pow(nightW, 1.34) * (2.72 + citySparkle * 1.2 + cityFineSparkle * 1.85);
+            vec3 cityHalo = nightGlowTex * vec3(0.95, 0.48, 0.18) * nightBoost * pow(nightW, 0.8) * 0.52;
+            cityCore += vec3(1.0, 0.82, 0.52) * cityFineSparkle * nightBoost * pow(nightW, 1.42) * 0.045;
             vec3 cityCol = cityCore + cityHalo;
             vec3 moonlitLand = daySurface * vec3(0.1, 0.18, 0.32) * deepNightW * 0.24;
             vec3 moonlitClouds = cloudCol * max(cloudMask, cloudCore) * deepNightW * vec3(0.18, 0.27, 0.44) * 1.35;
+            float surfaceFillStrength = (0.04 + ambient * 3.4) * (0.38 + dayW * 0.62) * mix(1.0, 0.62, closeStage);
+            vec3 surfaceFill = daySurface * vec3(0.14, 0.18, 0.24) * surfaceFillStrength * (1.0 - deepNightW * 0.45);
 
             float terminator = 1.0 - smoothstep(0.0, transitionWidth * 0.78, abs(ndl));
             float blueTwilight =
@@ -272,8 +336,8 @@ export function LandingEarth({
               smoothstep(-transitionWidth * 0.42, -transitionWidth * 0.04, ndl) *
               (1.0 - smoothstep(0.0, transitionWidth * 0.38, ndl));
             vec3 terminatorCol =
-              vec3(0.035, 0.11, 0.24) * blueTwilight * 0.08 +
-              vec3(0.98, 0.48, 0.14) * warmEdge * 0.026;
+              vec3(0.035, 0.11, 0.24) * blueTwilight * 0.018 +
+              vec3(0.98, 0.48, 0.14) * warmEdge * 0.0015;
             float grazingLight = pow(
               1.0 - smoothstep(transitionWidth * 0.08, transitionWidth * 2.15, abs(ndl)),
               1.35
@@ -286,7 +350,8 @@ export function LandingEarth({
               ) *
               grazingLight *
               cloudBreak *
-              mix(0.82, 0.42, closeStage);
+              mix(0.64, 0.32, closeStage) *
+              (1.0 - midTransitionStage * 0.38);
 
             float legacyInnerRim = pow(fresnel, max(rimWidth * 1.5, 0.8));
             float legacyOuterRim = pow(fresnel, max(rimWidth * 0.8, 0.3));
@@ -294,22 +359,57 @@ export function LandingEarth({
             legacyRim *= 0.24 + 0.76 * max(ndl, 0.0);
 
             float sunRim = smoothstep(-edgeShadowSoftness, 0.58, ndl);
-            float edgeRim = pow(fresnel, max(edgeLightWidth, 0.4)) * sunRim;
-            float innerNeedle = pow(fresnel, 42.0) * sunRim;
-            float surfaceNeedle = pow(fresnel, 72.0) * (0.22 + 0.78 * dayW) * closeStage;
-            float needleCut = 1.0 - smoothstep(0.995, 1.0, fresnel);
+            float edgeRim = pow(fresnel, max(edgeLightWidth * 0.64, 2.6)) * sunRim;
+            float innerNeedle = pow(fresnel, 34.0) * sunRim;
+            float surfaceNeedle = pow(fresnel, 42.0) * (0.22 + 0.78 * dayW) * closeStage;
+            float needleCut = 1.0 - smoothstep(0.986, 1.0, fresnel);
+            float surfaceScatter =
+              smoothstep(0.62, 0.93, fresnel) *
+              (1.0 - smoothstep(0.992, 1.0, fresnel)) *
+              sunRim *
+              (0.34 + dayW * 0.66);
+            float cloudSurface = smoothstep(0.38, 0.78, cloudSharp);
+            float terrainSignal = max(dayTex.r, dayTex.g) - dayTex.b;
+            float landAbsorption = smoothstep(0.06, 0.32, terrainSignal) * (1.0 - oceanMask);
+            float surfaceRimResponse = clamp(
+              0.42 + oceanMask * 1.72 + cloudSurface * 0.58 - landAbsorption * 0.32,
+              0.3,
+              2.18
+            );
+            float needleSurfaceResponse = clamp(
+              0.3 + oceanMask * 2.18 + cloudSurface * 0.78 - landAbsorption * 0.24,
+              0.2,
+              2.55
+            );
             vec3 rimCol =
               mix(vec3(0.035, 0.14, 0.34), vec3(0.16, 0.44, 0.82), legacyInnerRim) *
               legacyRim *
               0.26;
             vec3 edgeLight =
-              edgeLightColor * edgeRim * edgeLightStrength +
-              vec3(0.94, 0.98, 1.0) * innerNeedle * edgeNeedleStrength +
-              vec3(0.95, 0.985, 1.0) * surfaceNeedle * needleCut * edgeNeedleStrength * 0.72;
+              edgeLightColor * edgeRim * edgeLightStrength * surfaceRimResponse * 0.34 +
+              vec3(0.84, 0.94, 1.0) * innerNeedle * edgeNeedleStrength * (0.36 + oceanMask * 0.82 + cloudSurface * 0.34) * 0.12 +
+              vec3(0.86, 0.96, 1.0) * surfaceNeedle * needleCut * edgeNeedleStrength * needleSurfaceResponse * 0.16;
+            float surfaceAirVeil =
+              smoothstep(0.42, 0.9, fresnel) *
+              (1.0 - smoothstep(0.992, 1.0, fresnel)) *
+              (0.22 + dayW * 0.78);
+            vec3 lowerAtmosphere =
+              mix(vec3(0.045, 0.16, 0.34), vec3(0.48, 0.68, 0.86), 0.36 + oceanMask * 0.34 + cloudSurface * 0.18) *
+              surfaceAirVeil *
+              (0.048 + closeStage * 0.048);
+            vec3 tangentSurfaceScatter =
+              mix(vec3(0.06, 0.18, 0.34), vec3(0.44, 0.66, 0.82), 0.28 + oceanMask * 0.22 + cloudSurface * 0.18) *
+              surfaceScatter *
+              (0.062 + closeStage * 0.058) *
+              (0.72 + surfaceRimResponse * 0.28);
 
-            vec3 color = dayCol + oceanSpecular + cityCol + moonlitLand + moonlitClouds + twilightFill + terminatorCol + rimCol + edgeLight;
-            color = color / (1.0 + max(color - vec3(0.78), vec3(0.0)) * 0.82);
-            color = pow(max(color, vec3(0.0)), vec3(1.08));
+            float closeOnlyStage = smoothstep(0.74, 1.0, closeStage);
+            vec3 color = dayCol + surfaceFill + oceanSpecular + cityCol + moonlitLand + moonlitClouds + twilightFill + terminatorCol + rimCol + edgeLight + lowerAtmosphere + tangentSurfaceScatter;
+            vec3 highlightKnee = vec3(mix(0.84, 0.4, closeStage));
+            float highlightDiscipline = mix(0.7, 2.12, closeStage);
+            color = color / (1.0 + max(color - highlightKnee, vec3(0.0)) * highlightDiscipline);
+            color *= mix(1.0, 0.76, closeOnlyStage);
+            color = pow(max(color, vec3(0.0)), vec3(1.0));
             color *= 0.96 + (grain(gl_FragCoord.xy) - 0.5) * 0.026;
             gl_FragColor = vec4(color, 1.0);
           }
@@ -370,7 +470,8 @@ export function LandingEarth({
     }
     earthMaterial.uniforms.closeStage.value = 1 - smoothstep(0.18, 0.86, progress);
     if (!paused && !reducedMotion && progress >= OPENING_FIELD_AUTO_ROTATE_START) {
-      earthMaterial.uniforms.cloudOffset.value = (earthMaterial.uniforms.cloudOffset.value + delta * 0.0045) % 1;
+      earthMaterial.uniforms.cloudOffset.value =
+        (earthMaterial.uniforms.cloudOffset.value + delta * SURFACE_CLOUD_SCROLL_SPEED) % 1;
     }
     earthMaterial.uniforms.rimStrength.value = composition.earth.rimStrength;
     earthMaterial.uniforms.rimWidth.value = composition.earth.rimWidth;

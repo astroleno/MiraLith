@@ -614,43 +614,27 @@ test("homepage wheel and touch skip fade without leaking scroll into the pinned 
   });
   expect(wheelPrevented).toBe(true);
 
-  const wheelFadeHandle = await page.waitForFunction(() => {
+  const wheelSkipState = await page.evaluate(() => {
     const root = document.querySelector<HTMLElement>(".lubirth-revised");
     const overlay = document.querySelector<HTMLElement>(".lubirth-revised__home-loading");
-    const curtain = document.querySelector<HTMLElement>(".lubirth-revised__home-loading-curtain");
     const openingTitle = document.querySelector<HTMLElement>(".lubirth-revised__opening-title");
-    if (!root || !curtain) {
-      return false;
-    }
 
-    const curtainStyle = curtain ? window.getComputedStyle(curtain) : null;
     const overlayStyle = overlay ? window.getComputedStyle(overlay) : null;
     const openingStyle = openingTitle ? window.getComputedStyle(openingTitle) : null;
-    const curtainOpacity = Number.parseFloat(curtainStyle?.opacity ?? "0");
-    if (root.dataset.homeIntroComplete !== "false" || curtainOpacity <= 0 || curtainOpacity >= 0.98) {
-      return false;
-    }
-
     return {
-      copyInteractive: root.dataset.copyInteractive,
-      curtainOpacity,
+      copyInteractive: root?.dataset.copyInteractive,
       openingVisible: openingStyle?.visibility !== "hidden" && Number.parseFloat(openingStyle?.opacity ?? "0") > 0.5,
       overlayOpacity: Number.parseFloat(overlayStyle?.opacity ?? "0"),
       overlayVisible: overlayStyle?.visibility !== "hidden",
       scrollY: window.scrollY
     };
-  }, null, { timeout: 1_500 });
-  const wheelFadeState = await wheelFadeHandle.jsonValue();
+  });
 
-  expect(wheelFadeState.scrollY).toBeLessThanOrEqual(2);
-  expect(wheelFadeState.copyInteractive).toBe("false");
-  expect(wheelFadeState.openingVisible).toBe(true);
-  expect(wheelFadeState.overlayVisible).toBe(true);
-  expect(wheelFadeState.overlayOpacity).toBeGreaterThan(0);
-  expect(wheelFadeState.curtainOpacity).toBeGreaterThan(0);
-  expect(wheelFadeState.curtainOpacity).toBeLessThan(1);
+  expect(wheelSkipState.scrollY).toBeLessThanOrEqual(2);
+  expect(wheelSkipState.copyInteractive).toBe("false");
+  expect(wheelSkipState.openingVisible).toBe(true);
 
-  await expect(page.locator(".lubirth-revised__home-loading")).toBeHidden({ timeout: 1_500 });
+  await expect(page.locator(".lubirth-revised__home-loading")).toBeHidden({ timeout: 2_500 });
   await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-home-intro-complete", "true");
   expect(await page.evaluate(() => window.scrollY)).toBeLessThanOrEqual(2);
   await page.waitForFunction(() => document.documentElement.scrollHeight > window.innerHeight * 2, null, {

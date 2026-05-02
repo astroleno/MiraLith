@@ -567,6 +567,17 @@ body::before {
   pointer-events: none;
 }
 
+.lubirth-revised__focus-vignette {
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 74% 78% at 50% 46%, transparent 0%, rgba(7, 7, 7, 0.01) 42%, rgba(7, 7, 7, 0.18) 76%, rgba(7, 7, 7, 0.48) 100%),
+    linear-gradient(90deg, rgba(7, 7, 7, 0.18), transparent 18%, transparent 82%, rgba(7, 7, 7, 0.18)),
+    linear-gradient(180deg, rgba(7, 7, 7, 0.16), transparent 22%, transparent 72%, rgba(7, 7, 7, 0.22));
+  opacity: 0.86;
+}
+
 .lubirth-revised__readability-wash {
   position: absolute;
   inset: 0 auto 0 0;
@@ -1899,6 +1910,24 @@ body::before {
     width: 100%;
   }
 
+  .lubirth-revised__home-loading-contour-path {
+    filter:
+      drop-shadow(0 0 7px rgba(178, 226, 255, 0.38))
+      drop-shadow(0 0 22px rgba(86, 172, 222, 0.2));
+    stroke: rgba(220, 242, 255, 0.92);
+    stroke-width: 2.15;
+  }
+
+  .lubirth-revised__home-loading-contour-path--aura {
+    stroke: rgba(124, 199, 245, 0.56);
+    stroke-width: 3.05;
+  }
+
+  .lubirth-revised__home-loading-contour-path--segment {
+    stroke: rgba(206, 237, 255, 0.8);
+    stroke-width: 1.8;
+  }
+
   .lubirth-revised__home-loading-moon {
     top: 26%;
     width: clamp(70px, 21vw, 104px);
@@ -2030,17 +2059,17 @@ body::before {
   }
 
   16% {
-    opacity: 0.72;
+    opacity: 0.66;
     transform: translateY(7px);
   }
 
   76% {
-    opacity: 0.76;
+    opacity: 0.68;
     transform: translateY(3px);
   }
 
   92% {
-    opacity: 0.54;
+    opacity: 0.44;
     transform: translateY(1px);
   }
 

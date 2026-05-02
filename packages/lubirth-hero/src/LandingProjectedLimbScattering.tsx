@@ -31,6 +31,7 @@ declare global {
 }
 
 const forward = new Vector3();
+const HORIZON_POINT_COUNT = 56;
 
 function fitOverlayToCamera(mesh: Mesh, camera: PerspectiveCamera, aspect: number) {
   const distance = 1;
@@ -49,6 +50,10 @@ function createLimbScatteringMaterial(composition: LandingComposition) {
       earthCenter: { value: new Vector2(0, 0) },
       earthRadius: { value: 1 },
       sunDirection: { value: new Vector2(0, 1) },
+      horizonPoints: {
+        value: Array.from({ length: HORIZON_POINT_COUNT }, () => new Vector2(-9999, -9999))
+      },
+      horizonPointCount: { value: 0 },
       progress: { value: 0 },
       intensity: { value: composition.atmosphere.intensity },
       debugBoost: { value: 0 }
@@ -62,6 +67,8 @@ function createLimbScatteringMaterial(composition: LandingComposition) {
       uniform vec2 earthCenter;
       uniform float earthRadius;
       uniform vec2 sunDirection;
+      uniform vec2 horizonPoints[${HORIZON_POINT_COUNT}];
+      uniform int horizonPointCount;
       uniform float progress;
       uniform float intensity;
       uniform float debugBoost;
@@ -99,7 +106,32 @@ function createLimbScatteringMaterial(composition: LandingComposition) {
         vec2 fromCenter = p - earthCenter;
         float distanceToCenter = length(fromCenter);
         vec2 edgeNormal = distanceToCenter > 0.001 ? fromCenter / distanceToCenter : vec2(0.0, 1.0);
-        float signedOutside = distanceToCenter - earthRadius;
+        float circleSignedOutside = distanceToCenter - earthRadius;
+        float pathDistance = 100000.0;
+        vec2 nearestPoint = earthCenter + edgeNormal * earthRadius;
+        for (int i = 0; i < ${HORIZON_POINT_COUNT - 1}; i += 1) {
+          if (i < horizonPointCount - 1) {
+            vec2 a = horizonPoints[i];
+            vec2 b = horizonPoints[i + 1];
+            vec2 segment = b - a;
+            float segmentLengthSq = max(dot(segment, segment), 0.0001);
+            float t = clamp(dot(p - a, segment) / segmentLengthSq, 0.0, 1.0);
+            vec2 candidate = a + segment * t;
+            float candidateDistance = length(p - candidate);
+            if (candidateDistance < pathDistance) {
+              pathDistance = candidateDistance;
+              nearestPoint = candidate;
+            }
+          }
+        }
+        vec2 pathNormal = nearestPoint - earthCenter;
+        pathNormal = length(pathNormal) > 0.001 ? normalize(pathNormal) : edgeNormal;
+        float signedOutside = horizonPointCount > 2
+          ? dot(p - nearestPoint, pathNormal)
+          : circleSignedOutside;
+        float closeStage = 1.0 - smoothstep(0.12, 0.78, progress);
+        float coreInset = mix(1.25, 2.65, closeStage);
+        float glowOutside = signedOutside + coreInset;
         float upperArc = smoothstep(0.02, 0.34, edgeNormal.y);
         float sideWindow = smoothstep(-0.98, -0.62, edgeNormal.x) * (1.0 - smoothstep(0.62, 0.98, edgeNormal.x));
 
@@ -107,60 +139,86 @@ function createLimbScatteringMaterial(composition: LandingComposition) {
         float day = smoothstep(-0.2, 0.34, sunDot);
         float night = 1.0 - smoothstep(-0.18, 0.18, sunDot);
         float twilight = 1.0 - smoothstep(0.0, 0.28, abs(sunDot));
-        float closeStage = 1.0 - smoothstep(0.12, 0.78, progress);
+        float outsideMask = smoothstep(-1.1, 1.2, glowOutside);
+        float tangentMask = smoothstep(-1.8, 0.5, glowOutside);
+        float pathLock = horizonPointCount > 2
+          ? exp(-pow(pathDistance / mix(260.0, 320.0, debugBoost), 2.0))
+          : 1.0;
+        float lineCore = horizonPointCount > 2 ? abs(glowOutside) : abs(circleSignedOutside);
 
         float angle = atan(edgeNormal.y, edgeNormal.x) / 3.14159265;
         float cloudOcclusion = smoothstep(0.58, 0.86, fbm(vec2(angle * 18.0 + 1.4, 2.0))) *
-          smoothstep(-6.0, 8.0, signedOutside) *
+          smoothstep(-0.8, 8.0, signedOutside) *
           (1.0 - smoothstep(18.0, 44.0, signedOutside)) *
           0.34;
         float airglowBreakup = smoothstep(0.46, 0.84, fbm(vec2(angle * 11.0 + 4.2, 7.0)));
 
-        float whiteNeedle = (1.0 - smoothstep(0.0, mix(1.6, 2.4, debugBoost), abs(signedOutside + 0.4))) *
-          (0.22 + day * 0.62);
-        float insideBlue = smoothstep(-5.0, -1.0, signedOutside) *
-          (1.0 - smoothstep(0.0, 4.0, signedOutside)) *
-          (0.05 + day * 0.08);
-        float blueThickness = smoothstep(0.0, mix(4.0, 8.0, debugBoost), signedOutside) *
-          (1.0 - smoothstep(mix(14.0, 28.0, debugBoost), mix(32.0, 68.0, debugBoost), signedOutside)) *
-          (0.055 + day * 0.08);
-        float oxygenGreen = smoothstep(1.0, mix(6.0, 8.0, debugBoost), signedOutside) *
-          (1.0 - smoothstep(mix(12.0, 18.0, debugBoost), mix(28.0, 44.0, debugBoost), signedOutside)) *
+        float brightCore = exp(-pow((lineCore - 1.4) / mix(3.8, 4.8, debugBoost), 2.0)) *
+          (0.42 + day * 0.72) *
+          tangentMask;
+        float whiteNeedle = brightCore * mix(0.0, 0.22, debugBoost);
+        float surfaceGlow = exp(-pow(max(glowOutside, 0.0) / 22.0, 1.18)) *
+          smoothstep(-0.6, 6.0, glowOutside) *
+          (0.05 + day * 0.078);
+        float nearBlue = exp(-pow(max(glowOutside, 0.0) / 16.5, 1.28)) *
+          (0.082 + day * 0.118) *
+          outsideMask;
+        float blueThickness = exp(-pow(max(glowOutside - 1.4, 0.0) / mix(58.0, 82.0, debugBoost), 1.16)) *
+          smoothstep(0.0, 20.0, glowOutside) *
+          (0.064 + day * 0.088);
+        float diffuseBlue = exp(-pow(max(glowOutside - 4.0, 0.0) / mix(152.0, 196.0, debugBoost), 1.26)) *
+          smoothstep(2.0, 56.0, glowOutside) *
+          (0.038 + day * 0.052);
+        float wideBloom = exp(-pow(max(glowOutside - 10.0, 0.0) / mix(250.0, 310.0, debugBoost), 1.18)) *
+          smoothstep(7.0, 86.0, glowOutside) *
+          (0.016 + day * 0.028);
+        float oxygenGreen = smoothstep(2.0, mix(10.0, 16.0, debugBoost), glowOutside) *
+          (1.0 - smoothstep(mix(24.0, 38.0, debugBoost), mix(62.0, 92.0, debugBoost), glowOutside)) *
           night *
-          mix(0.055, 0.16, debugBoost);
-        float amberTwilight = smoothstep(1.0, mix(7.0, 9.0, debugBoost), signedOutside) *
-          (1.0 - smoothstep(mix(12.0, 18.0, debugBoost), mix(26.0, 38.0, debugBoost), signedOutside)) *
+          mix(0.04, 0.12, debugBoost);
+        float amberTwilight = smoothstep(2.0, mix(12.0, 18.0, debugBoost), glowOutside) *
+          (1.0 - smoothstep(mix(28.0, 42.0, debugBoost), mix(72.0, 104.0, debugBoost), glowOutside)) *
           twilight *
-          mix(0.065, 0.13, debugBoost);
-        float outerCyan = smoothstep(12.0, mix(28.0, 42.0, debugBoost), signedOutside) *
-          (1.0 - smoothstep(mix(54.0, 80.0, debugBoost), mix(96.0, 138.0, debugBoost), signedOutside)) *
-          mix(0.006, 0.018, debugBoost);
-        blueThickness *= mix(0.75, 1.0, debugBoost);
-        oxygenGreen *= mix(0.45 * airglowBreakup, 1.0, debugBoost);
+          mix(0.05, 0.11, debugBoost);
+        float outerCyan = smoothstep(22.0, mix(52.0, 74.0, debugBoost), glowOutside) *
+          (1.0 - smoothstep(mix(110.0, 150.0, debugBoost), mix(192.0, 260.0, debugBoost), glowOutside)) *
+          mix(0.01, 0.024, debugBoost);
+        surfaceGlow *= mix(0.86, 1.0, debugBoost);
+        blueThickness *= mix(0.92, 1.0, debugBoost);
+        diffuseBlue *= mix(0.72, 1.0, debugBoost);
+        wideBloom *= mix(0.62, 1.0, debugBoost);
+        oxygenGreen *= mix(0.38 * airglowBreakup, 1.0, debugBoost);
         amberTwilight *= mix(0.55, 1.0, debugBoost);
-        outerCyan *= mix(0.45, 1.0, debugBoost);
+        outerCyan *= mix(0.62, 1.0, debugBoost);
         whiteNeedle *= 1.0 - cloudOcclusion;
-        insideBlue *= 1.0 - cloudOcclusion * 0.72;
+        surfaceGlow *= 1.0 - cloudOcclusion * 0.78;
+        nearBlue *= 1.0 - cloudOcclusion * 0.72;
         blueThickness *= 1.0 - cloudOcclusion * 0.58;
+        diffuseBlue *= 1.0 - cloudOcclusion * 0.38;
+        wideBloom *= 1.0 - cloudOcclusion * 0.22;
 
         vec3 color =
-          vec3(0.95, 0.985, 1.0) * whiteNeedle +
-          vec3(0.14, 0.44, 0.92) * (insideBlue + blueThickness) +
+          vec3(1.05, 1.18, 1.32) * whiteNeedle +
+          vec3(0.34, 0.72, 1.42) * surfaceGlow +
+          vec3(0.26, 0.66, 1.36) * nearBlue +
+          vec3(0.10, 0.36, 1.06) * blueThickness +
+          vec3(0.035, 0.18, 0.66) * diffuseBlue * 1.08 +
+          vec3(0.018, 0.085, 0.32) * wideBloom * 1.18 +
           vec3(0.16, 0.66, 0.43) * oxygenGreen +
           vec3(0.92, 0.42, 0.14) * amberTwilight +
           vec3(0.1, 0.48, 0.72) * outerCyan;
 
-        float alpha = whiteNeedle + insideBlue + blueThickness + oxygenGreen + amberTwilight + outerCyan;
+        float alpha = whiteNeedle + surfaceGlow + nearBlue + blueThickness + diffuseBlue + wideBloom + oxygenGreen + amberTwilight + outerCyan;
         float arcMask = upperArc * sideWindow;
-        float gain = intensity * (0.58 + closeStage * 0.1) * (1.0 + debugBoost * 0.22);
-        alpha *= arcMask * gain;
-        color *= arcMask * gain;
+        float gain = intensity * (0.92 + closeStage * 0.22) * (1.0 + debugBoost * 0.24);
+        alpha *= arcMask * outsideMask * pathLock * gain;
+        color *= arcMask * outsideMask * pathLock * gain;
 
         if (alpha < 0.001) {
           discard;
         }
 
-        gl_FragColor = vec4(min(color, vec3(0.94)), clamp(alpha, 0.0, mix(0.18, 0.3, debugBoost)));
+        gl_FragColor = vec4(min(color, vec3(1.8)), clamp(alpha, 0.0, mix(0.36, 0.72, debugBoost)));
       }
     `,
     transparent: true,
@@ -212,6 +270,19 @@ export function LandingProjectedLimbScattering({
     material.uniforms.earthCenter.value.copy(projection.current.center);
     material.uniforms.earthRadius.value = projection.current.radius;
     material.uniforms.sunDirection.value.copy(projection.current.sunDirection);
+    material.uniforms.horizonPointCount.value = Math.min(
+      projection.current.horizonPointCount,
+      HORIZON_POINT_COUNT
+    );
+    const horizonUniforms = material.uniforms.horizonPoints.value as Vector2[];
+    for (let index = 0; index < HORIZON_POINT_COUNT; index += 1) {
+      const source = projection.current.horizonPoints[index];
+      if (source) {
+        horizonUniforms[index].copy(source);
+      } else {
+        horizonUniforms[index].set(-9999, -9999);
+      }
+    }
     material.uniforms.progress.value = projection.current.progress;
     material.uniforms.intensity.value = composition.atmosphere.enabled ? composition.atmosphere.intensity : 0;
     material.uniforms.debugBoost.value = emphasis ? 1 : 0;

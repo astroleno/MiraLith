@@ -8,7 +8,7 @@ export const DEFAULT_LUBIRTH_LOCATION = {
 const rad = Math.PI / 180;
 const TWO_PI = Math.PI * 2;
 
-function geodeticToTextureVector(latitudeDeg: number, longitudeDeg: number) {
+export function geodeticToTextureVector(latitudeDeg: number, longitudeDeg: number) {
   const phi = ((longitudeDeg + 180) / 360) * TWO_PI;
   const theta = (90 - latitudeDeg) * rad;
 

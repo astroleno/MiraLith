@@ -49,11 +49,18 @@ class VisualCanvasErrorBoundary extends Component<
 interface VisualCanvasProps {
   ariaLabel?: string;
   decorative?: boolean;
+  dpr?: number | [number, number];
   fallback: ReactNode;
   children: ReactNode;
 }
 
-export function VisualCanvas({ ariaLabel, decorative = true, fallback, children }: VisualCanvasProps) {
+export function VisualCanvas({
+  ariaLabel,
+  decorative = true,
+  dpr = [1, 1.1],
+  fallback,
+  children
+}: VisualCanvasProps) {
   const [contextLost, setContextLost] = useState(false);
   const forcedFallback =
     typeof window !== "undefined" && new URLSearchParams(window.location.search).get("visual") === "fallback";
@@ -73,7 +80,7 @@ export function VisualCanvas({ ariaLabel, decorative = true, fallback, children 
     >
       <VisualCanvasErrorBoundary fallback={fallback}>
         <Canvas
-          dpr={[1, 1.1]}
+          dpr={dpr}
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance", preserveDrawingBuffer }}
           camera={{ fov: 42, position: [0, 2.8, 7.4], near: 0.1, far: 90 }}
           onCreated={({ gl }) => {

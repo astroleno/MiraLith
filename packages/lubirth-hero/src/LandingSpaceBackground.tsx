@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
 import {
   AdditiveBlending,
   BackSide,
@@ -24,6 +24,8 @@ import type { TextureRef } from "./types";
 interface LandingSpaceBackgroundProps {
   quality: QualityProfile;
   spaceBackground?: TextureRef;
+  emphasis?: boolean;
+  counterRotation?: MutableRefObject<{ yawRad: number }>;
 }
 
 function random(seed: number) {
@@ -31,7 +33,12 @@ function random(seed: number) {
   return x - Math.floor(x);
 }
 
-export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpaceBackgroundProps) {
+export function LandingSpaceBackground({
+  quality,
+  spaceBackground,
+  emphasis = false,
+  counterRotation
+}: LandingSpaceBackgroundProps) {
   const fixedSky = useRef<Group>(null);
   const { camera } = useThree();
   const [backgroundTexture, setBackgroundTexture] = useState<Texture | null>(null);
@@ -47,12 +54,7 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
 
     let disposed = false;
     let loadedTexture: Texture | null = null;
-    let idleHandle: number | null = null;
     let timeoutHandle: number | null = null;
-    const idleWindow = window as Window & {
-      requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
-      cancelIdleCallback?: (handle: number) => void;
-    };
     const loader = new TextureLoader();
 
     const load = () => {
@@ -72,7 +74,7 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
           texture.wrapS = RepeatWrapping;
           texture.wrapT = ClampToEdgeWrapping;
           texture.center.set(0.5, 0.5);
-          texture.repeat.set(2, 1);
+          texture.repeat.set(1, 1);
           texture.needsUpdate = true;
           loadedTexture = texture;
           setBackgroundTexture(texture);
@@ -86,17 +88,10 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
       );
     };
 
-    if (idleWindow.requestIdleCallback) {
-      idleHandle = idleWindow.requestIdleCallback(load, { timeout: 2500 });
-    } else {
-      timeoutHandle = window.setTimeout(load, 2500);
-    }
+    timeoutHandle = window.setTimeout(load, 180);
 
     return () => {
       disposed = true;
-      if (idleHandle !== null && idleWindow.cancelIdleCallback) {
-        idleWindow.cancelIdleCallback(idleHandle);
-      }
       if (timeoutHandle !== null) {
         window.clearTimeout(timeoutHandle);
       }
@@ -105,7 +100,7 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
   }, [quality.tier, spaceBackground?.colorSpace, spaceBackground?.src]);
 
   const starGeometry = useMemo(() => {
-    const count = quality.stars;
+    const count = Math.round(quality.stars * (emphasis ? 0.78 : 0.36));
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
 
@@ -123,7 +118,7 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
       positions[i3 + 2] = Math.sin(theta) * band * radius;
 
       const cool = 0.68 + random(index + 143) * 0.22;
-      const brightness = random(index + 251) > 0.9 ? 1.22 : 0.6 + random(index + 271) * 0.42;
+      const brightness = random(index + 251) > 0.94 ? 0.82 : 0.34 + random(index + 271) * 0.28;
       colors[i3] = brightness * cool;
       colors[i3 + 1] = brightness * (0.9 + cool * 0.12);
       colors[i3 + 2] = brightness * 1.12;
@@ -133,16 +128,16 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
     geometry.setAttribute("position", new BufferAttribute(positions, 3));
     geometry.setAttribute("color", new BufferAttribute(colors, 3));
     return geometry;
-  }, [quality.stars, quality.tier]);
+  }, [emphasis, quality.stars, quality.tier]);
 
   const starMaterial = useMemo(() => {
     return new PointsMaterial({
-      size: quality.tier === "high" ? 0.07 : 0.064,
+      size: quality.tier === "high" ? 0.045 : 0.04,
       sizeAttenuation: true,
       vertexColors: true,
       color: new Color("#d8e8ff"),
       transparent: true,
-      opacity: backgroundTexture ? 0.64 : 0.98,
+      opacity: backgroundTexture ? 0.08 : 0.46,
       blending: AdditiveBlending,
       depthWrite: false,
       depthTest: false
@@ -164,9 +159,9 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
 
         void main() {
           float upperBlue = smoothstep(-0.22, 0.72, vDir.y);
-          float galacticHaze = exp(-pow((vDir.y - 0.18) * 3.2, 2.0)) * 0.68;
-          vec3 base = mix(vec3(0.0, 0.004, 0.01), vec3(0.008, 0.026, 0.056), upperBlue);
-          base += vec3(0.012, 0.028, 0.052) * galacticHaze;
+          float galacticHaze = exp(-pow((vDir.y - 0.18) * 3.4, 2.0)) * 0.42;
+          vec3 base = mix(vec3(0.0, 0.003, 0.009), vec3(0.006, 0.018, 0.04), upperBlue);
+          base += vec3(0.01, 0.022, 0.044) * galacticHaze;
           gl_FragColor = vec4(base, 1.0);
         }
       `,
@@ -184,8 +179,12 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
     return new ShaderMaterial({
       uniforms: {
         map: { value: backgroundTexture },
-        exposure: { value: quality.tier === "high" ? 1.78 : 1.58 },
-        hazeLift: { value: quality.tier === "high" ? 0.26 : 0.22 }
+        exposure: { value: emphasis ? 1.55 : 0.72 },
+        hazeLift: { value: emphasis ? 0.18 : 0.034 },
+        starStrength: { value: emphasis ? 0.08 : 0.006 },
+        starDamp: { value: emphasis ? 0.24 : 0.9 },
+        textureStrength: { value: emphasis ? 0.16 : 0.026 },
+        colorCeiling: { value: emphasis ? 0.2 : 0.052 }
       },
       vertexShader: `
         varying vec2 vUv;
@@ -201,6 +200,10 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
         uniform sampler2D map;
         uniform float exposure;
         uniform float hazeLift;
+        uniform float starStrength;
+        uniform float starDamp;
+        uniform float textureStrength;
+        uniform float colorCeiling;
 
         varying vec2 vUv;
         varying vec3 vDir;
@@ -209,24 +212,24 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
           vec2 skyUv = vec2(vUv.x, clamp(vUv.y, 0.0, 1.0));
           vec3 tex = texture2D(map, skyUv).rgb;
           float luma = max(max(tex.r, tex.g), tex.b);
-          float haze = smoothstep(0.035, 0.32, luma);
-          float star = smoothstep(0.5, 0.96, luma);
-          vec3 deepSky = mix(vec3(0.0, 0.003, 0.008), vec3(0.006, 0.015, 0.03), smoothstep(-0.3, 0.75, vDir.y));
-          vec3 lifted = pow(max(tex, vec3(0.0)), vec3(0.78)) * exposure;
-          vec3 coolHaze = lifted * (0.38 + haze * hazeLift);
-          vec3 pinStars = vec3(0.72, 0.84, 1.0) * star * 0.36;
+          float haze = smoothstep(0.018, 0.22, luma);
+          float star = smoothstep(0.36, 0.9, luma);
+          vec3 deepSky = mix(vec3(0.0, 0.0035, 0.009), vec3(0.008, 0.018, 0.034), smoothstep(-0.3, 0.75, vDir.y));
+          vec3 lifted = pow(max(tex, vec3(0.0)), vec3(0.62)) * exposure * (1.0 - star * starDamp);
+          vec3 coolHaze = lifted * (textureStrength + haze * hazeLift);
+          vec3 pinStars = vec3(0.76, 0.86, 1.0) * star * starStrength;
 
-          gl_FragColor = vec4(min(deepSky + coolHaze + pinStars, vec3(0.42)), 1.0);
+          gl_FragColor = vec4(min(deepSky + coolHaze + pinStars, vec3(colorCeiling)), 1.0);
         }
       `,
       side: BackSide,
       depthWrite: false,
       depthTest: false
     });
-  }, [backgroundFailed, backgroundTexture, quality.tier]);
+  }, [backgroundFailed, backgroundTexture, emphasis]);
 
   const useTextureBackdrop = Boolean(textureMaterial && !backgroundFailed);
-  const showPointStars = quality.stars > 0;
+  const showPointStars = quality.stars > 0 && !backgroundTexture;
 
   useFrame(() => {
     if (!fixedSky.current) {
@@ -235,7 +238,10 @@ export function LandingSpaceBackground({ quality, spaceBackground }: LandingSpac
 
     fixedSky.current.position.copy(camera.position);
     fixedSky.current.quaternion.copy(camera.quaternion);
-  }, -10);
+    if (counterRotation) {
+      fixedSky.current.rotateY(counterRotation.current.yawRad);
+    }
+  }, -1);
 
   return (
     <group ref={fixedSky}>

@@ -29,10 +29,13 @@ export {
 export {
   DEFAULT_LUBIRTH_DATE,
   DEFAULT_LUBIRTH_FIELD_SUN_DIRECTION,
+  DEFAULT_LUBIRTH_LOCATION,
   DEFAULT_LUBIRTH_LOCATION_TARGET,
   DEFAULT_LUBIRTH_LOCATION_VECTOR,
-  DEFAULT_LUBIRTH_MOON_PHASE
+  DEFAULT_LUBIRTH_MOON_PHASE,
+  geodeticToTextureVector
 } from "./constants";
+export { computeRuntimeMoonPhase } from "./moonPhase";
 export { LUBIRTH_PRESETS, resolveLandingPreset } from "./presets";
 export type {
   EarthMoonHeroError,
@@ -45,7 +48,9 @@ export type {
   LandingAuroraProfile,
   LandingComposition,
   LandingCompositionOverrides,
+  LandingLocationConfig,
   LandingMoonLightingMode,
+  LandingMoonPhase,
   LandingRenderProfile,
   LandingResolvedAssets,
   LandingPresetName,

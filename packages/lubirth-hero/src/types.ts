@@ -99,6 +99,13 @@ export interface LandingMoonPhase {
 
 export type LandingMoonLightingMode = "birthPhase" | "sceneLit" | "mixed";
 
+export interface LandingLocationConfig {
+  latitudeDeg: number;
+  longitudeDeg: number;
+  label: string;
+  source: "birthplace" | "ip-geo" | "manual";
+}
+
 export interface LandingMoonConfig {
   visible: boolean;
   date: string;
@@ -160,6 +167,7 @@ export interface LandingMotionConfig {
 export interface LandingComposition {
   camera: LandingCameraConfig;
   earth: LandingEarthConfig;
+  location: LandingLocationConfig;
   moon: LandingMoonConfig;
   light: LandingLightConfig;
   atmosphere: LandingAtmosphereConfig;
@@ -170,6 +178,7 @@ export interface LandingComposition {
 export interface LandingCompositionOverrides {
   camera?: Partial<LandingCameraConfig>;
   earth?: Partial<LandingEarthConfig>;
+  location?: Partial<LandingLocationConfig>;
   moon?: Partial<LandingMoonConfig>;
   light?: Partial<LandingLightConfig>;
   atmosphere?: Partial<LandingAtmosphereConfig>;
@@ -218,6 +227,8 @@ export interface LandingProjectedEarthFrame {
   sunDirection: Vector2;
   radius: number;
   progress: number;
+  horizonPoints: Vector2[];
+  horizonPointCount: number;
 }
 
 export type EarthMoonHeroInteraction =

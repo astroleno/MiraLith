@@ -152,26 +152,39 @@ export function LandingMoon({
             float limbLight = 0.72 + 0.28 * pow(viewerFacing, 0.45);
             float terrainContrast = 0.82 + luma * 0.22;
 
-            vec3 moonLight = mix(lightColor, vec3(0.74, 0.8, 0.95), 0.72);
-            float exposure = sunIntensity * mix(0.32, 0.44, fullness);
+            float waxing = smoothstep(-0.08, 0.08, phaseAngle);
+            float crescent = 1.0 - smoothstep(0.18, 0.58, fullness);
+            float gibbousWarmth = smoothstep(0.48, 0.96, fullness);
+            vec3 coolPhaseTint = vec3(0.76, 0.86, 1.08);
+            vec3 neutralPhaseTint = vec3(0.94, 0.96, 1.0);
+            vec3 warmPhaseTint = vec3(1.24, 1.02, 0.72);
+            vec3 phaseTint = mix(neutralPhaseTint, coolPhaseTint, crescent * (0.58 + (1.0 - waxing) * 0.24));
+            phaseTint = mix(phaseTint, warmPhaseTint, gibbousWarmth * (0.66 + waxing * 0.12));
+
+            float coolMoonMix = clamp(0.5 - gibbousWarmth * 0.18 + crescent * 0.08, 0.26, 0.58);
+            vec3 moonLight = mix(lightColor * vec3(1.04, 1.0, 0.9), vec3(0.78, 0.84, 0.98), coolMoonMix) * phaseTint;
+            float exposure = sunIntensity * mix(0.2, 0.34, fullness);
             vec3 lit = base * moonLight * exposure * (0.26 + directLight * 0.78 + grazingLight * 0.16)
               * limbLight * terrainContrast;
-            vec3 night = base * vec3(0.18, 0.22, 0.32) * (0.12 + nightLift * 0.7);
-            float earthshine = pow(viewerFacing, 1.8) * (1.0 - daySide) * (0.022 + nightLift * 0.12);
+            vec3 night = base * mix(vec3(0.16, 0.22, 0.36), vec3(0.26, 0.22, 0.18), gibbousWarmth * 0.28) * (0.18 + nightLift * 0.9);
+            float earthshine = pow(viewerFacing, 1.8) * (1.0 - daySide) * (0.038 + nightLift * 0.16);
             vec3 color = mix(night, lit, daySide);
             color += base * vec3(0.32, 0.42, 0.62) * earthshine;
             color += vec3(0.08, 0.12, 0.18) * pow(1.0 - viewerFacing, 2.4) * visibleDisk * (0.1 + daySide * 0.14);
-            color *= mix(0.98, 1.08, birthPhaseWeight * fullness);
+            color *= mix(0.82, 0.98, birthPhaseWeight * fullness);
             color *= 0.36 + visibleDisk * 0.64;
-            color = mix(color, color * vec3(0.94, 0.99, 1.06), 0.2);
-            color *= 1.0 + fullness * 0.05;
-            color = color / (1.0 + max(color - vec3(0.82), vec3(0.0)) * 0.62);
-            color = min(color, vec3(0.92));
-            gl_FragColor = vec4(color, 1.0);
+            color = mix(color, color * vec3(0.97, 1.0, 1.04), crescent * 0.18);
+            color *= 0.92 + fullness * 0.08;
+            color = color / (1.0 + max(color - vec3(0.62), vec3(0.0)) * 0.72);
+            color = min(color, vec3(0.78));
+            float diskAlpha = visibleDisk * mix(0.76, 0.92, fullness);
+            diskAlpha *= mix(0.9, 1.0, daySide);
+            gl_FragColor = vec4(color, diskAlpha);
           }
         `,
+        transparent: true,
         depthTest: true,
-        depthWrite: true
+        depthWrite: false
       });
     },
     [

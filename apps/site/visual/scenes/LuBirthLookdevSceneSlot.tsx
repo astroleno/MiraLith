@@ -113,7 +113,9 @@ function LookdevScene({ pass, quality, reducedMotion, paused = false }: LookdevS
     center: new Vector2(0, 0),
     sunDirection: new Vector2(0, 1),
     radius: 1,
-    progress: 0
+    progress: 0,
+    horizonPoints: Array.from({ length: 56 }, () => new Vector2(-9999, -9999)),
+    horizonPointCount: 0
   });
   const composition = useMemo(
     () => resolveLandingPreset(

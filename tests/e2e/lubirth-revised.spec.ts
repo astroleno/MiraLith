@@ -8,6 +8,8 @@ declare global {
     __MiraLithLuBirthAtmosphereStackActive?: boolean;
     __MiraLithLuBirthCloudDeckActive?: boolean;
     __MiraLithLuBirthCloudDeckTexture?: string;
+    __MiraLithLuBirthPostBloomActive?: boolean;
+    __MiraLithLuBirthMoonPhase?: { date: string; source: string; phaseAngleRad: number };
     __MiraLithLuBirthProjectedAuroraCurtainActive?: boolean;
     __MiraLithLuBirthProjectedCloudPlateActive?: boolean;
     __MiraLithLuBirthProjectedCloudPlateTexture?: string;
@@ -16,6 +18,12 @@ declare global {
     __MiraLithLuBirthProjectedHorizonCompositeTexture?: string;
     __MiraLithLuBirthProjectedLimbScatteringActive?: boolean;
     __MiraLithLuBirthQualityTier?: string;
+    __MiraLithLuBirthRuntimeLocation?: {
+      latitudeDeg: number;
+      longitudeDeg: number;
+      label: string;
+      source: string;
+    };
   }
 }
 
@@ -79,6 +87,12 @@ test("defaults the study route to the nasa Earth-limb profile", async ({ page })
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthAtmosphereStackActive ?? false), { timeout: 25_000 })
     .toBe(true);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomActive ?? false), { timeout: 25_000 })
+    .toBe(true);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedLimbScatteringActive ?? false), { timeout: 25_000 })
+    .toBe(true);
 });
 
 test("keeps a clean Earth-Moon comparison profile", async ({ page }) => {
@@ -91,7 +105,7 @@ test("keeps a clean Earth-Moon comparison profile", async ({ page }) => {
     .toBe(false);
 });
 
-test("uses high-detail Earth assets for the nasa profile without projected-strip requests", async ({ page }) => {
+test("uses high-detail Earth and sky assets for the nasa profile without projected-strip requests", async ({ page }) => {
   const assetRequests = new Set<string>();
 
   page.on("request", (request) => {
@@ -111,10 +125,16 @@ test("uses high-detail Earth assets for the nasa profile without projected-strip
     .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-clouds-8k.webp")), { timeout: 25_000 })
     .toBe(true);
   await expect
+    .poll(() => Array.from(assetRequests).some((path) => path.includes("8k_stars_milky_way.webp")), { timeout: 25_000 })
+    .toBe(true);
+  await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedHorizonCompositeActive ?? false), { timeout: 25_000 })
     .toBe(false);
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthAtmosphereStackActive ?? false), { timeout: 25_000 })
+    .toBe(true);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomActive ?? false), { timeout: 25_000 })
     .toBe(true);
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthAirglowActive ?? false), { timeout: 25_000 })
@@ -122,9 +142,7 @@ test("uses high-detail Earth assets for the nasa profile without projected-strip
   await page.waitForTimeout(900);
 
   const oldProjectionRequests = Array.from(assetRequests).filter(
-    (path) =>
-      path.includes("earth-horizon-cloud-strip-2k") ||
-      path.includes("8k_stars_milky_way")
+    (path) => path.includes("earth-horizon-cloud-strip-2k")
   );
 
   expect(oldProjectionRequests).toEqual([]);
@@ -167,6 +185,9 @@ test("uses the 3D atmosphere stack for atmosphere review", async ({ page }) => {
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthAtmosphereStackActive), { timeout: 25_000 })
     .toBe(true);
   await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomActive ?? false), { timeout: 25_000 })
+    .toBe(true);
+  await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedHorizonCompositeActive ?? false), { timeout: 25_000 })
     .toBe(false);
   await expect
@@ -174,7 +195,60 @@ test("uses the 3D atmosphere stack for atmosphere review", async ({ page }) => {
     .toBe(false);
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedLimbScatteringActive ?? false), { timeout: 25_000 })
-    .toBe(false);
+    .toBe(true);
+});
+
+test("can drive the nasa profile from today's moon phase and visitor geo", async ({ page }) => {
+  const samples = [
+    {
+      label: "Tokyo",
+      latitudeDeg: 35.6812,
+      longitudeDeg: 139.7671,
+      moonDate: "2026-05-01T12:00:00Z"
+    },
+    {
+      label: "Reykjavik",
+      latitudeDeg: 64.1466,
+      longitudeDeg: -21.9426,
+      moonDate: "2026-05-08T12:00:00Z"
+    },
+    {
+      label: "Sao Paulo",
+      latitudeDeg: -23.5558,
+      longitudeDeg: -46.6396,
+      moonDate: "2026-05-15T12:00:00Z"
+    }
+  ];
+
+  for (const sample of samples) {
+    const params = new URLSearchParams({
+      progress: "0",
+      copy: "hidden",
+      profile: "nasa",
+      moonPhase: "today",
+      moonDate: sample.moonDate,
+      location: "ip",
+      geoLat: String(sample.latitudeDeg),
+      geoLon: String(sample.longitudeDeg),
+      geoLabel: sample.label,
+      visualTest: "pixels"
+    });
+    await page.goto(`/lubirth-revised?${params.toString()}`);
+
+    await expect(page.locator("canvas")).toHaveCount(1);
+    await expect
+      .poll(() => page.evaluate(() => window.__MiraLithLuBirthMoonPhase?.source), { timeout: 25_000 })
+      .toBe("runtime-ephemeris");
+    await expect
+      .poll(() => page.evaluate(() => window.__MiraLithLuBirthMoonPhase?.date), { timeout: 25_000 })
+      .toBe(sample.moonDate.slice(0, 10));
+    await expect
+      .poll(() => page.evaluate(() => window.__MiraLithLuBirthRuntimeLocation?.label), { timeout: 25_000 })
+      .toBe(sample.label);
+    await expect
+      .poll(() => page.evaluate(() => window.__MiraLithLuBirthRuntimeLocation?.source), { timeout: 25_000 })
+      .toBe("manual");
+  }
 });
 
 test("uses the horizon aurora ribbon for high quality aurora debug", async ({ page }) => {

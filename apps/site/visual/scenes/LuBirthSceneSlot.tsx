@@ -1,13 +1,21 @@
 "use client";
 
-import { useEffect } from "react";
-import { EarthMoonScene, resolveLandingAssets, resolveLandingPreset } from "@miralith/lubirth-hero";
+import { useEffect, useMemo, useState } from "react";
+import {
+  EarthMoonScene,
+  computeRuntimeMoonPhase,
+  resolveLandingAssets,
+  resolveLandingPreset
+} from "@miralith/lubirth-hero";
 import { useQualityTier, useReducedMotionPreference } from "@miralith/visual-core";
 import type {
   LandingAssetManifest,
   LandingAuroraProfile,
+  LandingCompositionOverrides,
   EarthMoonHeroMode,
+  LandingLocationConfig,
   LandingMoonLightingMode,
+  LandingMoonPhase,
   LandingRenderProfile,
   LandingVisualDebugLayer,
   LuBirthProjectionFrame
@@ -46,6 +54,8 @@ declare global {
     __MiraLithLuBirthQualityTier?: string;
     __MiraLithLuBirthAuroraEnabled?: boolean;
     __MiraLithLuBirthAuroraProfile?: LandingAuroraProfile;
+    __MiraLithLuBirthMoonPhase?: LandingMoonPhase;
+    __MiraLithLuBirthRuntimeLocation?: LandingLocationConfig;
   }
 }
 
@@ -108,6 +118,80 @@ function readRenderProfileOverride(): LandingRenderProfile | undefined {
   return undefined;
 }
 
+function readMoonPhaseOverride(activeRenderProfile: LandingRenderProfile | undefined): "birth" | "today" {
+  if (typeof window === "undefined") {
+    return "birth";
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const mode = params.get("moonPhase");
+  if (mode === "birth" || mode === "fixed") {
+    return "birth";
+  }
+  if (mode === "today" || mode === "runtime") {
+    return "today";
+  }
+
+  return activeRenderProfile === "nasa" ? "today" : "birth";
+}
+
+function readMoonDateOverride(): string | undefined {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+
+  const value = new URLSearchParams(window.location.search).get("moonDate");
+  if (!value) {
+    return undefined;
+  }
+
+  const parsed = new Date(value);
+  return Number.isFinite(parsed.getTime()) ? value : undefined;
+}
+
+function readLocationOverride(activeRenderProfile: LandingRenderProfile | undefined): "birth" | "ip" {
+  if (typeof window === "undefined") {
+    return "birth";
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const location = params.get("location");
+  if (location === "birth" || location === "mianyang") {
+    return "birth";
+  }
+  if (location === "ip" || location === "visitor") {
+    return "ip";
+  }
+  if (params.has("geoLat") && params.has("geoLon")) {
+    return "ip";
+  }
+  if (params.get("visualTest") === "pixels") {
+    return "birth";
+  }
+
+  return activeRenderProfile === "nasa" ? "ip" : "birth";
+}
+
+function buildGeoEndpoint() {
+  const params = new URLSearchParams(window.location.search);
+  const latitude = params.get("geoLat");
+  const longitude = params.get("geoLon");
+  if (!latitude || !longitude) {
+    return "/api/lubirth-geo";
+  }
+
+  const endpoint = new URLSearchParams({
+    lat: latitude,
+    lon: longitude
+  });
+  const label = params.get("geoLabel");
+  if (label) {
+    endpoint.set("label", label);
+  }
+
+  return `/api/lubirth-geo?${endpoint.toString()}`;
+}
+
 export function LuBirthSceneSlot({
   mode,
   quality = "auto",
@@ -124,20 +208,97 @@ export function LuBirthSceneSlot({
   const auroraProfile = readAuroraProfile();
   const renderProfileOverride = readRenderProfileOverride();
   const activeRenderProfile = renderProfileOverride ?? renderProfile;
+  const moonPhaseOverride = readMoonPhaseOverride(activeRenderProfile);
+  const moonDateOverride = readMoonDateOverride();
+  const locationOverride = readLocationOverride(activeRenderProfile);
+  const geoEndpoint = locationOverride === "ip" && typeof window !== "undefined" ? buildGeoEndpoint() : null;
   const qualityProfile = useQualityTier(qualityOverride ?? quality, reducedMotion);
   const moonLightingMode = readMoonLightingMode();
-  const composition = resolveLandingPreset(
-    mode,
-    moonLightingMode ? { moon: { lightingMode: moonLightingMode } } : undefined
+  const todayMoonPhase = useMemo(
+    () => computeRuntimeMoonPhase(moonDateOverride ? new Date(moonDateOverride) : new Date()),
+    [moonDateOverride]
+  );
+  const [visitorLocationState, setVisitorLocationState] = useState<{
+    endpoint: string;
+    location: LandingLocationConfig;
+  } | null>(null);
+  const activeVisitorLocation =
+    geoEndpoint && visitorLocationState?.endpoint === geoEndpoint ? visitorLocationState.location : null;
+  const compositionOverrides = useMemo<LandingCompositionOverrides>(
+    () => {
+      const moon: NonNullable<LandingCompositionOverrides["moon"]> = {
+        ...(moonLightingMode ? { lightingMode: moonLightingMode } : {}),
+        ...(moonPhaseOverride === "today"
+          ? {
+              date: todayMoonPhase.date,
+              phaseMode: "runtime-ephemeris",
+              fixedPhase: todayMoonPhase
+            }
+          : {})
+      };
+
+      return {
+        ...(Object.keys(moon).length > 0 ? { moon } : {}),
+        ...(activeVisitorLocation ? { location: activeVisitorLocation } : {})
+      };
+    },
+    [activeVisitorLocation, moonLightingMode, moonPhaseOverride, todayMoonPhase]
+  );
+  const composition = useMemo(
+    () => resolveLandingPreset(mode, compositionOverrides),
+    [compositionOverrides, mode]
   );
   const useHighDetailEarthAssets = qualityProfile.tier === "high" && activeRenderProfile !== "clean";
   const assets = resolveLandingAssets(useHighDetailEarthAssets ? HIGH_DETAIL_EARTH_ASSETS : undefined);
 
   useEffect(() => {
+    let cancelled = false;
+
+    if (!geoEndpoint) {
+      window.__MiraLithLuBirthRuntimeLocation = undefined;
+      return undefined;
+    }
+
+    fetch(geoEndpoint, { cache: "no-store" })
+      .then((response) => response.json() as Promise<{
+        located?: boolean;
+        latitudeDeg?: number;
+        longitudeDeg?: number;
+        label?: string;
+        source?: string;
+      }>)
+      .then((payload) => {
+        if (
+          cancelled ||
+          !payload.located ||
+          typeof payload.latitudeDeg !== "number" ||
+          typeof payload.longitudeDeg !== "number"
+        ) {
+          return;
+        }
+
+        const nextLocation: LandingLocationConfig = {
+          latitudeDeg: payload.latitudeDeg,
+          longitudeDeg: payload.longitudeDeg,
+          label: payload.label || "Visitor location",
+          source: payload.source === "manual" ? "manual" : "ip-geo"
+        };
+        setVisitorLocationState({ endpoint: geoEndpoint, location: nextLocation });
+        window.__MiraLithLuBirthRuntimeLocation = nextLocation;
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [geoEndpoint]);
+
+  useEffect(() => {
     window.__MiraLithLuBirthQualityTier = qualityProfile.tier;
     window.__MiraLithLuBirthAuroraEnabled = qualityProfile.aurora;
     window.__MiraLithLuBirthAuroraProfile = auroraProfile;
-  }, [auroraProfile, qualityProfile.aurora, qualityProfile.tier]);
+    window.__MiraLithLuBirthMoonPhase = composition.moon.fixedPhase;
+  }, [auroraProfile, composition.moon.fixedPhase, qualityProfile.aurora, qualityProfile.tier]);
 
   if (qualityProfile.tier === "fallback") {
     return null;
