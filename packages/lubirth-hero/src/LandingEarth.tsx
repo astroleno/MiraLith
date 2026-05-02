@@ -304,10 +304,12 @@ export function LandingEarth({
             float lightTangentLen = max(length(lightTangentUv), 0.001);
             lightTangentUv /= lightTangentLen;
             float lowSunShadow = 1.0 - smoothstep(0.22, 0.78, max(ndl, 0.0));
+            float cloudCoreUnit = clamp(cloudCore / max(cloudOpacity, 0.001), 0.0, 1.0);
+            float shadowDistance = mix(0.65, 1.25, cloudCoreUnit);
             float shadowOffset = (0.0042 + lowSunShadow * 0.009 + closeStage * 0.003) * (0.45 + lightTangentLen * 0.55);
             vec2 shadowUv = vec2(
-              fract(cloudUv.x - lightTangentUv.x * shadowOffset),
-              fract(cloudUv.y - lightTangentUv.y * shadowOffset * 0.62)
+              fract(cloudUv.x - lightTangentUv.x * shadowOffset * shadowDistance),
+              fract(cloudUv.y - lightTangentUv.y * shadowOffset * shadowDistance * 0.62)
             );
             float shadowRaw = texture2D(cloudMap, shadowUv).r;
             float shadowSoft =
@@ -347,13 +349,13 @@ export function LandingEarth({
             daySurface += landFineDetail * exposedSurface * (0.34 + dryLandSignal * 0.42);
             daySurface += (microGrain - 0.5) * closeStage * 0.02 * (0.28 + daySurfaceLuma);
             daySurface += (orthoTextureDetail - 0.5) * closeStage * 0.026 * exposedSurface * (0.36 + dryLandSignal * 0.58);
-            float terrainDetail =
-              fbmTerrain(vUv * vec2(96.0, 48.0) + vec2(3.2, 1.7)) * 0.58 +
-              fbmTerrain(vUv * vec2(384.0, 192.0) + vec2(11.3, 8.1)) * 0.42;
-            float terrainRidge = abs(terrainDetail - 0.5) * 2.0;
+            float landMacro = fbmTerrain(vUv * vec2(32.0, 16.0) + vec2(1.7, 4.2));
+            float landMeso = fbmTerrain(vUv * vec2(128.0, 64.0) + vec2(3.2, 1.7));
+            float landMicro = fbmTerrain(vUv * vec2(512.0, 256.0) + vec2(11.3, 8.1));
             float dryCloseDetail = exposedSurface * closeStage * dryLandSignal * dayW;
-            daySurface += (terrainDetail - 0.5) * dryCloseDetail * 0.055;
-            daySurface += (terrainRidge - 0.38) * dryCloseDetail * 0.032;
+            daySurface += (landMacro - 0.5) * dryCloseDetail * 0.035;
+            daySurface += (landMeso - 0.5) * dryCloseDetail * 0.045;
+            daySurface += (landMicro - 0.5) * dryCloseDetail * 0.018;
             daySurface *= mix(1.0, 0.82, dryLandSignal * closeStage);
             daySurface *= mix(1.0, 0.68, smoothstep(0.46, 0.88, daySurfaceLuma) * closeStage);
             float dayLight = pow(max(ndl, 0.0), 0.82);

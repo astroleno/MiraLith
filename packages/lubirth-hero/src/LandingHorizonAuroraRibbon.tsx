@@ -201,7 +201,7 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
         float verticalFalloff = 1.0 - smoothstep(0.34 + columnHeight * 0.32, 0.96, vertical);
         float curtainBreakup = smoothstep(0.18, 0.78, fbm(vec2(arc * 40.0 - time * 0.009, vertical * 6.0 + 2.0)));
         float curtain = body * strands * curtainBreakup * verticalFalloff;
-        float density = sideFeather * bottomFeather * (root * 0.82 + curtain * 0.92 + topMist * curtainBreakup * 0.1);
+        float density = sideFeather * bottomFeather * (root * 1.08 + curtain * 0.78 + topMist * curtainBreakup * 0.08);
         vec3 horizonNormal = normalize(vLocalPosition);
         float lightSide = dot(normalize(lightDirection), horizonNormal);
         float nightGate = 1.0 - smoothstep(-0.08, 0.26, lightSide);
@@ -298,7 +298,7 @@ export function LandingHorizonAuroraRibbon({
 
     const progress = getRuntimeOpeningProgress(0);
     const nearFade = 1 - smoothstep(0.12, 0.52, progress);
-    const farFloor = debugProfile ? 0.14 : 0.045;
+    const farFloor = debugProfile ? 0.14 : 0.08;
     const elapsed = paused || reducedMotion ? 0 : state.clock.elapsedTime;
     const intensity = composition.aurora.intensity * visibilityBoost * Math.max(farFloor, nearFade);
     localLightDirection.copy(sceneLightDirection).applyQuaternion(inverseParentWorldQuaternion).normalize();
