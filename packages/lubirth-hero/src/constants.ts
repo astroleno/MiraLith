@@ -45,6 +45,32 @@ function normalizeLongitude(longitudeDeg: number) {
   return result;
 }
 
+export function computeRuntimeSolarDirection(dateUtc = new Date()) {
+  const minutesUtc = dateUtc.getUTCHours() * 60 + dateUtc.getUTCMinutes() + dateUtc.getUTCSeconds() / 60;
+  const fractionalYear = (2 * Math.PI / 365) * (
+    dayOfYearUtc(dateUtc) - 1 + (minutesUtc / 60 - 12) / 24
+  );
+  const equationOfTime = 229.18 * (
+    0.000075 +
+    0.001868 * Math.cos(fractionalYear) -
+    0.032077 * Math.sin(fractionalYear) -
+    0.014615 * Math.cos(2 * fractionalYear) -
+    0.040849 * Math.sin(2 * fractionalYear)
+  );
+  const declination =
+    0.006918 -
+    0.399912 * Math.cos(fractionalYear) +
+    0.070257 * Math.sin(fractionalYear) -
+    0.006758 * Math.cos(2 * fractionalYear) +
+    0.000907 * Math.sin(2 * fractionalYear) -
+    0.002697 * Math.cos(3 * fractionalYear) +
+    0.00148 * Math.sin(3 * fractionalYear);
+  const subsolarLongitude = normalizeLongitude((720 - minutesUtc - equationOfTime) / 4);
+
+  const [x, y, z] = geodeticToTextureVector(declination / rad, subsolarLongitude);
+  return [x, y, z] as [number, number, number];
+}
+
 function computeSolarDirection(localISO: string, longitudeDeg: number, utcOffsetHours = 8) {
   const match = localISO.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
   if (!match) {

@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+test.setTimeout(120_000);
+
 declare global {
   interface Window {
     __MiraLithLuBirthAuroraEnabled?: boolean;
@@ -24,6 +26,13 @@ declare global {
       longitudeDeg: number;
       label: string;
       source: string;
+      timeZone?: string;
+    };
+    __MiraLithLuBirthSolarState?: {
+      date: string;
+      locationSunDot?: number;
+      source: string;
+      timeZone?: string;
     };
   }
 }
@@ -203,23 +212,31 @@ test("uses the 3D atmosphere stack for atmosphere review", async ({ page }) => {
 });
 
 test("can drive the nasa profile from today's moon phase and visitor geo", async ({ page }) => {
+  test.setTimeout(120_000);
+
   const samples = [
     {
       label: "Tokyo",
       latitudeDeg: 35.6812,
       longitudeDeg: 139.7671,
+      timeZone: "Asia/Tokyo",
+      sunDate: "2026-05-01T03:00:00Z",
       moonDate: "2026-05-01T12:00:00Z"
     },
     {
       label: "Reykjavik",
       latitudeDeg: 64.1466,
       longitudeDeg: -21.9426,
+      timeZone: "Atlantic/Reykjavik",
+      sunDate: "2026-05-08T13:00:00Z",
       moonDate: "2026-05-08T12:00:00Z"
     },
     {
       label: "Sao Paulo",
       latitudeDeg: -23.5558,
       longitudeDeg: -46.6396,
+      timeZone: "America/Sao_Paulo",
+      sunDate: "2026-05-15T15:00:00Z",
       moonDate: "2026-05-15T12:00:00Z"
     }
   ];
@@ -231,10 +248,12 @@ test("can drive the nasa profile from today's moon phase and visitor geo", async
       profile: "nasa",
       moonPhase: "today",
       moonDate: sample.moonDate,
+      sunDate: sample.sunDate,
       location: "ip",
       geoLat: String(sample.latitudeDeg),
       geoLon: String(sample.longitudeDeg),
       geoLabel: sample.label,
+      geoTimeZone: sample.timeZone,
       visualTest: "pixels"
     });
     await page.goto(`/lubirth-revised?${params.toString()}`);
@@ -252,7 +271,35 @@ test("can drive the nasa profile from today's moon phase and visitor geo", async
     await expect
       .poll(() => page.evaluate(() => window.__MiraLithLuBirthRuntimeLocation?.source), { timeout: 25_000 })
       .toBe("manual");
+    await expect
+      .poll(() => page.evaluate(() => window.__MiraLithLuBirthRuntimeLocation?.timeZone), { timeout: 25_000 })
+      .toBe(sample.timeZone);
+    await expect
+      .poll(() => page.evaluate(() => window.__MiraLithLuBirthSolarState?.date), { timeout: 25_000 })
+      .toBe(new Date(sample.sunDate).toISOString());
+    await expect
+      .poll(() => page.evaluate(() => window.__MiraLithLuBirthSolarState?.locationSunDot ?? -1), { timeout: 25_000 })
+      .toBeGreaterThan(0.42);
   }
+
+  const tokyoMidnight = new URLSearchParams({
+    progress: "0",
+    copy: "hidden",
+    profile: "nasa",
+    moonPhase: "today",
+    moonDate: "2026-05-01T12:00:00Z",
+    sunDate: "2026-05-01T15:00:00Z",
+    location: "ip",
+    geoLat: "35.6812",
+    geoLon: "139.7671",
+    geoLabel: "Tokyo",
+    geoTimeZone: "Asia/Tokyo",
+    visualTest: "pixels"
+  });
+  await page.goto(`/lubirth-revised?${tokyoMidnight.toString()}`);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthSolarState?.locationSunDot ?? 1), { timeout: 25_000 })
+    .toBeLessThan(-0.32);
 });
 
 test("uses the horizon aurora ribbon for high quality aurora debug", async ({ page }) => {

@@ -33,6 +33,7 @@ export {
   DEFAULT_LUBIRTH_LOCATION_TARGET,
   DEFAULT_LUBIRTH_LOCATION_VECTOR,
   DEFAULT_LUBIRTH_MOON_PHASE,
+  computeRuntimeSolarDirection,
   geodeticToTextureVector
 } from "./constants";
 export { computeRuntimeMoonPhase } from "./moonPhase";

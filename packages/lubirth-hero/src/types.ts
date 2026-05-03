@@ -103,6 +103,7 @@ export interface LandingLocationConfig {
   latitudeDeg: number;
   longitudeDeg: number;
   label: string;
+  timeZone?: string;
   source: "birthplace" | "ip-geo" | "manual";
 }
 

@@ -5,6 +5,7 @@ interface GeoPayload {
   latitudeDeg?: number;
   longitudeDeg?: number;
   label?: string;
+  timeZone?: string;
   source: "edge-geo" | "ipapi" | "manual" | "unavailable";
 }
 
@@ -67,6 +68,7 @@ function edgeGeoPayload(request: NextRequest): GeoPayload | null {
   const city = decodeHeaderLabel(firstHeader(request.headers, ["x-vercel-ip-city", "cf-ipcity"]));
   const region = decodeHeaderLabel(firstHeader(request.headers, ["x-vercel-ip-country-region", "cf-region"]));
   const country = decodeHeaderLabel(firstHeader(request.headers, ["x-vercel-ip-country", "cf-ipcountry"]));
+  const timeZone = firstHeader(request.headers, ["x-vercel-ip-timezone", "cf-timezone"]);
   const label = [city, region, country].filter(Boolean).join(", ") || "Visitor location";
 
   return {
@@ -74,6 +76,7 @@ function edgeGeoPayload(request: NextRequest): GeoPayload | null {
     latitudeDeg,
     longitudeDeg,
     label,
+    ...(timeZone ? { timeZone } : {}),
     source: "edge-geo"
   };
 }
@@ -120,6 +123,7 @@ async function lookupPublicIp(ip: string): Promise<GeoPayload | null> {
       city?: string;
       region?: string;
       country_name?: string;
+      timezone?: string;
       error?: boolean;
     };
 
@@ -140,6 +144,7 @@ async function lookupPublicIp(ip: string): Promise<GeoPayload | null> {
       latitudeDeg: data.latitude,
       longitudeDeg: data.longitude,
       label: [data.city, data.region, data.country_name].filter(Boolean).join(", ") || "Visitor location",
+      ...(data.timezone ? { timeZone: data.timezone } : {}),
       source: "ipapi"
     };
   } catch {
@@ -159,6 +164,9 @@ export async function GET(request: NextRequest) {
       latitudeDeg: manualLatitude,
       longitudeDeg: manualLongitude,
       label: request.nextUrl.searchParams.get("label") || "Manual location",
+      ...(request.nextUrl.searchParams.get("timeZone") || request.nextUrl.searchParams.get("tz")
+        ? { timeZone: request.nextUrl.searchParams.get("timeZone") || request.nextUrl.searchParams.get("tz") || undefined }
+        : {}),
       source: "manual"
     });
   }
