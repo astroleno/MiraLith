@@ -83,6 +83,8 @@ for (let index = 0; index < pixelCount; index += 1) {
 const smallBlur = boxBlur(coverage, width, height, 3, 2);
 const mediumBlur = boxBlur(coverage, width, height, 10, 6);
 const largeBlur = boxBlur(coverage, width, height, 22, 12);
+const synopticBlur = boxBlur(coverage, width, height, 40, 22);
+const regionalBlur = boxBlur(coverage, width, height, 72, 36);
 const output = Buffer.alloc(pixelCount * 4);
 
 for (let y = 0; y < height; y += 1) {
@@ -92,20 +94,41 @@ for (let y = 0; y < height; y += 1) {
     const right = sample(smallBlur, width, height, x + 1, y);
     const up = sample(smallBlur, width, height, x, y - 1);
     const down = sample(smallBlur, width, height, x, y + 1);
+    const synopticLeft = sample(synopticBlur, width, height, x - 6, y);
+    const synopticRight = sample(synopticBlur, width, height, x + 6, y);
+    const synopticUp = sample(synopticBlur, width, height, x, y - 4);
+    const synopticDown = sample(synopticBlur, width, height, x, y + 4);
     const edge = clamp01(Math.hypot(right - left, down - up) * 3.4);
-    const expanded = largeBlur[index] * 0.86 + mediumBlur[index] * 0.34 + coverage[index] * 0.18;
-    const thickness = clamp01(smoothstep(0.08, 0.72, expanded) * (0.68 + coverage[index] * 0.38) - edge * 0.16);
-    const offsetShadow = sample(mediumBlur, width, height, x - 18, y + 7);
+    const synopticEdge = clamp01(Math.hypot(synopticRight - synopticLeft, synopticDown - synopticUp) * 4.8);
+    const weatherCore = smoothstep(
+      0.1,
+      0.52,
+      regionalBlur[index] * 0.62 + synopticBlur[index] * 0.48 + largeBlur[index] * 0.18
+    );
+    const expanded =
+      weatherCore * 0.46 +
+      synopticBlur[index] * 0.34 +
+      largeBlur[index] * 0.38 +
+      mediumBlur[index] * 0.22 +
+      coverage[index] * 0.16;
+    const thickness = clamp01(
+      smoothstep(0.1, 0.76, expanded) * (0.62 + weatherCore * 0.32 + coverage[index] * 0.28) -
+      edge * 0.08
+    );
+    const offsetShadow = sample(synopticBlur, width, height, x - 24, y + 10);
     const ambientOcclusion = clamp01(
-      smoothstep(0.08, 0.7, offsetShadow * 0.72 + largeBlur[index] * 0.24) * (0.52 + thickness * 0.48)
+      smoothstep(0.08, 0.68, offsetShadow * 0.68 + weatherCore * 0.32 + largeBlur[index] * 0.18) *
+      (0.48 + thickness * 0.52)
     );
-    const highCore = smoothstep(0.38, 0.82, coverage[index]);
+    const highCore = smoothstep(0.34, 0.82, coverage[index] * 0.72 + smallBlur[index] * 0.28 + synopticEdge * 0.12);
     const brightCap = clamp01(
-      Math.pow(smoothstep(0.26, 0.78, smallBlur[index]) * highCore, 0.82) * (1 - edge * 0.28)
+      Math.pow(smoothstep(0.24, 0.78, smallBlur[index] * 0.72 + weatherCore * 0.18 + synopticEdge * 0.16) * highCore, 0.82) *
+      (1 - edge * 0.2)
     );
+    const synopticCoverage = clamp01(coverage[index] * 0.64 + mediumBlur[index] * 0.22 + weatherCore * 0.26);
     const target = index * 4;
 
-    output[target] = byte(coverage[index]);
+    output[target] = byte(synopticCoverage);
     output[target + 1] = byte(thickness);
     output[target + 2] = byte(ambientOcclusion);
     output[target + 3] = byte(brightCap);

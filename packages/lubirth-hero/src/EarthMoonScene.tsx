@@ -211,7 +211,7 @@ export function EarthMoonScene({
     quality.tier !== "fallback";
   const useHeroAuroraProfile = auroraProfile === "hero";
   const auroraVisibilityBoost = debugAurora
-    ? (auroraProfile === "debug" ? 2.6 : 1.7)
+    ? (auroraProfile === "debug" ? 2.6 : 2.2)
     : 0.9;
 
   const lightColor = useMemo(
@@ -604,7 +604,7 @@ export function EarthMoonScene({
               sceneLightDirection={sceneLightDirection}
               visibilityBoost={auroraVisibilityBoost}
               moonColumnAvoidance={0}
-              debugProfile={auroraProfile === "debug"}
+              debugProfile={debugAurora || auroraProfile === "debug"}
               reducedMotion={reducedMotion}
               paused={paused}
             />

@@ -37,7 +37,6 @@ declare global {
 
 const colorA = new Color();
 const colorB = new Color();
-const cameraWorldQuaternion = new Quaternion();
 const parentWorldQuaternion = new Quaternion();
 const inverseParentWorldQuaternion = new Quaternion();
 const localLightDirection = new Vector3();
@@ -57,9 +56,9 @@ function createRibbonGeometry(composition: LandingComposition, debugProfile: boo
   const indices: number[] = [];
   const radius = composition.earth.radius;
   const ribbonWidth = radius * 1.36;
-  const baseY = radius * 0.892;
+  const baseY = radius * 0.948;
   const baseZ = radius * -0.025;
-  const maxHeight = radius * (debugProfile ? 0.092 : 0.06);
+  const maxHeight = radius * (debugProfile ? 0.108 : 0.082);
 
   for (let y = 0; y <= heightSegments; y += 1) {
     const v = y / heightSegments;
@@ -186,22 +185,22 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
         float vertical = vUv.y;
         float arc = vUv.x;
         float sideFeather = smoothstep(0.018, 0.1, arc) * (1.0 - smoothstep(0.9, 0.982, arc));
-        float bottomFeather = smoothstep(0.018, 0.095, vertical);
-        float rootLine = 1.0 - smoothstep(0.01, 0.068, vertical);
-        float rootBreakup = smoothstep(0.14, 0.72, fbm(vec2(arc * 34.0 + time * 0.01, 0.7)));
-        float root = rootLine * mix(0.72, 1.0, rootBreakup);
+        float bottomFeather = smoothstep(0.006, 0.052, vertical);
+        float rootLine = 1.0 - smoothstep(0.004, 0.026, vertical);
+        float rootBreakup = smoothstep(0.28, 0.78, fbm(vec2(arc * 42.0 + time * 0.01, 0.7)));
+        float root = rootLine * rootBreakup;
 
-        float body = smoothstep(0.035, 0.16, vertical) * (1.0 - smoothstep(0.46, 0.92, vertical));
-        float topMist = smoothstep(0.3, 0.72, vertical) * (1.0 - smoothstep(0.68, 1.0, vertical));
+        float body = smoothstep(0.028, 0.13, vertical) * (1.0 - smoothstep(0.58, 0.98, vertical));
+        float topMist = smoothstep(0.34, 0.78, vertical) * (1.0 - smoothstep(0.72, 1.0, vertical));
         float drift = fbm(vec2(arc * 5.0 + time * 0.012, vertical * 2.0)) * 0.055;
         float fold = sin((arc + drift) * 94.0 + fbm(vec2(arc * 20.0, vertical * 5.4 + time * 0.018)) * 3.6);
         float fine = sin((arc - drift) * 213.0 + vertical * 9.0 + time * 0.02);
-        float strands = smoothstep(0.42, 0.88, 0.52 + fold * 0.25 + fine * 0.09);
+        float strands = pow(smoothstep(0.5, 0.9, 0.52 + fold * 0.25 + fine * 0.09), 1.55);
         float columnHeight = smoothstep(0.2, 0.84, fbm(vec2(arc * 18.0 - time * 0.008, 2.4)));
-        float verticalFalloff = 1.0 - smoothstep(0.34 + columnHeight * 0.32, 0.96, vertical);
+        float verticalFalloff = 1.0 - smoothstep(0.46 + columnHeight * 0.34, 1.02, vertical);
         float curtainBreakup = smoothstep(0.18, 0.78, fbm(vec2(arc * 40.0 - time * 0.009, vertical * 6.0 + 2.0)));
         float curtain = body * strands * curtainBreakup * verticalFalloff;
-        float density = sideFeather * bottomFeather * (root * 1.08 + curtain * 0.78 + topMist * curtainBreakup * 0.08);
+        float density = sideFeather * bottomFeather * (root * 0.46 + curtain * 1.32 + topMist * curtainBreakup * 0.1);
         vec3 horizonNormal = normalize(vLocalPosition);
         float lightSide = dot(normalize(lightDirection), horizonNormal);
         float nightGate = 1.0 - smoothstep(-0.08, 0.26, lightSide);
@@ -223,14 +222,14 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
         auroraColor = mix(auroraColor, nitrogenRed, topMist * 0.55);
         auroraColor = mix(auroraColor, colorB, curtain * 0.16);
         auroraColor = mix(auroraColor, vec3(0.28, 0.4, 0.34), smoothstep(0.54, 0.98, vertical) * 0.26);
-        vec3 finalColor = auroraColor * density * gain * (1.62 + root * 1.18 + curtain * 0.36);
+        vec3 finalColor = auroraColor * density * gain * (1.28 + root * 0.42 + curtain * 1.04);
 
-        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.105, 0.18, debugGain)));
+        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.085, 0.16, debugGain)));
       }
     `,
     transparent: true,
     blending: AdditiveBlending,
-    depthTest: false,
+    depthTest: true,
     depthWrite: false,
     side: DoubleSide
   });
@@ -286,13 +285,12 @@ export function LandingHorizonAuroraRibbon({
       return;
     }
 
-    state.camera.getWorldQuaternion(cameraWorldQuaternion);
     if (aurora.current.parent) {
       aurora.current.parent.getWorldQuaternion(parentWorldQuaternion);
       inverseParentWorldQuaternion.copy(parentWorldQuaternion).invert();
-      aurora.current.quaternion.copy(parentWorldQuaternion.invert().multiply(cameraWorldQuaternion));
+      aurora.current.quaternion.identity();
     } else {
-      aurora.current.quaternion.copy(cameraWorldQuaternion);
+      aurora.current.quaternion.identity();
       inverseParentWorldQuaternion.identity();
     }
 

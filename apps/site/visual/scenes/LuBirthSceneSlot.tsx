@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import {
   EarthMoonScene,
   computeRuntimeMoonPhase,
@@ -192,6 +192,26 @@ function buildGeoEndpoint() {
   return `/api/lubirth-geo?${endpoint.toString()}`;
 }
 
+function readManualGeoLocation(): LandingLocationConfig | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const latitude = Number(params.get("geoLat"));
+  const longitude = Number(params.get("geoLon"));
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return null;
+  }
+
+  return {
+    latitudeDeg: latitude,
+    longitudeDeg: longitude,
+    label: params.get("geoLabel") || "Visitor location",
+    source: "manual"
+  };
+}
+
 export function LuBirthSceneSlot({
   mode,
   quality = "auto",
@@ -211,7 +231,11 @@ export function LuBirthSceneSlot({
   const moonPhaseOverride = readMoonPhaseOverride(activeRenderProfile);
   const moonDateOverride = readMoonDateOverride();
   const locationOverride = readLocationOverride(activeRenderProfile);
-  const geoEndpoint = locationOverride === "ip" && typeof window !== "undefined" ? buildGeoEndpoint() : null;
+  const manualGeoLocation = useMemo(() => readManualGeoLocation(), []);
+  const geoEndpoint =
+    locationOverride === "ip" && typeof window !== "undefined" && !manualGeoLocation
+      ? buildGeoEndpoint()
+      : null;
   const qualityProfile = useQualityTier(qualityOverride ?? quality, reducedMotion);
   const moonLightingMode = readMoonLightingMode();
   const todayMoonPhase = useMemo(
@@ -223,7 +247,8 @@ export function LuBirthSceneSlot({
     location: LandingLocationConfig;
   } | null>(null);
   const activeVisitorLocation =
-    geoEndpoint && visitorLocationState?.endpoint === geoEndpoint ? visitorLocationState.location : null;
+    manualGeoLocation ??
+    (geoEndpoint && visitorLocationState?.endpoint === geoEndpoint ? visitorLocationState.location : null);
   const compositionOverrides = useMemo<LandingCompositionOverrides>(
     () => {
       const moon: NonNullable<LandingCompositionOverrides["moon"]> = {
@@ -255,7 +280,7 @@ export function LuBirthSceneSlot({
     let cancelled = false;
 
     if (!geoEndpoint) {
-      window.__MiraLithLuBirthRuntimeLocation = undefined;
+      window.__MiraLithLuBirthRuntimeLocation = manualGeoLocation ?? undefined;
       return undefined;
     }
 
@@ -291,9 +316,9 @@ export function LuBirthSceneSlot({
     return () => {
       cancelled = true;
     };
-  }, [geoEndpoint]);
+  }, [geoEndpoint, manualGeoLocation]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     window.__MiraLithLuBirthQualityTier = qualityProfile.tier;
     window.__MiraLithLuBirthAuroraEnabled = qualityProfile.aurora;
     window.__MiraLithLuBirthAuroraProfile = auroraProfile;

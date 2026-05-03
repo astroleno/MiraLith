@@ -550,9 +550,11 @@ export function LuBirthRevisedRoute({
   const [homeProjectionSource, setHomeProjectionSource] = useState<HomeProjectionSource>("pending");
   const [homeVisualReadySource, setHomeVisualReadySource] = useState<HomeVisualReadySource | "pending">("pending");
   const [homeSkipReady, setHomeSkipReady] = useState(() => variant !== "home");
-  const [debugOptions, setDebugOptions] = useState<ScreenshotDebugOptions>(() =>
-    readScreenshotDebugOptions(variant !== "home")
-  );
+  const [debugOptions, setDebugOptions] = useState<ScreenshotDebugOptions>(() => ({
+    ...DEFAULT_SCREENSHOT_DEBUG_OPTIONS,
+    copyHidden: variant !== "home"
+  }));
+  const [debugOptionsReady, setDebugOptionsReady] = useState(false);
   const homeProjectionSourceRef = useRef<HomeProjectionSource>("pending");
   const homeVisualReadySourceRef = useRef<HomeVisualReadySource | "pending">("pending");
   const homeDayTextureReadyRef = useRef(false);
@@ -650,6 +652,22 @@ export function LuBirthRevisedRoute({
   }, [markHomeLoadingReady]);
 
   useEffect(() => {
+    let active = true;
+    window.queueMicrotask(() => {
+      if (!active) {
+        return;
+      }
+
+      setDebugOptions(readScreenshotDebugOptions(!isHome));
+      setDebugOptionsReady(true);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [isHome]);
+
+  useEffect(() => {
     if (!isHome || homeProjectionSource === "pending" || homeReadinessDispatchedRef.current) {
       return;
     }
@@ -668,6 +686,10 @@ export function LuBirthRevisedRoute({
   }, [homeVisualReady, homeVisualReadySource, isHome]);
 
   useEffect(() => {
+    if (!debugOptionsReady) {
+      return;
+    }
+
     let disposed = false;
     let cleanupAnimations: (() => void) | undefined;
     let cleanupHomeReadyHandler: (() => void) | undefined;
@@ -690,8 +712,7 @@ export function LuBirthRevisedRoute({
       const rootElement = rootRef.current;
       const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const forcedFallback = new URLSearchParams(window.location.search).get("visual") === "fallback";
-      const screenshotDebug = readScreenshotDebugOptions(!isHome);
-      setDebugOptions(screenshotDebug);
+      const screenshotDebug = debugOptions;
       setRuntimeReady(true);
       setCopyInteractive(false);
       setProjectInteractive(!isHome);
@@ -1352,7 +1373,7 @@ export function LuBirthRevisedRoute({
       disposed = true;
       cleanupAnimations?.();
     };
-  }, [isHome, markHomeLoadingReady, markHomeVisualReady, triggerId, variant]);
+  }, [debugOptions, debugOptionsReady, isHome, markHomeLoadingReady, markHomeVisualReady, triggerId, variant]);
 
   return (
     <main
