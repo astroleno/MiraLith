@@ -47,7 +47,7 @@ const HIGH_DETAIL_EARTH_ASSETS: Partial<LandingAssetManifest> = {
     width: 8192,
     height: 4096,
     format: "webp",
-    colorSpace: "linear"
+    colorSpace: "srgb"
   },
   earthNormal: {
     id: "earth-normal-2k",
@@ -93,6 +93,7 @@ interface LuBirthSceneSlotProps {
   visualDebugLayer?: LandingVisualDebugLayer;
   renderProfile?: LandingRenderProfile;
   paused?: boolean;
+  cloudDeckEnabled?: boolean;
   onProjectionFrame?: (frame: LuBirthProjectionFrame) => void;
   onVisualReadyEnough?: () => void;
   onMoonTextureReady?: () => void;
@@ -293,6 +294,7 @@ export function LuBirthSceneSlot({
   visualDebugLayer = "all",
   renderProfile,
   paused = false,
+  cloudDeckEnabled = true,
   onProjectionFrame,
   onVisualReadyEnough,
   onMoonTextureReady
@@ -451,6 +453,7 @@ export function LuBirthSceneSlot({
       auroraProfile={auroraProfile}
       reducedMotion={reducedMotion}
       paused={paused}
+      cloudDeckEnabled={cloudDeckEnabled}
       onProjectionFrame={onProjectionFrame}
       onVisualReadyEnough={onVisualReadyEnough}
       onMoonTextureReady={onMoonTextureReady}

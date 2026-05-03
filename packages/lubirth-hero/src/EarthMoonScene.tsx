@@ -164,6 +164,7 @@ export function EarthMoonScene({
   onProjectionFrame,
   onVisualReadyEnough,
   onMoonTextureReady,
+  cloudDeckEnabled = true,
   useCloudDeckV2 = true,
   useAirglowV2 = true,
   useAuroraOval = true,
@@ -560,6 +561,7 @@ export function EarthMoonScene({
             paused={paused}
             sceneLightDirection={sceneLightDirection}
             onDayTextureReady={onVisualReadyEnough}
+            cloudDeckEnabled={cloudDeckEnabled}
           />
         ) : null}
         {showVolumetricClouds ? (
@@ -573,27 +575,27 @@ export function EarthMoonScene({
               reducedMotion={reducedMotion}
               paused={paused}
             />
-            {assets.earthCloudDeck ? (
+            {cloudDeckEnabled && debugClouds && assets.earthCloudDeck ? (
               useCloudDeckV2 ? (
                 <>
-                <LandingCloudDeckV2
-                  composition={composition}
-                  assets={assets}
-                  quality={quality}
-                  sceneLightDirection={sceneLightDirection}
-                  emphasis={debugClouds}
-                  reducedMotion={reducedMotion}
-                  paused={paused}
-                />
-                <LandingHorizonCloudBelt
-                  composition={composition}
-                  assets={assets}
-                  quality={quality}
-                  sceneLightDirection={sceneLightDirection}
-                  emphasis={debugClouds}
-                  reducedMotion={reducedMotion}
-                  paused={paused}
-                />
+                  <LandingCloudDeckV2
+                    composition={composition}
+                    assets={assets}
+                    quality={quality}
+                    sceneLightDirection={sceneLightDirection}
+                    emphasis
+                    reducedMotion={reducedMotion}
+                    paused={paused}
+                  />
+                  <LandingHorizonCloudBelt
+                    composition={composition}
+                    assets={assets}
+                    quality={quality}
+                    sceneLightDirection={sceneLightDirection}
+                    emphasis
+                    reducedMotion={reducedMotion}
+                    paused={paused}
+                  />
                 </>
               ) : (
                 <LandingCloudDeck
