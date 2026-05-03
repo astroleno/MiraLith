@@ -211,11 +211,13 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
         float continuousVeil = body * verticalFalloff * (0.16 + arcBreakup * 0.18);
         float curtain = body * fineCurtain * verticalFalloff * (0.28 + arcBand * 0.72);
         float density = sideFeather * bottomFeather * arcBand * (
-          root * 0.4 +
+          root * 0.48 +
           continuousVeil * 0.34 +
-          curtain * 0.82 +
-          topMist * curtainBreakup * 0.12
+          curtain * 0.78 +
+          topMist * curtainBreakup * mix(0.04, 0.12, debugGain)
         );
+        float productionHeightGate = mix(1.0 - smoothstep(0.34, 0.72, vertical), 1.0, debugGain);
+        density *= productionHeightGate;
         vec3 horizonNormal = normalize(vLocalPosition);
         float lightSide = dot(normalize(lightDirection), horizonNormal);
         float nightGate = 1.0 - smoothstep(-0.08, 0.26, lightSide);
@@ -226,8 +228,8 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
         float screenX = gl_FragCoord.x / max(screenSize.x, 1.0);
         float moonColumn = 1.0 - smoothstep(0.055, 0.19, abs(screenX - moonColumnCenter));
         density *= mix(1.0, 0.55, moonColumn * moonColumnAvoidance);
-        density *= mix(0.42, 1.0, debugGain);
-        float gain = mix(0.34, 1.02, debugGain);
+        density *= mix(0.62, 1.0, debugGain);
+        float gain = mix(0.46, 1.02, debugGain);
         float alpha = density * intensity * gain * mix(0.72, 1.18, debugGain);
 
         if (alpha < 0.0012) {
@@ -240,12 +242,12 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
         auroraColor = mix(auroraColor, vec3(0.28, 0.4, 0.34), smoothstep(0.54, 0.98, vertical) * 0.26);
         vec3 finalColor = auroraColor * density * gain * (1.28 + root * 0.42 + curtain * 1.04);
 
-        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.046, 0.145, debugGain)));
+        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.065, 0.145, debugGain)));
       }
     `,
     transparent: true,
     blending: AdditiveBlending,
-    depthTest: true,
+    depthTest: false,
     depthWrite: false,
     side: DoubleSide
   });
@@ -313,9 +315,10 @@ export function LandingHorizonAuroraRibbon({
 
     const progress = getRuntimeOpeningProgress(0);
     const nearFade = 1 - smoothstep(0.12, 0.52, progress);
-    const farFloor = debugProfile ? 0.14 : 0.08;
+    const heroOpeningBoost = debugProfile ? nearFade : nearFade * 0.36;
+    const farFloor = debugProfile ? 0.14 : 0.16;
     const elapsed = paused || reducedMotion ? 0 : state.clock.elapsedTime;
-    const intensity = composition.aurora.intensity * visibilityBoost * Math.max(farFloor, nearFade);
+    const intensity = composition.aurora.intensity * visibilityBoost * Math.max(farFloor, heroOpeningBoost);
     localLightDirection.copy(sceneLightDirection).applyQuaternion(inverseParentWorldQuaternion).normalize();
 
     ribbon.material.uniforms.time.value = elapsed;

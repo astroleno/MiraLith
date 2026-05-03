@@ -7,7 +7,7 @@ import {
   Color,
   CustomBlending,
   FrontSide,
-  Mesh,
+  Group,
   OneMinusSrcAlphaFactor,
   RepeatWrapping,
   ShaderMaterial,
@@ -35,7 +35,8 @@ declare global {
   }
 }
 
-const CLOUD_DECK_V2_RADIUS = 1.0065;
+const CLOUD_DECK_V2_LOWER_RADIUS = 1.0048;
+const CLOUD_DECK_V2_UPPER_RADIUS = 1.0084;
 const lightDirection = new Vector3();
 const lightColor = new Color();
 
@@ -53,7 +54,7 @@ function shouldArmCloudDeckImmediately() {
   return params.has("progress") || params.get("visualTest") === "pixels";
 }
 
-function createCloudDeckV2Material(composition: LandingComposition) {
+function createCloudDeckV2Material(composition: LandingComposition, shellLayer: number) {
   return new ShaderMaterial({
     uniforms: {
       cloudDeckMap: { value: null },
@@ -62,6 +63,7 @@ function createCloudDeckV2Material(composition: LandingComposition) {
       opacity: { value: composition.earth.useClouds ? composition.earth.cloudOpacity : 0 },
       debugBoost: { value: 0 },
       qualityMix: { value: 1 },
+      shellLayer: { value: shellLayer },
       lightDir: { value: lightDirection.set(...composition.light.fixedSunDir).normalize().clone() },
       lightColor: {
         value: lightColor.setRGB(
@@ -103,6 +105,7 @@ function createCloudDeckV2Material(composition: LandingComposition) {
       uniform float opacity;
       uniform float debugBoost;
       uniform float qualityMix;
+      uniform float shellLayer;
       uniform vec3 lightDir;
       uniform vec3 lightColor;
 
@@ -291,6 +294,13 @@ function createCloudDeckV2Material(composition: LandingComposition) {
         float alpha = centerAlpha + limbAlpha + massAlpha;
         alpha *= (0.8 + closeStage * 0.16) * mix(0.9, 1.08, microBreakup) * mix(0.94, 1.06, fineFilament) * mix(1.0, 0.72, closeOnlyStage);
         alpha += closeDenseAlpha * mix(0.92, 1.1, microBreakup);
+        vec3 lowerLayerColor = mix(finalColor * vec3(0.34, 0.46, 0.64), finalColor * vec3(0.62, 0.72, 0.84), clamp(day * 0.48 + coverage * 0.2, 0.0, 1.0));
+        lowerLayerColor = mix(lowerLayerColor, lowerLayerColor * vec3(0.32, 0.46, 0.68), clamp(lowerShadow * (0.58 + sideMass * 0.28), 0.0, 0.82));
+        vec3 upperLayerColor = finalColor + vec3(0.72, 0.82, 0.92) * (topLight * 0.12 + denseCloudTop * day * 0.045);
+        finalColor = mix(lowerLayerColor, upperLayerColor, shellLayer);
+        float lowerAlpha = alpha * (0.38 + sideMass * 0.52 + closeDenseWeather * 0.18);
+        float upperAlpha = alpha * (0.58 + highCap * 0.24 + closeDenseWeather * 0.34);
+        alpha = mix(lowerAlpha, upperAlpha, shellLayer);
         alpha = clamp(alpha, 0.0, mix(0.24, 0.68, debugBoost));
 
         if (alpha < 0.0025) {
@@ -320,7 +330,7 @@ export function LandingCloudDeckV2({
   reducedMotion,
   paused
 }: LandingCloudDeckV2Props) {
-  const cloud = useRef<Mesh>(null);
+  const cloudGroup = useRef<Group>(null);
   const [cloudDeckArmed, setCloudDeckArmed] = useState(() => !emphasis || shouldArmCloudDeckImmediately());
   const cloudDeckAsset = assets.earthCloudDeck;
   const shouldLoadCloudDeck =
@@ -338,12 +348,21 @@ export function LandingCloudDeckV2({
       anisotropy: quality.tier === "high" ? 16 : 8
     }
   );
-  const material = useMemo(() => createCloudDeckV2Material(composition), [composition]);
+  const materials = useMemo(
+    () => ({
+      lower: createCloudDeckV2Material(composition, 0),
+      upper: createCloudDeckV2Material(composition, 1)
+    }),
+    [composition]
+  );
   const enabled = shouldLoadCloudDeck && Boolean(cloudDeckTexture) && !cloudDeckTextureFailed;
 
   useEffect(() => {
-    return () => material.dispose();
-  }, [material]);
+    return () => {
+      materials.lower.dispose();
+      materials.upper.dispose();
+    };
+  }, [materials]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -365,7 +384,7 @@ export function LandingCloudDeckV2({
       setCloudDeckArmed(true);
     }
 
-    if (!cloud.current || !enabled || !cloudDeckTexture) {
+    if (!cloudGroup.current || !enabled || !cloudDeckTexture) {
       return;
     }
 
@@ -374,18 +393,20 @@ export function LandingCloudDeckV2({
     const activeLightDirection = sceneLightDirection ?? lightDirection.set(...composition.light.fixedSunDir).normalize();
 
     if (!paused && !reducedMotion) {
-      cloud.current.rotation.y = elapsed * 0.028;
-      cloud.current.rotation.x = Math.sin(elapsed * 0.03) * 0.005;
-      cloud.current.rotation.z = Math.sin(elapsed * 0.026) * 0.005;
+      cloudGroup.current.rotation.y = elapsed * 0.028;
+      cloudGroup.current.rotation.x = Math.sin(elapsed * 0.03) * 0.005;
+      cloudGroup.current.rotation.z = Math.sin(elapsed * 0.026) * 0.005;
     }
 
-    material.uniforms.cloudDeckMap.value = cloudDeckTexture;
-    material.uniforms.time.value = elapsed;
-    material.uniforms.closeStage.value = closeStage;
-    material.uniforms.opacity.value = composition.earth.useClouds ? composition.earth.cloudOpacity : 0;
-    material.uniforms.debugBoost.value = emphasis ? 1 : 0;
-    material.uniforms.qualityMix.value = quality.tier === "high" ? 1 : 0.68;
-    material.uniforms.lightDir.value.copy(activeLightDirection).normalize();
+    [materials.lower, materials.upper].forEach((material) => {
+      material.uniforms.cloudDeckMap.value = cloudDeckTexture;
+      material.uniforms.time.value = elapsed;
+      material.uniforms.closeStage.value = closeStage;
+      material.uniforms.opacity.value = composition.earth.useClouds ? composition.earth.cloudOpacity : 0;
+      material.uniforms.debugBoost.value = emphasis ? 1 : 0;
+      material.uniforms.qualityMix.value = quality.tier === "high" ? 1 : 0.68;
+      material.uniforms.lightDir.value.copy(activeLightDirection).normalize();
+    });
   });
 
   if (!enabled) {
@@ -393,14 +414,25 @@ export function LandingCloudDeckV2({
   }
 
   return (
-    <mesh ref={cloud} material={material} renderOrder={3}>
-      <sphereGeometry
-        args={[
-          composition.earth.radius * CLOUD_DECK_V2_RADIUS,
-          quality.tier === "high" ? Math.max(composition.earth.segments, quality.segments, 256) : 64,
-          quality.tier === "high" ? 128 : 36
-        ]}
-      />
-    </mesh>
+    <group ref={cloudGroup}>
+      <mesh material={materials.lower} renderOrder={3}>
+        <sphereGeometry
+          args={[
+            composition.earth.radius * CLOUD_DECK_V2_LOWER_RADIUS,
+            quality.tier === "high" ? Math.max(composition.earth.segments, quality.segments, 256) : 64,
+            quality.tier === "high" ? 128 : 36
+          ]}
+        />
+      </mesh>
+      <mesh material={materials.upper} renderOrder={4}>
+        <sphereGeometry
+          args={[
+            composition.earth.radius * CLOUD_DECK_V2_UPPER_RADIUS,
+            quality.tier === "high" ? Math.max(composition.earth.segments, quality.segments, 256) : 64,
+            quality.tier === "high" ? 128 : 36
+          ]}
+        />
+      </mesh>
+    </group>
   );
 }

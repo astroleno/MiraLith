@@ -162,9 +162,9 @@ function createHorizonCloudMaterial(composition: LandingComposition) {
           synthetic * 0.42 +
           fbm(baseUv * vec2(42.0, 17.0) + vec2(time * 0.002, 1.7)) * 0.32 +
           fbm(baseUv * vec2(118.0, 43.0) - wind * 9.0) * 0.26;
-        float cloudPresence = smoothstep(0.3, 0.68, mapCoverage + mapThickness * 0.42 + highCap * 0.18);
-        float beltCore = smoothstep(0.36, 0.72, mapCoverage + mapThickness * 0.35 + brokenEdge * 0.18);
-        float edgeGap = smoothstep(0.24, 0.62, brokenEdge + mapCoverage * 0.35 + mapThickness * 0.24);
+        float cloudPresence = smoothstep(0.44, 0.82, mapCoverage + mapThickness * 0.45 + highCap * 0.18);
+        float beltCore = smoothstep(0.48, 0.82, mapCoverage + mapThickness * 0.45 + brokenEdge * 0.16);
+        float edgeGap = smoothstep(0.34, 0.72, brokenEdge * 0.36 + mapCoverage * 0.44 + mapThickness * 0.36);
         float coverage = clamp(mapCoverage * (0.72 + beltCore * 0.28), 0.0, 1.0) * cloudPresence;
         float thickness = clamp(mapThickness * (0.78 + beltCore * 0.24), 0.0, 1.0) * cloudPresence;
         float sideMass = thickness * pathMask * edgeGap * (0.42 + coverage * 0.32);
@@ -184,8 +184,8 @@ function createHorizonCloudMaterial(composition: LandingComposition) {
         finalColor += vec3(0.08, 0.18, 0.36) * sideMass * 0.22;
         finalColor += vec3(0.95, 0.48, 0.22) * twilight * highCap * 0.035;
 
-        float limbAlpha = horizonMask * coverage * edgeGap * opacity * (0.046 + closeStage * 0.072 + debugBoost * 0.11);
-        float volumeAlpha = horizonMask * sideMass * opacity * (0.034 + closeStage * 0.052 + debugBoost * 0.07);
+        float limbAlpha = horizonMask * coverage * edgeGap * opacity * (0.052 + closeStage * 0.082 + debugBoost * 0.12);
+        float volumeAlpha = horizonMask * sideMass * opacity * (0.042 + closeStage * 0.058 + debugBoost * 0.076);
         float alpha = limbAlpha + volumeAlpha;
         alpha *= smoothstep(0.18, 0.72, coverage + thickness * 0.38) * cloudPresence;
         alpha *= mix(0.64, 1.0, pathMask);

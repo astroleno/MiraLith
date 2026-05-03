@@ -213,7 +213,7 @@ export function EarthMoonScene({
   const useHeroAuroraProfile = auroraProfile === "hero";
   const auroraVisibilityBoost = debugAurora
     ? (auroraProfile === "debug" ? 2.6 : 2.2)
-    : 0.9;
+    : 1.05;
 
   const lightColor = useMemo(
     () => new Color(composition.light.color[0], composition.light.color[1], composition.light.color[2]),
