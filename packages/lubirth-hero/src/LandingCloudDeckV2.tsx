@@ -163,6 +163,8 @@ function createCloudDeckV2Material(composition: LandingComposition, shellLayer: 
         vec2 wind = vec2(time * 0.0054, time * 0.0011);
         vec2 shearStep = viewShear * (0.0026 + pathVolume * 0.0108 + closeStage * 0.0014);
         vec2 uv = baseUv + wind + viewShear * 0.0018;
+        vec2 lightUv = vec2(dot(sunDirection, normalize(vWorldTangentA)), dot(sunDirection, normalize(vWorldTangentB)));
+        lightUv /= max(length(lightUv), 0.001);
 
         vec4 tap0 = texture2D(cloudDeckMap, uv - shearStep * 3.0);
         vec4 tap1 = texture2D(cloudDeckMap, uv - shearStep * 2.0);
@@ -173,10 +175,15 @@ function createCloudDeckV2Material(composition: LandingComposition, shellLayer: 
         vec4 tap6 = texture2D(cloudDeckMap, uv + shearStep * 3.0);
 
         vec4 deck = (tap0 * 0.07 + tap1 * 0.11 + tap2 * 0.16 + tap3 * 0.22 + tap4 * 0.16 + tap5 * 0.11 + tap6 * 0.07) / 0.9;
+        deck = mix(deck, tap3, smoothstep(0.68, 1.0, closeStage) * 0.72);
         float coverage = clamp(deck.r, 0.0, 1.0);
         float thickness = clamp(deck.g * 0.86 + (tap1.g + tap5.g) * 0.08, 0.0, 1.0);
         float ao = clamp(deck.b * 0.82 + (tap0.b + tap1.b) * 0.12, 0.0, 1.0);
         float highCap = clamp(deck.a * 0.74 + (tap4.a + tap5.a + tap6.a) * 0.1, 0.0, 1.0);
+        float sunColumnDensity =
+          texture2D(cloudDeckMap, uv - lightUv * 0.0022).g * 0.45 +
+          texture2D(cloudDeckMap, uv - lightUv * 0.0052).g * 0.35 +
+          texture2D(cloudDeckMap, uv - lightUv * 0.0105).g * 0.2;
         float shearDepth = clamp(max(tap0.g + tap1.g - tap5.g - tap6.g, 0.0) * 0.5 + abs(tap2.r - tap4.r) * 0.45, 0.0, 1.0);
         float synoptic = smoothstep(0.2, 0.78, deck.r * 0.48 + thickness * 0.42 + highCap * 0.24);
         float frontBand = smoothstep(0.16, 0.46, abs(tap0.r - tap6.r) + abs(tap1.g - tap5.g) * 0.74);
@@ -243,6 +250,7 @@ function createCloudDeckV2Material(composition: LandingComposition, shellLayer: 
         float lowerShadow = clamp(
           ao * (0.34 + sideMass * 1.22) +
           shearDepth * pathVolume * 0.66 +
+          sunColumnDensity * (0.22 + pathVolume * 0.2) * day +
           (1.0 - cloudTopNdl) * highCap * day * 0.22,
           0.0,
           1.0
@@ -254,19 +262,21 @@ function createCloudDeckV2Material(composition: LandingComposition, shellLayer: 
         vec3 cloudBase = mix(vec3(0.045, 0.07, 0.12), vec3(0.58, 0.66, 0.75), clamp(day * 0.68 + aerialLift * 0.24, 0.0, 1.0));
         vec3 cloudTop = mix(vec3(0.56, 0.66, 0.76), vec3(0.9, 0.91, 0.86), clamp(highCap * 0.8 + day * 0.12, 0.0, 1.0));
         vec3 finalColor = mix(cloudBase, cloudTop, clamp(highCap * 0.55 + coverage * 0.12 + day * 0.16, 0.0, 1.0));
+        float internalRelief = clamp((microBreakup - 0.5) * 0.7 + (fineFilament - 0.5) * 0.48 + shearDepth * 0.28, -0.42, 0.58);
         finalColor *= lightColor * (0.2 + day * 0.92 + twilight * 0.09);
         finalColor = mix(finalColor, finalColor * vec3(0.28, 0.39, 0.58), clamp(lowerShadow * (0.62 + pathVolume * 0.32 + synoptic * 0.12), 0.0, 0.9));
+        finalColor *= mix(0.72, 1.16, clamp(internalRelief + 0.5, 0.0, 1.0));
         finalColor += vec3(0.82, 0.9, 0.96) * topLight * 0.22;
         finalColor += vec3(0.08, 0.22, 0.46) * sideMass * (0.16 + day * 0.16 + night * 0.12);
         finalColor += vec3(0.95, 0.48, 0.2) * twilight * highCap * 0.04;
         float closeOnlyStage = smoothstep(0.74, 1.0, closeStage);
         finalColor *= (0.94 + microBreakup * 0.07 + fineFilament * 0.035) * mix(1.0, 0.8, closeStage) * mix(1.0, 0.86, closeOnlyStage);
 
-        float productionSoftness = mix(0.7, 1.0, debugBoost);
-        float centerAlphaScale = mix(0.034 + closeStage * 0.018, 0.018 + debugBoost * 0.016, closeOnlyStage);
+        float productionSoftness = 1.0;
+        float centerAlphaScale = mix(0.046 + closeStage * 0.04, 0.026 + debugBoost * 0.02, closeOnlyStage);
         float centerAlpha = coverage * opacity * centerAlphaScale * (0.58 + highCap * 0.42) * productionSoftness;
         float existingCloud = smoothstep(0.28, 0.72, baseCoverage);
-        float denseCloud = smoothstep(0.46, 0.86, baseThickness) * existingCloud;
+        float denseCloud = smoothstep(0.42, 0.82, baseThickness) * existingCloud;
         float denseCloudTop = smoothstep(0.34, 0.74, baseHighCap) * denseCloud;
         float synopticFlow = noise2(baseUv * vec2(18.0, 7.0) + wind * 10.0);
         float cirrusFlow =
@@ -277,7 +287,7 @@ function createCloudDeckV2Material(composition: LandingComposition, shellLayer: 
           clearWeatherSlot *
           closeOnlyStage *
           smoothstep(-0.12, 0.52, ndl);
-        centerAlpha += denseCloud * opacity * (0.028 + closeStage * 0.052) * (0.62 + denseCloudTop * 0.38) * productionSoftness;
+        centerAlpha += denseCloud * opacity * (0.22 + closeStage * 0.22) * (0.62 + denseCloudTop * 0.38) * productionSoftness;
         centerAlpha += closeCirrus * opacity * 0.038 * productionSoftness;
         float closeDenseWeather = denseCloud * closeOnlyStage * smoothstep(-0.12, 0.46, ndl);
         finalColor += vec3(0.72, 0.82, 0.92) * denseCloudTop * day * (0.055 + closeDenseWeather * 0.08);
@@ -290,18 +300,27 @@ function createCloudDeckV2Material(composition: LandingComposition, shellLayer: 
           edgeBreak *
           mix(0.74, 1.0, qualityMix);
         float massAlpha = sideMass * opacity * (0.08 + closeStage * 0.045 + debugBoost * 0.08) * edgeBreak;
-        float closeDenseAlpha = closeDenseWeather * opacity * (0.052 + denseCloudTop * 0.074) * productionSoftness;
+        float closeDenseAlpha = closeDenseWeather * opacity * (0.2 + denseCloudTop * 0.18) * productionSoftness;
         float alpha = centerAlpha + limbAlpha + massAlpha;
         alpha *= (0.8 + closeStage * 0.16) * mix(0.9, 1.08, microBreakup) * mix(0.94, 1.06, fineFilament) * mix(1.0, 0.72, closeOnlyStage);
         alpha += closeDenseAlpha * mix(0.92, 1.1, microBreakup);
+        float opticalDepth =
+          (coverage * 0.18 + thickness * 0.82 + denseCloud * 0.74 + sideMass * 0.36) *
+          pathLength *
+          opacity *
+          (0.22 + closeStage * 0.2 + debugBoost * 0.16);
+        float opticalAlpha = (1.0 - exp(-opticalDepth)) * edgeBreak * (0.56 + pathVolume * 0.28 + day * 0.12);
+        alpha = max(alpha, opticalAlpha * mix(0.68, 1.0, shellLayer));
         vec3 lowerLayerColor = mix(finalColor * vec3(0.34, 0.46, 0.64), finalColor * vec3(0.62, 0.72, 0.84), clamp(day * 0.48 + coverage * 0.2, 0.0, 1.0));
         lowerLayerColor = mix(lowerLayerColor, lowerLayerColor * vec3(0.32, 0.46, 0.68), clamp(lowerShadow * (0.58 + sideMass * 0.28), 0.0, 0.82));
         vec3 upperLayerColor = finalColor + vec3(0.72, 0.82, 0.92) * (topLight * 0.12 + denseCloudTop * day * 0.045);
         finalColor = mix(lowerLayerColor, upperLayerColor, shellLayer);
-        float lowerAlpha = alpha * (0.38 + sideMass * 0.52 + closeDenseWeather * 0.18);
-        float upperAlpha = alpha * (0.58 + highCap * 0.24 + closeDenseWeather * 0.34);
+        float lowerAlpha = alpha * (0.86 + sideMass * 0.72 + closeDenseWeather * 0.34);
+        float upperAlpha = alpha * (0.94 + highCap * 0.34 + closeDenseWeather * 0.5);
         alpha = mix(lowerAlpha, upperAlpha, shellLayer);
-        alpha = clamp(alpha, 0.0, mix(0.24, 0.68, debugBoost));
+        float centerSuppress = clamp(limb * 1.25 + pathVolume * 0.32 + debugBoost * 0.5, 0.0, 1.0);
+        alpha *= centerSuppress;
+        alpha = clamp(alpha, 0.0, mix(0.9, 0.96, debugBoost));
 
         if (alpha < 0.0025) {
           discard;

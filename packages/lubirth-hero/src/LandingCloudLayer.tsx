@@ -46,9 +46,8 @@ interface CloudShellLayer {
 const lightDirection = new Vector3();
 const color = new Color();
 const CLOUD_SHELLS: CloudShellLayer[] = [
-  { radius: 1.012, opacity: 0.35, offset: 0, parallax: 0.0052, shadow: 0.48, baseDepth: 1.08, topCap: 0.34, rimFocus: 0.15, edgeBreak: 0.82 },
-  { radius: 1.038, opacity: 0.18, offset: 0.018, parallax: 0.0084, shadow: 0.22, baseDepth: 0.58, topCap: 1.16, rimFocus: 0.72, edgeBreak: 1.18, highOnly: true },
-  { radius: 1.046, opacity: 0.21, offset: 0.031, parallax: 0.0072, shadow: 0.12, baseDepth: 0.28, topCap: 0.74, rimFocus: 0.36, edgeBreak: 1 }
+  { radius: 1.01, opacity: 1.42, offset: 0, parallax: 0.0028, shadow: 0.62, baseDepth: 1.2, topCap: 0.48, rimFocus: 0.1, edgeBreak: 0.82 },
+  { radius: 1.026, opacity: 0.24, offset: 0.018, parallax: 0.0054, shadow: 0.22, baseDepth: 0.44, topCap: 0.86, rimFocus: 0.62, edgeBreak: 1.08, highOnly: true }
 ];
 
 const smoothstep = (edge0: number, edge1: number, value: number) => {
@@ -139,12 +138,18 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
         return vec2(fract(u), clamp(v, 0.001, 0.999));
       }
 
-      float cloudMask(vec2 uv) {
+      float cloudRaw(vec2 uv) {
         vec2 wrappedUv = vec2(fract(uv.x), clamp(uv.y, 0.001, 0.999));
-        float raw = texture2D(cloudMap, wrappedUv).r;
-        float wisps = smoothstep(0.14, 0.52, raw);
-        float core = smoothstep(0.34, 0.78, raw);
-        return clamp(wisps * 0.68 + core * 0.44, 0.0, 1.0);
+        return texture2D(cloudMap, wrappedUv).r;
+      }
+
+      float cloudMask(vec2 uv) {
+        float raw = cloudRaw(uv);
+        float wisps = smoothstep(0.12, 0.5, raw);
+        float core = smoothstep(0.34, 0.72, raw);
+        float brightCore = smoothstep(0.58, 0.88, raw);
+        float brokenEdge = wisps * (1.0 - smoothstep(0.68, 0.96, raw));
+        return clamp(wisps * 0.12 + core * 0.68 + brightCore * 0.54 + brokenEdge * 0.08, 0.0, 1.0);
       }
 
       float hash21(vec2 p) {
@@ -194,11 +199,16 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
         vec2 parallax = viewShear * parallaxScale * (0.32 + limb * 0.58);
         vec2 sunOffset = sunShear * 0.012;
 
+        float rawBottom = cloudRaw(baseUv + wind - parallax * 0.72);
+        float rawMid = cloudRaw(baseUv + wind + parallax * 0.12);
+        float rawTop = cloudRaw(baseUv + wind + parallax * 0.64);
         float bottom = cloudMask(baseUv + wind - parallax * 0.72);
-        float mid = cloudMask(baseUv + wind + parallax * 0.16);
-        float top = cloudMask(baseUv + wind + parallax * 0.92);
-        float shadowMask = cloudMask(baseUv + wind + sunOffset * (1.25 + limb * 0.85));
-        float density = clamp(bottom * 0.3 + mid * 0.46 + top * 0.3, 0.0, 1.0);
+        float mid = cloudMask(baseUv + wind + parallax * 0.12);
+        float top = cloudMask(baseUv + wind + parallax * 0.64);
+        float shadowMask = cloudMask(baseUv + wind + sunOffset * (1.8 + limb * 0.9));
+        float rawDensity = clamp(rawBottom * 0.26 + rawMid * 0.5 + rawTop * 0.24, 0.0, 1.0);
+        float density = clamp(bottom * 0.24 + mid * 0.54 + top * 0.22, 0.0, 1.0);
+        float opaqueCore = smoothstep(0.28, 0.62, rawDensity);
         float baseMass = max(bottom * (0.94 + baseDepth * 0.22) - top * 0.44, 0.0) * limbVolume * baseDepth;
         float topCap = max(top - mid * 0.5, 0.0) * smoothstep(0.42, 0.9, rim) * topCapStrength;
         float layerSeparation = abs(top - bottom);
@@ -214,14 +224,14 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
           1.0
         );
         float selfShadow = clamp(
-          shadowMask * shadowStrength * (0.76 + density * 0.64 + limbVolume * 0.42) + baseMass * 0.58,
+          shadowMask * shadowStrength * (0.96 + density * 0.72 + limbVolume * 0.5) + baseMass * 0.72,
           0.0,
-          0.82
+          0.9
         );
         float light = mix(0.18, 1.02, day) * (1.0 - selfShadow) + twilight * 0.16 + limb * day * 0.1;
 
-        vec3 cloudShadow = mix(vec3(0.04, 0.075, 0.14), vec3(0.28, 0.36, 0.46), mid);
-        vec3 cloudLit = mix(vec3(0.68, 0.74, 0.8), vec3(1.0, 0.985, 0.92), smoothstep(0.18, 0.82, top));
+        vec3 cloudShadow = mix(vec3(0.16, 0.22, 0.32), vec3(0.44, 0.52, 0.62), mid);
+        vec3 cloudLit = mix(vec3(0.78, 0.83, 0.88), vec3(1.0, 0.99, 0.94), smoothstep(0.12, 0.76, rawTop));
         vec3 cloudBase = mix(cloudShadow, cloudLit, clamp(day * 0.76 + top * 0.3, 0.0, 1.0));
         vec3 warmEdge = vec3(1.0, 0.62, 0.28) * twilight * (0.06 + thickness * 0.06);
         vec3 blueNight = vec3(0.035, 0.11, 0.25) * night * (0.12 + thickness * 0.2);
@@ -231,11 +241,7 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
           blueNight;
         finalColor += vec3(0.56, 0.66, 0.78) * limbVolume * density * thickness * (0.05 + day * 0.08);
         finalColor += vec3(0.86, 0.92, 0.98) * topCap * day * (0.22 + debugBoost * 0.08);
-        finalColor = mix(
-          finalColor,
-          finalColor * vec3(0.48, 0.58, 0.72),
-          clamp(baseMass * (1.02 - debugBoost * 0.2), 0.0, 0.7)
-        );
+        finalColor = mix(finalColor, finalColor * vec3(0.66, 0.74, 0.86), clamp(baseMass * (0.78 - debugBoost * 0.18), 0.0, 0.58));
 
         float edgeTrim = 1.0 - smoothstep(0.86, 0.98, rim);
         float extremeGrazing = smoothstep(0.82, 0.99, rim);
@@ -244,20 +250,20 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
           noise2(baseUv * vec2(151.0, 67.0) + vec2(shellOffset * 19.0, shellOffset * 53.0)) * 0.38;
         float edgeBreakup = smoothstep(0.34, 0.72, edgeNoise + density * 0.16 - extremeGrazing * 0.1);
         float brokenEdge = mix(1.0, mix(0.18, 1.0, edgeBreakup), extremeGrazing * edgeBreakStrength * (1.0 - debugBoost * 0.18));
-        float alpha = (density * 0.36 + thickness * 0.52 + limbVolume * density * 0.18) *
+        float alpha = (density * 0.42 + thickness * 0.44 + opaqueCore * 1.45 + limbVolume * density * 0.18) *
           opacity *
           shellOpacity *
-          shellFade *
+          (shellFade + closeStage * 0.72) *
           brokenEdge *
           mix(0.58, 1.0, edgeTrim) *
-          mix(0.82, 1.08, closeStage) *
+          mix(1.0, 1.72, closeStage) *
           mix(1.0, 1.82, debugBoost);
 
         if (alpha < 0.003) {
           discard;
         }
 
-        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.28, 0.52, debugBoost)));
+        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.98, 1.0, debugBoost)));
       }
     `,
     transparent: true,

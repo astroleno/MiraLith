@@ -29,6 +29,12 @@ interface LandingAuroraOvalProps {
   paused?: boolean;
 }
 
+declare global {
+  interface Window {
+    __MiraLithLuBirthAuroraOvalActive?: boolean;
+  }
+}
+
 const DEG_TO_RAD = Math.PI / 180;
 const RAD_TO_DEG = 180 / Math.PI;
 const colorA = new Color();
@@ -66,7 +72,7 @@ function createAuroraOvalGeometry(composition: LandingComposition, lowProfile: b
   const [minLatDeg, maxLatDeg] = composition.aurora.latitudeBandDeg;
   const centerLatDeg = (minLatDeg + maxLatDeg) * 0.5 - 3.2;
   const radius = composition.earth.radius;
-  const maxHeight = radius * (lowProfile ? 0.088 : 0.145);
+  const maxHeight = radius * (lowProfile ? 0.018 : 0.034);
   const baseRadius = radius * 1.014;
 
   for (let y = 0; y <= heightSegments; y += 1) {
@@ -226,7 +232,9 @@ function createAuroraOvalMaterial(composition: LandingComposition, lowProfile: b
 
         vec3 sunDirection = normalize(lightDirection);
         float sunSide = dot(normalize(vWorldNormal), sunDirection);
-        float nightMask = 0.16 + 0.84 * (1.0 - smoothstep(-0.08, 0.26, sunSide));
+        float nightGate = 1.0 - smoothstep(-0.1, 0.22, sunSide);
+        float twilightGate = 1.0 - smoothstep(0.05, 0.38, abs(sunSide));
+        float nightMask = max(nightGate, twilightGate * 0.45);
 
         float latDeg = abs(asin(clamp(vLocalNormal.y, -1.0, 1.0)) * ${RAD_TO_DEG.toFixed(8)});
         float latMask = 1.0 - smoothstep(latHalfWidthDeg, latHalfWidthDeg + 5.4, abs(latDeg - latCenterDeg));
@@ -264,7 +272,7 @@ function createAuroraOvalMaterial(composition: LandingComposition, lowProfile: b
         vec3 highRed = vec3(0.28, 0.045, 0.035) * smoothstep(0.68, 0.98, vertical) * curtain * 0.025;
         vec3 finalColor = auroraColor * density * (3.1 + strands * 0.58 + rootBand * 0.9) + highRed;
 
-        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, 0.34));
+        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, ${lowProfile ? "0.14" : "0.34"}));
       }
     `,
     transparent: true,
@@ -311,11 +319,18 @@ export function LandingAuroraOval({
   }, [composition, enabled, lowProfile, quality.tier]);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.__MiraLithLuBirthAuroraOvalActive = enabled;
+    }
+
     return () => {
+      if (typeof window !== "undefined") {
+        window.__MiraLithLuBirthAuroraOvalActive = false;
+      }
       oval?.geometry.dispose();
       oval?.material.dispose();
     };
-  }, [oval]);
+  }, [enabled, oval]);
 
   useFrame((state) => {
     if (!aurora.current || !oval) {

@@ -247,7 +247,7 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
     `,
     transparent: true,
     blending: AdditiveBlending,
-    depthTest: false,
+    depthTest: true,
     depthWrite: false,
     side: DoubleSide
   });

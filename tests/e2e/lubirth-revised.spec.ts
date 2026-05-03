@@ -5,6 +5,7 @@ test.setTimeout(120_000);
 declare global {
   interface Window {
     __MiraLithLuBirthAuroraEnabled?: boolean;
+    __MiraLithLuBirthAuroraOvalActive?: boolean;
     __MiraLithLuBirthAuroraProfile?: string;
     __MiraLithLuBirthAirglowActive?: boolean;
     __MiraLithLuBirthAtmosphereStackActive?: boolean;
@@ -153,8 +154,8 @@ test("uses high-detail Earth and sky assets for the nasa profile without project
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomActive ?? false), { timeout: 25_000 })
     .toBe(true);
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthHorizonAuroraRibbonActive ?? false), { timeout: 25_000 })
-    .toBe(true);
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthAuroraOvalActive ?? false), { timeout: 25_000 })
+    .toBe(false);
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthAirglowActive ?? false), { timeout: 25_000 })
     .toBe(false);
@@ -336,7 +337,7 @@ test("uses the IP geo endpoint when visitor location has no manual override", as
     .toBe("America/Los_Angeles");
 });
 
-test("uses the horizon aurora ribbon for high quality aurora debug", async ({ page }) => {
+test("uses the earth-local aurora oval for high quality aurora debug", async ({ page }) => {
   await page.goto("/lubirth-revised?progress=0&copy=hidden&profile=debug-aurora&quality=high&visualTest=pixels");
   await expect(page.locator("canvas")).toHaveCount(1);
   await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-render-profile", "debug-aurora");
@@ -347,7 +348,7 @@ test("uses the horizon aurora ribbon for high quality aurora debug", async ({ pa
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedAuroraCurtainActive ?? false), { timeout: 25_000 })
     .toBe(false);
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthHorizonAuroraRibbonActive ?? false), { timeout: 25_000 })
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthAuroraOvalActive ?? false), { timeout: 25_000 })
     .toBe(true);
 });
 

@@ -47,7 +47,7 @@ const HIGH_DETAIL_EARTH_ASSETS: Partial<LandingAssetManifest> = {
     width: 8192,
     height: 4096,
     format: "webp",
-    colorSpace: "srgb"
+    colorSpace: "linear"
   },
   earthNormal: {
     id: "earth-normal-2k",

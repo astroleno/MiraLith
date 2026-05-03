@@ -24,7 +24,7 @@ export const DEFAULT_LUBIRTH_ASSETS: LandingAssetManifest = {
     width: 2048,
     height: 1024,
     format: "jpg",
-    colorSpace: "srgb"
+    colorSpace: "linear"
   },
   earthCloudDeck: LUBIRTH_CLOUD_DECK_TEXTURE,
   earthHorizonCloudStrip: {

@@ -166,8 +166,8 @@ export function EarthMoonScene({
   onMoonTextureReady,
   useCloudDeckV2 = true,
   useAirglowV2 = true,
-  useAuroraOval = false,
-  useHorizonAuroraRibbon = true,
+  useAuroraOval = true,
+  useHorizonAuroraRibbon = false,
   showAuroraInAll = false
 }: EarthMoonSceneProps) {
   const earthGroup = useRef<Group>(null);
@@ -197,7 +197,7 @@ export function EarthMoonScene({
   const showMoon = isNasaProfile || isCleanProfile;
   const showClouds = isNasaProfile || debugClouds;
   const showAtmosphere = isNasaProfile || debugAtmosphere;
-  const showAurora = debugAurora || (isNasaProfile && quality.aurora);
+  const showAurora = debugAurora && quality.aurora;
   const showProjectedHorizonComposite = false;
   const showProjectedLimbScattering = showAtmosphere && quality.tier !== "fallback";
   const showVolumetricClouds =
@@ -563,9 +563,19 @@ export function EarthMoonScene({
           />
         ) : null}
         {showVolumetricClouds ? (
-          assets.earthCloudDeck ? (
-            useCloudDeckV2 ? (
-              <>
+          <>
+            <LandingCloudLayer
+              composition={composition}
+              assets={assets}
+              quality={quality}
+              sceneLightDirection={sceneLightDirection}
+              emphasis={debugClouds}
+              reducedMotion={reducedMotion}
+              paused={paused}
+            />
+            {assets.earthCloudDeck ? (
+              useCloudDeckV2 ? (
+                <>
                 <LandingCloudDeckV2
                   composition={composition}
                   assets={assets}
@@ -584,29 +594,20 @@ export function EarthMoonScene({
                   reducedMotion={reducedMotion}
                   paused={paused}
                 />
-              </>
-            ) : (
-              <LandingCloudDeck
-                composition={composition}
-                assets={assets}
-                quality={quality}
-                sceneLightDirection={sceneLightDirection}
-                emphasis={debugClouds}
-                reducedMotion={reducedMotion}
-                paused={paused}
-              />
-            )
-          ) : (
-            <LandingCloudLayer
-              composition={composition}
-              assets={assets}
-              quality={quality}
-              sceneLightDirection={sceneLightDirection}
-              emphasis={debugClouds}
-              reducedMotion={reducedMotion}
-              paused={paused}
-            />
-          )
+                </>
+              ) : (
+                <LandingCloudDeck
+                  composition={composition}
+                  assets={assets}
+                  quality={quality}
+                  sceneLightDirection={sceneLightDirection}
+                  emphasis={debugClouds}
+                  reducedMotion={reducedMotion}
+                  paused={paused}
+                />
+              )
+            ) : null}
+          </>
         ) : null}
         {showLegacyAurora ? (
           useHorizonAuroraRibbon ? (
