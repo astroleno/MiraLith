@@ -125,7 +125,7 @@ for (let y = 0; y < height; y += 1) {
       Math.pow(smoothstep(0.24, 0.78, smallBlur[index] * 0.72 + weatherCore * 0.18 + synopticEdge * 0.16) * highCore, 0.82) *
       (1 - edge * 0.2)
     );
-    const synopticCoverage = clamp01(coverage[index] * 0.64 + mediumBlur[index] * 0.22 + weatherCore * 0.26);
+    const synopticCoverage = clamp01(coverage[index] * 0.78 + mediumBlur[index] * 0.14 + weatherCore * 0.08);
     const target = index * 4;
 
     output[target] = byte(synopticCoverage);

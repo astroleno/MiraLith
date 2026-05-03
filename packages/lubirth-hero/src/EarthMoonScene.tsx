@@ -24,6 +24,7 @@ import { LandingCloudDeckV2 } from "./LandingCloudDeckV2";
 import { LandingCloudLayer } from "./LandingCloudLayer";
 import { LandingEarth } from "./LandingEarth";
 import { LandingHorizonAuroraRibbon } from "./LandingHorizonAuroraRibbon";
+import { LandingHorizonCloudBelt } from "./LandingHorizonCloudBelt";
 import { LandingLimbAirglowV2 } from "./LandingLimbAirglowV2";
 import { LandingMoon } from "./LandingMoon";
 import { LandingPostBloom } from "./LandingPostBloom";
@@ -564,15 +565,26 @@ export function EarthMoonScene({
         {showVolumetricClouds ? (
           assets.earthCloudDeck ? (
             useCloudDeckV2 ? (
-              <LandingCloudDeckV2
-                composition={composition}
-                assets={assets}
-                quality={quality}
-                sceneLightDirection={sceneLightDirection}
-                emphasis={debugClouds}
-                reducedMotion={reducedMotion}
-                paused={paused}
-              />
+              <>
+                <LandingCloudDeckV2
+                  composition={composition}
+                  assets={assets}
+                  quality={quality}
+                  sceneLightDirection={sceneLightDirection}
+                  emphasis={debugClouds}
+                  reducedMotion={reducedMotion}
+                  paused={paused}
+                />
+                <LandingHorizonCloudBelt
+                  composition={composition}
+                  assets={assets}
+                  quality={quality}
+                  sceneLightDirection={sceneLightDirection}
+                  emphasis={debugClouds}
+                  reducedMotion={reducedMotion}
+                  paused={paused}
+                />
+              </>
             ) : (
               <LandingCloudDeck
                 composition={composition}

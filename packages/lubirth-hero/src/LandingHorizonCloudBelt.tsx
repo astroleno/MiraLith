@@ -28,7 +28,7 @@ interface LandingHorizonCloudBeltProps {
   paused?: boolean;
 }
 
-const HORIZON_CLOUD_RADIUS = 1.018;
+const HORIZON_CLOUD_RADIUS = 1.0115;
 const lightDirection = new Vector3();
 const lightColor = new Color();
 
@@ -132,10 +132,9 @@ function createHorizonCloudMaterial(composition: LandingComposition) {
         vec3 sunDirection = normalize(lightDir);
         float viewDot = max(dot(n, viewDirection), 0.001);
         float rim = 1.0 - clamp(viewDot, 0.0, 1.0);
-        float pathLength = clamp(1.0 / (0.14 + viewDot * 1.5), 0.5, 5.2);
-        float pathMask = smoothstep(0.54, 2.7, pathLength);
-        float horizonMask = smoothstep(0.52, 0.88, rim) * (1.0 - smoothstep(0.997, 1.0, rim));
-        float centerMask = 1.0 - smoothstep(0.28, 0.72, rim);
+        float pathLength = clamp(1.0 / (0.2 + viewDot * 1.8), 0.42, 4.2);
+        float pathMask = smoothstep(0.82, 2.85, pathLength);
+        float horizonMask = smoothstep(0.74, 0.94, rim) * (1.0 - smoothstep(0.989, 1.0, rim));
 
         vec2 baseUv = sphereUv(localN);
         vec2 viewShear = vec2(dot(viewDirection, vWorldTangentA), dot(viewDirection, vWorldTangentB));
@@ -159,32 +158,32 @@ function createHorizonCloudMaterial(composition: LandingComposition) {
           fbm(baseUv * vec2(18.0, 9.0) + wind * 16.0) * 0.5 +
           fbm(baseUv * vec2(52.0, 19.0) + vec2(3.7, 1.2)) * 0.32 +
           fbm(baseUv * vec2(118.0, 43.0) - wind * 9.0) * 0.18;
-        float horizonCoverage = smoothstep(0.34, 0.78, synthetic + pathMask * 0.28 + mapCoverage * 0.26);
-        float coverage = clamp(mapCoverage * 0.44 + horizonCoverage * 0.72, 0.0, 1.0);
-        float thickness = clamp(mapThickness * 0.48 + horizonCoverage * (0.58 + pathMask * 0.28), 0.0, 1.0);
-        float sideMass = thickness * pathMask * (0.72 + coverage * 0.34);
+        float horizonCoverage = smoothstep(0.42, 0.82, synthetic * 0.28 + pathMask * 0.14 + mapCoverage * 0.54 + mapThickness * 0.28);
+        float coverage = clamp(mapCoverage * 0.62 + horizonCoverage * 0.38, 0.0, 1.0);
+        float thickness = clamp(mapThickness * 0.66 + horizonCoverage * (0.32 + pathMask * 0.2), 0.0, 1.0);
+        float sideMass = thickness * pathMask * (0.48 + coverage * 0.28);
 
         float ndl = dot(n, sunDirection);
         float day = smoothstep(-0.2, 0.38, ndl);
         float twilight = 1.0 - smoothstep(0.02, 0.42, abs(ndl));
         float underside = clamp(mapAo * 0.42 + sideMass * 0.62 + max(a.r - e.r, 0.0) * pathMask * 0.38, 0.0, 1.0);
-        float topLight = (highCap * 0.55 + horizonCoverage * 0.28) * day * (0.62 + pathMask * 0.6);
+        float topLight = (highCap * 0.48 + horizonCoverage * 0.16) * day * (0.54 + pathMask * 0.42);
 
         vec3 cloudBase = mix(vec3(0.04, 0.065, 0.105), vec3(0.54, 0.62, 0.7), clamp(day * 0.72 + coverage * 0.16, 0.0, 1.0));
-        vec3 cloudTop = mix(vec3(0.64, 0.72, 0.82), vec3(1.08, 1.04, 0.94), clamp(highCap * 0.62 + horizonCoverage * 0.28, 0.0, 1.0));
+        vec3 cloudTop = mix(vec3(0.62, 0.7, 0.78), vec3(0.88, 0.9, 0.86), clamp(highCap * 0.62 + horizonCoverage * 0.28, 0.0, 1.0));
         vec3 finalColor = mix(cloudBase, cloudTop, clamp(highCap * 0.48 + coverage * 0.22, 0.0, 1.0));
         finalColor *= lightColor * (0.24 + day * 0.92 + twilight * 0.08);
         finalColor = mix(finalColor, finalColor * vec3(0.28, 0.38, 0.54), clamp(underside * 0.78, 0.0, 0.86));
-        finalColor += vec3(0.96, 0.99, 1.0) * topLight * 0.42;
-        finalColor += vec3(0.08, 0.18, 0.36) * sideMass * 0.26;
+        finalColor += vec3(0.86, 0.93, 1.0) * topLight * 0.24;
+        finalColor += vec3(0.08, 0.18, 0.36) * sideMass * 0.22;
         finalColor += vec3(0.95, 0.48, 0.22) * twilight * highCap * 0.035;
 
-        float centerAlpha = centerMask * coverage * opacity * 0.055;
-        float limbAlpha = horizonMask * coverage * opacity * (0.22 + closeStage * 0.2 + debugBoost * 0.14);
-        float volumeAlpha = horizonMask * sideMass * opacity * (0.18 + closeStage * 0.12 + debugBoost * 0.08);
-        float alpha = centerAlpha + limbAlpha + volumeAlpha;
+        float limbAlpha = horizonMask * coverage * opacity * (0.046 + closeStage * 0.072 + debugBoost * 0.11);
+        float volumeAlpha = horizonMask * sideMass * opacity * (0.034 + closeStage * 0.052 + debugBoost * 0.07);
+        float alpha = limbAlpha + volumeAlpha;
         alpha *= smoothstep(0.18, 0.72, coverage + thickness * 0.38);
-        alpha = clamp(alpha, 0.0, mix(0.5, 0.74, debugBoost));
+        alpha *= mix(0.64, 1.0, pathMask);
+        alpha = clamp(alpha, 0.0, mix(0.16, 0.46, debugBoost));
 
         if (alpha < 0.0025) {
           discard;

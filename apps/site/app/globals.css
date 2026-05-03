@@ -30,7 +30,8 @@ body {
   overflow-x: hidden;
 }
 
-[data-next-badge] {
+[data-next-badge],
+nextjs-portal {
   display: none !important;
 }
 

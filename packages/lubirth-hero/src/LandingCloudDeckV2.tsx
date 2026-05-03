@@ -195,10 +195,35 @@ function createCloudDeckV2Material(composition: LandingComposition) {
           noise2(baseUv * vec2(2387.0, 1091.0) + vec2(time * 0.004, 14.2)) * 0.54 +
           noise2(baseUv * vec2(4813.0, 2207.0) + vec2(3.6, time * 0.003)) * 0.46;
         coverage = clamp(coverage * mix(0.86, 1.1, microBreakup) * mix(0.92, 1.08, fineFilament), 0.0, 1.0);
-        coverage = clamp(max(coverage, synoptic * (0.4 + frontBand * 0.22)) * mix(0.96, 1.08, fineFilament), 0.0, 1.0);
-        thickness = clamp(max(thickness, synoptic * (0.5 + frontBand * 0.24)) * mix(0.94, 1.08, microBreakup), 0.0, 1.0);
-        ao = clamp(max(ao, synoptic * (1.0 - highCap * 0.42) * (0.46 + pathVolume * 0.16)), 0.0, 1.0);
-        highCap = clamp(max(highCap, synoptic * frontBand * 0.34) * mix(0.9, 1.12, microBreakup) * mix(0.94, 1.08, fineFilament), 0.0, 1.0);
+        float baseCoverage = coverage;
+        float baseThickness = thickness;
+        float baseAo = ao;
+        float baseHighCap = highCap;
+        float closeWeatherLimiter = 1.0 - smoothstep(0.52, 1.0, closeStage) * 0.82;
+        coverage = clamp(
+          mix(baseCoverage, max(baseCoverage, synoptic * (0.4 + frontBand * 0.22)), closeWeatherLimiter) *
+          mix(0.96, 1.08, fineFilament),
+          0.0,
+          1.0
+        );
+        thickness = clamp(
+          mix(baseThickness, max(baseThickness, synoptic * (0.5 + frontBand * 0.24)), closeWeatherLimiter) *
+          mix(0.94, 1.08, microBreakup),
+          0.0,
+          1.0
+        );
+        ao = clamp(
+          mix(baseAo, max(baseAo, synoptic * (1.0 - baseHighCap * 0.42) * (0.46 + pathVolume * 0.16)), closeWeatherLimiter),
+          0.0,
+          1.0
+        );
+        highCap = clamp(
+          mix(baseHighCap, max(baseHighCap, synoptic * frontBand * 0.34), closeWeatherLimiter) *
+          mix(0.9, 1.12, microBreakup) *
+          mix(0.94, 1.08, fineFilament),
+          0.0,
+          1.0
+        );
 
         float edgeNoise =
           noise2(baseUv * vec2(84.0, 37.0) + vec2(7.2, 2.8)) * 0.5 +
@@ -235,7 +260,8 @@ function createCloudDeckV2Material(composition: LandingComposition) {
         finalColor *= (0.94 + microBreakup * 0.07 + fineFilament * 0.035) * mix(1.0, 0.68, closeStage) * mix(1.0, 0.78, closeOnlyStage);
 
         float productionSoftness = mix(0.7, 1.0, debugBoost);
-        float centerAlpha = coverage * opacity * (0.034 + closeStage * 0.022) * (0.58 + highCap * 0.42) * productionSoftness;
+        float centerAlphaScale = mix(0.034 + closeStage * 0.018, 0.006 + debugBoost * 0.014, closeOnlyStage);
+        float centerAlpha = coverage * opacity * centerAlphaScale * (0.58 + highCap * 0.42) * productionSoftness;
         float limbAlpha = (coverage * 0.46 + thickness * 0.36 + highCap * 0.18) *
           opacity *
           (0.112 + closeStage * 0.085 + debugBoost * 0.18) *
@@ -244,7 +270,7 @@ function createCloudDeckV2Material(composition: LandingComposition) {
           mix(0.74, 1.0, qualityMix);
         float massAlpha = sideMass * opacity * (0.08 + closeStage * 0.045 + debugBoost * 0.08) * edgeBreak;
         float alpha = centerAlpha + limbAlpha + massAlpha;
-        alpha *= (0.8 + closeStage * 0.16) * mix(0.9, 1.08, microBreakup) * mix(0.94, 1.06, fineFilament) * mix(1.0, 0.8, closeOnlyStage);
+        alpha *= (0.8 + closeStage * 0.16) * mix(0.9, 1.08, microBreakup) * mix(0.94, 1.06, fineFilament) * mix(1.0, 0.42, closeOnlyStage);
         alpha = clamp(alpha, 0.0, mix(0.24, 0.68, debugBoost));
 
         if (alpha < 0.0025) {
