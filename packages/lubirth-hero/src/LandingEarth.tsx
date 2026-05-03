@@ -327,16 +327,20 @@ export function LandingEarth({
               * 0.42
               * dayW
               * (0.72 + lowSunShadow * 0.28);
-            float shadowCaster = smoothstep(0.45, 0.85, cloudCoreUnit) * smoothstep(0.35, 0.8, cloudSharp);
-            hardCloudShadow *= shadowCaster;
-            softCloudShadow *= mix(0.35, 1.0, shadowCaster);
-            float cloudShadow = min(hardCloudShadow + softCloudShadow, 0.34);
+            float thickShadowCaster =
+              smoothstep(0.52, 0.88, cloudCoreUnit) *
+              smoothstep(0.46, 0.82, cloudSharp) *
+              smoothstep(0.22, 0.72, cloudRaw);
+            hardCloudShadow *= thickShadowCaster;
+            softCloudShadow *= mix(0.22, 1.0, thickShadowCaster);
+            float cloudShadow = min(hardCloudShadow + softCloudShadow, 0.28);
             vec3 cloudCol = mix(vec3(0.38, 0.45, 0.52), vec3(0.98, 0.97, 0.9), cloudSharp);
             cloudCol += vec3(0.58, 0.64, 0.7) * max(cloudRelief, 0.0);
             cloudCol += vec3(0.2, 0.3, 0.48) * cloudAltitude;
             cloudCol -= vec3(0.25, 0.29, 0.36) * max(-cloudRelief, 0.0);
             cloudCol *= closeCloudDiscipline;
-            vec3 shadowedDay = dayTex * (1.0 - cloudShadow * 1.02);
+            vec3 shadowTint = mix(vec3(1.0), vec3(0.72, 0.8, 0.9), clamp(cloudShadow * 1.18, 0.0, 0.38));
+            vec3 shadowedDay = dayTex * shadowTint;
             float cloudLitEdge = smoothstep(0.44, 0.86, cloudSharp) * smoothstep(-0.1, 0.3, ndl);
             vec3 cloudWarmEdge = vec3(1.0, 0.82, 0.54) * cloudLitEdge * (0.12 + cloudAltitude * 0.18) * mix(1.0, 0.54, closeStage);
             float dryLandSignal = smoothstep(0.06, 0.26, max(dayTex.r, dayTex.g) - dayTex.b) *

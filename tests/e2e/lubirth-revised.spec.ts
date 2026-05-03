@@ -302,6 +302,34 @@ test("can drive the nasa profile from today's moon phase and visitor geo", async
     .toBeLessThan(-0.32);
 });
 
+test("uses the IP geo endpoint when visitor location has no manual override", async ({ page }) => {
+  await page.route("**/api/lubirth-geo", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        located: true,
+        latitudeDeg: 47.6062,
+        longitudeDeg: -122.3321,
+        label: "Seattle, Washington, US",
+        source: "edge-geo",
+        timeZone: "America/Los_Angeles"
+      })
+    });
+  });
+
+  await page.goto("/lubirth-revised?progress=0&copy=hidden&profile=nasa&location=ip&visualTest=pixels");
+
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthRuntimeLocation?.source), { timeout: 25_000 })
+    .toBe("ip-geo");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthRuntimeLocation?.label), { timeout: 25_000 })
+    .toBe("Seattle, Washington, US");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthSolarState?.timeZone), { timeout: 25_000 })
+    .toBe("America/Los_Angeles");
+});
+
 test("uses the horizon aurora ribbon for high quality aurora debug", async ({ page }) => {
   await page.goto("/lubirth-revised?progress=0&copy=hidden&profile=debug-aurora&quality=high&visualTest=pixels");
   await expect(page.locator("canvas")).toHaveCount(1);

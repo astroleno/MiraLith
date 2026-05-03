@@ -158,19 +158,25 @@ function createHorizonCloudMaterial(composition: LandingComposition) {
           fbm(baseUv * vec2(18.0, 9.0) + wind * 16.0) * 0.5 +
           fbm(baseUv * vec2(52.0, 19.0) + vec2(3.7, 1.2)) * 0.32 +
           fbm(baseUv * vec2(118.0, 43.0) - wind * 9.0) * 0.18;
-        float horizonCoverage = smoothstep(0.42, 0.82, synthetic * 0.28 + pathMask * 0.14 + mapCoverage * 0.54 + mapThickness * 0.28);
-        float coverage = clamp(mapCoverage * 0.62 + horizonCoverage * 0.38, 0.0, 1.0);
-        float thickness = clamp(mapThickness * 0.66 + horizonCoverage * (0.32 + pathMask * 0.2), 0.0, 1.0);
-        float sideMass = thickness * pathMask * (0.48 + coverage * 0.28);
+        float brokenEdge =
+          synthetic * 0.42 +
+          fbm(baseUv * vec2(42.0, 17.0) + vec2(time * 0.002, 1.7)) * 0.32 +
+          fbm(baseUv * vec2(118.0, 43.0) - wind * 9.0) * 0.26;
+        float cloudPresence = smoothstep(0.3, 0.68, mapCoverage + mapThickness * 0.42 + highCap * 0.18);
+        float beltCore = smoothstep(0.36, 0.72, mapCoverage + mapThickness * 0.35 + brokenEdge * 0.18);
+        float edgeGap = smoothstep(0.24, 0.62, brokenEdge + mapCoverage * 0.35 + mapThickness * 0.24);
+        float coverage = clamp(mapCoverage * (0.72 + beltCore * 0.28), 0.0, 1.0) * cloudPresence;
+        float thickness = clamp(mapThickness * (0.78 + beltCore * 0.24), 0.0, 1.0) * cloudPresence;
+        float sideMass = thickness * pathMask * edgeGap * (0.42 + coverage * 0.32);
 
         float ndl = dot(n, sunDirection);
         float day = smoothstep(-0.2, 0.38, ndl);
         float twilight = 1.0 - smoothstep(0.02, 0.42, abs(ndl));
         float underside = clamp(mapAo * 0.42 + sideMass * 0.62 + max(a.r - e.r, 0.0) * pathMask * 0.38, 0.0, 1.0);
-        float topLight = (highCap * 0.48 + horizonCoverage * 0.16) * day * (0.54 + pathMask * 0.42);
+        float topLight = (highCap * 0.54 + beltCore * 0.1) * day * (0.54 + pathMask * 0.42) * edgeGap;
 
         vec3 cloudBase = mix(vec3(0.04, 0.065, 0.105), vec3(0.54, 0.62, 0.7), clamp(day * 0.72 + coverage * 0.16, 0.0, 1.0));
-        vec3 cloudTop = mix(vec3(0.62, 0.7, 0.78), vec3(0.88, 0.9, 0.86), clamp(highCap * 0.62 + horizonCoverage * 0.28, 0.0, 1.0));
+        vec3 cloudTop = mix(vec3(0.62, 0.7, 0.78), vec3(0.88, 0.9, 0.86), clamp(highCap * 0.62 + beltCore * 0.18, 0.0, 1.0));
         vec3 finalColor = mix(cloudBase, cloudTop, clamp(highCap * 0.48 + coverage * 0.22, 0.0, 1.0));
         finalColor *= lightColor * (0.24 + day * 0.92 + twilight * 0.08);
         finalColor = mix(finalColor, finalColor * vec3(0.28, 0.38, 0.54), clamp(underside * 0.78, 0.0, 0.86));
@@ -178,10 +184,10 @@ function createHorizonCloudMaterial(composition: LandingComposition) {
         finalColor += vec3(0.08, 0.18, 0.36) * sideMass * 0.22;
         finalColor += vec3(0.95, 0.48, 0.22) * twilight * highCap * 0.035;
 
-        float limbAlpha = horizonMask * coverage * opacity * (0.046 + closeStage * 0.072 + debugBoost * 0.11);
+        float limbAlpha = horizonMask * coverage * edgeGap * opacity * (0.046 + closeStage * 0.072 + debugBoost * 0.11);
         float volumeAlpha = horizonMask * sideMass * opacity * (0.034 + closeStage * 0.052 + debugBoost * 0.07);
         float alpha = limbAlpha + volumeAlpha;
-        alpha *= smoothstep(0.18, 0.72, coverage + thickness * 0.38);
+        alpha *= smoothstep(0.18, 0.72, coverage + thickness * 0.38) * cloudPresence;
         alpha *= mix(0.64, 1.0, pathMask);
         alpha = clamp(alpha, 0.0, mix(0.16, 0.46, debugBoost));
 

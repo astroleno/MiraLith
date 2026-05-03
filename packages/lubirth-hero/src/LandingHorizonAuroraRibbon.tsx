@@ -188,21 +188,15 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
         float sideFeather = smoothstep(0.018, 0.1, arc) * (1.0 - smoothstep(0.9, 0.982, arc));
         float bottomFeather = smoothstep(0.006, 0.052, vertical);
         float rootLine = 1.0 - smoothstep(0.004, 0.026, vertical);
-        float segmentMask = 0.0;
-        float segmentHeight = 0.0;
-        for (int i = 0; i < 12; i += 1) {
-          float fi = float(i);
-          float center = (fi + 0.5) / 12.0 + (hash21(vec2(fi, 0.37)) - 0.5) * 0.052;
-          float width = mix(0.028, 0.082, hash21(vec2(fi, 2.11)));
-          float segment = 1.0 - smoothstep(width, width * 1.72, abs(arc - center));
-          float height = mix(0.34, 0.86, hash21(vec2(fi, 4.23)));
-          segment *= smoothstep(0.0, 0.2, height);
-          segmentMask = max(segmentMask, segment);
-          segmentHeight = max(segmentHeight, segment * height);
-        }
-        float fieldMist = smoothstep(0.26, 0.72, fbm(vec2(arc * 8.0 - time * 0.006, 1.7))) * 0.32;
+        float broadBand = fbm(vec2(arc * 2.4 - time * 0.002, 0.35));
+        float bandCenter = 0.5 + (broadBand - 0.5) * 0.18;
+        float bandWidth = mix(0.22, 0.36, fbm(vec2(arc * 1.3 + 2.0, 3.4)));
+        float continuousBand = 1.0 - smoothstep(bandWidth, bandWidth + 0.18, abs(arc - bandCenter));
+        float bandNoise = fbm(vec2(arc * 7.5 - time * 0.006, 1.7));
+        float arcBreakup = smoothstep(0.18, 0.68, bandNoise);
+        float arcBand = clamp(continuousBand * mix(0.34, 1.0, arcBreakup), 0.0, 1.0);
         float rootBreakup = smoothstep(0.22, 0.72, fbm(vec2(arc * 42.0 + time * 0.01, 0.7)));
-        float root = rootLine * rootBreakup * (0.22 + segmentMask * 0.78 + fieldMist * 0.34);
+        float root = rootLine * rootBreakup * (0.18 + arcBand * 0.52);
 
         float body = smoothstep(0.028, 0.13, vertical) * (1.0 - smoothstep(0.58, 0.98, vertical));
         float topMist = smoothstep(0.34, 0.78, vertical) * (1.0 - smoothstep(0.72, 1.0, vertical));
@@ -211,10 +205,17 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
         float fine = sin((arc - drift) * 213.0 + vertical * 9.0 + time * 0.02);
         float strands = pow(smoothstep(0.5, 0.9, 0.52 + fold * 0.25 + fine * 0.09), 1.55);
         float columnHeight = smoothstep(0.2, 0.84, fbm(vec2(arc * 18.0 - time * 0.008, 2.4)));
-        float verticalFalloff = 1.0 - smoothstep(0.38 + max(columnHeight, segmentHeight) * 0.42, 1.02, vertical);
+        float verticalFalloff = 1.0 - smoothstep(0.42 + columnHeight * 0.36, 1.02, vertical);
         float curtainBreakup = smoothstep(0.18, 0.78, fbm(vec2(arc * 40.0 - time * 0.009, vertical * 6.0 + 2.0)));
-        float curtain = body * strands * curtainBreakup * verticalFalloff * (0.28 + segmentMask * 0.92 + fieldMist * 0.24);
-        float density = sideFeather * bottomFeather * (root * 0.34 + curtain * 1.42 + topMist * curtainBreakup * (0.08 + segmentMask * 0.08));
+        float fineCurtain = mix(0.26, 1.0, pow(strands, 1.18)) * curtainBreakup;
+        float continuousVeil = body * verticalFalloff * (0.16 + arcBreakup * 0.18);
+        float curtain = body * fineCurtain * verticalFalloff * (0.28 + arcBand * 0.72);
+        float density = sideFeather * bottomFeather * arcBand * (
+          root * 0.4 +
+          continuousVeil * 0.34 +
+          curtain * 0.82 +
+          topMist * curtainBreakup * 0.12
+        );
         vec3 horizonNormal = normalize(vLocalPosition);
         float lightSide = dot(normalize(lightDirection), horizonNormal);
         float nightGate = 1.0 - smoothstep(-0.08, 0.26, lightSide);
@@ -226,7 +227,7 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
         float moonColumn = 1.0 - smoothstep(0.055, 0.19, abs(screenX - moonColumnCenter));
         density *= mix(1.0, 0.55, moonColumn * moonColumnAvoidance);
         density *= mix(0.42, 1.0, debugGain);
-        float gain = mix(0.28, 1.02, debugGain);
+        float gain = mix(0.34, 1.02, debugGain);
         float alpha = density * intensity * gain * mix(0.72, 1.18, debugGain);
 
         if (alpha < 0.0012) {
@@ -239,7 +240,7 @@ function createRibbonMaterial(composition: LandingComposition, debugProfile: boo
         auroraColor = mix(auroraColor, vec3(0.28, 0.4, 0.34), smoothstep(0.54, 0.98, vertical) * 0.26);
         vec3 finalColor = auroraColor * density * gain * (1.28 + root * 0.42 + curtain * 1.04);
 
-        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.052, 0.16, debugGain)));
+        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.046, 0.145, debugGain)));
       }
     `,
     transparent: true,

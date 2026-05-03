@@ -262,6 +262,11 @@ function createCloudDeckV2Material(composition: LandingComposition) {
         float productionSoftness = mix(0.7, 1.0, debugBoost);
         float centerAlphaScale = mix(0.034 + closeStage * 0.018, 0.006 + debugBoost * 0.014, closeOnlyStage);
         float centerAlpha = coverage * opacity * centerAlphaScale * (0.58 + highCap * 0.42) * productionSoftness;
+        float existingCloud = smoothstep(0.28, 0.72, baseCoverage);
+        float denseCloud = smoothstep(0.46, 0.86, baseThickness) * existingCloud;
+        float denseCloudTop = smoothstep(0.34, 0.74, baseHighCap) * denseCloud;
+        centerAlpha += denseCloud * opacity * (0.012 + closeStage * 0.024) * (0.62 + denseCloudTop * 0.38) * productionSoftness;
+        finalColor += vec3(0.72, 0.82, 0.92) * denseCloudTop * day * 0.055;
         float limbAlpha = (coverage * 0.46 + thickness * 0.36 + highCap * 0.18) *
           opacity *
           (0.112 + closeStage * 0.085 + debugBoost * 0.18) *

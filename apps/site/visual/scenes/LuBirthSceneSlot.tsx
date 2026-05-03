@@ -228,6 +228,10 @@ function readManualGeoLocation(): LandingLocationConfig | null {
   }
 
   const params = new URLSearchParams(window.location.search);
+  if (!params.has("geoLat") || !params.has("geoLon")) {
+    return null;
+  }
+
   const latitude = Number(params.get("geoLat"));
   const longitude = Number(params.get("geoLon"));
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
