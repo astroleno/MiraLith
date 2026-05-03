@@ -8,6 +8,7 @@ import {
   CustomBlending,
   FrontSide,
   Group,
+  MathUtils,
   Mesh,
   OneMinusSrcAlphaFactor,
   RepeatWrapping,
@@ -16,7 +17,7 @@ import {
   Texture,
   Vector3
 } from "three";
-import { getRuntimeOpeningProgress, type QualityProfile } from "@miralith/visual-core";
+import { getRuntimeOpeningProgress, OPENING_FIELD_AUTO_ROTATE_START, type QualityProfile } from "@miralith/visual-core";
 import type { LandingComposition, LandingResolvedAssets } from "./types";
 import { useLandingTexture } from "./useLandingTexture";
 
@@ -60,7 +61,7 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
   return new ShaderMaterial({
     uniforms: {
       cloudMap: { value: cloudTexture },
-      time: { value: 0 },
+      cloudOffset: { value: 0 },
       closeStage: { value: 1 },
       opacity: { value: composition.earth.useClouds ? composition.earth.cloudOpacity : 0 },
       shellOpacity: { value: layer.opacity },
@@ -85,17 +86,16 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
       varying vec2 vUv;
       varying vec3 vWorldPosition;
       varying vec3 vWorldNormal;
-      varying vec3 vLocalNormal;
       varying vec3 vWorldTangentA;
       varying vec3 vWorldTangentB;
       varying float vFresnel;
 
       void main() {
         vUv = uv;
-        vLocalNormal = normalize(position);
-        vec3 localUp = abs(vLocalNormal.y) > 0.96 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
-        vec3 localTangentA = normalize(cross(localUp, vLocalNormal));
-        vec3 localTangentB = normalize(cross(vLocalNormal, localTangentA));
+        vec3 localNormal = normalize(position);
+        vec3 localUp = abs(localNormal.y) > 0.96 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
+        vec3 localTangentA = normalize(cross(localUp, localNormal));
+        vec3 localTangentB = normalize(cross(localNormal, localTangentA));
         vec4 worldPosition = modelMatrix * vec4(position, 1.0);
         vWorldPosition = worldPosition.xyz;
         vWorldNormal = normalize(mat3(modelMatrix) * normal);
@@ -108,7 +108,7 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
     `,
     fragmentShader: `
       uniform sampler2D cloudMap;
-      uniform float time;
+      uniform float cloudOffset;
       uniform float closeStage;
       uniform float opacity;
       uniform float shellOpacity;
@@ -126,18 +126,9 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
       varying vec2 vUv;
       varying vec3 vWorldPosition;
       varying vec3 vWorldNormal;
-      varying vec3 vLocalNormal;
       varying vec3 vWorldTangentA;
       varying vec3 vWorldTangentB;
       varying float vFresnel;
-
-      const float PI = 3.14159265359;
-
-      vec2 sphereUv(vec3 normal) {
-        float u = atan(normal.z, normal.x) / (PI * 2.0) + 0.5;
-        float v = asin(clamp(normal.y, -1.0, 1.0)) / PI + 0.5;
-        return vec2(fract(u), clamp(v, 0.001, 0.999));
-      }
 
       float cloudRaw(vec2 uv) {
         vec2 wrappedUv = vec2(fract(uv.x), clamp(uv.y, 0.001, 0.999));
@@ -173,7 +164,6 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
 
       void main() {
         vec3 n = normalize(vWorldNormal);
-        vec3 localN = normalize(vLocalNormal);
         vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
         vec3 sunDirection = normalize(lightDir);
         float ndl = dot(n, sunDirection);
@@ -191,10 +181,10 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
           limbVolume * (0.08 + closeStage * 0.1 + debugBoost * 0.08);
         shellFade *= mix(1.0, 0.44 + rimBand * 0.92, rimFocus);
 
-        vec2 baseUv = sphereUv(localN);
+        vec2 baseUv = vec2(fract(vUv.x), clamp(vUv.y, 0.001, 0.999));
         vec2 wind = vec2(
-          shellOffset + time * ${CLOUD_SCROLL_SPEED.toFixed(3)},
-          shellOffset * 0.37 + time * ${(CLOUD_SCROLL_SPEED * 0.18).toFixed(5)}
+          shellOffset + cloudOffset,
+          shellOffset * 0.37 + cloudOffset * 0.18
         );
         vec2 viewShear = vec2(dot(viewDirection, vWorldTangentA), dot(viewDirection, vWorldTangentB));
         vec2 sunShear = vec2(dot(sunDirection, vWorldTangentA), dot(sunDirection, vWorldTangentB));
@@ -212,17 +202,48 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
           cloudRaw(midUv + detailStep.yx) +
           cloudRaw(midUv - detailStep.yx)
         ) * 0.25;
-        float rawSharp = clamp(rawMid + (rawMid - rawMidBlur) * (1.05 + closeStage * 0.52), 0.0, 1.0);
-        float photoWisps = smoothstep(0.18, 0.46, rawSharp) * (1.0 - smoothstep(0.6, 0.86, rawSharp));
-        float photoCore = smoothstep(0.38, 0.68, rawSharp);
-        float photoBright = smoothstep(0.58, 0.86, rawSharp);
+        vec2 massStepA = vec2(0.0056, 0.0028);
+        vec2 massStepB = vec2(0.013, 0.0064);
+        vec2 massStepC = vec2(0.027, 0.012);
+        float rawMass = (
+          rawMid * 0.2 +
+          (cloudRaw(midUv + massStepA) + cloudRaw(midUv - massStepA)) * 0.14 +
+          (cloudRaw(midUv + massStepA.yx) + cloudRaw(midUv - massStepA.yx)) * 0.14 +
+          (cloudRaw(midUv + massStepB) + cloudRaw(midUv - massStepB)) * 0.09 +
+          (cloudRaw(midUv + massStepB.yx) + cloudRaw(midUv - massStepB.yx)) * 0.09
+        );
+        float reachA = max(
+          max(cloudRaw(midUv + massStepA), cloudRaw(midUv - massStepA)),
+          max(cloudRaw(midUv + massStepA.yx), cloudRaw(midUv - massStepA.yx))
+        );
+        float reachB = max(
+          max(cloudRaw(midUv + massStepB), cloudRaw(midUv - massStepB)),
+          max(cloudRaw(midUv + massStepB.yx), cloudRaw(midUv - massStepB.yx))
+        );
+        float reachC = max(
+          max(cloudRaw(midUv + massStepC), cloudRaw(midUv - massStepC)),
+          max(cloudRaw(midUv + massStepC.yx), cloudRaw(midUv - massStepC.yx))
+        );
+        float weatherSpread = max(rawMass, max(reachA * 0.82, max(reachB * 0.68, reachC * 0.5)));
+        float rawSharp = clamp(rawMid + (rawMid - rawMidBlur) * (0.42 + closeStage * 0.24), 0.0, 1.0);
+        rawSharp = mix(rawSharp, rawMidBlur, (1.0 - closeStage) * 0.18);
+        float weatherMass = smoothstep(0.13, 0.36, rawMass);
+        float weatherCore = smoothstep(0.28, 0.56, rawMass);
+        float spreadDeck = smoothstep(0.15, 0.34, weatherSpread) *
+          (1.0 - smoothstep(0.5, 0.74, rawSharp)) *
+          (1.0 - weatherMass * 0.35);
+        float massGate = mix(0.5, 1.0, weatherMass);
+        float photoWisps = smoothstep(0.18, 0.46, rawSharp) * (1.0 - smoothstep(0.6, 0.86, rawSharp)) * massGate;
+        float photoCore = smoothstep(0.38, 0.68, rawSharp) * mix(0.42, 1.0, weatherMass);
+        float photoBright = smoothstep(0.58, 0.86, rawSharp) * mix(0.58, 1.0, weatherMass);
         float bottom = cloudMask(baseUv + wind - parallax * 0.42);
-        float mid = max(cloudMask(midUv) * 0.76, photoWisps * 0.1 + photoCore * 0.7 + photoBright * 0.22);
+        float massBody = weatherMass * 0.56 + spreadDeck * 0.16 + weatherCore * 0.22 + photoCore * 0.32 + photoBright * 0.1;
+        float mid = max(cloudMask(midUv) * 0.54, massBody);
         float top = cloudMask(baseUv + wind + parallax * 0.38);
         float shadowMask = cloudMask(baseUv + wind + sunOffset * (1.8 + limb * 0.9));
-        float rawDensity = clamp(rawBottom * 0.1 + rawSharp * 0.76 + rawTop * 0.14, 0.0, 1.0);
-        float density = clamp(bottom * 0.12 + mid * 0.76 + top * 0.12, 0.0, 1.0);
-        float opaqueCore = smoothstep(0.34, 0.64, rawSharp);
+        float rawDensity = clamp(rawBottom * 0.08 + rawSharp * 0.5 + rawMass * 0.32 + rawTop * 0.1, 0.0, 1.0);
+        float density = clamp(bottom * 0.08 + mid * 0.82 + top * 0.1, 0.0, 1.0);
+        float opaqueCore = max(smoothstep(0.34, 0.64, rawSharp) * massGate, weatherCore * 0.48);
         float baseMass = max(bottom * (0.94 + baseDepth * 0.22) - top * 0.44, 0.0) * limbVolume * baseDepth;
         float topCap = max(top - mid * 0.5, 0.0) * smoothstep(0.42, 0.9, rim) * topCapStrength;
         float layerSeparation = abs(top - bottom);
@@ -232,6 +253,9 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
           layerSeparation * 0.9 +
           forwardStack * 0.58 +
           backStack * 0.46 +
+          weatherMass * 0.22 +
+          spreadDeck * 0.08 +
+          weatherCore * 0.26 +
           photoCore * 0.32 +
           photoBright * 0.18 +
           limbVolume * mid * (0.5 + rimFocus * 0.22) +
@@ -244,12 +268,14 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
           0.0,
           0.62
         );
-        float light = mix(0.18, 1.02, day) * (1.0 - selfShadow) + twilight * 0.16 + limb * day * 0.1;
+        float light = mix(0.16, 0.88, day) * (1.0 - selfShadow) + twilight * 0.14 + limb * day * 0.08;
 
-        vec3 cloudShadow = mix(vec3(0.16, 0.22, 0.32), vec3(0.46, 0.54, 0.64), mid);
-        vec3 cloudLit = mix(vec3(0.82, 0.86, 0.9), vec3(1.0, 0.995, 0.96), smoothstep(0.1, 0.7, max(rawTop, rawSharp * 0.72)));
-        vec3 cloudBase = mix(cloudShadow, cloudLit, clamp(day * 0.76 + top * 0.3, 0.0, 1.0));
-        cloudBase += vec3(0.16, 0.18, 0.2) * clamp((rawSharp - rawMidBlur) * (0.72 + closeStage * 0.44), 0.0, 0.26) * day;
+        vec3 cloudShadow = mix(vec3(0.14, 0.2, 0.3), vec3(0.4, 0.49, 0.6), max(mid, weatherMass * 0.72));
+        vec3 cloudLit = mix(vec3(0.66, 0.73, 0.8), vec3(0.8, 0.84, 0.84), smoothstep(0.12, 0.74, max(rawTop, rawSharp * 0.66)));
+        vec3 cloudBase = mix(cloudShadow, cloudLit, clamp(day * (0.42 + weatherCore * 0.1) + top * 0.16 + photoBright * 0.06, 0.0, 1.0));
+        float spreadOnly = spreadDeck * (1.0 - weatherCore * 0.64);
+        cloudBase = mix(cloudBase, mix(cloudShadow, vec3(0.52, 0.6, 0.68), day * 0.36), clamp(spreadOnly * 0.42, 0.0, 0.42));
+        cloudBase += vec3(0.055, 0.062, 0.07) * clamp((rawSharp - rawMidBlur) * (0.28 + closeStage * 0.16) * weatherMass, 0.0, 0.09) * day;
         vec3 warmEdge = vec3(1.0, 0.62, 0.28) * twilight * (0.06 + thickness * 0.06);
         vec3 blueNight = vec3(0.035, 0.11, 0.25) * night * (0.12 + thickness * 0.2);
         vec3 finalColor =
@@ -269,9 +295,12 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
         float brokenEdge = mix(1.0, mix(0.18, 1.0, edgeBreakup), extremeGrazing * edgeBreakStrength * (1.0 - debugBoost * 0.18));
         float alpha = (
           photoWisps * 0.1 +
-          density * 0.42 +
+          weatherMass * 0.42 +
+          spreadDeck * 0.13 +
+          weatherCore * 0.24 +
+          density * 0.2 +
           thickness * 0.42 +
-          opaqueCore * 1.18 +
+          opaqueCore * 0.92 +
           limbVolume * density * 0.1
         ) *
           opacity *
@@ -279,7 +308,7 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
           (shellFade + closeStage * 0.28) *
           brokenEdge *
           mix(0.58, 1.0, edgeTrim) *
-          mix(0.94, 1.26, closeStage) *
+          mix(0.98, 1.34, closeStage) *
           mix(1.0, 1.82, debugBoost);
 
         if (alpha < 0.003) {
@@ -311,14 +340,15 @@ export function LandingCloudLayer({
 }: LandingCloudLayerProps) {
   const cloud = useRef<Mesh>(null);
   const cloudGroup = useRef<Group>(null);
+  const cloudOffset = useRef(0);
   const { texture: cloudTexture, failed: cloudTextureFailed } = useLandingTexture(assets.earthClouds?.src, {
     colorSpace: assets.earthClouds?.colorSpace,
     wrapS: RepeatWrapping,
     wrapT: RepeatWrapping
   });
   const activeCloudShells = useMemo(
-    () => CLOUD_SHELLS.filter((layer) => quality.tier === "high" || !layer.highOnly),
-    [quality.tier]
+    () => CLOUD_SHELLS.filter((layer) => !layer.highOnly || (emphasis && quality.tier === "high")),
+    [emphasis, quality.tier]
   );
   const materials = useMemo(
     () => cloudTexture ? activeCloudShells.map((layer) => createCloudMaterial(composition, layer, cloudTexture)) : [],
@@ -337,14 +367,16 @@ export function LandingCloudLayer({
     };
   }, [materials]);
 
-  useFrame((state) => {
+  useFrame((_state, delta) => {
     if (!cloudGroup.current || !enabled || !cloudTexture) {
       return;
     }
 
     const progress = getRuntimeOpeningProgress(0);
     const closeStage = 1 - smoothstep(0.18, 0.86, progress);
-    const elapsed = paused || reducedMotion ? 0 : state.clock.elapsedTime;
+    if (!paused && !reducedMotion && progress >= OPENING_FIELD_AUTO_ROTATE_START) {
+      cloudOffset.current = (cloudOffset.current + delta * CLOUD_SCROLL_SPEED) % 1;
+    }
     if (sceneLightDirection) {
       lightDirection.copy(sceneLightDirection).normalize();
     } else {
@@ -355,11 +387,11 @@ export function LandingCloudLayer({
 
     cloudGroup.current.children.forEach((child, index) => {
       const cloudMaterial = (child as Mesh).material as ShaderMaterial;
-      child.rotation.y = 0;
+      child.rotation.y = MathUtils.degToRad(composition.earth.yawDeg);
       child.rotation.x = 0;
       child.rotation.z = 0;
       cloudMaterial.uniforms.cloudMap.value = cloudTexture;
-      cloudMaterial.uniforms.time.value = elapsed;
+      cloudMaterial.uniforms.cloudOffset.value = cloudOffset.current;
       cloudMaterial.uniforms.closeStage.value = closeStage;
       cloudMaterial.uniforms.opacity.value = composition.earth.useClouds ? composition.earth.cloudOpacity : 0;
       cloudMaterial.uniforms.debugBoost.value = emphasis ? 1 : 0;
