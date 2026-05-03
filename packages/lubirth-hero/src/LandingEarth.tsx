@@ -33,6 +33,8 @@ interface LandingEarthProps {
 const lightDirection = new Vector3();
 const SURFACE_CLOUD_OPACITY_MULTIPLIER = 0.22;
 const SURFACE_CLOUD_SHADOW_MULTIPLIER = 0.62;
+const SURFACE_CLOUD_TEXTURE_ART_OFFSET_X = 0.045;
+const SURFACE_CLOUD_TEXTURE_ART_OFFSET_Y = 0.018;
 const SURFACE_CLOUD_SCROLL_SPEED = 0.022;
 
 const smoothstep = (edge0: number, edge1: number, value: number) => {
@@ -281,7 +283,8 @@ export function LandingEarth({
 
           float sampleCloud(vec2 uv) {
             vec3 cloudRgb = texture2D(cloudMap, vec2(fract(uv.x), clamp(uv.y, 0.001, 0.999))).rgb;
-            return dot(cloudRgb, vec3(0.2126, 0.7152, 0.0722));
+            float raw = dot(cloudRgb, vec3(0.2126, 0.7152, 0.0722));
+            return pow(clamp(raw, 0.0, 1.0), 0.55);
           }
 
           void main() {
@@ -351,22 +354,25 @@ export function LandingEarth({
               grain(vUv * vec2(24576.0, 12288.0) + vec2(13.2, 8.4)) * 0.5;
             vec3 dayTex =
               rawDayTex +
-              (rawDayTex - dayBlur) * (0.28 + closeStage * 0.08) +
-              (rawDayTex - dayMicroBlur) * (0.08 + closeStage * 0.14) +
-              surfaceDetail * 0.042;
+              (rawDayTex - dayBlur) * (0.08 + closeStage * 0.02) +
+              (rawDayTex - dayMicroBlur) * (0.015 + closeStage * 0.035) +
+              surfaceDetail * 0.008;
             float dayTexLuma = dot(dayTex, vec3(0.299, 0.587, 0.114));
-            dayTex += (microGrain - 0.5) * (0.008 + closeStage * 0.018) * (0.42 + dayTexLuma);
-            dayTex += (orthoTextureDetail - 0.5) * closeStage * 0.014 * smoothstep(0.2, 0.76, dayTexLuma);
+            dayTex += (microGrain - 0.5) * (0.002 + closeStage * 0.006) * (0.42 + dayTexLuma);
+            dayTex += (orthoTextureDetail - 0.5) * closeStage * 0.004 * smoothstep(0.2, 0.76, dayTexLuma);
             float farTextureSoftness = 1.0 - closeStage;
             dayTex = mix(dayTex, dayBlur, farTextureSoftness * 0.16);
-            dayTex = mix(vec3(dayTexLuma), dayTex, 0.95);
-            dayTex = pow(clamp(dayTex, vec3(0.0), vec3(1.18)), vec3(mix(0.98, 1.08, closeStage)));
+            dayTex = mix(vec3(dayTexLuma), dayTex, 0.985);
+            dayTex = clamp(dayTex, vec3(0.0), vec3(1.08));
             float closeDayHighlight = smoothstep(0.38, 0.82, dayTexLuma) * closeStage;
-            dayTex *= mix(1.0, 0.78, closeDayHighlight);
+            dayTex *= mix(1.0, 0.9, closeDayHighlight);
             vec3 nightTex = pow(texture2D(nightMap, vUv).rgb, vec3(0.9));
-            vec2 cloudUv = vec2(fract(vUv.x + cloudOffset), fract(vUv.y + cloudOffset * 0.18));
+            vec2 cloudUv = vec2(
+              fract(vUv.x + cloudOffset + ${SURFACE_CLOUD_TEXTURE_ART_OFFSET_X.toFixed(3)}),
+              fract(vUv.y + cloudOffset * 0.18 + ${SURFACE_CLOUD_TEXTURE_ART_OFFSET_Y.toFixed(3)})
+            );
             vec2 deckUv = cloudUv;
-            float closeExposureDiscipline = mix(1.0, 0.87, closeStage);
+            float closeExposureDiscipline = mix(1.0, 0.96, closeStage);
             float closeCloudDiscipline = mix(1.0, 0.92, closeStage);
             float cloudRaw = sampleCloud(cloudUv);
             vec4 cloudDeck = texture2D(cloudDeckMap, deckUv);
@@ -382,11 +388,11 @@ export function LandingEarth({
               sampleCloud(cloudUv - cloudDetailStep.yx)
             ) * 0.25;
             float cloudSharp = clamp(
-              cloudRaw + (cloudRaw - cloudBlur) * (0.16 + closeStage * 0.18),
+              cloudRaw + (cloudRaw - cloudBlur) * (0.08 + closeStage * 0.08),
               0.0,
               1.0
             );
-            cloudSharp = mix(cloudSharp, cloudBlur, farTextureSoftness * 0.14);
+            cloudSharp = mix(cloudSharp, cloudBlur, 0.08 + farTextureSoftness * 0.14);
             float deckWeather = smoothstep(0.26, 0.74, deckCoverage + deckThickness * 0.48 + deckHighCap * 0.18);
             float deckDenseWeather = smoothstep(0.58, 0.9, deckCoverage * 0.64 + deckThickness * 0.78 + deckHighCap * 0.22);
             float unifiedCloudSharp = mix(
@@ -405,7 +411,8 @@ export function LandingEarth({
               smoothstep(-0.18, 0.58, ndl);
             float closeSurfaceCloudLimiter = mix(1.0, 0.82, closeStage);
             float cloudDetailGate = smoothstep(0.22, 0.62, cloudSharp + closeFilament * 0.14 + (cloudMicro - 0.5) * 0.18);
-            float visibleCloudCore = smoothstep(0.32, 0.64, cloudSharp * mix(0.92, 1.12, cloudMicro));
+            float visibleCloudCore = smoothstep(0.34, 0.66, cloudSharp * mix(0.92, 1.08, cloudMicro)) *
+              smoothstep(0.14, 0.34, cloudBlur);
             float visibleCloudFringe = smoothstep(0.14, 0.46, cloudSharp * cloudEdgeBreak);
             float cloudThicknessBoost = mix(0.92, 1.28, deckDenseWeather * hasCloudDeckMap);
             float cloudBodySource = visibleCloudCore * cloudThicknessBoost;
@@ -425,8 +432,8 @@ export function LandingEarth({
             lightTangentUv /= lightTangentLen;
             float lowSunShadow = 1.0 - smoothstep(0.22, 0.78, max(ndl, 0.0));
             float cloudCoreUnit = clamp(cloudCore / max(cloudOpacity, 0.001), 0.0, 1.0);
-            float shadowDistance = mix(0.32, 0.72, cloudCoreUnit);
-            float shadowOffset = (0.00065 + lowSunShadow * 0.00135 + closeStage * 0.00045) * (0.45 + lightTangentLen * 0.55);
+            float shadowDistance = mix(0.18, 0.42, cloudCoreUnit);
+            float shadowOffset = (0.00038 + lowSunShadow * 0.00082 + closeStage * 0.00028) * (0.45 + lightTangentLen * 0.55);
             vec2 shadowUv = vec2(
               fract(cloudUv.x - lightTangentUv.x * shadowOffset * shadowDistance),
               fract(cloudUv.y - lightTangentUv.y * shadowOffset * shadowDistance * 0.62)
@@ -461,7 +468,7 @@ export function LandingEarth({
             thickShadowCaster = max(thickShadowCaster, deckCaster * smoothstep(0.24, 0.72, shadowDeck.g) * hasCloudDeckMap);
             hardCloudShadow *= thickShadowCaster;
             softCloudShadow *= mix(0.36, 1.0, thickShadowCaster);
-            float cloudShadow = min(hardCloudShadow + softCloudShadow, 0.52);
+            float cloudShadow = min(hardCloudShadow + softCloudShadow, 0.4);
             float cloudPresentation = clamp(max(max(cloudSharp, visibleCloudCore), closeFilament * 0.82), 0.0, 1.0);
             vec3 cloudCol = mix(vec3(0.62, 0.68, 0.74), vec3(1.0, 0.985, 0.94), pow(cloudPresentation, 0.72));
             cloudCol += vec3(0.58, 0.64, 0.7) * max(cloudRelief, 0.0);
@@ -476,12 +483,16 @@ export function LandingEarth({
             cloudCol += vec3(0.2, 0.3, 0.48) * cloudAltitude;
             cloudCol -= vec3(0.25, 0.29, 0.36) * max(-cloudRelief, 0.0);
             cloudCol *= closeCloudDiscipline;
-            vec3 shadowTint = mix(vec3(1.0), vec3(0.54, 0.62, 0.78), clamp(cloudShadow * 1.18, 0.0, 0.5));
+            vec3 shadowTint = mix(vec3(1.0), vec3(0.62, 0.69, 0.82), clamp(cloudShadow * 1.08, 0.0, 0.42));
             vec3 shadowedDay = dayTex * shadowTint;
             float cloudLitEdge = smoothstep(0.44, 0.86, unifiedCloudSharp) * smoothstep(-0.1, 0.3, ndl);
             vec3 cloudWarmEdge = vec3(1.0, 0.82, 0.54) * cloudLitEdge * (0.12 + cloudAltitude * 0.18) * mix(1.0, 0.54, closeStage);
             float dryLandSignal = smoothstep(0.06, 0.26, max(dayTex.r, dayTex.g) - dayTex.b) *
               smoothstep(0.42, 0.82, dayTexLuma);
+            float yellowTerrainSignal =
+              smoothstep(0.06, 0.22, dayTex.r + dayTex.g - dayTex.b * 2.0) *
+              smoothstep(0.34, 0.82, dayTexLuma) *
+              closeStage;
             float cloudCoverageMix = clamp(
               max(
                 cloudMask * (2.1 + cloudCore * 1.15 + deckDenseWeather * cloudDetailGate * hasCloudDeckMap * 0.5),
@@ -502,28 +513,28 @@ export function LandingEarth({
             visibleCloudShadow = max(visibleCloudShadow, directVisibleShadow);
             daySurface = mix(
               daySurface,
-              daySurface * vec3(0.52, 0.62, 0.8),
-              clamp(visibleCloudShadow * 0.68, 0.0, 0.44)
+              daySurface * vec3(0.64, 0.72, 0.86),
+              clamp(visibleCloudShadow * 0.54, 0.0, 0.32)
             );
             float daySurfaceLuma = dot(daySurface, vec3(0.299, 0.587, 0.114));
-            vec3 landFineDetail = (rawDayTex - dayMicroBlur) * (0.08 + closeStage * 0.18);
+            vec3 landFineDetail = (rawDayTex - dayMicroBlur) * (0.05 + closeStage * 0.1);
             float exposedSurface = 1.0 - clamp(surfaceCloudBlend * 1.12, 0.0, 1.0);
-            daySurface = mix(vec3(daySurfaceLuma), daySurface, 0.94);
-            daySurface += landFineDetail * exposedSurface * (0.34 + dryLandSignal * 0.42);
-            daySurface += (microGrain - 0.5) * closeStage * 0.01 * (0.28 + daySurfaceLuma);
-            daySurface += (orthoTextureDetail - 0.5) * closeStage * 0.012 * exposedSurface * (0.36 + dryLandSignal * 0.58);
+            daySurface = mix(vec3(daySurfaceLuma), daySurface, 0.985);
+            daySurface += landFineDetail * exposedSurface * (0.14 + dryLandSignal * 0.18);
+            daySurface += (microGrain - 0.5) * closeStage * 0.005 * (0.28 + daySurfaceLuma);
+            daySurface += (orthoTextureDetail - 0.5) * closeStage * 0.006 * exposedSurface * (0.36 + dryLandSignal * 0.58);
             float landMacro = fbmTerrain(vUv * vec2(32.0, 16.0) + vec2(1.7, 4.2));
             float landMeso = fbmTerrain(vUv * vec2(128.0, 64.0) + vec2(3.2, 1.7));
             float landMicro = fbmTerrain(vUv * vec2(512.0, 256.0) + vec2(11.3, 8.1));
             float dryCloseDetail = exposedSurface * closeStage * dryLandSignal * dayW;
-            daySurface += (landMacro - 0.5) * dryCloseDetail * 0.024;
-            daySurface += (landMeso - 0.5) * dryCloseDetail * 0.026;
-            daySurface += (landMicro - 0.5) * dryCloseDetail * 0.008;
-            daySurface += terrainRelief * dryCloseDetail * vec3(0.034, 0.038, 0.044);
+            daySurface += (landMacro - 0.5) * dryCloseDetail * 0.012;
+            daySurface += (landMeso - 0.5) * dryCloseDetail * 0.012;
+            daySurface += (landMicro - 0.5) * dryCloseDetail * 0.004;
+            daySurface += terrainRelief * dryCloseDetail * vec3(0.02, 0.022, 0.026);
             daySurfaceLuma = dot(daySurface, vec3(0.299, 0.587, 0.114));
-            daySurface *= mix(1.0, 0.78, dryLandSignal * closeStage);
-            daySurface *= mix(1.0, 0.48, smoothstep(0.38, 0.8, daySurfaceLuma) * closeStage);
-            daySurface *= mix(vec3(1.0), vec3(0.9, 0.92, 0.98), dryLandSignal * closeStage * 0.42);
+            daySurface *= mix(1.0, 0.9, dryLandSignal * closeStage);
+            daySurface *= mix(1.0, 0.82, smoothstep(0.44, 0.84, daySurfaceLuma) * closeStage);
+            daySurface *= mix(vec3(1.0), vec3(0.98, 0.97, 0.94), dryLandSignal * closeStage * 0.14);
             float desertOceanSignal = dayTex.b - max(dayTex.r, dayTex.g) * 0.52;
             float desertOceanMask = smoothstep(0.035, 0.18, desertOceanSignal) *
               (1.0 - clamp(max(cloudMask, cloudCore) * 0.9, 0.0, 0.92));
@@ -532,27 +543,49 @@ export function LandingEarth({
               smoothstep(0.45, 0.78, dayTexLuma) *
               (1.0 - desertOceanMask) *
               exposedSurface;
-            daySurface *= mix(vec3(1.0), vec3(0.64, 0.68, 0.76), desertSignal * closeStage * 0.68);
+            daySurface *= mix(vec3(1.0), vec3(0.72, 0.76, 0.84), max(desertSignal, yellowTerrainSignal) * closeStage * 0.44);
             float compressedDesertLuma = dot(daySurface, vec3(0.299, 0.587, 0.114));
-            daySurface = mix(daySurface, vec3(compressedDesertLuma), desertSignal * closeStage * 0.26);
+            daySurface = mix(daySurface, vec3(compressedDesertLuma), desertSignal * closeStage * 0.035);
             daySurfaceLuma = dot(daySurface, vec3(0.299, 0.587, 0.114));
             float closeBrightSurface = smoothstep(0.26, 0.62, daySurfaceLuma) * closeStage * exposedSurface * dayW;
             float closeHorizonSurface = smoothstep(0.34, 0.88, fresnel) * closeStage * dayW;
             daySurface *= mix(vec3(1.0), vec3(0.76, 0.8, 0.88), closeBrightSurface * 0.24);
             daySurface *= mix(vec3(1.0), vec3(0.84, 0.88, 0.94), closeHorizonSurface * 0.18);
             float closeBrightLuma = dot(daySurface, vec3(0.299, 0.587, 0.114));
-            daySurface = mix(daySurface, vec3(closeBrightLuma), closeBrightSurface * 0.18);
+            daySurface = mix(daySurface, vec3(closeBrightLuma), closeBrightSurface * 0.08);
             daySurface *= mix(
               vec3(1.0),
-              vec3(0.58, 0.68, 0.84),
-              clamp(visibleCloudShadow * 0.34, 0.0, 0.34)
+              vec3(0.66, 0.74, 0.86),
+              clamp(visibleCloudShadow * 0.24, 0.0, 0.24)
+            );
+            vec3 photoSurface = rawDayTex + (rawDayTex - dayBlur) * 0.028;
+            float photoSurfaceLuma = dot(photoSurface, vec3(0.299, 0.587, 0.114));
+            photoSurface = mix(vec3(photoSurfaceLuma), photoSurface, mix(0.9, 0.62, yellowTerrainSignal));
+            photoSurface *= mix(1.0, 0.72, smoothstep(0.5, 0.82, photoSurfaceLuma) * closeStage);
+            photoSurface *= shadowTint;
+            photoSurface *= mix(
+              vec3(1.0),
+              vec3(0.72, 0.8, 0.92),
+              clamp(visibleCloudShadow * 0.22, 0.0, 0.22)
+            );
+            photoSurface *= mix(vec3(1.0), vec3(0.7, 0.76, 0.86), max(desertSignal * closeStage, yellowTerrainSignal) * 0.34);
+            daySurface = mix(daySurface, photoSurface, closeStage * 0.64);
+            float finalSurfaceLuma = dot(daySurface, vec3(0.299, 0.587, 0.114));
+            float finalYellowCast =
+              smoothstep(0.0, 0.18, daySurface.r + daySurface.g - daySurface.b * 2.0) *
+              smoothstep(0.22, 0.74, finalSurfaceLuma) *
+              closeStage;
+            daySurface = mix(
+              daySurface,
+              vec3(finalSurfaceLuma) * vec3(0.82, 0.86, 0.95),
+              finalYellowCast * 0.46
             );
             float dayLight = pow(max(ndl, 0.0), 0.82);
             float grazingSun = pow(
               clamp((ndl + transitionWidth * 1.45) / max(transitionWidth * 2.7, 0.001), 0.0, 1.0),
               1.32
             ) * (1.0 - smoothstep(transitionWidth * 0.55, transitionWidth * 2.4, abs(ndl)));
-            vec3 dayCol = daySurface * lightColor * (ambient * 1.34 + (dayLight + grazingSun * 0.25) * sunIntensity) * dayW * 0.84 * closeExposureDiscipline;
+            vec3 dayCol = daySurface * lightColor * (ambient * 1.34 + (dayLight + grazingSun * 0.25) * sunIntensity) * dayW * 0.94 * closeExposureDiscipline;
             dayCol *= mix(1.0, 0.86, closeHorizonSurface);
             vec3 halfDir = normalize(l + v);
             float oceanSignal = dayTex.b - max(dayTex.r, dayTex.g) * 0.52;
@@ -662,10 +695,10 @@ export function LandingEarth({
 
             float closeOnlyStage = smoothstep(0.74, 1.0, closeStage);
             vec3 color = dayCol + surfaceFill + oceanSpecular + cityCol + moonlitLand + moonlitClouds + twilightFill + terminatorCol + rimCol + edgeLight + lowerAtmosphere + tangentSurfaceScatter;
-            vec3 highlightKnee = vec3(mix(0.84, 0.22, closeStage));
-            float highlightDiscipline = mix(0.7, 4.0, closeStage);
+            vec3 highlightKnee = vec3(mix(0.84, 0.28, closeStage));
+            float highlightDiscipline = mix(0.7, 3.1, closeStage);
             color = color / (1.0 + max(color - highlightKnee, vec3(0.0)) * highlightDiscipline);
-            color *= mix(1.0, 0.62, closeOnlyStage);
+            color *= mix(1.0, 0.92, closeOnlyStage);
             color = pow(max(color, vec3(0.0)), vec3(1.0));
             color *= 0.96 + (grain(gl_FragCoord.xy) - 0.5) * 0.026;
             gl_FragColor = vec4(color, 1.0);

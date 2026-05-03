@@ -26,11 +26,11 @@ import type { LandingQuality } from "@miralith/visual-core";
 
 const HIGH_DETAIL_EARTH_ASSETS: Partial<LandingAssetManifest> = {
   earthDay: {
-    id: "earth-day-8k",
-    src: "/assets/lubirth/textures/earth-day-8k.webp",
+    id: "earth-day-8k-nasa",
+    src: "/assets/lubirth/textures/earth-day-8k-nasa.png",
     width: 8192,
     height: 4096,
-    format: "webp",
+    format: "png",
     colorSpace: "srgb"
   },
   earthNight: {
@@ -360,7 +360,7 @@ export function LuBirthSceneSlot({
     () => resolveLandingPreset(mode, compositionOverrides),
     [compositionOverrides, mode]
   );
-  const useHighDetailEarthAssets = qualityProfile.tier === "high" && activeRenderProfile !== "clean";
+  const useHighDetailEarthAssets = qualityProfile.tier === "high";
   const assets = resolveLandingAssets(useHighDetailEarthAssets ? HIGH_DETAIL_EARTH_ASSETS : undefined);
 
   useEffect(() => {
