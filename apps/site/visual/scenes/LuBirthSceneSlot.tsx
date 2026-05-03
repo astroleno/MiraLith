@@ -48,6 +48,22 @@ const HIGH_DETAIL_EARTH_ASSETS: Partial<LandingAssetManifest> = {
     height: 4096,
     format: "webp",
     colorSpace: "srgb"
+  },
+  earthNormal: {
+    id: "earth-normal-2k",
+    src: "/assets/lubirth/textures/earth-normal-2k.jpg",
+    width: 2048,
+    height: 1024,
+    format: "jpg",
+    colorSpace: "linear"
+  },
+  earthDisplacement: {
+    id: "earth-displacement-8k",
+    src: "/assets/lubirth/textures/earth-displacement-8k.jpg",
+    width: 8192,
+    height: 4096,
+    format: "jpg",
+    colorSpace: "linear"
   }
 };
 

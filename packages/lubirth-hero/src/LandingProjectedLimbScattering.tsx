@@ -153,25 +153,25 @@ function createLimbScatteringMaterial(composition: LandingComposition) {
           0.34;
         float airglowBreakup = smoothstep(0.46, 0.84, fbm(vec2(angle * 11.0 + 4.2, 7.0)));
 
-        float brightCore = exp(-pow((lineCore - 1.25) / mix(3.2, 4.8, debugBoost), 2.0)) *
+        float brightCore = exp(-pow((lineCore - 1.45) / mix(5.2, 6.8, debugBoost), 2.0)) *
           (0.42 + day * 0.72) *
           tangentMask;
-        float whiteNeedle = brightCore * mix(0.0315, 0.198, debugBoost);
-        float surfaceGlow = exp(-pow(max(glowOutside, 0.0) / mix(18.0, 24.0, debugBoost), 1.2)) *
-          smoothstep(-0.6, 5.0, glowOutside) *
-          (0.044 + day * 0.066);
-        float nearBlue = exp(-pow(max(glowOutside, 0.0) / mix(12.0, 16.5, debugBoost), 1.34)) *
-          (0.072 + day * 0.1) *
+        float whiteNeedle = brightCore * mix(0.011, 0.142, debugBoost);
+        float surfaceGlow = exp(-pow(max(glowOutside, 0.0) / mix(26.0, 34.0, debugBoost), 1.16)) *
+          smoothstep(-1.6, 7.0, glowOutside) *
+          (0.05 + day * 0.068);
+        float nearBlue = exp(-pow(max(glowOutside, 0.0) / mix(18.0, 24.0, debugBoost), 1.26)) *
+          (0.058 + day * 0.082) *
           outsideMask;
-        float blueThickness = exp(-pow(max(glowOutside - 1.4, 0.0) / mix(42.0, 82.0, debugBoost), 1.18)) *
-          smoothstep(0.0, 16.0, glowOutside) *
-          (0.054 + day * 0.074);
-        float diffuseBlue = exp(-pow(max(glowOutside - 4.0, 0.0) / mix(112.0, 196.0, debugBoost), 1.3)) *
-          smoothstep(2.0, 46.0, glowOutside) *
-          (0.03 + day * 0.042);
-        float wideBloom = exp(-pow(max(glowOutside - 8.0, 0.0) / mix(172.0, 310.0, debugBoost), 1.22)) *
-          smoothstep(6.0, 70.0, glowOutside) *
-          (0.012 + day * 0.021);
+        float blueThickness = exp(-pow(max(glowOutside - 1.8, 0.0) / mix(58.0, 98.0, debugBoost), 1.12)) *
+          smoothstep(-1.0, 22.0, glowOutside) *
+          (0.048 + day * 0.066);
+        float diffuseBlue = exp(-pow(max(glowOutside - 2.0, 0.0) / mix(138.0, 218.0, debugBoost), 1.22)) *
+          smoothstep(0.0, 58.0, glowOutside) *
+          (0.04 + day * 0.052);
+        float wideBloom = exp(-pow(max(glowOutside - 4.0, 0.0) / mix(210.0, 340.0, debugBoost), 1.14)) *
+          smoothstep(2.0, 88.0, glowOutside) *
+          (0.019 + day * 0.026);
         float oxygenGreen = smoothstep(2.0, mix(10.0, 16.0, debugBoost), glowOutside) *
           (1.0 - smoothstep(mix(24.0, 38.0, debugBoost), mix(62.0, 92.0, debugBoost), glowOutside)) *
           night *
@@ -183,10 +183,10 @@ function createLimbScatteringMaterial(composition: LandingComposition) {
         float outerCyan = smoothstep(22.0, mix(52.0, 74.0, debugBoost), glowOutside) *
           (1.0 - smoothstep(mix(110.0, 150.0, debugBoost), mix(192.0, 260.0, debugBoost), glowOutside)) *
           mix(0.01, 0.024, debugBoost);
-        surfaceGlow *= mix(0.86, 1.0, debugBoost);
+        surfaceGlow *= mix(0.94, 1.0, debugBoost);
         blueThickness *= mix(0.92, 1.0, debugBoost);
-        diffuseBlue *= mix(0.58, 1.0, debugBoost);
-        wideBloom *= mix(0.5, 1.0, debugBoost);
+        diffuseBlue *= mix(0.74, 1.0, debugBoost);
+        wideBloom *= mix(0.68, 1.0, debugBoost);
         oxygenGreen *= mix(0.55 * airglowBreakup, 1.0, debugBoost);
         amberTwilight *= mix(0.55, 1.0, debugBoost);
         outerCyan *= mix(0.62, 1.0, debugBoost);

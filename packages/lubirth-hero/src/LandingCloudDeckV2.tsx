@@ -257,16 +257,29 @@ function createCloudDeckV2Material(composition: LandingComposition) {
         finalColor += vec3(0.08, 0.22, 0.46) * sideMass * (0.16 + day * 0.16 + night * 0.12);
         finalColor += vec3(0.95, 0.48, 0.2) * twilight * highCap * 0.04;
         float closeOnlyStage = smoothstep(0.74, 1.0, closeStage);
-        finalColor *= (0.94 + microBreakup * 0.07 + fineFilament * 0.035) * mix(1.0, 0.68, closeStage) * mix(1.0, 0.78, closeOnlyStage);
+        finalColor *= (0.94 + microBreakup * 0.07 + fineFilament * 0.035) * mix(1.0, 0.8, closeStage) * mix(1.0, 0.86, closeOnlyStage);
 
         float productionSoftness = mix(0.7, 1.0, debugBoost);
-        float centerAlphaScale = mix(0.034 + closeStage * 0.018, 0.006 + debugBoost * 0.014, closeOnlyStage);
+        float centerAlphaScale = mix(0.034 + closeStage * 0.018, 0.018 + debugBoost * 0.016, closeOnlyStage);
         float centerAlpha = coverage * opacity * centerAlphaScale * (0.58 + highCap * 0.42) * productionSoftness;
         float existingCloud = smoothstep(0.28, 0.72, baseCoverage);
         float denseCloud = smoothstep(0.46, 0.86, baseThickness) * existingCloud;
         float denseCloudTop = smoothstep(0.34, 0.74, baseHighCap) * denseCloud;
-        centerAlpha += denseCloud * opacity * (0.012 + closeStage * 0.024) * (0.62 + denseCloudTop * 0.38) * productionSoftness;
-        finalColor += vec3(0.72, 0.82, 0.92) * denseCloudTop * day * 0.055;
+        float synopticFlow = noise2(baseUv * vec2(18.0, 7.0) + wind * 10.0);
+        float cirrusFlow =
+          noise2(baseUv * vec2(74.0, 18.0) + vec2(synopticFlow * 2.8, time * 0.002)) * 0.58 +
+          noise2(baseUv * vec2(156.0, 31.0) + vec2(4.2, synopticFlow * 3.4)) * 0.42;
+        float clearWeatherSlot = 1.0 - smoothstep(0.62, 0.92, baseCoverage + baseThickness * 0.42);
+        float closeCirrus = smoothstep(0.6, 0.84, cirrusFlow + fineFilament * 0.12) *
+          clearWeatherSlot *
+          closeOnlyStage *
+          smoothstep(-0.12, 0.52, ndl);
+        centerAlpha += denseCloud * opacity * (0.028 + closeStage * 0.052) * (0.62 + denseCloudTop * 0.38) * productionSoftness;
+        centerAlpha += closeCirrus * opacity * 0.038 * productionSoftness;
+        float closeDenseWeather = denseCloud * closeOnlyStage * smoothstep(-0.12, 0.46, ndl);
+        finalColor += vec3(0.72, 0.82, 0.92) * denseCloudTop * day * (0.055 + closeDenseWeather * 0.08);
+        finalColor = mix(finalColor, max(finalColor, vec3(0.44, 0.52, 0.62)), closeDenseWeather * 0.12);
+        finalColor = mix(finalColor, max(finalColor, vec3(0.42, 0.49, 0.58)), closeCirrus * 0.18);
         float limbAlpha = (coverage * 0.46 + thickness * 0.36 + highCap * 0.18) *
           opacity *
           (0.112 + closeStage * 0.085 + debugBoost * 0.18) *
@@ -274,8 +287,10 @@ function createCloudDeckV2Material(composition: LandingComposition) {
           edgeBreak *
           mix(0.74, 1.0, qualityMix);
         float massAlpha = sideMass * opacity * (0.08 + closeStage * 0.045 + debugBoost * 0.08) * edgeBreak;
+        float closeDenseAlpha = closeDenseWeather * opacity * (0.052 + denseCloudTop * 0.074) * productionSoftness;
         float alpha = centerAlpha + limbAlpha + massAlpha;
-        alpha *= (0.8 + closeStage * 0.16) * mix(0.9, 1.08, microBreakup) * mix(0.94, 1.06, fineFilament) * mix(1.0, 0.42, closeOnlyStage);
+        alpha *= (0.8 + closeStage * 0.16) * mix(0.9, 1.08, microBreakup) * mix(0.94, 1.06, fineFilament) * mix(1.0, 0.72, closeOnlyStage);
+        alpha += closeDenseAlpha * mix(0.92, 1.1, microBreakup);
         alpha = clamp(alpha, 0.0, mix(0.24, 0.68, debugBoost));
 
         if (alpha < 0.0025) {

@@ -198,27 +198,32 @@ function createAtmosphereStackMaterial(composition: LandingComposition, spec: At
           float contactWeight = 1.0 - smoothstep(0.0015, 0.0048, shellAltitude);
           float airColumnWeight = exp(-shellAltitude * 210.0);
           float surfaceContact =
-            smoothstep(0.68, 0.92, rim) *
-            (1.0 - smoothstep(0.982, 1.0, rim));
+            smoothstep(0.64, 0.9, rim) *
+            (1.0 - smoothstep(0.972, 1.0, rim));
           float groundGlow =
-            smoothstep(0.42, 0.78, rim) *
-            (1.0 - smoothstep(0.958, 1.0, rim));
+            smoothstep(0.36, 0.74, rim) *
+            (1.0 - smoothstep(0.942, 1.0, rim));
           float nearSurfaceShelf =
-            smoothstep(0.58, 0.88, rim) *
-            (1.0 - smoothstep(0.976, 1.0, rim));
+            smoothstep(0.5, 0.86, rim) *
+            (1.0 - smoothstep(0.99, 1.0, rim));
+          float diffuseShoulder =
+            smoothstep(0.3, 0.66, rim) *
+            (1.0 - smoothstep(0.92, 1.0, rim));
           vec3 groundBlue = mix(deepBlue, rayleighBlue, 0.34 + daySide * 0.38 + twilight * 0.12);
-          float contactGain = 0.62 + contactWeight * 0.74 + airColumnWeight * 0.26;
-          float shelfGain = 0.2 + contactWeight * 0.36 + airColumnWeight * 0.3;
+          float contactGain = 0.48 + contactWeight * 0.52 + airColumnWeight * 0.2;
+          float shelfGain = 0.26 + contactWeight * 0.28 + airColumnWeight * 0.28;
           color =
             groundBlue * groundGlow * contactGain +
-            rayleighBlue * surfaceContact * (0.08 + contactWeight * 0.24) * (0.45 + daySide * 0.55) +
-            mix(deepBlue, rayleighBlue, 0.38 + daySide * 0.22) * nearSurfaceShelf * shelfGain;
+            rayleighBlue * surfaceContact * (0.052 + contactWeight * 0.16) * (0.45 + daySide * 0.55) +
+            mix(deepBlue, rayleighBlue, 0.38 + daySide * 0.22) * nearSurfaceShelf * shelfGain +
+            mix(deepBlue, rayleighBlue, 0.28 + daySide * 0.18) * diffuseShoulder * (0.1 + airColumnWeight * 0.1);
           alpha =
             groundGlow *
-            (0.042 + contactWeight * 0.074 + airColumnWeight * 0.022) *
+            (0.034 + contactWeight * 0.054 + airColumnWeight * 0.02) *
             (0.64 + daySide * 0.32 + twilight * 0.2);
-          alpha += surfaceContact * (0.014 + contactWeight * 0.034) * (0.48 + daySide * 0.52);
-          alpha += nearSurfaceShelf * (0.009 + airColumnWeight * 0.014) * (0.42 + daySide * 0.42);
+          alpha += surfaceContact * (0.009 + contactWeight * 0.022) * (0.48 + daySide * 0.52);
+          alpha += nearSurfaceShelf * (0.012 + airColumnWeight * 0.016) * (0.42 + daySide * 0.42);
+          alpha += diffuseShoulder * (0.005 + airColumnWeight * 0.008) * (0.36 + daySide * 0.38);
           alpha *= mix(0.44, 1.0, altitudeFade);
         } else if (kind == 0) {
           color = whiteLineColor * innerWhite * (0.98 + daySide * 0.96);

@@ -135,6 +135,12 @@ test("uses high-detail Earth and sky assets for the nasa profile without project
     .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-clouds-8k.webp")), { timeout: 25_000 })
     .toBe(true);
   await expect
+    .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-normal-2k.jpg")), { timeout: 25_000 })
+    .toBe(true);
+  await expect
+    .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-displacement-8k.jpg")), { timeout: 25_000 })
+    .toBe(true);
+  await expect
     .poll(() => Array.from(assetRequests).some((path) => path.includes("8k_stars_milky_way.webp")), { timeout: 25_000 })
     .toBe(true);
   await expect

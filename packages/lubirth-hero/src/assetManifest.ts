@@ -122,6 +122,12 @@ export function getLandingAssetBudget(assets: Partial<LandingAssetManifest> = {}
       "critical",
       true
     ),
+    ...(resolvedAssets.earthNormal
+      ? [textureBudget(resolvedAssets.earthNormal, 420_000, "idle", false)]
+      : []),
+    ...(resolvedAssets.earthDisplacement
+      ? [textureBudget(resolvedAssets.earthDisplacement, 1_600_000, "idle", false)]
+      : []),
     textureBudget(
       resolvedAssets.earthHorizonCloudStrip ?? DEFAULT_LUBIRTH_ASSETS.earthHorizonCloudStrip ?? {
         id: "earth-horizon-cloud-strip-2k",

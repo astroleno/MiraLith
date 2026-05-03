@@ -30,7 +30,7 @@ interface LandingEarthProps {
 }
 
 const lightDirection = new Vector3();
-const SURFACE_CLOUD_OPACITY_MULTIPLIER = 0.14;
+const SURFACE_CLOUD_OPACITY_MULTIPLIER = 0.22;
 const SURFACE_CLOUD_SHADOW_MULTIPLIER = 0.3;
 const SURFACE_CLOUD_SCROLL_SPEED = 0.022;
 
@@ -86,9 +86,24 @@ export function LandingEarth({
     wrapS: RepeatWrapping,
     wrapT: RepeatWrapping
   });
+  const { texture: normalTexture } = useLandingTexture(quality.tier === "high" ? assets.earthNormal?.src : undefined, {
+    colorSpace: assets.earthNormal?.colorSpace ?? "linear",
+    wrapS: RepeatWrapping,
+    wrapT: RepeatWrapping
+  });
+  const { texture: displacementTexture } = useLandingTexture(
+    quality.tier === "high" ? assets.earthDisplacement?.src : undefined,
+    {
+      colorSpace: assets.earthDisplacement?.colorSpace ?? "linear",
+      wrapS: RepeatWrapping,
+      wrapT: RepeatWrapping
+    }
+  );
   const activeDayTexture = dayTexture ?? proceduralDayTexture;
   const activeNightTexture = nightTexture ?? activeDayTexture;
   const activeCloudTexture = cloudTexture ?? activeDayTexture;
+  const activeNormalTexture = normalTexture ?? activeDayTexture;
+  const activeDisplacementTexture = displacementTexture ?? activeDayTexture;
 
   useEffect(() => {
     if (dayTexture) {
@@ -105,12 +120,22 @@ export function LandingEarth({
       activeCloudTexture.colorSpace = SRGBColorSpace;
       activeCloudTexture.wrapS = RepeatWrapping;
       activeCloudTexture.wrapT = RepeatWrapping;
+      activeNormalTexture.wrapS = RepeatWrapping;
+      activeNormalTexture.wrapT = RepeatWrapping;
+      activeDisplacementTexture.wrapS = RepeatWrapping;
+      activeDisplacementTexture.wrapT = RepeatWrapping;
 
       return new ShaderMaterial({
         uniforms: {
           dayMap: { value: activeDayTexture },
           nightMap: { value: activeNightTexture },
           cloudMap: { value: activeCloudTexture },
+          normalMap: { value: activeNormalTexture },
+          displacementMap: { value: activeDisplacementTexture },
+          hasNormalMap: { value: normalTexture ? 1 : 0 },
+          hasDisplacementMap: { value: displacementTexture ? 1 : 0 },
+          normalMapStrength: { value: 0.46 },
+          displacementStrength: { value: 3.6 },
           lightDir: { value: lightDirection.set(...composition.light.fixedSunDir).normalize().clone() },
           lightColor: {
             value: new Color(
@@ -175,6 +200,12 @@ export function LandingEarth({
           uniform sampler2D dayMap;
           uniform sampler2D nightMap;
           uniform sampler2D cloudMap;
+          uniform sampler2D normalMap;
+          uniform sampler2D displacementMap;
+          uniform float hasNormalMap;
+          uniform float hasDisplacementMap;
+          uniform float normalMapStrength;
+          uniform float displacementStrength;
           uniform vec3 lightDir;
           uniform vec3 lightColor;
           uniform float sunIntensity;
@@ -228,8 +259,36 @@ export function LandingEarth({
 
           void main() {
             vec3 n = normalize(vNormalW);
+            vec3 tangentA = normalize(vWorldTangentA);
+            vec3 tangentB = normalize(vWorldTangentB);
             vec3 l = normalize(lightDir);
             vec3 v = normalize(vViewW);
+            float reliefStage = smoothstep(0.18, 1.0, closeStage);
+            float terrainHeight = 0.5;
+            float terrainRelief = 0.0;
+
+            if (hasNormalMap > 0.5) {
+              vec3 normalTex = texture2D(normalMap, vUv).xyz * 2.0 - 1.0;
+              normalTex.xy *= normalMapStrength * (0.36 + reliefStage * 0.82);
+              normalTex.z = max(normalTex.z, 0.18);
+              vec3 mappedNormal = normalize(tangentA * normalTex.x + tangentB * normalTex.y + n * normalTex.z);
+              n = normalize(mix(n, mappedNormal, 0.16 + reliefStage * 0.38));
+            }
+
+            if (hasDisplacementMap > 0.5) {
+              vec2 heightStep = vec2(0.00062, 0.00031);
+              terrainHeight = texture2D(displacementMap, vUv).r;
+              float heightX = texture2D(displacementMap, vUv + vec2(heightStep.x, 0.0)).r;
+              float heightY = texture2D(displacementMap, vUv + vec2(0.0, heightStep.y)).r;
+              vec3 heightNormal = normalize(
+                n -
+                tangentA * (heightX - terrainHeight) * displacementStrength * reliefStage -
+                tangentB * (heightY - terrainHeight) * displacementStrength * reliefStage
+              );
+              n = normalize(mix(n, heightNormal, 0.12 + reliefStage * 0.44));
+              terrainRelief = (terrainHeight - 0.5) * reliefStage;
+            }
+
             float ndl = dot(n, l);
             float fresnel = 1.0 - max(dot(n, v), 0.0);
             float closeTransition = clamp(edge * 0.68, 0.07, 0.11);
@@ -274,11 +333,11 @@ export function LandingEarth({
             dayTex = mix(vec3(dayTexLuma), dayTex, 0.95);
             dayTex = pow(clamp(dayTex, vec3(0.0), vec3(1.18)), vec3(mix(0.98, 1.08, closeStage)));
             float closeDayHighlight = smoothstep(0.38, 0.82, dayTexLuma) * closeStage;
-            dayTex *= mix(1.0, 0.58, closeDayHighlight);
+            dayTex *= mix(1.0, 0.68, closeDayHighlight);
             vec3 nightTex = pow(texture2D(nightMap, vUv).rgb, vec3(0.9));
             vec2 cloudUv = vec2(fract(vUv.x + cloudOffset), fract(vUv.y + cloudOffset * 0.18));
-            float closeExposureDiscipline = mix(1.0, 0.24, closeStage);
-            float closeCloudDiscipline = mix(1.0, 0.42, closeStage);
+            float closeExposureDiscipline = mix(1.0, 0.44, closeStage);
+            float closeCloudDiscipline = mix(1.0, 0.82, closeStage);
             float cloudRaw = texture2D(cloudMap, cloudUv).r;
             vec2 cloudDetailStep = vec2(0.0015, 0.00078);
             float cloudBlur = (
@@ -297,9 +356,19 @@ export function LandingEarth({
               grain(cloudUv * vec2(8192.0, 4096.0) + vec2(1.3, 4.7)) * 0.58 +
               grain(cloudUv * vec2(16384.0, 8192.0) + vec2(11.2, 0.8)) * 0.42;
             float cloudEdgeBreak = mix(0.84, 1.16, cloudMicro);
-            float closeSurfaceCloudLimiter = mix(1.0, 0.18, closeStage);
-            float cloudMask = smoothstep(0.13, 0.54, cloudSharp * cloudEdgeBreak) * cloudOpacity * closeSurfaceCloudLimiter;
-            float cloudCore = smoothstep(0.3, 0.72, cloudSharp * mix(0.9, 1.08, cloudMicro)) * cloudOpacity * mix(1.0, 0.28, closeStage);
+            float closeWeatherFlow = fbmTerrain(cloudUv * vec2(30.0, 13.0) + vec2(cloudOffset * 9.0, cloudOffset * 2.4));
+            float closeFilament = smoothstep(0.58, 0.86, closeWeatherFlow + (cloudMicro - 0.5) * 0.2) *
+              closeStage *
+              smoothstep(-0.18, 0.58, ndl);
+            float closeSurfaceCloudLimiter = mix(1.0, 0.62, closeStage);
+            float cloudMask = (
+              smoothstep(0.13, 0.54, cloudSharp * cloudEdgeBreak) +
+              closeFilament * 0.34
+            ) * cloudOpacity * closeSurfaceCloudLimiter;
+            float cloudCore = (
+              smoothstep(0.3, 0.72, cloudSharp * mix(0.9, 1.08, cloudMicro)) +
+              closeFilament * 0.18
+            ) * cloudOpacity * mix(1.0, 0.72, closeStage);
             float cloudAltitude = pow(fresnel, 2.35) * cloudMask * (0.28 + closeStage * 0.46);
             vec2 lightTangentUv = vec2(dot(l, normalize(vWorldTangentA)), dot(l, normalize(vWorldTangentB)));
             float lightTangentLen = max(length(lightTangentUv), 0.001);
@@ -334,7 +403,8 @@ export function LandingEarth({
             hardCloudShadow *= thickShadowCaster;
             softCloudShadow *= mix(0.22, 1.0, thickShadowCaster);
             float cloudShadow = min(hardCloudShadow + softCloudShadow, 0.28);
-            vec3 cloudCol = mix(vec3(0.38, 0.45, 0.52), vec3(0.98, 0.97, 0.9), cloudSharp);
+            float cloudPresentation = clamp(max(cloudSharp, closeFilament * 0.82), 0.0, 1.0);
+            vec3 cloudCol = mix(vec3(0.38, 0.45, 0.52), vec3(0.98, 0.97, 0.9), cloudPresentation);
             cloudCol += vec3(0.58, 0.64, 0.7) * max(cloudRelief, 0.0);
             cloudCol += vec3(0.2, 0.3, 0.48) * cloudAltitude;
             cloudCol -= vec3(0.25, 0.29, 0.36) * max(-cloudRelief, 0.0);
@@ -364,6 +434,7 @@ export function LandingEarth({
             daySurface += (landMacro - 0.5) * dryCloseDetail * 0.035;
             daySurface += (landMeso - 0.5) * dryCloseDetail * 0.045;
             daySurface += (landMicro - 0.5) * dryCloseDetail * 0.018;
+            daySurface += terrainRelief * dryCloseDetail * vec3(0.055, 0.06, 0.068);
             daySurfaceLuma = dot(daySurface, vec3(0.299, 0.587, 0.114));
             daySurface *= mix(1.0, 0.78, dryLandSignal * closeStage);
             daySurface *= mix(1.0, 0.48, smoothstep(0.38, 0.8, daySurfaceLuma) * closeStage);
@@ -382,8 +453,8 @@ export function LandingEarth({
             daySurfaceLuma = dot(daySurface, vec3(0.299, 0.587, 0.114));
             float closeBrightSurface = smoothstep(0.26, 0.62, daySurfaceLuma) * closeStage * exposedSurface * dayW;
             float closeHorizonSurface = smoothstep(0.34, 0.88, fresnel) * closeStage * dayW;
-            daySurface *= mix(vec3(1.0), vec3(0.6, 0.64, 0.72), closeBrightSurface * 0.58);
-            daySurface *= mix(vec3(1.0), vec3(0.62, 0.68, 0.78), closeHorizonSurface * 0.42);
+            daySurface *= mix(vec3(1.0), vec3(0.68, 0.72, 0.8), closeBrightSurface * 0.46);
+            daySurface *= mix(vec3(1.0), vec3(0.72, 0.78, 0.86), closeHorizonSurface * 0.34);
             float closeBrightLuma = dot(daySurface, vec3(0.299, 0.587, 0.114));
             daySurface = mix(daySurface, vec3(closeBrightLuma), closeBrightSurface * 0.18);
             float dayLight = pow(max(ndl, 0.0), 0.82);
@@ -504,7 +575,7 @@ export function LandingEarth({
             vec3 highlightKnee = vec3(mix(0.84, 0.22, closeStage));
             float highlightDiscipline = mix(0.7, 4.0, closeStage);
             color = color / (1.0 + max(color - highlightKnee, vec3(0.0)) * highlightDiscipline);
-            color *= mix(1.0, 0.38, closeOnlyStage);
+            color *= mix(1.0, 0.62, closeOnlyStage);
             color = pow(max(color, vec3(0.0)), vec3(1.0));
             color *= 0.96 + (grain(gl_FragCoord.xy) - 0.5) * 0.026;
             gl_FragColor = vec4(color, 1.0);
@@ -531,7 +602,11 @@ export function LandingEarth({
       composition.light.intensity,
       activeDayTexture,
       activeCloudTexture,
-      activeNightTexture
+      activeDisplacementTexture,
+      activeNormalTexture,
+      activeNightTexture,
+      displacementTexture,
+      normalTexture
     ]
   );
 
