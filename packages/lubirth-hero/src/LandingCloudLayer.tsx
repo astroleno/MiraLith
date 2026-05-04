@@ -204,11 +204,15 @@ function createCloudMaterial(
         vec2 sunOffset = sunShear * 0.012;
         vec2 midUv = baseUv + wind + parallax * 0.03;
         vec2 detailStep = vec2(mix(0.00032, 0.00012, closeStage), mix(0.00016, 0.00008, closeStage));
-        vec4 deck = texture2D(cloudDeckMap, vec2(fract(midUv.x), clamp(midUv.y, 0.001, 0.999)));
+        vec2 deckUv = vec2(
+          fract(baseUv.x + wind.x),
+          clamp(baseUv.y + wind.y, 0.001, 0.999)
+        );
+        vec4 deck = texture2D(cloudDeckMap, deckUv);
         float deckCoverage = clamp(deck.r, 0.0, 1.0) * hasCloudDeckMap;
-        float deckThickness = clamp(deck.g, 0.0, 1.0) * hasCloudDeckMap;
-        float deckAo = clamp(deck.b, 0.0, 1.0) * hasCloudDeckMap;
-        float deckHighCap = clamp(deck.a, 0.0, 1.0) * hasCloudDeckMap;
+        float deckThickness = pow(clamp(deck.g, 0.0, 1.0), 1.35) * hasCloudDeckMap;
+        float deckAo = pow(clamp(deck.b, 0.0, 1.0), 1.25) * hasCloudDeckMap;
+        float deckHighCap = pow(clamp(deck.a, 0.0, 1.0), 1.45) * hasCloudDeckMap;
         float deckWeatherMass = smoothstep(0.2, 0.7, deckCoverage + deckThickness * 0.24);
         float deckWeatherCore = smoothstep(0.35, 0.75, deckThickness) * smoothstep(0.18, 0.68, deckCoverage);
 
@@ -241,8 +245,14 @@ function createCloudMaterial(
         rawSharp = mix(rawSharp, broadWeather, 0.52 + closeStage * 0.1);
         float weatherMass = smoothstep(0.15, 0.44, broadWeather);
         float weatherCore = smoothstep(0.36, 0.68, broadWeather);
-        weatherMass = max(weatherMass, deckWeatherMass * 0.22);
-        weatherCore = max(weatherCore, deckWeatherCore * 0.46);
+        float visibleCloudGate = smoothstep(
+          0.16,
+          0.52,
+          max(rawMassNear * 0.62 + rawSharp * 0.38, rawMidBlur)
+        );
+        float deckInfluence = hasCloudDeckMap * visibleCloudGate;
+        weatherMass = max(weatherMass, deckWeatherMass * 0.14 * deckInfluence);
+        weatherCore = max(weatherCore, deckWeatherCore * 0.26 * deckInfluence);
         float massGate = smoothstep(0.12, 0.42, rawMass);
         float photoWisps = smoothstep(0.18, 0.46, rawSharp) * (1.0 - smoothstep(0.64, 0.9, rawSharp)) * mix(0.18, 1.0, massGate);
         float photoCore = smoothstep(0.34, 0.66, rawSharp) * mix(0.18, 1.0, massGate);
@@ -259,7 +269,7 @@ function createCloudMaterial(
         float opaqueCore = max(smoothstep(0.34, 0.64, rawSharp) * massGate, weatherCore * 0.48);
         float baseMass = max(bottom * (0.94 + baseDepth * 0.22) - top * 0.44, 0.0) * limbVolume * baseDepth;
         float topCap = max(top - mid * 0.5, 0.0) * smoothstep(0.42, 0.9, rim) * topCapStrength;
-        topCap += deckHighCap * day * topCapStrength * 0.18 * smoothstep(0.25, 0.85, deckCoverage);
+        topCap += deckHighCap * day * topCapStrength * 0.1 * smoothstep(0.28, 0.82, deckCoverage) * deckInfluence;
         float layerSeparation = abs(top - bottom);
         float forwardStack = max(top - mid, 0.0);
         float backStack = max(mid - bottom, 0.0);
@@ -281,7 +291,13 @@ function createCloudMaterial(
           0.0,
           0.62
         );
-        selfShadow = clamp(selfShadow + deckAo * 0.18 + deckThickness * deckWeatherCore * 0.08, 0.0, 0.68);
+        selfShadow = clamp(
+          selfShadow +
+          deckAo * 0.12 * deckInfluence +
+          deckThickness * deckWeatherCore * 0.045 * deckInfluence,
+          0.0,
+          0.64
+        );
         float light = mix(0.16, 0.88, day) * (1.0 - selfShadow) + twilight * 0.14 + limb * day * 0.08;
 
         vec3 cloudShadow = mix(vec3(0.16, 0.21, 0.29), vec3(0.44, 0.5, 0.58), max(mid, weatherMass * 0.72));
@@ -303,8 +319,8 @@ function createCloudMaterial(
           weatherMass * 0.36 +
           weatherCore * 0.28 +
           selfShadow * 0.42 +
-          deckAo * 0.35 +
-          deckThickness * deckWeatherCore * 0.18 +
+          deckAo * 0.26 * deckInfluence +
+          deckThickness * deckWeatherCore * 0.12 * deckInfluence +
           limbVolume * 0.18,
           0.0,
           1.0
@@ -318,8 +334,8 @@ function createCloudMaterial(
           weatherCore * 0.42 +
           opaqueCore * 0.32 +
           selfShadow * 0.36 +
-          deckThickness * deckWeatherCore * 0.28 +
-          deckAo * 0.16,
+          deckThickness * deckWeatherCore * 0.18 * deckInfluence +
+          deckAo * 0.1 * deckInfluence,
           0.0,
           1.0
         );

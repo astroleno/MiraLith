@@ -386,8 +386,8 @@ export function LandingEarth({
               vec3(0.58, 0.72, 0.92) * truthOceanGlint +
               vec3(0.45, 0.58, 0.72) * truthOceanSoftGlint;
             float truthSunRim = smoothstep(-edgeShadowSoftness, 0.42, ndl);
-            float truthBlueRim = pow(fresnel, 5.4) * truthSunRim * edgeLightStrength * (0.008 + dayW * 0.018);
-            float truthWhiteNeedle = pow(fresnel, 42.0) * truthSunRim * edgeNeedleStrength * 0.016;
+            float truthBlueRim = pow(fresnel, 6.2) * truthSunRim * edgeLightStrength * (0.006 + dayW * 0.014);
+            float truthWhiteNeedle = pow(fresnel, 52.0) * truthSunRim * edgeNeedleStrength * 0.018;
             vec3 truthRim = edgeLightColor * truthBlueRim + vec3(0.78, 0.9, 1.0) * truthWhiteNeedle;
             vec3 truthColor = truthLitDay + truthTwilightFill + truthNightFill + truthGrazingFill + truthCity + truthSpecular + truthRim;
             float truthHorizonHaze = pow(fresnel, 2.1) * smoothstep(-0.16, 0.52, ndl);
