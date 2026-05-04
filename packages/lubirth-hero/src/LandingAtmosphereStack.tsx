@@ -248,7 +248,7 @@ function createAtmosphereStackMaterial(composition: LandingComposition, spec: At
         float activeGate = kind == 5
           ? mix(tangentGate, 1.0, productionMode * 0.34)
           : tangentGate;
-        float productionAttenuation = mix(1.0, 0.58, productionMode);
+        float productionAttenuation = mix(1.0, 0.44, productionMode);
         alpha *= intensity * closeHold * boost * activeGate * productionAttenuation;
         color *= intensity * closeHold * boost * activeGate * productionAttenuation;
 

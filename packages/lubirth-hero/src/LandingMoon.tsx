@@ -164,7 +164,7 @@ export function LandingMoon({
 
             float coolMoonMix = clamp(0.5 - gibbousWarmth * 0.18 + crescent * 0.08, 0.26, 0.58);
             vec3 moonLight = mix(lightColor * vec3(1.04, 1.0, 0.9), vec3(0.78, 0.84, 0.98), coolMoonMix) * phaseTint;
-            float exposure = sunIntensity * mix(0.28, 0.46, fullness);
+            float exposure = sunIntensity * mix(0.25, 0.40, fullness);
             vec3 lit = base * moonLight * exposure * (0.26 + directLight * 0.78 + grazingLight * 0.16)
               * limbLight * terrainContrast;
             vec3 night = base * vec3(0.18, 0.22, 0.32) * (0.24 + nightLift * 1.05 + lowPhase * 0.08);
@@ -177,7 +177,7 @@ export function LandingMoon({
             color = mix(color, color * vec3(0.97, 1.0, 1.04), crescent * 0.18);
             color *= 0.92 + fullness * 0.08;
             color = color / (1.0 + max(color - vec3(0.72), vec3(0.0)) * 0.56);
-            color = min(color, vec3(0.86));
+            color = min(color, vec3(0.78));
             float diskAlpha = visibleDisk * mix(0.82, 0.96, fullness);
             diskAlpha *= mix(0.9, 1.0, daySide);
             gl_FragColor = vec4(color, diskAlpha);

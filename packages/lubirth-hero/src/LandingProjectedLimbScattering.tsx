@@ -183,11 +183,11 @@ function createLimbScatteringMaterial(composition: LandingComposition) {
         float outerCyan = smoothstep(22.0, mix(52.0, 74.0, debugBoost), glowOutside) *
           (1.0 - smoothstep(mix(110.0, 150.0, debugBoost), mix(192.0, 260.0, debugBoost), glowOutside)) *
           mix(0.01, 0.024, debugBoost);
-        surfaceGlow *= mix(0.58, 1.0, debugBoost);
-        nearBlue *= mix(0.7, 1.0, debugBoost);
-        blueThickness *= mix(0.56, 1.0, debugBoost);
-        diffuseBlue *= mix(0.42, 1.0, debugBoost);
-        wideBloom *= mix(0.32, 1.0, debugBoost);
+        surfaceGlow *= mix(0.46, 1.0, debugBoost);
+        nearBlue *= mix(0.54, 1.0, debugBoost);
+        blueThickness *= mix(0.42, 1.0, debugBoost);
+        diffuseBlue *= mix(0.28, 1.0, debugBoost);
+        wideBloom *= mix(0.18, 1.0, debugBoost);
         oxygenGreen *= mix(0.55 * airglowBreakup, 1.0, debugBoost);
         amberTwilight *= mix(0.55, 1.0, debugBoost);
         outerCyan *= mix(0.62, 1.0, debugBoost);
@@ -220,7 +220,7 @@ function createLimbScatteringMaterial(composition: LandingComposition) {
           discard;
         }
 
-        gl_FragColor = vec4(min(color, vec3(1.8)), clamp(alpha, 0.0, mix(0.18, 0.62, debugBoost)));
+        gl_FragColor = vec4(min(color, vec3(1.8)), clamp(alpha, 0.0, mix(0.12, 0.62, debugBoost)));
       }
     `,
     transparent: true,
