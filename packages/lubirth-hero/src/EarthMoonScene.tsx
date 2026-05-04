@@ -246,10 +246,10 @@ export function EarthMoonScene({
     const finalFrame = mapOpeningProgress(1);
     if (isNasaProfile && mode === "field") {
       const orbitalGrazing = 1 - easeInOut(MathUtils.clamp(progress / 0.72, 0, 1));
-      frame.cameraElevation += MathUtils.degToRad(2.6 * orbitalGrazing);
-      frame.cameraLookAtY += 0.68 * orbitalGrazing;
-      frame.earthScale *= 1 + 0.04 * orbitalGrazing;
-      frame.earthY -= 0.06 * orbitalGrazing;
+      frame.cameraElevation += MathUtils.degToRad(2.1 * orbitalGrazing);
+      frame.cameraLookAtY += 0.55 * orbitalGrazing;
+      frame.earthScale *= 1 + 0.02 * orbitalGrazing;
+      frame.earthY -= 0.035 * orbitalGrazing;
     }
     const fov = composition.camera.fov;
 

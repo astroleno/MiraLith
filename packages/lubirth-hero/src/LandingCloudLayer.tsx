@@ -292,6 +292,18 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
           finalColor * vec3(0.62, 0.70, 0.82),
           cloudUnderside * mix(0.16, 0.28, closeStage)
         );
+        float thickCloudRelief = clamp(
+          weatherCore * 0.42 +
+          opaqueCore * 0.32 +
+          selfShadow * 0.36,
+          0.0,
+          1.0
+        );
+        finalColor = mix(
+          finalColor,
+          finalColor * vec3(0.72, 0.78, 0.88),
+          thickCloudRelief * 0.16
+        );
         finalColor += vec3(0.56, 0.66, 0.78) * limbVolume * density * thickness * (0.05 + day * 0.08);
         finalColor += vec3(0.72, 0.8, 0.88) * topCap * day * (0.1 + debugBoost * 0.08);
         finalColor = mix(finalColor, finalColor * vec3(0.66, 0.74, 0.86), clamp(baseMass * (0.78 - debugBoost * 0.18), 0.0, 0.58));

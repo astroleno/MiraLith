@@ -132,12 +132,12 @@ export function LandingSpaceBackground({
 
   const starMaterial = useMemo(() => {
     return new PointsMaterial({
-      size: quality.tier === "high" ? 0.045 : 0.04,
+      size: quality.tier === "high" ? 0.038 : 0.034,
       sizeAttenuation: true,
       vertexColors: true,
       color: new Color("#d8e8ff"),
       transparent: true,
-      opacity: backgroundTexture ? 0.08 : 0.46,
+      opacity: backgroundTexture ? 0.06 : 0.34,
       blending: AdditiveBlending,
       depthWrite: false,
       depthTest: false
@@ -179,12 +179,12 @@ export function LandingSpaceBackground({
     return new ShaderMaterial({
       uniforms: {
         map: { value: backgroundTexture },
-        exposure: { value: emphasis ? 1.55 : 0.72 },
-        hazeLift: { value: emphasis ? 0.18 : 0.034 },
-        starStrength: { value: emphasis ? 0.08 : 0.006 },
+        exposure: { value: emphasis ? 1.55 : 0.64 },
+        hazeLift: { value: emphasis ? 0.18 : 0.018 },
+        starStrength: { value: emphasis ? 0.08 : 0.009 },
         starDamp: { value: emphasis ? 0.24 : 0.9 },
-        textureStrength: { value: emphasis ? 0.16 : 0.026 },
-        colorCeiling: { value: emphasis ? 0.2 : 0.052 }
+        textureStrength: { value: emphasis ? 0.16 : 0.018 },
+        colorCeiling: { value: emphasis ? 0.2 : 0.046 }
       },
       vertexShader: `
         varying vec2 vUv;
@@ -213,8 +213,8 @@ export function LandingSpaceBackground({
           vec3 tex = texture2D(map, skyUv).rgb;
           float luma = max(max(tex.r, tex.g), tex.b);
           float haze = smoothstep(0.018, 0.22, luma);
-          float star = smoothstep(0.36, 0.9, luma);
-          vec3 deepSky = mix(vec3(0.0, 0.0035, 0.009), vec3(0.008, 0.018, 0.034), smoothstep(-0.3, 0.75, vDir.y));
+          float star = smoothstep(0.56, 0.94, luma);
+          vec3 deepSky = mix(vec3(0.0, 0.0028, 0.0075), vec3(0.006, 0.014, 0.028), smoothstep(-0.3, 0.75, vDir.y));
           vec3 lifted = pow(max(tex, vec3(0.0)), vec3(0.62)) * exposure * (1.0 - star * starDamp);
           vec3 coolHaze = lifted * (textureStrength + haze * hazeLift);
           vec3 pinStars = vec3(0.76, 0.86, 1.0) * star * starStrength;

@@ -370,7 +370,14 @@ export function LandingEarth({
             float truthOceanMask = smoothstep(0.04, 0.2, truthOceanSignal);
             float truthOceanGlint = pow(max(dot(n, truthHalfDir), 0.0), 96.0) *
               truthOceanMask * dayW * specularStrength * mix(0.2, 0.34, closeStage);
-            vec3 truthSpecular = vec3(0.58, 0.72, 0.92) * truthOceanGlint;
+            float truthOceanSoftGlint = pow(max(dot(n, truthHalfDir), 0.0), 42.0) *
+              truthOceanMask *
+              dayW *
+              specularStrength *
+              0.08;
+            vec3 truthSpecular =
+              vec3(0.58, 0.72, 0.92) * truthOceanGlint +
+              vec3(0.45, 0.58, 0.72) * truthOceanSoftGlint;
             float truthSunRim = smoothstep(-edgeShadowSoftness, 0.42, ndl);
             float truthBlueRim = pow(fresnel, 4.8) * truthSunRim * edgeLightStrength * (0.012 + dayW * 0.024);
             float truthWhiteNeedle = pow(fresnel, 34.0) * truthSunRim * edgeNeedleStrength * 0.012;
@@ -421,7 +428,7 @@ export function LandingEarth({
               truthCloudShadowEnable *
               cloudShadowOpacity *
               mix(0.55, 1.15, truthLowSunShadow);
-            truthColor *= mix(vec3(1.0), vec3(0.80, 0.85, 0.93), clamp(truthCloudShadow * 0.20, 0.0, 0.16));
+            truthColor *= mix(vec3(1.0), vec3(0.78, 0.84, 0.92), clamp(truthCloudShadow * 0.24, 0.0, 0.18));
             truthColor *= mix(1.0, 1.1, closeStage);
             vec3 truthKnee = vec3(mix(0.84, 0.64, closeStage));
             truthColor = truthColor / (1.0 + max(truthColor - truthKnee, vec3(0.0)) * mix(0.78, 1.26, closeStage));
