@@ -119,12 +119,12 @@ export function LandingPostBloom({ quality, emphasis = false }: LandingPostBloom
     const closeStage = 1 - smoothstep(0.18, 0.86, progress);
     const emphasisLift = emphasis ? 1 : 0;
     bloomPass.strength = (
-      0.072 +
-      fieldStage * 0.032 +
+      0.082 +
+      fieldStage * 0.036 +
       emphasisLift * (0.022 + fieldStage * 0.014)
     );
-    bloomPass.radius = 0.38 + fieldStage * 0.055 + emphasisLift * 0.03;
-    bloomPass.threshold = 0.925 - fieldStage * 0.018 - emphasisLift * 0.018;
+    bloomPass.radius = 0.42 + fieldStage * 0.06 + emphasisLift * 0.03;
+    bloomPass.threshold = 0.915 - fieldStage * 0.014 - emphasisLift * 0.018;
     sharpenPass.uniforms.strength.value =
       quality.tier === "high"
         ? 0.016 + closeStage * 0.062 + emphasisLift * 0.01
