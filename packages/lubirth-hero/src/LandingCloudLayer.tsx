@@ -181,6 +181,8 @@ function createCloudMaterial(
         float ndl = dot(n, sunDirection);
         float day = smoothstep(-0.18, 0.34, ndl);
         float night = 1.0 - smoothstep(-0.18, 0.2, ndl);
+        float sunlitCloud = smoothstep(-0.02, 0.36, ndl);
+        float nightCloud = 1.0 - smoothstep(-0.1, 0.18, ndl);
         float twilight = 1.0 - smoothstep(0.02, 0.42, abs(ndl));
         float rim = clamp(vFresnel, 0.0, 1.0);
         float limb = smoothstep(0.24, 0.78, rim) * (1.0 - smoothstep(0.9, 0.985, rim));
@@ -276,7 +278,7 @@ function createCloudMaterial(
         float opaqueCore = max(smoothstep(0.34, 0.64, rawSharp) * massGate, weatherCore * 0.48);
         float baseMass = max(bottom * (0.94 + baseDepth * 0.22) - top * 0.44, 0.0) * limbVolume * baseDepth;
         float topCap = max(top - mid * 0.5, 0.0) * smoothstep(0.42, 0.9, rim) * topCapStrength;
-        topCap += deckHighCap * day * topCapStrength * 0.1 * smoothstep(0.28, 0.82, deckCoverage) * deckInfluence;
+        topCap += deckHighCap * sunlitCloud * topCapStrength * 0.1 * smoothstep(0.28, 0.82, deckCoverage) * deckInfluence;
         float layerSeparation = abs(top - bottom);
         float forwardStack = max(top - mid, 0.0);
         float backStack = max(mid - bottom, 0.0);
@@ -305,19 +307,19 @@ function createCloudMaterial(
           0.0,
           0.64
         );
-        float light = mix(0.16, 0.88, day) * (1.0 - selfShadow) + twilight * 0.14 + limb * day * 0.08;
+        float light = mix(0.08, 1.08, sunlitCloud) * (1.0 - selfShadow) + twilight * 0.06 + limb * sunlitCloud * 0.1;
 
         vec3 cloudShadow = mix(vec3(0.16, 0.21, 0.29), vec3(0.44, 0.5, 0.58), max(mid, weatherMass * 0.72));
         vec3 cloudLit = mix(
           vec3(0.50, 0.58, 0.66),
-          vec3(0.78, 0.80, 0.78),
+          vec3(0.86, 0.88, 0.84),
           smoothstep(0.12, 0.74, max(rawTop, rawSharp * 0.66))
         );
-        vec3 cloudBase = mix(cloudShadow, cloudLit, clamp(day * (0.36 + weatherCore * 0.08) + top * 0.14 + photoBright * 0.08, 0.0, 1.0));
-        cloudBase += vec3(0.048, 0.054, 0.06) * clamp((rawSharp - rawMidBlur) * (0.22 + closeStage * 0.12) * weatherMass, 0.0, 0.07) * day;
+        vec3 cloudBase = mix(cloudShadow, cloudLit, clamp(sunlitCloud * (0.42 + weatherCore * 0.08) + top * 0.14 + photoBright * 0.08, 0.0, 1.0));
+        cloudBase += vec3(0.048, 0.054, 0.06) * clamp((rawSharp - rawMidBlur) * (0.22 + closeStage * 0.12) * weatherMass, 0.0, 0.07) * sunlitCloud;
         cloudBase *= mix(0.82, 1.0, smoothstep(0.22, 0.82, textureBody));
         vec3 warmEdge = vec3(1.0, 0.62, 0.28) * twilight * (0.06 + thickness * 0.06);
-        vec3 blueNight = vec3(0.035, 0.11, 0.25) * night * (0.12 + thickness * 0.2);
+        vec3 blueNight = vec3(0.018, 0.055, 0.13) * nightCloud * (0.07 + thickness * 0.12);
         vec3 finalColor =
           cloudBase * lightColor * light * (0.72 + thickness * 0.5 + debugBoost * 0.2) +
           warmEdge +
@@ -335,7 +337,7 @@ function createCloudMaterial(
         finalColor = mix(
           finalColor,
           finalColor * vec3(0.62, 0.70, 0.82),
-          cloudUnderside * mix(0.16, 0.28, closeStage)
+          cloudUnderside * mix(0.16, 0.28, closeStage) * mix(1.0, 0.52, sunlitCloud)
         );
         float thickCloudRelief = clamp(
           weatherCore * 0.42 +
@@ -349,7 +351,7 @@ function createCloudMaterial(
         finalColor = mix(
           finalColor,
           finalColor * vec3(0.72, 0.78, 0.88),
-          thickCloudRelief * 0.16
+          thickCloudRelief * mix(0.16, 0.08, sunlitCloud)
         );
         float closeCloudReadability = max(
           closeStage * visibleCloudGate *
@@ -358,11 +360,23 @@ function createCloudMaterial(
         );
         finalColor = mix(
           finalColor,
-          finalColor * vec3(1.28, 1.29, 1.26) + vec3(0.13, 0.14, 0.145) * day,
+          finalColor * vec3(1.28, 1.29, 1.26) + vec3(0.13, 0.14, 0.145) * sunlitCloud,
           closeCloudReadability * 0.56
         );
-        finalColor += vec3(0.56, 0.66, 0.78) * limbVolume * density * thickness * (0.05 + day * 0.08);
-        finalColor += vec3(0.72, 0.8, 0.88) * topCap * day * (0.1 + debugBoost * 0.08);
+        float daylightCloudLift =
+          sunlitCloud *
+          smoothstep(0.24, 0.82, max(max(weatherMass, weatherCore), closeCloudReadability)) *
+          (0.1 + closeCloudReadability * 0.3 + topCap * 0.14);
+        finalColor += vec3(0.94, 0.97, 0.95) * daylightCloudLift;
+        finalColor = mix(
+          finalColor,
+          vec3(0.94, 0.96, 0.92),
+          closeCloudReadability * sunlitCloud * 0.68
+        );
+        float nightCloudDim = nightCloud * (1.0 - twilight * 0.48) * (0.48 + closeStage * 0.12);
+        finalColor *= mix(1.0, 0.48, nightCloudDim);
+        finalColor += vec3(0.56, 0.66, 0.78) * limbVolume * density * thickness * (0.04 + sunlitCloud * 0.08);
+        finalColor += vec3(0.72, 0.8, 0.88) * topCap * sunlitCloud * (0.1 + debugBoost * 0.08);
         finalColor = mix(finalColor, finalColor * vec3(0.66, 0.74, 0.86), clamp(baseMass * (0.78 - debugBoost * 0.18), 0.0, 0.58));
         finalColor *= mix(0.88 + closeStage * 0.04, 1.0, debugBoost);
 
@@ -391,6 +405,7 @@ function createCloudMaterial(
           brokenEdge *
           mix(0.58, 1.0, edgeTrim) *
           mix(0.94, 1.32, closeStage) *
+          mix(1.0, 0.58, nightCloud * (1.0 - twilight * 0.42)) *
           mix(1.0, 1.82, debugBoost);
 
         if (alpha < 0.003) {
