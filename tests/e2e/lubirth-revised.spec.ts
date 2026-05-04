@@ -130,7 +130,7 @@ test("uses high-detail Earth and sky assets for the nasa profile without project
   await expect(page.locator("canvas")).toHaveCount(1);
   await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-render-profile", "nasa");
   await expect
-    .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-day-8k-nasa.png")), { timeout: 25_000 })
+    .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-day-8k.webp")), { timeout: 25_000 })
     .toBe(true);
   await expect
     .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-clouds-8k.webp")), { timeout: 25_000 })

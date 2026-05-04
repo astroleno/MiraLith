@@ -132,7 +132,7 @@ export function LandingMoon({
           void main() {
             vec3 sampled = texture2D(moonMap, vUv).rgb;
             float luma = dot(sampled, vec3(0.299, 0.587, 0.114));
-            vec3 base = pow(mix(vec3(luma), sampled, 0.48), vec3(0.66));
+            vec3 base = pow(mix(vec3(luma), sampled, 0.36), vec3(0.78));
             vec3 n = normalize(vNormal);
             vec3 sceneLight = normalize(lightDir);
             vec3 birthLight = normalize(birthLightDir);
@@ -158,27 +158,27 @@ export function LandingMoon({
             float gibbousWarmth = smoothstep(0.48, 0.96, fullness);
             vec3 coolPhaseTint = vec3(0.76, 0.86, 1.08);
             vec3 neutralPhaseTint = vec3(0.94, 0.96, 1.0);
-            vec3 warmPhaseTint = vec3(1.24, 1.02, 0.72);
+            vec3 warmPhaseTint = vec3(1.08, 1.0, 0.88);
             vec3 phaseTint = mix(neutralPhaseTint, coolPhaseTint, crescent * (0.58 + (1.0 - waxing) * 0.24));
             phaseTint = mix(phaseTint, warmPhaseTint, gibbousWarmth * (0.66 + waxing * 0.12));
 
             float coolMoonMix = clamp(0.5 - gibbousWarmth * 0.18 + crescent * 0.08, 0.26, 0.58);
             vec3 moonLight = mix(lightColor * vec3(1.04, 1.0, 0.9), vec3(0.78, 0.84, 0.98), coolMoonMix) * phaseTint;
-            float exposure = sunIntensity * mix(0.2, 0.34, fullness);
+            float exposure = sunIntensity * mix(0.28, 0.46, fullness);
             vec3 lit = base * moonLight * exposure * (0.26 + directLight * 0.78 + grazingLight * 0.16)
               * limbLight * terrainContrast;
-            vec3 night = base * mix(vec3(0.16, 0.22, 0.36), vec3(0.26, 0.22, 0.18), gibbousWarmth * 0.28) * (0.18 + nightLift * 0.9 + lowPhase * 0.065);
-            float earthshine = pow(viewerFacing, 1.8) * (1.0 - daySide) * (0.038 + nightLift * 0.16 + lowPhase * 0.055);
+            vec3 night = base * vec3(0.18, 0.22, 0.32) * (0.24 + nightLift * 1.05 + lowPhase * 0.08);
+            float earthshine = pow(viewerFacing, 1.8) * (1.0 - daySide) * (0.058 + nightLift * 0.2 + lowPhase * 0.07);
             vec3 color = mix(night, lit, daySide);
             color += base * vec3(0.32, 0.42, 0.62) * earthshine;
             color += vec3(0.08, 0.12, 0.18) * pow(1.0 - viewerFacing, 2.4) * visibleDisk * (0.1 + daySide * 0.14);
-            color *= mix(0.82, 0.98, birthPhaseWeight * fullness);
+            color *= mix(0.9, 1.02, birthPhaseWeight * fullness);
             color *= 0.36 + visibleDisk * 0.64;
             color = mix(color, color * vec3(0.97, 1.0, 1.04), crescent * 0.18);
             color *= 0.92 + fullness * 0.08;
-            color = color / (1.0 + max(color - vec3(0.62), vec3(0.0)) * 0.72);
-            color = min(color, vec3(0.78));
-            float diskAlpha = visibleDisk * mix(0.76, 0.92, fullness);
+            color = color / (1.0 + max(color - vec3(0.72), vec3(0.0)) * 0.56);
+            color = min(color, vec3(0.86));
+            float diskAlpha = visibleDisk * mix(0.82, 0.96, fullness);
             diskAlpha *= mix(0.9, 1.0, daySide);
             gl_FragColor = vec4(color, diskAlpha);
           }

@@ -156,8 +156,8 @@ export function LandingEarth({
           hasCloudDeckMap: { value: cloudDeckTexture ? 1 : 0 },
           hasNormalMap: { value: normalTexture ? 1 : 0 },
           hasDisplacementMap: { value: displacementTexture ? 1 : 0 },
-          normalMapStrength: { value: 0.28 },
-          displacementStrength: { value: 2.8 },
+          normalMapStrength: { value: 0.14 },
+          displacementStrength: { value: 0.9 },
           lightDir: { value: lightDirection.set(...composition.light.fixedSunDir).normalize().clone() },
           lightColor: {
             value: new Color(
@@ -329,6 +329,43 @@ export function LandingEarth({
             float dayW = smoothstep(-transitionWidth * 1.12, transitionWidth * 1.18, ndl);
             float nightW = 1.0 - dayW;
             float deepNightW = 1.0 - smoothstep(-transitionWidth * 2.7, -transitionWidth * 0.86, ndl);
+
+            vec3 truthDayTexRaw = texture2D(dayMap, vUv).rgb;
+            float truthDayLuma = dot(truthDayTexRaw, vec3(0.299, 0.587, 0.114));
+            vec3 truthDayTex = mix(vec3(truthDayLuma), truthDayTexRaw, 0.82);
+            vec3 truthNightTex = pow(texture2D(nightMap, vUv).rgb, vec3(0.96));
+            float truthDayLight = max(ndl, 0.0);
+            float truthSurfaceGate = smoothstep(-transitionWidth * 2.4, transitionWidth * 1.35, ndl);
+            float truthAmbient = 0.04 + ambient * mix(0.86, 0.58, closeStage);
+            vec3 truthLitDay = truthDayTex * lightColor *
+              (truthAmbient * truthSurfaceGate + truthDayLight * sunIntensity * 0.68 * dayW);
+            float truthTwilight = (1.0 - smoothstep(transitionWidth * 0.10, transitionWidth * 1.55, abs(ndl)));
+            vec3 truthTwilightFill = truthDayTex * vec3(0.055, 0.075, 0.105) *
+              truthTwilight * (1.0 - dayW) * 0.52;
+            vec3 truthNightFill = truthDayTex * vec3(0.03, 0.045, 0.07) *
+              deepNightW * (0.28 + ambient * 1.4);
+            vec3 truthGrazingFill = truthDayTex * vec3(0.065, 0.082, 0.11) *
+              max(truthSurfaceGate - dayW, 0.0) * mix(0.78, 1.08, closeStage);
+            float truthCityLuma = max(max(truthNightTex.r, truthNightTex.g), truthNightTex.b);
+            float truthCityGate = smoothstep(0.06, 0.5, truthCityLuma);
+            vec3 truthCity = truthNightTex * vec3(1.0, 0.68, 0.36) * nightBoost *
+              pow(nightW, 1.45) * (1.15 + truthCityGate * 0.55);
+            vec3 truthHalfDir = normalize(l + v);
+            float truthOceanSignal = truthDayTex.b - max(truthDayTex.r, truthDayTex.g) * 0.55;
+            float truthOceanMask = smoothstep(0.04, 0.2, truthOceanSignal);
+            float truthOceanGlint = pow(max(dot(n, truthHalfDir), 0.0), 96.0) *
+              truthOceanMask * dayW * specularStrength * mix(0.2, 0.34, closeStage);
+            vec3 truthSpecular = vec3(0.58, 0.72, 0.92) * truthOceanGlint;
+            float truthSunRim = smoothstep(-edgeShadowSoftness, 0.42, ndl);
+            float truthBlueRim = pow(fresnel, 4.8) * truthSunRim * edgeLightStrength * (0.012 + dayW * 0.024);
+            float truthWhiteNeedle = pow(fresnel, 34.0) * truthSunRim * edgeNeedleStrength * 0.012;
+            vec3 truthRim = edgeLightColor * truthBlueRim + vec3(0.78, 0.9, 1.0) * truthWhiteNeedle;
+            vec3 truthColor = truthLitDay + truthTwilightFill + truthNightFill + truthGrazingFill + truthCity + truthSpecular + truthRim;
+            truthColor *= mix(1.08, 1.32, closeStage);
+            vec3 truthKnee = vec3(mix(0.9, 0.72, closeStage));
+            truthColor = truthColor / (1.0 + max(truthColor - truthKnee, vec3(0.0)) * mix(0.64, 1.22, closeStage));
+            gl_FragColor = vec4(max(truthColor, vec3(0.0)), 1.0);
+            return;
 
             vec3 rawDayTex = texture2D(dayMap, vUv).rgb;
             vec2 detailStep = vec2(0.00062, 0.00031);

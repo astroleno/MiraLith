@@ -26,11 +26,11 @@ import type { LandingQuality } from "@miralith/visual-core";
 
 const HIGH_DETAIL_EARTH_ASSETS: Partial<LandingAssetManifest> = {
   earthDay: {
-    id: "earth-day-8k-nasa",
-    src: "/assets/lubirth/textures/earth-day-8k-nasa.png",
+    id: "earth-day-8k",
+    src: "/assets/lubirth/textures/earth-day-8k.webp",
     width: 8192,
     height: 4096,
-    format: "png",
+    format: "webp",
     colorSpace: "srgb"
   },
   earthNight: {

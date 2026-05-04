@@ -47,8 +47,8 @@ interface CloudShellLayer {
 const lightDirection = new Vector3();
 const color = new Color();
 const CLOUD_SHELLS: CloudShellLayer[] = [
-  { radius: 1.0062, opacity: 0.82, offset: 0, parallax: 0.00072, shadow: 0.34, baseDepth: 0.7, topCap: 0.46, rimFocus: 0.04, edgeBreak: 0.66 },
-  { radius: 1.0108, opacity: 0.11, offset: 0.014, parallax: 0.0015, shadow: 0.1, baseDepth: 0.28, topCap: 0.58, rimFocus: 0.44, edgeBreak: 0.84, highOnly: true }
+  { radius: 1.0048, opacity: 0.36, offset: 0, parallax: 0.00045, shadow: 0.18, baseDepth: 0.42, topCap: 0.28, rimFocus: 0.04, edgeBreak: 0.66 },
+  { radius: 1.0102, opacity: 0.08, offset: 0.014, parallax: 0.0012, shadow: 0.08, baseDepth: 0.22, topCap: 0.46, rimFocus: 0.44, edgeBreak: 0.84, highOnly: true }
 ];
 const CLOUD_TEXTURE_ART_OFFSET_X = 0.045;
 const CLOUD_TEXTURE_ART_OFFSET_Y = 0.018;
@@ -136,7 +136,7 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
         vec2 wrappedUv = vec2(fract(uv.x), clamp(uv.y, 0.001, 0.999));
         vec3 cloudRgb = texture2D(cloudMap, wrappedUv).rgb;
         float raw = dot(cloudRgb, vec3(0.2126, 0.7152, 0.0722));
-        return pow(clamp(raw, 0.0, 1.0), 0.55);
+        return pow(clamp(raw, 0.0, 1.0), 0.68);
       }
 
       float cloudMask(vec2 uv) {
@@ -219,10 +219,12 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
           rawMassNear * 0.36
         );
         float rawMass = max(rawMassNear, rawMassWide * 0.92);
+        float broadWeather = clamp(rawMassWide * 0.82 + rawMassNear * 0.18, 0.0, 1.0);
         float rawSharp = clamp(rawMid + (rawMid - rawMidBlur) * (0.2 + closeStage * 0.14), 0.0, 1.0);
         rawSharp = mix(rawSharp, rawMidBlur, 0.2 + (1.0 - closeStage) * 0.16);
-        float weatherMass = smoothstep(0.14, 0.36, rawMass);
-        float weatherCore = smoothstep(0.3, 0.58, rawMassNear);
+        rawSharp = mix(rawSharp, broadWeather, 0.36 + closeStage * 0.18);
+        float weatherMass = smoothstep(0.18, 0.42, broadWeather);
+        float weatherCore = smoothstep(0.34, 0.62, broadWeather);
         float massGate = smoothstep(0.12, 0.42, rawMass);
         float photoWisps = smoothstep(0.18, 0.46, rawSharp) * (1.0 - smoothstep(0.64, 0.9, rawSharp)) * mix(0.18, 1.0, massGate);
         float photoCore = smoothstep(0.34, 0.66, rawSharp) * mix(0.18, 1.0, massGate);
@@ -234,7 +236,7 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
         float shadowMask = cloudMask(baseUv + wind + sunOffset * (1.8 + limb * 0.9));
         float rawDensity = clamp(rawBottom * 0.08 + rawSharp * 0.5 + rawMass * 0.32 + rawTop * 0.1, 0.0, 1.0);
         float textureBody = clamp(rawSharp * 0.56 + rawMidBlur * 0.26 + rawMassNear * 0.18, 0.0, 1.0);
-        float textureMod = mix(0.62, 1.14, smoothstep(0.18, 0.76, textureBody));
+        float textureMod = mix(0.62, 1.02, smoothstep(0.18, 0.76, textureBody));
         float density = clamp(bottom * 0.08 + mid * 0.82 + top * 0.1, 0.0, 1.0);
         float opaqueCore = max(smoothstep(0.34, 0.64, rawSharp) * massGate, weatherCore * 0.48);
         float baseMass = max(bottom * (0.94 + baseDepth * 0.22) - top * 0.44, 0.0) * limbVolume * baseDepth;
@@ -276,6 +278,7 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
         finalColor += vec3(0.56, 0.66, 0.78) * limbVolume * density * thickness * (0.05 + day * 0.08);
         finalColor += vec3(0.72, 0.8, 0.88) * topCap * day * (0.1 + debugBoost * 0.08);
         finalColor = mix(finalColor, finalColor * vec3(0.66, 0.74, 0.86), clamp(baseMass * (0.78 - debugBoost * 0.18), 0.0, 0.58));
+        finalColor *= mix(0.78, 1.0, debugBoost);
 
         float edgeTrim = 1.0 - smoothstep(0.86, 0.98, rim);
         float extremeGrazing = smoothstep(0.82, 0.99, rim);
@@ -306,7 +309,7 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
           discard;
         }
 
-        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.74, 0.9, debugBoost)));
+        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.38, 0.76, debugBoost)));
       }
     `,
     transparent: true,

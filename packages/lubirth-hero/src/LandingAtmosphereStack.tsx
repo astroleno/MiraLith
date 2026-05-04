@@ -183,8 +183,8 @@ function createAtmosphereStackMaterial(composition: LandingComposition, spec: At
           (1.0 - smoothstep(0.992, 1.0, rim));
 
         vec3 whiteLineColor = vec3(1.16, 1.34, 1.62);
-        vec3 rayleighBlue = vec3(0.16, 0.54, 1.08);
-        vec3 deepBlue = vec3(0.012, 0.09, 0.34);
+        vec3 rayleighBlue = vec3(0.18, 0.46, 0.86);
+        vec3 deepBlue = vec3(0.018, 0.068, 0.18);
         vec3 oxygenGreen = vec3(0.20, 0.85, 0.58);
         vec3 amberGlow = vec3(1.0, 0.48, 0.16);
 
@@ -248,8 +248,9 @@ function createAtmosphereStackMaterial(composition: LandingComposition, spec: At
         float activeGate = kind == 5
           ? mix(tangentGate, 1.0, productionMode * 0.34)
           : tangentGate;
-        alpha *= intensity * closeHold * boost * activeGate;
-        color *= intensity * closeHold * boost * activeGate;
+        float productionAttenuation = mix(1.0, 0.58, productionMode);
+        alpha *= intensity * closeHold * boost * activeGate * productionAttenuation;
+        color *= intensity * closeHold * boost * activeGate * productionAttenuation;
 
         if (alpha < 0.001) {
           discard;
