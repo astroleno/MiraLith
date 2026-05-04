@@ -360,10 +360,17 @@ export function LandingEarth({
               max(truthSurfaceGate - dayW, 0.0) * mix(0.78, 1.08, closeStage);
             float truthCityLuma = max(max(truthNightTex.r, truthNightTex.g), truthNightTex.b);
             float truthCityGate = smoothstep(0.06, 0.5, truthCityLuma);
-            vec3 truthCityCore = truthNightTex * vec3(1.0, 0.74, 0.48) * nightBoost *
-              pow(nightW, 1.72) * (0.68 + truthCityGate * 0.32);
-            vec3 truthCityHalo = truthNightTex * vec3(1.0, 0.52, 0.24) * nightBoost *
-              pow(nightW, 1.08) * 0.16;
+            vec3 truthNightBlur = (
+              texture2D(nightMap, vec2(fract(vUv.x + 0.0018), clamp(vUv.y + 0.0009, 0.001, 0.999))).rgb +
+              texture2D(nightMap, vec2(fract(vUv.x - 0.0018), clamp(vUv.y - 0.0009, 0.001, 0.999))).rgb +
+              texture2D(nightMap, vec2(fract(vUv.x - 0.0011), clamp(vUv.y + 0.0014, 0.001, 0.999))).rgb +
+              texture2D(nightMap, vec2(fract(vUv.x + 0.0011), clamp(vUv.y - 0.0014, 0.001, 0.999))).rgb
+            ) * 0.25;
+            truthNightBlur = pow(max(truthNightBlur, vec3(0.0)), vec3(0.96));
+            vec3 truthCityCore = pow(truthNightTex, vec3(1.12)) * vec3(1.0, 0.74, 0.48) * nightBoost *
+              pow(nightW, 1.78) * (0.58 + truthCityGate * 0.28);
+            vec3 truthCityHalo = truthNightBlur * vec3(0.95, 0.48, 0.20) * nightBoost *
+              pow(nightW, 1.05) * 0.18;
             vec3 truthCity = truthCityCore + truthCityHalo;
             vec3 truthHalfDir = normalize(l + v);
             float truthOceanSignal = truthDayTex.b - max(truthDayTex.r, truthDayTex.g) * 0.55;
@@ -379,8 +386,8 @@ export function LandingEarth({
               vec3(0.58, 0.72, 0.92) * truthOceanGlint +
               vec3(0.45, 0.58, 0.72) * truthOceanSoftGlint;
             float truthSunRim = smoothstep(-edgeShadowSoftness, 0.42, ndl);
-            float truthBlueRim = pow(fresnel, 4.8) * truthSunRim * edgeLightStrength * (0.012 + dayW * 0.024);
-            float truthWhiteNeedle = pow(fresnel, 34.0) * truthSunRim * edgeNeedleStrength * 0.012;
+            float truthBlueRim = pow(fresnel, 5.4) * truthSunRim * edgeLightStrength * (0.008 + dayW * 0.018);
+            float truthWhiteNeedle = pow(fresnel, 42.0) * truthSunRim * edgeNeedleStrength * 0.016;
             vec3 truthRim = edgeLightColor * truthBlueRim + vec3(0.78, 0.9, 1.0) * truthWhiteNeedle;
             vec3 truthColor = truthLitDay + truthTwilightFill + truthNightFill + truthGrazingFill + truthCity + truthSpecular + truthRim;
             float truthHorizonHaze = pow(fresnel, 2.1) * smoothstep(-0.16, 0.52, ndl);

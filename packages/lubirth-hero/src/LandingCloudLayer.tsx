@@ -59,10 +59,17 @@ const smoothstep = (edge0: number, edge1: number, value: number) => {
   return t * t * (3 - 2 * t);
 };
 
-function createCloudMaterial(composition: LandingComposition, layer: CloudShellLayer, cloudTexture: Texture) {
+function createCloudMaterial(
+  composition: LandingComposition,
+  layer: CloudShellLayer,
+  cloudTexture: Texture,
+  cloudDeckTexture?: Texture
+) {
   return new ShaderMaterial({
     uniforms: {
       cloudMap: { value: cloudTexture },
+      cloudDeckMap: { value: cloudDeckTexture ?? cloudTexture },
+      hasCloudDeckMap: { value: cloudDeckTexture ? 1 : 0 },
       cloudOffset: { value: 0 },
       closeStage: { value: 1 },
       opacity: { value: composition.earth.useClouds ? composition.earth.cloudOpacity : 0 },
@@ -110,6 +117,8 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
     `,
     fragmentShader: `
       uniform sampler2D cloudMap;
+      uniform sampler2D cloudDeckMap;
+      uniform float hasCloudDeckMap;
       uniform float cloudOffset;
       uniform float closeStage;
       uniform float opacity;
@@ -195,6 +204,13 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
         vec2 sunOffset = sunShear * 0.012;
         vec2 midUv = baseUv + wind + parallax * 0.03;
         vec2 detailStep = vec2(mix(0.00032, 0.00012, closeStage), mix(0.00016, 0.00008, closeStage));
+        vec4 deck = texture2D(cloudDeckMap, vec2(fract(midUv.x), clamp(midUv.y, 0.001, 0.999)));
+        float deckCoverage = clamp(deck.r, 0.0, 1.0) * hasCloudDeckMap;
+        float deckThickness = clamp(deck.g, 0.0, 1.0) * hasCloudDeckMap;
+        float deckAo = clamp(deck.b, 0.0, 1.0) * hasCloudDeckMap;
+        float deckHighCap = clamp(deck.a, 0.0, 1.0) * hasCloudDeckMap;
+        float deckWeatherMass = smoothstep(0.2, 0.7, deckCoverage + deckThickness * 0.24);
+        float deckWeatherCore = smoothstep(0.35, 0.75, deckThickness) * smoothstep(0.18, 0.68, deckCoverage);
 
         float rawBottom = cloudRaw(baseUv + wind - parallax * 0.42);
         float rawMid = cloudRaw(midUv);
@@ -225,6 +241,8 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
         rawSharp = mix(rawSharp, broadWeather, 0.52 + closeStage * 0.1);
         float weatherMass = smoothstep(0.15, 0.44, broadWeather);
         float weatherCore = smoothstep(0.36, 0.68, broadWeather);
+        weatherMass = max(weatherMass, deckWeatherMass * 0.22);
+        weatherCore = max(weatherCore, deckWeatherCore * 0.46);
         float massGate = smoothstep(0.12, 0.42, rawMass);
         float photoWisps = smoothstep(0.18, 0.46, rawSharp) * (1.0 - smoothstep(0.64, 0.9, rawSharp)) * mix(0.18, 1.0, massGate);
         float photoCore = smoothstep(0.34, 0.66, rawSharp) * mix(0.18, 1.0, massGate);
@@ -241,6 +259,7 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
         float opaqueCore = max(smoothstep(0.34, 0.64, rawSharp) * massGate, weatherCore * 0.48);
         float baseMass = max(bottom * (0.94 + baseDepth * 0.22) - top * 0.44, 0.0) * limbVolume * baseDepth;
         float topCap = max(top - mid * 0.5, 0.0) * smoothstep(0.42, 0.9, rim) * topCapStrength;
+        topCap += deckHighCap * day * topCapStrength * 0.18 * smoothstep(0.25, 0.85, deckCoverage);
         float layerSeparation = abs(top - bottom);
         float forwardStack = max(top - mid, 0.0);
         float backStack = max(mid - bottom, 0.0);
@@ -262,6 +281,7 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
           0.0,
           0.62
         );
+        selfShadow = clamp(selfShadow + deckAo * 0.18 + deckThickness * deckWeatherCore * 0.08, 0.0, 0.68);
         float light = mix(0.16, 0.88, day) * (1.0 - selfShadow) + twilight * 0.14 + limb * day * 0.08;
 
         vec3 cloudShadow = mix(vec3(0.16, 0.21, 0.29), vec3(0.44, 0.5, 0.58), max(mid, weatherMass * 0.72));
@@ -283,6 +303,8 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
           weatherMass * 0.36 +
           weatherCore * 0.28 +
           selfShadow * 0.42 +
+          deckAo * 0.35 +
+          deckThickness * deckWeatherCore * 0.18 +
           limbVolume * 0.18,
           0.0,
           1.0
@@ -295,7 +317,9 @@ function createCloudMaterial(composition: LandingComposition, layer: CloudShellL
         float thickCloudRelief = clamp(
           weatherCore * 0.42 +
           opaqueCore * 0.32 +
-          selfShadow * 0.36,
+          selfShadow * 0.36 +
+          deckThickness * deckWeatherCore * 0.28 +
+          deckAo * 0.16,
           0.0,
           1.0
         );
@@ -369,13 +393,21 @@ export function LandingCloudLayer({
     wrapS: RepeatWrapping,
     wrapT: RepeatWrapping
   });
+  const { texture: cloudDeckTexture } = useLandingTexture(
+    quality.tier !== "low" && quality.tier !== "fallback" ? assets.earthCloudDeck?.src : undefined,
+    {
+      colorSpace: assets.earthCloudDeck?.colorSpace ?? "linear",
+      wrapS: RepeatWrapping,
+      wrapT: RepeatWrapping
+    }
+  );
   const activeCloudShells = useMemo(
     () => CLOUD_SHELLS.filter((layer) => !layer.highOnly || (emphasis && quality.tier === "high")),
     [emphasis, quality.tier]
   );
   const materials = useMemo(
-    () => cloudTexture ? activeCloudShells.map((layer) => createCloudMaterial(composition, layer, cloudTexture)) : [],
-    [activeCloudShells, cloudTexture, composition]
+    () => cloudTexture ? activeCloudShells.map((layer) => createCloudMaterial(composition, layer, cloudTexture, cloudDeckTexture ?? undefined)) : [],
+    [activeCloudShells, cloudDeckTexture, cloudTexture, composition]
   );
   const enabled =
     composition.earth.useClouds &&
@@ -414,6 +446,8 @@ export function LandingCloudLayer({
       child.rotation.x = 0;
       child.rotation.z = 0;
       cloudMaterial.uniforms.cloudMap.value = cloudTexture;
+      cloudMaterial.uniforms.cloudDeckMap.value = cloudDeckTexture ?? cloudTexture;
+      cloudMaterial.uniforms.hasCloudDeckMap.value = cloudDeckTexture ? 1 : 0;
       cloudMaterial.uniforms.cloudOffset.value = cloudOffset.current;
       cloudMaterial.uniforms.closeStage.value = closeStage;
       cloudMaterial.uniforms.opacity.value = composition.earth.useClouds ? composition.earth.cloudOpacity : 0;
