@@ -47,8 +47,8 @@ interface CloudShellLayer {
 const lightDirection = new Vector3();
 const color = new Color();
 const CLOUD_SHELLS: CloudShellLayer[] = [
-  { radius: 1.0042, opacity: 0.44, offset: 0, parallax: 0.00036, shadow: 0.12, baseDepth: 0.34, topCap: 0.18, rimFocus: 0.04, edgeBreak: 0.62 },
-  { radius: 1.0088, opacity: 0.06, offset: 0.014, parallax: 0.0009, shadow: 0.05, baseDepth: 0.16, topCap: 0.34, rimFocus: 0.38, edgeBreak: 0.78, highOnly: true }
+  { radius: 1.0068, opacity: 0.68, offset: 0, parallax: 0.00036, shadow: 0.12, baseDepth: 0.34, topCap: 0.18, rimFocus: 0.04, edgeBreak: 0.62 },
+  { radius: 1.0112, opacity: 0.09, offset: 0.014, parallax: 0.0009, shadow: 0.05, baseDepth: 0.16, topCap: 0.34, rimFocus: 0.38, edgeBreak: 0.78, highOnly: true }
 ];
 const CLOUD_TEXTURE_ART_OFFSET_X = 0.045;
 const CLOUD_TEXTURE_ART_OFFSET_Y = 0.018;
@@ -246,13 +246,20 @@ function createCloudMaterial(
         float weatherMass = smoothstep(0.15, 0.44, broadWeather);
         float weatherCore = smoothstep(0.36, 0.68, broadWeather);
         float visibleCloudGate = smoothstep(
-          0.16,
-          0.52,
+          0.1,
+          0.42,
           max(rawMassNear * 0.62 + rawSharp * 0.38, rawMidBlur)
         );
         float deckInfluence = hasCloudDeckMap * visibleCloudGate;
-        weatherMass = max(weatherMass, deckWeatherMass * 0.14 * deckInfluence);
+        weatherMass = max(weatherMass, deckWeatherMass * 0.18 * deckInfluence);
         weatherCore = max(weatherCore, deckWeatherCore * 0.26 * deckInfluence);
+        float closeDeckCloud = closeStage *
+          hasCloudDeckMap *
+          smoothstep(0.32, 0.72, deckCoverage + deckThickness * 0.35) *
+          smoothstep(0.14, 0.58, deckThickness) *
+          (0.45 + visibleCloudGate * 0.55);
+        weatherMass = max(weatherMass, deckWeatherMass * closeDeckCloud * 0.22);
+        weatherCore = max(weatherCore, deckWeatherCore * closeDeckCloud * 0.22);
         float massGate = smoothstep(0.12, 0.42, rawMass);
         float photoWisps = smoothstep(0.18, 0.46, rawSharp) * (1.0 - smoothstep(0.64, 0.9, rawSharp)) * mix(0.18, 1.0, massGate);
         float photoCore = smoothstep(0.34, 0.66, rawSharp) * mix(0.18, 1.0, massGate);
@@ -344,10 +351,20 @@ function createCloudMaterial(
           finalColor * vec3(0.72, 0.78, 0.88),
           thickCloudRelief * 0.16
         );
+        float closeCloudReadability = max(
+          closeStage * visibleCloudGate *
+            smoothstep(0.18, 0.58, max(max(rawSharp, rawMassNear), weatherMass)),
+          closeDeckCloud * 0.82
+        );
+        finalColor = mix(
+          finalColor,
+          finalColor * vec3(1.28, 1.29, 1.26) + vec3(0.13, 0.14, 0.145) * day,
+          closeCloudReadability * 0.56
+        );
         finalColor += vec3(0.56, 0.66, 0.78) * limbVolume * density * thickness * (0.05 + day * 0.08);
         finalColor += vec3(0.72, 0.8, 0.88) * topCap * day * (0.1 + debugBoost * 0.08);
         finalColor = mix(finalColor, finalColor * vec3(0.66, 0.74, 0.86), clamp(baseMass * (0.78 - debugBoost * 0.18), 0.0, 0.58));
-        finalColor *= mix(0.78, 1.0, debugBoost);
+        finalColor *= mix(0.88 + closeStage * 0.04, 1.0, debugBoost);
 
         float edgeTrim = 1.0 - smoothstep(0.86, 0.98, rim);
         float extremeGrazing = smoothstep(0.82, 0.99, rim);
@@ -363,22 +380,24 @@ function createCloudMaterial(
           density * 0.26 +
           thickness * 0.20 +
           opaqueCore * 0.46 +
+          closeCloudReadability * 0.68 +
+          closeDeckCloud * 0.62 +
           limbVolume * density * 0.08
         ) *
           textureMod *
           opacity *
           shellOpacity *
-          (shellFade + closeStage * 0.20) *
+          (shellFade + closeStage * 0.3) *
           brokenEdge *
           mix(0.58, 1.0, edgeTrim) *
-          mix(0.94, 1.18, closeStage) *
+          mix(0.94, 1.32, closeStage) *
           mix(1.0, 1.82, debugBoost);
 
         if (alpha < 0.003) {
           discard;
         }
 
-        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.32, 0.72, debugBoost)));
+        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.64, 0.72, debugBoost)));
       }
     `,
     transparent: true,
@@ -418,7 +437,7 @@ export function LandingCloudLayer({
     }
   );
   const activeCloudShells = useMemo(
-    () => CLOUD_SHELLS.filter((layer) => !layer.highOnly || (emphasis && quality.tier === "high")),
+    () => CLOUD_SHELLS.filter((layer) => !layer.highOnly || quality.tier === "high" || emphasis),
     [emphasis, quality.tier]
   );
   const materials = useMemo(
