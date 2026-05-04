@@ -360,8 +360,11 @@ export function LandingEarth({
               max(truthSurfaceGate - dayW, 0.0) * mix(0.78, 1.08, closeStage);
             float truthCityLuma = max(max(truthNightTex.r, truthNightTex.g), truthNightTex.b);
             float truthCityGate = smoothstep(0.06, 0.5, truthCityLuma);
-            vec3 truthCity = truthNightTex * vec3(1.0, 0.74, 0.48) * nightBoost *
-              pow(nightW, 1.62) * (0.92 + truthCityGate * 0.42);
+            vec3 truthCityCore = truthNightTex * vec3(1.0, 0.74, 0.48) * nightBoost *
+              pow(nightW, 1.72) * (0.68 + truthCityGate * 0.32);
+            vec3 truthCityHalo = truthNightTex * vec3(1.0, 0.52, 0.24) * nightBoost *
+              pow(nightW, 1.08) * 0.16;
+            vec3 truthCity = truthCityCore + truthCityHalo;
             vec3 truthHalfDir = normalize(l + v);
             float truthOceanSignal = truthDayTex.b - max(truthDayTex.r, truthDayTex.g) * 0.55;
             float truthOceanMask = smoothstep(0.04, 0.2, truthOceanSignal);
@@ -373,6 +376,34 @@ export function LandingEarth({
             float truthWhiteNeedle = pow(fresnel, 34.0) * truthSunRim * edgeNeedleStrength * 0.012;
             vec3 truthRim = edgeLightColor * truthBlueRim + vec3(0.78, 0.9, 1.0) * truthWhiteNeedle;
             vec3 truthColor = truthLitDay + truthTwilightFill + truthNightFill + truthGrazingFill + truthCity + truthSpecular + truthRim;
+            float truthHorizonHaze = pow(fresnel, 2.2) * smoothstep(-0.12, 0.5, ndl);
+            truthColor = mix(truthColor, truthColor * vec3(0.72, 0.82, 0.95), truthHorizonHaze * 0.18);
+            vec3 truthDayBlurTiny = (
+              texture2D(dayMap, vUv + vec2(0.00045, 0.00022)).rgb +
+              texture2D(dayMap, vUv - vec2(0.00045, 0.00022)).rgb
+            ) * 0.5;
+            truthColor += (truthDayTexRaw - truthDayBlurTiny) * dayW * 0.035 * (1.0 - truthHorizonHaze * 0.45);
+            vec2 truthCloudUv = vec2(
+              fract(vUv.x + cloudOffset + ${SURFACE_CLOUD_TEXTURE_ART_OFFSET_X.toFixed(3)}),
+              fract(vUv.y + cloudOffset * 0.18 + ${SURFACE_CLOUD_TEXTURE_ART_OFFSET_Y.toFixed(3)})
+            );
+            float truthCloudRaw = sampleCloud(truthCloudUv);
+            float truthCloudCaster = smoothstep(0.42, 0.76, truthCloudRaw);
+            vec2 truthLightTangentUv = vec2(dot(l, tangentA), dot(l, tangentB));
+            float truthLightTangentLen = max(length(truthLightTangentUv), 0.001);
+            truthLightTangentUv /= truthLightTangentLen;
+            vec2 truthShadowUv = vec2(
+              fract(truthCloudUv.x - truthLightTangentUv.x * 0.0012),
+              fract(truthCloudUv.y - truthLightTangentUv.y * 0.0012 * 0.62)
+            );
+            float truthShadowRaw = sampleCloud(truthShadowUv);
+            float truthCloudShadowEnable = step(0.5, hasCloudDeckMap) * step(0.001, cloudShadowOpacity);
+            float truthCloudShadow = smoothstep(0.44, 0.78, truthShadowRaw) *
+              truthCloudCaster *
+              dayW *
+              truthCloudShadowEnable *
+              cloudShadowOpacity;
+            truthColor *= mix(vec3(1.0), vec3(0.84, 0.88, 0.94), clamp(truthCloudShadow * 0.14, 0.0, 0.18));
             truthColor *= mix(1.0, 1.1, closeStage);
             vec3 truthKnee = vec3(mix(0.84, 0.64, closeStage));
             truthColor = truthColor / (1.0 + max(truthColor - truthKnee, vec3(0.0)) * mix(0.78, 1.26, closeStage));

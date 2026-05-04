@@ -156,7 +156,7 @@ function createLimbScatteringMaterial(composition: LandingComposition) {
         float brightCore = exp(-pow((lineCore - 1.45) / mix(5.2, 6.8, debugBoost), 2.0)) *
           (0.42 + day * 0.72) *
           tangentMask;
-        float whiteNeedle = brightCore * mix(0.006, 0.142, debugBoost);
+        float whiteNeedle = brightCore * mix(0.009, 0.142, debugBoost);
         float surfaceGlow = exp(-pow(max(glowOutside, 0.0) / mix(26.0, 34.0, debugBoost), 1.16)) *
           smoothstep(-1.6, 7.0, glowOutside) *
           (0.05 + day * 0.068);
