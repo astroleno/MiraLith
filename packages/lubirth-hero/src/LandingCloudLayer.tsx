@@ -146,6 +146,11 @@ function createCloudMaterial(
       varying vec3 vWorldTangentB;
       varying float vFresnel;
 
+      float cloudPhase(float g, float mu) {
+        float gg = g * g;
+        return (1.0 - gg) / max(pow(1.0 + gg - 2.0 * g * mu, 1.5), 0.001);
+      }
+
       float cloudRaw(vec2 uv) {
         vec2 wrappedUv = vec2(fract(uv.x), clamp(uv.y, 0.001, 0.999));
         vec3 cloudRgb = texture2D(cloudMap, wrappedUv).rgb;
@@ -301,6 +306,34 @@ function createCloudMaterial(
         float cloudSlopeShadow =
           smoothstep(0.18, 0.86, 1.0 - cloudTopLight) *
           max(deckThickness * deckInfluence, normalReliefMask * 0.46);
+        float volumeJitter = noise2(gl_FragCoord.xy * 0.37 + baseUv * vec2(173.0, 89.0) + shellOffset * 31.0);
+        float volumeColumn = 0.0;
+        float volumeStep = mix(0.0022, 0.0011, closeStage) * (0.58 + limb * 0.42);
+        for (int volumeStepIndex = 0; volumeStepIndex < 3; volumeStepIndex += 1) {
+          float stepIndex = float(volumeStepIndex);
+          float stepWeight = stepIndex + 0.58 + volumeJitter * 0.38;
+          vec2 volumeUv = vec2(
+            fract(midUv.x + sunShear.x * volumeStep * stepWeight),
+            clamp(midUv.y + sunShear.y * volumeStep * stepWeight * 0.62, 0.001, 0.999)
+          );
+          vec4 volumeDeck = texture2D(cloudDeckMap, volumeUv);
+          float volumeRaw = cloudRaw(volumeUv);
+          float volumeDensity =
+            smoothstep(0.16, 0.72, volumeRaw) * 0.48 +
+            smoothstep(0.18, 0.78, volumeDeck.g) * hasCloudDeckMap * 0.52;
+          volumeColumn += volumeDensity * (0.44 + stepIndex * 0.16);
+        }
+        float volumeMass = referenceLookStrength *
+          visibleCloudGate *
+          smoothstep(0.14, 0.82, max(max(rawSharp, deckThickness), volumeColumn * 0.36));
+        float volumeTransmittance = exp(-volumeColumn * volumeMass * (0.92 + (1.0 - sunlitCloud) * 0.46));
+        float volumeSelfShadow = (1.0 - volumeTransmittance) * volumeMass;
+        float volumeForwardScatter =
+          cloudPhase(0.32, clamp(dot(viewDirection, sunDirection), -1.0, 1.0)) *
+          volumeMass *
+          volumeTransmittance *
+          sunlitCloud *
+          0.28;
         weatherMass = max(weatherMass, deckWeatherMass * 0.18 * deckInfluence);
         weatherCore = max(weatherCore, deckWeatherCore * 0.26 * deckInfluence);
         float closeDeckCloud = closeStage *
@@ -372,6 +405,7 @@ function createCloudMaterial(
             deckAo * 0.18 * deckInfluence +
             cloudSlopeShadow * 0.36 +
             normalReliefMask * (1.0 - cloudTopLight) * 0.16 +
+            volumeSelfShadow * 0.42 +
             weatherCore * 0.08
           ),
           0.0,
@@ -444,10 +478,13 @@ function createCloudMaterial(
           cloudNormalHighlight *
           sunlitCloud *
           (0.045 + closeStage * 0.04);
+        finalColor += vec3(0.68, 0.82, 1.0) *
+          volumeForwardScatter *
+          (0.08 + closeStage * 0.08);
         finalColor = mix(
           finalColor,
           finalColor * vec3(0.68, 0.76, 0.88),
-          cloudSlopeShadow * (0.16 + referenceLookStrength * 0.1)
+          cloudSlopeShadow * (0.16 + referenceLookStrength * 0.1) + volumeSelfShadow * 0.08
         );
         float closeCloudReadability = max(
           closeStage * visibleCloudGate *

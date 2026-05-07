@@ -158,9 +158,9 @@ function updatePhysicalScaleUniforms(
 
   material.uniforms.planetRadius.value = planetRadius;
   material.uniforms.atmosphereRadius.value =
-    planetRadius * (referenceLook ? 1.022 : ATMOSPHERE_RADIUS_RATIO);
-  material.uniforms.rayleighHeight.value = (referenceLook ? 8.8e3 : 8e3) * safeScale;
-  material.uniforms.mieHeight.value = (referenceLook ? 1.65e3 : 1.2e3) * safeScale;
+    planetRadius * (referenceLook ? 1.014 : ATMOSPHERE_RADIUS_RATIO);
+  material.uniforms.rayleighHeight.value = (referenceLook ? 7.6e3 : 8e3) * safeScale;
+  material.uniforms.mieHeight.value = (referenceLook ? 1.1e3 : 1.2e3) * safeScale;
   material.uniforms.ozoneHeight.value = 25e3 * safeScale;
   material.uniforms.ozoneFalloff.value = 5e3 * safeScale;
   material.uniforms.rayleighCoeffs.value.set(
@@ -168,7 +168,7 @@ function updatePhysicalScaleUniforms(
     13.5e-6 / safeScale,
     (referenceLook ? 42.0e-6 : 33.1e-6) / safeScale
   );
-  material.uniforms.mieCoeffs.value.setScalar((referenceLook ? 0.95e-6 : 3.9e-6) / safeScale);
+  material.uniforms.mieCoeffs.value.setScalar((referenceLook ? 0.55e-6 : 3.9e-6) / safeScale);
   material.uniforms.ozoneCoeffs.value.set(0.6e-6 / safeScale, 1.8e-6 / safeScale, 0.085e-6 / safeScale);
   material.uniforms.mieAsymmetry.value = referenceLook ? 0.72 : 0.8;
   material.uniforms.sunIntensity.value = referenceLook
@@ -176,9 +176,9 @@ function updatePhysicalScaleUniforms(
     : (emphasis ? 18 : 14) * Math.max(composition.atmosphere.intensity, 0);
   material.uniforms.atmosphereStrength.value = composition.atmosphere.enabled ? 1 : 0;
   material.uniforms.referenceLookStrength.value = referenceLook ? 1 : 0;
-  material.uniforms.limbWhiteStrength.value = referenceLook ? (emphasis ? 0.42 : 0.22) : 0.46;
-  material.uniforms.limbBlueStrength.value = referenceLook ? (emphasis ? 1.64 : 1.24) : 0.78;
-  material.uniforms.limbShelfStrength.value = referenceLook ? (emphasis ? 1.04 : 0.72) : 0.54;
+  material.uniforms.limbWhiteStrength.value = referenceLook ? (emphasis ? 0.24 : 0.1) : 0.46;
+  material.uniforms.limbBlueStrength.value = referenceLook ? (emphasis ? 1.32 : 1.02) : 0.78;
+  material.uniforms.limbShelfStrength.value = referenceLook ? (emphasis ? 0.78 : 0.5) : 0.54;
 }
 
 function cameraRange(camera: Camera) {

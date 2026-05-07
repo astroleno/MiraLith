@@ -267,8 +267,8 @@ vec3 referenceLimbComposite(
     float skyColumn = clamp(1.0 - tangentHeight / atmoThickness, 0.0, 1.0);
     float rim = 1.0 - clamp(viewFacing, 0.0, 1.0);
     float surfaceColumn =
-        smoothstep(0.72, 0.965, rim) *
-        (1.0 - smoothstep(0.998, 1.0, rim));
+        smoothstep(0.82, 0.972, rim) *
+        (1.0 - smoothstep(0.992, 1.0, rim));
 
     float column = max(skyColumn * (1.0 - hitSurface), surfaceColumn * hitSurface);
     if (column <= 0.0001) {
@@ -280,10 +280,10 @@ vec3 referenceLimbComposite(
     float daySide = smoothstep(-0.28, 0.55, sun);
     float twilight = 1.0 - smoothstep(0.02, 0.48, abs(sun));
 
-    float blueShelf = pow(column, 1.34) * (0.42 + daySide * 0.68 + twilight * 0.16);
-    float cyanShelf = pow(column, 4.9) * (0.16 + daySide * 0.56);
-    float blueNeedle = pow(column, 34.0) * (0.045 + daySide * 0.2);
-    float whiteNeedle = pow(column, 58.0) * (0.012 + daySide * 0.07);
+    float blueShelf = pow(column, 1.72) * (0.38 + daySide * 0.62 + twilight * 0.14);
+    float cyanShelf = pow(column, 6.2) * (0.12 + daySide * 0.46);
+    float blueNeedle = pow(column, 44.0) * (0.035 + daySide * 0.16);
+    float whiteNeedle = pow(column, 96.0) * (0.004 + daySide * 0.024);
     float baseProtect = 1.0 - smoothstep(0.26, 0.66, luma(baseColor)) * hitSurface * 0.68;
 
     vec3 deepBlue = vec3(0.012, 0.065, 0.20);
@@ -345,7 +345,7 @@ void main() {
 
             // Preserve the underlying Earth color on face-on surface pixels. The reference
             // look gets its blue edge from the long tangent path, not from a uniform surface veil.
-            surfaceAtmosphereBlend = mix(0.10, 0.94, horizonBlend);
+            surfaceAtmosphereBlend = mix(0.06, mix(0.94, 0.58, referenceLookStrength), horizonBlend);
         }
     }
 
@@ -354,13 +354,13 @@ void main() {
     finalColor = mix(screenColor, finalColor, atmosphereStrength);
     float referenceSurfaceRim = referenceLookStrength *
         hitSurface *
-        smoothstep(0.70, 0.965, 1.0 - viewFacing) *
-        (1.0 - smoothstep(0.995, 1.0, 1.0 - viewFacing));
+        smoothstep(0.82, 0.974, 1.0 - viewFacing) *
+        (1.0 - smoothstep(0.990, 1.0, 1.0 - viewFacing));
     float brightRim = smoothstep(0.30, 0.86, luma(finalColor));
     finalColor = mix(
         finalColor,
         finalColor * vec3(0.42, 0.68, 1.06),
-        referenceSurfaceRim * brightRim * 0.42
+        referenceSurfaceRim * brightRim * 0.28
     );
     vec3 referenceLimb = referenceLimbComposite(
         sceneCameraPosition,
@@ -374,7 +374,7 @@ void main() {
     finalColor = mix(
         finalColor,
         finalColor * vec3(0.34, 0.62, 1.08),
-        referenceSurfaceRim * brightRim * 0.28
+        referenceSurfaceRim * brightRim * 0.18
     );
     finalColor = applyUpstreamOutputLook(finalColor);
 
