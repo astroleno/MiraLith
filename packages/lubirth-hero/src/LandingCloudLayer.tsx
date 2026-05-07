@@ -258,7 +258,7 @@ function createCloudMaterial(
           max(rawMassNear * 0.62 + rawSharp * 0.38, rawMidBlur)
         );
         float deckInfluence = hasCloudDeckMap * visibleCloudGate;
-        vec2 deckNormalStep = vec2(0.00115, 0.00058);
+        vec2 deckNormalStep = mix(vec2(0.00115, 0.00058), vec2(0.00062, 0.00031), referenceLookStrength);
         float deckThicknessX = pow(
           clamp(texture2D(cloudDeckMap, vec2(fract(deckUv.x + deckNormalStep.x), deckUv.y)).g, 0.0, 1.0),
           1.35
@@ -272,13 +272,35 @@ function createCloudMaterial(
           (deckThickness - deckThicknessY) * 5.4,
           1.0
         ));
+        vec2 fineNormalStep = vec2(
+          mix(0.00042, 0.00016, closeStage),
+          mix(0.00021, 0.00008, closeStage)
+        );
+        float rawFineX = cloudRaw(vec2(fract(midUv.x + fineNormalStep.x), clamp(midUv.y, 0.001, 0.999)));
+        float rawFineY = cloudRaw(vec2(fract(midUv.x), clamp(midUv.y + fineNormalStep.y, 0.001, 0.999)));
+        float normalReliefMask = referenceLookStrength *
+          visibleCloudGate *
+          smoothstep(0.14, 0.72, max(rawSharp, deckCoverage + deckThickness * 0.32));
+        vec3 fineHeightNormal = normalize(vec3(
+          (rawSharp - rawFineX) * (1.45 + closeStage * 1.1),
+          (rawSharp - rawFineY) * (1.45 + closeStage * 0.84),
+          1.0
+        ));
+        cloudHeightNormal = normalize(vec3(
+          cloudHeightNormal.xy * (1.0 + normalReliefMask * 0.52) +
+            fineHeightNormal.xy * normalReliefMask * (1.25 + closeStage * 0.55),
+          1.0
+        ));
         vec3 sunTangent = normalize(vec3(
           dot(sunDirection, vWorldTangentA),
           dot(sunDirection, vWorldTangentB),
           max(ndl, 0.0) + 0.18
         ));
         float cloudTopLight = mix(1.0, clamp(dot(cloudHeightNormal, sunTangent), 0.0, 1.0), deckInfluence);
-        float cloudSlopeShadow = smoothstep(0.18, 0.86, 1.0 - cloudTopLight) * deckThickness * deckInfluence;
+        float cloudNormalHighlight = smoothstep(0.54, 0.94, cloudTopLight) * normalReliefMask;
+        float cloudSlopeShadow =
+          smoothstep(0.18, 0.86, 1.0 - cloudTopLight) *
+          max(deckThickness * deckInfluence, normalReliefMask * 0.46);
         weatherMass = max(weatherMass, deckWeatherMass * 0.18 * deckInfluence);
         weatherCore = max(weatherCore, deckWeatherCore * 0.26 * deckInfluence);
         float closeDeckCloud = closeStage *
@@ -348,7 +370,8 @@ function createCloudMaterial(
           selfShadow +
           referenceLookStrength * (
             deckAo * 0.18 * deckInfluence +
-            cloudSlopeShadow * 0.26 +
+            cloudSlopeShadow * 0.36 +
+            normalReliefMask * (1.0 - cloudTopLight) * 0.16 +
             weatherCore * 0.08
           ),
           0.0,
@@ -416,11 +439,15 @@ function createCloudMaterial(
           deckHighCap *
           sunlitCloud *
           deckInfluence *
-          (0.045 + closeStage * 0.035);
+          (0.03 + closeStage * 0.024);
+        finalColor += vec3(0.72, 0.84, 0.98) *
+          cloudNormalHighlight *
+          sunlitCloud *
+          (0.045 + closeStage * 0.04);
         finalColor = mix(
           finalColor,
           finalColor * vec3(0.68, 0.76, 0.88),
-          cloudSlopeShadow * 0.16
+          cloudSlopeShadow * (0.16 + referenceLookStrength * 0.1)
         );
         float closeCloudReadability = max(
           closeStage * visibleCloudGate *

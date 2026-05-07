@@ -280,19 +280,22 @@ vec3 referenceLimbComposite(
     float daySide = smoothstep(-0.28, 0.55, sun);
     float twilight = 1.0 - smoothstep(0.02, 0.48, abs(sun));
 
-    float blueShelf = pow(column, 1.46) * (0.36 + daySide * 0.62 + twilight * 0.16);
-    float cyanShelf = pow(column, 5.2) * (0.14 + daySide * 0.58);
-    float whiteNeedle = pow(column, 30.0) * (0.055 + daySide * 0.28);
-    float baseProtect = 1.0 - smoothstep(0.32, 0.72, luma(baseColor)) * hitSurface * 0.54;
+    float blueShelf = pow(column, 1.34) * (0.42 + daySide * 0.68 + twilight * 0.16);
+    float cyanShelf = pow(column, 4.9) * (0.16 + daySide * 0.56);
+    float blueNeedle = pow(column, 34.0) * (0.045 + daySide * 0.2);
+    float whiteNeedle = pow(column, 58.0) * (0.012 + daySide * 0.07);
+    float baseProtect = 1.0 - smoothstep(0.26, 0.66, luma(baseColor)) * hitSurface * 0.68;
 
     vec3 deepBlue = vec3(0.012, 0.065, 0.20);
-    vec3 rayleighBlue = vec3(0.07, 0.32, 0.98);
-    vec3 cyan = vec3(0.34, 0.66, 1.14);
-    vec3 contactWhite = vec3(0.82, 1.02, 1.32);
+    vec3 rayleighBlue = vec3(0.045, 0.28, 0.92);
+    vec3 cyan = vec3(0.22, 0.58, 1.08);
+    vec3 contactBlue = vec3(0.32, 0.72, 1.36);
+    vec3 contactWhite = vec3(0.46, 0.78, 1.22);
 
     vec3 shell =
         mix(deepBlue, rayleighBlue, 0.48 + daySide * 0.28) * blueShelf * limbBlueStrength +
         cyan * cyanShelf * limbShelfStrength +
+        contactBlue * blueNeedle * limbShelfStrength * baseProtect +
         contactWhite * whiteNeedle * limbWhiteStrength * baseProtect;
 
     return shell * referenceLookStrength * atmosphereStrength;
@@ -349,13 +352,29 @@ void main() {
     vec3 finalColor = scatter(screenColor, sceneCameraPosition, rayDir, maximumDistance); // the color to be displayed on the screen
     finalColor = mix(screenColor, finalColor, surfaceAtmosphereBlend);
     finalColor = mix(screenColor, finalColor, atmosphereStrength);
-    finalColor += referenceLimbComposite(
+    float referenceSurfaceRim = referenceLookStrength *
+        hitSurface *
+        smoothstep(0.70, 0.965, 1.0 - viewFacing) *
+        (1.0 - smoothstep(0.995, 1.0, 1.0 - viewFacing));
+    float brightRim = smoothstep(0.30, 0.86, luma(finalColor));
+    finalColor = mix(
+        finalColor,
+        finalColor * vec3(0.42, 0.68, 1.06),
+        referenceSurfaceRim * brightRim * 0.42
+    );
+    vec3 referenceLimb = referenceLimbComposite(
         sceneCameraPosition,
         rayDir,
         hitSurface,
         surfaceNormal,
         viewFacing,
         finalColor
+    );
+    finalColor += referenceLimb;
+    finalColor = mix(
+        finalColor,
+        finalColor * vec3(0.34, 0.62, 1.08),
+        referenceSurfaceRim * brightRim * 0.28
     );
     finalColor = applyUpstreamOutputLook(finalColor);
 
