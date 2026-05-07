@@ -27,6 +27,7 @@ interface LandingCloudLayerProps {
   quality: QualityProfile;
   sceneLightDirection?: Vector3;
   emphasis?: boolean;
+  referenceLook?: boolean;
   reducedMotion?: boolean;
   paused?: boolean;
   cloudDeckEnabled?: boolean;
@@ -84,6 +85,7 @@ function createCloudMaterial(
       rimFocus: { value: layer.rimFocus },
       edgeBreakStrength: { value: layer.edgeBreak },
       debugBoost: { value: 0 },
+      referenceLookStrength: { value: 0 },
       lightDir: { value: lightDirection.set(...composition.light.fixedSunDir).normalize().clone() },
       lightColor: {
         value: color.setRGB(
@@ -133,6 +135,7 @@ function createCloudMaterial(
       uniform float rimFocus;
       uniform float edgeBreakStrength;
       uniform float debugBoost;
+      uniform float referenceLookStrength;
       uniform vec3 lightDir;
       uniform vec3 lightColor;
 
@@ -341,6 +344,16 @@ function createCloudMaterial(
           0.0,
           0.64
         );
+        selfShadow = clamp(
+          selfShadow +
+          referenceLookStrength * (
+            deckAo * 0.18 * deckInfluence +
+            cloudSlopeShadow * 0.26 +
+            weatherCore * 0.08
+          ),
+          0.0,
+          0.78
+        );
         float light = mix(0.08, 1.08, sunlitCloud) * (1.0 - selfShadow) + twilight * 0.06 + limb * sunlitCloud * 0.1;
 
         vec3 cloudShadow = mix(vec3(0.16, 0.21, 0.29), vec3(0.44, 0.5, 0.58), max(mid, weatherMass * 0.72));
@@ -373,6 +386,11 @@ function createCloudMaterial(
           finalColor * vec3(0.62, 0.70, 0.82),
           cloudUnderside * mix(0.16, 0.28, closeStage) * mix(1.0, 0.52, sunlitCloud)
         );
+        finalColor = mix(
+          finalColor,
+          finalColor * vec3(0.58, 0.66, 0.80),
+          referenceLookStrength * cloudUnderside * 0.24
+        );
         float thickCloudRelief = clamp(
           weatherCore * 0.42 +
           opaqueCore * 0.32 +
@@ -393,6 +411,12 @@ function createCloudMaterial(
           sunlitCloud *
           deckInfluence *
           (0.028 + closeStage * 0.022);
+        finalColor += vec3(0.86, 0.92, 0.96) *
+          referenceLookStrength *
+          deckHighCap *
+          sunlitCloud *
+          deckInfluence *
+          (0.045 + closeStage * 0.035);
         finalColor = mix(
           finalColor,
           finalColor * vec3(0.68, 0.76, 0.88),
@@ -468,6 +492,11 @@ function createCloudMaterial(
           mix(0.94, 1.16, closeStage) *
           mix(1.0, 0.58, nightCloud * (1.0 - twilight * 0.42)) *
           mix(1.0, 1.82, debugBoost);
+        alpha *= mix(
+          1.0,
+          1.32,
+          referenceLookStrength * smoothstep(0.18, 0.72, max(weatherMass, thickness))
+        );
 
         if (alpha < 0.00008) {
           discard;
@@ -493,6 +522,7 @@ export function LandingCloudLayer({
   quality,
   sceneLightDirection,
   emphasis = false,
+  referenceLook = false,
   reducedMotion,
   paused,
   cloudDeckEnabled = true
@@ -565,6 +595,7 @@ export function LandingCloudLayer({
       cloudMaterial.uniforms.closeStage.value = closeStage;
       cloudMaterial.uniforms.opacity.value = composition.earth.useClouds ? composition.earth.cloudOpacity : 0;
       cloudMaterial.uniforms.debugBoost.value = emphasis ? 1 : 0;
+      cloudMaterial.uniforms.referenceLookStrength.value = referenceLook ? 1 : 0;
       cloudMaterial.uniforms.lightDir.value.copy(lightDirection);
     });
   });

@@ -615,18 +615,17 @@ export function EarthMoonScene({
         ) : null}
         {showVolumetricClouds ? (
           <>
-            {!useReferenceVolumetricSurfaceClouds ? (
-              <LandingCloudLayer
-                composition={composition}
-                assets={assets}
-                quality={quality}
-                sceneLightDirection={sceneLightDirection}
-                emphasis={debugClouds}
-                reducedMotion={reducedMotion}
-                paused={paused}
-                cloudDeckEnabled={cloudDeckEnabled}
-              />
-            ) : null}
+            <LandingCloudLayer
+              composition={composition}
+              assets={assets}
+              quality={quality}
+              sceneLightDirection={sceneLightDirection}
+              emphasis={debugClouds}
+              referenceLook={useReferenceVolumetricSurfaceClouds}
+              reducedMotion={reducedMotion}
+              paused={paused}
+              cloudDeckEnabled={cloudDeckEnabled}
+            />
             {cloudDeckEnabled && debugClouds && assets.earthCloudDeck ? (
               useCloudDeckV2 ? (
                 <>

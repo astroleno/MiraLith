@@ -260,8 +260,8 @@ export function LandingEarth({
   const activeNormalTexture = normalTexture ?? activeDayTexture;
   const activeDisplacementTexture = displacementTexture ?? activeDayTexture;
   const cloudShadowAtlasSize = useMemo(
-    () => referenceVolumetricSurfaceClouds ? null : resolveCloudShadowAtlasSize(quality),
-    [quality, referenceVolumetricSurfaceClouds]
+    () => resolveCloudShadowAtlasSize(quality),
+    [quality]
   );
   const [cloudShadowAtlasTexture, setCloudShadowAtlasTexture] = useState<Texture | null>(null);
 
@@ -360,7 +360,9 @@ export function LandingEarth({
           },
           cloudShadowOpacity: {
             value: shouldUseTextureClouds
-              ? composition.earth.cloudOpacity * SURFACE_CLOUD_SHADOW_MULTIPLIER
+              ? composition.earth.cloudOpacity *
+                SURFACE_CLOUD_SHADOW_MULTIPLIER *
+                (referenceVolumetricSurfaceClouds ? 1.42 : 1)
               : 0
           },
           referenceVolumetricSurfaceClouds: { value: referenceVolumetricSurfaceClouds ? 1 : 0 },
@@ -577,6 +579,31 @@ export function LandingEarth({
             float truthReferenceSunExposure = mix(1.0, 0.62, lowCostReferenceCloudLook);
             vec3 truthLitDay = truthDayTex * truthLightColor *
               (truthAmbient * truthSurfaceGate + truthDayLight * sunIntensity * mix(0.62, 0.56, closeStage) * truthReferenceSunExposure * dayW);
+            vec2 truthEarlyCloudBaseUv = vec2(
+              fract(vUv.x + cloudOffset + ${SURFACE_CLOUD_TEXTURE_ART_OFFSET_X.toFixed(3)}),
+              clamp(vUv.y + ${SURFACE_CLOUD_TEXTURE_ART_OFFSET_Y.toFixed(3)} + cloudOffset * 0.18, 0.001, 0.999)
+            );
+            vec2 truthEarlySunShear = vec2(dot(l, tangentA), dot(l, tangentB));
+            vec2 truthEarlyShadowUv = truthEarlyCloudBaseUv +
+              truthEarlySunShear * mix(0.010, 0.018, lowCostReferenceCloudLook);
+            vec4 truthEarlyShadowAtlas = sampleCloudShadowAtlas(truthEarlyShadowUv);
+            float truthEarlyProjectedCloudShadow =
+              truthEarlyShadowAtlas.r *
+              hasCloudShadowAtlas *
+              cloudShadowOpacity *
+              dayW *
+              smoothstep(-0.12, 0.42, ndl);
+            float truthEarlyCloudSelfAo =
+              truthEarlyShadowAtlas.g *
+              hasCloudShadowAtlas *
+              cloudOpacity *
+              smoothstep(-0.08, 0.52, ndl);
+            truthLitDay *= 1.0 - truthEarlyProjectedCloudShadow * mix(0.26, 0.48, lowCostReferenceCloudLook);
+            truthLitDay = mix(
+              truthLitDay,
+              truthLitDay * vec3(0.66, 0.74, 0.86),
+              truthEarlyCloudSelfAo * mix(0.10, 0.22, lowCostReferenceCloudLook)
+            );
             float truthTwilight = (1.0 - smoothstep(transitionWidth * 0.10, transitionWidth * 1.55, abs(ndl)));
             vec3 truthTwilightFill = truthDayTex * vec3(0.055, 0.075, 0.105) *
               truthTwilight * (1.0 - dayW) * 0.52;
@@ -1468,7 +1495,9 @@ export function LandingEarth({
         : 0;
     earthMaterial.uniforms.cloudShadowOpacity.value =
       shouldUseTextureClouds
-        ? composition.earth.cloudOpacity * SURFACE_CLOUD_SHADOW_MULTIPLIER
+        ? composition.earth.cloudOpacity *
+          SURFACE_CLOUD_SHADOW_MULTIPLIER *
+          (referenceVolumetricSurfaceClouds ? 1.42 : 1)
         : 0;
     earthMaterial.uniforms.referenceVolumetricSurfaceClouds.value = referenceVolumetricSurfaceClouds ? 1 : 0;
     earthMaterial.uniforms.cloudShadowAtlasMap.value = cloudShadowAtlasTexture ?? activeCloudTexture;
