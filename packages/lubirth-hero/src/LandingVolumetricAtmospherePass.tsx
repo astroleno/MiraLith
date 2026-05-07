@@ -62,7 +62,6 @@ declare global {
 const PHYSICAL_PLANET_RADIUS_METERS = 6000e3;
 const PHYSICAL_ATMOSPHERE_RADIUS_METERS = 6100e3;
 const ATMOSPHERE_RADIUS_RATIO = PHYSICAL_ATMOSPHERE_RADIUS_METERS / PHYSICAL_PLANET_RADIUS_METERS;
-const REFERENCE_LOOK_ATMOSPHERE_RADIUS_RATIO = 1.0185;
 const tmpPlanetPosition = new Vector3();
 const tmpScale = new Vector3();
 const tmpSunPosition = new Vector3();
@@ -124,7 +123,11 @@ function createAtmosphereMaterial(budget: VolumetricSampleBudget) {
       ozoneCoeffs: { value: new Vector3(0.6e-6, 1.8e-6, 0.085e-6) },
       ozoneFalloff: { value: 5e3 },
       sunIntensity: { value: 20 },
-      atmosphereStrength: { value: 1 }
+      atmosphereStrength: { value: 1 },
+      referenceLookStrength: { value: 0 },
+      limbWhiteStrength: { value: 1 },
+      limbBlueStrength: { value: 1 },
+      limbShelfStrength: { value: 1 }
     },
     vertexShader: `
       varying vec2 vUV;
@@ -155,23 +158,27 @@ function updatePhysicalScaleUniforms(
 
   material.uniforms.planetRadius.value = planetRadius;
   material.uniforms.atmosphereRadius.value =
-    planetRadius * (referenceLook ? REFERENCE_LOOK_ATMOSPHERE_RADIUS_RATIO : ATMOSPHERE_RADIUS_RATIO);
-  material.uniforms.rayleighHeight.value = (referenceLook ? 8.4e3 : 8e3) * safeScale;
-  material.uniforms.mieHeight.value = 1.2e3 * safeScale;
+    planetRadius * (referenceLook ? 1.022 : ATMOSPHERE_RADIUS_RATIO);
+  material.uniforms.rayleighHeight.value = (referenceLook ? 8.8e3 : 8e3) * safeScale;
+  material.uniforms.mieHeight.value = (referenceLook ? 1.65e3 : 1.2e3) * safeScale;
   material.uniforms.ozoneHeight.value = 25e3 * safeScale;
   material.uniforms.ozoneFalloff.value = 5e3 * safeScale;
   material.uniforms.rayleighCoeffs.value.set(
     5.8e-6 / safeScale,
     13.5e-6 / safeScale,
-    (referenceLook ? 48.0e-6 : 33.1e-6) / safeScale
+    (referenceLook ? 42.0e-6 : 33.1e-6) / safeScale
   );
-  material.uniforms.mieCoeffs.value.setScalar((referenceLook ? 0.045e-6 : 3.9e-6) / safeScale);
+  material.uniforms.mieCoeffs.value.setScalar((referenceLook ? 0.95e-6 : 3.9e-6) / safeScale);
   material.uniforms.ozoneCoeffs.value.set(0.6e-6 / safeScale, 1.8e-6 / safeScale, 0.085e-6 / safeScale);
-  material.uniforms.mieAsymmetry.value = referenceLook ? 0.38 : 0.8;
+  material.uniforms.mieAsymmetry.value = referenceLook ? 0.72 : 0.8;
   material.uniforms.sunIntensity.value = referenceLook
-    ? (emphasis ? 16 : 8.5) * Math.max(composition.atmosphere.intensity, 0)
+    ? (emphasis ? 18 : 11.5) * Math.max(composition.atmosphere.intensity, 0)
     : (emphasis ? 18 : 14) * Math.max(composition.atmosphere.intensity, 0);
   material.uniforms.atmosphereStrength.value = composition.atmosphere.enabled ? 1 : 0;
+  material.uniforms.referenceLookStrength.value = referenceLook ? 1 : 0;
+  material.uniforms.limbWhiteStrength.value = referenceLook ? (emphasis ? 2.4 : 1.65) : 0.65;
+  material.uniforms.limbBlueStrength.value = referenceLook ? (emphasis ? 1.55 : 1.05) : 0.75;
+  material.uniforms.limbShelfStrength.value = referenceLook ? (emphasis ? 1.35 : 0.95) : 0.65;
 }
 
 function cameraRange(camera: Camera) {

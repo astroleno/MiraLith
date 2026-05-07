@@ -63,6 +63,10 @@ uniform float ozoneFalloff; // ozone falloff around the ozone layer in meters
 
 uniform float sunIntensity; // controls atmosphere overall brightness
 uniform float atmosphereStrength; // MiraLith feature switch; 1.0 keeps upstream output
+uniform float referenceLookStrength; // art-directed NASA/reference limb resolve
+uniform float limbWhiteStrength;
+uniform float limbBlueStrength;
+uniform float limbShelfStrength;
 
 // compute the world position of a pixel from its uv coordinates and depth
 vec3 worldFromUV(vec2 UV, float depth) {
@@ -239,6 +243,61 @@ vec3 applyUpstreamOutputLook(vec3 finalColor) {
     return finalColor;
 }
 
+float luma(vec3 color) {
+    return dot(color, vec3(0.2126, 0.7152, 0.0722));
+}
+
+vec3 referenceLimbComposite(
+    vec3 rayOrigin,
+    vec3 rayDir,
+    float hitSurface,
+    vec3 surfaceNormal,
+    float viewFacing,
+    vec3 baseColor
+) {
+    vec3 sunDir = normalize(sunPosition - planetPosition);
+    float atmoThickness = max(atmosphereRadius - planetRadius, 0.000001);
+
+    vec3 toCenter = planetPosition - rayOrigin;
+    float closestT = max(dot(toCenter, rayDir), 0.0);
+    vec3 closestPoint = rayOrigin + rayDir * closestT;
+    vec3 tangentNormal = normalize(closestPoint - planetPosition);
+    float tangentHeight = max(length(closestPoint - planetPosition) - planetRadius, 0.0);
+
+    float skyColumn = clamp(1.0 - tangentHeight / atmoThickness, 0.0, 1.0);
+    float rim = 1.0 - clamp(viewFacing, 0.0, 1.0);
+    float surfaceColumn =
+        smoothstep(0.72, 0.965, rim) *
+        (1.0 - smoothstep(0.998, 1.0, rim));
+
+    float column = max(skyColumn * (1.0 - hitSurface), surfaceColumn * hitSurface);
+    if (column <= 0.0001) {
+        return vec3(0.0);
+    }
+
+    vec3 shellNormal = normalize(mix(tangentNormal, surfaceNormal, hitSurface));
+    float sun = dot(shellNormal, sunDir);
+    float daySide = smoothstep(-0.28, 0.55, sun);
+    float twilight = 1.0 - smoothstep(0.02, 0.48, abs(sun));
+
+    float blueShelf = pow(column, 1.55) * (0.32 + daySide * 0.72 + twilight * 0.18);
+    float cyanShelf = pow(column, 4.2) * (0.22 + daySide * 0.86);
+    float whiteNeedle = pow(column, 18.0) * (0.20 + daySide * 0.86);
+    float baseProtect = 1.0 - smoothstep(0.42, 0.82, luma(baseColor)) * hitSurface * 0.36;
+
+    vec3 deepBlue = vec3(0.012, 0.065, 0.20);
+    vec3 rayleighBlue = vec3(0.10, 0.38, 1.05);
+    vec3 cyan = vec3(0.48, 0.78, 1.22);
+    vec3 contactWhite = vec3(1.22, 1.42, 1.70);
+
+    vec3 shell =
+        mix(deepBlue, rayleighBlue, 0.48 + daySide * 0.28) * blueShelf * limbBlueStrength +
+        cyan * cyanShelf * limbShelfStrength +
+        contactWhite * whiteNeedle * limbWhiteStrength * baseProtect;
+
+    return shell * referenceLookStrength * atmosphereStrength;
+}
+
 void main() {
     vec3 screenColor = texture2D(textureSampler, vUV).rgb;
 
@@ -266,26 +325,38 @@ void main() {
     float t0, t1;
     float planetSurfaceDistance = 0.0;
     float surfaceAtmosphereBlend = 1.0;
+    float hitSurface = 0.0;
+    vec3 surfaceNormal = vec3(0.0, 1.0, 0.0);
+    float viewFacing = 1.0;
     if(rayIntersectSphere(sceneCameraPosition, rayDir, planetPosition, planetRadius, t0, t1)) {
         float shellEpsilon = max(planetRadius * 0.0005, 0.000001);
         if(maximumDistance > t0 - shellEpsilon) {
+            hitSurface = 1.0;
             maximumDistance = t0; // avoids Three-scale imprecision artifacts
             planetSurfaceDistance = t0;
 
             vec3 surfacePoint = sceneCameraPosition + rayDir * planetSurfaceDistance;
-            vec3 surfaceNormal = normalize(surfacePoint - planetPosition);
-            float viewFacing = clamp(dot(surfaceNormal, -rayDir), 0.0, 1.0);
+            surfaceNormal = normalize(surfacePoint - planetPosition);
+            viewFacing = clamp(dot(surfaceNormal, -rayDir), 0.0, 1.0);
             float horizonBlend = smoothstep(0.42, 0.92, 1.0 - viewFacing);
 
             // Preserve the underlying Earth color on face-on surface pixels. The reference
             // look gets its blue edge from the long tangent path, not from a uniform surface veil.
-            surfaceAtmosphereBlend = mix(0.12, 0.82, horizonBlend);
+            surfaceAtmosphereBlend = mix(0.10, 0.94, horizonBlend);
         }
     }
 
     vec3 finalColor = scatter(screenColor, sceneCameraPosition, rayDir, maximumDistance); // the color to be displayed on the screen
     finalColor = mix(screenColor, finalColor, surfaceAtmosphereBlend);
     finalColor = mix(screenColor, finalColor, atmosphereStrength);
+    finalColor += referenceLimbComposite(
+        sceneCameraPosition,
+        rayDir,
+        hitSurface,
+        surfaceNormal,
+        viewFacing,
+        finalColor
+    );
     finalColor = applyUpstreamOutputLook(finalColor);
 
     gl_FragColor = vec4(finalColor, 1.0); // displaying the final color
