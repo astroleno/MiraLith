@@ -280,15 +280,15 @@ vec3 referenceLimbComposite(
     float daySide = smoothstep(-0.28, 0.55, sun);
     float twilight = 1.0 - smoothstep(0.02, 0.48, abs(sun));
 
-    float blueShelf = pow(column, 1.55) * (0.32 + daySide * 0.72 + twilight * 0.18);
-    float cyanShelf = pow(column, 4.2) * (0.22 + daySide * 0.86);
-    float whiteNeedle = pow(column, 18.0) * (0.20 + daySide * 0.86);
-    float baseProtect = 1.0 - smoothstep(0.42, 0.82, luma(baseColor)) * hitSurface * 0.36;
+    float blueShelf = pow(column, 1.46) * (0.36 + daySide * 0.62 + twilight * 0.16);
+    float cyanShelf = pow(column, 5.2) * (0.14 + daySide * 0.58);
+    float whiteNeedle = pow(column, 30.0) * (0.055 + daySide * 0.28);
+    float baseProtect = 1.0 - smoothstep(0.32, 0.72, luma(baseColor)) * hitSurface * 0.54;
 
     vec3 deepBlue = vec3(0.012, 0.065, 0.20);
-    vec3 rayleighBlue = vec3(0.10, 0.38, 1.05);
-    vec3 cyan = vec3(0.48, 0.78, 1.22);
-    vec3 contactWhite = vec3(1.22, 1.42, 1.70);
+    vec3 rayleighBlue = vec3(0.07, 0.32, 0.98);
+    vec3 cyan = vec3(0.34, 0.66, 1.14);
+    vec3 contactWhite = vec3(0.82, 1.02, 1.32);
 
     vec3 shell =
         mix(deepBlue, rayleighBlue, 0.48 + daySide * 0.28) * blueShelf * limbBlueStrength +

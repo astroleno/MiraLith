@@ -7,8 +7,23 @@ import sharp from "sharp";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, "../../..");
-const inputPath = path.join(repoRoot, "apps/site/public/assets/lubirth/textures/earth-clouds-2k-light.jpg");
-const outputPath = path.join(repoRoot, "apps/site/public/assets/lubirth/textures/earth-cloud-deck-2k.png");
+
+function resolveRepoPath(value, fallback) {
+  return value ? path.resolve(repoRoot, value) : fallback;
+}
+
+const inputPath = resolveRepoPath(
+  process.env.LUBIRTH_CLOUD_DECK_INPUT,
+  path.join(repoRoot, "apps/site/public/assets/lubirth/textures/earth-clouds-2k-light.jpg")
+);
+const outputPath = resolveRepoPath(
+  process.env.LUBIRTH_CLOUD_DECK_OUTPUT,
+  path.join(repoRoot, "apps/site/public/assets/lubirth/textures/earth-cloud-deck-2k.png")
+);
+const requestedWidth = Number(process.env.LUBIRTH_CLOUD_DECK_WIDTH);
+const outputWidth = Number.isFinite(requestedWidth) && requestedWidth > 0
+  ? Math.round(requestedWidth)
+  : undefined;
 
 const clamp01 = (value) => Math.min(1, Math.max(0, value));
 
@@ -62,7 +77,15 @@ function byte(value) {
   return Math.round(clamp01(value) * 255);
 }
 
-const { data, info } = await sharp(inputPath)
+let sourcePipeline = sharp(inputPath);
+if (outputWidth) {
+  sourcePipeline = sourcePipeline.resize(outputWidth, Math.round(outputWidth / 2), {
+    fit: "fill",
+    kernel: sharp.kernel.lanczos3
+  });
+}
+
+const { data, info } = await sourcePipeline
   .ensureAlpha()
   .raw()
   .toBuffer({ resolveWithObject: true });
@@ -137,14 +160,22 @@ for (let y = 0; y < height; y += 1) {
 }
 
 await mkdir(path.dirname(outputPath), { recursive: true });
-await sharp(output, {
+const outputPipeline = sharp(output, {
   raw: {
     width,
     height,
     channels: 4
   }
-})
-  .png({ compressionLevel: 9, adaptiveFiltering: false, palette: false, effort: 10 })
-  .toFile(outputPath);
+});
+
+if (path.extname(outputPath).toLowerCase() === ".webp") {
+  await outputPipeline
+    .webp({ alphaQuality: 88, effort: 6, quality: 86, smartSubsample: true })
+    .toFile(outputPath);
+} else {
+  await outputPipeline
+    .png({ compressionLevel: 9, adaptiveFiltering: false, palette: false, effort: 10 })
+    .toFile(outputPath);
+}
 
 console.log(`Generated ${path.relative(repoRoot, outputPath)} from ${path.relative(repoRoot, inputPath)}`);

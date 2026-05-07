@@ -69,6 +69,18 @@ const HIGH_DETAIL_EARTH_ASSETS: Partial<LandingAssetManifest> = {
   }
 };
 
+const HIGH_DETAIL_REFERENCE_EARTH_ASSETS: Partial<LandingAssetManifest> = {
+  ...HIGH_DETAIL_EARTH_ASSETS,
+  earthCloudDeck: {
+    id: "earth-cloud-deck-4k",
+    src: "/assets/lubirth/textures/earth-cloud-deck-4k.webp",
+    width: 4096,
+    height: 2048,
+    format: "webp",
+    colorSpace: "linear"
+  }
+};
+
 const VISITOR_LOCATION_CACHE_KEY = "miralith:lubirth-runtime-location:v1";
 // Matches the reference demo's default slider sunTheta=80, sunPhi=3 without tying light to the camera.
 const REFERENCE_ATMOSPHERE_SUN_DIRECTION: [number, number, number] = [0.1734, 0.0523, 0.9835];
@@ -494,8 +506,21 @@ export function LuBirthSceneSlot({
     () => resolveLandingPreset(mode, compositionOverrides),
     [compositionOverrides, mode]
   );
-  const useHighDetailEarthAssets = qualityProfile.tier === "high";
-  const assets = resolveLandingAssets(useHighDetailEarthAssets ? HIGH_DETAIL_EARTH_ASSETS : undefined);
+  const forceReferenceSpikeHighDetailAssets =
+    isAtmosphereSpikeRoute() &&
+    atmosphereVariant === "volumetric" &&
+    atmosphereLook === "reference" &&
+    quality !== "low" &&
+    typeof window !== "undefined" &&
+    Math.min(window.innerWidth, window.innerHeight) >= 760;
+  const useHighDetailEarthAssets = qualityProfile.tier === "high" || forceReferenceSpikeHighDetailAssets;
+  const assets = resolveLandingAssets(
+    useHighDetailEarthAssets
+      ? forceReferenceSpikeHighDetailAssets
+        ? HIGH_DETAIL_REFERENCE_EARTH_ASSETS
+        : HIGH_DETAIL_EARTH_ASSETS
+      : undefined
+  );
 
   useEffect(() => {
     let cancelled = false;
