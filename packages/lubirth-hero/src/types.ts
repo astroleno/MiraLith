@@ -4,6 +4,8 @@ import type { LandingQuality, QualityProfile, ResolvedQualityTier } from "@miral
 
 export type EarthMoonHeroMode = "field" | "window" | "zoomed" | "expanded";
 export type LandingVisualDebugLayer = "all" | "stars" | "clouds" | "atmosphere" | "aurora";
+export type LandingAtmosphereVariant = "stack" | "volumetric";
+export type LandingAtmosphereLook = "lubirth" | "reference";
 export type LandingRenderProfile =
   | "clean"
   | "nasa"
@@ -213,6 +215,8 @@ export interface EarthMoonSceneProps {
   useHorizonAuroraRibbon?: boolean;
   showAuroraInAll?: boolean;
   useProjectedHorizonPasses?: boolean;
+  atmosphereVariant?: LandingAtmosphereVariant;
+  atmosphereLook?: LandingAtmosphereLook;
 }
 
 export interface LuBirthProjectionFrame {

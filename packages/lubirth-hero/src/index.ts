@@ -19,6 +19,7 @@ export { LandingProjectedHorizonCloudPlate } from "./LandingProjectedHorizonClou
 export { LandingProjectedHorizonComposite } from "./LandingProjectedHorizonComposite";
 export { LandingProjectedLimbScattering } from "./LandingProjectedLimbScattering";
 export { LandingSpaceBackground } from "./LandingSpaceBackground";
+export { LandingVolumetricAtmospherePass } from "./LandingVolumetricAtmospherePass";
 export {
   DEFAULT_LUBIRTH_ASSETS,
   LUBIRTH_ASSET_BUDGET,
@@ -45,6 +46,8 @@ export type {
   EarthMoonHeroMode,
   EarthMoonHeroProps,
   EarthMoonSceneProps,
+  LandingAtmosphereLook,
+  LandingAtmosphereVariant,
   LandingAssetManifest,
   LandingAuroraProfile,
   LandingComposition,
