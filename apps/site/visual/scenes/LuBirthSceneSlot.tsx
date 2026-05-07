@@ -12,6 +12,8 @@ import {
 import { useQualityTier, useReducedMotionPreference } from "@miralith/visual-core";
 import type {
   LandingAssetManifest,
+  LandingAtmosphereLook,
+  LandingAtmosphereVariant,
   LandingAuroraProfile,
   LandingCompositionOverrides,
   EarthMoonHeroMode,
@@ -67,12 +69,17 @@ const HIGH_DETAIL_EARTH_ASSETS: Partial<LandingAssetManifest> = {
   }
 };
 
+const VISITOR_LOCATION_CACHE_KEY = "miralith:lubirth-runtime-location:v1";
+// Matches the reference demo's default slider sunTheta=80, sunPhi=3 without tying light to the camera.
+const REFERENCE_ATMOSPHERE_SUN_DIRECTION: [number, number, number] = [0.1734, 0.0523, 0.9835];
+
 declare global {
   interface Window {
     __MiraLithLuBirthQualityTier?: string;
     __MiraLithLuBirthAuroraEnabled?: boolean;
     __MiraLithLuBirthAuroraProfile?: LandingAuroraProfile;
     __MiraLithLuBirthMoonPhase?: LandingMoonPhase;
+    __MiraLithLuBirthMoonLightingMode?: LandingMoonLightingMode;
     __MiraLithLuBirthRuntimeLocation?: LandingLocationConfig;
     __MiraLithLuBirthSolarState?: {
       date: string;
@@ -92,6 +99,8 @@ interface LuBirthSceneSlotProps {
   debugMianyang?: boolean;
   visualDebugLayer?: LandingVisualDebugLayer;
   renderProfile?: LandingRenderProfile;
+  atmosphereVariant?: LandingAtmosphereVariant;
+  atmosphereLook?: LandingAtmosphereLook;
   paused?: boolean;
   cloudDeckEnabled?: boolean;
   onProjectionFrame?: (frame: LuBirthProjectionFrame) => void;
@@ -192,6 +201,25 @@ function readSunDateOverride(): string | undefined {
   return Number.isFinite(parsed.getTime()) ? value : undefined;
 }
 
+function isAtmosphereSpikeRoute() {
+  return typeof window !== "undefined" && window.location.pathname.includes("/lubirth-atmosphere-spike");
+}
+
+function hasExplicitRuntimeSolarInput() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const location = params.get("location");
+  return params.has("sunDate") ||
+    params.has("solarDate") ||
+    location === "ip" ||
+    location === "visitor" ||
+    params.has("geoLat") ||
+    params.has("geoLon");
+}
+
 function readLocationOverride(activeRenderProfile: LandingRenderProfile | undefined): "birth" | "ip" {
   if (typeof window === "undefined") {
     return "birth";
@@ -209,6 +237,9 @@ function readLocationOverride(activeRenderProfile: LandingRenderProfile | undefi
     return "ip";
   }
   if (params.get("visualTest") === "pixels") {
+    return "birth";
+  }
+  if (isAtmosphereSpikeRoute()) {
     return "birth";
   }
 
@@ -237,6 +268,61 @@ function buildGeoEndpoint() {
   }
 
   return `/api/lubirth-geo?${endpoint.toString()}`;
+}
+
+function readCachedVisitorLocation(endpoint: string): { endpoint: string; location: LandingLocationConfig } | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem(VISITOR_LOCATION_CACHE_KEY) ??
+      window.localStorage.getItem(VISITOR_LOCATION_CACHE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const cached = JSON.parse(raw) as {
+      endpoint?: string;
+      location?: Partial<LandingLocationConfig>;
+    };
+    const location = cached.location;
+    if (
+      cached.endpoint !== endpoint ||
+      !location ||
+      typeof location.latitudeDeg !== "number" ||
+      typeof location.longitudeDeg !== "number"
+    ) {
+      return null;
+    }
+
+    return {
+      endpoint,
+      location: {
+        latitudeDeg: location.latitudeDeg,
+        longitudeDeg: location.longitudeDeg,
+        label: location.label || "Visitor location",
+        ...(location.timeZone ? { timeZone: location.timeZone } : {}),
+        source: location.source === "manual" ? "manual" : "ip-geo"
+      }
+    };
+  } catch {
+    return null;
+  }
+}
+
+function cacheVisitorLocation(endpoint: string, location: LandingLocationConfig) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    const payload = JSON.stringify({ endpoint, location });
+    window.sessionStorage.setItem(VISITOR_LOCATION_CACHE_KEY, payload);
+    window.localStorage.setItem(VISITOR_LOCATION_CACHE_KEY, payload);
+  } catch {
+    // Cache is a smoothness enhancement only.
+  }
 }
 
 function readManualGeoLocation(): LandingLocationConfig | null {
@@ -293,6 +379,8 @@ export function LuBirthSceneSlot({
   debugMianyang = false,
   visualDebugLayer = "all",
   renderProfile,
+  atmosphereVariant = "stack",
+  atmosphereLook = "lubirth",
   paused = false,
   cloudDeckEnabled = true,
   onProjectionFrame,
@@ -315,6 +403,7 @@ export function LuBirthSceneSlot({
       : null;
   const qualityProfile = useQualityTier(qualityOverride ?? quality, reducedMotion);
   const moonLightingMode = readMoonLightingMode();
+  const freezeAtmosphereSpikeSolar = isAtmosphereSpikeRoute() && !hasExplicitRuntimeSolarInput();
   const todayMoonPhase = useMemo(
     () => computeRuntimeMoonPhase(moonDateOverride ? new Date(moonDateOverride) : new Date()),
     [moonDateOverride]
@@ -327,18 +416,37 @@ export function LuBirthSceneSlot({
     () => computeRuntimeSolarDirection(runtimeSolarDate),
     [runtimeSolarDate]
   );
+  const cachedVisitorLocationState = useMemo(
+    () => geoEndpoint ? readCachedVisitorLocation(geoEndpoint) : null,
+    [geoEndpoint]
+  );
   const [visitorLocationState, setVisitorLocationState] = useState<{
     endpoint: string;
     location: LandingLocationConfig;
-  } | null>(null);
+  } | null>(() => cachedVisitorLocationState);
   const activeVisitorLocation =
     manualGeoLocation ??
     (geoEndpoint && visitorLocationState?.endpoint === geoEndpoint ? visitorLocationState.location : null);
+
+  useEffect(() => {
+    if (!cachedVisitorLocationState || visitorLocationState?.endpoint === cachedVisitorLocationState.endpoint) {
+      return;
+    }
+
+    setVisitorLocationState(cachedVisitorLocationState);
+    window.__MiraLithLuBirthRuntimeLocation = cachedVisitorLocationState.location;
+  }, [cachedVisitorLocationState, visitorLocationState?.endpoint]);
+
   const compositionOverrides = useMemo<LandingCompositionOverrides>(
     () => {
-      const useRuntimeSolar = activeRenderProfile === "nasa" || moonPhaseOverride === "today" || Boolean(activeVisitorLocation);
+      const useRuntimeSolar =
+        !freezeAtmosphereSpikeSolar &&
+        (activeRenderProfile === "nasa" || moonPhaseOverride === "today" || Boolean(activeVisitorLocation));
+      const referenceAtmosphereLook = atmosphereLook === "reference";
+      const resolvedMoonLightingMode =
+        moonLightingMode ?? (moonPhaseOverride === "today" ? "birthPhase" : undefined);
       const moon: NonNullable<LandingCompositionOverrides["moon"]> = {
-        ...(moonLightingMode ? { lightingMode: moonLightingMode } : {}),
+        ...(resolvedMoonLightingMode ? { lightingMode: resolvedMoonLightingMode } : {}),
         ...(moonPhaseOverride === "today"
           ? {
               date: todayMoonPhase.date,
@@ -351,10 +459,36 @@ export function LuBirthSceneSlot({
       return {
         ...(Object.keys(moon).length > 0 ? { moon } : {}),
         ...(useRuntimeSolar ? { light: { fixedSunDir: runtimeSunDirection } } : {}),
+        ...(referenceAtmosphereLook
+          ? {
+              atmosphere: { intensity: 1.0 },
+              earth: {
+                cloudOpacity: 3.0,
+                edgeLightStrength: 0,
+                edgeLightWidth: 2.2,
+                edgeNeedleStrength: 0,
+                rimStrength: 0
+              },
+              light: {
+                fixedSunDir: useRuntimeSolar ? runtimeSunDirection : REFERENCE_ATMOSPHERE_SUN_DIRECTION,
+                ambientIntensity: 0.014,
+                intensity: 2.2
+              }
+            }
+          : {}),
         ...(activeVisitorLocation ? { location: activeVisitorLocation } : {})
       };
     },
-    [activeRenderProfile, activeVisitorLocation, moonLightingMode, moonPhaseOverride, runtimeSunDirection, todayMoonPhase]
+    [
+      activeRenderProfile,
+      atmosphereLook,
+      activeVisitorLocation,
+      freezeAtmosphereSpikeSolar,
+      moonLightingMode,
+      moonPhaseOverride,
+      runtimeSunDirection,
+      todayMoonPhase
+    ]
   );
   const composition = useMemo(
     () => resolveLandingPreset(mode, compositionOverrides),
@@ -398,6 +532,7 @@ export function LuBirthSceneSlot({
           source: payload.source === "manual" ? "manual" : "ip-geo"
         };
         setVisitorLocationState({ endpoint: geoEndpoint, location: nextLocation });
+        cacheVisitorLocation(geoEndpoint, nextLocation);
         window.__MiraLithLuBirthRuntimeLocation = nextLocation;
       })
       .catch(() => undefined);
@@ -412,6 +547,7 @@ export function LuBirthSceneSlot({
     window.__MiraLithLuBirthAuroraEnabled = qualityProfile.aurora;
     window.__MiraLithLuBirthAuroraProfile = auroraProfile;
     window.__MiraLithLuBirthMoonPhase = composition.moon.fixedPhase;
+    window.__MiraLithLuBirthMoonLightingMode = composition.moon.lightingMode;
     const locationVector = geodeticToTextureVector(
       composition.location.latitudeDeg,
       composition.location.longitudeDeg
@@ -431,6 +567,7 @@ export function LuBirthSceneSlot({
     composition.location.latitudeDeg,
     composition.location.longitudeDeg,
     composition.moon.fixedPhase,
+    composition.moon.lightingMode,
     qualityProfile.aurora,
     qualityProfile.tier,
     runtimeSolarDate,
@@ -450,6 +587,8 @@ export function LuBirthSceneSlot({
       debugMianyang={debugMianyang}
       visualDebugLayer={visualDebugLayer}
       renderProfile={activeRenderProfile}
+      atmosphereVariant={atmosphereVariant}
+      atmosphereLook={atmosphereLook}
       auroraProfile={auroraProfile}
       reducedMotion={reducedMotion}
       paused={paused}

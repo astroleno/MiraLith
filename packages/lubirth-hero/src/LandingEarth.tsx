@@ -3,7 +3,9 @@
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  CanvasTexture,
   Color,
+  LinearFilter,
   LinearMipmapLinearFilter,
   MathUtils,
   Mesh,
@@ -13,7 +15,7 @@ import {
   Texture,
   Vector3
 } from "three";
-import { OPENING_FIELD_AUTO_ROTATE_START, type QualityProfile } from "@miralith/visual-core";
+import { type QualityProfile } from "@miralith/visual-core";
 import type { LandingComposition, LandingResolvedAssets } from "./types";
 import { createEarthTexture } from "./textures";
 import { useLandingTexture } from "./useLandingTexture";
@@ -28,6 +30,7 @@ interface LandingEarthProps {
   sceneLightDirection?: Vector3;
   onDayTextureReady?: () => void;
   cloudDeckEnabled?: boolean;
+  referenceVolumetricSurfaceClouds?: boolean;
 }
 
 const lightDirection = new Vector3();
@@ -36,6 +39,9 @@ const SURFACE_CLOUD_SHADOW_MULTIPLIER = 0.62;
 const SURFACE_CLOUD_TEXTURE_ART_OFFSET_X = 0.045;
 const SURFACE_CLOUD_TEXTURE_ART_OFFSET_Y = 0.018;
 const SURFACE_CLOUD_SCROLL_SPEED = 0.022;
+const CLOUD_SHADOW_ATLAS_DESKTOP_HIGH = { width: 1024, height: 512 };
+const CLOUD_SHADOW_ATLAS_DESKTOP_MEDIUM = { width: 512, height: 256 };
+const CLOUD_SHADOW_ATLAS_MOBILE_HIGH = { width: 256, height: 128 };
 
 const smoothstep = (edge0: number, edge1: number, value: number) => {
   const t = Math.min(1, Math.max(0, (value - edge0) / Math.max(edge1 - edge0, 1e-5)));
@@ -44,14 +50,144 @@ const smoothstep = (edge0: number, edge1: number, value: number) => {
 
 function resolveEarthSegments(composition: LandingComposition, quality: QualityProfile) {
   if (quality.tier === "high") {
-    return Math.max(composition.earth.segments, quality.segments);
+    return Math.max(composition.earth.segments, quality.segments, 512);
   }
 
   if (quality.tier === "medium") {
-    return Math.max(96, quality.segments);
+    return Math.max(256, quality.segments);
   }
 
   return quality.segments;
+}
+
+function isMobileLikeViewport() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.matchMedia("(pointer: coarse)").matches || Math.min(window.innerWidth, window.innerHeight) < 560;
+}
+
+function resolveCloudShadowAtlasSize(quality: QualityProfile) {
+  if (quality.tier === "low" || quality.tier === "fallback") {
+    return null;
+  }
+
+  if (isMobileLikeViewport()) {
+    return quality.tier === "high" ? CLOUD_SHADOW_ATLAS_MOBILE_HIGH : null;
+  }
+
+  return quality.tier === "high" ? CLOUD_SHADOW_ATLAS_DESKTOP_HIGH : CLOUD_SHADOW_ATLAS_DESKTOP_MEDIUM;
+}
+
+function drawableImageSize(image: unknown) {
+  if (!image || typeof image !== "object") {
+    return null;
+  }
+
+  const maybeSized = image as { width?: number; height?: number; naturalWidth?: number; naturalHeight?: number };
+  const width = maybeSized.naturalWidth ?? maybeSized.width ?? 0;
+  const height = maybeSized.naturalHeight ?? maybeSized.height ?? 0;
+
+  return width > 0 && height > 0 ? { height, width } : null;
+}
+
+function createCloudShadowAtlasTexture(cloudMap: Texture, width: number, height: number) {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const image = cloudMap.image as CanvasImageSource | undefined;
+  const imageSize = drawableImageSize(image);
+  if (!image || !imageSize) {
+    return null;
+  }
+
+  const sourceCanvas = document.createElement("canvas");
+  sourceCanvas.width = width;
+  sourceCanvas.height = height;
+  const sourceContext = sourceCanvas.getContext("2d", { willReadFrequently: true });
+  if (!sourceContext) {
+    return null;
+  }
+
+  sourceContext.drawImage(image, 0, 0, width, height);
+  const source = sourceContext.getImageData(0, 0, width, height);
+  const densities = new Float32Array(width * height);
+
+  for (let index = 0; index < densities.length; index += 1) {
+    const pixel = index * 4;
+    const luminance = (
+      source.data[pixel] * 0.2126 +
+      source.data[pixel + 1] * 0.7152 +
+      source.data[pixel + 2] * 0.0722
+    ) / 255;
+    densities[index] = Math.pow(Math.min(1, Math.max(0, luminance)), 0.55);
+  }
+
+  const shadowCanvas = document.createElement("canvas");
+  shadowCanvas.width = width;
+  shadowCanvas.height = height;
+  const shadowContext = shadowCanvas.getContext("2d");
+  if (!shadowContext) {
+    return null;
+  }
+
+  const shadow = shadowContext.createImageData(width, height);
+  const sample = (x: number, y: number) => {
+    const wrappedX = ((Math.round(x) % width) + width) % width;
+    const clampedY = Math.min(height - 1, Math.max(0, Math.round(y)));
+    return densities[clampedY * width + wrappedX] ?? 0;
+  };
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = y * width + x;
+      const center = densities[index] ?? 0;
+      const radius1 = Math.max(1, Math.round(width / 420));
+      const radius2 = Math.max(radius1 + 1, Math.round(width / 180));
+      const radius3 = Math.max(radius2 + 1, Math.round(width / 82));
+      const cross =
+        sample(x + radius1, y) +
+        sample(x - radius1, y) +
+        sample(x, y + radius1) +
+        sample(x, y - radius1);
+      const diagonal =
+        sample(x + radius2, y + radius2 * 0.62) +
+        sample(x - radius2, y + radius2 * 0.62) +
+        sample(x + radius2, y - radius2 * 0.62) +
+        sample(x - radius2, y - radius2 * 0.62);
+      const wide =
+        sample(x + radius3, y) +
+        sample(x - radius3, y) +
+        sample(x, y + radius3 * 0.62) +
+        sample(x, y - radius3 * 0.62);
+      const broad = (center * 3.8 + cross * 0.9 + diagonal * 0.62 + wide * 0.36) / 11.52;
+      const gradient = Math.abs(sample(x + radius1, y) - sample(x - radius1, y)) +
+        Math.abs(sample(x, y + radius1) - sample(x, y - radius1));
+      const projectedCaster = smoothstep(0.18, 0.68, Math.max(center, broad * 1.08));
+      const selfOcclusion = smoothstep(0.24, 0.84, broad) * smoothstep(0.08, 0.72, center);
+      const edgeHighlight = Math.min(1, Math.max(0, (center - broad) * 2.4 + gradient * 0.62));
+      const mass = Math.pow(Math.min(1, Math.max(0, center)), 0.52);
+      const pixel = index * 4;
+      shadow.data[pixel] = Math.round(projectedCaster * 255);
+      shadow.data[pixel + 1] = Math.round(selfOcclusion * 255);
+      shadow.data[pixel + 2] = Math.round(edgeHighlight * 255);
+      shadow.data[pixel + 3] = Math.round(mass * 255);
+    }
+  }
+
+  shadowContext.putImageData(shadow, 0, 0);
+  const texture = new CanvasTexture(shadowCanvas);
+  texture.name = `LuBirth cloud shadow atlas ${width}x${height}`;
+  texture.wrapS = RepeatWrapping;
+  texture.wrapT = RepeatWrapping;
+  texture.magFilter = LinearFilter;
+  texture.minFilter = LinearFilter;
+  texture.generateMipmaps = false;
+  texture.needsUpdate = true;
+
+  return texture;
 }
 
 export function LandingEarth({
@@ -63,7 +199,8 @@ export function LandingEarth({
   paused,
   sceneLightDirection,
   onDayTextureReady,
-  cloudDeckEnabled = true
+  cloudDeckEnabled = true,
+  referenceVolumetricSurfaceClouds = false
 }: LandingEarthProps) {
   const earth = useRef<Mesh>(null);
   const earthSegments = resolveEarthSegments(composition, quality);
@@ -122,12 +259,42 @@ export function LandingEarth({
   const activeCloudDeckTexture = cloudDeckTexture ?? activeCloudTexture;
   const activeNormalTexture = normalTexture ?? activeDayTexture;
   const activeDisplacementTexture = displacementTexture ?? activeDayTexture;
+  const cloudShadowAtlasSize = useMemo(
+    () => referenceVolumetricSurfaceClouds ? null : resolveCloudShadowAtlasSize(quality),
+    [quality, referenceVolumetricSurfaceClouds]
+  );
+  const [cloudShadowAtlasTexture, setCloudShadowAtlasTexture] = useState<Texture | null>(null);
 
   useEffect(() => {
     if (dayTexture) {
       onDayTextureReady?.();
     }
   }, [dayTexture, onDayTextureReady]);
+
+  useEffect(() => {
+    if (!cloudTexture || !shouldUseTextureClouds || !cloudShadowAtlasSize) {
+      setCloudShadowAtlasTexture((previous) => {
+        previous?.dispose();
+        return null;
+      });
+      return undefined;
+    }
+
+    const nextTexture = createCloudShadowAtlasTexture(
+      cloudTexture,
+      cloudShadowAtlasSize.width,
+      cloudShadowAtlasSize.height
+    );
+
+    setCloudShadowAtlasTexture((previous) => {
+      previous?.dispose();
+      return nextTexture;
+    });
+
+    return () => {
+      nextTexture?.dispose();
+    };
+  }, [cloudShadowAtlasSize, cloudTexture, shouldUseTextureClouds]);
 
   const material = useMemo(
     () => {
@@ -144,6 +311,19 @@ export function LandingEarth({
       activeNormalTexture.wrapT = RepeatWrapping;
       activeDisplacementTexture.wrapS = RepeatWrapping;
       activeDisplacementTexture.wrapT = RepeatWrapping;
+      [
+        activeDayTexture,
+        activeNightTexture,
+        activeCloudTexture,
+        activeCloudDeckTexture,
+        activeNormalTexture,
+        activeDisplacementTexture
+      ].forEach((texture) => {
+        texture.magFilter = LinearFilter;
+        texture.minFilter = LinearMipmapLinearFilter;
+        texture.anisotropy = Math.max(texture.anisotropy, quality.tier === "high" ? 16 : 10);
+        texture.needsUpdate = true;
+      });
 
       return new ShaderMaterial({
         uniforms: {
@@ -151,9 +331,11 @@ export function LandingEarth({
           nightMap: { value: activeNightTexture },
           cloudMap: { value: activeCloudTexture },
           cloudDeckMap: { value: activeCloudDeckTexture },
+          cloudShadowAtlasMap: { value: cloudShadowAtlasTexture ?? activeCloudTexture },
           normalMap: { value: activeNormalTexture },
           displacementMap: { value: activeDisplacementTexture },
           hasCloudDeckMap: { value: cloudDeckTexture ? 1 : 0 },
+          hasCloudShadowAtlas: { value: cloudShadowAtlasTexture ? 1 : 0 },
           hasNormalMap: { value: normalTexture ? 1 : 0 },
           hasDisplacementMap: { value: displacementTexture ? 1 : 0 },
           normalMapStrength: { value: 0.14 },
@@ -181,6 +363,7 @@ export function LandingEarth({
               ? composition.earth.cloudOpacity * SURFACE_CLOUD_SHADOW_MULTIPLIER
               : 0
           },
+          referenceVolumetricSurfaceClouds: { value: referenceVolumetricSurfaceClouds ? 1 : 0 },
           cloudOffset: { value: 0 },
           rimStrength: { value: composition.earth.rimStrength },
           rimWidth: { value: composition.earth.rimWidth },
@@ -223,9 +406,11 @@ export function LandingEarth({
           uniform sampler2D nightMap;
           uniform sampler2D cloudMap;
           uniform sampler2D cloudDeckMap;
+          uniform sampler2D cloudShadowAtlasMap;
           uniform sampler2D normalMap;
           uniform sampler2D displacementMap;
           uniform float hasCloudDeckMap;
+          uniform float hasCloudShadowAtlas;
           uniform float hasNormalMap;
           uniform float hasDisplacementMap;
           uniform float normalMapStrength;
@@ -239,6 +424,7 @@ export function LandingEarth({
           uniform float specularStrength;
           uniform float cloudOpacity;
           uniform float cloudShadowOpacity;
+          uniform float referenceVolumetricSurfaceClouds;
           uniform float cloudOffset;
           uniform float rimStrength;
           uniform float rimWidth;
@@ -287,12 +473,18 @@ export function LandingEarth({
             return pow(clamp(raw, 0.0, 1.0), 0.55);
           }
 
+          vec4 sampleCloudShadowAtlas(vec2 uv) {
+            return texture2D(cloudShadowAtlasMap, vec2(fract(uv.x), clamp(uv.y, 0.001, 0.999)));
+          }
+
           void main() {
             vec3 n = normalize(vNormalW);
             vec3 tangentA = normalize(vWorldTangentA);
             vec3 tangentB = normalize(vWorldTangentB);
             vec3 l = normalize(lightDir);
             vec3 v = normalize(vViewW);
+            float lowCostReferenceCloudLook = step(0.5, referenceVolumetricSurfaceClouds);
+            float referenceCloudLook = 0.0;
             float reliefStage = smoothstep(0.18, 1.0, closeStage);
             float terrainHeight = 0.5;
             float terrainRelief = 0.0;
@@ -331,26 +523,60 @@ export function LandingEarth({
             float deepNightW = 1.0 - smoothstep(-transitionWidth * 2.7, -transitionWidth * 0.86, ndl);
 
             vec3 truthDayTexRaw = texture2D(dayMap, vUv).rgb;
+            if (lowCostReferenceCloudLook > 0.5) {
+              truthDayTexRaw = mix(
+                truthDayTexRaw,
+                pow(max(truthDayTexRaw, vec3(0.0)), vec3(1.18)),
+                0.34
+              );
+            }
             float truthDayLuma = dot(truthDayTexRaw, vec3(0.299, 0.587, 0.114));
-            vec3 truthDayTex = mix(vec3(truthDayLuma), truthDayTexRaw, 0.72);
+            vec3 truthDayTex = mix(vec3(truthDayLuma), truthDayTexRaw, 0.82);
             float dryAlbedoSignal =
               smoothstep(0.06, 0.24, max(truthDayTex.r, truthDayTex.g) - truthDayTex.b) *
               smoothstep(0.38, 0.78, truthDayLuma);
-            vec3 dryNeutral = vec3(truthDayLuma) * vec3(1.02, 0.98, 0.92);
-            truthDayTex = mix(truthDayTex, dryNeutral, dryAlbedoSignal * 0.22);
+            vec3 dryNeutral = truthDayTex * vec3(1.02, 0.96, 0.86);
+            truthDayTex = mix(truthDayTex, dryNeutral, dryAlbedoSignal * 0.14);
+            float vegetationSignal =
+              smoothstep(0.025, 0.14, truthDayTex.g - max(truthDayTex.r, truthDayTex.b) * 0.86) *
+              smoothstep(0.18, 0.62, truthDayLuma);
+            vec3 vegetationNeutral = truthDayTex * vec3(0.92, 1.04, 0.9);
+            truthDayTex = mix(truthDayTex, vegetationNeutral, vegetationSignal * 0.08);
             float truthOceanAlbedoSignal = truthDayTex.b - max(truthDayTex.r, truthDayTex.g) * 0.52;
             float truthOceanAlbedoMask = smoothstep(0.04, 0.18, truthOceanAlbedoSignal);
             truthDayTex = mix(
               truthDayTex,
-              truthDayTex * vec3(0.72, 0.84, 0.96),
-              truthOceanAlbedoMask * 0.26
+              truthDayTex * vec3(0.64, 0.76, 0.88),
+              truthOceanAlbedoMask * 0.3
             );
+            if (lowCostReferenceCloudLook > 0.5) {
+              float referenceBrightSurface = smoothstep(0.30, 0.74, truthDayLuma);
+              float referenceCloudBakeMask = smoothstep(0.52, 0.86, truthDayLuma) *
+                (1.0 - truthOceanAlbedoMask * 0.45);
+              vec3 referenceNeutralDay = vec3(dot(truthDayTex, vec3(0.299, 0.587, 0.114))) *
+                vec3(0.72, 0.82, 0.96);
+              truthDayTex = mix(truthDayTex, referenceNeutralDay, referenceBrightSurface * 0.18);
+              truthDayTex = mix(
+                truthDayTex,
+                truthDayTex * vec3(0.68, 0.78, 0.92),
+                referenceCloudBakeMask * 0.18
+              );
+              truthDayTex = mix(
+                truthDayTex,
+                truthDayTex * vec3(0.78, 0.84, 0.92),
+                dryAlbedoSignal * 0.16
+              );
+              truthDayTex = truthDayTex / (1.0 + max(truthDayTex - vec3(0.46), vec3(0.0)) * 0.72);
+            }
             vec3 truthNightTex = pow(texture2D(nightMap, vUv).rgb, vec3(0.96));
             float truthDayLight = max(ndl, 0.0);
             float truthSurfaceGate = smoothstep(-transitionWidth * 2.4, transitionWidth * 1.35, ndl);
             float truthAmbient = 0.035 + ambient * mix(0.72, 0.54, closeStage);
-            vec3 truthLitDay = truthDayTex * lightColor *
-              (truthAmbient * truthSurfaceGate + truthDayLight * sunIntensity * mix(0.62, 0.56, closeStage) * dayW);
+            truthAmbient *= mix(1.0, 0.72, lowCostReferenceCloudLook);
+            vec3 truthLightColor = mix(lightColor, vec3(0.92, 0.96, 1.0), 0.12 + closeStage * 0.06);
+            float truthReferenceSunExposure = mix(1.0, 0.62, lowCostReferenceCloudLook);
+            vec3 truthLitDay = truthDayTex * truthLightColor *
+              (truthAmbient * truthSurfaceGate + truthDayLight * sunIntensity * mix(0.62, 0.56, closeStage) * truthReferenceSunExposure * dayW);
             float truthTwilight = (1.0 - smoothstep(transitionWidth * 0.10, transitionWidth * 1.55, abs(ndl)));
             vec3 truthTwilightFill = truthDayTex * vec3(0.055, 0.075, 0.105) *
               truthTwilight * (1.0 - dayW) * 0.52;
@@ -386,25 +612,103 @@ export function LandingEarth({
               vec3(0.58, 0.72, 0.92) * truthOceanGlint +
               vec3(0.45, 0.58, 0.72) * truthOceanSoftGlint;
             float truthSunRim = smoothstep(-edgeShadowSoftness, 0.42, ndl);
-            float truthBlueRim = pow(fresnel, 6.2) * truthSunRim * edgeLightStrength * (0.006 + dayW * 0.014);
-            float truthWhiteNeedle = pow(fresnel, 52.0) * truthSunRim * edgeNeedleStrength * 0.018;
-            vec3 truthRim = edgeLightColor * truthBlueRim + vec3(0.78, 0.9, 1.0) * truthWhiteNeedle;
+            float truthBlueRim = pow(fresnel, 5.8) * truthSunRim * edgeLightStrength * (0.003 + dayW * 0.008);
+            float truthWhiteNeedle = pow(fresnel, 52.0) * truthSunRim * edgeNeedleStrength * mix(0.006, 0.0024, referenceCloudLook);
+            vec3 truthRim = edgeLightColor * truthBlueRim + mix(vec3(0.78, 0.9, 1.0), vec3(0.42, 0.68, 1.0), referenceCloudLook) * truthWhiteNeedle;
             vec3 truthColor = truthLitDay + truthTwilightFill + truthNightFill + truthGrazingFill + truthCity + truthSpecular + truthRim;
+            float truthSurfaceReflectance = clamp(
+              0.72 +
+              truthOceanMask * 0.34 +
+              dryAlbedoSignal * 0.12 +
+              truthDayLuma * 0.18,
+              0.62,
+              1.32
+            );
+            float truthSurfaceAirShelf =
+              pow(smoothstep(0.34, 0.92, fresnel), 1.45) *
+              (1.0 - smoothstep(0.992, 1.0, fresnel)) *
+              truthSunRim;
+            float truthSurfaceAirBridge =
+              pow(smoothstep(0.62, 0.985, fresnel), 1.55) *
+              (1.0 - smoothstep(0.998, 1.0, fresnel)) *
+              truthSunRim;
+            float truthSurfaceInteriorLift =
+              pow(smoothstep(0.06, 0.74, fresnel), 1.08) *
+              (1.0 - smoothstep(0.95, 1.0, fresnel)) *
+              truthSunRim *
+              smoothstep(-0.14, 0.68, ndl);
+            float truthSurfaceAirFeather =
+              pow(smoothstep(0.10, 0.82, fresnel), 1.55) *
+              (1.0 - smoothstep(0.97, 1.0, fresnel)) *
+              truthSunRim;
+            vec3 truthAirBlue = mix(
+              vec3(0.018, 0.068, 0.18),
+              edgeLightColor,
+              0.58 + dayW * 0.22
+            );
+            vec3 truthContactBlue = mix(
+              edgeLightColor,
+              vec3(0.78, 0.9, 1.0),
+              0.36 + truthOceanMask * 0.22
+            );
+            truthColor += (
+              truthColor * vec3(0.18, 0.20, 0.22) +
+              truthDayTex * truthLightColor * (0.035 + dayW * 0.035)
+            ) *
+              truthSurfaceInteriorLift *
+              truthSurfaceReflectance *
+              mix(0.52, 0.86, closeStage);
+            truthColor += (
+              truthColor * vec3(0.075, 0.088, 0.105) +
+              truthAirBlue * (0.008 + dayW * 0.014)
+            ) *
+              truthSurfaceAirFeather *
+              truthSurfaceReflectance *
+              mix(0.3, 0.48, closeStage);
+            truthColor = mix(
+              truthColor,
+              truthColor * vec3(1.03, 1.07, 1.13) + truthAirBlue * (0.016 + dayW * 0.026),
+              truthSurfaceAirShelf * mix(0.08, 0.14, closeStage) * truthSurfaceReflectance
+            );
+            float truthSurfaceGlowLift =
+              pow(smoothstep(0.36, 0.93, fresnel), 1.65) *
+              (1.0 - smoothstep(0.992, 1.0, fresnel)) *
+              truthSunRim;
+            truthColor += (
+              truthColor * vec3(0.09, 0.105, 0.125) +
+              truthAirBlue * (0.01 + dayW * 0.018)
+            ) *
+              truthSurfaceGlowLift *
+              truthSurfaceReflectance *
+              mix(0.22, 0.38, closeStage);
+            truthColor += truthContactBlue *
+              truthSurfaceAirBridge *
+              (0.009 + dayW * 0.02) *
+              edgeLightStrength *
+              truthSurfaceReflectance;
             float truthHorizonHaze = pow(fresnel, 2.1) * smoothstep(-0.16, 0.52, ndl);
-            float truthHazeLuma = dot(truthColor, vec3(0.299, 0.587, 0.114));
             vec3 truthHazeColor =
-              vec3(truthHazeLuma) * vec3(0.76, 0.86, 1.0) +
-              vec3(0.018, 0.028, 0.045) * dayW;
+              mix(
+                truthColor * vec3(0.96, 1.0, 1.05) + truthAirBlue * (0.01 + dayW * 0.018),
+                truthColor * vec3(0.28, 0.42, 0.66) + truthAirBlue * (0.09 + dayW * 0.08),
+                referenceCloudLook
+              );
             truthColor = mix(
               truthColor,
               truthHazeColor,
-              truthHorizonHaze * mix(0.08, 0.16, closeStage)
+              truthHorizonHaze * mix(mix(0.05, 0.12, referenceCloudLook), mix(0.09, 0.18, referenceCloudLook), closeStage)
             );
             vec3 truthDayBlurTiny = (
               texture2D(dayMap, vUv + vec2(0.00045, 0.00022)).rgb +
               texture2D(dayMap, vUv - vec2(0.00045, 0.00022)).rgb
             ) * 0.5;
-            truthColor += (truthDayTexRaw - truthDayBlurTiny) * dayW * 0.035 * (1.0 - truthHorizonHaze * 0.45);
+            vec3 truthDayMicroBlur = (
+              texture2D(dayMap, vUv + vec2(0.00022, -0.00011)).rgb +
+              texture2D(dayMap, vUv - vec2(0.00022, -0.00011)).rgb
+            ) * 0.5;
+            float truthCloseDetailGate = dayW * (0.42 + closeStage * 0.58) * (1.0 - truthHorizonHaze * 0.56);
+            truthColor += (truthDayTexRaw - truthDayBlurTiny) * truthCloseDetailGate * 0.052;
+            truthColor += (truthDayTexRaw - truthDayMicroBlur) * truthCloseDetailGate * 0.032;
             float truthOceanFresnelDark = pow(fresnel, 2.0) *
               truthOceanAlbedoMask *
               smoothstep(-0.12, 0.5, ndl);
@@ -422,21 +726,312 @@ export function LandingEarth({
             vec2 truthLightTangentUv = vec2(dot(l, tangentA), dot(l, tangentB));
             float truthLightTangentLen = max(length(truthLightTangentUv), 0.001);
             truthLightTangentUv /= truthLightTangentLen;
-            vec2 truthShadowUv = vec2(
-              fract(truthCloudUv.x - truthLightTangentUv.x * 0.0012),
-              fract(truthCloudUv.y - truthLightTangentUv.y * 0.0012 * 0.62)
-            );
-            float truthShadowRaw = sampleCloud(truthShadowUv);
             float truthCloudShadowEnable = step(0.001, cloudShadowOpacity);
             float truthLowSunShadow = 1.0 - smoothstep(0.28, 0.78, max(ndl, 0.0));
-            float truthCloudShadow = smoothstep(0.44, 0.78, truthShadowRaw) *
-              truthCloudCaster *
+
+            if (lowCostReferenceCloudLook > 0.5) {
+              float refHorizonFade = smoothstep(0.58, 1.0, fresnel);
+              float refCloudLight = pow(max(0.9 * ndl + 0.1, 0.0), 0.5);
+              vec2 refLightStep = truthLightTangentUv * (0.006 + truthLowSunShadow * 0.014);
+              float refCloudTowardLight = sampleCloud(vec2(
+                fract(truthCloudUv.x + refLightStep.x),
+                fract(truthCloudUv.y + refLightStep.y * 0.62)
+              ));
+              float refCloudBehind = sampleCloud(vec2(
+                fract(truthCloudUv.x - refLightStep.x * 0.62),
+                fract(truthCloudUv.y - refLightStep.y * 0.62 * 0.62)
+              ));
+              float refCloudRelief = truthCloudRaw - refCloudTowardLight;
+              float refCloudColumn = clamp(truthCloudRaw * 0.56 + refCloudTowardLight * 0.32 + refCloudBehind * 0.12, 0.0, 1.0);
+              float refCloudSelfShadow = clamp(
+                smoothstep(0.44, 0.8, refCloudTowardLight) * truthLowSunShadow * 0.44 +
+                max(refCloudTowardLight - truthCloudRaw, 0.0) * 1.72 +
+                smoothstep(0.54, 0.9, refCloudColumn) * 0.32,
+                0.0,
+                0.76
+              );
+              float refCloudAlpha =
+                pow(clamp(truthCloudRaw, 0.0, 1.0), 0.62) *
+                cloudOpacity *
+                0.92 *
+                smoothstep(-0.16, 0.52, ndl) *
+                smoothstep(0.05, 0.32, truthCloudRaw);
+              refCloudAlpha *= mix(1.0, 0.18, refHorizonFade);
+              refCloudAlpha = clamp(refCloudAlpha, 0.0, 0.58);
+
+              vec3 refCloudLit = mix(
+                vec3(0.42, 0.54, 0.74),
+                vec3(0.86, 0.9, 0.93),
+                refCloudLight
+              );
+              refCloudLit *= mix(0.66, 1.04, clamp(refCloudRelief * 2.6 + 0.58, 0.0, 1.0));
+              vec3 refCloudShadow = refCloudLit * mix(
+                vec3(0.2, 0.32, 0.56),
+                vec3(0.38, 0.5, 0.68),
+                refCloudLight
+              );
+              vec3 refCloudColor = mix(refCloudLit, refCloudShadow, refCloudSelfShadow);
+              refCloudColor += vec3(0.78, 0.88, 1.0) *
+                max(refCloudRelief, 0.0) *
+                smoothstep(0.18, 0.82, truthCloudRaw) *
+                0.22;
+              refCloudColor = mix(
+                refCloudColor,
+                truthAirBlue * (0.34 + dayW * 0.28) + refCloudColor * vec3(0.34, 0.5, 0.78),
+                refHorizonFade * 0.58
+              );
+
+              vec2 refCastUv = vec2(
+                fract(truthCloudUv.x - truthLightTangentUv.x * (0.024 + truthLowSunShadow * 0.034)),
+                fract(truthCloudUv.y - truthLightTangentUv.y * (0.024 + truthLowSunShadow * 0.034) * 0.62)
+              );
+              float refCastCloud = sampleCloud(refCastUv);
+              float refGroundShadow = smoothstep(0.46, 0.78, refCastCloud) *
+                dayW *
+                cloudShadowOpacity *
+                0.58 *
+                (1.0 - smoothstep(0.78, 1.0, fresnel)) *
+                (1.0 - smoothstep(0.3, 0.72, truthCloudRaw) * 0.5);
+
+              float refSurfaceLuma = dot(truthColor, vec3(0.299, 0.587, 0.114));
+              float refOverWhite = smoothstep(0.28, 0.66, refSurfaceLuma);
+              truthColor = mix(
+                truthColor,
+                truthColor * vec3(0.74, 0.84, 0.96),
+                refOverWhite * (0.16 + refHorizonFade * 0.2)
+              );
+              truthColor *= mix(vec3(1.0), vec3(0.44, 0.56, 0.76), refGroundShadow);
+              truthColor -= truthDayTex * refGroundShadow * 0.07;
+              truthColor = mix(truthColor, refCloudColor, refCloudAlpha);
+
+              float refFinalLuma = dot(truthColor, vec3(0.299, 0.587, 0.114));
+              float refColorDiscipline = clamp(0.018 + dayW * 0.012 + refOverWhite * 0.02, 0.0, 0.06);
+              truthColor = mix(
+                truthColor,
+                vec3(refFinalLuma) * vec3(0.82, 0.9, 1.0),
+                refColorDiscipline
+              );
+              vec3 refKnee = vec3(0.62);
+              truthColor = truthColor / (1.0 + max(truthColor - refKnee, vec3(0.0)) * 0.82);
+              truthColor *= 0.88;
+              gl_FragColor = vec4(max(truthColor, vec3(0.0)), 1.0);
+              return;
+            }
+
+            float truthShadowReach = mix(
+              0.010 + truthLowSunShadow * 0.026,
+              0.026 + truthLowSunShadow * 0.058,
+              referenceCloudLook
+            ) * (0.86 + closeStage * 0.62);
+            vec2 truthShadowUvNear = vec2(
+              fract(truthCloudUv.x - truthLightTangentUv.x * truthShadowReach * 0.52),
+              fract(truthCloudUv.y - truthLightTangentUv.y * truthShadowReach * 0.52 * 0.62)
+            );
+            vec2 truthShadowUvMid = vec2(
+              fract(truthCloudUv.x - truthLightTangentUv.x * truthShadowReach),
+              fract(truthCloudUv.y - truthLightTangentUv.y * truthShadowReach * 0.62)
+            );
+            vec2 truthShadowUvFar = vec2(
+              fract(truthCloudUv.x - truthLightTangentUv.x * truthShadowReach * 1.72),
+              fract(truthCloudUv.y - truthLightTangentUv.y * truthShadowReach * 1.72 * 0.62)
+            );
+            float truthShadowColumn = 0.0;
+            float truthShadowEdge = 0.0;
+            if (hasCloudShadowAtlas > 0.5) {
+              vec4 truthProjectedAtlasNear = sampleCloudShadowAtlas(truthShadowUvNear);
+              vec4 truthProjectedAtlasMid = sampleCloudShadowAtlas(truthShadowUvMid);
+              vec4 truthProjectedAtlasFar = sampleCloudShadowAtlas(truthShadowUvFar);
+              truthShadowColumn =
+                truthProjectedAtlasNear.r * 0.22 +
+                truthProjectedAtlasMid.r * 0.54 +
+                truthProjectedAtlasFar.r * 0.24;
+              truthShadowEdge = max(
+                max(truthProjectedAtlasNear.b, truthProjectedAtlasMid.b),
+                max(truthProjectedAtlasFar.b, abs(truthProjectedAtlasNear.r - truthProjectedAtlasFar.r) * 0.72)
+              );
+            } else {
+              float truthShadowNear = sampleCloud(truthShadowUvNear);
+              float truthShadowMid = sampleCloud(truthShadowUvMid);
+              float truthShadowFar = sampleCloud(truthShadowUvFar);
+              truthShadowColumn = truthShadowNear * 0.5 + truthShadowMid * 0.34 + truthShadowFar * 0.16;
+              truthShadowEdge = abs(truthShadowNear - truthShadowFar);
+            }
+            float truthProjectedGroundShadow = smoothstep(mix(0.12, 0.08, referenceCloudLook), mix(0.48, 0.38, referenceCloudLook), truthShadowColumn) *
               dayW *
               truthCloudShadowEnable *
               cloudShadowOpacity *
-              mix(0.55, 1.15, truthLowSunShadow);
-            truthColor *= mix(vec3(1.0), vec3(0.78, 0.84, 0.92), clamp(truthCloudShadow * 0.24, 0.0, 0.18));
-            truthColor *= mix(1.0, 1.1, closeStage);
+              mix(mix(0.72, 0.98, referenceCloudLook), mix(1.62, 2.28, referenceCloudLook), truthLowSunShadow);
+            truthProjectedGroundShadow *= mix(1.0, mix(1.42, 1.84, referenceCloudLook), smoothstep(0.03, 0.28, truthShadowEdge));
+            truthProjectedGroundShadow *= 1.0 - smoothstep(0.84, 1.0, fresnel) * mix(0.58, 0.76, referenceCloudLook);
+            vec2 truthCastShadowUv = vec2(
+              fract(truthCloudUv.x - truthLightTangentUv.x * (0.048 + truthLowSunShadow * 0.072) * (0.9 + closeStage * 0.52)),
+              fract(truthCloudUv.y - truthLightTangentUv.y * (0.048 + truthLowSunShadow * 0.072) * (0.9 + closeStage * 0.52) * 0.62)
+            );
+            float truthCastShadowSource = sampleCloud(truthCastShadowUv);
+            float truthReadableCastShadow =
+              smoothstep(0.36, 0.76, truthCastShadowSource) *
+              (1.0 - smoothstep(0.28, 0.7, truthCloudRaw) * 0.52) *
+              smoothstep(0.06, 0.78, dayW) *
+              (1.0 - smoothstep(0.72, 1.0, fresnel) * 0.78) *
+              cloudShadowOpacity *
+              referenceCloudLook;
+            truthProjectedGroundShadow = max(truthProjectedGroundShadow, truthReadableCastShadow * 0.74);
+
+            vec3 truthCloudTex = texture2D(cloudMap, truthCloudUv).rgb;
+            vec4 truthCloudAtlas = sampleCloudShadowAtlas(truthCloudUv);
+            float truthCloudLight = pow(max(0.9 * ndl + 0.1, 0.0), 0.5);
+            float truthCloudMass = pow(clamp(dot(truthCloudTex, vec3(1.0)) / 3.0, 0.0, 1.0), 0.52);
+            float truthCloudAlpha = truthCloudMass * pow(truthCloudLight, 0.35);
+            truthCloudAlpha *= cloudOpacity * smoothstep(-0.16, 0.52, ndl);
+            truthCloudAlpha *= smoothstep(0.04, 0.32, truthCloudRaw);
+            float truthLimbBlueTakeover =
+              smoothstep(mix(0.68, 0.42, referenceCloudLook), 1.0, fresnel) *
+              smoothstep(-0.18, 0.68, ndl);
+            float truthCloudLimbAlpha = mix(0.34, 0.035, referenceCloudLook);
+            truthCloudAlpha *= mix(1.0, truthCloudLimbAlpha, truthLimbBlueTakeover);
+            truthCloudAlpha *= mix(1.0, 2.1, referenceCloudLook * (1.0 - truthLimbBlueTakeover));
+            truthCloudAlpha = clamp(truthCloudAlpha, 0.0, mix(0.88, 0.92, referenceCloudLook));
+
+            float truthCloudNear = sampleCloud(vec2(
+              fract(truthCloudUv.x + truthLightTangentUv.x * 0.0038),
+              fract(truthCloudUv.y + truthLightTangentUv.y * 0.0038 * 0.62)
+            ));
+            float truthCloudFar = sampleCloud(vec2(
+              fract(truthCloudUv.x + truthLightTangentUv.x * 0.011),
+              fract(truthCloudUv.y + truthLightTangentUv.y * 0.011 * 0.62)
+            ));
+            float truthCloudVeryFar = sampleCloud(vec2(
+              fract(truthCloudUv.x + truthLightTangentUv.x * 0.022),
+              fract(truthCloudUv.y + truthLightTangentUv.y * 0.022 * 0.62)
+            ));
+            float truthCloudBehind = sampleCloud(vec2(
+              fract(truthCloudUv.x - truthLightTangentUv.x * 0.006),
+              fract(truthCloudUv.y - truthLightTangentUv.y * 0.006 * 0.62)
+            ));
+            float truthCloudRelief = truthCloudRaw - truthCloudNear;
+            float truthCloudLongRelief = truthCloudRaw - truthCloudFar;
+            vec2 truthCloudHeightStep = vec2(0.0018, 0.00095);
+            float truthCloudHeightDx =
+              sampleCloud(vec2(fract(truthCloudUv.x + truthCloudHeightStep.x), truthCloudUv.y)) -
+              sampleCloud(vec2(fract(truthCloudUv.x - truthCloudHeightStep.x), truthCloudUv.y));
+            float truthCloudHeightDy =
+              sampleCloud(vec2(truthCloudUv.x, fract(truthCloudUv.y + truthCloudHeightStep.y))) -
+              sampleCloud(vec2(truthCloudUv.x, fract(truthCloudUv.y - truthCloudHeightStep.y)));
+            vec3 truthCloudHeightNormal = normalize(
+              n -
+              tangentA * truthCloudHeightDx * 8.5 * referenceCloudLook -
+              tangentB * truthCloudHeightDy * 8.5 * referenceCloudLook
+            );
+            float truthCloudBumpLight = smoothstep(-0.18, 0.72, dot(truthCloudHeightNormal, l));
+            float truthCloudColumnOcclusion = smoothstep(
+              0.38,
+              0.86,
+              truthCloudNear * 0.44 + truthCloudFar * 0.36 + truthCloudVeryFar * 0.2
+            );
+            truthCloudColumnOcclusion = hasCloudShadowAtlas > 0.5
+              ? max(truthCloudColumnOcclusion, truthCloudAtlas.g)
+              : truthCloudColumnOcclusion;
+            float truthCloudForwardBlock = smoothstep(0.05, 0.38, truthCloudFar - truthCloudRaw);
+            float truthCloudEdgeHighlight = max(truthCloudRaw - truthCloudBehind, 0.0);
+            truthCloudEdgeHighlight = hasCloudShadowAtlas > 0.5
+              ? max(truthCloudEdgeHighlight, truthCloudAtlas.b)
+              : truthCloudEdgeHighlight;
+            float truthCloudSelfShadow = clamp(
+              truthLowSunShadow * truthCloudCaster * mix(0.52, 0.84, referenceCloudLook) +
+              truthCloudForwardBlock * truthLowSunShadow * mix(0.72, 1.08, referenceCloudLook) +
+              truthCloudColumnOcclusion * smoothstep(0.18, 0.72, truthCloudMass) * (mix(0.34, 0.58, referenceCloudLook) + truthLowSunShadow * mix(0.56, 0.82, referenceCloudLook)) +
+              max(-truthCloudRelief, 0.0) * mix(3.25, 5.2, referenceCloudLook) +
+              max(-truthCloudLongRelief, 0.0) * mix(1.9, 3.35, referenceCloudLook) +
+              smoothstep(0.42, 0.86, truthCloudMass) * truthLowSunShadow * mix(0.0, 0.34, referenceCloudLook) +
+              truthProjectedGroundShadow * mix(0.28, 0.54, referenceCloudLook),
+              0.0,
+              mix(0.94, 0.98, referenceCloudLook)
+            );
+            vec3 truthCloudTopColor = mix(
+              vec3(0.54, 0.62, 0.76),
+              vec3(1.0, 0.975, 0.92),
+              truthCloudLight
+            );
+            truthCloudTopColor *= mix(0.58, 1.3, truthCloudMass);
+            truthCloudTopColor *= mix(0.62, 1.18, clamp(truthCloudRelief * 3.0 + 0.58, 0.0, 1.0));
+            truthCloudTopColor *= mix(0.62, 1.14, mix(1.0, truthCloudBumpLight, referenceCloudLook));
+            vec3 truthCloudShadowTint = mix(
+              mix(vec3(0.2, 0.31, 0.54), vec3(0.08, 0.18, 0.38), referenceCloudLook),
+              mix(vec3(0.5, 0.58, 0.7), vec3(0.32, 0.42, 0.62), referenceCloudLook),
+              truthCloudLight
+            );
+            vec3 truthCloudColor = mix(
+              truthCloudTopColor,
+              truthCloudTopColor * truthCloudShadowTint,
+              truthCloudSelfShadow
+            );
+            float truthCloudDepthShade = clamp(
+              (
+                truthCloudColumnOcclusion * 0.7 +
+                truthCloudForwardBlock * 0.68 +
+                (1.0 - truthCloudBumpLight) * smoothstep(0.2, 0.82, truthCloudMass) * 0.74 +
+                truthLowSunShadow * truthCloudCaster * 0.38 +
+                smoothstep(0.52, 0.92, truthCloudMass) * 0.36
+              ) * referenceCloudLook,
+              0.0,
+              0.92
+            );
+            truthCloudColor = mix(
+              truthCloudColor,
+              truthCloudColor * vec3(0.3, 0.42, 0.68),
+              truthCloudDepthShade
+            );
+            truthCloudColor *= mix(
+              1.0,
+              0.7,
+              truthCloudForwardBlock * smoothstep(0.2, 0.78, truthCloudMass) * (0.35 + truthLowSunShadow * 0.65)
+            );
+            truthCloudColor += vec3(0.92, 0.97, 1.0) *
+              (truthCloudEdgeHighlight * 0.24 + max(truthCloudRelief, 0.0) * 0.24) *
+              smoothstep(0.16, 0.82, truthCloudMass);
+            truthCloudColor = mix(
+              truthCloudColor,
+              truthAirBlue * (0.44 + dayW * 0.38) + truthCloudColor * vec3(0.18, 0.34, 0.68),
+              max(truthHorizonHaze * mix(0.26, 0.54, referenceCloudLook), truthLimbBlueTakeover * mix(0.52, 0.94, referenceCloudLook))
+            );
+            float truthVisibleGroundShadow = clamp(
+              truthProjectedGroundShadow *
+              (1.0 - smoothstep(0.16, 0.52, truthCloudRaw) * mix(0.74, 0.12, referenceCloudLook)) *
+              (1.0 - truthCloudAlpha * mix(0.18, 0.02, referenceCloudLook)),
+              0.0,
+              mix(0.62, 0.72, referenceCloudLook)
+            );
+            vec3 truthGroundShadowTint = mix(
+              vec3(0.48, 0.6, 0.78),
+              vec3(0.18, 0.3, 0.52),
+              truthLowSunShadow
+            );
+            truthColor *= mix(vec3(1.0), truthGroundShadowTint, truthVisibleGroundShadow * mix(1.0, 0.92, referenceCloudLook));
+            truthColor -= truthDayTex * truthVisibleGroundShadow * (mix(0.06, 0.085, referenceCloudLook) + truthLowSunShadow * mix(0.09, 0.12, referenceCloudLook));
+            truthColor = mix(
+              truthColor,
+              truthColor * vec3(0.48, 0.7, 1.16) + truthAirBlue * (0.055 + dayW * 0.07),
+              truthLimbBlueTakeover * 0.04
+            );
+            truthColor = mix(truthColor, truthCloudColor, truthCloudAlpha);
+
+            float truthFinalLuma = dot(truthColor, vec3(0.299, 0.587, 0.114));
+            float nasaFilmDesat = mix(0.035, 0.08, closeStage) * smoothstep(-0.42, 0.9, ndl);
+            float truthColorDiscipline = clamp(
+              nasaFilmDesat +
+              dayW * mix(0.02, 0.055, closeStage) +
+              dryAlbedoSignal * closeStage * 0.04 +
+              vegetationSignal * closeStage * 0.02 +
+              truthOceanAlbedoMask * 0.03,
+              0.0,
+              0.18
+            );
+            truthColor = mix(
+              truthColor,
+              vec3(truthFinalLuma) * vec3(0.88, 0.9, 0.92),
+              truthColorDiscipline
+            );
+            truthColor *= mix(1.0, 1.02, closeStage);
             vec3 truthKnee = vec3(mix(0.84, 0.64, closeStage));
             truthColor = truthColor / (1.0 + max(truthColor - truthKnee, vec3(0.0)) * mix(0.78, 1.26, closeStage));
             gl_FragColor = vec4(max(truthColor, vec3(0.0)), 1.0);
@@ -835,15 +1430,18 @@ export function LandingEarth({
       composition.light.color,
       composition.light.fixedSunDir,
       composition.light.intensity,
+      quality.tier,
       activeDayTexture,
       activeCloudDeckTexture,
       activeCloudTexture,
+      cloudShadowAtlasTexture,
       activeDisplacementTexture,
       activeNormalTexture,
       activeNightTexture,
       cloudDeckTexture,
       displacementTexture,
-      normalTexture
+      normalTexture,
+      referenceVolumetricSurfaceClouds
     ]
   );
 
@@ -872,14 +1470,18 @@ export function LandingEarth({
       shouldUseTextureClouds
         ? composition.earth.cloudOpacity * SURFACE_CLOUD_SHADOW_MULTIPLIER
         : 0;
+    earthMaterial.uniforms.referenceVolumetricSurfaceClouds.value = referenceVolumetricSurfaceClouds ? 1 : 0;
+    earthMaterial.uniforms.cloudShadowAtlasMap.value = cloudShadowAtlasTexture ?? activeCloudTexture;
+    earthMaterial.uniforms.hasCloudShadowAtlas.value = cloudShadowAtlasTexture ? 1 : 0;
     const progress = typeof window === "undefined" ? 1 : Math.min(1, Math.max(0, window.__MiraLithOpeningProgress ?? 0));
     if (!shouldLoadNightTexture && progress > 0.28) {
       setShouldLoadNightTexture(true);
     }
     earthMaterial.uniforms.closeStage.value = 1 - smoothstep(0.18, 0.86, progress);
-    if (!paused && !reducedMotion && progress >= OPENING_FIELD_AUTO_ROTATE_START) {
+    if (!paused && !reducedMotion) {
+      const nearStaticCloudDrift = 0.04 + (1 - earthMaterial.uniforms.closeStage.value) * 0.96;
       earthMaterial.uniforms.cloudOffset.value =
-        (earthMaterial.uniforms.cloudOffset.value + delta * SURFACE_CLOUD_SCROLL_SPEED) % 1;
+        (earthMaterial.uniforms.cloudOffset.value + delta * SURFACE_CLOUD_SCROLL_SPEED * nearStaticCloudDrift) % 1;
     }
     earthMaterial.uniforms.rimStrength.value = composition.earth.rimStrength;
     earthMaterial.uniforms.rimWidth.value = composition.earth.rimWidth;

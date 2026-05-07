@@ -31,8 +31,10 @@ import { LandingPostBloom } from "./LandingPostBloom";
 import { LandingProjectedHorizonComposite } from "./LandingProjectedHorizonComposite";
 import { LandingProjectedLimbScattering } from "./LandingProjectedLimbScattering";
 import { LandingSpaceBackground } from "./LandingSpaceBackground";
+import { LandingVolumetricAtmospherePass } from "./LandingVolumetricAtmospherePass";
 import type {
   EarthMoonSceneProps,
+  LandingAtmosphereVariant,
   LandingProjectedEarthFrame,
   LandingRenderProfile,
   LuBirthProjectionFrame
@@ -78,6 +80,9 @@ declare global {
       targetY: number;
       withinTolerance: boolean;
     };
+    __MiraLithLuBirthAtmosphereVariant?: LandingAtmosphereVariant;
+    __MiraLithLuBirthVolumetricAtmosphereActive?: boolean;
+    __MiraLithLuBirthVolumetricAtmosphereQuality?: string;
   }
 }
 
@@ -169,7 +174,9 @@ export function EarthMoonScene({
   useAirglowV2 = true,
   useAuroraOval = true,
   useHorizonAuroraRibbon = false,
-  showAuroraInAll = false
+  showAuroraInAll = false,
+  atmosphereVariant = "stack",
+  atmosphereLook = "lubirth"
 }: EarthMoonSceneProps) {
   const earthGroup = useRef<Group>(null);
   const projectedEarthFrame = useRef<LandingProjectedEarthFrame>({
@@ -183,6 +190,8 @@ export function EarthMoonScene({
   const directionalLightRef = useRef<DirectionalLight>(null);
   const autoEarthYawDeg = useRef(0);
   const skyCounterRotation = useRef({ yawRad: 0 });
+  const smoothedLocationYawOffsetDeg = useRef(0);
+  const smoothedLocationPitchOffsetDeg = useRef(0);
   const lastProjectionSignature = useRef("");
   const { camera, size } = useThree();
   const sceneLightDirection = useMemo(() => fieldSunDirection.clone(), []);
@@ -200,11 +209,22 @@ export function EarthMoonScene({
   const showAtmosphere = isNasaProfile || debugAtmosphere;
   const showAurora = debugAurora && quality.aurora;
   const showProjectedHorizonComposite = false;
-  const showProjectedLimbScattering = showAtmosphere && quality.tier !== "fallback";
+  const canUseVolumetricAtmosphere =
+    atmosphereVariant === "volumetric" &&
+    quality.tier !== "low" &&
+    quality.tier !== "fallback";
+  const activeAtmosphereVariant: LandingAtmosphereVariant = canUseVolumetricAtmosphere ? "volumetric" : "stack";
+  const showAtmosphereStack = showAtmosphere && activeAtmosphereVariant === "stack";
+  const showVolumetricAtmosphere = showAtmosphere && activeAtmosphereVariant === "volumetric";
+  const showProjectedLimbScattering =
+    debugAtmosphere &&
+    quality.tier !== "fallback" &&
+    activeAtmosphereVariant === "stack";
   const showVolumetricClouds =
     showClouds &&
     quality.tier !== "low" &&
     quality.tier !== "fallback";
+  const useReferenceVolumetricSurfaceClouds = showVolumetricAtmosphere && atmosphereLook === "reference";
   const showLegacyAtmosphere = false;
   const showLegacyAurora = showAurora;
   const showSurfaceTextureClouds =
@@ -240,6 +260,18 @@ export function EarthMoonScene({
     onSceneReady?.();
   }, [onSceneReady]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.__MiraLithLuBirthAtmosphereVariant = activeAtmosphereVariant;
+    if (!showVolumetricAtmosphere) {
+      window.__MiraLithLuBirthVolumetricAtmosphereActive = false;
+      window.__MiraLithLuBirthVolumetricAtmosphereQuality = undefined;
+    }
+  }, [activeAtmosphereVariant, showVolumetricAtmosphere]);
+
   useFrame((_state, delta) => {
     const progress = getRuntimeOpeningProgress(mode === "window" || mode === "expanded" ? 1 : 0);
     const frame = mapOpeningProgress(mode === "expanded" ? 1 : progress);
@@ -274,9 +306,26 @@ export function EarthMoonScene({
       }
 
       if (composition.location.source !== "birthplace" && mode !== "expanded") {
+        const locationSmoothing = 1 - Math.exp(-delta * 1.65);
+        const yawDelta = normalizeLongitudeDelta(locationYawOffsetDeg - smoothedLocationYawOffsetDeg.current);
+        smoothedLocationYawOffsetDeg.current += yawDelta * locationSmoothing;
+        smoothedLocationPitchOffsetDeg.current = MathUtils.lerp(
+          smoothedLocationPitchOffsetDeg.current,
+          locationPitchOffsetDeg,
+          locationSmoothing
+        );
         const locationFocusWeight = 1 - easeInOut(MathUtils.clamp(progress / 0.72, 0, 1));
-        earthYawDeg += locationYawOffsetDeg * locationFocusWeight;
-        earthPitchDeg += locationPitchOffsetDeg * locationFocusWeight * 0.82;
+        earthYawDeg += smoothedLocationYawOffsetDeg.current * locationFocusWeight;
+        earthPitchDeg += smoothedLocationPitchOffsetDeg.current * locationFocusWeight * 0.82;
+      } else {
+        const locationSmoothing = 1 - Math.exp(-delta * 2.8);
+        const yawDelta = normalizeLongitudeDelta(0 - smoothedLocationYawOffsetDeg.current);
+        smoothedLocationYawOffsetDeg.current += yawDelta * locationSmoothing;
+        smoothedLocationPitchOffsetDeg.current = MathUtils.lerp(
+          smoothedLocationPitchOffsetDeg.current,
+          0,
+          locationSmoothing
+        );
       }
 
       const autoRotateProgress = mode === "expanded"
@@ -531,8 +580,8 @@ export function EarthMoonScene({
 
   return (
     <>
-      <color attach="background" args={["#000307"]} />
-      <fog attach="fog" args={["#000307", 16, 48]} />
+      <color attach="background" args={["#000102"]} />
+      <fog attach="fog" args={["#000102", 16, 48]} />
       <LandingSpaceBackground
         quality={quality}
         spaceBackground={assets.spaceBackground}
@@ -561,19 +610,23 @@ export function EarthMoonScene({
             sceneLightDirection={sceneLightDirection}
             onDayTextureReady={onVisualReadyEnough}
             cloudDeckEnabled={cloudDeckEnabled}
+            referenceVolumetricSurfaceClouds={useReferenceVolumetricSurfaceClouds}
           />
         ) : null}
         {showVolumetricClouds ? (
           <>
-            <LandingCloudLayer
-              composition={composition}
-              assets={assets}
-              quality={quality}
-              sceneLightDirection={sceneLightDirection}
-              emphasis={debugClouds}
-              reducedMotion={reducedMotion}
-              paused={paused}
-            />
+            {!useReferenceVolumetricSurfaceClouds ? (
+              <LandingCloudLayer
+                composition={composition}
+                assets={assets}
+                quality={quality}
+                sceneLightDirection={sceneLightDirection}
+                emphasis={debugClouds}
+                reducedMotion={reducedMotion}
+                paused={paused}
+                cloudDeckEnabled={cloudDeckEnabled}
+              />
+            ) : null}
             {cloudDeckEnabled && debugClouds && assets.earthCloudDeck ? (
               useCloudDeckV2 ? (
                 <>
@@ -582,19 +635,21 @@ export function EarthMoonScene({
                     assets={assets}
                     quality={quality}
                     sceneLightDirection={sceneLightDirection}
-                    emphasis
+                    emphasis={debugClouds}
                     reducedMotion={reducedMotion}
                     paused={paused}
                   />
-                  <LandingHorizonCloudBelt
-                    composition={composition}
-                    assets={assets}
-                    quality={quality}
-                    sceneLightDirection={sceneLightDirection}
-                    emphasis
-                    reducedMotion={reducedMotion}
-                    paused={paused}
-                  />
+                  {debugClouds ? (
+                    <LandingHorizonCloudBelt
+                      composition={composition}
+                      assets={assets}
+                      quality={quality}
+                      sceneLightDirection={sceneLightDirection}
+                      emphasis
+                      reducedMotion={reducedMotion}
+                      paused={paused}
+                    />
+                  ) : null}
                 </>
               ) : (
                 <LandingCloudDeck
@@ -671,9 +726,10 @@ export function EarthMoonScene({
             emphasis={debugAtmosphere}
           />
         ) : null}
-        {showAtmosphere ? (
+        {showAtmosphereStack ? (
           <LandingAtmosphereStack
             composition={composition}
+            assets={assets}
             quality={quality}
             sceneLightDirection={sceneLightDirection}
             emphasis={debugAtmosphere}
@@ -722,7 +778,17 @@ export function EarthMoonScene({
         />
       ) : null}
 
-      {showAtmosphere ? <LandingPostBloom quality={quality} emphasis={debugAtmosphere} /> : null}
+      {showAtmosphereStack ? <LandingPostBloom quality={quality} emphasis={debugAtmosphere} /> : null}
+      {showVolumetricAtmosphere ? (
+        <LandingVolumetricAtmospherePass
+          composition={composition}
+          earthRef={earthGroup}
+          quality={quality}
+          sceneLightDirection={sceneLightDirection}
+          look={atmosphereLook}
+          emphasis={debugAtmosphere}
+        />
+      ) : null}
     </>
   );
 }
