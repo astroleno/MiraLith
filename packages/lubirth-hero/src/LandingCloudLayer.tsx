@@ -212,13 +212,13 @@ function createCloudMaterial(
         );
         vec2 viewShear = vec2(dot(viewDirection, vWorldTangentA), dot(viewDirection, vWorldTangentB));
         vec2 sunShear = vec2(dot(sunDirection, vWorldTangentA), dot(sunDirection, vWorldTangentB));
-        float referenceParallaxAttenuation = mix(1.0, 0.18, referenceLookStrength);
+        float referenceParallaxAttenuation = mix(1.0, 0.06, referenceLookStrength);
         vec2 parallax =
           viewShear *
           parallaxScale *
           referenceParallaxAttenuation *
           (0.18 + limb * 0.34);
-        vec2 sunOffset = sunShear * mix(0.012, 0.004, referenceLookStrength);
+        vec2 sunOffset = sunShear * mix(0.012, 0.0016, referenceLookStrength);
         vec2 midUv = baseUv + wind + parallax * 0.03;
         vec2 detailStep = vec2(mix(0.00042, 0.00022, closeStage), mix(0.00021, 0.00012, closeStage));
         vec2 deckUv = vec2(
@@ -258,8 +258,8 @@ function createCloudMaterial(
         float rawMass = max(rawMassNear, rawMassWide * 0.92);
         float broadWeather = clamp(rawMassWide * 0.82 + rawMassNear * 0.18, 0.0, 1.0);
         float rawSharp = clamp(rawMid + (rawMid - rawMidBlur) * (0.08 + closeStage * 0.06), 0.0, 1.0);
-        rawSharp = mix(rawSharp, rawMidBlur, 0.34 + (1.0 - closeStage) * 0.18);
-        rawSharp = mix(rawSharp, broadWeather, 0.56 + closeStage * 0.1);
+        rawSharp = mix(rawSharp, rawMidBlur, 0.16 + (1.0 - closeStage) * 0.08);
+        rawSharp = mix(rawSharp, broadWeather, 0.18 + closeStage * 0.04);
         float weatherMass = smoothstep(0.08, 0.58, broadWeather);
         float weatherCore = smoothstep(0.3, 0.78, broadWeather);
         float visibleCloudGate = smoothstep(
@@ -354,13 +354,18 @@ function createCloudMaterial(
         float photoCore = smoothstep(0.24, 0.74, rawSharp) * mix(0.2, 1.0, massGate);
         float photoBright = smoothstep(0.52, 0.9, rawSharp) * mix(0.1, 0.86, weatherMass);
         float bottom = cloudMask(baseUv + wind - parallax * 0.42);
-        float naturalCoverage = clamp(rawMidBlur * 0.38 + rawMassNear * 0.34 + rawMassWide * 0.22 + rawSharp * 0.06, 0.0, 1.0);
+        float naturalCoverage = clamp(rawMidBlur * 0.18 + rawMassNear * 0.26 + rawMassWide * 0.1 + rawSharp * 0.38 + deckCoverage * deckInfluence * 0.08, 0.0, 1.0);
         float massBody = weatherMass * 0.32 + weatherCore * 0.1 + photoCore * 0.34 + photoBright * 0.08 + naturalCoverage * 0.16;
         float mid = max(cloudMask(midUv) * 0.38 + naturalCoverage * 0.24, massBody);
         float top = cloudMask(baseUv + wind + parallax * 0.38) * 0.78 + naturalCoverage * 0.16;
         float shadowMask = cloudMask(baseUv + wind + sunOffset * (1.8 + limb * 0.9));
+        float referenceSingleLayerMask = cloudMask(midUv);
+        bottom = mix(bottom, referenceSingleLayerMask, referenceLookStrength * 0.92);
+        mid = mix(mid, max(mid, referenceSingleLayerMask * 0.88), referenceLookStrength * 0.74);
+        top = mix(top, referenceSingleLayerMask * (0.86 + cloudTopLight * 0.14), referenceLookStrength * 0.86);
+        shadowMask = mix(shadowMask, cloudMask(baseUv + wind + sunOffset * (0.72 + limb * 0.2)), referenceLookStrength * 0.76);
         float rawDensity = clamp(rawBottom * 0.08 + rawSharp * 0.5 + rawMass * 0.32 + rawTop * 0.1, 0.0, 1.0);
-        float textureBody = clamp(rawSharp * 0.36 + rawMidBlur * 0.36 + rawMassNear * 0.18 + rawMassWide * 0.1, 0.0, 1.0);
+        float textureBody = clamp(rawSharp * 0.52 + rawMidBlur * 0.24 + rawMassNear * 0.16 + rawMassWide * 0.08, 0.0, 1.0);
         float textureMod = mix(0.62, 1.02, smoothstep(0.18, 0.76, textureBody));
         float density = clamp(bottom * 0.08 + mid * 0.82 + top * 0.1, 0.0, 1.0);
         float opaqueCore = max(smoothstep(0.34, 0.64, rawSharp) * massGate, weatherCore * 0.48);
@@ -555,6 +560,12 @@ function createCloudMaterial(
         float edgeBreakup = smoothstep(0.0, 1.0, edgeNoise + density * 0.12 - extremeGrazing * 0.035);
         float brokenEdge = mix(1.0, mix(0.78, 1.0, edgeBreakup), extremeGrazing * edgeBreakStrength * 0.62 * (1.0 - debugBoost * 0.18));
         float softDensityFeather = smoothstep(-0.04, 0.46, rawDensity + rawMidBlur * 0.18 + weatherMass * 0.16 + closeDeckCloud * 0.08);
+        float referenceDensityFeather = smoothstep(
+          0.055,
+          0.48,
+          rawSharp + rawMassNear * 0.12 + deckCoverage * deckInfluence * 0.06
+        );
+        softDensityFeather = mix(softDensityFeather, referenceDensityFeather, referenceLookStrength * 0.78);
         float cloudLayerSeparation = clamp(
           shellOffset * 9.0 +
           deckThickness * deckInfluence * 0.24 +
@@ -592,9 +603,15 @@ function createCloudMaterial(
           mix(1.0, 1.82, debugBoost);
         alpha *= mix(
           1.0,
-          1.18,
+          1.06,
           referenceLookStrength * smoothstep(0.18, 0.72, max(weatherMass, thickness))
         );
+        float referenceAlphaStructure = mix(
+          0.46,
+          1.08,
+          smoothstep(0.16, 0.7, max(rawSharp, deckCoverage * 0.7 + deckThickness * 0.3))
+        );
+        alpha *= mix(1.0, referenceAlphaStructure, referenceLookStrength * 0.82);
 
         if (alpha < 0.00008) {
           discard;

@@ -602,11 +602,12 @@ export function LandingEarth({
               hasCloudShadowAtlas *
               cloudOpacity *
               smoothstep(-0.08, 0.52, ndl);
-            truthLitDay *= 1.0 - truthEarlyProjectedCloudShadow * mix(0.22, 0.26, lowCostReferenceCloudLook);
+            float truthEarlyReferenceShadowGate = 1.0 - lowCostReferenceCloudLook;
+            truthLitDay *= 1.0 - truthEarlyProjectedCloudShadow * mix(0.22, 0.26, lowCostReferenceCloudLook) * truthEarlyReferenceShadowGate;
             truthLitDay = mix(
               truthLitDay,
               truthLitDay * vec3(0.66, 0.74, 0.86),
-              truthEarlyCloudSelfAo * mix(0.08, 0.14, lowCostReferenceCloudLook)
+              truthEarlyCloudSelfAo * mix(0.08, 0.14, lowCostReferenceCloudLook) * truthEarlyReferenceShadowGate
             );
             float truthTwilight = (1.0 - smoothstep(transitionWidth * 0.10, transitionWidth * 1.55, abs(ndl)));
             vec3 truthTwilightFill = truthDayTex * vec3(0.055, 0.075, 0.105) *
@@ -873,6 +874,7 @@ export function LandingEarth({
                 smoothstep(0.09, 0.38, refCloudCompositeRaw);
               refCloudAlpha *= mix(1.0, 0.055, refHorizonFade);
               refCloudAlpha = clamp(refCloudAlpha, 0.0, 0.12);
+              refCloudAlpha *= 0.0;
 
               vec3 refCloudLit = mix(
                 vec3(0.52, 0.62, 0.76),
@@ -913,11 +915,11 @@ export function LandingEarth({
                 dayW *
                 truthCloudShadowEnable *
                 cloudShadowOpacity *
-                0.16 *
+                0.12 *
                 (1.0 - truthOceanAlbedoMask * 0.55);
 
               float refCastReach =
-                mix(0.00022, 0.00062, truthLowSunShadow) *
+                mix(0.00004, 0.00014, truthLowSunShadow) *
                 (1.0 - smoothstep(0.50, 0.88, fresnel));
               vec2 refCastUv = vec2(
                 fract(truthCloudUv.x - truthLightTangentUv.x * refCastReach),
@@ -925,15 +927,15 @@ export function LandingEarth({
               );
               float refCastCloudSoft = (
                 sampleCloud(refCastUv) * 0.58 +
-                sampleCloud(vec2(fract(refCastUv.x + 0.0007), clamp(refCastUv.y + 0.00036, 0.001, 0.999))) * 0.18 +
-                sampleCloud(vec2(fract(refCastUv.x - 0.0007), clamp(refCastUv.y - 0.00036, 0.001, 0.999))) * 0.18 +
-                sampleCloud(vec2(fract(refCastUv.x + 0.0012), clamp(refCastUv.y - 0.00062, 0.001, 0.999))) * 0.06
+                sampleCloud(vec2(fract(refCastUv.x + 0.00036), clamp(refCastUv.y + 0.00018, 0.001, 0.999))) * 0.18 +
+                sampleCloud(vec2(fract(refCastUv.x - 0.00036), clamp(refCastUv.y - 0.00018, 0.001, 0.999))) * 0.18 +
+                sampleCloud(vec2(fract(refCastUv.x + 0.00062), clamp(refCastUv.y - 0.00032, 0.001, 0.999))) * 0.06
               );
               float refCastShadow = smoothstep(0.38, 0.72, refCastCloudSoft) *
                 dayW *
                 truthCloudShadowEnable *
                 cloudShadowOpacity *
-                0.22 *
+                0.1 *
                 (1.0 - smoothstep(0.62, 0.94, fresnel)) *
                 (1.0 - truthOceanAlbedoMask * 0.45);
               float refGroundShadow = refContactShadow + refCastShadow;
