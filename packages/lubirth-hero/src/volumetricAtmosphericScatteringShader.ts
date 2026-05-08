@@ -267,8 +267,8 @@ vec3 referenceLimbComposite(
     float skyColumn = clamp(1.0 - tangentHeight / atmoThickness, 0.0, 1.0);
     float rim = 1.0 - clamp(viewFacing, 0.0, 1.0);
     float surfaceColumn =
-        smoothstep(0.82, 0.972, rim) *
-        (1.0 - smoothstep(0.992, 1.0, rim));
+        smoothstep(0.86, 0.976, rim) *
+        (1.0 - smoothstep(0.988, 1.0, rim));
 
     float column = max(skyColumn * (1.0 - hitSurface), surfaceColumn * hitSurface);
     if (column <= 0.0001) {
@@ -280,17 +280,20 @@ vec3 referenceLimbComposite(
     float daySide = smoothstep(-0.28, 0.55, sun);
     float twilight = 1.0 - smoothstep(0.02, 0.48, abs(sun));
 
-    float blueShelf = pow(column, 1.72) * (0.38 + daySide * 0.62 + twilight * 0.14);
-    float cyanShelf = pow(column, 6.2) * (0.12 + daySide * 0.46);
-    float blueNeedle = pow(column, 44.0) * (0.035 + daySide * 0.16);
-    float whiteNeedle = pow(column, 96.0) * (0.004 + daySide * 0.024);
-    float baseProtect = 1.0 - smoothstep(0.26, 0.66, luma(baseColor)) * hitSurface * 0.68;
+    float baseLuma = luma(baseColor);
+    float surfaceBreakup = mix(1.0, 0.68 + 0.32 * smoothstep(0.12, 0.58, baseLuma), hitSurface);
+    float arcFalloff = mix(1.0, 0.86 + 0.14 * smoothstep(0.14, 0.92, abs(vUV.x - 0.5) * 2.0), referenceLookStrength);
+    float blueShelf = pow(column, 1.86) * (0.34 + daySide * 0.52 + twilight * 0.12) * arcFalloff;
+    float cyanShelf = pow(column, 7.4) * (0.10 + daySide * 0.34) * surfaceBreakup;
+    float blueNeedle = pow(column, 56.0) * (0.024 + daySide * 0.11) * surfaceBreakup;
+    float whiteNeedle = pow(column, 142.0) * (0.0012 + daySide * 0.0065) * surfaceBreakup;
+    float baseProtect = 1.0 - smoothstep(0.18, 0.52, baseLuma) * hitSurface * 0.84;
 
     vec3 deepBlue = vec3(0.012, 0.065, 0.20);
     vec3 rayleighBlue = vec3(0.045, 0.28, 0.92);
     vec3 cyan = vec3(0.22, 0.58, 1.08);
     vec3 contactBlue = vec3(0.32, 0.72, 1.36);
-    vec3 contactWhite = vec3(0.46, 0.78, 1.22);
+    vec3 contactWhite = vec3(0.30, 0.58, 1.02);
 
     vec3 shell =
         mix(deepBlue, rayleighBlue, 0.48 + daySide * 0.28) * blueShelf * limbBlueStrength +
@@ -345,7 +348,7 @@ void main() {
 
             // Preserve the underlying Earth color on face-on surface pixels. The reference
             // look gets its blue edge from the long tangent path, not from a uniform surface veil.
-            surfaceAtmosphereBlend = mix(0.06, mix(0.94, 0.58, referenceLookStrength), horizonBlend);
+            surfaceAtmosphereBlend = mix(0.045, mix(0.94, 0.34, referenceLookStrength), horizonBlend);
         }
     }
 
@@ -354,13 +357,13 @@ void main() {
     finalColor = mix(screenColor, finalColor, atmosphereStrength);
     float referenceSurfaceRim = referenceLookStrength *
         hitSurface *
-        smoothstep(0.82, 0.974, 1.0 - viewFacing) *
-        (1.0 - smoothstep(0.990, 1.0, 1.0 - viewFacing));
+        smoothstep(0.88, 0.978, 1.0 - viewFacing) *
+        (1.0 - smoothstep(0.988, 1.0, 1.0 - viewFacing));
     float brightRim = smoothstep(0.30, 0.86, luma(finalColor));
     finalColor = mix(
         finalColor,
         finalColor * vec3(0.42, 0.68, 1.06),
-        referenceSurfaceRim * brightRim * 0.28
+        referenceSurfaceRim * brightRim * 0.065
     );
     vec3 referenceLimb = referenceLimbComposite(
         sceneCameraPosition,
@@ -374,7 +377,7 @@ void main() {
     finalColor = mix(
         finalColor,
         finalColor * vec3(0.34, 0.62, 1.08),
-        referenceSurfaceRim * brightRim * 0.18
+        referenceSurfaceRim * brightRim * 0.045
     );
     finalColor = applyUpstreamOutputLook(finalColor);
 

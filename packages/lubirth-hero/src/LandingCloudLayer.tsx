@@ -402,25 +402,25 @@ function createCloudMaterial(
         selfShadow = clamp(
           selfShadow +
           referenceLookStrength * (
-            deckAo * 0.18 * deckInfluence +
-            cloudSlopeShadow * 0.36 +
-            normalReliefMask * (1.0 - cloudTopLight) * 0.16 +
-            volumeSelfShadow * 0.42 +
-            weatherCore * 0.08
+            deckAo * 0.12 * deckInfluence +
+            cloudSlopeShadow * 0.22 +
+            normalReliefMask * (1.0 - cloudTopLight) * 0.08 +
+            volumeSelfShadow * 0.24 +
+            weatherCore * 0.045
           ),
           0.0,
-          0.78
+          0.66
         );
         float light = mix(0.08, 1.08, sunlitCloud) * (1.0 - selfShadow) + twilight * 0.06 + limb * sunlitCloud * 0.1;
 
-        vec3 cloudShadow = mix(vec3(0.16, 0.21, 0.29), vec3(0.44, 0.5, 0.58), max(mid, weatherMass * 0.72));
+        vec3 cloudShadow = mix(vec3(0.24, 0.30, 0.40), vec3(0.48, 0.54, 0.64), max(mid, weatherMass * 0.72));
         vec3 cloudLit = mix(
-          vec3(0.50, 0.58, 0.66),
-          vec3(0.82, 0.85, 0.82),
+          vec3(0.54, 0.62, 0.70),
+          vec3(0.78, 0.82, 0.82),
           smoothstep(0.08, 0.82, max(rawTop, rawSharp * 0.58 + rawMidBlur * 0.22))
         );
         vec3 cloudBase = mix(cloudShadow, cloudLit, clamp(sunlitCloud * (0.42 + weatherCore * 0.08) + top * 0.14 + photoBright * 0.08, 0.0, 1.0));
-        cloudBase += vec3(0.048, 0.054, 0.06) * clamp((rawSharp - rawMidBlur) * (0.22 + closeStage * 0.12) * weatherMass, 0.0, 0.07) * sunlitCloud;
+        cloudBase += vec3(0.036, 0.042, 0.048) * clamp((rawSharp - rawMidBlur) * (0.12 + closeStage * 0.06) * weatherMass, 0.0, 0.04) * sunlitCloud;
         cloudBase *= mix(0.82, 1.0, smoothstep(0.22, 0.82, textureBody));
         vec3 warmEdge = vec3(1.0, 0.62, 0.28) * twilight * (0.06 + thickness * 0.06);
         vec3 blueNight = vec3(0.018, 0.055, 0.13) * nightCloud * (0.07 + thickness * 0.12);
@@ -484,7 +484,7 @@ function createCloudMaterial(
         finalColor = mix(
           finalColor,
           finalColor * vec3(0.68, 0.76, 0.88),
-          cloudSlopeShadow * (0.16 + referenceLookStrength * 0.1) + volumeSelfShadow * 0.08
+          cloudSlopeShadow * (0.12 + referenceLookStrength * 0.055) + volumeSelfShadow * 0.04
         );
         float closeCloudReadability = max(
           closeStage * visibleCloudGate *
@@ -494,7 +494,7 @@ function createCloudMaterial(
         finalColor = mix(
           finalColor,
           finalColor * vec3(1.12, 1.13, 1.11) + vec3(0.055, 0.06, 0.064) * sunlitCloud,
-          closeCloudReadability * 0.16
+          closeCloudReadability * 0.09
         );
         float daylightCloudLift =
           sunlitCloud *
