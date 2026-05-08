@@ -279,14 +279,27 @@ vec3 referenceLimbComposite(
     float sun = dot(shellNormal, sunDir);
     float daySide = smoothstep(-0.28, 0.55, sun);
     float twilight = 1.0 - smoothstep(0.02, 0.48, abs(sun));
+    float sunEdge = smoothstep(-0.12, 0.52, sun);
+    float shadowEdge = 1.0 - smoothstep(-0.45, -0.02, sun);
 
     float baseLuma = luma(baseColor);
-    float surfaceBreakup = mix(1.0, 0.68 + 0.32 * smoothstep(0.12, 0.58, baseLuma), hitSurface);
+    float surfaceLumaBreakup = mix(
+        1.0,
+        0.72 + 0.28 * smoothstep(0.16, 0.62, baseLuma),
+        hitSurface
+    );
     float arcFalloff = mix(1.0, 0.86 + 0.14 * smoothstep(0.14, 0.92, abs(vUV.x - 0.5) * 2.0), referenceLookStrength);
+    float rimBreakup =
+        surfaceLumaBreakup *
+        mix(0.86, 1.06, smoothstep(0.12, 0.82, abs(vUV.x - 0.5) * 2.0));
     float blueShelf = pow(column, 1.86) * (0.34 + daySide * 0.52 + twilight * 0.12) * arcFalloff;
-    float cyanShelf = pow(column, 7.4) * (0.10 + daySide * 0.34) * surfaceBreakup;
-    float blueNeedle = pow(column, 56.0) * (0.024 + daySide * 0.11) * surfaceBreakup;
-    float whiteNeedle = pow(column, 142.0) * (0.0012 + daySide * 0.0065) * surfaceBreakup;
+    float cyanShelf = pow(column, 7.4) * (0.10 + daySide * 0.34);
+    float blueNeedle = pow(column, 56.0) * (0.024 + daySide * 0.11);
+    float whiteNeedle = pow(column, 142.0) * (0.0012 + daySide * 0.0065);
+    blueShelf *= rimBreakup * mix(0.62, 1.0, sunEdge) * mix(0.78, 1.0, shadowEdge);
+    cyanShelf *= rimBreakup * mix(0.52, 1.0, sunEdge);
+    blueNeedle *= rimBreakup * mix(0.48, 1.0, sunEdge);
+    whiteNeedle *= rimBreakup * sunEdge;
     float baseProtect = 1.0 - smoothstep(0.18, 0.52, baseLuma) * hitSurface * 0.84;
 
     vec3 deepBlue = vec3(0.012, 0.065, 0.20);
@@ -379,7 +392,12 @@ void main() {
         finalColor * vec3(0.34, 0.62, 1.08),
         referenceSurfaceRim * brightRim * 0.045
     );
-    finalColor = applyUpstreamOutputLook(finalColor);
+    vec3 gradedColor = applyUpstreamOutputLook(finalColor);
+    finalColor = mix(
+        gradedColor,
+        clamp(finalColor, 0.0, 1.0),
+        referenceLookStrength * hitSurface * 0.38
+    );
 
     gl_FragColor = vec4(finalColor, 1.0); // displaying the final color
     #include <colorspace_fragment>

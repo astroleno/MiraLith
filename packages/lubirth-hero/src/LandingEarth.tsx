@@ -528,8 +528,8 @@ export function LandingEarth({
             if (lowCostReferenceCloudLook > 0.5) {
               truthDayTexRaw = mix(
                 truthDayTexRaw,
-                pow(max(truthDayTexRaw, vec3(0.0)), vec3(1.18)),
-                0.34
+                pow(max(truthDayTexRaw, vec3(0.0)), vec3(1.08)),
+                0.14
               );
             }
             float truthDayLuma = dot(truthDayTexRaw, vec3(0.299, 0.587, 0.114));
@@ -565,22 +565,22 @@ export function LandingEarth({
               truthDayTex = mix(
                 truthDayTex,
                 truthDayTex * vec3(0.68, 0.78, 0.92),
-                referenceCloudBakeMask * 0.18
+                referenceCloudBakeMask * 0.1
               );
               truthDayTex = mix(
                 truthDayTex,
                 truthDayTex * vec3(0.78, 0.84, 0.92),
-                dryAlbedoSignal * 0.16
+                dryAlbedoSignal * 0.08
               );
-              truthDayTex = truthDayTex / (1.0 + max(truthDayTex - vec3(0.46), vec3(0.0)) * 0.72);
+              truthDayTex = truthDayTex / (1.0 + max(truthDayTex - vec3(0.58), vec3(0.0)) * 0.42);
             }
             vec3 truthNightTex = pow(texture2D(nightMap, vUv).rgb, vec3(0.96));
             float truthDayLight = max(ndl, 0.0);
             float truthSurfaceGate = smoothstep(-transitionWidth * 2.4, transitionWidth * 1.35, ndl);
             float truthAmbient = 0.035 + ambient * mix(0.72, 0.54, closeStage);
-            truthAmbient *= mix(1.0, 0.72, lowCostReferenceCloudLook);
+            truthAmbient *= mix(1.0, 0.88, lowCostReferenceCloudLook);
             vec3 truthLightColor = mix(lightColor, vec3(0.92, 0.96, 1.0), 0.12 + closeStage * 0.06);
-            float truthReferenceSunExposure = mix(1.0, 0.62, lowCostReferenceCloudLook);
+            float truthReferenceSunExposure = mix(1.0, 0.78, lowCostReferenceCloudLook);
             vec3 truthLitDay = truthDayTex * truthLightColor *
               (truthAmbient * truthSurfaceGate + truthDayLight * sunIntensity * mix(0.62, 0.56, closeStage) * truthReferenceSunExposure * dayW);
             vec2 truthEarlyCloudBaseUv = vec2(
@@ -899,6 +899,15 @@ export function LandingEarth({
                 refHorizonFade * 0.84
               );
 
+              float refLandLift = smoothstep(0.18, 0.68, truthDayLuma) *
+                (1.0 - truthOceanAlbedoMask * 0.52) *
+                (1.0 - refHorizonFade * 0.28);
+              truthColor = mix(
+                truthColor,
+                truthColor * vec3(1.10, 1.08, 1.04) + vec3(0.018, 0.020, 0.018),
+                refLandLift * dayW * 0.22
+              );
+
               float refShadowReach = 0.00085 + truthLowSunShadow * 0.00115;
               vec2 refCastUv = vec2(
                 fract(truthCloudUv.x - truthLightTangentUv.x * refShadowReach),
@@ -911,15 +920,19 @@ export function LandingEarth({
                 sampleCloud(vec2(fract(refCastUv.x - 0.0012), clamp(refCastUv.y - 0.00062, 0.001, 0.999))) * 0.22 +
                 sampleCloud(vec2(fract(refCastUv.x + 0.0007), clamp(refCastUv.y - 0.0011, 0.001, 0.999))) * 0.12
               );
-              float refGroundShadow = smoothstep(0.38, 0.72, refCastCloudSoft) *
+              float refGroundShadow = smoothstep(0.34, 0.68, refCastCloudSoft) *
                 dayW *
                 truthCloudShadowEnable *
                 cloudShadowOpacity *
-                (0.34 + truthLowSunShadow * 0.1) *
+                (0.46 + truthLowSunShadow * 0.14) *
                 (1.0 - smoothstep(0.78, 1.0, fresnel)) *
-                (1.0 - smoothstep(0.34, 0.82, refCloudCompositeRaw) * 0.28);
+                (1.0 - smoothstep(0.34, 0.82, refCloudCompositeRaw) * 0.18);
 
               float refSurfaceLuma = dot(truthColor, vec3(0.299, 0.587, 0.114));
+              float brightLandShadowReadability =
+                smoothstep(0.24, 0.72, refSurfaceLuma) *
+                (1.0 - truthOceanAlbedoMask * 0.35);
+              refGroundShadow *= mix(0.82, 1.22, brightLandShadowReadability);
               float refOverWhite = smoothstep(0.28, 0.66, refSurfaceLuma);
               truthColor = mix(
                 truthColor,
