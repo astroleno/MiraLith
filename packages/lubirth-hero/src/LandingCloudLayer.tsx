@@ -212,10 +212,10 @@ function createCloudMaterial(
         );
         vec2 viewShear = vec2(dot(viewDirection, vWorldTangentA), dot(viewDirection, vWorldTangentB));
         vec2 sunShear = vec2(dot(sunDirection, vWorldTangentA), dot(sunDirection, vWorldTangentB));
-        vec2 parallax = viewShear * parallaxScale * (0.18 + limb * 0.34);
+        vec2 parallax = viewShear * parallaxScale * (0.12 + limb * 0.22);
         vec2 sunOffset = sunShear * 0.012;
         vec2 midUv = baseUv + wind + parallax * 0.03;
-        vec2 detailStep = vec2(mix(0.00032, 0.00012, closeStage), mix(0.00016, 0.00008, closeStage));
+        vec2 detailStep = vec2(mix(0.00042, 0.00022, closeStage), mix(0.00021, 0.00012, closeStage));
         vec2 deckUv = vec2(
           fract(baseUv.x + wind.x),
           clamp(baseUv.y + wind.y, 0.001, 0.999)
@@ -252,9 +252,9 @@ function createCloudMaterial(
         );
         float rawMass = max(rawMassNear, rawMassWide * 0.92);
         float broadWeather = clamp(rawMassWide * 0.82 + rawMassNear * 0.18, 0.0, 1.0);
-        float rawSharp = clamp(rawMid + (rawMid - rawMidBlur) * (0.2 + closeStage * 0.14), 0.0, 1.0);
-        rawSharp = mix(rawSharp, rawMidBlur, 0.2 + (1.0 - closeStage) * 0.16);
-        rawSharp = mix(rawSharp, broadWeather, 0.46 + closeStage * 0.08);
+        float rawSharp = clamp(rawMid + (rawMid - rawMidBlur) * (0.08 + closeStage * 0.06), 0.0, 1.0);
+        rawSharp = mix(rawSharp, rawMidBlur, 0.34 + (1.0 - closeStage) * 0.18);
+        rawSharp = mix(rawSharp, broadWeather, 0.56 + closeStage * 0.1);
         float weatherMass = smoothstep(0.08, 0.58, broadWeather);
         float weatherCore = smoothstep(0.3, 0.78, broadWeather);
         float visibleCloudGate = smoothstep(
@@ -285,15 +285,16 @@ function createCloudMaterial(
         float rawFineY = cloudRaw(vec2(fract(midUv.x), clamp(midUv.y + fineNormalStep.y, 0.001, 0.999)));
         float normalReliefMask = referenceLookStrength *
           visibleCloudGate *
-          smoothstep(0.14, 0.72, max(rawSharp, deckCoverage + deckThickness * 0.32));
+          smoothstep(0.14, 0.72, max(rawSharp, deckCoverage + deckThickness * 0.32)) *
+          0.72;
         vec3 fineHeightNormal = normalize(vec3(
-          (rawSharp - rawFineX) * (1.45 + closeStage * 1.1),
-          (rawSharp - rawFineY) * (1.45 + closeStage * 0.84),
+          (rawSharp - rawFineX) * (0.85 + closeStage * 0.5),
+          (rawSharp - rawFineY) * (0.85 + closeStage * 0.4),
           1.0
         ));
         cloudHeightNormal = normalize(vec3(
           cloudHeightNormal.xy * (1.0 + normalReliefMask * 0.52) +
-            fineHeightNormal.xy * normalReliefMask * (1.25 + closeStage * 0.55),
+            fineHeightNormal.xy * normalReliefMask * (0.72 + closeStage * 0.28),
           1.0
         ));
         vec3 sunTangent = normalize(vec3(
@@ -302,10 +303,10 @@ function createCloudMaterial(
           max(ndl, 0.0) + 0.18
         ));
         float cloudTopLight = mix(1.0, clamp(dot(cloudHeightNormal, sunTangent), 0.0, 1.0), deckInfluence);
-        float cloudNormalHighlight = smoothstep(0.54, 0.94, cloudTopLight) * normalReliefMask;
+        float cloudNormalHighlight = smoothstep(0.62, 0.98, cloudTopLight) * normalReliefMask * 0.72;
         float cloudSlopeShadow =
           smoothstep(0.18, 0.86, 1.0 - cloudTopLight) *
-          max(deckThickness * deckInfluence, normalReliefMask * 0.46);
+          max(deckThickness * deckInfluence, normalReliefMask * 0.3);
         float volumeJitter = noise2(gl_FragCoord.xy * 0.37 + baseUv * vec2(173.0, 89.0) + shellOffset * 31.0);
         float volumeColumn = 0.0;
         float volumeStep = mix(0.0022, 0.0011, closeStage) * (0.58 + limb * 0.42);
@@ -420,7 +421,7 @@ function createCloudMaterial(
           smoothstep(0.08, 0.82, max(rawTop, rawSharp * 0.58 + rawMidBlur * 0.22))
         );
         vec3 cloudBase = mix(cloudShadow, cloudLit, clamp(sunlitCloud * (0.42 + weatherCore * 0.08) + top * 0.14 + photoBright * 0.08, 0.0, 1.0));
-        cloudBase += vec3(0.036, 0.042, 0.048) * clamp((rawSharp - rawMidBlur) * (0.12 + closeStage * 0.06) * weatherMass, 0.0, 0.04) * sunlitCloud;
+        cloudBase += vec3(0.036, 0.042, 0.048) * clamp((rawSharp - rawMidBlur) * (0.06 + closeStage * 0.03) * weatherMass, 0.0, 0.024) * sunlitCloud;
         cloudBase *= mix(0.82, 1.0, smoothstep(0.22, 0.82, textureBody));
         vec3 warmEdge = vec3(1.0, 0.62, 0.28) * twilight * (0.06 + thickness * 0.06);
         vec3 blueNight = vec3(0.018, 0.055, 0.13) * nightCloud * (0.07 + thickness * 0.12);
@@ -477,7 +478,7 @@ function createCloudMaterial(
         finalColor += vec3(0.72, 0.84, 0.98) *
           cloudNormalHighlight *
           sunlitCloud *
-          (0.034 + closeStage * 0.03);
+          (0.022 + closeStage * 0.018);
         finalColor += vec3(0.68, 0.82, 1.0) *
           volumeForwardScatter *
           (0.08 + closeStage * 0.08);
@@ -489,12 +490,12 @@ function createCloudMaterial(
         float closeCloudReadability = max(
           closeStage * visibleCloudGate *
             smoothstep(0.18, 0.58, max(max(rawSharp, rawMassNear), weatherMass)),
-          closeDeckCloud * 0.82
+          closeDeckCloud * 0.68
         );
         finalColor = mix(
           finalColor,
           finalColor * vec3(1.12, 1.13, 1.11) + vec3(0.055, 0.06, 0.064) * sunlitCloud,
-          closeCloudReadability * 0.07
+          closeCloudReadability * 0.045
         );
         float daylightCloudLift =
           sunlitCloud *
@@ -504,7 +505,7 @@ function createCloudMaterial(
         finalColor = mix(
           finalColor,
           vec3(0.76, 0.82, 0.82),
-          closeCloudReadability * sunlitCloud * 0.08
+          closeCloudReadability * sunlitCloud * 0.052
         );
         float nightCloudDim = nightCloud * (1.0 - twilight * 0.48) * (0.48 + closeStage * 0.12);
         finalColor *= mix(1.0, 0.48, nightCloudDim);
@@ -542,8 +543,8 @@ function createCloudMaterial(
           density * 0.22 +
           thickness * 0.16 +
           opaqueCore * 0.22 +
-          closeCloudReadability * 0.22 +
-          closeDeckCloud * 0.22 +
+          closeCloudReadability * 0.12 +
+          closeDeckCloud * 0.16 +
           limbVolume * density * 0.08
         ) *
           softDensityFeather *
@@ -558,7 +559,7 @@ function createCloudMaterial(
           mix(1.0, 1.82, debugBoost);
         alpha *= mix(
           1.0,
-          1.32,
+          1.18,
           referenceLookStrength * smoothstep(0.18, 0.72, max(weatherMass, thickness))
         );
 
@@ -566,7 +567,7 @@ function createCloudMaterial(
           discard;
         }
 
-        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.38, 0.72, debugBoost)));
+        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.34, 0.66, debugBoost)));
       }
     `,
     transparent: true,
