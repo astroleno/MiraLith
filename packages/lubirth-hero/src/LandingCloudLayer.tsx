@@ -212,8 +212,13 @@ function createCloudMaterial(
         );
         vec2 viewShear = vec2(dot(viewDirection, vWorldTangentA), dot(viewDirection, vWorldTangentB));
         vec2 sunShear = vec2(dot(sunDirection, vWorldTangentA), dot(sunDirection, vWorldTangentB));
-        vec2 parallax = viewShear * parallaxScale * (0.12 + limb * 0.22);
-        vec2 sunOffset = sunShear * 0.012;
+        float referenceParallaxAttenuation = mix(1.0, 0.18, referenceLookStrength);
+        vec2 parallax =
+          viewShear *
+          parallaxScale *
+          referenceParallaxAttenuation *
+          (0.18 + limb * 0.34);
+        vec2 sunOffset = sunShear * mix(0.012, 0.004, referenceLookStrength);
         vec2 midUv = baseUv + wind + parallax * 0.03;
         vec2 detailStep = vec2(mix(0.00042, 0.00022, closeStage), mix(0.00021, 0.00012, closeStage));
         vec2 deckUv = vec2(
@@ -416,9 +421,9 @@ function createCloudMaterial(
 
         vec3 cloudShadow = mix(vec3(0.24, 0.30, 0.40), vec3(0.48, 0.54, 0.64), max(mid, weatherMass * 0.72));
         vec3 cloudLit = mix(
-          vec3(0.58, 0.66, 0.74),
-          vec3(0.94, 0.97, 0.94),
-          smoothstep(0.12, 0.86, max(rawTop, rawSharp * 0.62 + rawMidBlur * 0.22))
+          vec3(0.54, 0.62, 0.70),
+          vec3(0.84, 0.88, 0.86),
+          smoothstep(0.10, 0.84, max(rawTop, rawSharp * 0.58 + rawMidBlur * 0.22))
         );
         vec3 cloudBase = mix(cloudShadow, cloudLit, clamp(sunlitCloud * (0.42 + weatherCore * 0.08) + top * 0.14 + photoBright * 0.08, 0.0, 1.0));
         cloudBase += vec3(0.036, 0.042, 0.048) * clamp((rawSharp - rawMidBlur) * (0.06 + closeStage * 0.03) * weatherMass, 0.0, 0.024) * sunlitCloud;
@@ -494,14 +499,27 @@ function createCloudMaterial(
           smoothstep(0.42, 0.92, max(deckHighCap, cloudTopLight * max(weatherMass, rawSharp)));
         finalColor = mix(
           finalColor,
-          vec3(0.92, 0.96, 0.94),
-          referenceSunlitTop * 0.18
+          vec3(0.90, 0.94, 0.92),
+          referenceSunlitTop * 0.055
         );
-        finalColor += vec3(0.92, 0.96, 0.94) *
+        finalColor += vec3(0.90, 0.94, 0.92) *
           referenceLookStrength *
           topCap *
           sunlitCloud *
-          (0.08 + closeStage * 0.06);
+          (0.022 + closeStage * 0.018);
+        float referenceThicknessShadow = referenceLookStrength * clamp(
+          cloudSlopeShadow * 0.42 +
+          volumeSelfShadow * 0.28 +
+          weatherCore * 0.12 +
+          deckAo * deckInfluence * 0.18,
+          0.0,
+          0.72
+        );
+        finalColor = mix(
+          finalColor,
+          finalColor * vec3(0.58, 0.66, 0.80),
+          referenceThicknessShadow * mix(0.42, 0.26, sunlitCloud)
+        );
         float closeCloudReadability = max(
           closeStage * visibleCloudGate *
             smoothstep(0.18, 0.58, max(max(rawSharp, rawMassNear), weatherMass)),
