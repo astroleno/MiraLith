@@ -545,7 +545,11 @@ export function LandingEarth({
             vec3 vegetationNeutral = truthDayTex * vec3(0.92, 1.04, 0.9);
             truthDayTex = mix(truthDayTex, vegetationNeutral, vegetationSignal * 0.08);
             float truthOceanAlbedoSignal = truthDayTex.b - max(truthDayTex.r, truthDayTex.g) * 0.52;
-            float truthOceanAlbedoMask = smoothstep(0.04, 0.18, truthOceanAlbedoSignal);
+            float truthOceanBlueChannelMask =
+              smoothstep(0.18, 0.54, truthDayTexRaw.b) *
+              smoothstep(0.01, 0.16, truthDayTexRaw.b - max(truthDayTexRaw.r, truthDayTexRaw.g) * 0.72) *
+              (1.0 - smoothstep(0.72, 0.94, truthDayLuma));
+            float truthOceanAlbedoMask = max(smoothstep(0.04, 0.18, truthOceanAlbedoSignal), truthOceanBlueChannelMask);
             truthDayTex = mix(
               truthDayTex,
               truthDayTex * vec3(0.64, 0.76, 0.88),
@@ -585,7 +589,7 @@ export function LandingEarth({
             );
             vec2 truthEarlySunShear = vec2(dot(l, tangentA), dot(l, tangentB));
             vec2 truthEarlyShadowUv = truthEarlyCloudBaseUv +
-              truthEarlySunShear * mix(0.007, 0.011, lowCostReferenceCloudLook);
+              truthEarlySunShear * mix(0.0035, 0.0055, lowCostReferenceCloudLook);
             vec4 truthEarlyShadowAtlas = sampleCloudShadowAtlas(truthEarlyShadowUv);
             float truthEarlyProjectedCloudShadow =
               truthEarlyShadowAtlas.r *
@@ -627,7 +631,11 @@ export function LandingEarth({
             vec3 truthCity = truthCityCore + truthCityHalo;
             vec3 truthHalfDir = normalize(l + v);
             float truthOceanSignal = truthDayTex.b - max(truthDayTex.r, truthDayTex.g) * 0.55;
-            float truthOceanMask = smoothstep(0.04, 0.2, truthOceanSignal);
+            float truthOceanBlueMask =
+              smoothstep(0.16, 0.52, truthDayTexRaw.b) *
+              smoothstep(0.0, 0.15, truthDayTexRaw.b - max(truthDayTexRaw.r, truthDayTexRaw.g) * 0.7) *
+              (1.0 - smoothstep(0.74, 0.96, truthDayLuma));
+            float truthOceanMask = max(smoothstep(0.04, 0.2, truthOceanSignal), truthOceanBlueMask);
             float truthOceanNoCloud = 1.0 - clamp(
               truthEarlyProjectedCloudShadow * 0.24 + truthEarlyCloudSelfAo * 0.18,
               0.0,
@@ -636,7 +644,7 @@ export function LandingEarth({
             float truthGlintFacing = max(dot(n, truthHalfDir), 0.0);
             float truthGlintLowSun = 1.0 - smoothstep(0.26, 0.82, max(ndl, 0.0));
             float truthOceanGlint = pow(truthGlintFacing, 72.0) *
-              truthOceanMask * truthOceanNoCloud * dayW * specularStrength * mix(0.22, 0.42, closeStage);
+              truthOceanMask * truthOceanNoCloud * dayW * specularStrength * mix(0.30, 0.58, closeStage);
             float truthOceanSoftGlint = pow(truthGlintFacing, 32.0) *
               truthOceanMask *
               truthOceanNoCloud *
@@ -648,7 +656,7 @@ export function LandingEarth({
               truthOceanNoCloud *
               dayW *
               specularStrength *
-              (0.07 + closeStage * 0.15) *
+              (0.11 + closeStage * 0.24) *
               (0.42 + truthGlintLowSun * 0.72);
             float truthOceanGoldGlint = pow(truthGlintFacing, 8.0) *
               truthOceanMask *
@@ -656,12 +664,22 @@ export function LandingEarth({
               dayW *
               specularStrength *
               truthGlintLowSun *
-              0.05;
+              0.075;
+            float truthOceanGrazingSheen =
+              truthOceanMask *
+              truthOceanNoCloud *
+              dayW *
+              smoothstep(0.28, 0.86, fresnel) *
+              specularStrength *
+              (0.02 + closeStage * 0.052) *
+              (0.55 + truthGlintLowSun * 0.48);
             vec3 truthSpecular =
               vec3(0.58, 0.72, 0.92) * truthOceanGlint +
               vec3(0.45, 0.58, 0.72) * truthOceanSoftGlint +
               vec3(0.84, 0.94, 1.0) * truthOceanWideGlint +
-              vec3(1.0, 0.72, 0.38) * truthOceanGoldGlint;
+              vec3(1.0, 0.72, 0.38) * truthOceanGoldGlint +
+              vec3(0.62, 0.84, 1.0) * truthOceanGrazingSheen +
+              vec3(1.0, 0.78, 0.48) * truthOceanGrazingSheen * truthGlintLowSun * 0.16;
             float truthSunRim = smoothstep(-edgeShadowSoftness, 0.42, ndl);
             float truthRimBreakup = mix(
               1.0,
@@ -873,8 +891,8 @@ export function LandingEarth({
               );
 
               vec2 refCastUv = vec2(
-                fract(truthCloudUv.x - truthLightTangentUv.x * (0.0045 + truthLowSunShadow * 0.0065)),
-                fract(truthCloudUv.y - truthLightTangentUv.y * (0.0045 + truthLowSunShadow * 0.0065) * 0.54)
+                fract(truthCloudUv.x - truthLightTangentUv.x * (0.002 + truthLowSunShadow * 0.003)),
+                fract(truthCloudUv.y - truthLightTangentUv.y * (0.002 + truthLowSunShadow * 0.003) * 0.5)
               );
               float refCastCloud = sampleCloud(refCastUv);
               float refGroundShadow = smoothstep(0.46, 0.78, refCastCloud) *
@@ -910,10 +928,10 @@ export function LandingEarth({
             }
 
             float truthShadowReach = mix(
-              0.006 + truthLowSunShadow * 0.012,
-              0.008 + truthLowSunShadow * 0.014,
+              0.0035 + truthLowSunShadow * 0.006,
+              0.0045 + truthLowSunShadow * 0.008,
               referenceCloudLook
-            ) * (0.62 + closeStage * 0.28);
+            ) * (0.50 + closeStage * 0.22);
             vec2 truthShadowUvNear = vec2(
               fract(truthCloudUv.x - truthLightTangentUv.x * truthShadowReach * 0.52),
               fract(truthCloudUv.y - truthLightTangentUv.y * truthShadowReach * 0.52 * 0.62)
@@ -1254,16 +1272,16 @@ export function LandingEarth({
             float cloudNormalLight = clamp(dot(cloudSurfaceNormal, cloudLightNormal), 0.0, 1.0);
             float cloudNormalShadow = smoothstep(0.14, 0.82, 1.0 - cloudNormalLight) *
               cloudNormalGate *
-              (0.22 + lowSunShadow * 0.2);
+              (0.18 + lowSunShadow * 0.16);
             float cloudNormalHighlight = smoothstep(0.54, 0.95, cloudNormalLight) *
               cloudNormalGate *
               dayW;
             float cloudCoreUnit = clamp(cloudCore / max(cloudOpacity, 0.001), 0.0, 1.0);
-            float shadowDistance = mix(0.07, 0.14, cloudCoreUnit);
+            float shadowDistance = mix(0.045, 0.09, cloudCoreUnit);
             float shadowOffset = (
-              0.00024 +
-              lowSunShadow * mix(0.00028, 0.00038, lowCostReferenceCloudLook) +
-              closeStage * 0.0001
+              0.0002 +
+              lowSunShadow * mix(0.00018, 0.00025, lowCostReferenceCloudLook) +
+              closeStage * 0.00008
             ) * (0.45 + lightTangentLen * 0.55);
             vec2 shadowUv = vec2(
               fract(cloudUv.x - lightTangentUv.x * shadowOffset * shadowDistance),
@@ -1283,8 +1301,8 @@ export function LandingEarth({
               sampleCloud(shadowUv - lightTangentUv * 0.0017) * 0.2;
             shadowSoft = mix(shadowSoft, max(shadowSoft * 0.54, deckCaster), hasCloudDeckMap * 0.82);
             vec2 broadShadowUv = vec2(
-              fract(cloudUv.x - lightTangentUv.x * shadowOffset * (shadowDistance * 1.1 + lowSunShadow * 0.18)),
-              fract(cloudUv.y - lightTangentUv.y * shadowOffset * (shadowDistance * 0.85 + lowSunShadow * 0.12))
+              fract(cloudUv.x - lightTangentUv.x * shadowOffset * (shadowDistance * 0.72 + lowSunShadow * 0.08)),
+              fract(cloudUv.y - lightTangentUv.y * shadowOffset * (shadowDistance * 0.56 + lowSunShadow * 0.055))
             );
             vec4 broadShadowDeck = texture2D(cloudDeckMap, broadShadowUv);
             float broadShadowRaw =
@@ -1446,25 +1464,38 @@ export function LandingEarth({
               0.0,
               0.78
             );
-            float oceanMask = smoothstep(0.035, 0.18, oceanSignal) * oceanCloudVisibility;
+            float oceanBlueMask =
+              smoothstep(0.16, 0.54, rawDayTex.b) *
+              smoothstep(0.0, 0.15, rawDayTex.b - max(rawDayTex.r, rawDayTex.g) * 0.7) *
+              (1.0 - smoothstep(0.74, 0.96, dayTexLuma));
+            float oceanMask = max(smoothstep(0.035, 0.18, oceanSignal), oceanBlueMask) * oceanCloudVisibility;
             float oceanFacing = max(dot(n, halfDir), 0.0);
-            float oceanGlint = pow(oceanFacing, 62.0) * oceanMask * dayW * specularStrength * (0.5 + closeStage * 0.42);
+            float oceanGlint = pow(oceanFacing, 58.0) * oceanMask * dayW * specularStrength * (0.62 + closeStage * 0.58);
             float oceanWideGlint = pow(oceanFacing, 18.0) *
               oceanMask *
               dayW *
               specularStrength *
-              (0.08 + closeStage * 0.16) *
+              (0.12 + closeStage * 0.25) *
               (0.45 + lowSunShadow * 0.72);
             float oceanGoldGlint = pow(oceanFacing, 9.0) *
               oceanMask *
               dayW *
               specularStrength *
               lowSunShadow *
-              0.055;
+              0.075;
+            float oceanGrazingSheen =
+              oceanMask *
+              dayW *
+              smoothstep(0.30, 0.88, fresnel) *
+              specularStrength *
+              (0.018 + closeStage * 0.048) *
+              (0.58 + lowSunShadow * 0.5);
             vec3 oceanSpecular =
               vec3(0.74, 0.86, 1.0) * oceanGlint +
               vec3(0.84, 0.94, 1.0) * oceanWideGlint +
-              vec3(1.0, 0.72, 0.38) * oceanGoldGlint;
+              vec3(1.0, 0.72, 0.38) * oceanGoldGlint +
+              vec3(0.62, 0.84, 1.0) * oceanGrazingSheen +
+              vec3(1.0, 0.78, 0.48) * oceanGrazingSheen * lowSunShadow * 0.16;
             vec2 glowStep = vec2(0.0024, 0.0012);
             vec3 nightGlowTex = (
               texture2D(nightMap, vUv).rgb +

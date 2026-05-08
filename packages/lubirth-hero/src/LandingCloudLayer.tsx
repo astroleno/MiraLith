@@ -477,7 +477,7 @@ function createCloudMaterial(
         finalColor += vec3(0.72, 0.84, 0.98) *
           cloudNormalHighlight *
           sunlitCloud *
-          (0.045 + closeStage * 0.04);
+          (0.034 + closeStage * 0.03);
         finalColor += vec3(0.68, 0.82, 1.0) *
           volumeForwardScatter *
           (0.08 + closeStage * 0.08);
@@ -494,7 +494,7 @@ function createCloudMaterial(
         finalColor = mix(
           finalColor,
           finalColor * vec3(1.12, 1.13, 1.11) + vec3(0.055, 0.06, 0.064) * sunlitCloud,
-          closeCloudReadability * 0.09
+          closeCloudReadability * 0.07
         );
         float daylightCloudLift =
           sunlitCloud *
