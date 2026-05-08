@@ -868,11 +868,11 @@ export function LandingEarth({
               float refCloudAlpha =
                 pow(clamp(refCloudCompositeRaw, 0.0, 1.0), 0.74) *
                 cloudOpacity *
-                0.58 *
+                0.22 *
                 smoothstep(-0.16, 0.52, ndl) *
                 smoothstep(0.09, 0.38, refCloudCompositeRaw);
               refCloudAlpha *= mix(1.0, 0.055, refHorizonFade);
-              refCloudAlpha = clamp(refCloudAlpha, 0.0, 0.34);
+              refCloudAlpha = clamp(refCloudAlpha, 0.0, 0.12);
 
               vec3 refCloudLit = mix(
                 vec3(0.52, 0.62, 0.76),
@@ -899,17 +899,25 @@ export function LandingEarth({
                 refHorizonFade * 0.84
               );
 
+              float refShadowReach = 0.00085 + truthLowSunShadow * 0.00115;
               vec2 refCastUv = vec2(
-                fract(truthCloudUv.x - truthLightTangentUv.x * (0.002 + truthLowSunShadow * 0.003)),
-                fract(truthCloudUv.y - truthLightTangentUv.y * (0.002 + truthLowSunShadow * 0.003) * 0.5)
+                fract(truthCloudUv.x - truthLightTangentUv.x * refShadowReach),
+                fract(truthCloudUv.y - truthLightTangentUv.y * refShadowReach * 0.5)
               );
               float refCastCloud = sampleCloud(refCastUv);
-              float refGroundShadow = smoothstep(0.46, 0.78, refCastCloud) *
+              float refCastCloudSoft = (
+                refCastCloud * 0.44 +
+                sampleCloud(vec2(fract(refCastUv.x + 0.0012), clamp(refCastUv.y + 0.00062, 0.001, 0.999))) * 0.22 +
+                sampleCloud(vec2(fract(refCastUv.x - 0.0012), clamp(refCastUv.y - 0.00062, 0.001, 0.999))) * 0.22 +
+                sampleCloud(vec2(fract(refCastUv.x + 0.0007), clamp(refCastUv.y - 0.0011, 0.001, 0.999))) * 0.12
+              );
+              float refGroundShadow = smoothstep(0.38, 0.72, refCastCloudSoft) *
                 dayW *
+                truthCloudShadowEnable *
                 cloudShadowOpacity *
-                0.22 *
+                (0.34 + truthLowSunShadow * 0.1) *
                 (1.0 - smoothstep(0.78, 1.0, fresnel)) *
-                (1.0 - smoothstep(0.3, 0.72, refCloudCompositeRaw) * 0.5);
+                (1.0 - smoothstep(0.34, 0.82, refCloudCompositeRaw) * 0.28);
 
               float refSurfaceLuma = dot(truthColor, vec3(0.299, 0.587, 0.114));
               float refOverWhite = smoothstep(0.28, 0.66, refSurfaceLuma);
@@ -918,7 +926,7 @@ export function LandingEarth({
                 truthColor * vec3(0.74, 0.84, 0.96),
                 refOverWhite * (0.16 + refHorizonFade * 0.2)
               );
-              truthColor *= mix(vec3(1.0), vec3(0.74, 0.82, 0.92), refGroundShadow);
+              truthColor *= mix(vec3(1.0), mix(vec3(0.68, 0.76, 0.88), vec3(0.58, 0.66, 0.78), truthLowSunShadow), refGroundShadow);
               truthColor -= truthDayTex * refGroundShadow * 0.018;
               truthColor = mix(truthColor, refCloudColor, refCloudAlpha);
 

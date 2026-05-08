@@ -403,14 +403,14 @@ function createCloudMaterial(
         selfShadow = clamp(
           selfShadow +
           referenceLookStrength * (
-            deckAo * 0.12 * deckInfluence +
-            cloudSlopeShadow * 0.22 +
+            deckAo * 0.16 * deckInfluence +
+            cloudSlopeShadow * 0.24 +
             normalReliefMask * (1.0 - cloudTopLight) * 0.08 +
-            volumeSelfShadow * 0.24 +
-            weatherCore * 0.045
+            volumeSelfShadow * 0.42 +
+            weatherCore * 0.095
           ),
           0.0,
-          0.66
+          0.7
         );
         float light = mix(0.08, 1.08, sunlitCloud) * (1.0 - selfShadow) + twilight * 0.06 + limb * sunlitCloud * 0.1;
 
@@ -608,10 +608,13 @@ export function LandingCloudLayer({
       wrapT: RepeatWrapping
     }
   );
-  const activeCloudShells = useMemo(
-    () => CLOUD_SHELLS.filter((layer) => !layer.highOnly || quality.tier === "high" || quality.tier === "medium" || emphasis),
-    [emphasis, quality.tier]
-  );
+  const activeCloudShells = useMemo(() => {
+    if (referenceLook) {
+      return CLOUD_SHELLS.slice(0, 1);
+    }
+
+    return CLOUD_SHELLS.filter((layer) => !layer.highOnly || quality.tier === "high" || quality.tier === "medium" || emphasis);
+  }, [emphasis, quality.tier, referenceLook]);
   const materials = useMemo(
     () => cloudTexture ? activeCloudShells.map((layer) => createCloudMaterial(composition, layer, cloudTexture, cloudDeckTexture ?? undefined)) : [],
     [activeCloudShells, cloudDeckTexture, cloudTexture, composition]
