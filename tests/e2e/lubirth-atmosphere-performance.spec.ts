@@ -97,6 +97,22 @@ function expectRafSamples(label: string, stats: RafStats, testInfo: import("@pla
   }
 }
 
+test("records blank RAF control", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "Performance sampling is calibrated for desktop review.");
+
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await page.setContent("<!doctype html><main>RAF control</main>");
+  const control = await sampleRafStats(page);
+
+  logStats("blank RAF control", control);
+  expectRafSamples("blank RAF control", control, testInfo);
+
+  if (STRICT_PERF) {
+    expect(control.median).toBeLessThanOrEqual(24);
+    expect(control.p95).toBeLessThanOrEqual(40);
+  }
+});
+
 test("records spike stack vs volumetric RAF performance", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "Performance sampling is calibrated for desktop review.");
 
@@ -104,12 +120,12 @@ test("records spike stack vs volumetric RAF performance", async ({ page }, testI
 
   const stack = await measurePage(
     page,
-    "/lubirth-atmosphere-spike?atmo=stack&look=lubirth&quality=high&progress=0&copy=hidden&visualTest=pixels",
+    "/lubirth-atmosphere-spike?atmo=stack&look=lubirth&quality=high&copy=hidden&perfTest=raf",
     "stack"
   );
   const volumetric = await measurePage(
     page,
-    "/lubirth-atmosphere-spike?atmo=volumetric&look=lubirth&quality=high&progress=0&copy=hidden&visualTest=pixels",
+    "/lubirth-atmosphere-spike?atmo=volumetric&look=lubirth&quality=high&copy=hidden&perfTest=raf",
     "volumetric"
   );
   const regressionRatio = stack.median > 0 ? volumetric.median / stack.median - 1 : 0;
@@ -135,16 +151,16 @@ test("records production visible-copy RAF performance", async ({ page }, testInf
 
   const studyStack = await measurePage(
     page,
-    "/lubirth-revised?copy=visible&profile=nasa&visualTest=pixels",
+    "/lubirth-revised?copy=visible&profile=nasa&perfTest=raf",
     "stack"
   );
   const studyCandidate = await measurePage(
     page,
-    "/lubirth-revised?copy=visible&profile=nasa&quality=high&atmoPolicy=hybrid&visualTest=pixels",
+    "/lubirth-revised?copy=visible&profile=nasa&quality=high&atmoPolicy=hybrid&perfTest=raf",
     "volumetric"
   );
 
-  await page.goto("/?copy=visible");
+  await page.goto("/?copy=visible&perfTest=raf");
   await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-variant", "home", { timeout: 25_000 });
   await expect(page.locator("canvas")).toHaveCount(1);
   await expect

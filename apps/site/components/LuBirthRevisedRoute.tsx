@@ -49,6 +49,7 @@ interface ScreenshotDebugOptions {
   fixedProgress: number | null;
   copyHidden: boolean;
   visualPixelMode: boolean;
+  rafPerfMode: boolean;
   visualDebugLayer: LandingVisualDebugLayer;
   renderProfile: LandingRenderProfile;
 }
@@ -64,6 +65,7 @@ const DEFAULT_SCREENSHOT_DEBUG_OPTIONS: ScreenshotDebugOptions = {
   fixedProgress: null,
   copyHidden: false,
   visualPixelMode: false,
+  rafPerfMode: false,
   visualDebugLayer: "all",
   renderProfile: "nasa"
 };
@@ -174,9 +176,10 @@ function readScreenshotDebugOptions(defaultCopyHidden = false): ScreenshotDebugO
   const params = new URLSearchParams(window.location.search);
   const copyMode = params.get("copy");
   const visualPixelMode = params.get("visualTest") === "pixels";
+  const rafPerfMode = params.get("perfTest") === "raf";
   const progressParam = params.get("progress");
   const parsedProgress = progressParam === null ? Number.NaN : Number.parseFloat(progressParam);
-  const policyParam = visualPixelMode ? params.get("atmoPolicy") : null;
+  const policyParam = visualPixelMode || rafPerfMode ? params.get("atmoPolicy") : null;
   const atmospherePolicy: LandingAtmospherePolicy =
     policyParam === "volumetric" || policyParam === "hybrid" || policyParam === "stack"
       ? policyParam
@@ -216,8 +219,9 @@ function readScreenshotDebugOptions(defaultCopyHidden = false): ScreenshotDebugO
     fixedProgress: Number.isFinite(parsedProgress) ? clamp01(parsedProgress) : null,
     copyHidden: copyMode === "visible"
       ? false
-      : defaultCopyHidden || copyMode === "hidden" || (visualPixelMode && copyMode !== "visible"),
+      : defaultCopyHidden || copyMode === "hidden" || ((visualPixelMode || rafPerfMode) && copyMode !== "visible"),
     visualPixelMode,
+    rafPerfMode,
     visualDebugLayer,
     renderProfile: profileFromQuery ?? profileFromDebug
   };
@@ -743,7 +747,13 @@ export function LuBirthRevisedRoute({
       rootElement.dataset.variant = variant;
       rootElement.dataset.debugLayer = screenshotDebug.visualDebugLayer;
       rootElement.dataset.renderProfile = screenshotDebug.renderProfile;
-      if (forcedFallback || isHome || screenshotDebug.copyHidden || screenshotDebug.visualPixelMode) {
+      if (
+        forcedFallback ||
+        isHome ||
+        screenshotDebug.copyHidden ||
+        screenshotDebug.visualPixelMode ||
+        screenshotDebug.rafPerfMode
+      ) {
         setSceneEnabled(true);
       }
 
@@ -1481,7 +1491,7 @@ export function LuBirthRevisedRoute({
         <VisualCanvas
           key={isScreenshotMode ? "lubirth-screenshot-canvas" : isHome ? "lubirth-home-canvas" : "lubirth-runtime-canvas"}
           decorative
-          dpr={isScreenshotMode ? 2 : homeIntroRendering ? [1.1, 1.25] : [1.5, 2.1]}
+          dpr={debugOptions.rafPerfMode ? 1 : isScreenshotMode ? 2 : homeIntroRendering ? [1.1, 1.25] : [1.5, 2.1]}
           fallback={
             <VisualCanvasFallback
               scene="lubirth"
@@ -1492,10 +1502,15 @@ export function LuBirthRevisedRoute({
         >
           <LuBirthSceneSlot
             mode="field"
-            quality={isScreenshotMode ? "high" : "auto"}
+            quality={homeIntroRendering ? "medium" : isScreenshotMode ? "high" : "auto"}
             paused={isScreenshotMode}
+            cloudDeckEnabled={!isHome || homeCloudDeckEnabled}
             visualDebugLayer={debugOptions.visualDebugLayer}
             renderProfile={debugOptions.renderProfile}
+            atmospherePolicy={debugOptions.atmospherePolicy}
+            routeVariant={variant}
+            homeIntroRendering={homeIntroRendering}
+            productionSurface
             onProjectionFrame={isHome ? handleProjectionFrame : undefined}
             onVisualReadyEnough={isHome ? () => markHomeVisualAssetReady("day-texture") : undefined}
             onMoonTextureReady={isHome ? () => markHomeVisualAssetReady("moon-texture") : undefined}

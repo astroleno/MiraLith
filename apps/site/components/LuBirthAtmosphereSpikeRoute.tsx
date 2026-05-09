@@ -21,6 +21,7 @@ interface SpikeConfig {
   fixedProgress: number;
   hasFixedProgress: boolean;
   quality: LandingQuality;
+  rafPerfMode: boolean;
   renderProfile: LandingRenderProfile;
   visualDebugLayer: LandingVisualDebugLayer;
 }
@@ -32,6 +33,7 @@ const DEFAULT_CONFIG: SpikeConfig = {
   fixedProgress: 0,
   hasFixedProgress: false,
   quality: "auto",
+  rafPerfMode: false,
   renderProfile: "nasa",
   visualDebugLayer: "all"
 };
@@ -111,15 +113,19 @@ function readConfig(): SpikeConfig {
   const parsedProgress = progressParam === null ? Number.NaN : Number.parseFloat(progressParam);
   const copyMode = params.get("copy");
   const visualPixelMode = params.get("visualTest") === "pixels";
+  const rafPerfMode = params.get("perfTest") === "raf";
   const visualDebugLayer = readVisualDebugLayer(params);
 
   return {
     atmosphereLook: readAtmosphereLook(params),
     atmosphereMode: readAtmosphereMode(params),
-    copyHidden: copyMode === "visible" ? false : copyMode === "hidden" || (visualPixelMode && copyMode !== "visible"),
+    copyHidden: copyMode === "visible"
+      ? false
+      : copyMode === "hidden" || ((visualPixelMode || rafPerfMode) && copyMode !== "visible"),
     fixedProgress: Number.isFinite(parsedProgress) ? clamp01(parsedProgress) : 0,
     hasFixedProgress: Number.isFinite(parsedProgress),
     quality: readQuality(params),
+    rafPerfMode,
     renderProfile: readRenderProfile(params, visualDebugLayer),
     visualDebugLayer
   };
@@ -139,7 +145,7 @@ function ScenePane({
       {!config.copyHidden ? <p className="lubirth-atmo-spike__pane-label">{label}</p> : null}
       <VisualCanvas
         decorative
-        dpr={config.hasFixedProgress ? 2 : [1.35, 1.8]}
+        dpr={config.rafPerfMode ? 1 : config.hasFixedProgress ? 2 : [1.35, 1.8]}
         fallback={
           <VisualCanvasFallback
             scene="lubirth"

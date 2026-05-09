@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { expect, test } from "@playwright/test";
 
@@ -16,13 +16,31 @@ async function captureEvidenceScreenshot(
   projectName: string,
   screenshotName: string
 ) {
+  const screenshotPath = evidenceScreenshotPath(projectName, screenshotName);
+  try {
+    const client = await page.context().newCDPSession(page);
+    try {
+      const result = await client.send("Page.captureScreenshot", {
+        captureBeyondViewport: false,
+        format: "png",
+        fromSurface: true
+      });
+      writeFileSync(screenshotPath, Buffer.from(result.data, "base64"));
+      return;
+    } finally {
+      await client.detach().catch(() => undefined);
+    }
+  } catch {
+    // Fall through to Playwright's screenshot API for non-Chromium fallback projects.
+  }
+
   const previousFontWait = process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY;
   process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY = "1";
 
   try {
     await page.screenshot({
       fullPage: false,
-      path: evidenceScreenshotPath(projectName, screenshotName),
+      path: screenshotPath,
       timeout: 30_000
     });
   } finally {

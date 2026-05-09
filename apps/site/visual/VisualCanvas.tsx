@@ -64,8 +64,12 @@ export function VisualCanvas({
   const [contextLost, setContextLost] = useState(false);
   const forcedFallback =
     typeof window !== "undefined" && new URLSearchParams(window.location.search).get("visual") === "fallback";
-  const preserveDrawingBuffer =
-    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("visualTest") === "pixels";
+  const preserveDrawingBuffer = typeof window !== "undefined"
+    ? (() => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("visualTest") === "pixels" && params.get("perfTest") !== "raf";
+      })()
+    : false;
 
   if (forcedFallback || contextLost) {
     return <>{fallback}</>;
