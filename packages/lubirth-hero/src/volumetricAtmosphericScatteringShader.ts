@@ -247,6 +247,23 @@ float luma(vec3 color) {
     return dot(color, vec3(0.2126, 0.7152, 0.0722));
 }
 
+float hash21(vec2 p) {
+    p = fract(p * vec2(123.34, 345.45));
+    p += dot(p, p + 34.345);
+    return fract(p.x * p.y);
+}
+
+float noise2(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    float a = hash21(i);
+    float b = hash21(i + vec2(1.0, 0.0));
+    float c = hash21(i + vec2(0.0, 1.0));
+    float d = hash21(i + vec2(1.0, 1.0));
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
 vec3 referenceLimbComposite(
     vec3 rayOrigin,
     vec3 rayDir,
@@ -279,7 +296,7 @@ vec3 referenceLimbComposite(
     float sun = dot(shellNormal, sunDir);
     float daySide = smoothstep(-0.28, 0.55, sun);
     float twilight = 1.0 - smoothstep(0.02, 0.48, abs(sun));
-    float sunEdge = smoothstep(-0.12, 0.52, sun);
+    float sunEdge = smoothstep(0.02, 0.66, sun);
     float shadowEdge = 1.0 - smoothstep(-0.45, -0.02, sun);
 
     float baseLuma = luma(baseColor);
@@ -288,25 +305,28 @@ vec3 referenceLimbComposite(
         0.72 + 0.28 * smoothstep(0.16, 0.62, baseLuma),
         hitSurface
     );
-    float arcFalloff = mix(1.0, 0.86 + 0.14 * smoothstep(0.14, 0.92, abs(vUV.x - 0.5) * 2.0), referenceLookStrength);
+    float screenArc = abs(vUV.x - 0.5) * 2.0;
+    float rimNoise = noise2(vec2(vUV.x * 34.0, vUV.y * 11.0 + column * 5.0));
+    float localArcBreakup = mix(0.82, 1.06, rimNoise);
+    float arcFalloff = mix(1.0, 0.58 + 0.42 * smoothstep(0.14, 0.92, screenArc), referenceLookStrength);
     float rimBreakup =
         surfaceLumaBreakup *
-        mix(0.86, 1.06, smoothstep(0.12, 0.82, abs(vUV.x - 0.5) * 2.0));
-    float blueShelf = pow(column, 1.86) * (0.34 + daySide * 0.52 + twilight * 0.12) * arcFalloff;
-    float cyanShelf = pow(column, 7.4) * (0.10 + daySide * 0.34);
-    float blueNeedle = pow(column, 56.0) * (0.024 + daySide * 0.11);
-    float whiteNeedle = pow(column, 142.0) * (0.0012 + daySide * 0.0065);
-    blueShelf *= rimBreakup * mix(0.62, 1.0, sunEdge) * mix(0.78, 1.0, shadowEdge);
-    cyanShelf *= rimBreakup * mix(0.52, 1.0, sunEdge);
-    blueNeedle *= rimBreakup * mix(0.48, 1.0, sunEdge);
-    whiteNeedle *= rimBreakup * sunEdge;
-    float baseProtect = 1.0 - smoothstep(0.18, 0.52, baseLuma) * hitSurface * 0.84;
+        mix(0.82, 1.04, smoothstep(0.12, 0.82, screenArc));
+    float blueShelf = pow(column, 1.78) * (0.36 + daySide * 0.42 + twilight * 0.10) * arcFalloff;
+    float cyanShelf = pow(column, 8.2) * (0.07 + daySide * 0.24);
+    float blueNeedle = pow(column, 68.0) * (0.026 + daySide * 0.095);
+    float whiteNeedle = pow(column, 210.0) * (0.00045 + daySide * 0.0024);
+    blueShelf *= rimBreakup * mix(0.74, 1.0, sunEdge) * mix(0.82, 1.0, shadowEdge);
+    cyanShelf *= rimBreakup * localArcBreakup * mix(0.32, 1.0, sunEdge);
+    blueNeedle *= rimBreakup * localArcBreakup * mix(0.36, 1.0, sunEdge);
+    whiteNeedle *= rimBreakup * localArcBreakup * sunEdge;
+    float baseProtect = 1.0 - smoothstep(0.14, 0.46, baseLuma) * hitSurface * 0.9;
 
     vec3 deepBlue = vec3(0.012, 0.065, 0.20);
     vec3 rayleighBlue = vec3(0.045, 0.28, 0.92);
     vec3 cyan = vec3(0.22, 0.58, 1.08);
     vec3 contactBlue = vec3(0.32, 0.72, 1.36);
-    vec3 contactWhite = vec3(0.30, 0.58, 1.02);
+    vec3 contactWhite = vec3(0.22, 0.46, 0.92);
 
     vec3 shell =
         mix(deepBlue, rayleighBlue, 0.48 + daySide * 0.28) * blueShelf * limbBlueStrength +
@@ -358,10 +378,17 @@ void main() {
             surfaceNormal = normalize(surfacePoint - planetPosition);
             viewFacing = clamp(dot(surfaceNormal, -rayDir), 0.0, 1.0);
             float horizonBlend = smoothstep(0.42, 0.92, 1.0 - viewFacing);
+            float surfaceSun = dot(surfaceNormal, normalize(sunPosition - planetPosition));
+            float referenceHorizonScatter =
+                mix(0.12, 0.23, smoothstep(0.02, 0.66, surfaceSun));
 
             // Preserve the underlying Earth color on face-on surface pixels. The reference
             // look gets its blue edge from the long tangent path, not from a uniform surface veil.
-            surfaceAtmosphereBlend = mix(0.045, mix(0.94, 0.34, referenceLookStrength), horizonBlend);
+            surfaceAtmosphereBlend = mix(
+                0.035,
+                mix(0.94, referenceHorizonScatter, referenceLookStrength),
+                horizonBlend
+            );
         }
     }
 
@@ -373,10 +400,11 @@ void main() {
         smoothstep(0.88, 0.978, 1.0 - viewFacing) *
         (1.0 - smoothstep(0.988, 1.0, 1.0 - viewFacing));
     float brightRim = smoothstep(0.30, 0.86, luma(finalColor));
+    float surfaceSunEdge = smoothstep(0.02, 0.66, dot(surfaceNormal, normalize(sunPosition - planetPosition)));
     finalColor = mix(
         finalColor,
         finalColor * vec3(0.42, 0.68, 1.06),
-        referenceSurfaceRim * brightRim * 0.065
+        referenceSurfaceRim * brightRim * mix(0.018, 0.04, surfaceSunEdge)
     );
     vec3 referenceLimb = referenceLimbComposite(
         sceneCameraPosition,
@@ -390,7 +418,7 @@ void main() {
     finalColor = mix(
         finalColor,
         finalColor * vec3(0.34, 0.62, 1.08),
-        referenceSurfaceRim * brightRim * 0.045
+        referenceSurfaceRim * brightRim * mix(0.014, 0.028, surfaceSunEdge)
     );
     vec3 gradedColor = applyUpstreamOutputLook(finalColor);
     finalColor = mix(

@@ -176,9 +176,9 @@ function updatePhysicalScaleUniforms(
     : (emphasis ? 18 : 14) * Math.max(composition.atmosphere.intensity, 0);
   material.uniforms.atmosphereStrength.value = composition.atmosphere.enabled ? 1 : 0;
   material.uniforms.referenceLookStrength.value = referenceLook ? 1 : 0;
-  material.uniforms.limbWhiteStrength.value = referenceLook ? (emphasis ? 0.055 : 0.018) : 0.46;
-  material.uniforms.limbBlueStrength.value = referenceLook ? (emphasis ? 0.86 : 0.68) : 0.78;
-  material.uniforms.limbShelfStrength.value = referenceLook ? (emphasis ? 0.38 : 0.24) : 0.54;
+  material.uniforms.limbWhiteStrength.value = referenceLook ? (emphasis ? 0.035 : 0.006) : 0.46;
+  material.uniforms.limbBlueStrength.value = referenceLook ? (emphasis ? 0.76 : 0.56) : 0.78;
+  material.uniforms.limbShelfStrength.value = referenceLook ? (emphasis ? 0.28 : 0.16) : 0.54;
 }
 
 function cameraRange(camera: Camera) {
