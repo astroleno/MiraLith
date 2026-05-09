@@ -1,5 +1,6 @@
 export { EarthMoonHero } from "./EarthMoonHero";
 export { EarthMoonScene } from "./EarthMoonScene";
+export { resolveLuBirthAtmospherePolicy } from "./atmospherePolicy";
 export { LandingAirglow } from "./LandingAirglow";
 export { LandingAtmosphere } from "./LandingAtmosphere";
 export { LandingAurora } from "./LandingAurora";
@@ -62,3 +63,9 @@ export type {
   LandingVisualDebugLayer,
   LuBirthProjectionFrame
 } from "./types";
+export type {
+  LandingAtmospherePolicy,
+  LuBirthAtmospherePolicyInput,
+  LuBirthAtmospherePolicyResult,
+  LuBirthAtmosphereRouteVariant
+} from "./atmospherePolicy";

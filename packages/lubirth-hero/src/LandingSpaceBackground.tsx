@@ -100,7 +100,8 @@ export function LandingSpaceBackground({
   }, [quality.tier, spaceBackground?.colorSpace, spaceBackground?.src]);
 
   const starGeometry = useMemo(() => {
-    const count = Math.round(quality.stars * (emphasis ? 0.78 : 0.36));
+    const textureBacked = Boolean(backgroundTexture);
+    const count = Math.round(quality.stars * (emphasis ? 0.58 : textureBacked ? 0.22 : 0.34));
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
 
@@ -118,7 +119,8 @@ export function LandingSpaceBackground({
       positions[i3 + 2] = Math.sin(theta) * band * radius;
 
       const cool = 0.68 + random(index + 143) * 0.22;
-      const brightness = random(index + 251) > 0.94 ? 0.82 : 0.34 + random(index + 271) * 0.28;
+      const rareBright = random(index + 251) > 0.975;
+      const brightness = rareBright ? 0.74 : 0.22 + random(index + 271) * 0.26;
       colors[i3] = brightness * cool;
       colors[i3 + 1] = brightness * (0.9 + cool * 0.12);
       colors[i3 + 2] = brightness * 1.12;
@@ -128,16 +130,18 @@ export function LandingSpaceBackground({
     geometry.setAttribute("position", new BufferAttribute(positions, 3));
     geometry.setAttribute("color", new BufferAttribute(colors, 3));
     return geometry;
-  }, [emphasis, quality.stars, quality.tier]);
+  }, [backgroundTexture, emphasis, quality.stars]);
 
   const starMaterial = useMemo(() => {
     return new PointsMaterial({
-      size: quality.tier === "high" ? 0.038 : 0.034,
+      size: backgroundTexture
+        ? quality.tier === "high" ? 0.018 : 0.015
+        : quality.tier === "high" ? 0.026 : 0.022,
       sizeAttenuation: true,
       vertexColors: true,
       color: new Color("#d8e8ff"),
       transparent: true,
-      opacity: backgroundTexture ? 0.06 : 0.34,
+      opacity: backgroundTexture ? 0.085 : 0.3,
       blending: AdditiveBlending,
       depthWrite: false,
       depthTest: false
@@ -158,10 +162,10 @@ export function LandingSpaceBackground({
         varying vec3 vDir;
 
         void main() {
-          float upperBlue = smoothstep(-0.22, 0.72, vDir.y);
-          float galacticHaze = exp(-pow((vDir.y - 0.18) * 3.4, 2.0)) * 0.42;
-          vec3 base = mix(vec3(0.0, 0.003, 0.009), vec3(0.006, 0.018, 0.04), upperBlue);
-          base += vec3(0.01, 0.022, 0.044) * galacticHaze;
+          float upperBlue = smoothstep(-0.18, 0.76, vDir.y);
+          float galacticHaze = exp(-pow((vDir.y - 0.12) * 3.1, 2.0)) * 0.42;
+          vec3 base = mix(vec3(0.0, 0.0012, 0.004), vec3(0.003, 0.007, 0.014), upperBlue);
+          base += vec3(0.0045, 0.0055, 0.0072) * galacticHaze;
           gl_FragColor = vec4(base, 1.0);
         }
       `,
@@ -179,12 +183,12 @@ export function LandingSpaceBackground({
     return new ShaderMaterial({
       uniforms: {
         map: { value: backgroundTexture },
-        exposure: { value: emphasis ? 1.55 : 0.64 },
-        hazeLift: { value: emphasis ? 0.18 : 0.018 },
-        starStrength: { value: emphasis ? 0.08 : 0.009 },
-        starDamp: { value: emphasis ? 0.24 : 0.9 },
-        textureStrength: { value: emphasis ? 0.16 : 0.018 },
-        colorCeiling: { value: emphasis ? 0.2 : 0.046 }
+        exposure: { value: emphasis ? 1.18 : 1.0 },
+        hazeLift: { value: emphasis ? 0.1 : 0.025 },
+        starStrength: { value: emphasis ? 0.026 : 0.018 },
+        starDamp: { value: emphasis ? 0.62 : 0.92 },
+        textureStrength: { value: emphasis ? 0.06 : 0.006 },
+        colorCeiling: { value: emphasis ? 0.14 : 0.088 }
       },
       vertexShader: `
         varying vec2 vUv;
@@ -208,18 +212,76 @@ export function LandingSpaceBackground({
         varying vec2 vUv;
         varying vec3 vDir;
 
+        float hash(vec2 p) {
+          p = fract(p * vec2(123.34, 456.21));
+          p += dot(p, p + 45.32);
+          return fract(p.x * p.y);
+        }
+
+        float noise(vec2 p) {
+          vec2 i = floor(p);
+          vec2 f = fract(p);
+          f = f * f * (3.0 - 2.0 * f);
+          float a = hash(i);
+          float b = hash(i + vec2(1.0, 0.0));
+          float c = hash(i + vec2(0.0, 1.0));
+          float d = hash(i + vec2(1.0, 1.0));
+          return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+        }
+
+        float fbm(vec2 p) {
+          float v = 0.0;
+          float a = 0.5;
+          for (int i = 0; i < 5; i++) {
+            v += noise(p) * a;
+            p = p * 2.07 + vec2(13.7, 4.3);
+            a *= 0.52;
+          }
+          return v;
+        }
+
         void main() {
           vec2 skyUv = vec2(vUv.x, clamp(vUv.y, 0.0, 1.0));
           vec3 tex = texture2D(map, skyUv).rgb;
           float luma = max(max(tex.r, tex.g), tex.b);
-          float haze = smoothstep(0.018, 0.22, luma);
-          float star = smoothstep(0.56, 0.94, luma);
-          vec3 deepSky = mix(vec3(0.0, 0.0028, 0.0075), vec3(0.006, 0.014, 0.028), smoothstep(-0.3, 0.75, vDir.y));
-          vec3 lifted = pow(max(tex, vec3(0.0)), vec3(0.62)) * exposure * (1.0 - star * starDamp);
-          vec3 coolHaze = lifted * (textureStrength + haze * hazeLift);
-          vec3 pinStars = vec3(0.76, 0.86, 1.0) * star * starStrength;
+          float textureHazeSource = min(luma, 0.18);
+          float highLuma = max(0.0, luma - textureHazeSource * 0.72);
+          float haze = smoothstep(0.04, 0.18, textureHazeSource);
+          float star = smoothstep(0.16, 0.52, highLuma) * smoothstep(0.64, 0.98, luma);
+          vec3 deepSky = mix(vec3(0.0, 0.00045, 0.0017), vec3(0.001, 0.0022, 0.0044), smoothstep(-0.3, 0.78, vDir.y));
+          float longitude = atan(vDir.z, vDir.x);
+          float wovenAxis =
+            vDir.y -
+            0.045 +
+            sin(longitude * 1.7 + 0.8) * 0.038 +
+            sin(longitude * 4.4 - 1.6) * 0.018;
+          float broadBand = exp(-pow(wovenAxis * 4.1, 2.0));
+          float narrowCore = exp(-pow(wovenAxis * 9.2, 2.0));
+          float dustNoise = fbm(vec2(longitude * 1.25 + 2.0, vDir.y * 4.2 - 0.6));
+          float dust = broadBand * smoothstep(0.24, 0.82, dustNoise);
+          float darkLane = exp(-pow((wovenAxis + 0.032) * 8.0, 2.0)) * smoothstep(0.34, 0.82, fbm(vec2(longitude * 2.2 - 1.0, vDir.y * 7.0 + 1.8)));
+          vec3 coolHaze = vec3(0.008, 0.012, 0.018) * haze * hazeLift * textureStrength * exposure;
+          vec3 milkyDust =
+            vec3(0.0018, 0.0024, 0.0042) * broadBand * (0.18 + dust * 0.42) +
+            vec3(0.006, 0.008, 0.014) * narrowCore * dust * 0.38;
+          milkyDust *= mix(1.0, 0.38, darkLane * 0.62);
+          vec2 starP = skyUv * vec2(1480.0, 740.0);
+          vec2 starCell = floor(starP);
+          vec2 starLocal = fract(starP) - 0.5;
+          float starSeed = hash(starCell);
+          float proceduralStar = step(0.9888, starSeed) * smoothstep(0.12, 0.0, length(starLocal));
+          vec2 brightStarP = skyUv * vec2(620.0, 310.0);
+          vec2 brightStarCell = floor(brightStarP);
+          vec2 brightStarLocal = fract(brightStarP) - 0.5;
+          float brightSeed = hash(brightStarCell + vec2(17.0, 23.0));
+          float brightStar = step(0.9958, brightSeed) * smoothstep(0.16, 0.0, length(brightStarLocal));
+          vec3 pinStars = vec3(0.72, 0.82, 1.0) * (
+            star * starStrength * 0.72 +
+            proceduralStar * 0.052 +
+            brightStar * 0.13
+          );
 
-          gl_FragColor = vec4(min(deepSky + coolHaze + pinStars, vec3(colorCeiling)), 1.0);
+          gl_FragColor = vec4(min(deepSky + coolHaze + milkyDust + pinStars, vec3(colorCeiling)), 1.0);
         }
       `,
       side: BackSide,

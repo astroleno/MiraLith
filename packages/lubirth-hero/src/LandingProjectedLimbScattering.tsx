@@ -150,22 +150,22 @@ function createLimbScatteringMaterial(composition: LandingComposition) {
         float cloudOcclusion = smoothstep(0.58, 0.86, fbm(vec2(angle * 18.0 + 1.4, 2.0))) *
           smoothstep(-0.8, 8.0, signedOutside) *
           (1.0 - smoothstep(18.0, 44.0, signedOutside)) *
-          0.34;
+          0.22;
         float airglowBreakup = smoothstep(0.46, 0.84, fbm(vec2(angle * 11.0 + 4.2, 7.0)));
 
         float brightCore = exp(-pow((lineCore - 1.45) / mix(5.2, 6.8, debugBoost), 2.0)) *
           (0.42 + day * 0.72) *
           tangentMask;
-        float whiteNeedle = brightCore * mix(0.014, 0.142, debugBoost);
+        float whiteNeedle = brightCore * mix(0.024, 0.142, debugBoost);
         float surfaceGlow = exp(-pow(max(glowOutside, 0.0) / mix(26.0, 34.0, debugBoost), 1.16)) *
           smoothstep(-1.6, 7.0, glowOutside) *
-          (0.05 + day * 0.068);
+          (0.076 + day * 0.112);
         float nearBlue = exp(-pow(max(glowOutside, 0.0) / mix(18.0, 24.0, debugBoost), 1.26)) *
-          (0.058 + day * 0.082) *
+          (0.074 + day * 0.106) *
           outsideMask;
         float blueThickness = exp(-pow(max(glowOutside - 1.8, 0.0) / mix(58.0, 98.0, debugBoost), 1.12)) *
           smoothstep(-1.0, 22.0, glowOutside) *
-          (0.048 + day * 0.066);
+          (0.06 + day * 0.086);
         float diffuseBlue = exp(-pow(max(glowOutside - 2.0, 0.0) / mix(138.0, 218.0, debugBoost), 1.22)) *
           smoothstep(0.0, 58.0, glowOutside) *
           (0.04 + day * 0.052);
@@ -183,26 +183,26 @@ function createLimbScatteringMaterial(composition: LandingComposition) {
         float outerCyan = smoothstep(22.0, mix(52.0, 74.0, debugBoost), glowOutside) *
           (1.0 - smoothstep(mix(110.0, 150.0, debugBoost), mix(192.0, 260.0, debugBoost), glowOutside)) *
           mix(0.01, 0.024, debugBoost);
-        surfaceGlow *= mix(0.58, 1.0, debugBoost);
-        nearBlue *= mix(0.62, 1.0, debugBoost);
-        blueThickness *= mix(0.46, 1.0, debugBoost);
+        surfaceGlow *= mix(0.92, 1.0, debugBoost);
+        nearBlue *= mix(0.86, 1.0, debugBoost);
+        blueThickness *= mix(0.64, 1.0, debugBoost);
         diffuseBlue *= mix(0.24, 1.0, debugBoost);
         wideBloom *= mix(0.16, 1.0, debugBoost);
         oxygenGreen *= mix(0.55 * airglowBreakup, 1.0, debugBoost);
         amberTwilight *= mix(0.55, 1.0, debugBoost);
         outerCyan *= mix(0.62, 1.0, debugBoost);
         whiteNeedle *= 1.0 - cloudOcclusion;
-        surfaceGlow *= 1.0 - cloudOcclusion * 0.78;
-        nearBlue *= 1.0 - cloudOcclusion * 0.72;
-        blueThickness *= 1.0 - cloudOcclusion * 0.58;
+        surfaceGlow *= 1.0 - cloudOcclusion * 0.48;
+        nearBlue *= 1.0 - cloudOcclusion * 0.42;
+        blueThickness *= 1.0 - cloudOcclusion * 0.32;
         diffuseBlue *= 1.0 - cloudOcclusion * 0.38;
         wideBloom *= 1.0 - cloudOcclusion * 0.22;
 
         vec3 color =
           vec3(1.05, 1.18, 1.32) * whiteNeedle +
-          vec3(0.26, 0.54, 0.92) * surfaceGlow +
-          vec3(0.2, 0.5, 0.94) * nearBlue +
-          vec3(0.08, 0.24, 0.62) * blueThickness +
+          vec3(0.34, 0.62, 0.96) * surfaceGlow +
+          vec3(0.24, 0.52, 0.92) * nearBlue +
+          vec3(0.1, 0.28, 0.66) * blueThickness +
           vec3(0.03, 0.12, 0.34) * diffuseBlue * 1.08 +
           vec3(0.014, 0.052, 0.16) * wideBloom * 1.18 +
           vec3(0.16, 0.66, 0.43) * oxygenGreen +
@@ -211,8 +211,8 @@ function createLimbScatteringMaterial(composition: LandingComposition) {
 
         float alpha = whiteNeedle + surfaceGlow + nearBlue + blueThickness + diffuseBlue + wideBloom + oxygenGreen + amberTwilight + outerCyan;
         float arcMask = upperArc * sideWindow;
-        float productionLimbAttenuation = mix(0.64, 1.0, debugBoost);
-        float gain = intensity * (0.82 + closeStage * 0.12) * (1.0 + debugBoost * 0.18) * productionLimbAttenuation;
+        float productionLimbAttenuation = mix(1.0, 1.0, debugBoost);
+        float gain = intensity * (0.96 + closeStage * 0.22) * (1.0 + debugBoost * 0.18) * productionLimbAttenuation;
         alpha *= arcMask * outsideMask * pathLock * gain;
         color *= arcMask * outsideMask * pathLock * gain;
 
@@ -220,7 +220,7 @@ function createLimbScatteringMaterial(composition: LandingComposition) {
           discard;
         }
 
-        gl_FragColor = vec4(min(color, vec3(1.8)), clamp(alpha, 0.0, mix(0.16, 0.62, debugBoost)));
+        gl_FragColor = vec4(min(color, vec3(1.8)), clamp(alpha, 0.0, mix(0.3, 0.62, debugBoost)));
       }
     `,
     transparent: true,
@@ -244,6 +244,7 @@ export function LandingProjectedLimbScattering({
   const { camera, size } = useThree();
   const material = useMemo(() => createLimbScatteringMaterial(composition), [composition]);
   const enabled =
+    emphasis &&
     composition.atmosphere.enabled &&
     composition.atmosphere.intensity > 0 &&
     quality.tier !== "fallback";

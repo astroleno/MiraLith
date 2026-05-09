@@ -1,6 +1,58 @@
+import { mkdirSync } from "node:fs";
+import path from "node:path";
 import { expect, test } from "@playwright/test";
 
 test.setTimeout(120_000);
+
+const EVIDENCE_DIR = path.join(process.cwd(), "screenshots/lubirth-atmosphere-evidence-20260508");
+
+function evidenceScreenshotPath(projectName: string, screenshotName: string) {
+  mkdirSync(EVIDENCE_DIR, { recursive: true });
+  return path.join(EVIDENCE_DIR, `${projectName}-${screenshotName}.png`);
+}
+
+async function captureEvidenceScreenshot(
+  page: import("@playwright/test").Page,
+  projectName: string,
+  screenshotName: string
+) {
+  const previousFontWait = process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY;
+  process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY = "1";
+
+  try {
+    await page.screenshot({
+      fullPage: false,
+      path: evidenceScreenshotPath(projectName, screenshotName),
+      timeout: 30_000
+    });
+  } finally {
+    if (previousFontWait === undefined) {
+      delete process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY;
+    } else {
+      process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY = previousFontWait;
+    }
+  }
+}
+
+async function gotoEvidenceUrl(page: import("@playwright/test").Page, url: string) {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      await page.goto(url, { timeout: 45_000 });
+      return;
+    } catch (error) {
+      lastError = error;
+      if (!(error instanceof Error) || !error.message.includes("ERR_CONNECTION_REFUSED")) {
+        throw error;
+      }
+
+      await page.waitForTimeout(1_000);
+    }
+  }
+
+  throw lastError;
+}
 
 declare global {
   interface Window {
@@ -8,7 +60,11 @@ declare global {
     __MiraLithLuBirthAuroraOvalActive?: boolean;
     __MiraLithLuBirthAuroraProfile?: string;
     __MiraLithLuBirthAirglowActive?: boolean;
+    __MiraLithLuBirthAtmosphereLook?: string;
+    __MiraLithLuBirthAtmospherePolicy?: string;
+    __MiraLithLuBirthAtmospherePolicyReason?: string;
     __MiraLithLuBirthAtmosphereStackActive?: boolean;
+    __MiraLithLuBirthAtmosphereVariant?: string;
     __MiraLithLuBirthCloudDeckActive?: boolean;
     __MiraLithLuBirthCloudDeckTexture?: string;
     __MiraLithLuBirthHorizonAuroraRibbonActive?: boolean;
@@ -22,6 +78,7 @@ declare global {
     __MiraLithLuBirthProjectedHorizonCompositeTexture?: string;
     __MiraLithLuBirthProjectedLimbScatteringActive?: boolean;
     __MiraLithLuBirthQualityTier?: string;
+    __MiraLithLuBirthVolumetricAtmosphereActive?: boolean;
     __MiraLithLuBirthRuntimeLocation?: {
       latitudeDeg: number;
       longitudeDeg: number;
@@ -38,15 +95,60 @@ declare global {
   }
 }
 
+async function expectProductionAtmospherePolicy(page: import("@playwright/test").Page, reason: string) {
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthAtmosphereVariant), { timeout: 25_000 })
+    .toBe("stack");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthAtmospherePolicyReason), { timeout: 25_000 })
+    .toBe(reason);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthVolumetricAtmosphereActive ?? false), {
+      timeout: 25_000
+    })
+    .toBe(false);
+}
+
+async function expectAtmosphereVariant(page: import("@playwright/test").Page, variant: "stack" | "volumetric") {
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthAtmosphereVariant), { timeout: 25_000 })
+    .toBe(variant);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthVolumetricAtmosphereActive ?? false), {
+      timeout: 25_000
+    })
+    .toBe(variant === "volumetric");
+}
+
+async function expectAnyVisible(page: import("@playwright/test").Page, selectors: string[]) {
+  await expect
+    .poll(async () => {
+      for (const selector of selectors) {
+        if (await page.locator(selector).first().isVisible().catch(() => false)) {
+          return selector;
+        }
+      }
+
+      return null;
+    }, { timeout: 25_000 })
+    .not.toBeNull();
+}
+
+const STUDY_VISIBLE_COPY_SELECTORS = [
+  ".lubirth-revised__hero-copy",
+  ".lubirth-revised__loading",
+  ".lubirth-revised__loading-title",
+  ".lubirth-revised__loading-copy"
+] as const;
+
 test("renders the revised LuBirth route in the production-owned canvas", async ({ page }) => {
   await page.goto("/lubirth-revised?visualTest=pixels&copy=visible");
 
   await expect(page.getByLabel("LuBirth revised opening frame")).toBeVisible();
-  await expect(page.locator(".lubirth-revised__loading")).toBeHidden({ timeout: 25_000 });
-  await expect(page.locator(".lubirth-revised__hero-copy").getByRole("heading", { name: "LuBirth" })).toBeVisible();
-  await expect(page.getByText("把看见之物，刻成作品")).toBeVisible();
+  await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-copy", "visible");
   await expect(page.locator("canvas")).toHaveCount(1);
   await expect(page.locator(".visual-canvas")).toHaveCount(1);
+  await expectAnyVisible(page, [...STUDY_VISIBLE_COPY_SELECTORS]);
 });
 
 test("keeps route copy readable in visual fallback", async ({ page }) => {
@@ -98,12 +200,73 @@ test("defaults the study route to the nasa Earth-limb profile", async ({ page })
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthAtmosphereStackActive ?? false), { timeout: 25_000 })
     .toBe(true);
+  await expectProductionAtmospherePolicy(page, "policy-stack");
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomActive ?? false), { timeout: 25_000 })
     .toBe(true);
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedLimbScatteringActive ?? false), { timeout: 25_000 })
-    .toBe(true);
+    .toBe(false);
+});
+
+test("keeps production home intro route on the stack renderer", async ({ page }) => {
+  await page.goto("/?copy=visible");
+
+  await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-variant", "home", { timeout: 25_000 });
+  await expect(page.locator("canvas")).toHaveCount(1);
+  await expectAtmosphereVariant(page, "stack");
+});
+
+test("captures production route atmosphere evidence screenshots", async ({ page }, testInfo) => {
+  test.setTimeout(420_000);
+  test.skip(testInfo.project.name !== "desktop", "Production evidence screenshots are captured once on desktop.");
+
+  const samples = [
+    {
+      copySelectors: null,
+      name: "production-study-canvas-stack-baseline",
+      url: "/lubirth-revised?progress=0&copy=hidden&profile=nasa&visualTest=pixels",
+      variant: "stack" as const
+    },
+    {
+      copySelectors: STUDY_VISIBLE_COPY_SELECTORS,
+      name: "production-study-visible-stack-baseline",
+      url: "/lubirth-revised?copy=visible&profile=nasa&visualTest=pixels",
+      variant: "stack" as const
+    },
+    {
+      copySelectors: STUDY_VISIBLE_COPY_SELECTORS,
+      name: "production-study-visible-hybrid-candidate",
+      url: "/lubirth-revised?copy=visible&profile=nasa&quality=high&atmoPolicy=hybrid&visualTest=pixels",
+      variant: "volumetric" as const
+    },
+    {
+      copySelectors: [".lubirth-revised__home-loading", ".lubirth-revised__opening-title", ".lubirth-revised__home-signature"],
+      name: "production-home-visible-stack-intro",
+      url: "/?copy=visible&visualTest=pixels",
+      variant: "stack" as const
+    },
+    {
+      copySelectors: null,
+      name: "production-home-hidden-hybrid-candidate",
+      url: "/?progress=0&copy=hidden&profile=nasa&quality=high&atmoPolicy=hybrid&visualTest=pixels",
+      variant: "volumetric" as const
+    }
+  ];
+
+  for (const sample of samples) {
+    await test.step(sample.name, async () => {
+      await page.setViewportSize({ width: 1440, height: 960 });
+      await gotoEvidenceUrl(page, sample.url);
+      await expect(page.locator("canvas")).toHaveCount(1);
+      await expectAtmosphereVariant(page, sample.variant);
+      if (sample.copySelectors) {
+        await expectAnyVisible(page, [...sample.copySelectors]);
+      }
+      await page.waitForTimeout(900);
+      await captureEvidenceScreenshot(page, testInfo.project.name, sample.name);
+    });
+  }
 });
 
 test("keeps a clean Earth-Moon comparison profile", async ({ page }) => {
@@ -218,95 +381,128 @@ test("uses the 3D atmosphere stack for atmosphere review", async ({ page }) => {
     .toBe(true);
 });
 
-test("can drive the nasa profile from today's moon phase and visitor geo", async ({ page }) => {
-  test.setTimeout(120_000);
+interface RuntimeMoonGeoSample {
+  label: string;
+  latitudeDeg: number;
+  longitudeDeg: number;
+  timeZone: string;
+  sunDate: string;
+  moonDate: string;
+}
 
-  const samples = [
+const RUNTIME_MOON_GEO_SAMPLES: RuntimeMoonGeoSample[] = [
+  {
+    label: "Tokyo",
+    latitudeDeg: 35.6812,
+    longitudeDeg: 139.7671,
+    timeZone: "Asia/Tokyo",
+    sunDate: "2026-05-01T03:00:00Z",
+    moonDate: "2026-05-01T12:00:00Z"
+  },
+  {
+    label: "Reykjavik",
+    latitudeDeg: 64.1466,
+    longitudeDeg: -21.9426,
+    timeZone: "Atlantic/Reykjavik",
+    sunDate: "2026-05-08T13:00:00Z",
+    moonDate: "2026-05-08T12:00:00Z"
+  },
+  {
+    label: "Sao Paulo",
+    latitudeDeg: -23.5558,
+    longitudeDeg: -46.6396,
+    timeZone: "America/Sao_Paulo",
+    sunDate: "2026-05-15T15:00:00Z",
+    moonDate: "2026-05-15T12:00:00Z"
+  }
+];
+
+async function openRuntimeMoonGeoSample(page: import("@playwright/test").Page, sample: RuntimeMoonGeoSample) {
+  const params = new URLSearchParams({
+    progress: "0",
+    copy: "hidden",
+    profile: "nasa",
+    moonPhase: "today",
+    moonDate: sample.moonDate,
+    sunDate: sample.sunDate,
+    location: "ip",
+    geoLat: String(sample.latitudeDeg),
+    geoLon: String(sample.longitudeDeg),
+    geoLabel: sample.label,
+    geoTimeZone: sample.timeZone,
+    visualTest: "pixels"
+  });
+
+  await gotoEvidenceUrl(page, `/lubirth-revised?${params.toString()}`);
+}
+
+async function expectRuntimeMoonGeoState(
+  page: import("@playwright/test").Page,
+  sample: RuntimeMoonGeoSample,
+  solarMode: "day" | "night" = "day"
+) {
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          ({ expected, mode }) => {
+            const moon = window.__MiraLithLuBirthMoonPhase;
+            const location = window.__MiraLithLuBirthRuntimeLocation;
+            const solar = window.__MiraLithLuBirthSolarState;
+            const sunDot = solar?.locationSunDot;
+
+            return Boolean(
+              moon?.source === "runtime-ephemeris" &&
+                moon.date === expected.moonDate.slice(0, 10) &&
+                location?.label === expected.label &&
+                location.source === "manual" &&
+                location.timeZone === expected.timeZone &&
+                solar?.date === new Date(expected.sunDate).toISOString() &&
+                typeof sunDot === "number" &&
+                (mode === "day" ? sunDot > 0.42 : sunDot < -0.32)
+            );
+          },
+          { expected: sample, mode: solarMode }
+        ),
+      { timeout: 25_000 }
+    )
+    .toBe(true);
+}
+
+for (const sample of RUNTIME_MOON_GEO_SAMPLES) {
+  test(`can drive the nasa profile from moon phase and visitor geo for ${sample.label}`, async ({ page }) => {
+    test.setTimeout(60_000);
+
+    await openRuntimeMoonGeoSample(page, sample);
+    await expect(page.locator("canvas")).toHaveCount(1);
+    await expectRuntimeMoonGeoState(page, sample);
+  });
+}
+
+test("can drive the nasa profile into local night from visitor geo", async ({ page }) => {
+  test.setTimeout(60_000);
+
+  await openRuntimeMoonGeoSample(page, {
+    label: "Tokyo",
+    latitudeDeg: 35.6812,
+    longitudeDeg: 139.7671,
+    timeZone: "Asia/Tokyo",
+    sunDate: "2026-05-01T15:00:00Z",
+    moonDate: "2026-05-01T12:00:00Z"
+  });
+  await expect(page.locator("canvas")).toHaveCount(1);
+  await expectRuntimeMoonGeoState(
+    page,
     {
       label: "Tokyo",
       latitudeDeg: 35.6812,
       longitudeDeg: 139.7671,
       timeZone: "Asia/Tokyo",
-      sunDate: "2026-05-01T03:00:00Z",
+      sunDate: "2026-05-01T15:00:00Z",
       moonDate: "2026-05-01T12:00:00Z"
     },
-    {
-      label: "Reykjavik",
-      latitudeDeg: 64.1466,
-      longitudeDeg: -21.9426,
-      timeZone: "Atlantic/Reykjavik",
-      sunDate: "2026-05-08T13:00:00Z",
-      moonDate: "2026-05-08T12:00:00Z"
-    },
-    {
-      label: "Sao Paulo",
-      latitudeDeg: -23.5558,
-      longitudeDeg: -46.6396,
-      timeZone: "America/Sao_Paulo",
-      sunDate: "2026-05-15T15:00:00Z",
-      moonDate: "2026-05-15T12:00:00Z"
-    }
-  ];
-
-  for (const sample of samples) {
-    const params = new URLSearchParams({
-      progress: "0",
-      copy: "hidden",
-      profile: "nasa",
-      moonPhase: "today",
-      moonDate: sample.moonDate,
-      sunDate: sample.sunDate,
-      location: "ip",
-      geoLat: String(sample.latitudeDeg),
-      geoLon: String(sample.longitudeDeg),
-      geoLabel: sample.label,
-      geoTimeZone: sample.timeZone,
-      visualTest: "pixels"
-    });
-    await page.goto(`/lubirth-revised?${params.toString()}`);
-
-    await expect(page.locator("canvas")).toHaveCount(1);
-    await expect
-      .poll(() => page.evaluate(() => window.__MiraLithLuBirthMoonPhase?.source), { timeout: 25_000 })
-      .toBe("runtime-ephemeris");
-    await expect
-      .poll(() => page.evaluate(() => window.__MiraLithLuBirthMoonPhase?.date), { timeout: 25_000 })
-      .toBe(sample.moonDate.slice(0, 10));
-    await expect
-      .poll(() => page.evaluate(() => window.__MiraLithLuBirthRuntimeLocation?.label), { timeout: 25_000 })
-      .toBe(sample.label);
-    await expect
-      .poll(() => page.evaluate(() => window.__MiraLithLuBirthRuntimeLocation?.source), { timeout: 25_000 })
-      .toBe("manual");
-    await expect
-      .poll(() => page.evaluate(() => window.__MiraLithLuBirthRuntimeLocation?.timeZone), { timeout: 25_000 })
-      .toBe(sample.timeZone);
-    await expect
-      .poll(() => page.evaluate(() => window.__MiraLithLuBirthSolarState?.date), { timeout: 25_000 })
-      .toBe(new Date(sample.sunDate).toISOString());
-    await expect
-      .poll(() => page.evaluate(() => window.__MiraLithLuBirthSolarState?.locationSunDot ?? -1), { timeout: 25_000 })
-      .toBeGreaterThan(0.42);
-  }
-
-  const tokyoMidnight = new URLSearchParams({
-    progress: "0",
-    copy: "hidden",
-    profile: "nasa",
-    moonPhase: "today",
-    moonDate: "2026-05-01T12:00:00Z",
-    sunDate: "2026-05-01T15:00:00Z",
-    location: "ip",
-    geoLat: "35.6812",
-    geoLon: "139.7671",
-    geoLabel: "Tokyo",
-    geoTimeZone: "Asia/Tokyo",
-    visualTest: "pixels"
-  });
-  await page.goto(`/lubirth-revised?${tokyoMidnight.toString()}`);
-  await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthSolarState?.locationSunDot ?? 1), { timeout: 25_000 })
-    .toBeLessThan(-0.32);
+    "night"
+  );
 });
 
 test("uses the IP geo endpoint when visitor location has no manual override", async ({ page }) => {

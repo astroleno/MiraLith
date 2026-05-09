@@ -1,11 +1,46 @@
+import { mkdirSync } from "node:fs";
+import path from "node:path";
 import { expect, test } from "@playwright/test";
 
 test.setTimeout(120_000);
 
+const EVIDENCE_DIR = path.join(process.cwd(), "screenshots/lubirth-atmosphere-evidence-20260508");
+
+function evidenceScreenshotPath(projectName: string, screenshotName: string) {
+  mkdirSync(EVIDENCE_DIR, { recursive: true });
+  return path.join(EVIDENCE_DIR, `${projectName}-${screenshotName}.png`);
+}
+
+async function captureEvidenceScreenshot(
+  page: import("@playwright/test").Page,
+  projectName: string,
+  screenshotName: string
+) {
+  const previousFontWait = process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY;
+  process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY = "1";
+
+  try {
+    await page.screenshot({
+      fullPage: false,
+      path: evidenceScreenshotPath(projectName, screenshotName),
+      timeout: 30_000
+    });
+  } finally {
+    if (previousFontWait === undefined) {
+      delete process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY;
+    } else {
+      process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY = previousFontWait;
+    }
+  }
+}
+
 declare global {
   interface Window {
+    __MiraLithLuBirthAtmospherePolicy?: string;
+    __MiraLithLuBirthAtmospherePolicyReason?: string;
     __MiraLithLuBirthAtmosphereStackActive?: boolean;
     __MiraLithLuBirthAtmosphereVariant?: string;
+    __MiraLithLuBirthAtmosphereLook?: string;
     __MiraLithLuBirthRuntimeLocation?: unknown;
     __MiraLithLuBirthVolumetricAtmosphereActive?: boolean;
     __MiraLithLuBirthVolumetricAtmosphereQuality?: string;
@@ -34,6 +69,12 @@ async function expectStackActive(page: import("@playwright/test").Page, active: 
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthAtmosphereStackActive ?? false), { timeout: 25_000 })
     .toBe(active);
+}
+
+async function expectAtmospherePolicyReason(page: import("@playwright/test").Page, reason: string) {
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthAtmospherePolicyReason), { timeout: 25_000 })
+    .toBe(reason);
 }
 
 async function openSpike(page: import("@playwright/test").Page, params: Record<string, string>) {
@@ -94,19 +135,21 @@ async function sampleCanvasLuminance(page: import("@playwright/test").Page) {
 }
 
 test("atmo=stack activates the existing atmosphere stack only", async ({ page }) => {
-  await openSpike(page, { atmo: "stack", quality: "high" });
+  await openSpike(page, { atmo: "stack", look: "lubirth", quality: "high" });
 
   await expectSpikeCanvas(page);
   await expectAtmosphereVariant(page, "stack");
+  await expectAtmospherePolicyReason(page, "policy-stack");
   await expectStackActive(page, true);
   await expectVolumetricActive(page, false);
 });
 
 test("atmo=volumetric activates the Three volumetric atmosphere pass only", async ({ page }) => {
-  await openSpike(page, { atmo: "volumetric", quality: "high" });
+  await openSpike(page, { atmo: "volumetric", look: "lubirth", quality: "high" });
 
   await expectSpikeCanvas(page);
   await expectAtmosphereVariant(page, "volumetric");
+  await expectAtmospherePolicyReason(page, "spike-volumetric-review");
   await expectStackActive(page, false);
   await expectVolumetricActive(page, true);
   await expect
@@ -118,7 +161,7 @@ test("volumetric output keeps the near-earth frame visible", async ({ page }, te
   test.skip(testInfo.project.name !== "desktop", "Pixel luminance smoke test runs once on desktop.");
 
   for (const quality of ["high", "medium"]) {
-    await openSpike(page, { atmo: "volumetric", quality, progress: "0" });
+    await openSpike(page, { atmo: "volumetric", look: "lubirth", quality, progress: "0" });
     await expectAtmosphereVariant(page, "volumetric");
     await expectVolumetricActive(page, true);
     await page.waitForTimeout(800);
@@ -154,10 +197,11 @@ test("atmo=split renders isolated stack and volumetric canvases", async ({ page 
 });
 
 test("low quality volumetric requests fall back to the atmosphere stack", async ({ page }) => {
-  await openSpike(page, { atmo: "volumetric", quality: "low" });
+  await openSpike(page, { atmo: "volumetric", look: "lubirth", quality: "low" });
 
   await expectSpikeCanvas(page);
   await expectAtmosphereVariant(page, "stack");
+  await expectAtmospherePolicyReason(page, "quality-low-stack");
   await expectStackActive(page, true);
   await expectVolumetricActive(page, false);
 });
@@ -168,16 +212,24 @@ test("mobile landscape only enables volumetric when high quality is explicit", a
   await openSpike(page, { atmo: "volumetric" });
   await expectSpikeCanvas(page);
   await expectAtmosphereVariant(page, "stack");
+  await expectAtmospherePolicyReason(page, "quality-low-stack");
+  await expectVolumetricActive(page, false);
+
+  await openSpike(page, { atmo: "volumetric", quality: "medium" });
+  await expectSpikeCanvas(page);
+  await expectAtmosphereVariant(page, "stack");
+  await expectAtmospherePolicyReason(page, "mobile-landscape-safe-stack");
   await expectVolumetricActive(page, false);
 
   await openSpike(page, { atmo: "volumetric", quality: "high" });
   await expectSpikeCanvas(page);
   await expectAtmosphereVariant(page, "volumetric");
+  await expectAtmospherePolicyReason(page, "spike-volumetric-review");
   await expectVolumetricActive(page, true);
 });
 
-test("captures volumetric atmosphere review screenshots", async ({ page }, testInfo) => {
-  test.setTimeout(300_000);
+test("captures atmosphere decision review screenshots", async ({ page }, testInfo) => {
+  test.setTimeout(420_000);
   test.skip(
     testInfo.project.name !== "desktop" && testInfo.project.name !== "mobile-landscape",
     "Screenshot artifacts are captured on desktop and mobile landscape."
@@ -186,49 +238,106 @@ test("captures volumetric atmosphere review screenshots", async ({ page }, testI
   const samples = testInfo.project.name === "desktop"
     ? [
         {
-          name: "desktop-high-progress0",
-          params: { atmo: "volumetric", quality: "high", progress: "0" },
+          canvasCount: 1,
+          expectedVariant: "stack",
+          name: "desktop-stack-high-progress0",
+          params: { atmo: "stack", look: "lubirth", quality: "high", progress: "0" },
           viewport: { width: 1440, height: 960 }
         },
         {
-          name: "desktop-high-progress05",
-          params: { atmo: "volumetric", quality: "high", progress: "0.5" },
+          canvasCount: 1,
+          expectedVariant: "stack",
+          name: "desktop-stack-high-progress05",
+          params: { atmo: "stack", look: "lubirth", quality: "high", progress: "0.5" },
           viewport: { width: 1440, height: 960 }
         },
         {
-          name: "desktop-high-progress1",
-          params: { atmo: "volumetric", quality: "high", progress: "1" },
+          canvasCount: 1,
+          expectedVariant: "stack",
+          name: "desktop-stack-high-progress1",
+          params: { atmo: "stack", look: "lubirth", quality: "high", progress: "1" },
           viewport: { width: 1440, height: 960 }
         },
         {
-          name: "desktop-high-debug-atmosphere",
-          params: { atmo: "volumetric", debug: "atmosphere", quality: "high", progress: "0" },
+          canvasCount: 1,
+          expectedVariant: "volumetric",
+          name: "desktop-volumetric-high-progress0",
+          params: { atmo: "volumetric", look: "lubirth", quality: "high", progress: "0" },
           viewport: { width: 1440, height: 960 }
         },
         {
-          name: "laptop-medium-progress0",
-          params: { atmo: "volumetric", quality: "medium", progress: "0" },
+          canvasCount: 1,
+          expectedVariant: "volumetric",
+          name: "desktop-volumetric-high-progress05",
+          params: { atmo: "volumetric", look: "lubirth", quality: "high", progress: "0.5" },
+          viewport: { width: 1440, height: 960 }
+        },
+        {
+          canvasCount: 1,
+          expectedVariant: "volumetric",
+          name: "desktop-volumetric-high-progress1",
+          params: { atmo: "volumetric", look: "lubirth", quality: "high", progress: "1" },
+          viewport: { width: 1440, height: 960 }
+        },
+        {
+          canvasCount: 2,
+          name: "desktop-split-high-progress0",
+          params: { atmo: "split", look: "lubirth", quality: "high", progress: "0" },
+          viewport: { width: 1440, height: 960 }
+        },
+        {
+          canvasCount: 1,
+          expectedVariant: "volumetric",
+          name: "laptop-volumetric-medium-progress0",
+          params: { atmo: "volumetric", look: "lubirth", quality: "medium", progress: "0" },
           viewport: { width: 1280, height: 800 }
+        },
+        {
+          canvasCount: 1,
+          expectedVariant: "stack",
+          name: "desktop-volumetric-low-fallback",
+          params: { atmo: "volumetric", look: "lubirth", quality: "low", progress: "0" },
+          viewport: { width: 1440, height: 960 }
         }
       ]
     : [
         {
+          canvasCount: 1,
+          expectedVariant: "stack",
+          name: "mobile-landscape-auto-fallback",
+          params: { atmo: "volumetric", look: "lubirth", progress: "0" },
+          viewport: { width: 915, height: 412 }
+        },
+        {
+          canvasCount: 1,
+          expectedVariant: "stack",
+          name: "mobile-landscape-medium-fallback",
+          params: { atmo: "volumetric", look: "lubirth", quality: "medium", progress: "0" },
+          viewport: { width: 915, height: 412 }
+        },
+        {
+          canvasCount: 1,
+          expectedVariant: "volumetric",
           name: "mobile-landscape-high-progress0",
-          params: { atmo: "volumetric", quality: "high", progress: "0" },
+          params: { atmo: "volumetric", look: "lubirth", quality: "high", progress: "0" },
           viewport: { width: 915, height: 412 }
         }
       ];
 
   for (const sample of samples) {
-    await page.setViewportSize(sample.viewport);
-    await openSpike(page, sample.params);
-    await expectSpikeCanvas(page);
-    await expectAtmosphereVariant(page, "volumetric");
-    await expectVolumetricActive(page, true);
-    await page.waitForTimeout(600);
-    await page.screenshot({
-      fullPage: true,
-      path: testInfo.outputPath(`${sample.name}.png`)
+    await test.step(sample.name, async () => {
+      await page.setViewportSize(sample.viewport);
+      await openSpike(page, sample.params);
+      await expectSpikeCanvas(page, sample.canvasCount);
+      if (sample.params.atmo === "split") {
+        await expect(page.locator('[data-atmo-pane="stack"] canvas')).toHaveCount(1);
+        await expect(page.locator('[data-atmo-pane="volumetric"] canvas')).toHaveCount(1);
+      } else if (sample.expectedVariant) {
+        await expectAtmosphereVariant(page, sample.expectedVariant as "stack" | "volumetric");
+        await expectVolumetricActive(page, sample.expectedVariant === "volumetric");
+      }
+      await page.waitForTimeout(600);
+      await captureEvidenceScreenshot(page, testInfo.project.name, sample.name);
     });
   }
 });

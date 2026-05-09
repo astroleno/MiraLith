@@ -155,8 +155,11 @@ function ScenePane({
           cloudDeckEnabled
           visualDebugLayer={config.visualDebugLayer}
           renderProfile={config.renderProfile}
+          atmospherePolicy={atmosphereVariant}
           atmosphereVariant={atmosphereVariant}
           atmosphereLook={config.atmosphereLook}
+          routeVariant="spike"
+          productionSurface={false}
         />
       </VisualCanvas>
     </section>

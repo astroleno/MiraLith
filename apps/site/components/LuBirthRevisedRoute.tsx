@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import type { LandingRenderProfile, LandingVisualDebugLayer, LuBirthProjectionFrame } from "@miralith/lubirth-hero";
+import type {
+  LandingAtmospherePolicy,
+  LandingRenderProfile,
+  LandingVisualDebugLayer,
+  LuBirthProjectionFrame
+} from "@miralith/lubirth-hero";
 import { VisualCanvas } from "../visual/VisualCanvas";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
 import { LuBirthSceneSlot } from "../visual/scenes/LuBirthSceneSlot";
@@ -27,10 +32,8 @@ const SCROLL_TRIGGER_ID_PREFIX = "miralith-lubirth-opening";
 const LUBIRTH_PROJECT_INTRO_ANCHOR_ID = "lubirth-project-intro-anchor";
 const HOME_PROJECTION_FALLBACK_DEADLINE_MS = 900;
 const HOME_VISUAL_GRACE_DEADLINE_MS = 700;
-const HOME_LOADING_REVEAL_DELAY_MS = 1300;
 const HOME_LOADING_SCROLL_DELAY_MS = 3900;
-const HOME_LOADING_HARD_COMPLETE_DEADLINE_MS = 5200;
-const HOME_LOADING_MIN_REVEAL_AFTER_READY_MS = 900;
+const HOME_LOADING_HARD_COMPLETE_DEADLINE_MS = 4550;
 const HOME_LOADING_MIN_COMPLETE_AFTER_READY_MS = 3000;
 const HOME_PROJECT_ACCESS_PROGRESS = 0.34;
 const HOME_RAIL_ACCESS_PROGRESS = 0.52;
@@ -42,8 +45,10 @@ type HomeVisualReadySource = "day-texture" | "grace";
 type LuBirthRevisedRouteVariant = "home" | "study";
 
 interface ScreenshotDebugOptions {
+  atmospherePolicy: LandingAtmospherePolicy;
   fixedProgress: number | null;
   copyHidden: boolean;
+  visualPixelMode: boolean;
   visualDebugLayer: LandingVisualDebugLayer;
   renderProfile: LandingRenderProfile;
 }
@@ -55,8 +60,10 @@ interface LuBirthRevisedRouteProps {
 }
 
 const DEFAULT_SCREENSHOT_DEBUG_OPTIONS: ScreenshotDebugOptions = {
+  atmospherePolicy: "stack",
   fixedProgress: null,
   copyHidden: false,
+  visualPixelMode: false,
   visualDebugLayer: "all",
   renderProfile: "nasa"
 };
@@ -169,6 +176,11 @@ function readScreenshotDebugOptions(defaultCopyHidden = false): ScreenshotDebugO
   const visualPixelMode = params.get("visualTest") === "pixels";
   const progressParam = params.get("progress");
   const parsedProgress = progressParam === null ? Number.NaN : Number.parseFloat(progressParam);
+  const policyParam = visualPixelMode ? params.get("atmoPolicy") : null;
+  const atmospherePolicy: LandingAtmospherePolicy =
+    policyParam === "volumetric" || policyParam === "hybrid" || policyParam === "stack"
+      ? policyParam
+      : "stack";
   const debugParam = params.get("debug");
   const visualDebugLayer: LandingVisualDebugLayer =
     debugParam === "stars" ||
@@ -200,10 +212,12 @@ function readScreenshotDebugOptions(defaultCopyHidden = false): ScreenshotDebugO
             : "nasa";
 
   return {
+    atmospherePolicy,
     fixedProgress: Number.isFinite(parsedProgress) ? clamp01(parsedProgress) : null,
     copyHidden: copyMode === "visible"
       ? false
       : defaultCopyHidden || copyMode === "hidden" || (visualPixelMode && copyMode !== "visible"),
+    visualPixelMode,
     visualDebugLayer,
     renderProfile: profileFromQuery ?? profileFromDebug
   };
@@ -340,7 +354,6 @@ function HomeLoadingOverlay({
           onError={onMemoryImageReady}
         />
       </div>
-      <div className="lubirth-revised__home-loading-helmet" aria-hidden="true" />
 
       <div className="lubirth-revised__home-loading-mark">
         <p className="lubirth-revised__home-loading-title">{copy.lubirth.title}</p>
@@ -546,6 +559,7 @@ export function LuBirthRevisedRoute({
   const [copyInteractive, setCopyInteractive] = useState(false);
   const [projectInteractive, setProjectInteractive] = useState(() => variant !== "home");
   const [homeIntroComplete, setHomeIntroComplete] = useState(() => variant !== "home");
+  const [homeCloudDeckEnabled, setHomeCloudDeckEnabled] = useState(true);
   const [homeProjection, setHomeProjection] = useState<LuBirthProjectionFrame | null>(null);
   const [homeProjectionSource, setHomeProjectionSource] = useState<HomeProjectionSource>("pending");
   const [homeVisualReadySource, setHomeVisualReadySource] = useState<HomeVisualReadySource | "pending">("pending");
@@ -566,6 +580,7 @@ export function LuBirthRevisedRoute({
   const homeVisualReadinessDispatchedRef = useRef(false);
   const showCopy = !debugOptions.copyHidden;
   const isScreenshotMode = debugOptions.fixedProgress !== null;
+  const homeIntroRendering = isHome && !homeIntroComplete && !isScreenshotMode;
   const homeLoadingReady = homeProjectionSource !== "pending";
   const homeLoadingProjection = homeProjection;
   const homeLoadingProjectionSource =
@@ -717,6 +732,7 @@ export function LuBirthRevisedRoute({
       setCopyInteractive(false);
       setProjectInteractive(!isHome);
       setHomeIntroComplete(!isHome);
+      setHomeCloudDeckEnabled(true);
 
       gsap.registerPlugin(ScrollTrigger);
       ScrollTrigger.getById(triggerId)?.kill();
@@ -727,7 +743,7 @@ export function LuBirthRevisedRoute({
       rootElement.dataset.variant = variant;
       rootElement.dataset.debugLayer = screenshotDebug.visualDebugLayer;
       rootElement.dataset.renderProfile = screenshotDebug.renderProfile;
-      if (forcedFallback || isHome || screenshotDebug.copyHidden) {
+      if (forcedFallback || isHome || screenshotDebug.copyHidden || screenshotDebug.visualPixelMode) {
         setSceneEnabled(true);
       }
 
@@ -827,6 +843,7 @@ export function LuBirthRevisedRoute({
           setCopyInteractive(!screenshotDebug.copyHidden && (!isHome || homeRailVisible));
           setProjectInteractive(!screenshotDebug.copyHidden && (!isHome || homeProjectVisible));
           setHomeIntroComplete(true);
+          setHomeCloudDeckEnabled(true);
           setOpeningProgress(screenshotDebug.fixedProgress);
           setIfPresent(".lubirth-revised__loading", { autoAlpha: 0 });
           setIfPresent(".lubirth-revised__home-loading", { autoAlpha: 0 });
@@ -861,6 +878,7 @@ export function LuBirthRevisedRoute({
           setCopyInteractive(!isHome);
           setProjectInteractive(true);
           setHomeIntroComplete(true);
+          setHomeCloudDeckEnabled(true);
           if (typeof window !== "undefined") {
             window.__MiraLithFirstUsableAt = performance.now();
             window.__MiraLithHomeIntroCompleteAt = performance.now();
@@ -1075,6 +1093,7 @@ export function LuBirthRevisedRoute({
           setCopyInteractive(false);
           setProjectInteractive(false);
           setHomeIntroComplete(true);
+          setHomeCloudDeckEnabled(true);
           setIfPresent(".lubirth-revised__loading", { autoAlpha: 0 });
           setIfPresent(".lubirth-revised__home-loading", { autoAlpha: 0 });
           setIfPresent(".lubirth-revised__atmosphere", { autoAlpha: 1 });
@@ -1085,6 +1104,7 @@ export function LuBirthRevisedRoute({
 
         if (isHome) {
           setSceneEnabled(true);
+          const homeIntroStartedAt = performance.now();
           let revealScheduled = false;
           let completionScheduled = false;
           let introCompleted = false;
@@ -1129,7 +1149,6 @@ export function LuBirthRevisedRoute({
             cleanupHomeReadyHandler?.();
             cleanupHomeReadyHandler = undefined;
             setIfPresent(".lubirth-revised__home-loading", { autoAlpha: 0 });
-            setHomeIntroComplete(true);
             setCopyInteractive(false);
             setProjectInteractive(false);
             unlockHomeScroll();
@@ -1138,6 +1157,8 @@ export function LuBirthRevisedRoute({
               window.__MiraLithHomeIntroCompleteAt = now;
               window.__MiraLithFirstUsableAt = now;
             }
+            setHomeIntroComplete(true);
+            setHomeCloudDeckEnabled(true);
             scrollTimeline = createScrollTimeline();
             window.requestAnimationFrame(() => {
               if (!disposed) {
@@ -1145,52 +1166,98 @@ export function LuBirthRevisedRoute({
               }
             });
           };
-          const completeHomeIntro = (immediate = false, fadeDuration = 0.62, finalizeDelayOverrideMs?: number) => {
+          const completeHomeIntro = (immediate = false, fadeDuration = 0.86, finalizeDelayOverrideMs?: number) => {
             if (introCompleted || disposed) {
               return;
             }
 
             introCompleted = true;
-            revealHomeIntro();
             if (immediate) {
+              revealHomeIntro();
               setIfPresent(".lubirth-revised__home-loading", { autoAlpha: 0 });
               finalizeHomeIntro();
             } else {
-              gsap.to(
-                selector(
-                  ".lubirth-revised__home-loading-curtain, .lubirth-revised__home-loading-contour, .lubirth-revised__home-loading-moon, .lubirth-revised__home-loading-mark, .lubirth-revised__home-loading-hint, .lubirth-revised__home-loading-prelude"
-                ),
-                {
-                  autoAlpha: 0,
-                  duration: Math.max(0.34, fadeDuration * 0.68),
+              const exitTimeline = gsap.timeline({
+                defaults: {
                   ease: "power2.inOut",
                   overwrite: true
                 }
+              });
+              exitTimeline.set(selector(".lubirth-revised__home-loading-memory"), {
+                autoAlpha: 0.68,
+                y: 2
+              }, 0);
+              exitTimeline.to(
+                selector(".lubirth-revised__home-loading-mark, .lubirth-revised__home-loading-hint, .lubirth-revised__home-loading-prelude"),
+                {
+                  autoAlpha: 0,
+                  duration: Math.max(0.32, fadeDuration * 0.52)
+                },
+                0
               );
-              const memoryFadeDelay = Math.max(0.03, fadeDuration * 0.06);
-              const memoryFadeDuration = Math.max(0.58, fadeDuration * 0.94);
-              const helmetFadeDelay = Math.max(0.08, fadeDuration * 0.12);
-              const helmetFadeDuration = Math.max(0.62, fadeDuration);
-              gsap.to(selector(".lubirth-revised__home-loading-memory"), {
-                autoAlpha: 0,
-                y: -4,
-                duration: memoryFadeDuration,
-                delay: memoryFadeDelay,
-                ease: "power2.inOut",
-                overwrite: true
-              });
-              gsap.to(selector(".lubirth-revised__home-loading-helmet"), {
-                autoAlpha: 0,
-                y: -8,
-                scale: 1.01,
-                duration: helmetFadeDuration,
-                delay: helmetFadeDelay,
-                ease: "power2.inOut",
-                overwrite: true
-              });
+              exitTimeline.to(
+                selector(".lubirth-revised__home-loading-contour-path--segment-left"),
+                {
+                  autoAlpha: 0,
+                  x: -74,
+                  duration: Math.max(0.56, fadeDuration * 0.92)
+                },
+                0.34
+              );
+              exitTimeline.to(
+                selector(".lubirth-revised__home-loading-contour-path--segment-right"),
+                {
+                  autoAlpha: 0,
+                  x: 74,
+                  duration: Math.max(0.56, fadeDuration * 0.92)
+                },
+                0.34
+              );
+              exitTimeline.to(
+                selector(".lubirth-revised__home-loading-contour-path--aura, .lubirth-revised__home-loading-contour-path--line"),
+                {
+                  autoAlpha: 0,
+                  scaleX: 0.72,
+                  transformOrigin: "50% 50%",
+                  duration: Math.max(0.5, fadeDuration * 0.82)
+                },
+                0.42
+              );
+              exitTimeline.to(
+                selector(".lubirth-revised__home-loading-moon"),
+                {
+                  autoAlpha: 0,
+                  y: -8,
+                  scale: 0.96,
+                  duration: Math.max(0.48, fadeDuration * 0.72)
+                },
+                0.52
+              );
+              exitTimeline.to(
+                selector(".lubirth-revised__home-loading-memory"),
+                {
+                  autoAlpha: 0,
+                  y: -6,
+                  duration: Math.max(0.62, fadeDuration * 0.9)
+                },
+                0.86
+              );
+              exitTimeline.to(
+                selector(".lubirth-revised__home-loading-curtain"),
+                {
+                  autoAlpha: 0,
+                  duration: Math.max(0.52, fadeDuration * 0.78)
+                },
+                0.88
+              );
+              exitTimeline.call(() => {
+                revealHomeIntro();
+              }, [], 0.9);
+              const exitFinalizeDelayMs = Math.max(1480, (0.88 + Math.max(0.52, fadeDuration * 0.78)) * 1000 + 80);
               const finalizeDelayMs =
-                finalizeDelayOverrideMs ??
-                Math.max(memoryFadeDelay + memoryFadeDuration, helmetFadeDelay + helmetFadeDuration) * 1000 + 50;
+                finalizeDelayOverrideMs === undefined
+                  ? exitFinalizeDelayMs
+                  : Math.max(finalizeDelayOverrideMs, exitFinalizeDelayMs);
               homeLoadTimeouts.push(
                 window.setTimeout(() => {
                   finalizeHomeIntro();
@@ -1210,7 +1277,7 @@ export function LuBirthRevisedRoute({
               markHomeVisualReady("grace");
             }
             window.scrollTo(0, 0);
-            completeHomeIntro(false, 0.48, 760);
+            completeHomeIntro(false, 0.68, 1120);
           };
           const scheduleHomePostReady = () => {
             if (disposed || homeProjectionSourceRef.current === "pending") {
@@ -1218,19 +1285,13 @@ export function LuBirthRevisedRoute({
             }
 
             const now = performance.now();
+            const elapsedSinceIntroStart = now - homeIntroStartedAt;
             const projectionReadyStartedAt = window.__MiraLithHomeLoadingReadyAt ?? now;
             const remainingDelay = (delay: number, minimumAfterReady: number) =>
-              Math.max(0, delay - now, minimumAfterReady - (now - projectionReadyStartedAt));
+              Math.max(0, delay - elapsedSinceIntroStart, minimumAfterReady - (now - projectionReadyStartedAt));
 
             if (!revealScheduled) {
               revealScheduled = true;
-              homeLoadTimeouts.push(
-                window.setTimeout(() => {
-                  if (!disposed) {
-                    revealHomeIntro();
-                  }
-                }, remainingDelay(HOME_LOADING_REVEAL_DELAY_MS, HOME_LOADING_MIN_REVEAL_AFTER_READY_MS))
-              );
             }
 
             if (completionScheduled || homeVisualReadySourceRef.current === "pending") {
@@ -1293,14 +1354,14 @@ export function LuBirthRevisedRoute({
               }
 
               markHomeLoadingReady("fallback");
-            }, Math.max(0, HOME_PROJECTION_FALLBACK_DEADLINE_MS - performance.now())),
+            }, Math.max(0, HOME_PROJECTION_FALLBACK_DEADLINE_MS - (performance.now() - homeIntroStartedAt))),
             window.setTimeout(() => {
               if (disposed) {
                 return;
               }
 
               markHomeVisualReady("grace");
-            }, Math.max(0, HOME_VISUAL_GRACE_DEADLINE_MS - performance.now())),
+            }, Math.max(0, HOME_VISUAL_GRACE_DEADLINE_MS - (performance.now() - homeIntroStartedAt))),
             window.setTimeout(() => {
               if (disposed || introCompleted) {
                 return;
@@ -1313,7 +1374,7 @@ export function LuBirthRevisedRoute({
                 markHomeVisualReady("grace");
               }
               completeHomeIntro();
-            }, Math.max(0, HOME_LOADING_HARD_COMPLETE_DEADLINE_MS - performance.now()))
+            }, Math.max(0, HOME_LOADING_HARD_COMPLETE_DEADLINE_MS - (performance.now() - homeIntroStartedAt)))
           );
           return;
         }
@@ -1390,6 +1451,7 @@ export function LuBirthRevisedRoute({
       data-home-intro-complete={isHome ? String(homeIntroComplete) : undefined}
       data-home-projection={isHome ? homeProjectionSource : undefined}
       data-home-projection-visual={isHome ? homeLoadingProjectionSource : undefined}
+      data-atmo-policy={debugOptions.atmospherePolicy}
       aria-label={ariaLabel ?? (isHome ? "MiraLith LuBirth opening" : "LuBirth revised opening route")}
     >
       <section
@@ -1417,8 +1479,9 @@ export function LuBirthRevisedRoute({
 
       {sceneEnabled ? (
         <VisualCanvas
+          key={isScreenshotMode ? "lubirth-screenshot-canvas" : isHome ? "lubirth-home-canvas" : "lubirth-runtime-canvas"}
           decorative
-          dpr={isScreenshotMode ? [1, 2] : [1, 1.6]}
+          dpr={isScreenshotMode ? 2 : homeIntroRendering ? [1.1, 1.25] : [1.5, 2.1]}
           fallback={
             <VisualCanvasFallback
               scene="lubirth"

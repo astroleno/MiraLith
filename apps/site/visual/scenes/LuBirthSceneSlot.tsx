@@ -7,12 +7,14 @@ import {
   computeRuntimeSolarDirection,
   geodeticToTextureVector,
   resolveLandingAssets,
-  resolveLandingPreset
+  resolveLandingPreset,
+  resolveLuBirthAtmospherePolicy
 } from "@miralith/lubirth-hero";
 import { useQualityTier, useReducedMotionPreference } from "@miralith/visual-core";
 import type {
   LandingAssetManifest,
   LandingAtmosphereLook,
+  LandingAtmospherePolicy,
   LandingAtmosphereVariant,
   LandingAuroraProfile,
   LandingCompositionOverrides,
@@ -22,6 +24,7 @@ import type {
   LandingMoonPhase,
   LandingRenderProfile,
   LandingVisualDebugLayer,
+  LuBirthAtmosphereRouteVariant,
   LuBirthProjectionFrame
 } from "@miralith/lubirth-hero";
 import type { LandingQuality } from "@miralith/visual-core";
@@ -90,6 +93,9 @@ declare global {
     __MiraLithLuBirthQualityTier?: string;
     __MiraLithLuBirthAuroraEnabled?: boolean;
     __MiraLithLuBirthAuroraProfile?: LandingAuroraProfile;
+    __MiraLithLuBirthAtmospherePolicy?: LandingAtmospherePolicy;
+    __MiraLithLuBirthAtmospherePolicyReason?: string;
+    __MiraLithLuBirthAtmosphereLook?: LandingAtmosphereLook;
     __MiraLithLuBirthMoonPhase?: LandingMoonPhase;
     __MiraLithLuBirthMoonLightingMode?: LandingMoonLightingMode;
     __MiraLithLuBirthRuntimeLocation?: LandingLocationConfig;
@@ -111,8 +117,12 @@ interface LuBirthSceneSlotProps {
   debugMianyang?: boolean;
   visualDebugLayer?: LandingVisualDebugLayer;
   renderProfile?: LandingRenderProfile;
+  atmospherePolicy?: LandingAtmospherePolicy;
   atmosphereVariant?: LandingAtmosphereVariant;
   atmosphereLook?: LandingAtmosphereLook;
+  routeVariant?: LuBirthAtmosphereRouteVariant;
+  homeIntroRendering?: boolean;
+  productionSurface?: boolean;
   paused?: boolean;
   cloudDeckEnabled?: boolean;
   onProjectionFrame?: (frame: LuBirthProjectionFrame) => void;
@@ -230,6 +240,14 @@ function hasExplicitRuntimeSolarInput() {
     location === "visitor" ||
     params.has("geoLat") ||
     params.has("geoLon");
+}
+
+function readMobileLandscape() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.innerWidth > window.innerHeight && Math.min(window.innerWidth, window.innerHeight) < 760;
 }
 
 function readLocationOverride(activeRenderProfile: LandingRenderProfile | undefined): "birth" | "ip" {
@@ -391,8 +409,12 @@ export function LuBirthSceneSlot({
   debugMianyang = false,
   visualDebugLayer = "all",
   renderProfile,
+  atmospherePolicy,
   atmosphereVariant = "stack",
   atmosphereLook = "lubirth",
+  routeVariant,
+  homeIntroRendering = false,
+  productionSurface,
   paused = false,
   cloudDeckEnabled = true,
   onProjectionFrame,
@@ -404,6 +426,8 @@ export function LuBirthSceneSlot({
   const auroraProfile = readAuroraProfile();
   const renderProfileOverride = readRenderProfileOverride();
   const activeRenderProfile = renderProfileOverride ?? renderProfile;
+  const activeRouteVariant: LuBirthAtmosphereRouteVariant =
+    routeVariant ?? (isAtmosphereSpikeRoute() ? "spike" : "study");
   const moonPhaseOverride = readMoonPhaseOverride(activeRenderProfile);
   const moonDateOverride = readMoonDateOverride();
   const sunDateOverride = readSunDateOverride();
@@ -414,6 +438,18 @@ export function LuBirthSceneSlot({
       ? buildGeoEndpoint()
       : null;
   const qualityProfile = useQualityTier(qualityOverride ?? quality, reducedMotion);
+  const resolvedAtmospherePolicy = resolveLuBirthAtmospherePolicy({
+    policy: atmospherePolicy ?? atmosphereVariant,
+    routeVariant: activeRouteVariant,
+    renderProfile: activeRenderProfile ?? "nasa",
+    requestedQuality: qualityOverride ?? quality,
+    resolvedQualityTier: qualityProfile.tier,
+    reducedMotion,
+    mobileLandscape: readMobileLandscape(),
+    homeIntroRendering,
+    productionSurface: productionSurface ?? activeRouteVariant !== "spike",
+    productionLook: atmosphereLook
+  });
   const moonLightingMode = readMoonLightingMode();
   const freezeAtmosphereSpikeSolar = isAtmosphereSpikeRoute() && !hasExplicitRuntimeSolarInput();
   const todayMoonPhase = useMemo(
@@ -508,7 +544,7 @@ export function LuBirthSceneSlot({
   );
   const forceReferenceSpikeHighDetailAssets =
     isAtmosphereSpikeRoute() &&
-    atmosphereVariant === "volumetric" &&
+    resolvedAtmospherePolicy.atmosphereVariant === "volumetric" &&
     atmosphereLook === "reference" &&
     quality !== "low" &&
     typeof window !== "undefined" &&
@@ -571,6 +607,9 @@ export function LuBirthSceneSlot({
     window.__MiraLithLuBirthQualityTier = qualityProfile.tier;
     window.__MiraLithLuBirthAuroraEnabled = qualityProfile.aurora;
     window.__MiraLithLuBirthAuroraProfile = auroraProfile;
+    window.__MiraLithLuBirthAtmospherePolicy = atmospherePolicy ?? atmosphereVariant;
+    window.__MiraLithLuBirthAtmospherePolicyReason = resolvedAtmospherePolicy.reason;
+    window.__MiraLithLuBirthAtmosphereLook = resolvedAtmospherePolicy.atmosphereLook;
     window.__MiraLithLuBirthMoonPhase = composition.moon.fixedPhase;
     window.__MiraLithLuBirthMoonLightingMode = composition.moon.lightingMode;
     const locationVector = geodeticToTextureVector(
@@ -588,6 +627,8 @@ export function LuBirthSceneSlot({
     };
   }, [
     activeVisitorLocation,
+    atmospherePolicy,
+    atmosphereVariant,
     auroraProfile,
     composition.location.latitudeDeg,
     composition.location.longitudeDeg,
@@ -595,6 +636,8 @@ export function LuBirthSceneSlot({
     composition.moon.lightingMode,
     qualityProfile.aurora,
     qualityProfile.tier,
+    resolvedAtmospherePolicy.atmosphereLook,
+    resolvedAtmospherePolicy.reason,
     runtimeSolarDate,
     runtimeSunDirection
   ]);
@@ -612,8 +655,8 @@ export function LuBirthSceneSlot({
       debugMianyang={debugMianyang}
       visualDebugLayer={visualDebugLayer}
       renderProfile={activeRenderProfile}
-      atmosphereVariant={atmosphereVariant}
-      atmosphereLook={atmosphereLook}
+      atmosphereVariant={resolvedAtmospherePolicy.atmosphereVariant}
+      atmosphereLook={resolvedAtmospherePolicy.atmosphereLook}
       auroraProfile={auroraProfile}
       reducedMotion={reducedMotion}
       paused={paused}

@@ -24,6 +24,8 @@ interface LandingCloudDeckV2Props {
   quality: QualityProfile;
   sceneLightDirection?: Vector3;
   emphasis?: boolean;
+  forceArmed?: boolean;
+  singleLayer?: boolean;
   reducedMotion?: boolean;
   paused?: boolean;
 }
@@ -346,18 +348,20 @@ export function LandingCloudDeckV2({
   quality,
   sceneLightDirection,
   emphasis = false,
+  forceArmed = false,
+  singleLayer = false,
   reducedMotion,
   paused
 }: LandingCloudDeckV2Props) {
   const cloudGroup = useRef<Group>(null);
-  const [cloudDeckArmed, setCloudDeckArmed] = useState(() => !emphasis || shouldArmCloudDeckImmediately());
+  const [cloudDeckArmed, setCloudDeckArmed] = useState(() => forceArmed || !emphasis || shouldArmCloudDeckImmediately());
   const cloudDeckAsset = assets.earthCloudDeck;
   const shouldLoadCloudDeck =
     composition.earth.useClouds &&
     composition.earth.cloudOpacity > 0 &&
     quality.tier !== "fallback" &&
     quality.tier !== "low" &&
-    (cloudDeckArmed || emphasis);
+    (cloudDeckArmed || emphasis || forceArmed);
   const { texture: cloudDeckTexture, failed: cloudDeckTextureFailed } = useLandingTexture(
     shouldLoadCloudDeck ? cloudDeckAsset?.src : undefined,
     {
@@ -399,7 +403,7 @@ export function LandingCloudDeckV2({
 
   useFrame((state) => {
     const progress = getRuntimeOpeningProgress(0);
-    if (!cloudDeckArmed && progress > 0.08) {
+    if (!cloudDeckArmed && (forceArmed || progress > 0.08)) {
       setCloudDeckArmed(true);
     }
 
@@ -422,7 +426,7 @@ export function LandingCloudDeckV2({
       material.uniforms.time.value = elapsed;
       material.uniforms.closeStage.value = closeStage;
       material.uniforms.opacity.value = composition.earth.useClouds ? composition.earth.cloudOpacity : 0;
-      material.uniforms.debugBoost.value = emphasis ? 1 : 0;
+      material.uniforms.debugBoost.value = emphasis ? 1 : forceArmed ? 0.48 : 0;
       material.uniforms.qualityMix.value = quality.tier === "high" ? 1 : 0.68;
       material.uniforms.lightDir.value.copy(activeLightDirection).normalize();
     });
@@ -437,21 +441,23 @@ export function LandingCloudDeckV2({
       <mesh material={materials.lower} renderOrder={3}>
         <sphereGeometry
           args={[
-            composition.earth.radius * CLOUD_DECK_V2_LOWER_RADIUS,
+            composition.earth.radius * (singleLayer ? 1.0072 : CLOUD_DECK_V2_LOWER_RADIUS),
             quality.tier === "high" ? Math.max(composition.earth.segments, quality.segments, 256) : 64,
             quality.tier === "high" ? 128 : 36
           ]}
         />
       </mesh>
-      <mesh material={materials.upper} renderOrder={4}>
-        <sphereGeometry
-          args={[
-            composition.earth.radius * CLOUD_DECK_V2_UPPER_RADIUS,
-            quality.tier === "high" ? Math.max(composition.earth.segments, quality.segments, 256) : 64,
-            quality.tier === "high" ? 128 : 36
-          ]}
-        />
-      </mesh>
+      {!singleLayer ? (
+        <mesh material={materials.upper} renderOrder={4}>
+          <sphereGeometry
+            args={[
+              composition.earth.radius * CLOUD_DECK_V2_UPPER_RADIUS,
+              quality.tier === "high" ? Math.max(composition.earth.segments, quality.segments, 256) : 64,
+              quality.tier === "high" ? 128 : 36
+            ]}
+          />
+        </mesh>
+      ) : null}
     </group>
   );
 }
