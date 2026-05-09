@@ -505,7 +505,7 @@ function createCloudMaterial(
         finalColor = mix(
           finalColor,
           vec3(0.90, 0.94, 0.92),
-          referenceSunlitTop * 0.055
+          referenceSunlitTop * 0.09
         );
         finalColor += vec3(0.90, 0.94, 0.92) *
           referenceLookStrength *
@@ -538,7 +538,7 @@ function createCloudMaterial(
         float daylightCloudLift =
           sunlitCloud *
           smoothstep(0.24, 0.82, max(max(weatherMass, weatherCore), closeCloudReadability)) *
-          (0.04 + closeCloudReadability * 0.1 + topCap * 0.08);
+          (0.065 + closeCloudReadability * 0.14 + topCap * 0.11);
         finalColor += vec3(0.84, 0.88, 0.86) * daylightCloudLift;
         finalColor = mix(
           finalColor,
@@ -603,21 +603,29 @@ function createCloudMaterial(
           mix(1.0, 1.82, debugBoost);
         alpha *= mix(
           1.0,
-          1.06,
+          1.38,
           referenceLookStrength * smoothstep(0.18, 0.72, max(weatherMass, thickness))
         );
         float referenceAlphaStructure = mix(
-          0.46,
-          1.08,
+          0.72,
+          1.5,
           smoothstep(0.16, 0.7, max(rawSharp, deckCoverage * 0.7 + deckThickness * 0.3))
         );
         alpha *= mix(1.0, referenceAlphaStructure, referenceLookStrength * 0.82);
+        float referenceCloudPresence =
+          referenceLookStrength *
+          visibleCloudGate *
+          smoothstep(0.1, 0.58, max(rawSharp, deckCoverage * 0.64 + deckThickness * 0.24));
+        alpha *= mix(1.0, 1.28, referenceCloudPresence);
+        alpha += referenceCloudPresence * opacity * (0.018 + closeStage * 0.006);
 
         if (alpha < 0.00008) {
           discard;
         }
 
-        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, mix(0.34, 0.66, debugBoost)));
+        float alphaCeiling = mix(0.34, 0.66, debugBoost);
+        alphaCeiling = mix(alphaCeiling, max(alphaCeiling, 0.54), referenceLookStrength * (1.0 - debugBoost * 0.35));
+        gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, alphaCeiling));
       }
     `,
     transparent: true,
