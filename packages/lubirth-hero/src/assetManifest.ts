@@ -26,6 +26,14 @@ export const DEFAULT_LUBIRTH_ASSETS: LandingAssetManifest = {
     format: "jpg",
     colorSpace: "srgb"
   },
+  earthSpecular: {
+    id: "earth-specular-4k",
+    src: "/assets/lubirth/textures/earth-specular-4k.png",
+    width: 4096,
+    height: 2048,
+    format: "png",
+    colorSpace: "linear"
+  },
   earthCloudDeck: LUBIRTH_CLOUD_DECK_TEXTURE,
   earthHorizonCloudStrip: {
     id: "earth-horizon-cloud-strip-2k",
@@ -124,6 +132,9 @@ export function getLandingAssetBudget(assets: Partial<LandingAssetManifest> = {}
     ),
     ...(resolvedAssets.earthNormal
       ? [textureBudget(resolvedAssets.earthNormal, 420_000, "idle", false)]
+      : []),
+    ...(resolvedAssets.earthSpecular
+      ? [textureBudget(resolvedAssets.earthSpecular, 900_000, "idle", false)]
       : []),
     ...(resolvedAssets.earthDisplacement
       ? [textureBudget(resolvedAssets.earthDisplacement, 1_600_000, "idle", false)]

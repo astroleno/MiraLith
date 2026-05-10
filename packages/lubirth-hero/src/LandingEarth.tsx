@@ -240,6 +240,15 @@ export function LandingEarth({
       wrapT: RepeatWrapping
     }
   );
+  const shouldUseSpecularTexture = quality.tier !== "low" && quality.tier !== "fallback";
+  const { texture: specularTexture } = useLandingTexture(
+    shouldUseSpecularTexture ? assets.earthSpecular?.src : undefined,
+    {
+      colorSpace: assets.earthSpecular?.colorSpace ?? "linear",
+      wrapS: RepeatWrapping,
+      wrapT: RepeatWrapping
+    }
+  );
   const { texture: normalTexture } = useLandingTexture(quality.tier === "high" ? assets.earthNormal?.src : undefined, {
     colorSpace: assets.earthNormal?.colorSpace ?? "linear",
     wrapS: RepeatWrapping,
@@ -257,6 +266,7 @@ export function LandingEarth({
   const activeNightTexture = nightTexture ?? activeDayTexture;
   const activeCloudTexture = cloudTexture ?? activeDayTexture;
   const activeCloudDeckTexture = cloudDeckTexture ?? activeCloudTexture;
+  const activeSpecularTexture = specularTexture ?? activeDayTexture;
   const activeNormalTexture = normalTexture ?? activeDayTexture;
   const activeDisplacementTexture = displacementTexture ?? activeDayTexture;
   const cloudShadowAtlasSize = useMemo(
@@ -307,6 +317,8 @@ export function LandingEarth({
       activeCloudTexture.wrapT = RepeatWrapping;
       activeCloudDeckTexture.wrapS = RepeatWrapping;
       activeCloudDeckTexture.wrapT = RepeatWrapping;
+      activeSpecularTexture.wrapS = RepeatWrapping;
+      activeSpecularTexture.wrapT = RepeatWrapping;
       activeNormalTexture.wrapS = RepeatWrapping;
       activeNormalTexture.wrapT = RepeatWrapping;
       activeDisplacementTexture.wrapS = RepeatWrapping;
@@ -316,6 +328,7 @@ export function LandingEarth({
         activeNightTexture,
         activeCloudTexture,
         activeCloudDeckTexture,
+        activeSpecularTexture,
         activeNormalTexture,
         activeDisplacementTexture
       ].forEach((texture) => {
@@ -332,10 +345,12 @@ export function LandingEarth({
           cloudMap: { value: activeCloudTexture },
           cloudDeckMap: { value: activeCloudDeckTexture },
           cloudShadowAtlasMap: { value: cloudShadowAtlasTexture ?? activeCloudTexture },
+          specularMap: { value: activeSpecularTexture },
           normalMap: { value: activeNormalTexture },
           displacementMap: { value: activeDisplacementTexture },
           hasCloudDeckMap: { value: cloudDeckTexture ? 1 : 0 },
           hasCloudShadowAtlas: { value: cloudShadowAtlasTexture ? 1 : 0 },
+          hasSpecularMap: { value: specularTexture ? 1 : 0 },
           hasNormalMap: { value: normalTexture ? 1 : 0 },
           hasDisplacementMap: { value: displacementTexture ? 1 : 0 },
           normalMapStrength: { value: 0.14 },
@@ -409,10 +424,12 @@ export function LandingEarth({
           uniform sampler2D cloudMap;
           uniform sampler2D cloudDeckMap;
           uniform sampler2D cloudShadowAtlasMap;
+          uniform sampler2D specularMap;
           uniform sampler2D normalMap;
           uniform sampler2D displacementMap;
           uniform float hasCloudDeckMap;
           uniform float hasCloudShadowAtlas;
+          uniform float hasSpecularMap;
           uniform float hasNormalMap;
           uniform float hasDisplacementMap;
           uniform float normalMapStrength;
@@ -636,7 +653,17 @@ export function LandingEarth({
               smoothstep(0.16, 0.52, truthDayTexRaw.b) *
               smoothstep(0.0, 0.15, truthDayTexRaw.b - max(truthDayTexRaw.r, truthDayTexRaw.g) * 0.7) *
               (1.0 - smoothstep(0.74, 0.96, truthDayLuma));
-            float truthOceanMask = max(smoothstep(0.04, 0.2, truthOceanSignal), truthOceanBlueMask);
+            float truthHeuristicOceanMask = max(smoothstep(0.04, 0.2, truthOceanSignal), truthOceanBlueMask);
+            float truthSpecularMapRaw = texture2D(specularMap, vUv).r;
+            float truthSpecularIceGuard =
+              1.0 - smoothstep(0.82, 0.98, truthDayLuma) * (1.0 - truthOceanBlueMask * 0.65);
+            float truthSpecularWaterMask =
+              smoothstep(0.34, 0.72, truthSpecularMapRaw) * truthSpecularIceGuard;
+            float truthOceanMask = mix(
+              truthHeuristicOceanMask,
+              max(truthHeuristicOceanMask * 0.22, truthSpecularWaterMask),
+              hasSpecularMap
+            );
             float truthOceanNoCloud = 1.0 - clamp(
               truthEarlyProjectedCloudShadow * 0.24 + truthEarlyCloudSelfAo * 0.18,
               0.0,
@@ -1510,7 +1537,16 @@ export function LandingEarth({
               smoothstep(0.16, 0.54, rawDayTex.b) *
               smoothstep(0.0, 0.15, rawDayTex.b - max(rawDayTex.r, rawDayTex.g) * 0.7) *
               (1.0 - smoothstep(0.74, 0.96, dayTexLuma));
-            float oceanMask = max(smoothstep(0.035, 0.18, oceanSignal), oceanBlueMask) * oceanCloudVisibility;
+            float heuristicOceanMask = max(smoothstep(0.035, 0.18, oceanSignal), oceanBlueMask);
+            float specularMapRaw = texture2D(specularMap, vUv).r;
+            float specularIceGuard =
+              1.0 - smoothstep(0.82, 0.98, dayTexLuma) * (1.0 - oceanBlueMask * 0.65);
+            float specularWaterMask = smoothstep(0.34, 0.72, specularMapRaw) * specularIceGuard;
+            float oceanMask = mix(
+              heuristicOceanMask,
+              max(heuristicOceanMask * 0.22, specularWaterMask),
+              hasSpecularMap
+            ) * oceanCloudVisibility;
             float oceanFacing = max(dot(n, halfDir), 0.0);
             float oceanGlint = pow(oceanFacing, 58.0) * oceanMask * dayW * specularStrength * (0.62 + closeStage * 0.58);
             float oceanWideGlint = pow(oceanFacing, 18.0) *
@@ -1673,6 +1709,7 @@ export function LandingEarth({
       activeDayTexture,
       activeCloudDeckTexture,
       activeCloudTexture,
+      activeSpecularTexture,
       cloudShadowAtlasTexture,
       activeDisplacementTexture,
       activeNormalTexture,
@@ -1680,6 +1717,7 @@ export function LandingEarth({
       cloudDeckTexture,
       displacementTexture,
       normalTexture,
+      specularTexture,
       referenceVolumetricSurfaceClouds
     ]
   );
@@ -1714,6 +1752,8 @@ export function LandingEarth({
     earthMaterial.uniforms.referenceVolumetricSurfaceClouds.value = referenceVolumetricSurfaceClouds ? 1 : 0;
     earthMaterial.uniforms.cloudShadowAtlasMap.value = cloudShadowAtlasTexture ?? activeCloudTexture;
     earthMaterial.uniforms.hasCloudShadowAtlas.value = cloudShadowAtlasTexture ? 1 : 0;
+    earthMaterial.uniforms.specularMap.value = activeSpecularTexture;
+    earthMaterial.uniforms.hasSpecularMap.value = specularTexture ? 1 : 0;
     const progress = typeof window === "undefined" ? 1 : Math.min(1, Math.max(0, window.__MiraLithOpeningProgress ?? 0));
     if (!shouldLoadNightTexture && progress > 0.28) {
       setShouldLoadNightTexture(true);
