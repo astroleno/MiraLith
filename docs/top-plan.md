@@ -1,3 +1,7 @@
+> 2026-04-24 对齐说明：本文保留为长期首页叙事参考。当前 v1.0 范围锁定为 LuBirth 前两屏：Opening / LuBirth Ritual Field + LuBirth Zoomable Project Window；Radio Gaga、CoScroll、ArtBreeze、实验星群、商业作品、Now Building、About / Contact 进入 v1.1+。
+>
+> 2026-04-29 进展说明：RadioGaga 已作为第一个 v1.1 独立案例页落地在 `/radio-gaga`。它目前先作为可测试的 standalone route 推进 PR / 集成 review；首页主线顺序仍保留为 `LuBirth -> RadioGaga -> CoScroll -> ArtBreeze -> Floating Constellation`。
+
 你说得对。
 我前面那个顺序太像“作品集信息架构”，不够像 **MiraLith 这种个人场域站**。你要参考 Shopify 那种体验，就不应该先讲“我是谁 / 我在做什么”，而应该先把人拖进一个场景。
 
@@ -131,6 +135,16 @@ An AI podcast system made for parents.
 
 重点是：
 **这是一个带硬件想象的 AI 家庭内容系统。**
+
+当前实现状态：
+
+* `/radio-gaga` 独立页面已可生产构建。
+* 主视觉从红色收音机进入，memory 阶段解释“把新闻翻译成父母能接住的日常”。
+* process artifact 改为 `local news -> curation -> rewritten script -> my voice -> radio at home` 的调频刻度。
+* core 段表达为“收音机外壳变透明，内部 ESP32 / board / chip 核心浮现”。
+* fallback 保留静态 radio silhouette，避免 WebGL 或模型失败时变成空黑页。
+* 进入首页时，RadioGaga 应延续这个硬件照护叙事，而不是降级成普通项目卡片。
+* 后续 review / 待做交接见 `docs/radio-gaga/post-review-plan.md`。
 
 ---
 
@@ -538,7 +552,7 @@ packages/coscroll-scene
 低性能设备使用 poster 或短视频 fallback
 ```
 
-不要让 CoScroll 自己管理全局滚动和音频时间；它只消费 MiraLith 传入的章节进度。
+不要让 CoScroll 自己管理全局滚动和音频时间。它由 MiraLith 的章节进度驱动，但正式实现不能只依赖 `progress` 一个值；还需要通过 `docs/coscroll-scene-interface.md` 定义 `visualTime`、`lyrics`、`currentAnchor`、`scrollVelocity`、quality tier 和 fallback 的适配状态。
 
 ---
 

@@ -16,13 +16,13 @@ The best product call is to keep LuBirth first. It gives MiraLith a mythic origi
 - R3F / Three.js is justified because LuBirth and CoScroll already live in that ecosystem.
 - pnpm workspace is justified because visual packages should have boundaries.
 - Typed local content is right for v1; CMS is premature.
-- Theatre.js should be staged, not first dependency. Start with static render and simple interpolation, then add timeline editing when the visual state is stable.
+- Theatre.js should be included from the start for the signature LuBirth field-to-window timeline, but with strict scope: camera, shader uniforms, light intensity, and key transforms only.
 
 ## Main Risk
 
 The project can fail by trying to match Shopify's surface complexity too early. Shopify-level pages are impressive because of their motion pipeline and asset discipline, not because every section is immediately 3D.
 
-The v1 risk is therefore not insufficient ambition. The risk is loading LuBirth, CoScroll, Radio Gaga, ArtBreeze, constellation, detail pages, Rive, Theatre, and full assets before the first two screens are excellent.
+The v1 risk is therefore not insufficient ambition. The risk is loading LuBirth, CoScroll, Radio Gaga, ArtBreeze, constellation, detail pages, Rive, and full assets before the first two screens are excellent. Theatre.js is now a v1.0 tool, but must not become a whole-site animation dependency before the opening works.
 
 ## Recommended v1 Philosophy
 
@@ -46,15 +46,30 @@ Then grow chapters.
 | Styling | CSS variables + Tailwind + CSS Modules | Tokens and layout speed without trapping complex visuals in utility classes |
 | 3D | Three.js + R3F + Drei | Matches source projects and desired experience |
 | State | Zustand | Section, quality, modal, and visual state without React render churn |
-| Motion | CSS / Motion for DOM, Theatre.js later for visual timelines | Keeps early complexity under control |
+| Motion | Theatre.js for LuBirth opening timeline; CSS / Motion for DOM | Gives the signature transition a tunable timeline while keeping routine motion simple |
 | Content | Typed local data, optional MDX later | Fast iteration, low operational burden |
 | Verification | Playwright + bundle analyzer + Lighthouse | Required for visual confidence and budget control |
 | Deploy | Vercel | Natural fit for Next and mostly static pages |
 
+## Source Project Scan Update
+
+The multi-agent source scan reinforces the current stack. ArtBreeze and Radio Gaga should enter MiraLith as v1.1+ content/visual narratives, not runtime migrations.
+
+- ArtBreeze: DOM vignette + poster fallback. Do not import Chrome extension runtime, selectors, cache layer, or global injected CSS.
+- Radio Gaga: case-study flow + lightweight mock hardware/sound scene. Do not import Vite SPA, Cloudflare Worker, n8n workflows, Jotai, TanStack Query, or ListenHub runtime.
+- Broader candidates: CoScroll, Anicca, SonoScope, AeScape, UGCFlow/fv_website, VoyaTide, ArtDuo, selected commissions, and visual studies.
+
+Stack micro-adjustments:
+
+- Add project representation types so non-visual systems can be case studies instead of forced scenes.
+- Add media/demo asset pipeline for posters, short loops, diagrams, and compressed models.
+- Allow isolated GSAP only for visual-study modules; Theatre remains the main narrative timeline.
+- Keep Python/CLI systems and source app runtimes out of MiraLith runtime.
+
 ## PRD Adjustments Worth Discussing
 
-- Decide whether v1 is bilingual. Bilingual improves range but doubles copy and layout QA.
-- Decide whether v1 must include all chapters, or whether a stunning LuBirth + selected project path is acceptable.
+- Language resolved: Chinese primary copy with English secondary lines.
+- v1.0 scope resolved: stunning LuBirth first two screens before full homepage expansion.
 - Decide whether project details are necessary at launch. They add credibility but can slow visual launch.
 - Decide whether contact should be subtle or more explicit. The current tone implies subtle.
 - Decide whether analytics should exist in v1. Useful, but not necessary for launch.
@@ -63,10 +78,9 @@ Then grow chapters.
 
 The long-term goal is reasonable if staged:
 
-- v1: field-site launch with LuBirth-led narrative.
-- v1.1: stronger detail pages and constellation.
-- v2: shared fixed canvas with more portal scenes and polished timeline tooling.
+- v1.0: LuBirth opening release with Theatre-controlled first two screens.
+- v1.1: Radio Gaga, CoScroll, ArtBreeze, constellation, contact, and selected commissions.
+- v2: shared fixed canvas with more portal scenes and deeper case-study pages.
 - v3: living archive / public operating surface with case studies, notes, experiments, and maybe CMS.
 
 Do not make v1 carry v3's infrastructure.
-
