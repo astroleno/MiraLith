@@ -481,8 +481,19 @@ export function LuBirthSceneSlot({
       return;
     }
 
-    setVisitorLocationState(cachedVisitorLocationState);
-    window.__MiraLithLuBirthRuntimeLocation = cachedVisitorLocationState.location;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
+      }
+
+      setVisitorLocationState(cachedVisitorLocationState);
+      window.__MiraLithLuBirthRuntimeLocation = cachedVisitorLocationState.location;
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [cachedVisitorLocationState, visitorLocationState?.endpoint]);
 
   const compositionOverrides = useMemo<LandingCompositionOverrides>(
