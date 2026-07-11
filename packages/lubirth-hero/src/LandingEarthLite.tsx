@@ -20,7 +20,9 @@ import {
   HOME_CLOUD_FIELD_OFFSET_Y,
   HOME_CLOUD_FIELD_SCROLL_SPEED
 } from "./homeCloudField";
+import { EMPTY_CLOSE_ATMOSPHERE_TUNING } from "./landingAtmosphereTuning";
 import type {
+  LandingCloseAtmosphereTuning,
   LandingComposition,
   LandingResolvedAssets,
   LandingVisualPolicy
@@ -37,6 +39,7 @@ interface LandingEarthLiteProps {
   paused?: boolean;
   sceneLightDirection?: Vector3;
   onDayTextureReady?: () => void;
+  closeAtmosphereTuning?: LandingCloseAtmosphereTuning;
 }
 
 const fallbackLightDirection = new Vector3();
@@ -54,13 +57,15 @@ function createLiteEarthMaterial({
   dayTexture,
   nightTexture,
   cloudFieldTexture,
-  visualPolicy
+  visualPolicy,
+  closeAtmosphereTuning
 }: {
   composition: LandingComposition;
   dayTexture: Texture;
   nightTexture: Texture;
   cloudFieldTexture: Texture;
   visualPolicy: LandingVisualPolicy;
+  closeAtmosphereTuning: LandingCloseAtmosphereTuning;
 }) {
   const lightColor = new Color(...composition.light.color);
 
@@ -93,7 +98,12 @@ function createLiteEarthMaterial({
       specularStrength: { value: composition.earth.specularStrength },
       rimStrength: { value: composition.earth.rimStrength },
       rimWidth: { value: composition.earth.rimWidth },
-      edgeLightColor: { value: new Color(...composition.earth.edgeLightColor) }
+      edgeLightColor: { value: new Color(...composition.earth.edgeLightColor) },
+      edgeGlowStrength: { value: closeAtmosphereTuning.edgeGlowStrength },
+      verticalGradientStrength: { value: closeAtmosphereTuning.verticalGradientStrength },
+      depthShadowStrength: { value: closeAtmosphereTuning.depthShadowStrength },
+      groundProjectionStrength: { value: closeAtmosphereTuning.groundProjectionStrength },
+      cloudVolumeShadowStrength: { value: closeAtmosphereTuning.cloudVolumeShadowStrength }
     },
     vertexShader: `
       varying vec2 vUv;
@@ -138,6 +148,11 @@ function createLiteEarthMaterial({
       uniform float rimStrength;
       uniform float rimWidth;
       uniform vec3 edgeLightColor;
+      uniform float edgeGlowStrength;
+      uniform float verticalGradientStrength;
+      uniform float depthShadowStrength;
+      uniform float groundProjectionStrength;
+      uniform float cloudVolumeShadowStrength;
 
       varying vec2 vUv;
       varying vec3 vWorldNormal;
@@ -194,6 +209,7 @@ function createLiteEarthMaterial({
         float lowSun = 1.0 - smoothstep(0.12, 0.72, directLight);
         float groundShadow = cloudCoverage * groundShadowStrength * dayWeight *
           (0.42 + cloudThickness * 0.34 + lowSun * 0.24);
+        groundShadow *= 1.0 + cloudVolumeShadowStrength * 0.36;
         color *= 1.0 - clamp(groundShadow, 0.0, 0.18);
 
         float surfaceCloudAlpha = cloudCoverage * surfaceCloudStrength * dayWeight *
@@ -213,6 +229,33 @@ function createLiteEarthMaterial({
         float rimDayGate = smoothstep(-0.34, 0.32, ndl);
         color += edgeLightColor * fresnel * rimStrength * (0.012 + rimDayGate * 0.032);
 
+        float contactLine = 1.0 - smoothstep(0.052, 0.118, facing);
+        float verticalPosition = normalDirection.y * 0.5 + 0.5;
+        float verticalGradient = mix(
+          1.0,
+          mix(0.78, 1.18, verticalPosition),
+          verticalGradientStrength
+        );
+        float contactDayGate = smoothstep(-0.34, 0.26, ndl);
+        float contactDepth = mix(
+          1.0,
+          0.58 + contactDayGate * 0.42,
+          depthShadowStrength
+        );
+        vec3 contactColor = mix(
+          vec3(0.42, 0.68, 1.0),
+          vec3(0.94, 0.985, 1.0),
+          0.34 + contactDayGate * 0.58
+        );
+        float contactStrength = (
+          0.065 +
+          edgeGlowStrength * 0.06 +
+          groundProjectionStrength * 0.025
+        ) *
+          verticalGradient *
+          contactDepth;
+        color += contactColor * contactLine * contactStrength;
+
         color = max(color, dayColor * nightWeight * 0.018);
         color = color / (1.0 + max(color - vec3(0.72), vec3(0.0)) * 0.72);
         float colorLuma = dot(color, vec3(0.299, 0.587, 0.114));
@@ -231,7 +274,8 @@ export function LandingEarthLite({
   reducedMotion,
   paused,
   sceneLightDirection,
-  onDayTextureReady
+  onDayTextureReady,
+  closeAtmosphereTuning = EMPTY_CLOSE_ATMOSPHERE_TUNING
 }: LandingEarthLiteProps) {
   const earth = useRef<Mesh>(null);
   const cloudOffset = useRef(0);
@@ -284,9 +328,17 @@ export function LandingEarthLite({
       dayTexture: activeDayTexture,
       nightTexture: activeNightTexture,
       cloudFieldTexture: activeCloudFieldTexture,
-      visualPolicy
+      visualPolicy,
+      closeAtmosphereTuning
     });
-  }, [activeCloudFieldTexture, activeDayTexture, activeNightTexture, composition, visualPolicy]);
+  }, [
+    activeCloudFieldTexture,
+    activeDayTexture,
+    activeNightTexture,
+    closeAtmosphereTuning,
+    composition,
+    visualPolicy
+  ]);
 
   useEffect(() => {
     if (dayTexture) {

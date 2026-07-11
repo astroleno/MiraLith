@@ -33,9 +33,11 @@ import { LandingProjectedLimbScattering } from "./LandingProjectedLimbScattering
 import { LandingSpaceBackground } from "./LandingSpaceBackground";
 import { LandingVolumetricAtmospherePass } from "./LandingVolumetricAtmospherePass";
 import { resolveLandingVisualPolicy } from "./landingVisualPolicy";
+import { EMPTY_CLOSE_ATMOSPHERE_TUNING } from "./landingAtmosphereTuning";
 import type {
   EarthMoonSceneProps,
   LandingAtmosphereVariant,
+  LandingCloseAtmosphereTuning,
   LandingProjectedEarthFrame,
   LandingRenderProfile,
   LuBirthProjectionFrame
@@ -181,7 +183,8 @@ export function EarthMoonScene({
   useHorizonAuroraRibbon = false,
   showAuroraInAll = false,
   atmosphereVariant = "stack",
-  atmosphereLook = "lubirth"
+  atmosphereLook = "lubirth",
+  closeAtmosphereTuning
 }: EarthMoonSceneProps) {
   const earthGroup = useRef<Group>(null);
   const projectedEarthFrame = useRef<LandingProjectedEarthFrame>({
@@ -212,6 +215,13 @@ export function EarthMoonScene({
     qualityTier: quality.tier,
     renderProfile: activeRenderProfile
   });
+  const activeCloseAtmosphereTuning = useMemo<LandingCloseAtmosphereTuning>(
+    () => ({
+      ...EMPTY_CLOSE_ATMOSPHERE_TUNING,
+      ...closeAtmosphereTuning
+    }),
+    [closeAtmosphereTuning]
+  );
 
   const showEarth = !debugStars;
   const showMoon = isNasaProfile || isCleanProfile;
@@ -293,7 +303,7 @@ export function EarthMoonScene({
     }
 
     window.__MiraLithLuBirthCloudShellsActive = showCloudShells;
-    if (activeVisualPolicy.bloomMode !== "full") {
+    if (activeVisualPolicy.bloomMode === "off") {
       window.__MiraLithLuBirthPostBloomActive = false;
     }
 
@@ -651,6 +661,7 @@ export function EarthMoonScene({
             referenceVolumetricSurfaceClouds={useReferenceVolumetricSurfaceClouds}
             runtimeProfile={runtimeProfile}
             visualPolicy={activeVisualPolicy}
+            closeAtmosphereTuning={activeCloseAtmosphereTuning}
           />
         ) : null}
         {showCloudShells ? (
@@ -774,6 +785,7 @@ export function EarthMoonScene({
             sceneLightDirection={sceneLightDirection}
             emphasis={debugAtmosphere}
             runtimeProfile={runtimeProfile}
+            closeAtmosphereTuning={activeCloseAtmosphereTuning}
           />
         ) : null}
         {debugMianyang && showEarth ? (
@@ -819,8 +831,12 @@ export function EarthMoonScene({
         />
       ) : null}
 
-      {showAtmosphereStack && activeVisualPolicy.bloomMode === "full" ? (
-        <LandingPostBloom quality={quality} emphasis={debugAtmosphere} />
+      {showAtmosphereStack && activeVisualPolicy.bloomMode !== "off" ? (
+        <LandingPostBloom
+          quality={quality}
+          emphasis={debugAtmosphere}
+          mode={activeVisualPolicy.bloomMode}
+        />
       ) : null}
       {showVolumetricAtmosphere ? (
         <LandingVolumetricAtmospherePass

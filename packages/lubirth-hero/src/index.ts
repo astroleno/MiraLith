@@ -2,6 +2,11 @@ export { EarthMoonHero } from "./EarthMoonHero";
 export { EarthMoonScene } from "./EarthMoonScene";
 export { resolveLuBirthAtmospherePolicy } from "./atmospherePolicy";
 export { resolveLandingVisualPolicy } from "./landingVisualPolicy";
+export {
+  EMPTY_CLOSE_ATMOSPHERE_TUNING,
+  HOME_CLOSE_ATMOSPHERE_TUNING,
+  resolveLandingCloseAtmosphereTuning
+} from "./landingAtmosphereTuning";
 export { LandingAirglow } from "./LandingAirglow";
 export { LandingAtmosphere } from "./LandingAtmosphere";
 export { LandingAurora } from "./LandingAurora";

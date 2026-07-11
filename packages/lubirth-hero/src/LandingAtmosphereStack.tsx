@@ -13,7 +13,13 @@ import {
   Vector3
 } from "three";
 import { getRuntimeOpeningProgress, type QualityProfile } from "@miralith/visual-core";
-import type { LandingComposition, LandingResolvedAssets, LandingRuntimeProfile } from "./types";
+import { EMPTY_CLOSE_ATMOSPHERE_TUNING } from "./landingAtmosphereTuning";
+import type {
+  LandingCloseAtmosphereTuning,
+  LandingComposition,
+  LandingResolvedAssets,
+  LandingRuntimeProfile
+} from "./types";
 import { useLandingTexture } from "./useLandingTexture";
 
 type AtmosphereLayerKind =
@@ -37,6 +43,7 @@ interface LandingAtmosphereStackProps {
   sceneLightDirection?: Vector3;
   emphasis?: boolean;
   runtimeProfile?: LandingRuntimeProfile;
+  closeAtmosphereTuning?: LandingCloseAtmosphereTuning;
 }
 
 interface AtmosphereLayerProps extends LandingAtmosphereStackProps {
@@ -98,7 +105,11 @@ function layerKindToUniform(kind: AtmosphereLayerKind) {
   return 3;
 }
 
-function createAtmosphereStackMaterial(composition: LandingComposition, spec: AtmosphereLayerSpec) {
+function createAtmosphereStackMaterial(
+  composition: LandingComposition,
+  spec: AtmosphereLayerSpec,
+  closeAtmosphereTuning: LandingCloseAtmosphereTuning
+) {
   return new ShaderMaterial({
     uniforms: {
       kind: { value: layerKindToUniform(spec.kind) },
@@ -112,7 +123,12 @@ function createAtmosphereStackMaterial(composition: LandingComposition, spec: At
       outerHaloStrength: { value: composition.atmosphere.outerHaloStrength },
       shellAltitude: { value: Math.max(0, spec.radius - 1) },
       surfaceMap: { value: null },
-      hasSurfaceMap: { value: 0 }
+      hasSurfaceMap: { value: 0 },
+      edgeGlowStrength: { value: closeAtmosphereTuning.edgeGlowStrength },
+      verticalGradientStrength: { value: closeAtmosphereTuning.verticalGradientStrength },
+      depthShadowStrength: { value: closeAtmosphereTuning.depthShadowStrength },
+      groundProjectionStrength: { value: closeAtmosphereTuning.groundProjectionStrength },
+      cloudVolumeShadowStrength: { value: closeAtmosphereTuning.cloudVolumeShadowStrength }
     },
     vertexShader: `
       varying vec2 vUv;
@@ -140,6 +156,11 @@ function createAtmosphereStackMaterial(composition: LandingComposition, spec: At
       uniform float shellAltitude;
       uniform sampler2D surfaceMap;
       uniform float hasSurfaceMap;
+      uniform float edgeGlowStrength;
+      uniform float verticalGradientStrength;
+      uniform float depthShadowStrength;
+      uniform float groundProjectionStrength;
+      uniform float cloudVolumeShadowStrength;
 
       varying vec2 vUv;
       varying vec3 vWorldPosition;
@@ -233,47 +254,47 @@ function createAtmosphereStackMaterial(composition: LandingComposition, spec: At
           float earthProjectedRadius = 1.0 / max(1.0001, 1.0 + shellAltitude);
           float radialSpan = max(0.004, 1.0 - earthProjectedRadius);
           float heightFromGround = (projectedRadial - earthProjectedRadius) / radialSpan;
-          float groundSideGate = smoothstep(-0.02, 0.018, heightFromGround);
+          float groundSideGate = smoothstep(-0.025, 0.035, heightFromGround);
           float outwardHeight = max(heightFromGround, 0.0);
-          float contactWeight = 1.0 - smoothstep(0.012, 0.078, shellAltitude);
-          float airColumnWeight = exp(-shellAltitude * 14.0);
-          float reflectiveContact = clamp(
-            0.72 +
-            oceanReflectance * 0.48 +
-            brightReflectance * 0.28 +
-            warmLandReflectance * 0.16,
-            0.62,
-            1.48
+          float lowerAir = exp(-outwardHeight * 3.8) * groundSideGate;
+          float upperAir = exp(-outwardHeight * 1.72) * groundSideGate;
+          float verticalPosition = n.y * 0.5 + 0.5;
+          float verticalGradient = mix(
+            1.0,
+            mix(0.8, 1.16, verticalPosition),
+            verticalGradientStrength
           );
-          float contactNeedle = exp(-outwardHeight * 15.5) * groundSideGate;
-          float innerRadialGlow = exp(-outwardHeight * 4.7) * groundSideGate;
-          float lowerAirColumn = exp(-outwardHeight * 2.35) * groundSideGate;
-          float outerRadialGlow =
-            exp(-outwardHeight * 2.0) *
-            groundSideGate;
-          float broadAirBloom =
-            exp(-outwardHeight * 2.65) *
-            groundSideGate;
-          vec3 groundBlue = mix(deepBlue, rayleighBlue, 0.34 + daySide * 0.38 + twilight * 0.12);
-          vec3 contactWhite = mix(whiteLineColor, vec3(1.34, 1.54, 1.86), oceanReflectance * 0.34);
-          vec3 warmScatter = vec3(1.0, 0.66, 0.36) * warmLandReflectance * twilight * 0.16;
-          float contactGain = 0.44 + contactWeight * 0.24 + airColumnWeight * 0.34;
-          float shelfGain = 0.42 + contactWeight * 0.14 + airColumnWeight * 0.34;
-          color =
-            groundBlue * innerRadialGlow * contactGain * 1.42 * shellReflectance +
-            rayleighBlue * outerRadialGlow * (0.38 + contactWeight * 0.2) * (0.46 + daySide * 0.54) * shellReflectance +
-            mix(deepBlue, rayleighBlue, 0.34 + daySide * 0.24) * broadAirBloom * (0.62 + airColumnWeight * 0.36) * shellReflectance +
-            contactWhite * contactNeedle * (0.042 + contactWeight * 0.044) * (0.34 + daySide * 0.66) * shellReflectance * reflectiveContact +
-            (mix(deepBlue, rayleighBlue, 0.42 + daySide * 0.24) + warmScatter) * lowerAirColumn * shelfGain * 1.34 * shellReflectance;
-          alpha =
-            innerRadialGlow *
-            (0.074 + contactWeight * 0.048 + airColumnWeight * 0.042) *
-            (0.64 + daySide * 0.32 + twilight * 0.2);
-          alpha += outerRadialGlow * (0.092 + contactWeight * 0.046) * (0.42 + daySide * 0.5);
-          alpha += broadAirBloom * (0.28 + airColumnWeight * 0.1) * (0.3 + daySide * 0.38);
-          alpha += contactNeedle * (0.011 + contactWeight * 0.012) * (0.38 + daySide * 0.52) * reflectiveContact;
-          alpha += lowerAirColumn * (0.038 + airColumnWeight * 0.03) * (0.38 + daySide * 0.46);
-          alpha *= mix(0.44, 1.0, altitudeFade) * shellReflectance;
+          float directionalFalloff = mix(
+            1.0,
+            0.58 + daySide * 0.42 + twilight * 0.08,
+            depthShadowStrength
+          );
+          float groundProjection = 1.0 +
+            groundProjectionStrength * exp(-outwardHeight * 6.2) * 0.28;
+          float edgeGain = 0.72 + edgeGlowStrength * 0.46;
+          float cloudVolumeAttenuation = 1.0 -
+            cloudVolumeShadowStrength * brightReflectance * hasSurfaceMap * 0.1;
+          vec3 atmosphereBlue = mix(
+            deepBlue,
+            rayleighBlue,
+            0.32 + daySide * 0.42 + twilight * 0.08
+          );
+          color = atmosphereBlue *
+            (lowerAir * 1.08 + upperAir * 0.34) *
+            edgeGain *
+            verticalGradient *
+            directionalFalloff *
+            groundProjection *
+            shellReflectance *
+            cloudVolumeAttenuation;
+          alpha = (lowerAir * 0.11 + upperAir * 0.085) *
+            (0.54 + daySide * 0.42 + twilight * 0.08) *
+            edgeGain *
+            verticalGradient *
+            directionalFalloff *
+            groundProjection *
+            mix(0.58, 1.0, altitudeFade) *
+            cloudVolumeAttenuation;
         } else if (kind == 0) {
           color = whiteLineColor * innerWhite * (0.54 + daySide * 0.86) * shellReflectance;
           alpha = innerWhite * 0.032 * innerWhiteStrength * mix(0.76, 1.08, shellReflectance - 0.48);
@@ -333,9 +354,13 @@ function AtmosphereLayer({
   sceneLightDirection,
   emphasis = false,
   runtimeProfile = "full",
+  closeAtmosphereTuning = EMPTY_CLOSE_ATMOSPHERE_TUNING,
   spec
 }: AtmosphereLayerProps) {
-  const material = useMemo(() => createAtmosphereStackMaterial(composition, spec), [composition, spec]);
+  const material = useMemo(
+    () => createAtmosphereStackMaterial(composition, spec, closeAtmosphereTuning),
+    [closeAtmosphereTuning, composition, spec]
+  );
   const { texture: surfaceTexture } = useLandingTexture(runtimeProfile === "home-lite" ? undefined : assets.earthDay.src, {
     colorSpace: assets.earthDay.colorSpace,
     wrapS: RepeatWrapping,
@@ -378,6 +403,11 @@ function AtmosphereLayer({
     material.uniforms.shellAltitude.value = Math.max(0, spec.radius - 1);
     material.uniforms.surfaceMap.value = surfaceTexture;
     material.uniforms.hasSurfaceMap.value = surfaceTexture ? 1 : 0;
+    material.uniforms.edgeGlowStrength.value = closeAtmosphereTuning.edgeGlowStrength;
+    material.uniforms.verticalGradientStrength.value = closeAtmosphereTuning.verticalGradientStrength;
+    material.uniforms.depthShadowStrength.value = closeAtmosphereTuning.depthShadowStrength;
+    material.uniforms.groundProjectionStrength.value = closeAtmosphereTuning.groundProjectionStrength;
+    material.uniforms.cloudVolumeShadowStrength.value = closeAtmosphereTuning.cloudVolumeShadowStrength;
   });
 
   return (
@@ -393,7 +423,8 @@ export function LandingAtmosphereStack({
   quality,
   sceneLightDirection,
   emphasis = false,
-  runtimeProfile = "full"
+  runtimeProfile = "full",
+  closeAtmosphereTuning = EMPTY_CLOSE_ATMOSPHERE_TUNING
 }: LandingAtmosphereStackProps) {
   const enabled = quality.tier !== "fallback" && composition.atmosphere.enabled;
   const layers = !emphasis
@@ -431,6 +462,7 @@ export function LandingAtmosphereStack({
           sceneLightDirection={sceneLightDirection}
           emphasis={emphasis}
           runtimeProfile={runtimeProfile}
+          closeAtmosphereTuning={closeAtmosphereTuning}
           spec={spec}
         />
       ))}

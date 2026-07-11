@@ -3,10 +3,12 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import {
   EarthMoonScene,
+  EMPTY_CLOSE_ATMOSPHERE_TUNING,
   computeRuntimeMoonPhase,
   computeRuntimeSolarDirection,
   geodeticToTextureVector,
   resolveLandingAssets,
+  resolveLandingCloseAtmosphereTuning,
   resolveLandingPreset,
   resolveLandingVisualPolicy,
   resolveLuBirthAtmospherePolicy
@@ -179,14 +181,6 @@ interface LuBirthSceneSlotProps {
   onVisualReadyEnough?: () => void;
   onMoonTextureReady?: () => void;
 }
-
-const EMPTY_CLOSE_ATMOSPHERE_TUNING: LandingCloseAtmosphereTuning = {
-  edgeGlowStrength: 0,
-  verticalGradientStrength: 0,
-  depthShadowStrength: 0,
-  groundProjectionStrength: 0,
-  cloudVolumeShadowStrength: 0
-};
 
 function readMoonLightingMode(): LandingMoonLightingMode | undefined {
   if (typeof window === "undefined") {
@@ -507,15 +501,17 @@ export function LuBirthSceneSlot({
     [activeRenderProfile, qualityProfile.tier, runtimeProfile]
   );
   const requestedCloseAtmosphereTuning = useMemo<LandingCloseAtmosphereTuning>(
-    () => ({
-      ...EMPTY_CLOSE_ATMOSPHERE_TUNING,
-      ...closeAtmosphereTuning
+    () => resolveLandingCloseAtmosphereTuning({
+      runtimeProfile,
+      overrides: closeAtmosphereTuning
     }),
-    [closeAtmosphereTuning]
+    [closeAtmosphereTuning, runtimeProfile]
   );
   const closeAtmosphereAllowed = qualityProfile.tier !== "low" && qualityProfile.tier !== "fallback";
   const effectiveCloseAtmosphereTuning = useMemo<LandingCloseAtmosphereTuning>(
-    () => closeAtmosphereAllowed ? requestedCloseAtmosphereTuning : EMPTY_CLOSE_ATMOSPHERE_TUNING,
+    () => closeAtmosphereAllowed
+      ? requestedCloseAtmosphereTuning
+      : { ...EMPTY_CLOSE_ATMOSPHERE_TUNING },
     [closeAtmosphereAllowed, requestedCloseAtmosphereTuning]
   );
   const resolvedAtmospherePolicy = resolveLuBirthAtmospherePolicy({
