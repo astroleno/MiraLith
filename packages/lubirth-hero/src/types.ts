@@ -92,6 +92,7 @@ export interface LandingEarthConfig {
   cloudOpacity: number;
   terminatorSoftness: number;
   nightIntensity: number;
+  nightSurfaceLift: number;
   specularStrength: number;
   rimStrength: number;
   rimWidth: number;

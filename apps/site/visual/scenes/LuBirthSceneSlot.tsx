@@ -89,6 +89,37 @@ const VISITOR_LOCATION_CACHE_KEY = "miralith:lubirth-runtime-location:v1";
 // Matches the reference demo's default slider sunTheta=80, sunPhi=3 without tying light to the camera.
 const REFERENCE_ATMOSPHERE_SUN_DIRECTION: [number, number, number] = [0.34, 0.18, 0.923];
 
+export function resolveHomeEarthEdgeProfile(
+  routeVariant: LuBirthAtmosphereRouteVariant
+): NonNullable<LandingCompositionOverrides["earth"]> | undefined {
+  if (routeVariant !== "home") {
+    return undefined;
+  }
+
+  return {
+    rimStrength: 0.68,
+    rimWidth: 1.9,
+    edgeLightStrength: 0.54,
+    edgeLightWidth: 6.6,
+    edgeNeedleStrength: 0.16,
+    edgeShadowSoftness: 0.22
+  };
+}
+
+export function resolveHomeEarthSurfaceProfile(
+  routeVariant: LuBirthAtmosphereRouteVariant
+): NonNullable<LandingCompositionOverrides["earth"]> | undefined {
+  if (routeVariant !== "home") {
+    return undefined;
+  }
+
+  return {
+    cloudOpacity: 0.62,
+    nightIntensity: 0.72,
+    nightSurfaceLift: 0.42
+  };
+}
+
 declare global {
   interface Window {
     __MiraLithLuBirthQualityTier?: string;
@@ -536,6 +567,8 @@ export function LuBirthSceneSlot({
         !freezeAtmosphereSpikeSolar &&
         (activeRenderProfile === "nasa" || moonPhaseOverride === "today" || Boolean(activeVisitorLocation));
       const referenceCloseOrbitLook = unifyReferenceMoonLighting;
+      const homeEarthEdgeProfile = resolveHomeEarthEdgeProfile(activeRouteVariant);
+      const homeEarthSurfaceProfile = resolveHomeEarthSurfaceProfile(activeRouteVariant);
       const resolvedMoonLightingMode =
         moonLightingMode ??
         (unifyReferenceMoonLighting
@@ -554,21 +587,28 @@ export function LuBirthSceneSlot({
             }
           : {})
       };
+      const earth: NonNullable<LandingCompositionOverrides["earth"]> = {
+        ...homeEarthEdgeProfile,
+        ...homeEarthSurfaceProfile,
+        ...(referenceAtmosphereLook
+          ? {
+              cloudOpacity: 3.0,
+              edgeLightStrength: 0,
+              edgeLightWidth: 2.2,
+              edgeNeedleStrength: 0,
+              rimStrength: 0
+            }
+          : {})
+      };
 
       return {
         ...(Object.keys(moon).length > 0 ? { moon } : {}),
+        ...(Object.keys(earth).length > 0 ? { earth } : {}),
         ...(useRuntimeSolar ? { light: { fixedSunDir: runtimeSunDirection } } : {}),
         ...(referenceAtmosphereLook
           ? {
               ...(referenceCloseOrbitLook ? { camera: { fov: 40 } } : {}),
               atmosphere: { intensity: 1.0 },
-              earth: {
-                cloudOpacity: 3.0,
-                edgeLightStrength: 0,
-                edgeLightWidth: 2.2,
-                edgeNeedleStrength: 0,
-                rimStrength: 0
-              },
               light: {
                 fixedSunDir: useRuntimeSolar ? runtimeSunDirection : REFERENCE_ATMOSPHERE_SUN_DIRECTION,
                 ambientIntensity: 0.024,

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Color, DirectionalLight, MathUtils, Vector3 } from "three";
 import type { Scene } from "three";
 import { RadioGagaParticleTransition } from "./RadioGagaParticleTransition";
-import { mapRadioGagaProgress } from "./radioGagaTimeline";
+import { mapRadioGagaProgress, RADIO_GAGA_TIMELINE } from "./radioGagaTimeline";
 import { RadioGagaModel } from "./RadioGagaModel";
 import type { RadioGagaSceneProps } from "./types";
 
@@ -82,7 +82,11 @@ export function RadioGagaSceneContent({
       return;
     }
     const nextFrame = mapRadioGagaProgress(progressRef?.current ?? progress);
-    const esp32SolidPresence = MathUtils.smoothstep(nextFrame.progress, 0.805, 0.85);
+    const esp32SolidPresence = MathUtils.smoothstep(
+      nextFrame.progress,
+      RADIO_GAGA_TIMELINE.finale.revealStart,
+      RADIO_GAGA_TIMELINE.finale.revealEnd
+    );
     const esp32LightPresence = Math.max(nextFrame.esp32Opacity, esp32SolidPresence, nextFrame.esp32SolidMotionProgress);
     const isMobile = size.width < 720;
     const isShortLandscape = size.height < 520 && size.width > size.height;
@@ -134,7 +138,13 @@ export function RadioGagaSceneContent({
       <directionalLight ref={openingFill} color="#e7eefc" position={[-2.6, 1.7, 3.2]} intensity={0.46} />
       <directionalLight ref={rimLight} color="#f5d8c8" position={[-3.2, 1.6, -1.8]} intensity={0.22} />
       <directionalLight ref={frontSoftbox} color="#ffffff" position={[0.2, 1.4, 4.6]} intensity={0.42} />
-      <RadioGagaModel frame={frame} frameRef={frameRef} motionRef={motionRef} onReady={handleModelReady} />
+      <RadioGagaModel
+        frame={frame}
+        frameRef={frameRef}
+        motionRef={motionRef}
+        reducedMotion={reducedMotion}
+        onReady={handleModelReady}
+      />
       <RadioGagaParticleTransition
         frame={frame}
         frameRef={frameRef}

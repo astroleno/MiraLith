@@ -27,6 +27,51 @@ async function waitForCoScrollPixels(page: import("@playwright/test").Page, thre
   expect(await nonblank.jsonValue()).toBe(true);
 }
 
+async function measureSourceShellColorBalance(page: import("@playwright/test").Page) {
+  return page.evaluate(() => {
+    const source = document.querySelector("canvas");
+    if (!source) {
+      throw new Error("No canvas found for source shell measurement");
+    }
+
+    const width = 144;
+    const height = 90;
+    const sample = document.createElement("canvas");
+    sample.width = width;
+    sample.height = height;
+    const context = sample.getContext("2d");
+    if (!context) {
+      throw new Error("Could not create source shell sample context");
+    }
+    context.drawImage(source, 0, 0, width, height);
+    const pixels = context.getImageData(0, 0, width, height).data;
+    let sampled = 0;
+    let neutralShell = 0;
+    let cyanCore = 0;
+
+    for (let y = 25; y < 65; y += 1) {
+      for (let x = 50; x < 94; x += 1) {
+        const pixel = (y * width + x) * 4;
+        const r = pixels[pixel];
+        const g = pixels[pixel + 1];
+        const b = pixels[pixel + 2];
+        sampled += 1;
+        if (r > 170 && g > 170 && b > 170 && Math.max(r, g, b) - Math.min(r, g, b) < 55) {
+          neutralShell += 1;
+        }
+        if (b > 150 && g > 110 && r < 150) {
+          cyanCore += 1;
+        }
+      }
+    }
+
+    return {
+      neutralShellShare: neutralShell / sampled,
+      cyanCoreShare: cyanCore / sampled
+    };
+  });
+}
+
 async function compareSourceMatchCanvasToReference(page: import("@playwright/test").Page) {
   const [{ readFileSync }, path] = await Promise.all([import("node:fs"), import("node:path")]);
   const referenceBase64 = readFileSync(
@@ -392,6 +437,64 @@ function meanSampleDelta(before: number[], after: number[]) {
   return total / Math.max(1, length);
 }
 
+async function measureBackgroundScreenshotMotion(
+  page: import("@playwright/test").Page,
+  delayMs = 2_200
+) {
+  const clip = { x: 0, y: 0, width: 1440, height: 220 };
+  const before = await page.screenshot({ clip });
+  await page.waitForTimeout(delayMs);
+  const after = await page.screenshot({ clip });
+
+  return page.evaluate(
+    async ({ beforeBase64, afterBase64 }) => {
+      const width = 180;
+      const height = 28;
+      const decode = (encoded: string) =>
+        new Promise<HTMLImageElement>((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error("Could not decode CoScroll motion frame"));
+          image.src = `data:image/png;base64,${encoded}`;
+        });
+      const readLuma = async (encoded: string) => {
+        const image = await decode(encoded);
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext("2d");
+        if (!context) {
+          throw new Error("Could not create CoScroll background motion context");
+        }
+        context.drawImage(image, 0, 0, width, height);
+        const pixels = context.getImageData(0, 0, width, height).data;
+        const luma: number[] = [];
+        for (let index = 0; index < pixels.length; index += 4) {
+          luma.push(0.2126 * pixels[index] + 0.7152 * pixels[index + 1] + 0.0722 * pixels[index + 2]);
+        }
+        return luma;
+      };
+
+      const [beforeLuma, afterLuma] = await Promise.all([readLuma(beforeBase64), readLuma(afterBase64)]);
+      let deltaSum = 0;
+      let changedPixels = 0;
+      for (let index = 0; index < beforeLuma.length; index += 1) {
+        const delta = Math.abs(beforeLuma[index] - afterLuma[index]);
+        deltaSum += delta;
+        if (delta > 4) {
+          changedPixels += 1;
+        }
+      }
+
+      return {
+        meanDelta: deltaSum / Math.max(1, beforeLuma.length),
+        changedShare: changedPixels / Math.max(1, beforeLuma.length)
+      };
+    },
+    { beforeBase64: before.toString("base64"), afterBase64: after.toString("base64") }
+  );
+}
+
 async function waitForSourceMatchAnchorEnergy(
   page: import("@playwright/test").Page,
   minimumLitPixels: number,
@@ -657,7 +760,7 @@ test("coscroll source-match lyrics use horizontal travel lanes instead of cluste
   expect(billboard).not.toContain("199, 176, 107");
 });
 
-test("coscroll jade material keeps the original dual-layer loader path with MiraLith amber tuning", async () => {
+test("coscroll jade source material preserves the original blue-jade dual shell", async () => {
   const jade = await readProjectFile("packages/coscroll-scene/src/CoScrollJadeAnchor.tsx");
   const sceneContent = await readProjectFile("packages/coscroll-scene/src/CoScrollSceneContent.tsx");
   const spikeExperience = await readProjectFile("apps/site/app/coscroll-spike/CoScrollSpikeExperience.tsx");
@@ -667,49 +770,63 @@ test("coscroll jade material keeps the original dual-layer loader path with Mira
   expect(jade).toContain("OBJLoader");
   expect(jade).toContain("GLTFLoader");
   expect(jade).toContain("MeshoptDecoder");
-  expect(jade).toContain("RGBELoader");
+  expect(jade).toContain("HDRLoader");
+  expect(jade).not.toContain("RGBELoader");
   expect(jade).toContain("deterministicPose");
   expect(jade).toContain("sourceMaterial");
   expect(jade).toContain("qwantani_moon_noon_puresky_1k.hdr");
   expect(jade).toContain('"/assets/coscroll/textures/normal.jpg"');
   expect(jade).toContain("SOURCE_JADE_MATERIAL");
-  expect(jade).toContain("innerColor: 0xd99552");
-  expect(jade).toContain("innerMetalness: 0.85");
+  expect(jade).toContain("innerColor: 0x2d6d8b");
+  expect(jade).toContain("innerMetalness: 1");
   expect(jade).toContain("innerRoughness: 1");
   expect(jade).toContain("innerTransmission: 0");
   expect(jade).toContain("innerOpacity: 1");
-  expect(jade).toContain("innerEmissive: 0x8b401e");
-  expect(jade).toContain("innerEmissiveIntensity: 11.4");
+  expect(jade).toContain("innerEmissive: 0x0f2b38");
+  expect(jade).toContain("innerEmissiveIntensity: 12");
   expect(jade).toContain("innerEnvMapIntensity: 2");
-  expect(jade).toContain("outerColor: 0xffe8c2");
+  expect(jade).toContain("emissiveIntensity: preset.innerEmissiveIntensity");
+  expect(jade).toContain("outerColor: 0xffffff");
   expect(jade).toContain("outerRoughness: 0.82");
-  expect(jade).toContain("outerTransmission: 0.92");
+  expect(jade).toContain("outerTransmission: 1");
   expect(jade).toContain("outerIor: 1.52");
   expect(jade).toContain("outerReflectivity: 0.3");
-  expect(jade).toContain("outerThickness: 0.28");
-  expect(jade).toContain("outerAttenuationColor: 0xf1aa64");
-  expect(jade).toContain("outerAttenuationDistance: 0.62");
-  expect(jade).toContain("outerEmissiveIntensity: 0.16");
+  expect(jade).toContain("outerThickness: 0.24");
+  expect(jade).not.toContain("outerAttenuationColor");
+  expect(jade).not.toContain("outerAttenuationDistance");
   expect(jade).toContain("outerClearcoat: 0");
   expect(jade).toContain("outerClearcoatRoughness: 1");
   expect(jade).toContain("outerEnvMapIntensity: 5");
   expect(jade).toContain("normalScale: 0.3");
   expect(jade).toContain("normalRepeat: 3");
+  expect(jade).toContain('import { TessellateModifier } from "three/examples/jsm/modifiers/TessellateModifier.js"');
+  expect(jade).toContain("mergeVertices, toCreasedNormals");
+  expect(jade).toContain("function createSourceOffsetGeometry");
+  expect(jade).toContain("new TessellateModifier(0.15)");
+  expect(jade).toContain("toCreasedNormals(workingGeometry, THREE.MathUtils.degToRad(30))");
+  expect(jade).toContain("function createSourcePreparedAnchorGeometry");
+  expect(jade).toContain("sourceMode && !fallback");
+  expect(jade).not.toContain("texture.colorSpace = THREE.SRGBColorSpace");
+  expect(jade).toContain("color: preset.outerColor");
+  expect(jade).toContain("transmission: preset.outerTransmission");
+  expect(jade).not.toContain("material.side = THREE.DoubleSide");
+  expect(jade).not.toContain("SOURCE_AMBER_VISUAL_TUNING");
+  expect(jade).not.toContain("jadeBodyFragmentShader");
+  expect(jade).not.toContain("volumeGlowFragmentShader");
+  expect(jade).not.toContain("volumeMaterial");
   expect(jade).not.toContain("createJadeDensityTexture");
   expect(jade).not.toContain("subsurfaceMaterial");
   expect(jade).toContain("geometry.inner");
   expect(jade).toContain("geometry.outer");
   expect(jade).toContain("new THREE.MeshPhysicalMaterial");
   expect(jade).toContain("new THREE.MeshStandardMaterial");
-  expect(jade).toContain("transparent: false");
+  expect(jade).toContain("transparent: opacity < 1");
+  expect(jade).toContain("depthWrite: opacity >= 1");
   expect(jade).toContain("depthWrite: true");
-  expect(jade).toContain("CoScrollModelCaustics");
-  expect(jade).toContain("WebGLRenderTarget");
-  expect(jade).toContain("causticComputeFragmentShader");
-  expect(jade).toContain("refract(lightDir, normal, 1.0 / 1.25)");
-  expect(jade).toContain("normalMesh.rotation.copy(anchorGroup.current.rotation)");
+  expect(jade).not.toContain("CoScrollModelCaustics");
+  expect(jade).not.toContain("viewport.width * 1.22");
   expect(jade).toContain("createSmoothedGeometry");
-  expect(jade).toContain("mergeVertices(geometry.clone(), 1e-4)");
+  expect(jade).toContain("mergeVertices(child.geometry.clone(), 1e-4)");
   expect(jade).toContain("preparedAnchorGeometryCache");
   expect(jade).toContain("preloadCoScrollAnchorGeometry");
   expect(jade).toContain("targetSpeedRef");
@@ -726,19 +843,69 @@ test("coscroll jade material keeps the original dual-layer loader path with Mira
   expect(sceneContent).not.toContain("key={currentAnchorAsset.id}");
   expect(sceneContent).not.toContain("key={currentAnchorAsset.modelSrc}");
   expect(sceneContent).toContain("listenToScrollInput={!sourceMatchMode}");
-  expect(sceneContent).toContain('ambientLight intensity={sourceMatchMode ? 0.66 : 0.34}');
-  expect(sceneContent).toContain('intensity={sourceMatchMode ? 2.15 : 1.12}');
-  expect(sceneContent).toContain('color={sourceMatchMode ? "#f4b066" : "#7ed6e8"}');
-  expect(sceneContent).toContain('color={sourceMatchMode ? "#3a2113" : undefined}');
-  expect(sceneContent).toContain("causticsActive={sourceMatchMode}");
-  expect(sceneContent).toContain("causticsOpacity={sourceMatchMode ? state.backgroundIntensity");
+  expect(sceneContent).toContain('ambientLight intensity={sourceMatchMode ? 0.4 : 0.34}');
+  expect(sceneContent).toContain('position={sourceMatchMode ? [2, 2, 2] : [3.4, 3.8, 5.2]}');
+  expect(sceneContent).toContain('intensity={sourceMatchMode ? 1.2 : 1.12}');
+  expect(sceneContent).toContain('position={sourceMatchMode ? [-2, 2, -2] : [-2.8, -1.8, 2.8]}');
+  expect(sceneContent).toContain('intensity={sourceMatchMode ? 0.3 : 0.48}');
+  expect(sceneContent).toContain('color={sourceMatchMode ? "#4A90E2" : "#7ed6e8"}');
+  expect(sceneContent).not.toContain('<pointLight position={[1.8, -1.4, 2.6]}');
+  expect(sceneContent).toContain("const SOURCE_MATCH_MODEL_SCALE = 2.8 * 1.2 * 1.1;");
+  expect(sceneContent).toContain("? 2.2 * 1.2 * 1.1");
+  expect(sceneContent).toContain(": SOURCE_MATCH_MODEL_SCALE");
+  expect(sceneContent).not.toContain("causticsActive={sourceMatchMode}");
+  expect(sceneContent).not.toContain("causticsOpacity={sourceMatchMode ? state.backgroundIntensity");
   expect(spikeExperience).not.toContain("onPointerMove");
   expect(spikeExperience).not.toContain("PointerEvent");
   expect(spikeExperience).not.toContain("DRAG_THRESHOLD");
-  expect(spikeExperience).toContain("onTouchMove={handleTouchMove}");
+  expect(spikeExperience).toContain('shell.addEventListener("wheel", handleWheel, { passive: false })');
+  expect(spikeExperience).toContain('shell.addEventListener("touchmove", handleTouchMove, { passive: false })');
   for (const oldMineralColor of ["#2f5b4f", "#344d44", "#5a5135"]) {
     expect(jade).not.toContain(oldMineralColor);
   }
+});
+
+test("coscroll source-match keeps lyric glyph size constant while scrolling", async () => {
+  const billboard = await readProjectFile("packages/coscroll-scene/src/CoScrollTextBillboard.tsx");
+  const sceneContent = await readProjectFile("packages/coscroll-scene/src/CoScrollSceneContent.tsx");
+
+  expect(billboard).toContain("ctx.font = `${fontPx}px ${sourceTextStyle(sourceFont)}`");
+  expect(billboard).not.toContain("current ? fontPx * 1.04 : fontPx");
+  expect(sceneContent).toContain("const SOURCE_MATCH_DESKTOP_FONT_SIZE = 0.5;");
+  expect(sceneContent).toContain("const SOURCE_MATCH_MOBILE_FONT_SIZE = 0.4;");
+  expect(sceneContent).toContain("? SOURCE_MATCH_MOBILE_FONT_SIZE");
+  expect(sceneContent).toContain(": SOURCE_MATCH_DESKTOP_FONT_SIZE");
+});
+
+test("coscroll source-match uses the original black-blue and cold-white palette", async () => {
+  const spikeExperience = await readProjectFile("apps/site/app/coscroll-spike/CoScrollSpikeExperience.tsx");
+  const sceneContent = await readProjectFile("packages/coscroll-scene/src/CoScrollSceneContent.tsx");
+  const billboard = await readProjectFile("packages/coscroll-scene/src/CoScrollTextBillboard.tsx");
+  const caustics = await readProjectFile("packages/coscroll-scene/src/CoScrollCausticLightField.tsx");
+
+  expect(spikeExperience).toContain('background: "#010205"');
+  expect(sceneContent).toContain('{sourceMatchMode ? null : <color attach="background" args={["#010205"]} />}');
+  expect(billboard).toContain('fill: current ? "#f8fafc" : "#cbd5f5"');
+  expect(billboard).toContain('shadow: "rgba(207, 242, 255, 0.2)"');
+  expect(caustics).toContain('sourceMatch ? "#2d6d8b" : "#386f70"');
+  expect(caustics).toContain('sourceMatch ? "#cbd5f5" : "#e5fff7"');
+});
+
+test("coscroll source-match keeps the original transmissive shell isolated from the backdrop", async () => {
+  const standalone = await readProjectFile("packages/coscroll-scene/src/CoScrollStandaloneDemo.tsx");
+  const sceneContent = await readProjectFile("packages/coscroll-scene/src/CoScrollSceneContent.tsx");
+
+  expect(standalone).toContain('alpha: sourceMatchMode');
+  expect(standalone).toContain('background: "#010205"');
+  expect(sceneContent).toContain('{sourceMatchMode ? null : <color attach="background" args={["#010205"]} />}');
+});
+
+test("coscroll source-match lifts the complete desktop composition as one unit", async () => {
+  const sceneContent = await readProjectFile("packages/coscroll-scene/src/CoScrollSceneContent.tsx");
+
+  expect(sceneContent).toContain("const SOURCE_MATCH_DESKTOP_Y_LIFT = 0.34;");
+  expect(sceneContent).toContain("-0.82 + SOURCE_MATCH_DESKTOP_Y_LIFT");
+  expect(sceneContent).toContain("-0.41 + SOURCE_MATCH_DESKTOP_Y_LIFT");
 });
 
 test("coscroll source-match mode uses the original OBJ anchor model set", async ({ page }) => {
@@ -813,7 +980,7 @@ test("coscroll source-match frame uses the original-project travel composition",
   expect(composition.centerTravelField.bbox).not.toBeNull();
   expect(composition.bottomTravelLane.bbox).not.toBeNull();
   expect(composition.anchor.bbox).not.toBeNull();
-  expect(composition.anchor.amberShare).toBeGreaterThan(0.12);
+  expect(composition.anchor.cyanShare).toBeGreaterThan(0.12);
 
   const anchorBox = composition.anchor.bbox;
   if (!anchorBox) {
@@ -885,6 +1052,54 @@ test("coscroll source-match route is scroll-driven outside frozen screenshot mod
   await expect.poll(async () => Number(await scene.getAttribute("data-coscroll-progress"))).not.toBe(initialProgress);
 });
 
+test("coscroll source-match owns the viewport while wheel input drives its timeline", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/coscroll-spike?sourceMatch=1&motionTest=1");
+  await waitForCoScrollPixels(page, 18);
+
+  const scene = page.locator('[data-coscroll-source-match="clean"]');
+  await page.evaluate(() => {
+    document.documentElement.style.minHeight = "1800px";
+    document.body.style.minHeight = "1800px";
+  });
+
+  const viewportOwnership = await scene.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+
+    return {
+      position: style.position,
+      overflow: style.overflow,
+      overscrollBehavior: style.overscrollBehavior,
+      touchAction: style.touchAction,
+      top: rect.top,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height,
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight
+    };
+  });
+
+  expect(viewportOwnership).toMatchObject({
+    position: "fixed",
+    overflow: "hidden",
+    overscrollBehavior: "none",
+    touchAction: "none",
+    top: 0,
+    left: 0,
+    width: viewportOwnership.viewportWidth,
+    height: viewportOwnership.viewportHeight
+  });
+
+  const initialProgress = Number(await scene.getAttribute("data-coscroll-progress"));
+  await page.mouse.move(720, 450);
+  await page.mouse.wheel(0, 360);
+
+  await expect.poll(async () => Number(await scene.getAttribute("data-coscroll-progress"))).not.toBe(initialProgress);
+  await expect.poll(async () => page.evaluate(() => window.scrollY)).toBe(0);
+});
+
 test("coscroll source-match wheel input visibly drives bidirectional model motion", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/coscroll-spike?sourceMatch=1&motionTest=1");
@@ -910,6 +1125,51 @@ test("coscroll source-match wheel input visibly drives bidirectional model motio
   expect(reverseProgress).toBeLessThan(forwardProgress);
   expect(meanSampleDelta(before, afterForward)).toBeGreaterThan(0.6);
   expect(meanSampleDelta(afterForward, afterReverse)).toBeGreaterThan(0.6);
+});
+
+test("coscroll source-match caustics keep an independent animated flow profile", async () => {
+  const caustics = await readProjectFile("packages/coscroll-scene/src/CoScrollCausticLightField.tsx");
+  const jade = await readProjectFile("packages/coscroll-scene/src/CoScrollJadeAnchor.tsx");
+  const sceneContent = await readProjectFile("packages/coscroll-scene/src/CoScrollSceneContent.tsx");
+
+  expect(caustics).toContain("const SOURCE_MATCH_CAUSTIC_SPEED = 0.82;");
+  expect(caustics).toContain("poolDriftA");
+  expect(caustics).toContain("roamingCaustic");
+  expect(caustics).toContain("sourceFlowA");
+  expect(caustics).toContain("sourceFlowB");
+  expect(caustics).toContain("sourceCoverageFloor");
+  expect(caustics).toContain("float perlinNoise(vec2 p)");
+  expect(caustics).toContain("float perlinFbm(vec2 p)");
+  expect(caustics).toContain("uLyricCenters");
+  expect(caustics).toContain("verticalReadingChannel(centered, uLyricCenters.x");
+  expect(caustics).toContain("if (!active || paused || reducedMotion)");
+  expect(sceneContent).toContain("lyricCenters={sourceCausticLyricCenters}");
+  expect(jade).not.toContain("SOURCE_MATCH_MODEL_CAUSTICS_OPACITY_SCALE");
+  expect(jade).not.toContain("SOURCE_MATCH_MODEL_CAUSTICS_MAX_OPACITY");
+});
+
+test("coscroll source-match renders a neutral outer shell over the blue core", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/coscroll-spike?sourceMatch=1&visualTest=pixels");
+  await waitForCoScrollPixels(page, 18);
+  await expect.poll(
+    async () => (await measureSourceShellColorBalance(page)).neutralShellShare,
+    { timeout: 20_000 }
+  ).toBeGreaterThan(0.01);
+
+  const balance = await measureSourceShellColorBalance(page);
+  expect(balance.cyanCoreShare).toBeGreaterThan(0.015);
+});
+
+test("coscroll source-match caustics visibly advect across the empty background band", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/coscroll-spike?sourceMatch=1&motionTest=1");
+  await waitForCoScrollPixels(page, 18);
+  await page.waitForTimeout(400);
+
+  const motion = await measureBackgroundScreenshotMotion(page);
+  expect(motion.meanDelta).toBeGreaterThan(1.2);
+  expect(motion.changedShare).toBeGreaterThan(0.08);
 });
 
 test("coscroll reduced motion keeps a static anchor instead of collapsing to background-only pixels", async ({ page }) => {

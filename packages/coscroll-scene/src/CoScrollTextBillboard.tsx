@@ -96,13 +96,19 @@ function createVerticalTextBillboard({
   const columnWidth = fontPx * (sourceFont ? 1.06 : 1.16);
   const canvasWidth = Math.ceil(columnWidth + padding * 2);
   const canvasHeight = Math.ceil(verticalSpacing * glyphCount + padding * 2);
-  const style = emphasisStyles[emphasis];
+  const style = sourceFont
+    ? {
+        fill: current ? "#f8fafc" : "#cbd5f5",
+        stroke: "rgba(1, 2, 5, 0.72)",
+        shadow: "rgba(207, 242, 255, 0.2)"
+      }
+    : emphasisStyles[emphasis];
 
   canvas.width = canvasWidth;
   canvas.height = canvasHeight;
 
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-  ctx.font = `${current ? fontPx * 1.04 : fontPx}px ${sourceTextStyle(sourceFont)}`;
+  ctx.font = `${fontPx}px ${sourceTextStyle(sourceFont)}`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.lineJoin = "round";

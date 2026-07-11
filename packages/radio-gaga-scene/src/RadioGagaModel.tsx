@@ -16,6 +16,7 @@ import {
   SRGBColorSpace
 } from "three";
 import { mapRadioGagaFinalOutput } from "./radioGagaFinalOutput";
+import { RADIO_GAGA_TIMELINE } from "./radioGagaTimeline";
 import type { RadioGagaFrame, RadioGagaFrameRef, RadioGagaSceneMotionRef } from "./types";
 
 const RADIO_POSITION: [number, number, number] = [0.18, -0.32, 0];
@@ -131,6 +132,7 @@ interface RadioGagaModelProps {
   frame: RadioGagaFrame;
   frameRef?: RadioGagaFrameRef;
   motionRef?: RadioGagaSceneMotionRef;
+  reducedMotion?: boolean;
   onReady?: () => void;
 }
 
@@ -201,7 +203,13 @@ const applyOpacity = (materials: AnimatedMaterial[], opacity: number) => {
   });
 };
 
-export function RadioGagaModel({ frame, frameRef, motionRef, onReady }: RadioGagaModelProps) {
+export function RadioGagaModel({
+  frame,
+  frameRef,
+  motionRef,
+  reducedMotion = false,
+  onReady
+}: RadioGagaModelProps) {
   const radio = useGLTF("/model/radio_gaga.glb");
   const esp32Gltf = useGLTF("/model/xiaozhi_esp32.glb");
   const radioGroup = useRef<Group>(null);
@@ -255,8 +263,20 @@ export function RadioGagaModel({ frame, frameRef, motionRef, onReady }: RadioGag
   const esp32Model = useMemo(() => cloneSceneWithMaterials(esp32Gltf.scene), [esp32Gltf.scene]);
 
   const updateModel = useCallback((nextFrame: RadioGagaFrame) => {
-    const finalVisualOpacity = smooth(range(nextFrame.progress, 0.925, 0.955));
-    const esp32SolidPresence = smooth(range(nextFrame.progress, 0.86, 0.925));
+    const finalVisualOpacity = smooth(
+      range(
+        nextFrame.progress,
+        RADIO_GAGA_TIMELINE.finale.frontLockEnd,
+        RADIO_GAGA_TIMELINE.finale.outputStart
+      )
+    );
+    const esp32SolidPresence = smooth(
+      range(
+        nextFrame.progress,
+        RADIO_GAGA_TIMELINE.finale.revealStart,
+        RADIO_GAGA_TIMELINE.finale.revealEnd
+      )
+    );
     const esp32Presence = Math.max(esp32SolidPresence, finalVisualOpacity);
     const radioVisible = nextFrame.radioOpacity > 0.01;
 
@@ -264,7 +284,7 @@ export function RadioGagaModel({ frame, frameRef, motionRef, onReady }: RadioGag
     applyOpacity(esp32Model.materials, esp32Presence);
 
     if (finalSubtitleCanvas && finalSubtitleTexture && finalSubtitleMaterial) {
-      const outputState = mapRadioGagaFinalOutput(nextFrame.progress);
+      const outputState = mapRadioGagaFinalOutput(nextFrame.progress, reducedMotion);
       const subtitleKey = `${outputState.activeIndex}:${outputState.displayText}:${outputState.isComplete}`;
 
       if (finalSubtitleKey.current !== subtitleKey) {
@@ -300,7 +320,7 @@ export function RadioGagaModel({ frame, frameRef, motionRef, onReady }: RadioGag
       solidGroup.current.visible = radioVisible;
     }
     if (esp32Group.current) {
-      const esp32SolidMotion = nextFrame.esp32SolidMotionProgress;
+      const esp32SolidMotion = reducedMotion ? 1 : nextFrame.esp32SolidMotionProgress;
       const esp32Lift = esp32SolidMotion * 0.09;
       const esp32Scale = ESP32_SCALE * (0.92 + esp32SolidMotion * 0.1);
       const esp32CenterProgress = esp32SolidMotion;
@@ -327,6 +347,7 @@ export function RadioGagaModel({ frame, frameRef, motionRef, onReady }: RadioGag
     finalSubtitleMaterial,
     finalSubtitleTexture,
     motionRef,
+    reducedMotion,
     solidRadio.materials
   ]);
 

@@ -44,9 +44,7 @@ test("renders radioGAGA route in one production canvas", async ({ page }, testIn
   ).toBeVisible();
   await expect(page.locator("canvas")).toHaveCount(1);
   await expect(page.locator(".visual-canvas")).toHaveCount(1);
-  await expect
-    .poll(() => titlePanel.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity)))
-    .toBeGreaterThan(0.85);
+  await expect.poll(() => opacityOf(titlePanel)).toBeGreaterThan(0.85);
 
   if (testInfo.project.name === "desktop") {
     await expect(page.locator(".radio-gaga-title-rail li[data-active='true'] .radio-gaga-title-rail__title")).toHaveText(
@@ -91,22 +89,28 @@ test("radioGAGA keeps copy visible while asset preflight is pending", async ({ p
       await route.fulfill({ status: 200, body: "" });
       return;
     }
-
     await route.continue();
   });
 
   try {
     await page.goto("/radio-gaga");
-
     await expect(page.locator('[data-visual-fallback="radio-gaga"]')).toHaveCount(0);
     await expect(page.locator("canvas")).toHaveCount(1);
     await expect(page.locator(".radio-gaga-copy h1")).toHaveText("radioGAGA");
-    await expect(
-      page.locator(".radio-gaga-copy").getByText("把附近发生的事，变成家里听得懂的一句提醒", { exact: true })
-    ).toBeVisible();
   } finally {
     releasePreflight();
   }
+});
+
+test("radioGAGA uses one broadcast tuner instead of detached status panels", async ({ page }) => {
+  await page.goto("/radio-gaga");
+
+  await expect(page.locator(".radio-gaga-broadcast-tuner")).toHaveCount(1);
+  await expect(page.locator(".radio-gaga-proof-strip")).toHaveCount(0);
+  await expect(page.locator(".radio-gaga-step-marker")).toHaveCount(0);
+  await expect(page.locator(".radio-gaga-copy__core")).toHaveCount(0);
+  await expect(page.locator(".radio-gaga-final-dialog")).toHaveCount(0);
+  await expect(page.locator(".radio-gaga-copy__intro")).toHaveCount(0);
 });
 
 test("radioGAGA canvas renders nonblank pixels", async ({ page }) => {
@@ -115,24 +119,18 @@ test("radioGAGA canvas renders nonblank pixels", async ({ page }) => {
 
   const nonblank = await page.waitForFunction(() => {
     const source = document.querySelector("canvas");
-    if (!source) {
-      return false;
-    }
+    if (!source) return false;
 
     const sample = document.createElement("canvas");
     sample.width = 64;
     sample.height = 64;
     const context = sample.getContext("2d");
-    if (!context) {
-      return false;
-    }
+    if (!context) return false;
 
     context.drawImage(source, 0, 0, 64, 64);
     const pixels = context.getImageData(0, 0, 64, 64).data;
     for (let index = 0; index < pixels.length; index += 4) {
-      if (pixels[index] + pixels[index + 1] + pixels[index + 2] > 18) {
-        return true;
-      }
+      if (pixels[index] + pixels[index + 1] + pixels[index + 2] > 18) return true;
     }
     return false;
   });
@@ -140,257 +138,152 @@ test("radioGAGA canvas renders nonblank pixels", async ({ page }) => {
   expect(await nonblank.jsonValue()).toBe(true);
 });
 
-test("radioGAGA memory phase renders embedded process copy after the radio handoff", async ({ page }, testInfo) => {
+test("radioGAGA writing phase keeps proof and progress inside the tuner", async ({ page }) => {
   await page.goto("/radio-gaga");
   await scrollRadioGagaTo(page, 0.58);
 
-  const memoryPanel = page.locator(".radio-gaga-copy__memory");
-  const instrumentLayer = page.locator(".radio-gaga-instrument");
-  const proof2 = page.locator('.radio-gaga-proof-strip__item[data-radio-gaga-proof="2"]');
-  await expect(page.locator(".radio-gaga-copy").getByText("收音机问今天有什么新鲜事，我把答案调成爸妈能接住的一句话。")).toBeVisible();
+  const memory = page.locator(".radio-gaga-copy__memory");
+  const tuner = page.locator(".radio-gaga-broadcast-tuner");
+  const writingReadout = tuner.locator('[data-radio-gaga-readout="3"]');
 
-  if (testInfo.project.name === "mobile-portrait") {
-    await expect
-      .poll(() => opacityOf(memoryPanel))
-      .toBeGreaterThan(0.45);
-    await expect
-      .poll(() => opacityOf(proof2))
-      .toBeGreaterThan(0.3);
-    await expect
-      .poll(() => opacityOf(instrumentLayer))
-      .toBeLessThan(0.18);
-
-    await scrollRadioGagaTo(page, 0.66);
-    await expect
-      .poll(() => opacityOf(instrumentLayer))
-      .toBeGreaterThan(0.45);
-    await expect
-      .poll(() => opacityOf(proof2))
-      .toBeLessThan(0.22);
-    return;
-  }
-
-  await expect
-    .poll(() => opacityOf(memoryPanel))
-    .toBeGreaterThan(0.45);
-
-  if (testInfo.project.name === "desktop") {
-    await expect
-      .poll(() => opacityOf(instrumentLayer))
-      .toBeGreaterThan(0.7);
-    await expect(instrumentLayer.getByText("rewrite it as one family sentence")).toBeVisible();
-    await expect
-      .poll(() => opacityOf(page.locator('.radio-gaga-instrument__step[data-radio-gaga-dial="1"]')))
-      .toBeGreaterThan(0.16);
-    await expect
-      .poll(() => opacityOf(page.locator('.radio-gaga-instrument__step[data-radio-gaga-dial="3"]')))
-      .toBeGreaterThan(0.85);
-  }
+  await expect.poll(() => opacityOf(memory)).toBeGreaterThan(0.7);
+  await expect.poll(() => opacityOf(tuner)).toBeGreaterThan(0.8);
+  await expect.poll(() => opacityOf(writingReadout)).toBeGreaterThan(0.8);
+  await expect(tuner.getByText("写成我会说出口的节目稿", { exact: true })).toHaveCount(1);
+  await expect(tuner.getByText("筛出今天真的要回家的消息", { exact: true })).toHaveCount(1);
 });
 
-test("radioGAGA mobile landscape memory layout keeps copy separated", async ({ page }) => {
+test("radioGAGA desktop reading stage keeps one caption inside the left safe lane", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "This composition contract targets the desktop reading lane.");
+
+  await page.setViewportSize({ width: 2048, height: 1153 });
+  await page.goto("/radio-gaga");
+  await scrollRadioGagaTo(page, 0.3);
+
+  const voice = page.locator(".radio-gaga-copy__voice");
+  const tuner = page.locator(".radio-gaga-broadcast-tuner");
+  await expect.poll(() => opacityOf(voice)).toBeGreaterThan(0.7);
+  await expect.poll(() => opacityOf(tuner)).toBeGreaterThan(0.8);
+
+  const voiceBox = await requireBoundingBox(voice, "voice copy");
+  const tunerBox = await requireBoundingBox(tuner, "broadcast tuner");
+  expect(boxesOverlap(voiceBox, tunerBox), "voice and broadcast tuner should not overlap").toBe(false);
+  expect(voiceBox.x + voiceBox.width, "reading copy should stay inside the left safe lane").toBeLessThan(2048 * 0.28);
+  expect(tunerBox.x, "tuner should stay inside the right safe lane").toBeGreaterThan(2048 * 0.68);
+});
+
+test("radioGAGA tuner stays fixed while its active readout changes", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "This composition contract targets the desktop tuner.");
+
+  await page.setViewportSize({ width: 2048, height: 1153 });
+  await page.goto("/radio-gaga");
+
+  const tuner = page.locator(".radio-gaga-broadcast-tuner");
+  await scrollRadioGagaTo(page, 0.3);
+  const readingBox = await requireBoundingBox(tuner, "reading tuner");
+  await expect.poll(() => opacityOf(tuner.locator('[data-radio-gaga-readout="2"]'))).toBeGreaterThan(0.8);
+
+  await scrollRadioGagaTo(page, 0.66);
+  const writingBox = await requireBoundingBox(tuner, "writing tuner");
+  await expect.poll(() => opacityOf(tuner.locator('[data-radio-gaga-readout="3"]'))).toBeGreaterThan(0.8);
+
+  expect(Math.abs(readingBox.x - writingBox.x)).toBeLessThan(1);
+  expect(Math.abs(readingBox.y - writingBox.y)).toBeLessThan(1);
+  expect(Math.abs(readingBox.width - writingBox.width)).toBeLessThan(1);
+});
+
+test("radioGAGA mobile landscape keeps story and tuner in separate lanes", async ({ page }) => {
   await page.setViewportSize({ width: 915, height: 412 });
   await page.goto("/radio-gaga");
   await scrollRadioGagaTo(page, 0.58);
 
-  const viewport = page.viewportSize();
-  expect(viewport).not.toBeNull();
+  const viewport = page.viewportSize() as { width: number; height: number };
+  const memory = page.locator(".radio-gaga-copy__memory");
+  const tuner = page.locator(".radio-gaga-broadcast-tuner");
+  await expect.poll(() => opacityOf(memory)).toBeGreaterThan(0.7);
+  await expect.poll(() => opacityOf(tuner)).toBeGreaterThan(0.8);
 
-  const memoryPanel = page.locator(".radio-gaga-copy__memory");
-  const activeStage = page.locator('.radio-gaga-step-marker__stage[data-radio-gaga-stage="3"]');
-
-  await expect
-    .poll(() => opacityOf(memoryPanel))
-    .toBeGreaterThan(0.28);
-  await expect
-    .poll(() => opacityOf(activeStage))
-    .toBeGreaterThan(0.85);
-
-  const memoryBox = await requireBoundingBox(memoryPanel, "memory copy");
-  const stageBox = await requireBoundingBox(activeStage, "step marker");
-  const resolvedViewport = viewport as { width: number; height: number };
-
-  expectBoxInViewport(memoryBox, resolvedViewport, "memory copy");
-  expectBoxInViewport(stageBox, resolvedViewport, "step marker");
-  expect(boxesOverlap(memoryBox, stageBox), "memory copy and step marker should not overlap").toBe(false);
-  expect(memoryBox.x + memoryBox.width, "memory copy should stay in the left text lane").toBeLessThan(
-    resolvedViewport.width * 0.48
-  );
+  const memoryBox = await requireBoundingBox(memory, "memory copy");
+  const tunerBox = await requireBoundingBox(tuner, "broadcast tuner");
+  expectBoxInViewport(memoryBox, viewport, "memory copy");
+  expectBoxInViewport(tunerBox, viewport, "broadcast tuner");
+  expect(boxesOverlap(memoryBox, tunerBox), "story and tuner should not overlap").toBe(false);
 });
 
-test("radioGAGA core phase exits earlier copy groups", async ({ page }, testInfo) => {
+test("radioGAGA particle handoff clears story while the tuner remains contextual", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "This composition contract targets the desktop handoff.");
+
+  await page.setViewportSize({ width: 2048, height: 1153 });
   await page.goto("/radio-gaga");
+  await scrollRadioGagaTo(page, 0.76);
 
-  const titlePanel = page.locator(".radio-gaga-copy__panel").first();
-  const voicePanel = page.locator(".radio-gaga-copy__voice");
-  const memoryPanel = page.locator(".radio-gaga-copy__memory");
-  const corePanel = page.locator(".radio-gaga-copy__core");
-  const coreProgress = 0.835;
-
-  if (testInfo.project.name !== "mobile-portrait") {
-    await scrollRadioGagaTo(page, 0.58);
-    await expect
-      .poll(() => opacityOf(memoryPanel))
-      .toBeGreaterThan(0.45);
-
-    await scrollRadioGagaTo(page, coreProgress);
-    await expect
-      .poll(() => opacityOf(corePanel))
-      .toBeGreaterThan(0.7);
-    await expect
-      .poll(() => opacityOf(memoryPanel))
-      .toBeLessThan(0.08);
-  }
-
-  await scrollRadioGagaTo(page, coreProgress);
-  await expect
-    .poll(() => opacityOf(corePanel))
-    .toBeGreaterThan(0.7);
-  await expect
-    .poll(() => opacityOf(titlePanel))
-    .toBeLessThan(0.2);
-  await expect
-    .poll(() => opacityOf(voicePanel))
-    .toBeLessThan(0.2);
-  await expect
-    .poll(() => opacityOf(memoryPanel))
-    .toBeLessThan(0.2);
+  const memory = page.locator(".radio-gaga-copy__memory");
+  const tuner = page.locator(".radio-gaga-broadcast-tuner");
+  const transmitReadout = tuner.locator('[data-radio-gaga-readout="4"]');
+  await expect.poll(() => opacityOf(memory)).toBeLessThan(0.02);
+  await expect.poll(() => opacityOf(tuner)).toBeGreaterThan(0.8);
+  await expect.poll(() => opacityOf(transmitReadout)).toBeGreaterThan(0.8);
+  await expect(tuner.getByText("ESP32 正在接收", { exact: true })).toHaveCount(1);
 });
 
-test("radioGAGA second act keeps the voice to memory handoff quiet", async ({ page }, testInfo) => {
+test("radioGAGA finale waits for the front lock before exposing output copy", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "This composition contract targets the desktop finale.");
+
+  await page.setViewportSize({ width: 2048, height: 1153 });
   await page.goto("/radio-gaga");
-  await scrollRadioGagaTo(page, 0.46);
+  await scrollRadioGagaTo(page, 0.95);
+  await expect(page.locator(".radio-gaga-broadcast-tuner__output")).toHaveCount(0);
 
-  const voicePanel = page.locator(".radio-gaga-copy__voice");
-  const memoryPanel = page.locator(".radio-gaga-copy__memory");
-  const instrumentLayer = page.locator(".radio-gaga-instrument");
-  const proof1 = page.locator('.radio-gaga-proof-strip__item[data-radio-gaga-proof="1"]');
-  const stage2 = page.locator('.radio-gaga-step-marker__stage[data-radio-gaga-stage="2"]');
-  const stage3 = page.locator('.radio-gaga-step-marker__stage[data-radio-gaga-stage="3"]');
-  const stepMarker = page.locator(".radio-gaga-step-marker");
-  const dial3 = page.locator('.radio-gaga-instrument__step[data-radio-gaga-dial="3"]');
-
-  await expect
-    .poll(() => opacityOf(voicePanel))
-    .toBeLessThan(0.15);
-  await expect
-    .poll(() => opacityOf(memoryPanel))
-    .toBeLessThan(0.08);
-  if (testInfo.project.name === "mobile-portrait") {
-    await expect
-      .poll(() => opacityOf(instrumentLayer))
-      .toBeLessThan(0.18);
-  } else {
-    await expect
-      .poll(() => opacityOf(instrumentLayer))
-      .toBeLessThan(0.24);
-  }
-  await expect
-    .poll(() => opacityOf(proof1))
-    .toBeGreaterThan(0.25);
-  await expect
-    .poll(() => opacityOf(stage2))
-    .toBeLessThan(0.25);
-  await expect
-    .poll(() => opacityOf(stage3))
-    .toBeLessThan(0.08);
-  await expect
-    .poll(() => opacityOf(stepMarker))
-    .toBeLessThan(0.12);
-  await expect
-    .poll(() => opacityOf(dial3))
-    .toBeLessThan(0.26);
+  await scrollRadioGagaTo(page, 0.96);
+  await expect(page.locator(".radio-gaga-broadcast-tuner__output")).toHaveCount(1);
+  await expect.poll(() => opacityOf(page.locator('[data-radio-gaga-readout="5"]'))).toBeGreaterThan(0.8);
 });
 
-test("radioGAGA proof copy stages the processing frames before the ESP32 handoff", async ({ page }) => {
+test("radioGAGA mobile finale keeps the tuner in the bottom reading lane", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-portrait", "This composition contract targets portrait mobile.");
+
   await page.goto("/radio-gaga");
+  await scrollRadioGagaTo(page, 0.96);
 
-  const proof1 = page.locator('.radio-gaga-proof-strip__item[data-radio-gaga-proof="1"]');
-  const proof2 = page.locator('.radio-gaga-proof-strip__item[data-radio-gaga-proof="2"]');
-
-  await expect(proof1.getByText("筛出今天真的要回家的消息")).toHaveCount(1);
-  await expect(proof2.getByText("写成我会说出口的节目稿")).toHaveCount(1);
-
-  await scrollRadioGagaTo(page, 0.44);
-  await expect
-    .poll(() => opacityOf(proof1))
-    .toBeGreaterThan(0.2);
-
-  await scrollRadioGagaTo(page, 0.58);
-  await expect
-    .poll(() => opacityOf(proof2))
-    .toBeGreaterThan(0.2);
+  const viewport = page.viewportSize() as { width: number; height: number };
+  const tuner = page.locator(".radio-gaga-broadcast-tuner");
+  const tunerBox = await requireBoundingBox(tuner, "mobile broadcast tuner");
+  expectBoxInViewport(tunerBox, viewport, "mobile broadcast tuner");
+  expect(tunerBox.y).toBeGreaterThan(viewport.height * 0.52);
 });
 
-test("radioGAGA mobile finale transition avoids partial sheet chrome", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "mobile-portrait", "The partial sheet entrance is a portrait mobile polish check.");
-
+test("radioGAGA finale shows one reminder, then yields to the closing line", async ({ page }) => {
   await page.goto("/radio-gaga");
-  await scrollRadioGagaTo(page, 0.945);
+  await scrollRadioGagaTo(page, 0.98);
 
-  const finalDialog = page.locator(".radio-gaga-final-dialog");
-  const stepMarker = page.locator(".radio-gaga-step-marker");
-
-  await expect
-    .poll(() => opacityOf(finalDialog))
-    .toBeLessThan(0.02);
-  await expect
-    .poll(() => opacityOf(stepMarker))
-    .toBeLessThan(0.02);
-});
-
-test("radioGAGA finale completes and exits earlier copy groups", async ({ page }, testInfo) => {
-  await page.goto("/radio-gaga");
-  await scrollRadioGagaTo(page, 1);
-
-  const titlePanel = page.locator(".radio-gaga-copy__panel").first();
-  const voicePanel = page.locator(".radio-gaga-copy__voice");
-  const memoryPanel = page.locator(".radio-gaga-copy__memory");
-  const corePanel = page.locator(".radio-gaga-copy__core");
+  const tuner = page.locator(".radio-gaga-broadcast-tuner");
   const finalPanel = page.locator(".radio-gaga-copy__final");
-  const finalDialog = page.locator(".radio-gaga-final-dialog");
-  const communityGateOutput = finalDialog.getByText("妈，社区门口那条路明天施工，出门从东门绕一下。");
-  const activeWeatherOutput = finalDialog.getByText("下午可能降温，出门前把外套放包里，我晚点再问你。");
+  await expect.poll(() => opacityOf(tuner)).toBeGreaterThan(0.8);
+  await expect(tuner.getByText("下午可能降温，出门前把外套放包里，我晚点再问你。", { exact: true })).toBeVisible();
+  await expect(tuner.getByText("妈，社区门口那条路明天施工，出门从东门绕一下。", { exact: true })).toHaveCount(0);
+  await expect(tuner.getByText("morning market", { exact: true })).toHaveCount(0);
 
-  await expect(finalPanel.getByText("A small machine for staying close.")).toBeVisible();
+  await scrollRadioGagaTo(page, 1);
+  await expect.poll(() => opacityOf(tuner)).toBeLessThan(0.02);
+  await expect.poll(() => opacityOf(finalPanel)).toBeGreaterThan(0.8);
   await expect(finalPanel.getByText("一台让距离变近的小机器。")).toBeVisible();
-  await expect(activeWeatherOutput).toBeVisible();
-  if (testInfo.project.name === "mobile-portrait") {
-    await expect(communityGateOutput).toBeHidden();
-  } else {
-    await expect(communityGateOutput).toBeVisible();
-  }
-  if (testInfo.project.name === "mobile-portrait") {
-    await expect(finalDialog.getByText("morning market")).toBeHidden();
-  } else if (testInfo.project.name === "desktop") {
-    await expect(finalDialog.getByText("morning market")).toBeVisible();
-  }
-  await expect
-    .poll(() => opacityOf(finalPanel))
-    .toBeGreaterThan(0.25);
-  await expect
-    .poll(() => opacityOf(finalDialog))
-    .toBeGreaterThan(0.65);
-  if (testInfo.project.name === "mobile-portrait") {
-    const viewport = page.viewportSize();
-    expect(viewport).not.toBeNull();
-    const dialogBox = await requireBoundingBox(finalDialog, "mobile finale sheet");
-    expect(dialogBox.y, "mobile finale sheet should stay in the bottom reading lane").toBeGreaterThan(
-      (viewport as { width: number; height: number }).height * 0.62
-    );
-  }
-  await expect
-    .poll(() => opacityOf(titlePanel))
-    .toBeLessThan(0.2);
-  await expect
-    .poll(() => opacityOf(voicePanel))
-    .toBeLessThan(0.2);
-  await expect
-    .poll(() => opacityOf(memoryPanel))
-    .toBeLessThan(0.2);
-  await expect
-    .poll(() => opacityOf(corePanel))
-    .toBeLessThan(0.2);
+  await expect.poll(() => opacityOf(page.locator(".radio-gaga-copy__voice"))).toBeLessThan(0.02);
+  await expect.poll(() => opacityOf(page.locator(".radio-gaga-copy__memory"))).toBeLessThan(0.02);
+});
+
+test("radioGAGA reduced motion reveals the final reminder without typing", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The reduced-motion contract only needs one project.");
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/radio-gaga");
+  await scrollRadioGagaTo(page, 0.96);
+
+  await expect(
+    page.locator(".radio-gaga-broadcast-tuner__output").getByText(
+      "下午可能降温，出门前把外套放包里，我晚点再问你。",
+      { exact: true }
+    )
+  ).toBeVisible();
 });
 
 test("radioGAGA falls back when the radio model fails to load", async ({ page }) => {

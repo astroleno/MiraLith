@@ -71,7 +71,8 @@ export function CoScrollStandaloneDemo({ className, fallback, onFallback, ...pro
       data-coscroll-standalone
       style={{
         position: "relative",
-        minHeight: "100vh",
+        height: sourceMatchMode ? "100%" : undefined,
+        minHeight: sourceMatchMode ? "100%" : "100vh",
         width: "100%",
         overflow: "hidden",
         background: "#010205"
@@ -80,7 +81,7 @@ export function CoScrollStandaloneDemo({ className, fallback, onFallback, ...pro
       <Canvas
         orthographic={sourceMatchMode}
         dpr={[1, Math.max(1, props.quality.dpr)]}
-        gl={{ antialias: true, alpha: false, powerPreference: "high-performance", preserveDrawingBuffer }}
+        gl={{ antialias: true, alpha: sourceMatchMode, powerPreference: "high-performance", preserveDrawingBuffer }}
         camera={
           sourceMatchMode
             ? { position: [0, 0, 12], zoom: viewport === "mobile" ? 92 : 100, near: 0.1, far: 50 }

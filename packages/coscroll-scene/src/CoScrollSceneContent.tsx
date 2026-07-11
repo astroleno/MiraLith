@@ -20,6 +20,11 @@ interface CoScrollAssetBoundaryState {
   failed: boolean;
 }
 
+const SOURCE_MATCH_DESKTOP_FONT_SIZE = 0.5;
+const SOURCE_MATCH_MOBILE_FONT_SIZE = 0.4;
+const SOURCE_MATCH_DESKTOP_Y_LIFT = 0.34;
+const SOURCE_MATCH_MODEL_SCALE = 2.8 * 1.2 * 1.1;
+
 class CoScrollAssetBoundary extends Component<CoScrollAssetBoundaryProps, CoScrollAssetBoundaryState> {
   state: CoScrollAssetBoundaryState = { failed: false };
 
@@ -51,7 +56,7 @@ export function CoScrollSceneContent({
 }: CoScrollSceneContentProps) {
   const sourceMatchMode = quality.reason === "source-match";
   const mobileSourceMatch = sourceMatchMode && viewport === "mobile";
-  const { gl } = useThree();
+  const { gl, viewport: sceneViewport } = useThree();
 
   useEffect(() => {
     if (!sourceMatchMode) {
@@ -131,6 +136,26 @@ export function CoScrollSceneContent({
       }),
     [mobileSourceMatch, quality.tier, sourceMatchMode, state.duration, state.visualTime, timeline.lyricSegments]
   );
+  const sourceCausticLyricCenters = useMemo<[number, number, number, number]>(() => {
+    const fallback: [number, number, number, number] = [-0.43, -0.18, 0.08, 0.35];
+    if (!sourceMatchMode) {
+      return fallback;
+    }
+
+    const visibleColumns = [...layeredLyrics.back, ...layeredLyrics.front]
+      .filter((line) => line.opacity > 0.08 && line.edgeFeather < 0.92)
+      .sort((a, b) => a.x - b.x);
+    if (visibleColumns.length === 0) {
+      return fallback;
+    }
+
+    const halfWidth = Math.max(0.01, sceneViewport.width * 0.5);
+    const sampleAt = (ratio: number) => {
+      const index = Math.min(visibleColumns.length - 1, Math.round((visibleColumns.length - 1) * ratio));
+      return Math.max(-0.92, Math.min(0.92, visibleColumns[index].x / halfWidth));
+    };
+    return [sampleAt(0.14), sampleAt(0.38), sampleAt(0.62), sampleAt(0.86)];
+  }, [layeredLyrics, sceneViewport.width, sourceMatchMode]);
   const currentAnchorAsset = useMemo(
     () => assets.anchors.find((asset) => asset.id === state.currentAnchor),
     [assets.anchors, state.currentAnchor]
@@ -168,7 +193,7 @@ export function CoScrollSceneContent({
     return null;
   }
 
-  const lyricYOffset = sourceMatchMode ? (mobileSourceMatch ? -0.02 : -0.82) : 0;
+  const lyricYOffset = sourceMatchMode ? (mobileSourceMatch ? -0.02 : -0.82 + SOURCE_MATCH_DESKTOP_Y_LIFT) : 0;
   const renderLyric = (line: CoScrollLayeredLyricItem) => {
     const isFront = line.layer === "front";
     const sourceLayerOpacity =
@@ -186,7 +211,15 @@ export function CoScrollSceneContent({
         text={line.text}
         position={[line.x, line.y + lyricYOffset + sourceCurrentFrontLift, line.z]}
         opacity={line.opacity * layerOpacity}
-        fontSize={sourceMatchMode ? (mobileSourceMatch ? (isFront ? 0.39 : 0.42) : isFront ? 0.52 : 0.5) : quality.tier === "low" ? 0.38 : 0.48}
+        fontSize={
+          sourceMatchMode
+            ? mobileSourceMatch
+              ? SOURCE_MATCH_MOBILE_FONT_SIZE
+              : SOURCE_MATCH_DESKTOP_FONT_SIZE
+            : quality.tier === "low"
+              ? 0.38
+              : 0.48
+        }
         layer={isFront ? "front" : "back"}
         current={line.isCurrent}
         emphasis={line.emphasis}
@@ -203,21 +236,19 @@ export function CoScrollSceneContent({
 
   return (
     <>
-      <color attach="background" args={[sourceMatchMode ? "#100705" : "#010205"]} />
+      {sourceMatchMode ? null : <color attach="background" args={["#010205"]} />}
       {sourceMatchMode ? null : <fog attach="fog" args={["#070707", 7.5, 24]} />}
-      <ambientLight intensity={sourceMatchMode ? 0.46 : 0.34} color={sourceMatchMode ? "#ffd8aa" : "#d9fbff"} />
+      <ambientLight intensity={sourceMatchMode ? 0.4 : 0.34} color={sourceMatchMode ? "#ffffff" : "#d9fbff"} />
       <directionalLight
-        position={sourceMatchMode ? [2.0, 3.2, 4.4] : [3.4, 3.8, 5.2]}
-        intensity={sourceMatchMode ? 1.34 : 1.12}
-        color={sourceMatchMode ? "#ffe8c6" : "#e7fbff"}
+        position={sourceMatchMode ? [2, 2, 2] : [3.4, 3.8, 5.2]}
+        intensity={sourceMatchMode ? 1.2 : 1.12}
+        color={sourceMatchMode ? "#ffffff" : "#e7fbff"}
       />
       <pointLight
-        position={sourceMatchMode ? [-2.8, 1.1, 2.2] : [-2.8, -1.8, 2.8]}
-        intensity={sourceMatchMode ? 1.05 : 0.48}
-        color={sourceMatchMode ? "#f4a35f" : "#7ed6e8"}
+        position={sourceMatchMode ? [-2, 2, -2] : [-2.8, -1.8, 2.8]}
+        intensity={sourceMatchMode ? 0.3 : 0.48}
+        color={sourceMatchMode ? "#4A90E2" : "#7ed6e8"}
       />
-      {sourceMatchMode ? <pointLight position={[1.8, -1.4, 2.6]} intensity={0.48} color="#ffd69b" /> : null}
-      {sourceMatchMode ? <pointLight position={[0, 0.2, 4.9]} intensity={0.58} color="#f2a96d" /> : null}
       {sourceMatchMode ? null : (
         <CoScrollSilkBackground
           active={active}
@@ -239,6 +270,7 @@ export function CoScrollSceneContent({
         }
         anchorPresence={state.shouldLoadModel ? 1 : 0.45}
         scrollVelocity={state.scrollVelocity}
+        lyricCenters={sourceCausticLyricCenters}
         positionZ={sourceMatchMode ? -5.05 : -5.22}
       />
 
@@ -249,8 +281,16 @@ export function CoScrollSceneContent({
           <CoScrollJadeAnchor
             modelSrc={currentAnchorAsset.modelSrc}
             materialPreset={currentAnchorAsset.materialPreset}
-            position={sourceMatchMode ? [0, mobileSourceMatch ? 0.95 : -0.41, 0] : [0, 0, 0]}
-            scale={sourceMatchMode ? (mobileSourceMatch ? 1.46 : 2.55) : quality.tier === "low" ? 0.9 : 1}
+            position={sourceMatchMode ? [0, mobileSourceMatch ? 0.95 : -0.41 + SOURCE_MATCH_DESKTOP_Y_LIFT, 0] : [0, 0, 0]}
+            scale={
+              sourceMatchMode
+                ? mobileSourceMatch
+                  ? 2.2 * 1.2 * 1.1
+                  : SOURCE_MATCH_MODEL_SCALE
+                : quality.tier === "low"
+                  ? 0.9
+                  : 1
+            }
             scrollVelocity={state.scrollVelocity}
             reducedMotion={reducedMotion}
             paused={paused}
@@ -259,8 +299,6 @@ export function CoScrollSceneContent({
             deterministicPose={sourceMatchMode && paused}
             sourceMaterial={sourceMatchMode}
             renderOrder={sourceMatchMode ? 2600 : undefined}
-            causticsActive={sourceMatchMode}
-            causticsOpacity={sourceMatchMode ? state.backgroundIntensity * (mobileSourceMatch ? 0.2 : 0.26) : 0}
             listenToScrollInput={!sourceMatchMode}
             onReady={onReady}
             onFallback={onFallback}

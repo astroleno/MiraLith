@@ -1,7 +1,9 @@
-const FINAL_OUTPUT_START = 0.925;
-const FINAL_OUTPUT_END = 1;
+import { RADIO_GAGA_TIMELINE } from "./radioGagaTimeline";
+
+const FINAL_OUTPUT_START = RADIO_GAGA_TIMELINE.finale.outputStart;
+const FINAL_OUTPUT_END = RADIO_GAGA_TIMELINE.finale.outputEnd;
 const TYPE_PORTION = 0.7;
-const EXIT_START = 0.84;
+const FEATURED_OUTPUT_INDEX = 2;
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 const range = (value: number, start: number, end: number) =>
@@ -35,7 +37,10 @@ export interface RadioGagaFinalOutputState {
   visibleCount: number;
 }
 
-export function mapRadioGagaFinalOutput(progressInput: number): RadioGagaFinalOutputState {
+export function mapRadioGagaFinalOutput(
+  progressInput: number,
+  reducedMotion = false
+): RadioGagaFinalOutputState {
   const progress = clamp01(progressInput);
   const sequenceProgress = range(progress, FINAL_OUTPUT_START, FINAL_OUTPUT_END);
 
@@ -50,25 +55,23 @@ export function mapRadioGagaFinalOutput(progressInput: number): RadioGagaFinalOu
     };
   }
 
-  const segmentCount = radioGagaFinalOutputs.length;
-  const scaledProgress = Math.min(sequenceProgress * segmentCount, segmentCount - 0.0001);
-  const activeIndex = Math.floor(scaledProgress);
-  const segmentProgress = scaledProgress - activeIndex;
-  const sourceText = radioGagaFinalOutputs[activeIndex]?.zh ?? "";
+  const activeIndex = FEATURED_OUTPUT_INDEX;
+  const segmentProgress = sequenceProgress;
+  const sourceText = radioGagaFinalOutputs[FEATURED_OUTPUT_INDEX]?.zh ?? "";
   const glyphs = Array.from(sourceText);
-  const typedCount = Math.min(
-    glyphs.length,
-    Math.max(1, Math.ceil(glyphs.length * range(segmentProgress, 0, TYPE_PORTION)))
-  );
-  const exitOpacity =
-    activeIndex === segmentCount - 1 ? 0 : smooth(range(segmentProgress, EXIT_START, 1));
+  const typedCount = reducedMotion
+    ? glyphs.length
+    : Math.min(
+        glyphs.length,
+        Math.max(1, Math.ceil(glyphs.length * range(segmentProgress, 0, TYPE_PORTION)))
+      );
 
   return {
     activeIndex,
     displayText: glyphs.slice(0, typedCount).join(""),
     isComplete: typedCount >= glyphs.length,
     progress: segmentProgress,
-    subtitleOpacity: smooth(range(segmentProgress, 0, 0.1)) * (1 - exitOpacity),
-    visibleCount: Math.min(segmentCount, activeIndex + 1)
+    subtitleOpacity: smooth(range(segmentProgress, 0, 0.12)),
+    visibleCount: 1
   };
 }

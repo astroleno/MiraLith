@@ -16,6 +16,7 @@ import {
   Vector3
 } from "three";
 import { type QualityProfile } from "@miralith/visual-core";
+import { DEFAULT_LUBIRTH_ASSETS } from "./assetManifest";
 import type { LandingComposition, LandingResolvedAssets } from "./types";
 import { createEarthTexture } from "./textures";
 import { useLandingTexture } from "./useLandingTexture";
@@ -208,16 +209,20 @@ export function LandingEarth({
     () => createEarthTexture(quality.tier === "high" ? 1024 : 512),
     [quality.tier]
   );
-  const [shouldLoadNightTexture, setShouldLoadNightTexture] = useState(
-    () => typeof window !== "undefined" && (window.__MiraLithOpeningProgress ?? 0) > 0.28
-  );
   const { texture: dayTexture } = useLandingTexture(assets.earthDay.src, {
     colorSpace: assets.earthDay.colorSpace,
     wrapS: RepeatWrapping,
     wrapT: RepeatWrapping
   });
-  const { texture: nightTexture } = useLandingTexture(shouldLoadNightTexture ? assets.earthNight?.src : undefined, {
-    colorSpace: assets.earthNight?.colorSpace,
+  const baseNightAsset = DEFAULT_LUBIRTH_ASSETS.earthNight!;
+  const detailNightAsset = assets.earthNight?.src !== baseNightAsset.src ? assets.earthNight : undefined;
+  const { texture: baseNightTexture } = useLandingTexture(baseNightAsset.src, {
+    colorSpace: baseNightAsset.colorSpace,
+    wrapS: RepeatWrapping,
+    wrapT: RepeatWrapping
+  });
+  const { texture: detailNightTexture } = useLandingTexture(detailNightAsset?.src, {
+    colorSpace: detailNightAsset?.colorSpace,
     wrapS: RepeatWrapping,
     wrapT: RepeatWrapping
   });
@@ -263,7 +268,7 @@ export function LandingEarth({
     }
   );
   const activeDayTexture = dayTexture ?? proceduralDayTexture;
-  const activeNightTexture = nightTexture ?? activeDayTexture;
+  const activeNightTexture = detailNightTexture ?? baseNightTexture ?? activeDayTexture;
   const activeCloudTexture = cloudTexture ?? activeDayTexture;
   const activeCloudDeckTexture = cloudDeckTexture ?? activeCloudTexture;
   const activeSpecularTexture = specularTexture ?? activeDayTexture;
@@ -367,6 +372,7 @@ export function LandingEarth({
           ambient: { value: composition.light.ambientIntensity },
           edge: { value: composition.earth.terminatorSoftness },
           nightBoost: { value: composition.earth.nightIntensity },
+          nightSurfaceLift: { value: composition.earth.nightSurfaceLift },
           specularStrength: { value: composition.earth.specularStrength },
           cloudOpacity: {
             value: shouldUseTextureClouds
@@ -440,6 +446,7 @@ export function LandingEarth({
           uniform float ambient;
           uniform float edge;
           uniform float nightBoost;
+          uniform float nightSurfaceLift;
           uniform float specularStrength;
           uniform float cloudOpacity;
           uniform float cloudShadowOpacity;
@@ -1499,7 +1506,7 @@ export function LandingEarth({
             thickShadowCaster = max(thickShadowCaster, deckCaster * smoothstep(0.24, 0.72, shadowDeck.g) * hasCloudDeckMap);
             hardCloudShadow *= thickShadowCaster;
             softCloudShadow *= mix(0.36, 1.0, thickShadowCaster);
-            float cloudShadow = min(hardCloudShadow + softCloudShadow, 0.24);
+            float cloudShadow = min(hardCloudShadow + softCloudShadow, 0.16);
             float cloudPresentation = clamp(max(max(cloudSharp, visibleCloudCore), closeFilament * 0.82), 0.0, 1.0);
             vec3 cloudCol = mix(vec3(0.62, 0.68, 0.74), vec3(1.0, 0.985, 0.94), pow(cloudPresentation, 0.72));
             cloudCol += vec3(0.58, 0.64, 0.7) * max(cloudRelief, 0.0);
@@ -1512,9 +1519,9 @@ export function LandingEarth({
               0.0,
               0.84
             );
-            cloudCol *= mix(vec3(1.0), vec3(0.38, 0.48, 0.66), cloudSelfShadow);
+            cloudCol *= mix(vec3(1.0), vec3(0.56, 0.63, 0.74), cloudSelfShadow);
             cloudCol += vec3(0.2, 0.3, 0.48) * cloudAltitude;
-            cloudCol -= vec3(0.25, 0.29, 0.36) * max(-cloudRelief, 0.0);
+            cloudCol -= vec3(0.12, 0.14, 0.18) * max(-cloudRelief, 0.0);
             cloudCol = mix(cloudCol, cloudCol * vec3(0.62, 0.72, 0.88), cloudNormalShadow * 0.18);
             cloudCol *= closeCloudDiscipline;
             vec3 shadowTint = mix(vec3(1.0), vec3(0.62, 0.69, 0.82), clamp(cloudShadow * 1.08, 0.0, 0.42));
@@ -1690,6 +1697,14 @@ export function LandingEarth({
             vec3 cityCol = cityCore + cityHalo;
             vec3 moonlitLand = daySurface * vec3(0.1, 0.18, 0.32) * deepNightW * 0.24;
             vec3 moonlitClouds = cloudCol * max(cloudMask, cloudCore) * deepNightW * vec3(0.18, 0.27, 0.44) * 1.35;
+            float nightSurfaceCloudGuard = 1.0 - clamp(max(cloudMask, cloudCore) * 0.36, 0.0, 0.32);
+            vec3 nightSurfaceReadability =
+              daySurface *
+              vec3(0.11, 0.16, 0.24) *
+              nightSurfaceLift *
+              deepNightW *
+              (0.58 + closeStage * 0.42) *
+              nightSurfaceCloudGuard;
             float surfaceFillStrength = (0.04 + ambient * 3.4) * (0.38 + dayW * 0.62) * mix(1.0, 0.62, closeStage);
             vec3 surfaceFill = daySurface * vec3(0.14, 0.18, 0.24) * surfaceFillStrength * (1.0 - deepNightW * 0.45);
             surfaceFill *= mix(1.0, 0.58, closeHorizonSurface);
@@ -1772,7 +1787,7 @@ export function LandingEarth({
               mix(1.0, 0.68, closeHorizonSurface);
 
             float closeOnlyStage = smoothstep(0.74, 1.0, closeStage);
-            vec3 color = dayCol + surfaceFill + oceanSpecular + cityCol + moonlitLand + moonlitClouds + twilightFill + terminatorCol + rimCol + edgeLight + lowerAtmosphere + tangentSurfaceScatter;
+            vec3 color = dayCol + surfaceFill + nightSurfaceReadability + oceanSpecular + cityCol + moonlitLand + moonlitClouds + twilightFill + terminatorCol + rimCol + edgeLight + lowerAtmosphere + tangentSurfaceScatter;
             vec3 highlightKnee = vec3(mix(0.84, 0.28, closeStage));
             float highlightDiscipline = mix(0.7, 3.1, closeStage);
             color = color / (1.0 + max(color - highlightKnee, vec3(0.0)) * highlightDiscipline);
@@ -1786,6 +1801,7 @@ export function LandingEarth({
     },
     [
       composition.earth.nightIntensity,
+      composition.earth.nightSurfaceLift,
       composition.earth.specularStrength,
       composition.earth.cloudOpacity,
       composition.earth.rimStrength,
@@ -1834,6 +1850,7 @@ export function LandingEarth({
     earthMaterial.uniforms.ambient.value = composition.light.ambientIntensity;
     earthMaterial.uniforms.edge.value = composition.earth.terminatorSoftness;
     earthMaterial.uniforms.nightBoost.value = composition.earth.nightIntensity;
+    earthMaterial.uniforms.nightSurfaceLift.value = composition.earth.nightSurfaceLift;
     earthMaterial.uniforms.specularStrength.value = composition.earth.specularStrength;
     earthMaterial.uniforms.cloudOpacity.value =
       shouldUseTextureClouds
@@ -1851,9 +1868,6 @@ export function LandingEarth({
     earthMaterial.uniforms.specularMap.value = activeSpecularTexture;
     earthMaterial.uniforms.hasSpecularMap.value = specularTexture ? 1 : 0;
     const progress = typeof window === "undefined" ? 1 : Math.min(1, Math.max(0, window.__MiraLithOpeningProgress ?? 0));
-    if (!shouldLoadNightTexture && progress > 0.28) {
-      setShouldLoadNightTexture(true);
-    }
     earthMaterial.uniforms.closeStage.value = 1 - smoothstep(0.18, 0.86, progress);
     if (!paused && !reducedMotion) {
       const nearStaticCloudDrift = 0.04 + (1 - earthMaterial.uniforms.closeStage.value) * 0.96;

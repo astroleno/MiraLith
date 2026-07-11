@@ -43,19 +43,42 @@ interface CloudShellLayer {
   topCap: number;
   rimFocus: number;
   edgeBreak: number;
+  limbFadeStart: number;
+  limbFadeEnd: number;
   highOnly?: boolean;
 }
 
 const lightDirection = new Vector3();
 const color = new Color();
-const CLOUD_SHELLS: CloudShellLayer[] = [
-  { radius: 1.0064, opacity: 0.78, offset: 0, parallax: 0.00028, shadow: 0.16, baseDepth: 0.4, topCap: 0.18, rimFocus: 0.04, edgeBreak: 0.34 },
-  { radius: 1.0108, opacity: 0.22, offset: 0.014, parallax: 0.00064, shadow: 0.08, baseDepth: 0.22, topCap: 0.32, rimFocus: 0.28, edgeBreak: 0.42, highOnly: true },
-  { radius: 1.0146, opacity: 0.09, offset: 0.031, parallax: 0.00082, shadow: 0.035, baseDepth: 0.12, topCap: 0.24, rimFocus: 0.46, edgeBreak: 0.5, highOnly: true }
+const STANDARD_CLOUD_SHELLS: readonly CloudShellLayer[] = [
+  { radius: 1.0064, opacity: 0.5, offset: 0, parallax: 0.00028, shadow: 0.11, baseDepth: 0.34, topCap: 0.14, rimFocus: 0.04, edgeBreak: 0.34, limbFadeStart: 0.72, limbFadeEnd: 0.91 },
+  { radius: 1.0108, opacity: 0.08, offset: 0.014, parallax: 0.00064, shadow: 0.05, baseDepth: 0.16, topCap: 0.24, rimFocus: 0.28, edgeBreak: 0.42, limbFadeStart: 0.66, limbFadeEnd: 0.86, highOnly: true },
+  { radius: 1.0146, opacity: 0.025, offset: 0.031, parallax: 0.00082, shadow: 0.02, baseDepth: 0.09, topCap: 0.16, rimFocus: 0.46, edgeBreak: 0.5, limbFadeStart: 0.54, limbFadeEnd: 0.76, highOnly: true }
+];
+const REFERENCE_CLOUD_SHELLS: readonly CloudShellLayer[] = [
+  { ...STANDARD_CLOUD_SHELLS[0], opacity: 0.78, shadow: 0.16, baseDepth: 0.4, topCap: 0.18 },
+  { ...STANDARD_CLOUD_SHELLS[1], opacity: 0.22, shadow: 0.08, baseDepth: 0.22, topCap: 0.32 },
+  { ...STANDARD_CLOUD_SHELLS[2], opacity: 0.09, shadow: 0.035, baseDepth: 0.12, topCap: 0.24 }
 ];
 const CLOUD_TEXTURE_ART_OFFSET_X = 0.045;
 const CLOUD_TEXTURE_ART_OFFSET_Y = 0.018;
 const CLOUD_SCROLL_SPEED = 0.022;
+
+export function resolveLandingCloudShells(
+  qualityTier: QualityProfile["tier"],
+  referenceLook: boolean
+): readonly CloudShellLayer[] {
+  if (qualityTier === "low" || qualityTier === "fallback") {
+    return [];
+  }
+
+  const shells = referenceLook ? REFERENCE_CLOUD_SHELLS : STANDARD_CLOUD_SHELLS;
+  if (referenceLook && qualityTier !== "high") {
+    return shells.slice(0, 1);
+  }
+
+  return shells.filter((layer) => !layer.highOnly || qualityTier === "high" || qualityTier === "medium");
+}
 
 const smoothstep = (edge0: number, edge1: number, value: number) => {
   const t = Math.min(1, Math.max(0, (value - edge0) / Math.max(edge1 - edge0, 1e-5)));
@@ -84,6 +107,8 @@ function createCloudMaterial(
       topCapStrength: { value: layer.topCap },
       rimFocus: { value: layer.rimFocus },
       edgeBreakStrength: { value: layer.edgeBreak },
+      limbFadeStart: { value: layer.limbFadeStart },
+      limbFadeEnd: { value: layer.limbFadeEnd },
       debugBoost: { value: 0 },
       referenceLookStrength: { value: 0 },
       lightDir: { value: lightDirection.set(...composition.light.fixedSunDir).normalize().clone() },
@@ -134,6 +159,8 @@ function createCloudMaterial(
       uniform float topCapStrength;
       uniform float rimFocus;
       uniform float edgeBreakStrength;
+      uniform float limbFadeStart;
+      uniform float limbFadeEnd;
       uniform float debugBoost;
       uniform float referenceLookStrength;
       uniform vec3 lightDir;
@@ -195,6 +222,7 @@ function createCloudMaterial(
         float nightCloud = 1.0 - smoothstep(-0.1, 0.18, ndl);
         float twilight = 1.0 - smoothstep(0.02, 0.42, abs(ndl));
         float rim = clamp(vFresnel, 0.0, 1.0);
+        float shellLimbFade = 1.0 - smoothstep(limbFadeStart, limbFadeEnd, rim);
         float limb = smoothstep(0.24, 0.78, rim) * (1.0 - smoothstep(0.9, 0.985, rim));
         float limbVolume = smoothstep(0.46, 0.88, rim) * (1.0 - smoothstep(0.972, 1.0, rim));
         float centerFade = 1.0 - smoothstep(0.86, 0.98, rim);
@@ -645,8 +673,8 @@ function createCloudMaterial(
           vec3(0.76, 0.82, 0.82),
           closeCloudReadability * sunlitCloud * 0.052
         );
-        float nightCloudDim = nightCloud * (1.0 - twilight * 0.48) * (0.48 + closeStage * 0.12);
-        finalColor *= mix(1.0, 0.48, nightCloudDim);
+        float nightCloudDim = nightCloud * (1.0 - twilight * 0.48) * (0.42 + closeStage * 0.1);
+        finalColor *= mix(1.0, 0.62, nightCloudDim);
         finalColor += vec3(0.56, 0.66, 0.78) * limbVolume * density * thickness * (0.04 + sunlitCloud * 0.08);
         finalColor += vec3(0.30, 0.42, 0.46) *
           referenceLookStrength *
@@ -730,6 +758,8 @@ function createCloudMaterial(
         alpha += referenceForegroundSoft * opacity * 0.022;
         alpha += referenceMistLayer * opacity * (0.042 + closeStage * 0.024);
         alpha += referenceHorizonGlowLift * opacity * 0.018;
+        float nightLimbFade = 1.0 - smoothstep(0.54, 0.9, rim) * nightCloud * 0.9;
+        alpha *= shellLimbFade * nightLimbFade;
 
         if (alpha < 0.00008) {
           discard;
@@ -779,11 +809,12 @@ export function LandingCloudLayer({
     }
   );
   const activeCloudShells = useMemo(() => {
-    if (referenceLook) {
-      return quality.tier === "high" ? CLOUD_SHELLS.slice(0, 3) : CLOUD_SHELLS.slice(0, 1);
+    const shells = resolveLandingCloudShells(quality.tier, referenceLook);
+    if (!emphasis || shells.length === 3) {
+      return shells;
     }
 
-    return CLOUD_SHELLS.filter((layer) => !layer.highOnly || quality.tier === "high" || quality.tier === "medium" || emphasis);
+    return (referenceLook ? REFERENCE_CLOUD_SHELLS : STANDARD_CLOUD_SHELLS).slice(0, 3);
   }, [emphasis, quality.tier, referenceLook]);
   const materials = useMemo(
     () => cloudTexture ? activeCloudShells.map((layer) => createCloudMaterial(composition, layer, cloudTexture, cloudDeckTexture ?? undefined)) : [],

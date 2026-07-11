@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { KeyboardEvent, TouchEvent, WheelEvent } from "react";
+import type { CSSProperties, KeyboardEvent } from "react";
 import { gsap } from "gsap";
 import {
   CoScrollStandaloneDemo,
@@ -41,6 +41,7 @@ export function CoScrollSpikeExperience({
   const interactive = sourceMatch && !staticFrame;
   const [progress, setProgress] = useState(initialProgress);
   const [scrollVelocity, setScrollVelocity] = useState(0);
+  const shellRef = useRef<HTMLElement>(null);
   const timeProxyRef = useRef({ time: initialTime });
   const targetTimeRef = useRef(initialTime);
   const touchYRef = useRef(0);
@@ -96,15 +97,14 @@ export function CoScrollSpikeExperience({
   }, [clearVelocityTimeout]);
 
   const handleWheel = useCallback(
-    (event: WheelEvent<HTMLElement>) => {
+    (event: globalThis.WheelEvent) => {
       if (!interactive) {
         return;
       }
 
-      const nativeEvent = event.nativeEvent;
-      const unit = nativeEvent.deltaMode === 1 ? 16 : 1;
-      const horizontal = Math.abs(nativeEvent.deltaX) > Math.abs(nativeEvent.deltaY);
-      const pixels = horizontal ? -nativeEvent.deltaX * unit : nativeEvent.deltaY * unit;
+      const unit = event.deltaMode === 1 ? 16 : 1;
+      const horizontal = Math.abs(event.deltaX) > Math.abs(event.deltaY);
+      const pixels = horizontal ? -event.deltaX * unit : event.deltaY * unit;
       if (!pixels) {
         return;
       }
@@ -133,7 +133,7 @@ export function CoScrollSpikeExperience({
   );
 
   const handleTouchStart = useCallback(
-    (event: TouchEvent<HTMLElement>) => {
+    (event: globalThis.TouchEvent) => {
       if (!interactive || event.touches.length === 0) {
         return;
       }
@@ -144,7 +144,7 @@ export function CoScrollSpikeExperience({
   );
 
   const handleTouchMove = useCallback(
-    (event: TouchEvent<HTMLElement>) => {
+    (event: globalThis.TouchEvent) => {
       if (!interactive || event.touches.length === 0) {
         return;
       }
@@ -162,6 +162,23 @@ export function CoScrollSpikeExperience({
     [interactive, seekByDelta]
   );
 
+  useEffect(() => {
+    const shell = shellRef.current;
+    if (!shell || !interactive) {
+      return;
+    }
+
+    shell.addEventListener("wheel", handleWheel, { passive: false });
+    shell.addEventListener("touchstart", handleTouchStart, { passive: true });
+    shell.addEventListener("touchmove", handleTouchMove, { passive: false });
+
+    return () => {
+      shell.removeEventListener("wheel", handleWheel);
+      shell.removeEventListener("touchstart", handleTouchStart);
+      shell.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, [handleTouchMove, handleTouchStart, handleWheel, interactive]);
+
   const quality: QualityProfile = {
     tier: "medium",
     dpr: 1.25,
@@ -170,9 +187,23 @@ export function CoScrollSpikeExperience({
     stars: 0,
     reason: sourceMatch ? "source-match" : "spike"
   };
+  const sourceMatchViewportStyle: CSSProperties | undefined = sourceMatch
+    ? {
+        position: "fixed",
+        inset: 0,
+        width: "100vw",
+        height: "100dvh",
+        minHeight: "100svh",
+        overflow: "hidden",
+        overscrollBehavior: "none",
+        touchAction: "none",
+        background: "#010205"
+      }
+    : undefined;
 
   return (
     <main
+      ref={shellRef}
       className="coscroll-section"
       data-coscroll-spike="heart-sutra"
       data-coscroll-source-match={sourceMatch ? "clean" : "copy"}
@@ -180,10 +211,8 @@ export function CoScrollSpikeExperience({
       data-coscroll-progress={progress.toFixed(4)}
       aria-label={sourceMatch ? "CoScroll Heart Sutra source match" : "CoScroll Heart Sutra spike"}
       tabIndex={interactive ? 0 : undefined}
-      onWheel={handleWheel}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
       onKeyDown={handleKeyDown}
+      style={sourceMatchViewportStyle}
     >
       <CoScrollStandaloneDemo
         className="coscroll-section__visual"

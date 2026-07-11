@@ -8,5 +8,14 @@ export {
   radioGagaFinalOutputs
 } from "./radioGagaFinalOutput";
 export { RadioGagaParticleTransition } from "./RadioGagaParticleTransition";
-export { mapRadioGagaProgress } from "./radioGagaTimeline";
+export {
+  mapRadioGagaChoreography,
+  mapRadioGagaProgress,
+  RADIO_GAGA_TIMELINE
+} from "./radioGagaTimeline";
+export type {
+  RadioGagaChoreographyFrame,
+  RadioGagaCopyFrame,
+  RadioGagaCopyMode
+} from "./radioGagaTimeline";
 export { RadioGagaSceneContent } from "./RadioGagaSceneContent";

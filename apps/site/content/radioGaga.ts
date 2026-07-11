@@ -3,14 +3,6 @@ export const radioGagaCopy = {
   title: "radioGAGA",
   subtitleEn: "A familiar radio shape for sending useful local updates home in my voice",
   subtitleZh: "把附近发生的事，变成家里听得懂的一句提醒",
-  introEn: [
-    "Not another app to open,",
-    "just the old radio already waiting at home."
-  ],
-  introZh: [
-    "不用再打开一个 App，",
-    "只是家里原本就在的那台收音机。"
-  ],
   voiceEn: [
     "I sift the local noise down to what matters today,",
     "then rewrite it as something I would actually say."
@@ -27,47 +19,61 @@ export const radioGagaCopy = {
     "收音机问今天有什么新鲜事，",
     "我把答案调成爸妈能接住的一句话。"
   ],
-  coreTitleEn: "The ESP32 plays it at home",
-  coreTitleZh: "ESP32 把它播回家里",
-  coreBodyEn: [
-    "The old radio hands its signal to the ESP32.",
-    "The device plays the reminder at home in my voice."
-  ],
-  coreBodyZh: [
-    "旧收音机把筛好的消息交给 ESP32。",
-    "这台设备在家里用我的声音把提醒播出来。"
-  ],
   finalEn: "A small machine for staying close.",
   finalZh: "一台让距离变近的小机器。"
 } as const;
 
-export const radioGagaProcessSteps = [
-  { en: "local updates arrive", zh: "本地新闻、天气和社区通知进来" },
-  { en: "I choose what matters", zh: "我只挑和爸妈今天有关的事" },
-  { en: "rewrite it as one family sentence", zh: "改成一句家里听得懂的话" },
-  { en: "send it to the ESP32 care device", zh: "送进 ESP32 照护设备" },
-  { en: "it plays at home in my voice", zh: "在家里用我的声音播出来" }
-] as const;
-
-export const radioGagaProofFrames = [
+export const radioGagaBroadcastStages = [
   {
-    detail: "新闻、天气、社区通知先被挑成爸妈今天用得上的几件事。",
-    image: "/img/website1.PNG",
-    title: "筛出今天真的要回家的消息"
+    count: "01 / 05",
+    stageEn: "Tuning old radio",
+    stageZh: "调入旧收音机",
+    stepEn: "tune the familiar signal",
+    stepZh: "让旧收音机找到今天的频道",
+    readoutKicker: "care band · local 88.5",
+    readoutTitle: "熟悉的信号，开始收听",
+    readoutDetail: "附近的新闻、天气与社区通知进入同一条照护频道。"
   },
   {
-    detail: "不是新闻摘要，而是像我在家里聊天的一段话。",
-    image: "/img/website2.png",
-    title: "写成我会说出口的节目稿"
+    count: "02 / 05",
+    stageEn: "Reading local updates",
+    stageZh: "读取本地消息",
+    stepEn: "choose what matters today",
+    stepZh: "只筛今天真正有用的事",
+    readoutKicker: "signal scan · local updates",
+    readoutTitle: "筛出今天真的要回家的消息",
+    readoutDetail: "新闻、天气、社区通知先被挑成爸妈今天用得上的几件事。"
+  },
+  {
+    count: "03 / 05",
+    stageEn: "Writing family script",
+    stageZh: "写成家常话",
+    stepEn: "rewrite one family sentence",
+    stepZh: "改成一句家里听得懂的话",
+    readoutKicker: "voice edit · family script",
+    readoutTitle: "写成我会说出口的节目稿",
+    readoutDetail: "不是新闻摘要，而是像我在家里聊天时会说的一段话。"
+  },
+  {
+    count: "04 / 05",
+    stageEn: "Sending to ESP32",
+    stageZh: "送进 ESP32",
+    stepEn: "materialize the care device",
+    stepZh: "让信号汇成照护设备",
+    readoutKicker: "transmitting · esp32",
+    readoutTitle: "ESP32 正在接收",
+    readoutDetail: "粒子完全汇入设备后，模型才显现、转正，并准备播出。"
+  },
+  {
+    count: "05 / 05",
+    stageEn: "Playing at home",
+    stageZh: "在家里播出",
+    stepEn: "play it at home in my voice",
+    stepZh: "在家里用我的声音播出",
+    readoutKicker: "on air · family channel",
+    readoutTitle: "一句提醒，回到家里",
+    readoutDetail: "设备一次只播出一句家里能够立刻听懂的提醒。"
   }
-] as const;
-
-export const radioGagaStages = [
-  { count: "01 / 05", en: "Tuning old radio", zh: "调入旧收音机" },
-  { count: "02 / 05", en: "Reading local updates", zh: "读取本地消息" },
-  { count: "03 / 05", en: "Writing family script", zh: "写成家常话" },
-  { count: "04 / 05", en: "Sending to ESP32", zh: "送进 ESP32" },
-  { count: "05 / 05", en: "Playing at home", zh: "在家里播出" }
 ] as const;
 
 export const radioGagaSiteChapters = [

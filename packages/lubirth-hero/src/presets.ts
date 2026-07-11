@@ -18,6 +18,7 @@ const field: LandingComposition = {
     cloudOpacity: 0.72,
     terminatorSoftness: 0.13,
     nightIntensity: 0.38,
+    nightSurfaceLift: 0.1,
     specularStrength: 0.18,
     rimStrength: 1.08,
     rimWidth: 1.58,

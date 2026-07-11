@@ -282,13 +282,13 @@ function HomeLoadingOverlay({
     <section
       className="lubirth-revised__home-loading"
       data-projection={visibleProjectionSource}
-      aria-label={visibleProjectionSource === "pending" ? "MiraLith opening loading" : "LuBirth opening status"}
+      aria-label={visibleProjectionSource === "pending" ? "MiraLith opening loading" : "MiraLith opening status"}
       aria-hidden={introComplete ? "true" : undefined}
     >
       <p className="sr-only">
         {visibleProjectionSource === "pending"
           ? "MiraLith opening is loading."
-          : "MiraLith opening. LuBirth 地月人 is ready. Scroll, press Enter, or press Space to enter."}
+          : "MiraLith opening is ready. Scroll, press Enter, or press Space to enter."}
       </p>
       <div className="lubirth-revised__home-loading-curtain" aria-hidden="true" />
       <div className="lubirth-revised__home-loading-prelude" aria-hidden="true">
@@ -312,12 +312,6 @@ function HomeLoadingOverlay({
           r="52"
           pathLength={1}
           transform="rotate(-90 60 60)"
-        />
-        <circle
-          className="lubirth-revised__home-loading-moon-path lubirth-revised__home-loading-moon-path--complete"
-          cx="60"
-          cy="60"
-          r="52"
         />
       </svg>
 
@@ -360,8 +354,8 @@ function HomeLoadingOverlay({
       </div>
 
       <div className="lubirth-revised__home-loading-mark">
-        <p className="lubirth-revised__home-loading-title">{copy.lubirth.title}</p>
-        <p className="lubirth-revised__home-loading-subtitle">{copy.lubirth.shortZh}</p>
+        <p className="lubirth-revised__home-loading-title">{copy.site.title}</p>
+        <p className="lubirth-revised__home-loading-subtitle">{copy.site.zh}</p>
       </div>
 
       <div className="lubirth-revised__home-loading-hint">
@@ -407,9 +401,9 @@ function HomeSignature() {
   );
 }
 
-function OpeningTitle() {
+function TravellingTitle() {
   return (
-    <section className="lubirth-revised__opening-title" aria-labelledby="lubirth-opening-title">
+    <section className="lubirth-revised__travelling-title" aria-labelledby="lubirth-opening-title">
       <h1 id="lubirth-opening-title">{copy.lubirth.title}</h1>
       <p>{copy.lubirth.shortZh}</p>
     </section>
@@ -479,11 +473,19 @@ function TitleRail({ activeChapter, interactive }: { activeChapter: Chapter; int
         {chapters.map((chapter) => {
           const isActive = chapter.index === activeChapter.index;
 
+          const titleContent = isActive ? (
+            <span className="lubirth-revised__rail-title-anchor" aria-hidden="true">
+              <span className="lubirth-revised__rail-title-placeholder">{chapter.title}</span>
+            </span>
+          ) : (
+            <span className="lubirth-revised__rail-title">{chapter.title}</span>
+          );
+
           const linkContent = (
             <>
               <span className="lubirth-revised__rail-index">{chapter.index}</span>
               <span className="lubirth-revised__rail-copy">
-                <span className="lubirth-revised__rail-title">{chapter.title}</span>
+                {titleContent}
                 <span className="lubirth-revised__rail-meta">
                   {chapter.zh} / <span>{chapter.en}</span>
                 </span>
@@ -498,6 +500,7 @@ function TitleRail({ activeChapter, interactive }: { activeChapter: Chapter; int
                   className="lubirth-revised__rail-link"
                   href={`#${LUBIRTH_PROJECT_INTRO_ANCHOR_ID}`}
                   aria-current="page"
+                  aria-label={`${chapter.index} ${chapter.title} ${chapter.zh}`}
                   tabIndex={interactive ? undefined : -1}
                 >
                   {linkContent}
@@ -530,7 +533,9 @@ function MobileTitleBar({ activeChapter, interactive }: { activeChapter: Chapter
       <a href={`#${LUBIRTH_PROJECT_INTRO_ANCHOR_ID}`} aria-current="page" tabIndex={interactive ? undefined : -1}>
         <span className="lubirth-revised__mobile-title-main">
           <span>{activeChapter.index}</span>
-          <span className="lubirth-revised__mobile-title-title">{activeChapter.title}</span>
+          <span className="lubirth-revised__mobile-title-anchor" aria-hidden="true">
+            <span className="lubirth-revised__mobile-title-placeholder">{activeChapter.title}</span>
+          </span>
         </span>
         <span className="lubirth-revised__mobile-title-label">{activeChapter.zh}</span>
       </a>
@@ -772,21 +777,21 @@ export function LuBirthRevisedRoute({
         };
 
         const getOpeningTitleTarget = () => {
-          const sourceContainer = selector(".lubirth-revised__opening-title")[0] as HTMLElement | undefined;
-          const sourceTitle = selector(".lubirth-revised__opening-title h1")[0] as HTMLElement | undefined;
+          const sourceContainer = selector(".lubirth-revised__travelling-title")[0] as HTMLElement | undefined;
+          const sourceTitle = selector(".lubirth-revised__travelling-title h1")[0] as HTMLElement | undefined;
           const titleRail = selector(".lubirth-revised__title-rail")[0] as HTMLElement | undefined;
           const desktopActiveItem = selector(".lubirth-revised__title-rail li[data-active='true']")[0] as
             | HTMLElement
             | undefined;
           const desktopTitle = selector(
-            ".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-title"
+            ".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-title-anchor"
           )[0] as HTMLElement | undefined;
           const mobileTitleBar = selector(".lubirth-revised__mobile-title-bar")[0] as HTMLElement | undefined;
-          const mobileTitle = selector(".lubirth-revised__mobile-title-title")[0] as HTMLElement | undefined;
+          const mobileTitle = selector(".lubirth-revised__mobile-title-anchor")[0] as HTMLElement | undefined;
           const canUseRail = window.innerWidth >= 768 && desktopTitle;
           const targetTitle = canUseRail ? desktopTitle : mobileTitle;
           const targetBounds = targetTitle?.getBoundingClientRect();
-          const sourceBounds = sourceContainer?.getBoundingClientRect();
+          const stageBounds = stage?.getBoundingClientRect();
           const sourceFontSize = sourceTitle ? Number.parseFloat(window.getComputedStyle(sourceTitle).fontSize) : 96;
           const targetFontSize = targetTitle ? Number.parseFloat(window.getComputedStyle(targetTitle).fontSize) : 24;
           const targetItemOffsetX = canUseRail && desktopActiveItem
@@ -802,21 +807,20 @@ export function LuBirthRevisedRoute({
             : mobileTitleBar ? Number(gsap.getProperty(mobileTitleBar, "y")) : 0;
           const left = targetBounds ? targetBounds.left - targetOffsetX : (canUseRail ? 84 : 52);
           const top = targetBounds ? targetBounds.top - targetOffsetY : (canUseRail ? 86 : 18);
-          const sourceTop = sourceBounds
-            ? sourceBounds.top + sourceBounds.height * 0.5
-            : window.innerHeight * 0.5;
+          const baseLeft = sourceContainer?.offsetLeft ?? window.innerWidth * 0.5;
+          const baseTop = sourceContainer?.offsetTop ?? window.innerHeight * 0.5;
           const scale = canUseRail
             ? Math.min(0.34, Math.max(0.12, targetFontSize / sourceFontSize))
             : Math.min(0.28, Math.max(0.14, targetFontSize / sourceFontSize));
 
           return {
-            x: left - window.innerWidth * 0.5,
-            y: top - sourceTop,
+            x: left - (stageBounds?.left ?? 0) - baseLeft,
+            y: top - (stageBounds?.top ?? 0) - baseTop,
             scale
           };
         };
 
-        setIfPresent(".lubirth-revised__opening-title", {
+        setIfPresent(".lubirth-revised__travelling-title", {
           autoAlpha: 0,
           xPercent: -50,
           yPercent: -50,
@@ -860,7 +864,24 @@ export function LuBirthRevisedRoute({
           setIfPresent(".lubirth-revised__atmosphere", { autoAlpha: 1 });
           setIfPresent(".lubirth-revised__scroll-hint", { autoAlpha: 0 });
           if (!screenshotDebug.copyHidden) {
-            setIfPresent(".lubirth-revised__opening-title", { autoAlpha: isHome && !homeRailVisible ? 1 : 0 });
+            setIfPresent(".lubirth-revised__travelling-title", {
+              autoAlpha: isHome ? 1 : 0,
+              ...(isHome && homeRailVisible
+                ? {
+                    x: getOpeningTitleTarget().x,
+                    y: getOpeningTitleTarget().y,
+                    xPercent: 0,
+                    yPercent: 0,
+                    scale: getOpeningTitleTarget().scale
+                  }
+                : {
+                    x: 0,
+                    y: 0,
+                    xPercent: -50,
+                    yPercent: -50,
+                    scale: 1
+                  })
+            });
             setIfPresent(".lubirth-revised__hero-copy", { autoAlpha: isHome ? 0 : 1, y: 0, scale: 1 });
             setIfPresent(".lubirth-revised__world-mark", { autoAlpha: isHome ? 0 : 1, y: 0 });
             setIfPresent(".lubirth-revised__title-rail", { autoAlpha: isHome && homeRailVisible ? 1 : 0, y: 0 });
@@ -876,7 +897,7 @@ export function LuBirthRevisedRoute({
             setIfPresent(".lubirth-revised__mobile-title-bar", { autoAlpha: isHome && homeRailVisible ? 1 : 0, y: 0 });
           } else {
             setIfPresent(
-              ".lubirth-revised__opening-title, .lubirth-revised__world-mark, .lubirth-revised__hero-copy, .lubirth-revised__title-rail, .lubirth-revised__project-intro, .lubirth-revised__mobile-title-bar",
+              ".lubirth-revised__travelling-title, .lubirth-revised__world-mark, .lubirth-revised__hero-copy, .lubirth-revised__title-rail, .lubirth-revised__project-intro, .lubirth-revised__mobile-title-bar",
               { autoAlpha: 0 }
             );
           }
@@ -903,7 +924,7 @@ export function LuBirthRevisedRoute({
           );
           setIfPresent(".lubirth-revised__scroll-hint", { autoAlpha: 0 });
           if (isHome) {
-            setIfPresent(".lubirth-revised__opening-title", {
+            setIfPresent(".lubirth-revised__travelling-title", {
               autoAlpha: 1,
               xPercent: -50,
               yPercent: -50,
@@ -979,21 +1000,24 @@ export function LuBirthRevisedRoute({
                   { autoAlpha: 0, y: -8, duration: 0.22, ease: "power1.out" },
                   0.06
                 )
-                .to(selector(".lubirth-revised__opening-title p"), { autoAlpha: 0, y: -4, duration: 0.14 }, 0.02)
+                .to(selector(".lubirth-revised__travelling-title p"), { autoAlpha: 0, y: -4, duration: 0.14 }, 0.02)
                 .to(
-                  selector(".lubirth-revised__opening-title"),
-                  { y: -28, scale: 0.88, duration: 0.22, ease: "power2.inOut" },
+                  selector(".lubirth-revised__travelling-title"),
+                  {
+                    x: () => getOpeningTitleTarget().x,
+                    y: () => getOpeningTitleTarget().y,
+                    xPercent: 0,
+                    yPercent: 0,
+                    scale: () => getOpeningTitleTarget().scale,
+                    duration: 0.52,
+                    ease: "power2.inOut"
+                  },
                   0
                 )
                 .to(
-                  selector(".lubirth-revised__opening-title"),
-                  { autoAlpha: 0, duration: 0.16, ease: "power1.out" },
-                  0.14
-                )
-                .to(
                   selector(".lubirth-revised__mobile-title-bar"),
-                  { autoAlpha: 1, y: 0, duration: 0.22, ease: "power2.out" },
-                  0.2
+                  { autoAlpha: 1, y: 0, duration: 0.24, ease: "power2.out" },
+                  0.14
                 )
                 .to(selector(".lubirth-revised__project-intro"), { autoAlpha: 1, y: 0, duration: 0.28 }, 0.26)
                 .to(
@@ -1003,31 +1027,16 @@ export function LuBirthRevisedRoute({
                   { autoAlpha: 1, y: 0, duration: 0.3, stagger: 0.035, ease: "power2.out" },
                   0.32
                 )
-                .to(selector(".lubirth-revised__title-rail"), { autoAlpha: 0, y: 0, duration: 0.01 }, 0)
-                .to(
-                  selector(".lubirth-revised__title-rail li[data-active='true']"),
-                  { autoAlpha: 1, x: 0, y: 0, duration: 0.2, ease: "power2.out" },
-                  0.58
-                )
-                .to(
-                  selector(".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-copy"),
-                  { autoAlpha: 1, duration: 0.28, ease: "power2.out" },
-                  0.62
-                )
-                .to(
-                  selector(".lubirth-revised__title-rail li:not([data-active='true'])"),
-                  { autoAlpha: 1, x: 0, y: 0, duration: 0.26, stagger: 0.035, ease: "power2.out" },
-                  0.62
-                );
+                .to(selector(".lubirth-revised__title-rail"), { autoAlpha: 0, y: 0, duration: 0.01 }, 0);
 
               return timeline;
             }
 
             timeline
               .to(selector(".lubirth-revised__scroll-hint"), { autoAlpha: 0, y: 12, duration: 0.12 }, 0)
-              .to(selector(".lubirth-revised__opening-title p"), { autoAlpha: 0, y: -4, duration: 0.14 }, 0.02)
+              .to(selector(".lubirth-revised__travelling-title p"), { autoAlpha: 0, y: -4, duration: 0.14 }, 0.02)
               .to(
-                selector(".lubirth-revised__opening-title"),
+                selector(".lubirth-revised__travelling-title"),
                 {
                   x: () => getOpeningTitleTarget().x,
                   y: () => getOpeningTitleTarget().y,
@@ -1043,19 +1052,13 @@ export function LuBirthRevisedRoute({
               .to(
                 selector(".lubirth-revised__title-rail li[data-active='true']"),
                 { autoAlpha: 1, x: 0, y: 0, duration: 0.2, ease: "power2.out" },
-                0.58
-              )
-              .to(
-                selector(".lubirth-revised__opening-title"),
-                { autoAlpha: 0, duration: 0.12, ease: "power1.out" },
-                0.52
+                0.34
               )
               .to(
                 selector(".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-copy"),
-                { autoAlpha: 1, duration: 0.28, ease: "power2.out" },
-                0.62
+                { autoAlpha: 1, duration: 0.24, ease: "power2.out" },
+                0.4
               )
-              .to(selector(".lubirth-revised__mobile-title-bar"), { autoAlpha: 1, y: 0, duration: 0.24, ease: "power2.out" }, 0.58)
               .to(selector(".lubirth-revised__project-intro"), { autoAlpha: 1, y: 0, duration: 0.24 }, 0.28)
               .to(
                 selector(
@@ -1067,7 +1070,7 @@ export function LuBirthRevisedRoute({
               .to(
                 selector(".lubirth-revised__title-rail li:not([data-active='true'])"),
                 { autoAlpha: 1, x: 0, y: 0, duration: 0.26, stagger: 0.035, ease: "power2.out" },
-                0.62
+                0.54
               );
 
             return timeline;
@@ -1146,7 +1149,7 @@ export function LuBirthRevisedRoute({
           lockHomeScroll();
           const revealHomeIntro = () => {
             setIfPresent(".lubirth-revised__atmosphere", { autoAlpha: 1 });
-            setIfPresent(".lubirth-revised__opening-title", { autoAlpha: 1 });
+            setIfPresent(".lubirth-revised__travelling-title", { autoAlpha: 1 });
             setIfPresent(".lubirth-revised__home-signature", { autoAlpha: 1, y: 0 });
             setIfPresent(".lubirth-revised__scroll-hint", { autoAlpha: 1, y: 0 });
           };
@@ -1470,7 +1473,7 @@ export function LuBirthRevisedRoute({
       >
         <AtmosphereOverlay />
         {showCopy && isHome ? <HomeSignature /> : null}
-        {showCopy ? isHome ? <OpeningTitle /> : <WorldMark /> : null}
+        {showCopy ? isHome ? <TravellingTitle /> : <WorldMark /> : null}
         {showCopy ? isHome ? (
           <HomeLoadingOverlay
             projection={homeLoadingProjection}

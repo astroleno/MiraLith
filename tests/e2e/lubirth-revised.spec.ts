@@ -235,6 +235,27 @@ test("keeps production home intro route on the stack renderer", async ({ page })
   await expectAtmosphereVariant(page, "stack");
 });
 
+test("keeps the loading and prelude phase branded as MiraLith with one continuous moon path", async ({ page }) => {
+  await page.goto("/?copy=visible");
+
+  const loading = page.locator(".lubirth-revised__home-loading");
+  await expect(loading).toBeVisible();
+  await expect(loading.locator(".lubirth-revised__home-loading-title")).toHaveText("MiraLith");
+  await expect(loading.locator(".lubirth-revised__home-loading-subtitle")).toHaveText("把看见之物，刻成作品");
+  await expect(loading.locator(".lubirth-revised__home-loading-moon-path")).toHaveCount(1);
+  await expect(loading.locator(".lubirth-revised__home-loading-moon-path--complete")).toHaveCount(0);
+  await expect(page.locator(".lubirth-revised__travelling-title")).toBeHidden();
+});
+
+test("uses one persistent LuBirth title node from the home hero to the chapter rail", async ({ page }) => {
+  await page.goto("/?progress=0.58&copy=visible&visualTest=pixels");
+
+  await expect(page.locator(".lubirth-revised__travelling-title")).toHaveCount(1);
+  await expect(page.locator(".lubirth-revised__travelling-title")).toBeVisible();
+  await expect(page.locator(".lubirth-revised__rail-title-anchor")).toHaveCount(1);
+  await expect(page.locator(".lubirth-revised__opening-title")).toHaveCount(0);
+});
+
 test("captures production route atmosphere evidence screenshots", async ({ page }, testInfo) => {
   test.setTimeout(420_000);
   test.skip(testInfo.project.name !== "desktop", "Production evidence screenshots are captured once on desktop.");
@@ -259,7 +280,7 @@ test("captures production route atmosphere evidence screenshots", async ({ page 
       variant: "volumetric" as const
     },
     {
-      copySelectors: [".lubirth-revised__home-loading", ".lubirth-revised__opening-title", ".lubirth-revised__home-signature"],
+      copySelectors: [".lubirth-revised__home-loading", ".lubirth-revised__travelling-title", ".lubirth-revised__home-signature"],
       name: "production-home-visible-stack-intro",
       url: "/?copy=visible&visualTest=pixels",
       variant: "stack" as const
@@ -315,6 +336,12 @@ test("uses high-detail Earth and sky assets for the nasa profile without project
     .toBe(true);
   await expect
     .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-clouds-8k.webp")), { timeout: 25_000 })
+    .toBe(true);
+  await expect
+    .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-night-8k.webp")), { timeout: 25_000 })
+    .toBe(true);
+  await expect
+    .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-night-2k.jpg")), { timeout: 25_000 })
     .toBe(true);
   await expect
     .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-normal-2k.jpg")), { timeout: 25_000 })
