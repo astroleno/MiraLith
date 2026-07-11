@@ -280,7 +280,13 @@ export function RadioGagaRoute({ initialForcedVisualFallback = false }: RadioGag
   const showFallback = forcedVisualFallback || assetState === "failed";
 
   return (
-    <main ref={routeRef} className="radio-gaga-route" aria-label="radioGAGA care radio scene">
+    <main
+      ref={routeRef}
+      className="radio-gaga-route"
+      aria-label="radioGAGA care radio scene"
+      data-radio-gaga-host="standalone"
+      data-radio-gaga-runtime="case-study"
+    >
       {showFallback ? (
         fallback
       ) : (
