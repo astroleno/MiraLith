@@ -2,7 +2,7 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { Color, DirectionalLight, MathUtils, Vector3 } from "three";
+import { Color, DirectionalLight, MathUtils, Quaternion, Vector3 } from "three";
 import type { Scene } from "three";
 import { RadioGagaParticleTransition } from "./RadioGagaParticleTransition";
 import { mapRadioGagaProgress } from "./radioGagaTimeline";
@@ -10,7 +10,17 @@ import { RadioGagaModel } from "./RadioGagaModel";
 import type { RadioGagaSceneProps } from "./types";
 
 const cameraTarget = new Vector3(0, -0.08, 0);
-type SceneEnvironment = Pick<Scene, "background" | "fog">;
+declare global {
+  interface Window {
+    __MiraLithRadioSceneEnvironmentActive?: boolean;
+  }
+}
+
+interface SceneEnvironment extends Pick<Scene, "background" | "fog"> {
+  cameraPosition: Vector3;
+  cameraQuaternion: Quaternion;
+  cameraUp: Vector3;
+}
 
 export function RadioGagaSceneContent({
   progress,
@@ -48,10 +58,16 @@ export function RadioGagaSceneContent({
     }
     previousSceneEnvironment.current = {
       background: scene.background,
-      fog: scene.fog
+      fog: scene.fog,
+      cameraPosition: camera.position.clone(),
+      cameraQuaternion: camera.quaternion.clone(),
+      cameraUp: camera.up.clone()
     };
     scene.background = backgroundColor;
     scene.fog = null;
+    if (typeof window !== "undefined") {
+      window.__MiraLithRadioSceneEnvironmentActive = true;
+    }
 
     return () => {
       if (!previousSceneEnvironment.current) {
@@ -59,9 +75,16 @@ export function RadioGagaSceneContent({
       }
       scene.background = previousSceneEnvironment.current.background;
       scene.fog = previousSceneEnvironment.current.fog;
+      camera.position.copy(previousSceneEnvironment.current.cameraPosition);
+      camera.quaternion.copy(previousSceneEnvironment.current.cameraQuaternion);
+      camera.up.copy(previousSceneEnvironment.current.cameraUp);
+      camera.updateMatrixWorld();
       previousSceneEnvironment.current = null;
+      if (typeof window !== "undefined") {
+        window.__MiraLithRadioSceneEnvironmentActive = false;
+      }
     };
-  }, [active, backgroundColor, scene]);
+  }, [active, backgroundColor, camera, scene]);
 
   useEffect(() => {
     if (!active) {
@@ -128,7 +151,7 @@ export function RadioGagaSceneContent({
   }
 
   return (
-    <>
+    <group visible={active} userData={{ sceneId: "radio-gaga", active }}>
       <ambientLight color="#f3f3ef" intensity={0.68} />
       <directionalLight ref={keyLight} color="#fffaf0" position={[2.4, 2.6, 3.8]} intensity={1.08} />
       <directionalLight ref={openingFill} color="#e7eefc" position={[-2.6, 1.7, 3.2]} intensity={0.46} />
@@ -143,6 +166,6 @@ export function RadioGagaSceneContent({
         reducedMotion={reducedMotion}
         active={active}
       />
-    </>
+    </group>
   );
 }

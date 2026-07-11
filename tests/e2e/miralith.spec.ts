@@ -11,6 +11,7 @@ declare global {
     __MiraLithHomeMoonTextureReadyAt?: number;
     __MiraLithHomeVisualReadyAt?: number;
     __MiraLithHomeVisualReadySource?: "day-texture" | "grace";
+    __MiraLithRadioSceneEnvironmentActive?: boolean;
     __MiraLithHomeProjectionFrame?: {
       width: number;
       height: number;
@@ -36,6 +37,61 @@ test("homepage composes LuBirth then Radio Gaga in one production canvas", async
     if (!(lubirth instanceof HTMLElement) || !(radio instanceof HTMLElement)) return false;
     return radio.offsetTop > lubirth.offsetTop;
   })).toBe(true);
+  await expect(page.locator('[data-visual-canvas="production"]')).toHaveCount(1);
+});
+
+test("homepage defers Radio Gaga assets until the second act is near", async ({ page }) => {
+  const radioAssets: string[] = [];
+  page.on("request", (request) => {
+    if (/radio_gaga|xiaozhi_esp32|website1|website2/i.test(request.url())) {
+      radioAssets.push(request.url());
+    }
+  });
+
+  await page.goto("/");
+  await page.waitForTimeout(500);
+  expect(radioAssets).toEqual([]);
+
+  await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-home-intro-complete", "true", {
+    timeout: 15_000
+  });
+  await page.locator('[data-home-chapter="radio-gaga"]').scrollIntoViewIfNeeded();
+  await expect.poll(() => radioAssets.length, { timeout: 15_000 }).toBeGreaterThan(0);
+});
+
+test("homepage switches the shared scene to Radio Gaga and restores LuBirth", async ({ page }) => {
+  await page.goto("/?visualTest=pixels&copy=visible");
+
+  const home = page.locator(".lubirth-revised");
+  await expect(home).toHaveAttribute("data-home-scene", "lubirth");
+  await expect(page.locator('[data-visual-canvas="production"]')).toHaveCount(1);
+  await expect(home).toHaveAttribute("data-home-intro-complete", "true", { timeout: 15_000 });
+
+  await page.locator('[data-home-chapter="radio-gaga"]').scrollIntoViewIfNeeded();
+  await expect(home).toHaveAttribute("data-home-scene", "radio-gaga", { timeout: 15_000 });
+  await expect(page.locator('[data-visual-canvas="production"]')).toHaveCount(1);
+  await expect(
+    page.locator(".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-title")
+  ).toHaveText("Radio Gaga");
+  await page.waitForFunction(() => window.__MiraLithRadioSceneEnvironmentActive === true);
+
+  const radioPixels = await page.waitForFunction(() => {
+    const source = document.querySelector("canvas");
+    if (!source) return false;
+    const sample = document.createElement("canvas");
+    sample.width = 32;
+    sample.height = 32;
+    const context = sample.getContext("2d");
+    if (!context) return false;
+    context.drawImage(source, 0, 0, 32, 32);
+    const pixels = context.getImageData(0, 0, 32, 32).data;
+    return pixels.some((value, index) => index % 4 !== 3 && value > 8);
+  });
+  expect(await radioPixels.jsonValue()).toBe(true);
+
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await expect(home).toHaveAttribute("data-home-scene", "lubirth", { timeout: 15_000 });
+  await page.waitForFunction(() => window.__MiraLithRadioSceneEnvironmentActive === false);
   await expect(page.locator('[data-visual-canvas="production"]')).toHaveCount(1);
 });
 
