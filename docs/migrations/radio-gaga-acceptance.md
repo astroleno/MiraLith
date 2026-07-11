@@ -12,6 +12,7 @@
 
 - The standalone route retains its complete five-stage story, forced visual fallback, model failure fallback, and one-Canvas contract.
 - Production rendering continues to use the existing `/model/radio_gaga.glb` and `/model/xiaozhi_esp32.glb`; neither GLB was replaced or modified. The static poster is used only by the explicit WebGL fallback path.
+- A direct homepage second-act audit recorded both GLB resource requests with `data-home-scene="radio-gaga"`, one production Canvas, and zero Radio Gaga fallback nodes.
 - The homepage mounts the Radio Gaga DOM act after the LuBirth intro, changes the shared title surface to Radio Gaga while the second act is active, and restores LuBirth when returning to the top.
 - Radio Gaga model and proof assets are not requested on the homepage first screen. The scene module and its four visual assets are loaded only after the second act enters the near range.
 - The Radio Gaga scene restores the previous shared camera, background, and fog when it is deactivated.
@@ -31,6 +32,7 @@ Playwright CLI was used against the production Next server. The following artifa
 - `output/playwright/radio-mobile-portrait-final.png`
 - `output/playwright/radio-mobile-landscape-memory.png`
 - `output/playwright/radio-desktop-fallback.png`
+- `output/playwright/home-radio-gaga-glb.png`
 
 Review result:
 
