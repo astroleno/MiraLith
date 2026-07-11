@@ -24,6 +24,7 @@ import type {
   LandingMoonLightingMode,
   LandingMoonPhase,
   LandingRenderProfile,
+  LandingRuntimeProfile,
   LandingVisualDebugLayer,
   LuBirthAtmosphereRouteVariant,
   LuBirthProjectionFrame
@@ -114,15 +115,23 @@ export function resolveHomeEarthSurfaceProfile(
   }
 
   return {
+    segments: 144,
     cloudOpacity: 0.62,
-    nightIntensity: 0.72,
-    nightSurfaceLift: 0.42
+    nightIntensity: 1.05,
+    nightSurfaceLift: 1
   };
+}
+
+export function resolveLandingRuntimeProfile(
+  routeVariant: LuBirthAtmosphereRouteVariant
+): LandingRuntimeProfile {
+  return routeVariant === "home" ? "home-lite" : "full";
 }
 
 declare global {
   interface Window {
     __MiraLithLuBirthQualityTier?: string;
+    __MiraLithLuBirthRuntimeProfile?: LandingRuntimeProfile;
     __MiraLithLuBirthAuroraEnabled?: boolean;
     __MiraLithLuBirthAuroraProfile?: LandingAuroraProfile;
     __MiraLithLuBirthAtmospherePolicy?: LandingAtmospherePolicy;
@@ -475,6 +484,7 @@ export function LuBirthSceneSlot({
   const activeRenderProfile = renderProfileOverride ?? renderProfile;
   const activeRouteVariant: LuBirthAtmosphereRouteVariant =
     routeVariant ?? (isAtmosphereSpikeRoute() ? "spike" : "study");
+  const runtimeProfile = resolveLandingRuntimeProfile(activeRouteVariant);
   const moonPhaseOverride = readMoonPhaseOverride(activeRenderProfile);
   const moonDateOverride = readMoonDateOverride();
   const sunDateOverride = readSunDateOverride();
@@ -659,7 +669,7 @@ export function LuBirthSceneSlot({
       return undefined;
     }
 
-    fetch(geoEndpoint, { cache: "no-store" })
+    fetch(geoEndpoint)
       .then((response) => response.json() as Promise<{
         located?: boolean;
         latitudeDeg?: number;
@@ -698,6 +708,7 @@ export function LuBirthSceneSlot({
 
   useLayoutEffect(() => {
     window.__MiraLithLuBirthQualityTier = qualityProfile.tier;
+    window.__MiraLithLuBirthRuntimeProfile = runtimeProfile;
     window.__MiraLithLuBirthAuroraEnabled = qualityProfile.aurora;
     window.__MiraLithLuBirthAuroraProfile = auroraProfile;
     window.__MiraLithLuBirthAtmospherePolicy = atmospherePolicy ?? atmosphereVariant;
@@ -736,6 +747,7 @@ export function LuBirthSceneSlot({
     effectiveCloseAtmosphereTuning,
     qualityProfile.aurora,
     qualityProfile.tier,
+    runtimeProfile,
     requestedCloseAtmosphereTuning,
     resolvedAtmospherePolicy.atmosphereLook,
     resolvedAtmospherePolicy.reason,
@@ -756,6 +768,7 @@ export function LuBirthSceneSlot({
       debugMianyang={debugMianyang}
       visualDebugLayer={visualDebugLayer}
       renderProfile={activeRenderProfile}
+      runtimeProfile={runtimeProfile}
       atmosphereVariant={resolvedAtmospherePolicy.atmosphereVariant}
       atmosphereLook={resolvedAtmospherePolicy.atmosphereLook}
       auroraProfile={auroraProfile}

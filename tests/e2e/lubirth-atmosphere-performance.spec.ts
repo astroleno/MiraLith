@@ -6,6 +6,7 @@ declare global {
   interface Window {
     __MiraLithLuBirthAtmospherePolicyReason?: string;
     __MiraLithLuBirthAtmosphereVariant?: string;
+    __MiraLithLuBirthRuntimeProfile?: string;
     __MiraLithLuBirthVolumetricAtmosphereActive?: boolean;
   }
 }
@@ -90,11 +91,7 @@ function expectRafSamples(label: string, stats: RafStats, testInfo: import("@pla
     console.log(description);
   }
 
-  if (STRICT_PERF) {
-    expect(stats.count).toBeGreaterThanOrEqual(30);
-  } else {
-    expect(stats.count).toBeGreaterThan(0);
-  }
+  expect(stats.count).toBeGreaterThanOrEqual(30);
 }
 
 test("records blank RAF control", async ({ page }, testInfo) => {
@@ -166,6 +163,9 @@ test("records production visible-copy RAF performance", async ({ page }, testInf
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthAtmosphereVariant), { timeout: 25_000 })
     .toBe("stack");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthRuntimeProfile), { timeout: 25_000 })
+    .toBe("home-lite");
   await page.waitForTimeout(1_000);
   const homeIntro = await sampleRafStats(page, 2_500);
 

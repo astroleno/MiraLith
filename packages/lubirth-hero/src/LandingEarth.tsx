@@ -17,7 +17,7 @@ import {
 } from "three";
 import { type QualityProfile } from "@miralith/visual-core";
 import { DEFAULT_LUBIRTH_ASSETS } from "./assetManifest";
-import type { LandingComposition, LandingResolvedAssets } from "./types";
+import type { LandingComposition, LandingResolvedAssets, LandingRuntimeProfile } from "./types";
 import { createEarthTexture } from "./textures";
 import { useLandingTexture } from "./useLandingTexture";
 
@@ -32,6 +32,7 @@ interface LandingEarthProps {
   onDayTextureReady?: () => void;
   cloudDeckEnabled?: boolean;
   referenceVolumetricSurfaceClouds?: boolean;
+  runtimeProfile?: LandingRuntimeProfile;
 }
 
 const lightDirection = new Vector3();
@@ -49,7 +50,15 @@ const smoothstep = (edge0: number, edge1: number, value: number) => {
   return t * t * (3 - 2 * t);
 };
 
-function resolveEarthSegments(composition: LandingComposition, quality: QualityProfile) {
+function resolveEarthSegments(
+  composition: LandingComposition,
+  quality: QualityProfile,
+  runtimeProfile: LandingRuntimeProfile
+) {
+  if (runtimeProfile === "home-lite") {
+    return Math.max(96, Math.min(160, composition.earth.segments));
+  }
+
   if (quality.tier === "high") {
     return Math.max(composition.earth.segments, quality.segments, 512);
   }
@@ -201,10 +210,12 @@ export function LandingEarth({
   sceneLightDirection,
   onDayTextureReady,
   cloudDeckEnabled = true,
-  referenceVolumetricSurfaceClouds = false
+  referenceVolumetricSurfaceClouds = false,
+  runtimeProfile = "full"
 }: LandingEarthProps) {
   const earth = useRef<Mesh>(null);
-  const earthSegments = resolveEarthSegments(composition, quality);
+  const earthSegments = resolveEarthSegments(composition, quality, runtimeProfile);
+  const isHomeLite = runtimeProfile === "home-lite";
   const proceduralDayTexture = useMemo(
     () => createEarthTexture(quality.tier === "high" ? 1024 : 512),
     [quality.tier]
@@ -245,7 +256,8 @@ export function LandingEarth({
       wrapT: RepeatWrapping
     }
   );
-  const shouldUseSpecularTexture = quality.tier !== "low" && quality.tier !== "fallback";
+  const shouldUseSpecularTexture =
+    !isHomeLite && quality.tier !== "low" && quality.tier !== "fallback";
   const { texture: specularTexture } = useLandingTexture(
     shouldUseSpecularTexture ? assets.earthSpecular?.src : undefined,
     {
@@ -275,8 +287,8 @@ export function LandingEarth({
   const activeNormalTexture = normalTexture ?? activeDayTexture;
   const activeDisplacementTexture = displacementTexture ?? activeDayTexture;
   const cloudShadowAtlasSize = useMemo(
-    () => resolveCloudShadowAtlasSize(quality),
-    [quality]
+    () => isHomeLite ? null : resolveCloudShadowAtlasSize(quality),
+    [isHomeLite, quality]
   );
   const [cloudShadowAtlasTexture, setCloudShadowAtlasTexture] = useState<Texture | null>(null);
 
@@ -339,7 +351,8 @@ export function LandingEarth({
       ].forEach((texture) => {
         texture.magFilter = LinearFilter;
         texture.minFilter = LinearMipmapLinearFilter;
-        texture.anisotropy = Math.max(texture.anisotropy, quality.tier === "high" ? 16 : 10);
+        const targetAnisotropy = isHomeLite ? 4 : quality.tier === "high" ? 16 : 10;
+        texture.anisotropy = Math.max(texture.anisotropy, targetAnisotropy);
         texture.needsUpdate = true;
       });
 
@@ -380,13 +393,14 @@ export function LandingEarth({
               : 0
           },
           cloudShadowOpacity: {
-            value: shouldUseTextureClouds
+            value: shouldUseTextureClouds && !isHomeLite
               ? composition.earth.cloudOpacity *
                 SURFACE_CLOUD_SHADOW_MULTIPLIER *
                 (referenceVolumetricSurfaceClouds ? 1.42 : 1)
               : 0
           },
           referenceVolumetricSurfaceClouds: { value: referenceVolumetricSurfaceClouds ? 1 : 0 },
+          homeLiteStrength: { value: isHomeLite ? 1 : 0 },
           cloudOffset: { value: 0 },
           rimStrength: { value: composition.earth.rimStrength },
           rimWidth: { value: composition.earth.rimWidth },
@@ -451,6 +465,7 @@ export function LandingEarth({
           uniform float cloudOpacity;
           uniform float cloudShadowOpacity;
           uniform float referenceVolumetricSurfaceClouds;
+          uniform float homeLiteStrength;
           uniform float cloudOffset;
           uniform float rimStrength;
           uniform float rimWidth;
@@ -638,6 +653,12 @@ export function LandingEarth({
               truthTwilight * (1.0 - dayW) * 0.52;
             vec3 truthNightFill = truthDayTex * vec3(0.04, 0.06, 0.09) *
               deepNightW * (0.34 + ambient * 1.55);
+            vec3 truthPresentationAlbedo = pow(max(truthDayTexRaw, vec3(0.0)), vec3(0.72));
+            vec3 truthPresentationNightFill =
+              (truthPresentationAlbedo * vec3(0.2, 0.27, 0.38) + vec3(0.008, 0.012, 0.022) * closeStage) *
+              nightSurfaceLift *
+              deepNightW *
+              (0.58 + closeStage * 0.42);
             vec3 truthGrazingFill = truthDayTex * vec3(0.065, 0.082, 0.11) *
               max(truthSurfaceGate - dayW, 0.0) * mix(0.78, 1.08, closeStage);
             float truthCityLuma = max(max(truthNightTex.r, truthNightTex.g), truthNightTex.b);
@@ -732,7 +753,7 @@ export function LandingEarth({
               mix(0.003, 0.00012, referenceCloudLook) *
               truthRimBreakup;
             vec3 truthRim = edgeLightColor * truthBlueRim + mix(vec3(0.58, 0.78, 1.0), vec3(0.30, 0.58, 1.0), referenceCloudLook) * truthWhiteNeedle;
-            vec3 truthColor = truthLitDay + truthTwilightFill + truthNightFill + truthGrazingFill + truthCity + truthSpecular + truthRim;
+            vec3 truthColor = truthLitDay + truthTwilightFill + truthNightFill + truthPresentationNightFill + truthGrazingFill + truthCity + truthSpecular + truthRim;
             float truthSurfaceReflectance = clamp(
               0.72 +
               truthOceanMask * 0.34 +
@@ -1161,9 +1182,15 @@ export function LandingEarth({
             vec3 truthCloudTex = texture2D(cloudMap, truthCloudUv).rgb;
             vec4 truthCloudAtlas = sampleCloudShadowAtlas(truthCloudUv);
             float truthCloudLight = pow(max(0.9 * ndl + 0.1, 0.0), 0.5);
+            truthCloudLight = max(truthCloudLight, homeLiteStrength * deepNightW * 0.22);
             float truthCloudMass = pow(clamp(dot(truthCloudTex, vec3(1.0)) / 3.0, 0.0, 1.0), 0.52);
             float truthCloudAlpha = truthCloudMass * pow(truthCloudLight, 0.35);
-            truthCloudAlpha *= cloudOpacity * smoothstep(-0.16, 0.52, ndl);
+            float truthCloudDayGate = smoothstep(-0.16, 0.52, ndl);
+            float truthCloudPresentationGate = max(
+              truthCloudDayGate,
+              deepNightW * (0.28 + closeStage * 0.16)
+            );
+            truthCloudAlpha *= cloudOpacity * mix(truthCloudDayGate, truthCloudPresentationGate, homeLiteStrength);
             truthCloudAlpha *= smoothstep(0.04, 0.32, truthCloudRaw);
             float truthLimbBlueTakeover =
               smoothstep(mix(0.68, 0.42, referenceCloudLook), 1.0, fresnel) *
@@ -1228,6 +1255,7 @@ export function LandingEarth({
               0.0,
               mix(0.94, 0.98, referenceCloudLook)
             );
+            truthCloudSelfShadow *= mix(1.0, 0.18, homeLiteStrength);
             vec3 truthCloudTopColor = mix(
               vec3(0.54, 0.62, 0.76),
               vec3(1.0, 0.975, 0.92),
@@ -1241,6 +1269,7 @@ export function LandingEarth({
               mix(vec3(0.5, 0.58, 0.7), vec3(0.32, 0.42, 0.62), referenceCloudLook),
               truthCloudLight
             );
+            truthCloudShadowTint = mix(truthCloudShadowTint, vec3(0.76, 0.81, 0.88), homeLiteStrength);
             vec3 truthCloudColor = mix(
               truthCloudTopColor,
               truthCloudTopColor * truthCloudShadowTint,
@@ -1698,9 +1727,9 @@ export function LandingEarth({
             vec3 moonlitLand = daySurface * vec3(0.1, 0.18, 0.32) * deepNightW * 0.24;
             vec3 moonlitClouds = cloudCol * max(cloudMask, cloudCore) * deepNightW * vec3(0.18, 0.27, 0.44) * 1.35;
             float nightSurfaceCloudGuard = 1.0 - clamp(max(cloudMask, cloudCore) * 0.36, 0.0, 0.32);
+            vec3 nightSurfaceAlbedo = mix(rawDayTex, daySurface, 0.28);
             vec3 nightSurfaceReadability =
-              daySurface *
-              vec3(0.11, 0.16, 0.24) *
+              (nightSurfaceAlbedo * vec3(0.2, 0.26, 0.36) + vec3(0.008, 0.012, 0.022) * closeStage) *
               nightSurfaceLift *
               deepNightW *
               (0.58 + closeStage * 0.42) *
@@ -1818,6 +1847,7 @@ export function LandingEarth({
       composition.light.fixedSunDir,
       composition.light.intensity,
       quality.tier,
+      isHomeLite,
       activeDayTexture,
       activeCloudDeckTexture,
       activeCloudTexture,
@@ -1857,7 +1887,7 @@ export function LandingEarth({
         ? composition.earth.cloudOpacity * SURFACE_CLOUD_OPACITY_MULTIPLIER
         : 0;
     earthMaterial.uniforms.cloudShadowOpacity.value =
-      shouldUseTextureClouds
+      shouldUseTextureClouds && !isHomeLite
         ? composition.earth.cloudOpacity *
           SURFACE_CLOUD_SHADOW_MULTIPLIER *
           (referenceVolumetricSurfaceClouds ? 1.42 : 1)

@@ -6,6 +6,7 @@ export type EarthMoonHeroMode = "field" | "window" | "zoomed" | "expanded";
 export type LandingVisualDebugLayer = "all" | "stars" | "clouds" | "atmosphere" | "aurora";
 export type LandingAtmosphereVariant = "stack" | "volumetric";
 export type LandingAtmosphereLook = "lubirth" | "reference";
+export type LandingRuntimeProfile = "full" | "home-lite";
 
 export interface LandingCloseAtmosphereTuning {
   edgeGlowStrength: number;
@@ -212,6 +213,7 @@ export interface EarthMoonSceneProps {
   debugMianyang?: boolean;
   visualDebugLayer?: LandingVisualDebugLayer;
   renderProfile?: LandingRenderProfile;
+  runtimeProfile?: LandingRuntimeProfile;
   auroraProfile?: LandingAuroraProfile;
   reducedMotion?: boolean;
   paused?: boolean;

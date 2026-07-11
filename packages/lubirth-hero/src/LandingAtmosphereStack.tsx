@@ -13,7 +13,7 @@ import {
   Vector3
 } from "three";
 import { getRuntimeOpeningProgress, type QualityProfile } from "@miralith/visual-core";
-import type { LandingComposition, LandingResolvedAssets } from "./types";
+import type { LandingComposition, LandingResolvedAssets, LandingRuntimeProfile } from "./types";
 import { useLandingTexture } from "./useLandingTexture";
 
 type AtmosphereLayerKind =
@@ -36,6 +36,7 @@ interface LandingAtmosphereStackProps {
   quality: QualityProfile;
   sceneLightDirection?: Vector3;
   emphasis?: boolean;
+  runtimeProfile?: LandingRuntimeProfile;
 }
 
 interface AtmosphereLayerProps extends LandingAtmosphereStackProps {
@@ -331,22 +332,27 @@ function AtmosphereLayer({
   quality,
   sceneLightDirection,
   emphasis = false,
+  runtimeProfile = "full",
   spec
 }: AtmosphereLayerProps) {
   const material = useMemo(() => createAtmosphereStackMaterial(composition, spec), [composition, spec]);
-  const { texture: surfaceTexture } = useLandingTexture(assets.earthDay.src, {
+  const { texture: surfaceTexture } = useLandingTexture(runtimeProfile === "home-lite" ? undefined : assets.earthDay.src, {
     colorSpace: assets.earthDay.colorSpace,
     wrapS: RepeatWrapping,
     wrapT: RepeatWrapping,
-    anisotropy: quality.tier === "high" ? 16 : 8
+    anisotropy: runtimeProfile === "home-lite" ? 4 : quality.tier === "high" ? 16 : 8
   });
   const radius = composition.earth.radius * spec.radius;
-  const widthSegments = quality.tier === "high"
+  const widthSegments = runtimeProfile === "home-lite"
+    ? 128
+    : quality.tier === "high"
     ? Math.max(composition.earth.segments, quality.segments, 512)
     : quality.tier === "medium"
       ? Math.max(224, quality.segments)
       : 40;
-  const heightSegments = quality.tier === "high" ? 256 : quality.tier === "medium" ? 128 : 36;
+  const heightSegments = runtimeProfile === "home-lite"
+    ? 64
+    : quality.tier === "high" ? 256 : quality.tier === "medium" ? 128 : 36;
 
   useEffect(() => {
     return () => material.dispose();
@@ -386,7 +392,8 @@ export function LandingAtmosphereStack({
   assets,
   quality,
   sceneLightDirection,
-  emphasis = false
+  emphasis = false,
+  runtimeProfile = "full"
 }: LandingAtmosphereStackProps) {
   const enabled = quality.tier !== "fallback" && composition.atmosphere.enabled;
   const layers = !emphasis
@@ -423,6 +430,7 @@ export function LandingAtmosphereStack({
           quality={quality}
           sceneLightDirection={sceneLightDirection}
           emphasis={emphasis}
+          runtimeProfile={runtimeProfile}
           spec={spec}
         />
       ))}

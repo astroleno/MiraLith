@@ -58,6 +58,7 @@ export type {
   LandingMoonLightingMode,
   LandingMoonPhase,
   LandingRenderProfile,
+  LandingRuntimeProfile,
   LandingResolvedAssets,
   LandingPresetName,
   LandingProjectedEarthFrame,

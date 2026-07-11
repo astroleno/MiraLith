@@ -85,6 +85,7 @@ declare global {
     __MiraLithLuBirthAtmosphereVariant?: string;
     __MiraLithLuBirthCloudDeckActive?: boolean;
     __MiraLithLuBirthCloudDeckTexture?: string;
+    __MiraLithLuBirthCloudShellsActive?: boolean;
     __MiraLithLuBirthHorizonAuroraRibbonActive?: boolean;
     __MiraLithLuBirthPostBloomActive?: boolean;
     __MiraLithLuBirthMoonPhase?: { date: string; source: string; phaseAngleRad: number };
@@ -96,6 +97,7 @@ declare global {
     __MiraLithLuBirthProjectedHorizonCompositeTexture?: string;
     __MiraLithLuBirthProjectedLimbScatteringActive?: boolean;
     __MiraLithLuBirthQualityTier?: string;
+    __MiraLithLuBirthRuntimeProfile?: string;
     __MiraLithLuBirthVolumetricAtmosphereActive?: boolean;
     __MiraLithLuBirthRuntimeLocation?: {
       latitudeDeg: number;
@@ -233,6 +235,46 @@ test("keeps production home intro route on the stack renderer", async ({ page })
   await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-variant", "home", { timeout: 25_000 });
   await expect(page.locator("canvas")).toHaveCount(1);
   await expectAtmosphereVariant(page, "stack");
+});
+
+test("keeps production home on the lightweight Earth renderer", async ({ page }) => {
+  const assetRequests = new Set<string>();
+  page.on("request", (request) => {
+    const path = new URL(request.url()).pathname;
+    if (path.includes("/assets/lubirth/")) {
+      assetRequests.add(path);
+    }
+  });
+
+  await page.goto("/?copy=visible");
+  await expect(page.locator("canvas")).toHaveCount(1);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthRuntimeProfile), { timeout: 25_000 })
+    .toBe("home-lite");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthQualityTier), { timeout: 25_000 })
+    .toBe("medium");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudShellsActive), { timeout: 25_000 })
+    .toBe(false);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomActive), { timeout: 25_000 })
+    .toBe(false);
+  await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-home-visual-ready", "true", {
+    timeout: 25_000
+  });
+
+  const canvasDpr = await page.locator("canvas").evaluate((canvas) =>
+    Math.max(canvas.width / canvas.clientWidth, canvas.height / canvas.clientHeight)
+  );
+  expect(canvasDpr).toBeLessThanOrEqual(1.26);
+  expect(Array.from(assetRequests).some((path) => path.includes("earth-day-2k"))).toBe(true);
+  expect(Array.from(assetRequests).some((path) => path.includes("earth-night-2k"))).toBe(true);
+  expect(Array.from(assetRequests).some((path) => path.includes("earth-clouds-2k"))).toBe(true);
+  expect(Array.from(assetRequests).some((path) => path.includes("moon-2k"))).toBe(true);
+  expect(Array.from(assetRequests).some((path) => path.includes("8k"))).toBe(false);
+  expect(Array.from(assetRequests).some((path) => path.includes("earth-cloud-deck"))).toBe(false);
+  expect(Array.from(assetRequests).some((path) => path.includes("earth-specular-4k"))).toBe(false);
 });
 
 test("keeps the loading and prelude phase branded as MiraLith with one continuous moon path", async ({ page }) => {

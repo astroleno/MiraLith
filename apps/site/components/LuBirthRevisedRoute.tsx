@@ -568,7 +568,6 @@ export function LuBirthRevisedRoute({
   const [copyInteractive, setCopyInteractive] = useState(false);
   const [projectInteractive, setProjectInteractive] = useState(() => variant !== "home");
   const [homeIntroComplete, setHomeIntroComplete] = useState(() => variant !== "home");
-  const [homeCloudDeckEnabled, setHomeCloudDeckEnabled] = useState(true);
   const [homeProjection, setHomeProjection] = useState<LuBirthProjectionFrame | null>(null);
   const [homeProjectionSource, setHomeProjectionSource] = useState<HomeProjectionSource>("pending");
   const [homeVisualReadySource, setHomeVisualReadySource] = useState<HomeVisualReadySource | "pending">("pending");
@@ -741,7 +740,6 @@ export function LuBirthRevisedRoute({
       setCopyInteractive(false);
       setProjectInteractive(!isHome);
       setHomeIntroComplete(!isHome);
-      setHomeCloudDeckEnabled(true);
 
       gsap.registerPlugin(ScrollTrigger);
       ScrollTrigger.getById(triggerId)?.kill();
@@ -857,7 +855,6 @@ export function LuBirthRevisedRoute({
           setCopyInteractive(!screenshotDebug.copyHidden && (!isHome || homeRailVisible));
           setProjectInteractive(!screenshotDebug.copyHidden && (!isHome || homeProjectVisible));
           setHomeIntroComplete(true);
-          setHomeCloudDeckEnabled(true);
           setOpeningProgress(screenshotDebug.fixedProgress);
           setIfPresent(".lubirth-revised__loading", { autoAlpha: 0 });
           setIfPresent(".lubirth-revised__home-loading", { autoAlpha: 0 });
@@ -909,7 +906,6 @@ export function LuBirthRevisedRoute({
           setCopyInteractive(!isHome);
           setProjectInteractive(true);
           setHomeIntroComplete(true);
-          setHomeCloudDeckEnabled(true);
           if (typeof window !== "undefined") {
             window.__MiraLithFirstUsableAt = performance.now();
             window.__MiraLithHomeIntroCompleteAt = performance.now();
@@ -1106,7 +1102,6 @@ export function LuBirthRevisedRoute({
           setCopyInteractive(false);
           setProjectInteractive(false);
           setHomeIntroComplete(true);
-          setHomeCloudDeckEnabled(true);
           setIfPresent(".lubirth-revised__loading", { autoAlpha: 0 });
           setIfPresent(".lubirth-revised__home-loading", { autoAlpha: 0 });
           setIfPresent(".lubirth-revised__atmosphere", { autoAlpha: 1 });
@@ -1171,7 +1166,6 @@ export function LuBirthRevisedRoute({
               window.__MiraLithFirstUsableAt = now;
             }
             setHomeIntroComplete(true);
-            setHomeCloudDeckEnabled(true);
             scrollTimeline = createScrollTimeline();
             window.requestAnimationFrame(() => {
               if (!disposed) {
@@ -1494,7 +1488,7 @@ export function LuBirthRevisedRoute({
         <VisualCanvas
           key={isScreenshotMode ? "lubirth-screenshot-canvas" : isHome ? "lubirth-home-canvas" : "lubirth-runtime-canvas"}
           decorative
-          dpr={debugOptions.rafPerfMode ? 1 : isScreenshotMode ? 2 : homeIntroRendering ? [1.1, 1.25] : [1.5, 2.1]}
+          dpr={isScreenshotMode && !isHome ? 2 : isHome ? [1, 1.25] : [1.5, 2.1]}
           fallback={
             <VisualCanvasFallback
               scene="lubirth"
@@ -1505,9 +1499,9 @@ export function LuBirthRevisedRoute({
         >
           <LuBirthSceneSlot
             mode="field"
-            quality={homeIntroRendering ? "medium" : isScreenshotMode ? "high" : "auto"}
+            quality={isHome ? "medium" : isScreenshotMode ? "high" : "auto"}
             paused={isScreenshotMode}
-            cloudDeckEnabled={!isHome || homeCloudDeckEnabled}
+            cloudDeckEnabled={!isHome}
             visualDebugLayer={debugOptions.visualDebugLayer}
             renderProfile={debugOptions.renderProfile}
             atmospherePolicy={debugOptions.atmospherePolicy}

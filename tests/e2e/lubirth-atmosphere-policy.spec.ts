@@ -137,7 +137,7 @@ test("hybrid only chooses volumetric for nasa high production after intro", () =
   });
 });
 
-test("scopes strong cloud shells to the reference look and feathers secondary home shells before the limb", () => {
+test("scopes strong cloud shells to the full lookdev renderer", () => {
   type CloudShellPolicy = {
     opacity: number;
     limbFadeEnd: number;
@@ -153,14 +153,14 @@ test("scopes strong cloud shells to the reference look and feathers secondary ho
 
   expect(resolveLandingCloudShells).toBeDefined();
 
-  const homeShells = resolveLandingCloudShells?.("high", false) ?? [];
+  const lookdevShells = resolveLandingCloudShells?.("high", false) ?? [];
   const referenceShells = resolveLandingCloudShells?.("high", true) ?? [];
 
-  expect(homeShells).toHaveLength(3);
+  expect(lookdevShells).toHaveLength(3);
   expect(referenceShells).toHaveLength(3);
-  expect(homeShells[0]?.opacity).toBeLessThanOrEqual(0.56);
-  expect(referenceShells[0]?.opacity).toBeGreaterThan(homeShells[0]?.opacity ?? 1);
-  expect(homeShells.every((shell) => shell.limbFadeEnd <= 0.92)).toBe(true);
+  expect(lookdevShells[0]?.opacity).toBeLessThanOrEqual(0.56);
+  expect(referenceShells[0]?.opacity).toBeGreaterThan(lookdevShells[0]?.opacity ?? 1);
+  expect(lookdevShells.every((shell) => shell.limbFadeEnd <= 0.92)).toBe(true);
 });
 
 test("uses a restrained Earth edge profile only on the production home route", () => {
@@ -188,6 +188,7 @@ test("keeps the production home night surface readable without changing study ro
   type ResolveHomeEarthSurfaceProfile = (routeVariant: "home" | "study" | "spike") => {
     nightIntensity: number;
     nightSurfaceLift: number;
+    segments: number;
   } | undefined;
 
   const resolveHomeEarthSurfaceProfile = (
@@ -196,11 +197,27 @@ test("keeps the production home night surface readable without changing study ro
 
   expect(resolveHomeEarthSurfaceProfile).toBeDefined();
   expect(resolveHomeEarthSurfaceProfile?.("home")).toMatchObject({
-    nightIntensity: expect.any(Number),
-    nightSurfaceLift: expect.any(Number)
+    nightIntensity: 1.05,
+    nightSurfaceLift: 1,
+    segments: 144
   });
   expect(resolveHomeEarthSurfaceProfile?.("home")?.nightIntensity).toBeGreaterThanOrEqual(0.62);
   expect(resolveHomeEarthSurfaceProfile?.("home")?.nightSurfaceLift).toBeGreaterThanOrEqual(0.3);
   expect(resolveHomeEarthSurfaceProfile?.("study")).toBeUndefined();
   expect(resolveHomeEarthSurfaceProfile?.("spike")).toBeUndefined();
+});
+
+test("routes only the production home through the lightweight renderer", () => {
+  type ResolveLandingRuntimeProfile = (
+    routeVariant: "home" | "study" | "spike"
+  ) => "home-lite" | "full";
+
+  const resolveLandingRuntimeProfile = (
+    luBirthSceneSlot as unknown as { resolveLandingRuntimeProfile?: ResolveLandingRuntimeProfile }
+  ).resolveLandingRuntimeProfile;
+
+  expect(resolveLandingRuntimeProfile).toBeDefined();
+  expect(resolveLandingRuntimeProfile?.("home")).toBe("home-lite");
+  expect(resolveLandingRuntimeProfile?.("study")).toBe("full");
+  expect(resolveLandingRuntimeProfile?.("spike")).toBe("full");
 });

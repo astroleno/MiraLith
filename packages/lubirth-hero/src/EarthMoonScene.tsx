@@ -83,6 +83,8 @@ declare global {
     __MiraLithLuBirthAtmosphereVariant?: LandingAtmosphereVariant;
     __MiraLithLuBirthVolumetricAtmosphereActive?: boolean;
     __MiraLithLuBirthVolumetricAtmosphereQuality?: string;
+    __MiraLithLuBirthCloudShellsActive?: boolean;
+    __MiraLithLuBirthPostBloomActive?: boolean;
   }
 }
 
@@ -162,6 +164,7 @@ export function EarthMoonScene({
   debugMianyang,
   visualDebugLayer = "all",
   renderProfile,
+  runtimeProfile = "full",
   auroraProfile = "hero",
   reducedMotion,
   paused,
@@ -202,6 +205,7 @@ export function EarthMoonScene({
   const debugClouds = activeRenderProfile === "debug-clouds";
   const debugAtmosphere = activeRenderProfile === "debug-atmosphere";
   const debugAurora = activeRenderProfile === "debug-aurora";
+  const isHomeLite = runtimeProfile === "home-lite";
 
   const showEarth = !debugStars;
   const showMoon = isNasaProfile || isCleanProfile;
@@ -222,6 +226,7 @@ export function EarthMoonScene({
     activeAtmosphereVariant === "stack";
   const showVolumetricClouds =
     showClouds &&
+    !isHomeLite &&
     quality.tier !== "low" &&
     quality.tier !== "fallback";
   const useReferenceVolumetricSurfaceClouds = showVolumetricAtmosphere && atmosphereLook === "reference";
@@ -275,6 +280,21 @@ export function EarthMoonScene({
       window.__MiraLithLuBirthVolumetricAtmosphereQuality = undefined;
     }
   }, [activeAtmosphereVariant, showVolumetricAtmosphere]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    window.__MiraLithLuBirthCloudShellsActive = showVolumetricClouds;
+    if (isHomeLite) {
+      window.__MiraLithLuBirthPostBloomActive = false;
+    }
+
+    return () => {
+      window.__MiraLithLuBirthCloudShellsActive = false;
+    };
+  }, [isHomeLite, showVolumetricClouds]);
 
   useFrame((_state, delta) => {
     const progress = getRuntimeOpeningProgress(mode === "window" || mode === "expanded" ? 1 : 0);
@@ -623,6 +643,7 @@ export function EarthMoonScene({
             onDayTextureReady={onVisualReadyEnough}
             cloudDeckEnabled={cloudDeckEnabled}
             referenceVolumetricSurfaceClouds={useReferenceVolumetricSurfaceClouds}
+            runtimeProfile={runtimeProfile}
           />
         ) : null}
         {showVolumetricClouds ? (
@@ -744,6 +765,7 @@ export function EarthMoonScene({
             quality={quality}
             sceneLightDirection={sceneLightDirection}
             emphasis={debugAtmosphere}
+            runtimeProfile={runtimeProfile}
           />
         ) : null}
         {debugMianyang && showEarth ? (
@@ -789,7 +811,7 @@ export function EarthMoonScene({
         />
       ) : null}
 
-      {showAtmosphereStack ? <LandingPostBloom quality={quality} emphasis={debugAtmosphere} /> : null}
+      {showAtmosphereStack && !isHomeLite ? <LandingPostBloom quality={quality} emphasis={debugAtmosphere} /> : null}
       {showVolumetricAtmosphere ? (
         <LandingVolumetricAtmospherePass
           composition={composition}
