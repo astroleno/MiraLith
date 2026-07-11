@@ -23,7 +23,13 @@ export interface RadioGagaFrame {
   radioScale: number;
   radioRotationY: number;
   esp32Opacity: number;
+  esp32SolidMotionProgress: number;
   coreLightIntensity: number;
+  radioToEsp32Progress: number;
+  particleOpacity: number;
+  particleTurbulence: number;
+  particleAttractorStrength: number;
+  traceOpacity: number;
   signatureMomentProgress: number;
   speakerGlow: number;
   voiceLinesOpacity: number;
