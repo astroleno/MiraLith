@@ -9,7 +9,7 @@ It is not planned as a normal portfolio. The first goal is to establish taste an
 - **Primary reference**: Shopify Editions-style interactive release pages.
 - **Core metaphor**: LuBirth as the origin field, followed by family systems, digital ritual, ambient browser work, experiment constellations, commissions, current building, and contact.
 - **v1.0 release scope**: make the LuBirth first two screens feel exceptional before expanding the full homepage.
-- **Current homepage state**: the home route now starts with a LuBirth-specific loading ritual that uses the Three scene's projected Earth horizon and Moon position when available, then hands off into the LuBirth field, title rail, and project intro.
+- **Current homepage state**: the home route runs LuBirth first and Radio Gaga second through one production Canvas. Radio Gaga reuses the existing radio/ESP32 GLBs and loads its scene and proof assets only when the second act is near.
 - **Language rhythm**: Chinese primary copy with English secondary lines.
 - **Motion strategy**: Theatre.js participates from the start for the opening field-to-window timeline, while simple hover / idle motion stays outside Theatre.
 - **Primary audience**: collaborators, clients, hiring / partnership contacts, creative technologists, designers, and people curious about AI-native visual products.
@@ -37,8 +37,9 @@ It is not planned as a normal portfolio. The first goal is to establish taste an
 - [LuBirth earth-moon visual gap review](docs/lubirth-earthmoon-visual-gap-review.md)
 - [CoScroll integration brief](docs/coscroll-integration-brief.md)
 - [CoScroll scene interface](docs/coscroll-scene-interface.md)
+- [Radio Gaga migration acceptance](docs/migrations/radio-gaga-acceptance.md)
 - [Shopify reference](reference/shopify.md)
 
 ## Next Build Step
 
-Continue from `docs/home-lubirth-next-stage-plan.md`. The next phase is LuBirth visual hardening: make the projection-based loading deterministic on slow starts, then resolve the earth-moon visual blockers recorded in `docs/lubirth-earthmoon-visual-gap-review.md` with screenshot-based acceptance.
+Use `docs/migrations/radio-gaga-acceptance.md` as the current homepage handoff. Any CoScroll integration must rebase onto the shared home spine, add a near-mounted chapter runtime, and preserve the single production Canvas.

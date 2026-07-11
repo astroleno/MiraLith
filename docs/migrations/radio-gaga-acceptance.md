@@ -11,6 +11,7 @@
 ## Functional acceptance
 
 - The standalone route retains its complete five-stage story, forced visual fallback, model failure fallback, and one-Canvas contract.
+- Production rendering continues to use the existing `/model/radio_gaga.glb` and `/model/xiaozhi_esp32.glb`; neither GLB was replaced or modified. The static poster is used only by the explicit WebGL fallback path.
 - The homepage mounts the Radio Gaga DOM act after the LuBirth intro, changes the shared title surface to Radio Gaga while the second act is active, and restores LuBirth when returning to the top.
 - Radio Gaga model and proof assets are not requested on the homepage first screen. The scene module and its four visual assets are loaded only after the second act enters the near range.
 - The Radio Gaga scene restores the previous shared camera, background, and fog when it is deactivated.
@@ -53,10 +54,28 @@ Acceptance thresholds were desktop p95 ≤25ms and mobile p95 ≤33ms. Both meas
 
 The pre-migration desktop homepage suite had eight reproducible LuBirth failures on the current Chromium/runtime. The migration did not rewrite the LuBirth loading/projection state machine. Its affected assertions were stabilized around bounded fallback behavior, authored animation contracts, deterministic handoff endpoints, and current production transfer size before the combined suite was rerun.
 
+## Final verification
+
+- `pnpm --filter @miralith/radio-gaga-scene typecheck`: passed.
+- `pnpm --filter @miralith/site typecheck`: passed.
+- `pnpm --filter @miralith/site lint`: passed.
+- `pnpm build`: passed; route output includes `/` and `/radio-gaga`.
+- `git diff --check`: passed.
+- Dedicated desktop, mobile portrait, and mobile landscape suite: 113 passed, 4 viewport-specific skips, 0 failed, 0 retries.
+- `pnpm verify`: passed, including workspace typechecks and a second production build.
+
 ## Knowledge graph
 
-Pending final Task 8 update attempt.
+Graph update blocked: the `/graphify` executable is unavailable in this environment. Both `/graphify --update` and `/graphify path "RadioGagaSceneContent" "HomeVisualSceneSlot"` exited `127`. The existing `graphify-out/graph.json` and `GRAPH_REPORT.md` were used for pre-change community/blast-radius review; no updated graph is claimed.
 
 ## CoScroll handoff
 
-Pending final migration SHA. CoScroll must extend the shared chapter registry/runtime and preserve near-only mounting plus the single production Canvas contract.
+- Radio/home-spine integration commit: `c7a4cf0a70bfce1cf8d922ad1148c96dd2df1f08`.
+- Latest verified migration commit before documentation closeout: `f5c190712183544effda34209d8f7a77ce209e02`.
+- Shared files now owned by the merged home spine:
+  - `apps/site/components/home/homeChapterTypes.ts`
+  - `apps/site/components/home/homeChapterRegistry.ts`
+  - `apps/site/components/home/MiraLithHomeNarrative.tsx`
+  - `apps/site/visual/scenes/HomeVisualSceneSlot.tsx`
+- CoScroll must rebase onto the Radio/home-spine history before editing shared files.
+- Extension contract: add a `HomeChapterRuntime`, extend registry order, mount only when near, and preserve one production Canvas.

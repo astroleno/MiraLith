@@ -1,5 +1,7 @@
 # RadioGaga Post-Review Follow-Up Implementation Plan
 
+> Superseded by `docs/superpowers/plans/2026-07-11-radio-gaga-miralith-migration.md`. Retained for historical review context.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Preserve the RadioGaga review context and finish the remaining polish / integration decisions without reopening solved visual work.
