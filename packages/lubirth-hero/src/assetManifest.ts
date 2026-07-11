@@ -26,6 +26,14 @@ export const DEFAULT_LUBIRTH_ASSETS: LandingAssetManifest = {
     format: "jpg",
     colorSpace: "srgb"
   },
+  earthCloudField: {
+    id: "earth-cloud-field-home",
+    src: "/assets/lubirth/textures/earth-cloud-field-home.webp",
+    width: 1536,
+    height: 768,
+    format: "webp",
+    colorSpace: "linear"
+  },
   earthSpecular: {
     id: "earth-specular-4k",
     src: "/assets/lubirth/textures/earth-specular-4k.png",
@@ -112,6 +120,19 @@ export function getLandingAssetBudget(assets: Partial<LandingAssetManifest> = {}
       true
     ),
     textureBudget(
+      resolvedAssets.earthCloudField ?? DEFAULT_LUBIRTH_ASSETS.earthCloudField ?? {
+        id: "earth-cloud-field-home",
+        src: "/assets/lubirth/textures/earth-cloud-field-home.webp",
+        width: 1536,
+        height: 768,
+        format: "webp",
+        colorSpace: "linear"
+      },
+      650_000,
+      "critical",
+      true
+    ),
+    textureBudget(
       resolvedAssets.earthClouds ?? DEFAULT_LUBIRTH_ASSETS.earthClouds ?? {
         id: "earth-clouds-2k-light",
         src: "/assets/lubirth/textures/earth-clouds-2k-light.jpg",
@@ -121,14 +142,14 @@ export function getLandingAssetBudget(assets: Partial<LandingAssetManifest> = {}
         colorSpace: "srgb"
       },
       680_000,
-      "critical",
-      true
+      "idle",
+      false
     ),
     textureBudget(
       resolvedAssets.earthCloudDeck ?? LUBIRTH_CLOUD_DECK_TEXTURE,
       560_000,
-      "critical",
-      true
+      "idle",
+      false
     ),
     ...(resolvedAssets.earthNormal
       ? [textureBudget(resolvedAssets.earthNormal, 420_000, "idle", false)]

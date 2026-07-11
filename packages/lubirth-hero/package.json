@@ -8,6 +8,7 @@
   },
   "scripts": {
     "generate:cloud-deck": "node scripts/generate-cloud-deck-texture.mjs",
+    "generate:home-cloud-field": "node scripts/generate-home-cloud-field.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {

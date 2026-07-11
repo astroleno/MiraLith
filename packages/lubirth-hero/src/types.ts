@@ -67,6 +67,7 @@ export interface LandingAssetManifest {
   earthDay: TextureRef;
   earthNight?: TextureRef;
   earthClouds?: TextureRef;
+  earthCloudField?: TextureRef;
   earthSpecular?: TextureRef;
   earthNormal?: TextureRef;
   earthDisplacement?: TextureRef;
