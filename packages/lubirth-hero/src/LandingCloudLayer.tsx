@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import {
   AddEquation,
+  ClampToEdgeWrapping,
   Color,
   CustomBlending,
   FrontSide,
@@ -18,7 +19,13 @@ import {
   Vector3
 } from "three";
 import { getRuntimeOpeningProgress, type QualityProfile } from "@miralith/visual-core";
-import type { LandingComposition, LandingResolvedAssets } from "./types";
+import {
+  HOME_CLOUD_FIELD_OFFSET_X,
+  HOME_CLOUD_FIELD_OFFSET_Y,
+  HOME_CLOUD_FIELD_SCROLL_SPEED,
+  HOME_CLOUD_SHELL_RADIUS
+} from "./homeCloudField";
+import type { LandingCloudMode, LandingComposition, LandingResolvedAssets } from "./types";
 import { useLandingTexture } from "./useLandingTexture";
 
 interface LandingCloudLayerProps {
@@ -31,6 +38,7 @@ interface LandingCloudLayerProps {
   reducedMotion?: boolean;
   paused?: boolean;
   cloudDeckEnabled?: boolean;
+  cloudMode?: LandingCloudMode;
 }
 
 interface CloudShellLayer {
@@ -63,6 +71,19 @@ const REFERENCE_CLOUD_SHELLS: readonly CloudShellLayer[] = [
 const CLOUD_TEXTURE_ART_OFFSET_X = 0.045;
 const CLOUD_TEXTURE_ART_OFFSET_Y = 0.018;
 const CLOUD_SCROLL_SPEED = 0.022;
+const HOME_LITE_CLOUD_SHELL: CloudShellLayer = {
+  radius: HOME_CLOUD_SHELL_RADIUS,
+  opacity: 0.66,
+  offset: 0,
+  parallax: 0,
+  shadow: 0.18,
+  baseDepth: 0.22,
+  topCap: 0.12,
+  rimFocus: 0.12,
+  edgeBreak: 0,
+  limbFadeStart: 0.82,
+  limbFadeEnd: 0.99
+};
 
 export function resolveLandingCloudShells(
   qualityTier: QualityProfile["tier"],
@@ -84,6 +105,138 @@ const smoothstep = (edge0: number, edge1: number, value: number) => {
   const t = Math.min(1, Math.max(0, (value - edge0) / Math.max(edge1 - edge0, 1e-5)));
   return t * t * (3 - 2 * t);
 };
+
+function createLiteCloudMaterial(
+  composition: LandingComposition,
+  cloudFieldTexture: Texture
+) {
+  return new ShaderMaterial({
+    uniforms: {
+      cloudFieldMap: { value: cloudFieldTexture },
+      cloudOffset: { value: 0 },
+      opacity: { value: composition.earth.useClouds ? composition.earth.cloudOpacity : 0 },
+      debugBoost: { value: 0 },
+      lightDir: {
+        value: lightDirection.set(...composition.light.fixedSunDir).normalize().clone()
+      },
+      lightColor: {
+        value: color.setRGB(
+          composition.light.color[0],
+          composition.light.color[1],
+          composition.light.color[2]
+        ).clone()
+      }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      varying vec3 vWorldPosition;
+      varying vec3 vWorldNormal;
+      varying vec3 vWorldEast;
+      varying vec3 vWorldNorth;
+
+      void main() {
+        vUv = uv;
+        vec3 localNormal = normalize(position);
+        vec3 localReference = abs(localNormal.y) > 0.98
+          ? vec3(1.0, 0.0, 0.0)
+          : vec3(0.0, 1.0, 0.0);
+        vec3 localEast = normalize(cross(localReference, localNormal));
+        vec3 localNorth = normalize(cross(localNormal, localEast));
+        vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+        mat3 worldRotation = mat3(modelMatrix);
+        vWorldPosition = worldPosition.xyz;
+        vWorldNormal = normalize(worldRotation * normal);
+        vWorldEast = normalize(worldRotation * localEast);
+        vWorldNorth = normalize(worldRotation * localNorth);
+        gl_Position = projectionMatrix * viewMatrix * worldPosition;
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D cloudFieldMap;
+      uniform float cloudOffset;
+      uniform float opacity;
+      uniform float debugBoost;
+      uniform vec3 lightDir;
+      uniform vec3 lightColor;
+
+      varying vec2 vUv;
+      varying vec3 vWorldPosition;
+      varying vec3 vWorldNormal;
+      varying vec3 vWorldEast;
+      varying vec3 vWorldNorth;
+
+      void main() {
+        vec3 geometricNormal = normalize(vWorldNormal);
+        vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
+        vec3 sunDirection = normalize(lightDir);
+        vec2 cloudUv = vec2(
+          fract(vUv.x + ${HOME_CLOUD_FIELD_OFFSET_X.toFixed(3)} + cloudOffset),
+          clamp(vUv.y + ${HOME_CLOUD_FIELD_OFFSET_Y.toFixed(3)}, 0.001, 0.999)
+        );
+        vec4 cloudField = texture2D(cloudFieldMap, cloudUv);
+        float coverage = smoothstep(0.045, 0.9, cloudField.r);
+        float thickness = smoothstep(0.04, 0.94, cloudField.a);
+
+        vec2 tangentNormal = cloudField.gb * 2.0 - 1.0;
+        float tangentLengthSquared = min(dot(tangentNormal, tangentNormal), 0.96);
+        float normalZ = sqrt(max(1.0 - tangentLengthSquared, 0.04));
+        vec3 cloudNormal = normalize(
+          normalize(vWorldEast) * tangentNormal.x +
+          normalize(vWorldNorth) * tangentNormal.y +
+          geometricNormal * normalZ
+        );
+
+        vec2 sunTangent = vec2(
+          dot(sunDirection, normalize(vWorldEast)),
+          dot(sunDirection, normalize(vWorldNorth))
+        );
+        float sunTangentLength = max(length(sunTangent), 0.001);
+        sunTangent /= sunTangentLength;
+        vec2 occlusionUv = vec2(
+          fract(cloudUv.x - sunTangent.x * 0.0031),
+          clamp(cloudUv.y - sunTangent.y * 0.00155, 0.001, 0.999)
+        );
+        vec4 occlusionField = texture2D(cloudFieldMap, occlusionUv);
+
+        float geometricLight = max(dot(geometricNormal, sunDirection), 0.0);
+        float shapedLight = max(dot(cloudNormal, sunDirection), 0.0);
+        float daylight = smoothstep(-0.12, 0.3, dot(geometricNormal, sunDirection));
+        float twilight = 1.0 - smoothstep(0.02, 0.34, abs(dot(geometricNormal, sunDirection)));
+        float selfOcclusion = smoothstep(0.16, 0.82, occlusionField.r) *
+          smoothstep(0.08, 0.9, occlusionField.a) *
+          (0.18 + thickness * 0.3);
+
+        vec3 shadowColor = vec3(0.32, 0.4, 0.52);
+        vec3 daylightColor = mix(vec3(0.72, 0.78, 0.84), vec3(0.98, 0.985, 0.97), shapedLight);
+        vec3 cloudColor = mix(shadowColor, daylightColor, daylight);
+        cloudColor *= lightColor * (0.54 + geometricLight * 0.42 + shapedLight * 0.2);
+        cloudColor *= 1.0 - selfOcclusion;
+        cloudColor += vec3(0.16, 0.1, 0.065) * twilight * (0.12 + thickness * 0.16);
+        cloudColor += vec3(0.08, 0.13, 0.22) * (1.0 - daylight) * (0.06 + thickness * 0.08);
+
+        float facing = max(dot(geometricNormal, viewDirection), 0.0);
+        float limbFade = 1.0 - smoothstep(0.91, 0.998, 1.0 - facing);
+        float alpha = coverage * opacity * (0.34 + thickness * 0.36) * limbFade;
+        alpha *= mix(0.64, 1.0, daylight);
+        alpha *= 1.0 + debugBoost * 0.28;
+
+        if (alpha < 0.002) {
+          discard;
+        }
+
+        gl_FragColor = vec4(max(cloudColor, vec3(0.06)), clamp(alpha, 0.0, 0.68));
+      }
+    `,
+    transparent: true,
+    blending: CustomBlending,
+    blendEquation: AddEquation,
+    blendSrc: SrcAlphaFactor,
+    blendDst: OneMinusSrcAlphaFactor,
+    side: FrontSide,
+    depthTest: true,
+    depthWrite: false
+  });
+}
 
 function createCloudMaterial(
   composition: LandingComposition,
@@ -790,18 +943,33 @@ export function LandingCloudLayer({
   referenceLook = false,
   reducedMotion,
   paused,
-  cloudDeckEnabled = true
+  cloudDeckEnabled = true,
+  cloudMode = "lookdev"
 }: LandingCloudLayerProps) {
   const cloud = useRef<Mesh>(null);
   const cloudGroup = useRef<Group>(null);
   const cloudOffset = useRef(0);
-  const { texture: cloudTexture, failed: cloudTextureFailed } = useLandingTexture(assets.earthClouds?.src, {
+  const { texture: cloudFieldTexture, failed: cloudFieldTextureFailed } = useLandingTexture(
+    cloudMode === "shell-lite" ? assets.earthCloudField?.src : undefined,
+    {
+      colorSpace: assets.earthCloudField?.colorSpace ?? "linear",
+      wrapS: RepeatWrapping,
+      wrapT: ClampToEdgeWrapping,
+      anisotropy: 4
+    }
+  );
+  const { texture: cloudTexture, failed: cloudTextureFailed } = useLandingTexture(
+    cloudMode === "lookdev" ? assets.earthClouds?.src : undefined,
+    {
     colorSpace: assets.earthClouds?.colorSpace,
     wrapS: RepeatWrapping,
     wrapT: RepeatWrapping
-  });
+    }
+  );
   const { texture: cloudDeckTexture } = useLandingTexture(
-    cloudDeckEnabled && quality.tier !== "low" && quality.tier !== "fallback" ? assets.earthCloudDeck?.src : undefined,
+    cloudMode === "lookdev" && cloudDeckEnabled && quality.tier !== "low" && quality.tier !== "fallback"
+      ? assets.earthCloudDeck?.src
+      : undefined,
     {
       colorSpace: assets.earthCloudDeck?.colorSpace ?? "linear",
       wrapS: RepeatWrapping,
@@ -809,23 +977,41 @@ export function LandingCloudLayer({
     }
   );
   const activeCloudShells = useMemo(() => {
+    if (cloudMode === "shell-lite") {
+      return [HOME_LITE_CLOUD_SHELL];
+    }
+    if (cloudMode !== "lookdev") {
+      return [];
+    }
+
     const shells = resolveLandingCloudShells(quality.tier, referenceLook);
     if (!emphasis || shells.length === 3) {
       return shells;
     }
 
     return (referenceLook ? REFERENCE_CLOUD_SHELLS : STANDARD_CLOUD_SHELLS).slice(0, 3);
-  }, [emphasis, quality.tier, referenceLook]);
+  }, [cloudMode, emphasis, quality.tier, referenceLook]);
   const materials = useMemo(
-    () => cloudTexture ? activeCloudShells.map((layer) => createCloudMaterial(composition, layer, cloudTexture, cloudDeckTexture ?? undefined)) : [],
-    [activeCloudShells, cloudDeckTexture, cloudTexture, composition]
+    () => {
+      if (cloudMode === "shell-lite") {
+        return cloudFieldTexture ? [createLiteCloudMaterial(composition, cloudFieldTexture)] : [];
+      }
+
+      return cloudTexture
+        ? activeCloudShells.map((layer) => createCloudMaterial(composition, layer, cloudTexture, cloudDeckTexture ?? undefined))
+        : [];
+    },
+    [activeCloudShells, cloudDeckTexture, cloudFieldTexture, cloudMode, cloudTexture, composition]
   );
+  const activeTexture = cloudMode === "shell-lite" ? cloudFieldTexture : cloudTexture;
+  const activeTextureFailed = cloudMode === "shell-lite" ? cloudFieldTextureFailed : cloudTextureFailed;
   const enabled =
     composition.earth.useClouds &&
     composition.earth.cloudOpacity > 0 &&
     quality.tier !== "fallback" &&
-    Boolean(cloudTexture) &&
-    !cloudTextureFailed;
+    cloudMode !== "surface" &&
+    Boolean(activeTexture) &&
+    !activeTextureFailed;
 
   useEffect(() => {
     return () => {
@@ -834,15 +1020,17 @@ export function LandingCloudLayer({
   }, [materials]);
 
   useFrame((_state, delta) => {
-    if (!cloudGroup.current || !enabled || !cloudTexture) {
+    if (!cloudGroup.current || !enabled || !activeTexture) {
       return;
     }
 
     const progress = getRuntimeOpeningProgress(0);
     const closeStage = 1 - smoothstep(0.18, 0.86, progress);
     if (!paused && !reducedMotion) {
-      const nearStaticCloudDrift = 0.04 + (1 - closeStage) * 0.96;
-      cloudOffset.current = (cloudOffset.current + delta * CLOUD_SCROLL_SPEED * nearStaticCloudDrift) % 1;
+      const driftSpeed = cloudMode === "shell-lite"
+        ? HOME_CLOUD_FIELD_SCROLL_SPEED
+        : CLOUD_SCROLL_SPEED * (0.04 + (1 - closeStage) * 0.96);
+      cloudOffset.current = (cloudOffset.current + delta * driftSpeed) % 1;
     }
     if (sceneLightDirection) {
       lightDirection.copy(sceneLightDirection).normalize();
@@ -857,15 +1045,20 @@ export function LandingCloudLayer({
       child.rotation.y = MathUtils.degToRad(composition.earth.yawDeg);
       child.rotation.x = 0;
       child.rotation.z = 0;
-      cloudMaterial.uniforms.cloudMap.value = cloudTexture;
-      cloudMaterial.uniforms.cloudDeckMap.value = cloudDeckTexture ?? cloudTexture;
-      cloudMaterial.uniforms.hasCloudDeckMap.value = cloudDeckTexture ? 1 : 0;
       cloudMaterial.uniforms.cloudOffset.value = cloudOffset.current;
-      cloudMaterial.uniforms.closeStage.value = closeStage;
       cloudMaterial.uniforms.opacity.value = composition.earth.useClouds ? composition.earth.cloudOpacity : 0;
       cloudMaterial.uniforms.debugBoost.value = emphasis ? 1 : 0;
-      cloudMaterial.uniforms.referenceLookStrength.value = referenceLook ? 1 : 0;
       cloudMaterial.uniforms.lightDir.value.copy(lightDirection);
+      if (cloudMode === "shell-lite") {
+        cloudMaterial.uniforms.cloudFieldMap.value = activeTexture;
+        return;
+      }
+
+      cloudMaterial.uniforms.cloudMap.value = activeTexture;
+      cloudMaterial.uniforms.cloudDeckMap.value = cloudDeckTexture ?? activeTexture;
+      cloudMaterial.uniforms.hasCloudDeckMap.value = cloudDeckTexture ? 1 : 0;
+      cloudMaterial.uniforms.closeStage.value = closeStage;
+      cloudMaterial.uniforms.referenceLookStrength.value = referenceLook ? 1 : 0;
     });
   });
 
@@ -880,8 +1073,12 @@ export function LandingCloudLayer({
           <sphereGeometry
             args={[
               composition.earth.radius * layer.radius,
-              quality.tier === "high" ? Math.max(288, quality.segments * 4) : quality.tier === "medium" ? Math.max(160, quality.segments * 3) : 48,
-              quality.tier === "high" ? 180 : quality.tier === "medium" ? 96 : 32
+              cloudMode === "shell-lite"
+                ? quality.tier === "high" ? 160 : quality.tier === "medium" ? 128 : 80
+                : quality.tier === "high" ? Math.max(288, quality.segments * 4) : quality.tier === "medium" ? Math.max(160, quality.segments * 3) : 48,
+              cloudMode === "shell-lite"
+                ? quality.tier === "high" ? 96 : quality.tier === "medium" ? 80 : 52
+                : quality.tier === "high" ? 180 : quality.tier === "medium" ? 96 : 32
             ]}
           />
         </mesh>

@@ -17,7 +17,13 @@ import {
 } from "three";
 import { type QualityProfile } from "@miralith/visual-core";
 import { DEFAULT_LUBIRTH_ASSETS } from "./assetManifest";
-import type { LandingComposition, LandingResolvedAssets, LandingRuntimeProfile } from "./types";
+import { LandingEarthLite } from "./LandingEarthLite";
+import type {
+  LandingComposition,
+  LandingResolvedAssets,
+  LandingRuntimeProfile,
+  LandingVisualPolicy
+} from "./types";
 import { createEarthTexture } from "./textures";
 import { useLandingTexture } from "./useLandingTexture";
 
@@ -33,6 +39,7 @@ interface LandingEarthProps {
   cloudDeckEnabled?: boolean;
   referenceVolumetricSurfaceClouds?: boolean;
   runtimeProfile?: LandingRuntimeProfile;
+  visualPolicy?: LandingVisualPolicy;
 }
 
 const lightDirection = new Vector3();
@@ -200,7 +207,7 @@ function createCloudShadowAtlasTexture(cloudMap: Texture, width: number, height:
   return texture;
 }
 
-export function LandingEarth({
+function LandingEarthLookdev({
   composition,
   assets,
   quality,
@@ -1925,4 +1932,23 @@ export function LandingEarth({
       <sphereGeometry args={[composition.earth.radius, earthSegments, earthSegments]} />
     </mesh>
   );
+}
+
+export function LandingEarth(props: LandingEarthProps) {
+  if (props.visualPolicy && props.visualPolicy.cloudMode !== "lookdev") {
+    return (
+      <LandingEarthLite
+        composition={props.composition}
+        assets={props.assets}
+        quality={props.quality}
+        visualPolicy={props.visualPolicy}
+        reducedMotion={props.reducedMotion}
+        paused={props.paused}
+        sceneLightDirection={props.sceneLightDirection}
+        onDayTextureReady={props.onDayTextureReady}
+      />
+    );
+  }
+
+  return <LandingEarthLookdev {...props} />;
 }

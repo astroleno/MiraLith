@@ -232,13 +232,16 @@ export function EarthMoonScene({
     activeAtmosphereVariant === "stack";
   const showCloudShells =
     showClouds &&
-    activeVisualPolicy.cloudMode === "lookdev" &&
+    activeVisualPolicy.cloudMode !== "surface" &&
     quality.tier !== "low" &&
     quality.tier !== "fallback";
   const useReferenceVolumetricSurfaceClouds = showVolumetricAtmosphere && atmosphereLook === "reference";
   const showLegacyAtmosphere = false;
   const showLegacyAurora = showAurora;
-  const showSurfaceTextureClouds = showClouds && quality.tier !== "fallback";
+  const showSurfaceTextureClouds =
+    showClouds &&
+    activeVisualPolicy.cloudMode !== "shell-lite" &&
+    quality.tier !== "fallback";
   const useReferenceCloseOrbitFraming =
     isNasaProfile &&
     mode === "field" &&
@@ -647,6 +650,7 @@ export function EarthMoonScene({
             cloudDeckEnabled={cloudDeckEnabled}
             referenceVolumetricSurfaceClouds={useReferenceVolumetricSurfaceClouds}
             runtimeProfile={runtimeProfile}
+            visualPolicy={activeVisualPolicy}
           />
         ) : null}
         {showCloudShells ? (
@@ -661,6 +665,7 @@ export function EarthMoonScene({
               reducedMotion={reducedMotion}
               paused={paused}
               cloudDeckEnabled={cloudDeckEnabled}
+              cloudMode={activeVisualPolicy.cloudMode}
             />
             {cloudDeckEnabled && debugClouds && assets.earthCloudDeck ? (
               useCloudDeckV2 ? (
