@@ -8,6 +8,7 @@ import {
   radioGagaSiteChapters,
   radioGagaStages
 } from "../content/radioGaga";
+import type { RadioGagaHost } from "./useRadioGagaProgress";
 
 function RadioGagaTitleRail() {
   const activeIndex = Math.max(0, radioGagaSiteChapters.findIndex((chapter) => chapter.active));
@@ -44,20 +45,10 @@ function RadioGagaTitleRail() {
   );
 }
 
-interface RadioGagaCopyLayerProps {
-  activeFinalOutputIndex: number;
-  activeFinalOutputText: string;
-  visibleFinalOutputCount: number;
-}
-
-export function RadioGagaCopyLayer({
-  activeFinalOutputIndex,
-  activeFinalOutputText,
-  visibleFinalOutputCount
-}: RadioGagaCopyLayerProps) {
+export function RadioGagaCopyLayer({ host }: { host: RadioGagaHost }) {
   return (
-    <div className="radio-gaga-copy" aria-hidden="true">
-      <RadioGagaTitleRail />
+    <div className="radio-gaga-copy" data-radio-gaga-copy-host={host} aria-hidden="true">
+      {host === "standalone" ? <RadioGagaTitleRail /> : null}
       <div className="radio-gaga-copy__panel">
         <p className="radio-gaga-copy__eyebrow">{radioGagaCopy.eyebrow}</p>
         <h1>{radioGagaCopy.title}</h1>
@@ -120,15 +111,15 @@ export function RadioGagaCopyLayer({
         <p>{radioGagaCopy.finalZh}</p>
       </div>
       <div className="radio-gaga-final-dialog">
-        {radioGagaFinalOutputs.map((output, index) => (
+        {radioGagaFinalOutputs.map((output) => (
           <div
             className="radio-gaga-final-dialog__item"
-            data-active={index === activeFinalOutputIndex ? "true" : "false"}
-            data-visible={index < visibleFinalOutputCount ? "true" : "false"}
+            data-active="false"
+            data-visible="false"
             key={output.zh}
           >
             <span className="radio-gaga-final-dialog__source">{output.source}</span>
-            <strong>{index === activeFinalOutputIndex ? activeFinalOutputText || output.zh : output.zh}</strong>
+            <strong>{output.zh}</strong>
             <span>{output.en}</span>
           </div>
         ))}

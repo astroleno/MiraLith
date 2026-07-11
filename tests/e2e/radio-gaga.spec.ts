@@ -140,6 +140,12 @@ test("radioGAGA canvas renders nonblank pixels", async ({ page }) => {
   expect(await nonblank.jsonValue()).toBe(true);
 });
 
+test("standalone route exposes reusable chapter progress without nested canvases", async ({ page }) => {
+  await page.goto("/radio-gaga");
+  await expect(page.locator('[data-radio-gaga-experience="standalone"]')).toHaveCount(1);
+  await expect(page.locator("canvas")).toHaveCount(1);
+});
+
 test("radioGAGA memory phase renders embedded process copy after the radio handoff", async ({ page }, testInfo) => {
   await page.goto("/radio-gaga");
   await scrollRadioGagaTo(page, 0.58);
