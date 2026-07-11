@@ -8,6 +8,7 @@ import {
   geodeticToTextureVector,
   resolveLandingAssets,
   resolveLandingPreset,
+  resolveLandingVisualPolicy,
   resolveLuBirthAtmospherePolicy
 } from "@miralith/lubirth-hero";
 import { useQualityTier, useReducedMotionPreference } from "@miralith/visual-core";
@@ -26,6 +27,7 @@ import type {
   LandingRenderProfile,
   LandingRuntimeProfile,
   LandingVisualDebugLayer,
+  LandingVisualPolicy,
   LuBirthAtmosphereRouteVariant,
   LuBirthProjectionFrame
 } from "@miralith/lubirth-hero";
@@ -132,6 +134,7 @@ declare global {
   interface Window {
     __MiraLithLuBirthQualityTier?: string;
     __MiraLithLuBirthRuntimeProfile?: LandingRuntimeProfile;
+    __MiraLithLuBirthVisualPolicy?: LandingVisualPolicy;
     __MiraLithLuBirthAuroraEnabled?: boolean;
     __MiraLithLuBirthAuroraProfile?: LandingAuroraProfile;
     __MiraLithLuBirthAtmospherePolicy?: LandingAtmospherePolicy;
@@ -495,6 +498,14 @@ export function LuBirthSceneSlot({
       ? buildGeoEndpoint()
       : null;
   const qualityProfile = useQualityTier(qualityOverride ?? quality, reducedMotion);
+  const visualPolicy = useMemo(
+    () => resolveLandingVisualPolicy({
+      runtimeProfile,
+      qualityTier: qualityProfile.tier,
+      renderProfile: activeRenderProfile ?? "nasa"
+    }),
+    [activeRenderProfile, qualityProfile.tier, runtimeProfile]
+  );
   const requestedCloseAtmosphereTuning = useMemo<LandingCloseAtmosphereTuning>(
     () => ({
       ...EMPTY_CLOSE_ATMOSPHERE_TUNING,
@@ -709,6 +720,7 @@ export function LuBirthSceneSlot({
   useLayoutEffect(() => {
     window.__MiraLithLuBirthQualityTier = qualityProfile.tier;
     window.__MiraLithLuBirthRuntimeProfile = runtimeProfile;
+    window.__MiraLithLuBirthVisualPolicy = visualPolicy;
     window.__MiraLithLuBirthAuroraEnabled = qualityProfile.aurora;
     window.__MiraLithLuBirthAuroraProfile = auroraProfile;
     window.__MiraLithLuBirthAtmospherePolicy = atmospherePolicy ?? atmosphereVariant;
@@ -748,6 +760,7 @@ export function LuBirthSceneSlot({
     qualityProfile.aurora,
     qualityProfile.tier,
     runtimeProfile,
+    visualPolicy,
     requestedCloseAtmosphereTuning,
     resolvedAtmospherePolicy.atmosphereLook,
     resolvedAtmospherePolicy.reason,
@@ -769,6 +782,7 @@ export function LuBirthSceneSlot({
       visualDebugLayer={visualDebugLayer}
       renderProfile={activeRenderProfile}
       runtimeProfile={runtimeProfile}
+      visualPolicy={visualPolicy}
       atmosphereVariant={resolvedAtmospherePolicy.atmosphereVariant}
       atmosphereLook={resolvedAtmospherePolicy.atmosphereLook}
       auroraProfile={auroraProfile}

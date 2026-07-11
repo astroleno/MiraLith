@@ -32,6 +32,7 @@ import { LandingProjectedHorizonComposite } from "./LandingProjectedHorizonCompo
 import { LandingProjectedLimbScattering } from "./LandingProjectedLimbScattering";
 import { LandingSpaceBackground } from "./LandingSpaceBackground";
 import { LandingVolumetricAtmospherePass } from "./LandingVolumetricAtmospherePass";
+import { resolveLandingVisualPolicy } from "./landingVisualPolicy";
 import type {
   EarthMoonSceneProps,
   LandingAtmosphereVariant,
@@ -165,6 +166,7 @@ export function EarthMoonScene({
   visualDebugLayer = "all",
   renderProfile,
   runtimeProfile = "full",
+  visualPolicy,
   auroraProfile = "hero",
   reducedMotion,
   paused,
@@ -205,7 +207,11 @@ export function EarthMoonScene({
   const debugClouds = activeRenderProfile === "debug-clouds";
   const debugAtmosphere = activeRenderProfile === "debug-atmosphere";
   const debugAurora = activeRenderProfile === "debug-aurora";
-  const isHomeLite = runtimeProfile === "home-lite";
+  const activeVisualPolicy = visualPolicy ?? resolveLandingVisualPolicy({
+    runtimeProfile,
+    qualityTier: quality.tier,
+    renderProfile: activeRenderProfile
+  });
 
   const showEarth = !debugStars;
   const showMoon = isNasaProfile || isCleanProfile;
@@ -224,18 +230,15 @@ export function EarthMoonScene({
     debugAtmosphere &&
     quality.tier !== "fallback" &&
     activeAtmosphereVariant === "stack";
-  const showVolumetricClouds =
+  const showCloudShells =
     showClouds &&
-    !isHomeLite &&
+    activeVisualPolicy.cloudMode === "lookdev" &&
     quality.tier !== "low" &&
     quality.tier !== "fallback";
   const useReferenceVolumetricSurfaceClouds = showVolumetricAtmosphere && atmosphereLook === "reference";
   const showLegacyAtmosphere = false;
   const showLegacyAurora = showAurora;
-  const showSurfaceTextureClouds =
-    showClouds &&
-    quality.tier !== "low" &&
-    quality.tier !== "fallback";
+  const showSurfaceTextureClouds = showClouds && quality.tier !== "fallback";
   const useReferenceCloseOrbitFraming =
     isNasaProfile &&
     mode === "field" &&
@@ -286,15 +289,15 @@ export function EarthMoonScene({
       return undefined;
     }
 
-    window.__MiraLithLuBirthCloudShellsActive = showVolumetricClouds;
-    if (isHomeLite) {
+    window.__MiraLithLuBirthCloudShellsActive = showCloudShells;
+    if (activeVisualPolicy.bloomMode !== "full") {
       window.__MiraLithLuBirthPostBloomActive = false;
     }
 
     return () => {
       window.__MiraLithLuBirthCloudShellsActive = false;
     };
-  }, [isHomeLite, showVolumetricClouds]);
+  }, [activeVisualPolicy.bloomMode, showCloudShells]);
 
   useFrame((_state, delta) => {
     const progress = getRuntimeOpeningProgress(mode === "window" || mode === "expanded" ? 1 : 0);
@@ -646,7 +649,7 @@ export function EarthMoonScene({
             runtimeProfile={runtimeProfile}
           />
         ) : null}
-        {showVolumetricClouds ? (
+        {showCloudShells ? (
           <>
             <LandingCloudLayer
               composition={composition}
@@ -811,7 +814,9 @@ export function EarthMoonScene({
         />
       ) : null}
 
-      {showAtmosphereStack && !isHomeLite ? <LandingPostBloom quality={quality} emphasis={debugAtmosphere} /> : null}
+      {showAtmosphereStack && activeVisualPolicy.bloomMode === "full" ? (
+        <LandingPostBloom quality={quality} emphasis={debugAtmosphere} />
+      ) : null}
       {showVolumetricAtmosphere ? (
         <LandingVolumetricAtmospherePass
           composition={composition}

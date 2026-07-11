@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import * as luBirthSceneSlot from "../../apps/site/visual/scenes/LuBirthSceneSlot";
 import * as landingCloudLayer from "../../packages/lubirth-hero/src/LandingCloudLayer";
 import { resolveLuBirthAtmospherePolicy } from "../../packages/lubirth-hero/src/atmospherePolicy";
+import { resolveLandingVisualPolicy } from "../../packages/lubirth-hero/src/landingVisualPolicy";
 import type { LuBirthAtmospherePolicyInput } from "../../packages/lubirth-hero/src/atmospherePolicy";
 
 const baseInput: LuBirthAtmospherePolicyInput = {
@@ -20,6 +21,53 @@ const baseInput: LuBirthAtmospherePolicyInput = {
 function resolve(overrides: Partial<LuBirthAtmospherePolicyInput>) {
   return resolveLuBirthAtmospherePolicy({ ...baseInput, ...overrides });
 }
+
+test("resolves the production home medium visual policy", () => {
+  expect(resolveLandingVisualPolicy({
+    runtimeProfile: "home-lite",
+    qualityTier: "medium",
+    renderProfile: "nasa"
+  })).toEqual({
+    cloudMode: "shell-lite",
+    groundShadow: true,
+    atmosphereMode: "surface-glow",
+    bloomMode: "lite",
+    reason: "home-lite"
+  });
+});
+
+test("resolves low quality to the surface-only safety policy", () => {
+  expect(resolveLandingVisualPolicy({
+    runtimeProfile: "home-lite",
+    qualityTier: "low",
+    renderProfile: "nasa"
+  })).toEqual({
+    cloudMode: "surface",
+    groundShadow: false,
+    atmosphereMode: "surface-glow",
+    bloomMode: "off",
+    reason: "quality-low"
+  });
+});
+
+test("keeps study and debug routes on full lookdev policies", () => {
+  expect(resolveLandingVisualPolicy({
+    runtimeProfile: "full",
+    qualityTier: "medium",
+    renderProfile: "nasa"
+  })).toMatchObject({ cloudMode: "lookdev", groundShadow: true, bloomMode: "full" });
+
+  expect(resolveLandingVisualPolicy({
+    runtimeProfile: "home-lite",
+    qualityTier: "medium",
+    renderProfile: "debug-atmosphere"
+  })).toMatchObject({
+    cloudMode: "lookdev",
+    groundShadow: true,
+    atmosphereMode: "lookdev",
+    bloomMode: "full"
+  });
+});
 
 test("explicit stack policy stays on the stack path", () => {
   expect(resolve({ policy: "stack" })).toEqual({

@@ -7,6 +7,17 @@ export type LandingVisualDebugLayer = "all" | "stars" | "clouds" | "atmosphere" 
 export type LandingAtmosphereVariant = "stack" | "volumetric";
 export type LandingAtmosphereLook = "lubirth" | "reference";
 export type LandingRuntimeProfile = "full" | "home-lite";
+export type LandingCloudMode = "surface" | "shell-lite" | "lookdev";
+export type LandingBloomMode = "off" | "lite" | "full";
+export type LandingAtmosphereMode = "surface-glow" | "lookdev";
+
+export interface LandingVisualPolicy {
+  cloudMode: LandingCloudMode;
+  groundShadow: boolean;
+  atmosphereMode: LandingAtmosphereMode;
+  bloomMode: LandingBloomMode;
+  reason: string;
+}
 
 export interface LandingCloseAtmosphereTuning {
   edgeGlowStrength: number;
@@ -214,6 +225,7 @@ export interface EarthMoonSceneProps {
   visualDebugLayer?: LandingVisualDebugLayer;
   renderProfile?: LandingRenderProfile;
   runtimeProfile?: LandingRuntimeProfile;
+  visualPolicy?: LandingVisualPolicy;
   auroraProfile?: LandingAuroraProfile;
   reducedMotion?: boolean;
   paused?: boolean;

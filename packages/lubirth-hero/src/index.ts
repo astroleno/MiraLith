@@ -1,6 +1,7 @@
 export { EarthMoonHero } from "./EarthMoonHero";
 export { EarthMoonScene } from "./EarthMoonScene";
 export { resolveLuBirthAtmospherePolicy } from "./atmospherePolicy";
+export { resolveLandingVisualPolicy } from "./landingVisualPolicy";
 export { LandingAirglow } from "./LandingAirglow";
 export { LandingAtmosphere } from "./LandingAtmosphere";
 export { LandingAurora } from "./LandingAurora";
@@ -48,21 +49,25 @@ export type {
   EarthMoonHeroProps,
   EarthMoonSceneProps,
   LandingAtmosphereLook,
+  LandingAtmosphereMode,
   LandingAtmosphereVariant,
   LandingAssetManifest,
   LandingAuroraProfile,
   LandingCloseAtmosphereTuning,
+  LandingCloudMode,
   LandingComposition,
   LandingCompositionOverrides,
   LandingLocationConfig,
   LandingMoonLightingMode,
   LandingMoonPhase,
+  LandingBloomMode,
   LandingRenderProfile,
   LandingRuntimeProfile,
   LandingResolvedAssets,
   LandingPresetName,
   LandingProjectedEarthFrame,
   LandingVisualDebugLayer,
+  LandingVisualPolicy,
   LuBirthProjectionFrame
 } from "./types";
 export type {
@@ -71,3 +76,4 @@ export type {
   LuBirthAtmospherePolicyResult,
   LuBirthAtmosphereRouteVariant
 } from "./atmospherePolicy";
+export type { LandingVisualPolicyInput } from "./landingVisualPolicy";
