@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
 import type {
   LandingAtmospherePolicy,
@@ -8,9 +8,12 @@ import type {
   LandingVisualDebugLayer,
   LuBirthProjectionFrame
 } from "@miralith/lubirth-hero";
+import type { LandingQuality } from "@miralith/visual-core";
 import { VisualCanvas } from "../visual/VisualCanvas";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
 import { LuBirthSceneSlot } from "../visual/scenes/LuBirthSceneSlot";
+import { HOME_CHAPTERS } from "./home/homeChapterRegistry";
+import type { HomeSceneId } from "./home/homeChapterTypes";
 
 declare global {
   interface Window {
@@ -54,10 +57,29 @@ interface ScreenshotDebugOptions {
   renderProfile: LandingRenderProfile;
 }
 
+export interface LuBirthVisualSlotProps {
+  mode: "field";
+  quality: LandingQuality;
+  paused: boolean;
+  cloudDeckEnabled: boolean;
+  visualDebugLayer: LandingVisualDebugLayer;
+  renderProfile: LandingRenderProfile;
+  atmospherePolicy: LandingAtmospherePolicy;
+  routeVariant: LuBirthRevisedRouteVariant;
+  homeIntroRendering: boolean;
+  productionSurface: true;
+  onProjectionFrame?: (frame: LuBirthProjectionFrame) => void;
+  onVisualReadyEnough?: () => void;
+  onMoonTextureReady?: () => void;
+}
+
 interface LuBirthRevisedRouteProps {
   variant?: LuBirthRevisedRouteVariant;
   ariaLabel?: string;
   stageLabel?: string;
+  activeChapterId?: HomeSceneId;
+  renderVisualSlot?: (props: LuBirthVisualSlotProps) => ReactNode;
+  onHomeIntroCompleteChange?: (complete: boolean) => void;
 }
 
 const DEFAULT_SCREENSHOT_DEBUG_OPTIONS: ScreenshotDebugOptions = {
@@ -99,7 +121,16 @@ const copy = {
   }
 };
 
-const chapters = [
+interface Chapter {
+  index: string;
+  targetId?: string;
+  title: string;
+  zh: string;
+  en: string;
+  active: boolean;
+}
+
+const chapters: readonly Chapter[] = [
   {
     index: "01",
     targetId: LUBIRTH_PROJECT_INTRO_ANCHOR_ID,
@@ -110,6 +141,7 @@ const chapters = [
   },
   {
     index: "02",
+    targetId: "radio-gaga",
     title: "Radio Gaga",
     zh: "照护",
     en: "Care",
@@ -117,6 +149,7 @@ const chapters = [
   },
   {
     index: "03",
+    targetId: "coscroll",
     title: "CoScroll",
     zh: "赛博转经筒",
     en: "Devotion",
@@ -150,11 +183,10 @@ const chapters = [
     en: "Work / About",
     active: false
   }
-] as const;
+];
 
-type Chapter = (typeof chapters)[number];
-
-const activeChapter = chapters.find((chapter) => chapter.active) ?? chapters[0];
+const defaultActiveChapter = chapters.find((chapter) => chapter.active) ?? chapters[0];
+const homeChapterIndexes = new Map(HOME_CHAPTERS.map((chapter) => [chapter.id, chapter.index]));
 
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value));
@@ -496,7 +528,7 @@ function TitleRail({ activeChapter, interactive }: { activeChapter: Chapter; int
               {isActive ? (
                 <a
                   className="lubirth-revised__rail-link"
-                  href={`#${LUBIRTH_PROJECT_INTRO_ANCHOR_ID}`}
+                  href={`#${activeChapter.targetId ?? LUBIRTH_PROJECT_INTRO_ANCHOR_ID}`}
                   aria-current="page"
                   tabIndex={interactive ? undefined : -1}
                 >
@@ -527,7 +559,11 @@ function MobileTitleBar({ activeChapter, interactive }: { activeChapter: Chapter
       aria-hidden={interactive ? undefined : "true"}
       inert={interactive ? undefined : true}
     >
-      <a href={`#${LUBIRTH_PROJECT_INTRO_ANCHOR_ID}`} aria-current="page" tabIndex={interactive ? undefined : -1}>
+      <a
+        href={`#${activeChapter.targetId ?? LUBIRTH_PROJECT_INTRO_ANCHOR_ID}`}
+        aria-current="page"
+        tabIndex={interactive ? undefined : -1}
+      >
         <span className="lubirth-revised__mobile-title-main">
           <span>{activeChapter.index}</span>
           <span className="lubirth-revised__mobile-title-title">{activeChapter.title}</span>
@@ -553,10 +589,16 @@ function ScrollHint() {
 export function LuBirthRevisedRoute({
   variant = "study",
   ariaLabel,
-  stageLabel
+  stageLabel,
+  activeChapterId = "lubirth",
+  renderVisualSlot,
+  onHomeIntroCompleteChange
 }: LuBirthRevisedRouteProps) {
   const rootRef = useRef<HTMLElement>(null);
   const isHome = variant === "home";
+  const resolvedActiveChapter = isHome
+    ? chapters.find((chapter) => chapter.index === homeChapterIndexes.get(activeChapterId)) ?? defaultActiveChapter
+    : defaultActiveChapter;
   const triggerId = `${SCROLL_TRIGGER_ID_PREFIX}-${variant}`;
   const [sceneEnabled, setSceneEnabled] = useState(() => variant === "home");
   const [runtimeReady, setRuntimeReady] = useState(false);
@@ -703,6 +745,12 @@ export function LuBirthRevisedRoute({
     homeVisualReadinessDispatchedRef.current = true;
     homeVisualReadinessHandlersRef.current.forEach((handler) => handler(homeVisualReadySource));
   }, [homeVisualReady, homeVisualReadySource, isHome]);
+
+  useEffect(() => {
+    if (isHome) {
+      onHomeIntroCompleteChange?.(homeIntroComplete);
+    }
+  }, [homeIntroComplete, isHome, onHomeIntroCompleteChange]);
 
   useEffect(() => {
     if (!debugOptionsReady) {
@@ -1446,6 +1494,23 @@ export function LuBirthRevisedRoute({
     };
   }, [debugOptions, debugOptionsReady, isHome, markHomeLoadingReady, markHomeVisualReady, triggerId, variant]);
 
+  const visualSlotProps: LuBirthVisualSlotProps = {
+    mode: "field",
+    quality: homeIntroRendering ? "medium" : isScreenshotMode ? "high" : "auto",
+    paused: isScreenshotMode,
+    cloudDeckEnabled: !isHome || homeCloudDeckEnabled,
+    visualDebugLayer: debugOptions.visualDebugLayer,
+    renderProfile: debugOptions.renderProfile,
+    atmospherePolicy: debugOptions.atmospherePolicy,
+    routeVariant: variant,
+    homeIntroRendering,
+    productionSurface: true,
+    onProjectionFrame: isHome ? handleProjectionFrame : undefined,
+    onVisualReadyEnough: isHome ? () => markHomeVisualAssetReady("day-texture") : undefined,
+    onMoonTextureReady: isHome ? () => markHomeVisualAssetReady("moon-texture") : undefined
+  };
+  const RenderVisualSlot = renderVisualSlot;
+
   return (
     <main
       ref={rootRef}
@@ -1461,6 +1526,8 @@ export function LuBirthRevisedRoute({
       data-home-intro-complete={isHome ? String(homeIntroComplete) : undefined}
       data-home-projection={isHome ? homeProjectionSource : undefined}
       data-home-projection-visual={isHome ? homeLoadingProjectionSource : undefined}
+      data-home-chapter={isHome ? "lubirth" : undefined}
+      data-home-scene={isHome ? activeChapterId : undefined}
       data-atmo-policy={debugOptions.atmospherePolicy}
       aria-label={ariaLabel ?? (isHome ? "MiraLith LuBirth opening" : "LuBirth revised opening route")}
     >
@@ -1482,8 +1549,8 @@ export function LuBirthRevisedRoute({
           <LoadingOverlay />
         ) : null}
         {showCopy ? isHome ? <ProjectIntro interactive={projectInteractive} /> : <HeroText /> : null}
-        {showCopy ? <TitleRail activeChapter={activeChapter} interactive={copyInteractive} /> : null}
-        {showCopy ? <MobileTitleBar activeChapter={activeChapter} interactive={copyInteractive} /> : null}
+        {showCopy ? <TitleRail activeChapter={resolvedActiveChapter} interactive={copyInteractive} /> : null}
+        {showCopy ? <MobileTitleBar activeChapter={resolvedActiveChapter} interactive={copyInteractive} /> : null}
         {showCopy ? <ScrollHint /> : null}
       </section>
 
@@ -1500,21 +1567,9 @@ export function LuBirthRevisedRoute({
             />
           }
         >
-          <LuBirthSceneSlot
-            mode="field"
-            quality={homeIntroRendering ? "medium" : isScreenshotMode ? "high" : "auto"}
-            paused={isScreenshotMode}
-            cloudDeckEnabled={!isHome || homeCloudDeckEnabled}
-            visualDebugLayer={debugOptions.visualDebugLayer}
-            renderProfile={debugOptions.renderProfile}
-            atmospherePolicy={debugOptions.atmospherePolicy}
-            routeVariant={variant}
-            homeIntroRendering={homeIntroRendering}
-            productionSurface
-            onProjectionFrame={isHome ? handleProjectionFrame : undefined}
-            onVisualReadyEnough={isHome ? () => markHomeVisualAssetReady("day-texture") : undefined}
-            onMoonTextureReady={isHome ? () => markHomeVisualAssetReady("moon-texture") : undefined}
-          />
+          {RenderVisualSlot
+            ? <RenderVisualSlot {...visualSlotProps} />
+            : <LuBirthSceneSlot {...visualSlotProps} />}
         </VisualCanvas>
       ) : null}
     </main>

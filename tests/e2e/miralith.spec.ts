@@ -26,6 +26,19 @@ declare global {
 
 test.describe.configure({ mode: "parallel" });
 
+test("homepage composes LuBirth then Radio Gaga in one production canvas", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.locator('[data-home-chapter="lubirth"]')).toBeVisible();
+  expect(await page.evaluate(() => {
+    const lubirth = document.querySelector('[data-home-chapter="lubirth"]');
+    const radio = document.querySelector('[data-home-chapter="radio-gaga"]');
+    if (!(lubirth instanceof HTMLElement) || !(radio instanceof HTMLElement)) return false;
+    return radio.offsetTop > lubirth.offsetTop;
+  })).toBe(true);
+  await expect(page.locator('[data-visual-canvas="production"]')).toHaveCount(1);
+});
+
 test("homepage keeps readable SSR fallback text before runtime animations", async ({ page }) => {
   await page.goto("/?visual=fallback", { waitUntil: "domcontentloaded" });
 

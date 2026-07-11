@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
 import { RadioGagaCopyLayer } from "./RadioGagaCopyLayer";
+import { useHomeChapterPresence } from "./home/useHomeChapterPresence";
 import { useRadioGagaProgress, type RadioGagaHost } from "./useRadioGagaProgress";
 
 const RADIO_GAGA_SCROLL_DISTANCE_VH = 11.6;
@@ -10,6 +11,7 @@ const radioGagaModelAssets = [
   "/model/radio_gaga.glb",
   "/model/xiaozhi_esp32.glb"
 ] as const;
+const STANDALONE_PRESENCE = { near: true, active: true } as const;
 
 export type RadioGagaAssetState = "checking" | "ready" | "failed";
 
@@ -73,10 +75,10 @@ export function RadioGagaExperience({
   onPresenceChange
 }: RadioGagaExperienceProps) {
   const rootRef = useRef<HTMLElement | null>(null);
-  const [presence, setPresence] = useState<RadioGagaChapterPresence>(() => ({
-    near: host === "standalone",
-    active: host === "standalone"
-  }));
+  const observedPresence = useHomeChapterPresence(rootRef, host === "home");
+  const presence: RadioGagaChapterPresence = host === "standalone"
+    ? STANDALONE_PRESENCE
+    : observedPresence;
   const [assetState, setAssetState] = useState<RadioGagaAssetState>("checking");
   const forcedVisualFallback = useSyncExternalStore(
     subscribeForcedVisualFallback,
@@ -90,39 +92,6 @@ export function RadioGagaExperience({
     rootRef,
     scrollDistanceVh: RADIO_GAGA_SCROLL_DISTANCE_VH
   });
-
-  useEffect(() => {
-    if (host === "standalone") {
-      return;
-    }
-
-    const root = rootRef.current;
-    if (!root || typeof IntersectionObserver === "undefined") {
-      return;
-    }
-
-    const updatePresence = (patch: Partial<RadioGagaChapterPresence>) => {
-      setPresence((current) => {
-        const next = { ...current, ...patch };
-        return next.near === current.near && next.active === current.active ? current : next;
-      });
-    };
-    const nearObserver = new IntersectionObserver(
-      ([entry]) => updatePresence({ near: entry?.isIntersecting ?? false }),
-      { rootMargin: "150% 0px 150% 0px", threshold: 0 }
-    );
-    const activeObserver = new IntersectionObserver(
-      ([entry]) => updatePresence({ active: entry?.isIntersecting ?? false }),
-      { rootMargin: "-25% 0px -25% 0px", threshold: 0.01 }
-    );
-    nearObserver.observe(root);
-    activeObserver.observe(root);
-
-    return () => {
-      nearObserver.disconnect();
-      activeObserver.disconnect();
-    };
-  }, [host]);
 
   useEffect(() => {
     onPresenceChange?.(presence);
