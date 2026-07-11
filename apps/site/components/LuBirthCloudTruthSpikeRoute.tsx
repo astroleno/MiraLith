@@ -12,7 +12,16 @@ import { VisualCanvas } from "../visual/VisualCanvas";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
 import { LuBirthSceneSlot } from "../visual/scenes/LuBirthSceneSlot";
 
-type CloudTruthMode = "all" | "clouds" | "atmosphere" | "aurora" | "stars";
+type CloudTruthMode =
+  | "baseline"
+  | "edge"
+  | "volume"
+  | "shadow"
+  | "all"
+  | "clouds"
+  | "atmosphere"
+  | "aurora"
+  | "stars";
 
 interface CloudTruthConfig {
   atmosphereLook: LandingAtmosphereLook;
@@ -26,9 +35,15 @@ interface CloudTruthConfig {
   visualDebugLayer: LandingVisualDebugLayer;
 }
 
+declare global {
+  interface Window {
+    __MiraLithLuBirthCloudTruthMode?: CloudTruthMode;
+  }
+}
+
 const DEFAULT_CONFIG: CloudTruthConfig = {
   atmosphereLook: "reference",
-  atmosphereVariant: "volumetric",
+  atmosphereVariant: "stack",
   copyHidden: false,
   fixedProgress: 0,
   hasFixedProgress: false,
@@ -47,7 +62,16 @@ function clamp01(value: number) {
 
 function readMode(params: URLSearchParams): CloudTruthMode {
   const mode = params.get("mode") ?? params.get("debug");
-  if (mode === "clouds" || mode === "atmosphere" || mode === "aurora" || mode === "stars") {
+  if (
+    mode === "baseline" ||
+    mode === "edge" ||
+    mode === "volume" ||
+    mode === "shadow" ||
+    mode === "clouds" ||
+    mode === "atmosphere" ||
+    mode === "aurora" ||
+    mode === "stars"
+  ) {
     return mode;
   }
 
@@ -90,7 +114,7 @@ function readRenderProfile(params: URLSearchParams): LandingRenderProfile {
 
 function readAtmosphereVariant(params: URLSearchParams): LandingAtmosphereVariant {
   const atmo = params.get("atmo");
-  return atmo === "stack" || atmo === "volumetric" ? atmo : "volumetric";
+  return atmo === "stack" || atmo === "volumetric" ? atmo : "stack";
 }
 
 function readAtmosphereLook(params: URLSearchParams): LandingAtmosphereLook {
@@ -147,7 +171,11 @@ export function LuBirthCloudTruthSpikeRoute() {
 
   useLayoutEffect(() => {
     window.__MiraLithOpeningProgress = config.fixedProgress;
-  }, [config.fixedProgress]);
+    window.__MiraLithLuBirthCloudTruthMode = config.mode;
+    return () => {
+      window.__MiraLithLuBirthCloudTruthMode = undefined;
+    };
+  }, [config.fixedProgress, config.mode]);
 
   return (
     <main
@@ -215,7 +243,7 @@ export function LuBirthCloudTruthSpikeRoute() {
             mode="field"
             quality={config.quality}
             paused={config.hasFixedProgress}
-            cloudDeckEnabled
+            cloudDeckEnabled={config.mode !== "baseline"}
             visualDebugLayer={config.visualDebugLayer}
             renderProfile={config.renderProfile}
             atmospherePolicy={config.atmosphereVariant}

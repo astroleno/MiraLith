@@ -100,10 +100,16 @@ function closeAtmosphereUrl(params: Record<string, string>, options: { pixels?: 
 
 async function waitForCloseScene(page: import("@playwright/test").Page) {
   await expect(page.locator("canvas")).toHaveCount(1);
+  await page.waitForLoadState("networkidle");
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthAtmosphereVariant), { timeout: 60_000 })
     .toBe("stack");
-  await page.waitForTimeout(900);
+  await expect(page.locator(".lubirth-close-atmo-spike")).toHaveAttribute(
+    "data-visual-ready",
+    "true",
+    { timeout: 60_000 }
+  );
+  await page.waitForTimeout(1_500);
 }
 
 async function sampleCanvasRegions(page: import("@playwright/test").Page) {

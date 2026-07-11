@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { expect, test } from "@playwright/test";
 
@@ -86,8 +86,31 @@ declare global {
     __MiraLithLuBirthCloudDeckActive?: boolean;
     __MiraLithLuBirthCloudDeckTexture?: string;
     __MiraLithLuBirthCloudShellsActive?: boolean;
+    __MiraLithLuBirthCloudShellCount?: number;
+    __MiraLithLuBirthCloudFieldTexture?: string;
+    __MiraLithLuBirthGroundCloudShadowActive?: boolean;
     __MiraLithLuBirthHorizonAuroraRibbonActive?: boolean;
     __MiraLithLuBirthPostBloomActive?: boolean;
+    __MiraLithLuBirthPostBloomMode?: string;
+    __MiraLithLuBirthPostBloomConfig?: {
+      radius: number;
+      resolutionScale: number;
+      strength: number;
+      threshold: number;
+    };
+    __MiraLithLuBirthVisualPolicy?: {
+      atmosphereMode: string;
+      bloomMode: string;
+      cloudMode: string;
+      groundShadow: boolean;
+      reason: string;
+    };
+    __MiraLithLuBirthCloseAtmosphereTuning?: {
+      effective: {
+        edgeGlowStrength: number;
+        verticalGradientStrength: number;
+      };
+    };
     __MiraLithLuBirthMoonPhase?: { date: string; source: string; phaseAngleRad: number };
     __MiraLithLuBirthProjectedAuroraCurtainActive?: boolean;
     __MiraLithLuBirthProjectedCloudPlateActive?: boolean;
@@ -256,10 +279,40 @@ test("keeps production home on the lightweight Earth renderer", async ({ page })
     .toBe("medium");
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudShellsActive), { timeout: 25_000 })
-    .toBe(false);
+    .toBe(true);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudShellCount), { timeout: 25_000 })
+    .toBe(1);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudFieldTexture), { timeout: 25_000 })
+    .toBe("/assets/lubirth/textures/earth-cloud-field-home.webp");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthGroundCloudShadowActive), { timeout: 25_000 })
+    .toBe(true);
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomActive), { timeout: 25_000 })
-    .toBe(false);
+    .toBe(true);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomMode), { timeout: 25_000 })
+    .toBe("lite");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomConfig), { timeout: 25_000 })
+    .toEqual({ radius: 0.35, resolutionScale: 0.5, strength: 0.07, threshold: 0.98 });
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthVisualPolicy), { timeout: 25_000 })
+    .toEqual({
+      atmosphereMode: "surface-glow",
+      bloomMode: "lite",
+      cloudMode: "shell-lite",
+      groundShadow: true,
+      reason: "home-lite"
+    });
+  await expect
+    .poll(
+      () => page.evaluate(() => window.__MiraLithLuBirthCloseAtmosphereTuning?.effective.edgeGlowStrength),
+      { timeout: 25_000 }
+    )
+    .toBeGreaterThan(0);
   await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-home-visual-ready", "true", {
     timeout: 25_000
   });
@@ -270,11 +323,24 @@ test("keeps production home on the lightweight Earth renderer", async ({ page })
   expect(canvasDpr).toBeLessThanOrEqual(1.26);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-day-2k"))).toBe(true);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-night-2k"))).toBe(true);
-  expect(Array.from(assetRequests).some((path) => path.includes("earth-clouds-2k"))).toBe(true);
+  expect(Array.from(assetRequests).some((path) => path.includes("earth-cloud-field-home.webp"))).toBe(true);
   expect(Array.from(assetRequests).some((path) => path.includes("moon-2k"))).toBe(true);
   expect(Array.from(assetRequests).some((path) => path.includes("8k"))).toBe(false);
+  expect(Array.from(assetRequests).some((path) => path.includes("earth-clouds-2k"))).toBe(false);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-cloud-deck"))).toBe(false);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-specular-4k"))).toBe(false);
+
+  const firstViewportTextures = [
+    "earth-day-2k.jpg",
+    "earth-night-2k.jpg",
+    "earth-cloud-field-home.webp",
+    "moon-2k.jpg"
+  ].map((fileName) =>
+    statSync(path.join(process.cwd(), "apps/site/public/assets/lubirth/textures", fileName)).size
+  );
+  const cloudFieldBytes = firstViewportTextures[2] ?? Number.POSITIVE_INFINITY;
+  expect(cloudFieldBytes).toBeLessThanOrEqual(650_000);
+  expect(firstViewportTextures.reduce((total, bytes) => total + bytes, 0)).toBeLessThan(3_000_000);
 });
 
 test("keeps the loading and prelude phase branded as MiraLith with one continuous moon path", async ({ page }) => {
@@ -437,9 +503,6 @@ test("uses the 3D cloud deck for high quality cloud review", async ({ page }) =>
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudDeckActive ?? false), { timeout: 25_000 })
     .toBe(true);
-  await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedCloudPlateActive ?? false), { timeout: 25_000 })
-    .toBe(false);
   await expect
     .poll(() => Array.from(assetRequests).some((path) => path.includes("earth-cloud-deck-2k.png")), { timeout: 25_000 })
     .toBe(true);

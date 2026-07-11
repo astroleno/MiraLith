@@ -73,6 +73,7 @@ function readConfig(): CloseAtmosphereSpikeConfig {
 
 export function LuBirthCloseAtmosphereSpikeRoute() {
   const [config] = useState<CloseAtmosphereSpikeConfig>(() => readConfig());
+  const [visualReady, setVisualReady] = useState(false);
 
   useLayoutEffect(() => {
     window.__MiraLithOpeningProgress = config.fixedProgress;
@@ -94,6 +95,7 @@ export function LuBirthCloseAtmosphereSpikeRoute() {
       data-depth={config.tuning.depthShadowStrength}
       data-projection={config.tuning.groundProjectionStrength}
       data-cloud-depth={config.tuning.cloudVolumeShadowStrength}
+      data-visual-ready={visualReady}
       aria-label={label}
       style={{ minHeight: "100svh", overflow: "hidden", background: "#000102" }}
     >
@@ -127,6 +129,7 @@ export function LuBirthCloseAtmosphereSpikeRoute() {
           routeVariant="spike"
           productionSurface={false}
           closeAtmosphereTuning={config.tuning}
+          onVisualReadyEnough={() => setVisualReady(true)}
         />
       </VisualCanvas>
     </main>

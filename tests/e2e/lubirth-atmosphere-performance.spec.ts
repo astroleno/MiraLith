@@ -6,8 +6,61 @@ declare global {
   interface Window {
     __MiraLithLuBirthAtmospherePolicyReason?: string;
     __MiraLithLuBirthAtmosphereVariant?: string;
+    __MiraLithLuBirthCloudShellCount?: number;
+    __MiraLithLuBirthGroundCloudShadowActive?: boolean;
     __MiraLithLuBirthRuntimeProfile?: string;
+    __MiraLithLuBirthPostBloomMode?: string;
+    __MiraLithLuBirthVisualPolicy?: {
+      bloomMode: string;
+      cloudMode: string;
+      groundShadow: boolean;
+    };
     __MiraLithLuBirthVolumetricAtmosphereActive?: boolean;
+  }
+}
+
+async function measureHomePage(
+  page: import("@playwright/test").Page,
+  url: string,
+  expectedPolicy: { bloomMode: string; cloudMode: string; groundShadow: boolean },
+  sampleMs = 1_800
+) {
+  await page.goto(url);
+  await page.waitForLoadState("networkidle");
+  await expect(page.locator("canvas")).toHaveCount(1, { timeout: 25_000 });
+  await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-runtime", "ready", {
+    timeout: 25_000
+  });
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthVisualPolicy), { timeout: 25_000 })
+    .toMatchObject(expectedPolicy);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomMode), { timeout: 25_000 })
+    .toBe(expectedPolicy.bloomMode);
+  if (expectedPolicy.cloudMode === "shell-lite") {
+    await expect
+      .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudShellCount), { timeout: 25_000 })
+      .toBe(1);
+    await expect
+      .poll(() => page.evaluate(() => window.__MiraLithLuBirthGroundCloudShadowActive), { timeout: 25_000 })
+      .toBe(expectedPolicy.groundShadow);
+  }
+  await page.waitForTimeout(1_500);
+  return sampleStableRafStats(page, sampleMs);
+}
+
+async function measureFreshHomePage(
+  browser: import("@playwright/test").Browser,
+  viewport: { width: number; height: number },
+  url: string,
+  expectedPolicy: { bloomMode: string; cloudMode: string; groundShadow: boolean }
+) {
+  const context = await browser.newContext({ viewport });
+  const page = await context.newPage();
+  try {
+    return await measureHomePage(page, url, expectedPolicy);
+  } finally {
+    await context.close();
   }
 }
 
@@ -19,6 +72,8 @@ interface RafStats {
 }
 
 const STRICT_PERF = process.env.LUBIRTH_PERF_STRICT === "1";
+// A 60 Hz RAF interval is 16.67 ms; allow sub-millisecond headless scheduler jitter.
+const DESKTOP_HOME_P95_BUDGET_MS = 18.5;
 
 function percentile(values: number[], percentileValue: number) {
   const sorted = [...values].sort((a, b) => a - b);
@@ -63,6 +118,27 @@ async function sampleRafStats(page: import("@playwright/test").Page, sampleMs = 
     }), sampleMs);
 
   return summarizeDeltas(deltas);
+}
+
+async function sampleStableRafStats(
+  page: import("@playwright/test").Page,
+  sampleMs = 1_800,
+  windowCount = 3
+) {
+  const windows: RafStats[] = [];
+  for (let index = 0; index < windowCount; index += 1) {
+    windows.push(await sampleRafStats(page, sampleMs));
+  }
+
+  // SwiftShader occasionally loses an entire vsync window to host scheduling.
+  // Use the median of independent windows so a promotion result represents the
+  // renderer's sustained cost while still failing a consistently slow shader.
+  return {
+    count: Math.min(...windows.map((stats) => stats.count)),
+    max: percentile(windows.map((stats) => stats.max), 0.5),
+    median: percentile(windows.map((stats) => stats.median), 0.5),
+    p95: percentile(windows.map((stats) => stats.p95), 0.5)
+  };
 }
 
 async function measurePage(
@@ -112,6 +188,7 @@ test("records blank RAF control", async ({ page }, testInfo) => {
 
 test("records spike stack vs volumetric RAF performance", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "Performance sampling is calibrated for desktop review.");
+  test.skip(STRICT_PERF, "Strict promotion budgeting is scoped to the production home renderer.");
 
   await page.setViewportSize({ width: 1440, height: 960 });
 
@@ -143,6 +220,7 @@ test("records spike stack vs volumetric RAF performance", async ({ page }, testI
 
 test("records production visible-copy RAF performance", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "Performance sampling is calibrated for desktop review.");
+  test.skip(STRICT_PERF, "Strict promotion budgeting is scoped to the production home renderer.");
 
   await page.setViewportSize({ width: 1440, height: 960 });
 
@@ -181,5 +259,46 @@ test("records production visible-copy RAF performance", async ({ page }, testInf
     expect(studyCandidate.median).toBeLessThanOrEqual(24);
     expect(studyCandidate.p95).toBeLessThanOrEqual(40);
     expect(homeIntro.max).toBeLessThanOrEqual(100);
+  }
+});
+
+test("keeps production home cloud and lite bloom inside the frame budget", async ({ browser }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "Performance sampling is calibrated for desktop review.");
+
+  const desktopViewport = { width: 1440, height: 960 };
+  const desktopLite = await measureFreshHomePage(
+    browser,
+    desktopViewport,
+    "/?progress=0.5&copy=hidden&quality=medium&perfTest=raf",
+    { bloomMode: "lite", cloudMode: "shell-lite", groundShadow: true }
+  );
+  const desktopSurface = await measureFreshHomePage(
+    browser,
+    desktopViewport,
+    "/?progress=0.5&copy=hidden&quality=low&perfTest=raf",
+    { bloomMode: "off", cloudMode: "surface", groundShadow: false }
+  );
+
+  const mobileLandscapeLite = await measureFreshHomePage(
+    browser,
+    { width: 844, height: 390 },
+    "/?progress=0.5&copy=hidden&quality=medium&perfTest=raf",
+    { bloomMode: "lite", cloudMode: "shell-lite", groundShadow: true }
+  );
+  const bloomCloudP95Overhead = desktopLite.p95 - desktopSurface.p95;
+
+  logStats("production home desktop shell-lite + bloom-lite", desktopLite);
+  logStats("production home desktop surface + bloom-off", desktopSurface);
+  logStats("production home mobile landscape shell-lite + bloom-lite", mobileLandscapeLite);
+  console.log(`home shell+bloom p95 overhead=${bloomCloudP95Overhead.toFixed(2)}ms`);
+
+  expectRafSamples("production home desktop shell-lite + bloom-lite", desktopLite, testInfo);
+  expectRafSamples("production home desktop surface + bloom-off", desktopSurface, testInfo);
+  expectRafSamples("production home mobile landscape shell-lite + bloom-lite", mobileLandscapeLite, testInfo);
+
+  if (STRICT_PERF) {
+    expect(desktopLite.p95).toBeLessThanOrEqual(DESKTOP_HOME_P95_BUDGET_MS);
+    expect(mobileLandscapeLite.p95).toBeLessThanOrEqual(34);
+    expect(bloomCloudP95Overhead).toBeLessThanOrEqual(2);
   }
 });

@@ -25,7 +25,12 @@ import {
   HOME_CLOUD_FIELD_SCROLL_SPEED,
   HOME_CLOUD_SHELL_RADIUS
 } from "./homeCloudField";
-import type { LandingCloudMode, LandingComposition, LandingResolvedAssets } from "./types";
+import type {
+  LandingCloseAtmosphereTuning,
+  LandingCloudMode,
+  LandingComposition,
+  LandingResolvedAssets
+} from "./types";
 import { useLandingTexture } from "./useLandingTexture";
 
 interface LandingCloudLayerProps {
@@ -39,6 +44,7 @@ interface LandingCloudLayerProps {
   paused?: boolean;
   cloudDeckEnabled?: boolean;
   cloudMode?: LandingCloudMode;
+  closeAtmosphereTuning?: LandingCloseAtmosphereTuning;
 }
 
 interface CloudShellLayer {
@@ -106,6 +112,13 @@ const smoothstep = (edge0: number, edge1: number, value: number) => {
   return t * t * (3 - 2 * t);
 };
 
+declare global {
+  interface Window {
+    __MiraLithLuBirthCloudShellCount?: number;
+    __MiraLithLuBirthCloudFieldTexture?: string;
+  }
+}
+
 function createLiteCloudMaterial(
   composition: LandingComposition,
   cloudFieldTexture: Texture
@@ -129,10 +142,10 @@ function createLiteCloudMaterial(
     },
     vertexShader: `
       varying vec2 vUv;
-      varying vec3 vWorldPosition;
-      varying vec3 vWorldNormal;
-      varying vec3 vWorldEast;
-      varying vec3 vWorldNorth;
+      varying vec3 vTangentLight;
+      varying vec2 vSunOffset;
+      varying float vViewFacing;
+      varying float vDaylight;
 
       void main() {
         vUv = uv;
@@ -144,10 +157,21 @@ function createLiteCloudMaterial(
         vec3 localNorth = normalize(cross(localNormal, localEast));
         vec4 worldPosition = modelMatrix * vec4(position, 1.0);
         mat3 worldRotation = mat3(modelMatrix);
-        vWorldPosition = worldPosition.xyz;
-        vWorldNormal = normalize(worldRotation * normal);
-        vWorldEast = normalize(worldRotation * localEast);
-        vWorldNorth = normalize(worldRotation * localNorth);
+        vec3 worldNormal = normalize(worldRotation * normal);
+        vec3 worldEast = normalize(worldRotation * localEast);
+        vec3 worldNorth = normalize(worldRotation * localNorth);
+        vec3 sunDirection = normalize(lightDir);
+        vTangentLight = vec3(
+          dot(sunDirection, worldEast),
+          dot(sunDirection, worldNorth),
+          dot(sunDirection, worldNormal)
+        );
+        vSunOffset = vTangentLight.xy / max(length(vTangentLight.xy), 0.001);
+        vDaylight = smoothstep(-0.12, 0.3, vTangentLight.z);
+        vViewFacing = max(
+          dot(worldNormal, normalize(cameraPosition - worldPosition.xyz)),
+          0.0
+        );
         gl_Position = projectionMatrix * viewMatrix * worldPosition;
       }
     `,
@@ -160,71 +184,55 @@ function createLiteCloudMaterial(
       uniform vec3 lightColor;
 
       varying vec2 vUv;
-      varying vec3 vWorldPosition;
-      varying vec3 vWorldNormal;
-      varying vec3 vWorldEast;
-      varying vec3 vWorldNorth;
+      varying vec3 vTangentLight;
+      varying vec2 vSunOffset;
+      varying float vViewFacing;
+      varying float vDaylight;
 
       void main() {
-        vec3 geometricNormal = normalize(vWorldNormal);
-        vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
-        vec3 sunDirection = normalize(lightDir);
         vec2 cloudUv = vec2(
           fract(vUv.x + ${HOME_CLOUD_FIELD_OFFSET_X.toFixed(3)} + cloudOffset),
           clamp(vUv.y + ${HOME_CLOUD_FIELD_OFFSET_Y.toFixed(3)}, 0.001, 0.999)
         );
         vec4 cloudField = texture2D(cloudFieldMap, cloudUv);
-        float coverage = smoothstep(0.045, 0.9, cloudField.r);
-        float thickness = smoothstep(0.04, 0.94, cloudField.a);
+        if (cloudField.r < 0.12) {
+          discard;
+        }
+        float coverage = clamp((cloudField.r - 0.12) * 1.14, 0.0, 1.0);
+        float thickness = cloudField.a;
 
         vec2 tangentNormal = cloudField.gb * 2.0 - 1.0;
         float tangentLengthSquared = min(dot(tangentNormal, tangentNormal), 0.96);
         float normalZ = sqrt(max(1.0 - tangentLengthSquared, 0.04));
-        vec3 cloudNormal = normalize(
-          normalize(vWorldEast) * tangentNormal.x +
-          normalize(vWorldNorth) * tangentNormal.y +
-          geometricNormal * normalZ
-        );
-
-        vec2 sunTangent = vec2(
-          dot(sunDirection, normalize(vWorldEast)),
-          dot(sunDirection, normalize(vWorldNorth))
-        );
-        float sunTangentLength = max(length(sunTangent), 0.001);
-        sunTangent /= sunTangentLength;
         vec2 occlusionUv = vec2(
-          fract(cloudUv.x - sunTangent.x * 0.0031),
-          clamp(cloudUv.y - sunTangent.y * 0.00155, 0.001, 0.999)
+          fract(cloudUv.x - vSunOffset.x * 0.0031),
+          clamp(cloudUv.y - vSunOffset.y * 0.00155, 0.001, 0.999)
         );
         vec4 occlusionField = texture2D(cloudFieldMap, occlusionUv);
 
-        float geometricLight = max(dot(geometricNormal, sunDirection), 0.0);
-        float shapedLight = max(dot(cloudNormal, sunDirection), 0.0);
-        float daylight = smoothstep(-0.12, 0.3, dot(geometricNormal, sunDirection));
-        float twilight = 1.0 - smoothstep(0.02, 0.34, abs(dot(geometricNormal, sunDirection)));
-        float selfOcclusion = smoothstep(0.16, 0.82, occlusionField.r) *
-          smoothstep(0.08, 0.9, occlusionField.a) *
+        float geometricLight = clamp(vTangentLight.z, 0.0, 1.0);
+        float shapedLight = max(dot(vec3(tangentNormal, normalZ), vTangentLight), 0.0);
+        float selfOcclusion = occlusionField.r * occlusionField.a *
           (0.18 + thickness * 0.3);
 
-        vec3 shadowColor = vec3(0.32, 0.4, 0.52);
-        vec3 daylightColor = mix(vec3(0.72, 0.78, 0.84), vec3(0.98, 0.985, 0.97), shapedLight);
-        vec3 cloudColor = mix(shadowColor, daylightColor, daylight);
-        cloudColor *= lightColor * (0.54 + geometricLight * 0.42 + shapedLight * 0.2);
+        vec3 shadowColor = vec3(0.44, 0.51, 0.62);
+        vec3 daylightColor = vec3(0.96, 0.98, 1.0);
+        float lightShape = clamp(vDaylight * 0.7 + shapedLight * 0.3, 0.0, 1.0);
+        vec3 cloudColor = mix(shadowColor, daylightColor, lightShape);
+        cloudColor *= lightColor * (0.56 + geometricLight * 0.26 + shapedLight * 0.18);
         cloudColor *= 1.0 - selfOcclusion;
-        cloudColor += vec3(0.16, 0.1, 0.065) * twilight * (0.12 + thickness * 0.16);
-        cloudColor += vec3(0.08, 0.13, 0.22) * (1.0 - daylight) * (0.06 + thickness * 0.08);
+        cloudColor += vec3(0.025, 0.05, 0.09) * (1.0 - vDaylight) * thickness;
 
-        float facing = max(dot(geometricNormal, viewDirection), 0.0);
-        float limbFade = 1.0 - smoothstep(0.91, 0.998, 1.0 - facing);
+        float limbFade = clamp(vViewFacing * 11.0, 0.0, 1.0);
         float alpha = coverage * opacity * (0.34 + thickness * 0.36) * limbFade;
-        alpha *= mix(0.64, 1.0, daylight);
+        alpha *= 0.64 + vDaylight * 0.36;
         alpha *= 1.0 + debugBoost * 0.28;
 
         if (alpha < 0.002) {
           discard;
         }
 
-        gl_FragColor = vec4(max(cloudColor, vec3(0.06)), clamp(alpha, 0.0, 0.68));
+        gl_FragColor = vec4(max(cloudColor, vec3(0.22)), clamp(alpha, 0.0, 0.68));
       }
     `,
     transparent: true,
@@ -264,6 +272,7 @@ function createCloudMaterial(
       limbFadeEnd: { value: layer.limbFadeEnd },
       debugBoost: { value: 0 },
       referenceLookStrength: { value: 0 },
+      cloudVolumeShadowStrength: { value: 0 },
       lightDir: { value: lightDirection.set(...composition.light.fixedSunDir).normalize().clone() },
       lightColor: {
         value: color.setRGB(
@@ -316,6 +325,7 @@ function createCloudMaterial(
       uniform float limbFadeEnd;
       uniform float debugBoost;
       uniform float referenceLookStrength;
+      uniform float cloudVolumeShadowStrength;
       uniform vec3 lightDir;
       uniform vec3 lightColor;
 
@@ -913,6 +923,9 @@ function createCloudMaterial(
         alpha += referenceHorizonGlowLift * opacity * 0.018;
         float nightLimbFade = 1.0 - smoothstep(0.54, 0.9, rim) * nightCloud * 0.9;
         alpha *= shellLimbFade * nightLimbFade;
+        float closeCloudDepth = clamp(cloudVolumeShadowStrength, 0.0, 2.0) *
+          closeStage * (0.06 + thickness * 0.16);
+        finalColor *= 1.0 - clamp(closeCloudDepth, 0.0, 0.32);
 
         if (alpha < 0.00008) {
           discard;
@@ -944,7 +957,8 @@ export function LandingCloudLayer({
   reducedMotion,
   paused,
   cloudDeckEnabled = true,
-  cloudMode = "lookdev"
+  cloudMode = "lookdev",
+  closeAtmosphereTuning
 }: LandingCloudLayerProps) {
   const cloud = useRef<Mesh>(null);
   const cloudGroup = useRef<Group>(null);
@@ -1019,6 +1033,21 @@ export function LandingCloudLayer({
     };
   }, [materials]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    window.__MiraLithLuBirthCloudShellCount = enabled ? activeCloudShells.length : 0;
+    window.__MiraLithLuBirthCloudFieldTexture =
+      enabled && cloudMode === "shell-lite" ? assets.earthCloudField?.src : undefined;
+
+    return () => {
+      window.__MiraLithLuBirthCloudShellCount = 0;
+      window.__MiraLithLuBirthCloudFieldTexture = undefined;
+    };
+  }, [activeCloudShells.length, assets.earthCloudField?.src, cloudMode, enabled]);
+
   useFrame((_state, delta) => {
     if (!cloudGroup.current || !enabled || !activeTexture) {
       return;
@@ -1059,6 +1088,8 @@ export function LandingCloudLayer({
       cloudMaterial.uniforms.hasCloudDeckMap.value = cloudDeckTexture ? 1 : 0;
       cloudMaterial.uniforms.closeStage.value = closeStage;
       cloudMaterial.uniforms.referenceLookStrength.value = referenceLook ? 1 : 0;
+      cloudMaterial.uniforms.cloudVolumeShadowStrength.value =
+        closeAtmosphereTuning?.cloudVolumeShadowStrength ?? 0;
     });
   });
 
@@ -1074,10 +1105,10 @@ export function LandingCloudLayer({
             args={[
               composition.earth.radius * layer.radius,
               cloudMode === "shell-lite"
-                ? quality.tier === "high" ? 160 : quality.tier === "medium" ? 128 : 80
+                ? quality.tier === "high" ? 128 : quality.tier === "medium" ? 96 : 64
                 : quality.tier === "high" ? Math.max(288, quality.segments * 4) : quality.tier === "medium" ? Math.max(160, quality.segments * 3) : 48,
               cloudMode === "shell-lite"
-                ? quality.tier === "high" ? 96 : quality.tier === "medium" ? 80 : 52
+                ? quality.tier === "high" ? 72 : quality.tier === "medium" ? 56 : 40
                 : quality.tier === "high" ? 180 : quality.tier === "medium" ? 96 : 32
             ]}
           />

@@ -98,14 +98,14 @@ function clientIp(request: NextRequest) {
   return firstForwarded || request.headers.get("x-real-ip") || null;
 }
 
-async function lookupPublicIp(ip: string | null): Promise<GeoPayload | null> {
+async function lookupPublicIp(ip: string): Promise<GeoPayload | null> {
   if (process.env.LUBIRTH_IP_GEO_LOOKUP === "off") {
     return null;
   }
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 650);
-  const endpoint = ip ? `https://ipapi.co/${encodeURIComponent(ip)}/json/` : "https://ipapi.co/json/";
+  const endpoint = `https://ipapi.co/${encodeURIComponent(ip)}/json/`;
 
   try {
     const result = await fetch(endpoint, {
@@ -182,13 +182,6 @@ export async function GET(request: NextRequest) {
     const ipLocation = await lookupPublicIp(ip);
     if (ipLocation) {
       return response(ipLocation);
-    }
-  }
-
-  if (!ip || isPrivateIp(ip)) {
-    const currentIpLocation = await lookupPublicIp(null);
-    if (currentIpLocation) {
-      return response(currentIpLocation);
     }
   }
 

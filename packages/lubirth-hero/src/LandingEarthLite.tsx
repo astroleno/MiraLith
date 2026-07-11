@@ -14,7 +14,7 @@ import {
   Texture,
   Vector3
 } from "three";
-import type { QualityProfile } from "@miralith/visual-core";
+import { getRuntimeOpeningProgress, type QualityProfile } from "@miralith/visual-core";
 import {
   HOME_CLOUD_FIELD_OFFSET_X,
   HOME_CLOUD_FIELD_OFFSET_Y,
@@ -44,12 +44,18 @@ interface LandingEarthLiteProps {
 
 const fallbackLightDirection = new Vector3();
 
+declare global {
+  interface Window {
+    __MiraLithLuBirthGroundCloudShadowActive?: boolean;
+  }
+}
+
 function resolveLiteEarthSegments(composition: LandingComposition, quality: QualityProfile) {
   if (quality.tier === "low" || quality.tier === "fallback") {
-    return Math.max(72, Math.min(96, composition.earth.segments));
+    return Math.max(64, Math.min(72, composition.earth.segments));
   }
 
-  return Math.max(96, Math.min(144, composition.earth.segments));
+  return Math.max(80, Math.min(96, composition.earth.segments));
 }
 
 function createLiteEarthMaterial({
@@ -86,6 +92,7 @@ function createLiteEarthMaterial({
           : 0
       },
       cloudOffset: { value: 0 },
+      closeStage: { value: 1 },
       lightDir: {
         value: fallbackLightDirection.set(...composition.light.fixedSunDir).normalize().clone()
       },
@@ -137,6 +144,7 @@ function createLiteEarthMaterial({
       uniform float surfaceCloudStrength;
       uniform float groundShadowStrength;
       uniform float cloudOffset;
+      uniform float closeStage;
       uniform vec3 lightDir;
       uniform vec3 lightColor;
       uniform float sunIntensity;
@@ -178,10 +186,19 @@ function createLiteEarthMaterial({
           0.075 + ambientIntensity * 1.6 + directLight * sunIntensity * 0.39
         );
         vec3 readableNight = dayColor * (
-          0.025 + nightSurfaceLift * 0.34 + smoothstep(-0.52, 0.04, ndl) * 0.03
+          0.032 +
+          nightSurfaceLift * 0.4 +
+          smoothstep(-0.52, 0.04, ndl) * 0.035 +
+          closeStage * 0.15
         );
-        vec3 cityLight = nightColor * nightIntensity * (0.5 + nightWeight * 1.55);
+        vec3 cityLight = nightColor * nightIntensity * (
+          0.58 + nightWeight * 1.62 + closeStage * 2.1
+        );
         vec3 color = mix(readableNight + cityLight, litSurface, dayWeight);
+        float closeSurfaceDetail = smoothstep(0.025, 0.32, dayLuma);
+        color += dayColor * nightWeight * closeStage * (
+          0.22 + closeSurfaceDetail * 0.48
+        );
 
         vec3 halfVector = normalize(sunDirection + viewDirection);
         float oceanSpecular = pow(max(dot(normalDirection, halfVector), 0.0), 74.0) *
@@ -348,6 +365,17 @@ export function LandingEarthLite({
 
   useEffect(() => () => material.dispose(), [material]);
   useEffect(() => () => proceduralDayTexture.dispose(), [proceduralDayTexture]);
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    window.__MiraLithLuBirthGroundCloudShadowActive =
+      Boolean(cloudFieldTexture) && visualPolicy.groundShadow;
+    return () => {
+      window.__MiraLithLuBirthGroundCloudShadowActive = false;
+    };
+  }, [cloudFieldTexture, visualPolicy.groundShadow]);
 
   useFrame((_state, delta) => {
     if (!earth.current) {
@@ -362,6 +390,11 @@ export function LandingEarthLite({
     const activeLightDirection = sceneLightDirection ?? fallbackLightDirection.set(...composition.light.fixedSunDir);
     earthMaterial.uniforms.lightDir.value.copy(activeLightDirection).normalize();
     earthMaterial.uniforms.cloudOffset.value = cloudOffset.current;
+    earthMaterial.uniforms.closeStage.value = 1 - MathUtils.smoothstep(
+      getRuntimeOpeningProgress(0),
+      0.18,
+      0.86
+    );
     earthMaterial.uniforms.hasCloudField.value = cloudFieldTexture ? 1 : 0;
     earthMaterial.uniforms.surfaceCloudStrength.value =
       cloudFieldTexture && visualPolicy.cloudMode === "surface"

@@ -1487,8 +1487,9 @@ export function LuBirthRevisedRoute({
       {sceneEnabled ? (
         <VisualCanvas
           key={isScreenshotMode ? "lubirth-screenshot-canvas" : isHome ? "lubirth-home-canvas" : "lubirth-runtime-canvas"}
+          antialias={!isHome}
           decorative
-          dpr={isScreenshotMode && !isHome ? 2 : isHome ? [1, 1.25] : [1.5, 2.1]}
+          dpr={isScreenshotMode && !isHome ? 2 : isHome ? 0.85 : [1.5, 2.1]}
           fallback={
             <VisualCanvasFallback
               scene="lubirth"

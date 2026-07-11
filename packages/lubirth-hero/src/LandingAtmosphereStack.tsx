@@ -85,6 +85,120 @@ const smoothstep = (edge0: number, edge1: number, value: number) => {
   return t * t * (3 - 2 * t);
 };
 
+function createSurfaceGlowMaterial(
+  composition: LandingComposition,
+  spec: AtmosphereLayerSpec,
+  closeAtmosphereTuning: LandingCloseAtmosphereTuning
+) {
+  return new ShaderMaterial({
+    uniforms: {
+      closeStage: { value: 1 },
+      intensity: { value: composition.atmosphere.intensity },
+      debugBoost: { value: 0 },
+      lightDir: { value: lightDirection.set(...composition.light.fixedSunDir).normalize().clone() },
+      innerWhiteStrength: { value: composition.atmosphere.innerWhiteStrength },
+      blueThicknessStrength: { value: composition.atmosphere.blueThicknessStrength },
+      karmanStrength: { value: composition.atmosphere.karmanStrength },
+      outerHaloStrength: { value: composition.atmosphere.outerHaloStrength },
+      shellAltitude: { value: Math.max(0, spec.radius - 1) },
+      surfaceMap: { value: null },
+      hasSurfaceMap: { value: 0 },
+      edgeGlowStrength: { value: closeAtmosphereTuning.edgeGlowStrength },
+      verticalGradientStrength: { value: closeAtmosphereTuning.verticalGradientStrength },
+      depthShadowStrength: { value: closeAtmosphereTuning.depthShadowStrength },
+      groundProjectionStrength: { value: closeAtmosphereTuning.groundProjectionStrength },
+      cloudVolumeShadowStrength: { value: closeAtmosphereTuning.cloudVolumeShadowStrength }
+    },
+    vertexShader: `
+      varying vec3 vWorldPosition;
+      varying vec3 vWorldNormal;
+
+      void main() {
+        vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+        vWorldPosition = worldPosition.xyz;
+        vWorldNormal = normalize(mat3(modelMatrix) * normal);
+        gl_Position = projectionMatrix * viewMatrix * worldPosition;
+      }
+    `,
+    fragmentShader: `
+      uniform float closeStage;
+      uniform float intensity;
+      uniform vec3 lightDir;
+      uniform float shellAltitude;
+      uniform float edgeGlowStrength;
+      uniform float verticalGradientStrength;
+      uniform float depthShadowStrength;
+      uniform float groundProjectionStrength;
+      uniform float cloudVolumeShadowStrength;
+
+      varying vec3 vWorldPosition;
+      varying vec3 vWorldNormal;
+
+      void main() {
+        vec3 normalDirection = normalize(vWorldNormal);
+        vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
+        vec3 sunDirection = normalize(lightDir);
+        float viewFacing = abs(dot(normalDirection, viewDirection));
+        float projectedRadial = sqrt(max(0.0, 1.0 - viewFacing * viewFacing));
+        float earthProjectedRadius = 1.0 / max(1.0001, 1.0 + shellAltitude);
+        float radialSpan = max(0.004, 1.0 - earthProjectedRadius);
+        float heightFromGround = (projectedRadial - earthProjectedRadius) / radialSpan;
+        float groundSideGate = smoothstep(-0.008, 0.028, heightFromGround);
+        float outwardHeight = max(heightFromGround, 0.0);
+        float lowerAir = exp(-outwardHeight * 3.8) * groundSideGate;
+        float upperAir = exp(-outwardHeight * 1.72) * groundSideGate;
+
+        float sun = dot(normalDirection, sunDirection);
+        float daySide = smoothstep(-0.25, 0.45, sun);
+        float twilight = 1.0 - smoothstep(0.02, 0.42, abs(sun));
+        float verticalPosition = normalDirection.y * 0.5 + 0.5;
+        float verticalGradient = mix(
+          1.0,
+          mix(0.8, 1.16, verticalPosition),
+          verticalGradientStrength
+        );
+        float directionalFalloff = mix(
+          1.0,
+          0.58 + daySide * 0.42 + twilight * 0.08,
+          depthShadowStrength
+        );
+        float groundProjection = 1.0 +
+          groundProjectionStrength * exp(-outwardHeight * 6.2) * 0.28;
+        float edgeGain = 0.64 + edgeGlowStrength;
+        float cloudVolumeAttenuation = 1.0 -
+          cloudVolumeShadowStrength * lowerAir * 0.1;
+        vec3 deepBlue = vec3(0.018, 0.068, 0.18);
+        vec3 rayleighBlue = vec3(0.18, 0.46, 0.86);
+        vec3 atmosphereBlue = mix(
+          deepBlue,
+          rayleighBlue,
+          0.32 + daySide * 0.42 + twilight * 0.08
+        );
+        float closeHold = mix(0.66, 0.58, closeStage);
+        float gain = intensity * closeHold * edgeGain * verticalGradient *
+          directionalFalloff * groundProjection * cloudVolumeAttenuation;
+        vec3 color = atmosphereBlue * (lowerAir * 1.08 + upperAir * 0.34) * gain;
+        float alpha = (lowerAir * 0.11 + upperAir * 0.085) *
+          (0.54 + daySide * 0.42 + twilight * 0.08) * gain;
+
+        if (alpha < 0.00025) {
+          discard;
+        }
+
+        gl_FragColor = vec4(min(color, vec3(1.2)), clamp(alpha, 0.0, 0.34));
+      }
+    `,
+    transparent: true,
+    blending: CustomBlending,
+    blendEquation: AddEquation,
+    blendSrc: SrcAlphaFactor,
+    blendDst: OneFactor,
+    side: DoubleSide,
+    depthTest: false,
+    depthWrite: false
+  });
+}
+
 function layerKindToUniform(kind: AtmosphereLayerKind) {
   if (kind === "soft-contour") {
     return 4;
@@ -110,6 +224,10 @@ function createAtmosphereStackMaterial(
   spec: AtmosphereLayerSpec,
   closeAtmosphereTuning: LandingCloseAtmosphereTuning
 ) {
+  if (spec.kind === "surface-glow") {
+    return createSurfaceGlowMaterial(composition, spec, closeAtmosphereTuning);
+  }
+
   return new ShaderMaterial({
     uniforms: {
       kind: { value: layerKindToUniform(spec.kind) },
@@ -361,22 +479,25 @@ function AtmosphereLayer({
     () => createAtmosphereStackMaterial(composition, spec, closeAtmosphereTuning),
     [closeAtmosphereTuning, composition, spec]
   );
-  const { texture: surfaceTexture } = useLandingTexture(runtimeProfile === "home-lite" ? undefined : assets.earthDay.src, {
+  const { texture: surfaceTexture } = useLandingTexture(
+    runtimeProfile === "home-lite" || spec.kind === "surface-glow" ? undefined : assets.earthDay.src,
+    {
     colorSpace: assets.earthDay.colorSpace,
     wrapS: RepeatWrapping,
     wrapT: RepeatWrapping,
     anisotropy: runtimeProfile === "home-lite" ? 4 : quality.tier === "high" ? 16 : 8
-  });
+    }
+  );
   const radius = composition.earth.radius * spec.radius;
   const widthSegments = runtimeProfile === "home-lite"
-    ? 128
+    ? 72
     : quality.tier === "high"
     ? Math.max(composition.earth.segments, quality.segments, 512)
     : quality.tier === "medium"
       ? Math.max(224, quality.segments)
       : 40;
   const heightSegments = runtimeProfile === "home-lite"
-    ? 64
+    ? 40
     : quality.tier === "high" ? 256 : quality.tier === "medium" ? 128 : 36;
 
   useEffect(() => {

@@ -1,17 +1,28 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Vector2 } from "three";
+import {
+  AdditiveBlending,
+  ClampToEdgeWrapping,
+  DataTexture,
+  LinearFilter,
+  RGBAFormat,
+  Sprite,
+  SpriteMaterial,
+  UnsignedByteType,
+  Vector2
+} from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { getRuntimeOpeningProgress, type QualityProfile } from "@miralith/visual-core";
-import type { LandingBloomMode } from "./types";
+import type { LandingBloomMode, LandingComposition } from "./types";
 
 interface LandingPostBloomProps {
+  composition: LandingComposition;
   quality: QualityProfile;
   emphasis?: boolean;
   mode?: LandingBloomMode;
@@ -21,6 +32,12 @@ declare global {
   interface Window {
     __MiraLithLuBirthPostBloomActive?: boolean;
     __MiraLithLuBirthPostBloomMode?: LandingBloomMode;
+    __MiraLithLuBirthPostBloomConfig?: {
+      radius: number;
+      resolutionScale: number;
+      strength: number;
+      threshold: number;
+    };
   }
 }
 
@@ -28,6 +45,36 @@ const smoothstep = (edge0: number, edge1: number, value: number) => {
   const t = Math.min(1, Math.max(0, (value - edge0) / Math.max(edge1 - edge0, 1e-5)));
   return t * t * (3 - 2 * t);
 };
+
+function createLiteBloomTexture() {
+  const size = 64;
+  const pixels = new Uint8Array(size * size * 4);
+
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const dx = ((x + 0.5) / size - 0.5) * 2;
+      const dy = ((y + 0.5) / size - 0.5) * 2;
+      const radius = Math.sqrt(dx * dx + dy * dy);
+      const inner = smoothstep(0.7, 0.83, radius);
+      const outer = 1 - smoothstep(0.83, 1.08, radius);
+      const alpha = inner * outer;
+      const offset = (y * size + x) * 4;
+      pixels[offset] = 132;
+      pixels[offset + 1] = 194;
+      pixels[offset + 2] = 255;
+      pixels[offset + 3] = Math.round(alpha * 255);
+    }
+  }
+
+  const texture = new DataTexture(pixels, size, size, RGBAFormat, UnsignedByteType);
+  texture.magFilter = LinearFilter;
+  texture.minFilter = LinearFilter;
+  texture.wrapS = ClampToEdgeWrapping;
+  texture.wrapT = ClampToEdgeWrapping;
+  texture.generateMipmaps = false;
+  texture.needsUpdate = true;
+  return texture;
+}
 
 const SHARPEN_SHADER = {
   uniforms: {
@@ -63,7 +110,67 @@ const SHARPEN_SHADER = {
   `
 };
 
-export function LandingPostBloom({
+function LandingPostBloomLite({
+  composition,
+  quality
+}: Pick<LandingPostBloomProps, "composition" | "quality">) {
+  const enabled = quality.tier !== "fallback";
+  const sprite = useRef<Sprite>(null);
+  const bloomTexture = useMemo(() => createLiteBloomTexture(), []);
+
+  useEffect(() => () => bloomTexture.dispose(), [bloomTexture]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    window.__MiraLithLuBirthPostBloomActive = enabled;
+    window.__MiraLithLuBirthPostBloomMode = enabled ? "lite" : "off";
+    window.__MiraLithLuBirthPostBloomConfig = enabled
+      ? { radius: 0.35, resolutionScale: 0.5, strength: 0.07, threshold: 0.98 }
+      : undefined;
+    return () => {
+      window.__MiraLithLuBirthPostBloomActive = false;
+      window.__MiraLithLuBirthPostBloomMode = "off";
+      window.__MiraLithLuBirthPostBloomConfig = undefined;
+    };
+  }, [enabled]);
+
+  useFrame(() => {
+    if (!sprite.current) {
+      return;
+    }
+
+    const progress = getRuntimeOpeningProgress(0);
+    const fieldStage = smoothstep(0.16, 0.82, progress);
+    (sprite.current.material as SpriteMaterial).opacity = enabled
+      ? 0.085 + fieldStage * 0.015
+      : 0;
+  });
+
+  if (!enabled) {
+    return null;
+  }
+
+  const diameter = composition.earth.radius * 2.5;
+  return (
+    <sprite ref={sprite} scale={[diameter, diameter, 1]} renderOrder={18}>
+      <spriteMaterial
+        map={bloomTexture}
+        color="#8ac7ff"
+        opacity={0.085}
+        transparent
+        blending={AdditiveBlending}
+        depthTest={false}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </sprite>
+  );
+}
+
+function LandingPostBloomComposer({
   quality,
   emphasis = false,
   mode = "full"
@@ -124,11 +231,20 @@ export function LandingPostBloom({
 
     window.__MiraLithLuBirthPostBloomActive = enabled;
     window.__MiraLithLuBirthPostBloomMode = enabled ? mode : "off";
+    window.__MiraLithLuBirthPostBloomConfig = enabled
+      ? {
+          radius: mode === "lite" ? 0.35 : emphasis ? 0.48 : 0.38,
+          resolutionScale,
+          strength: mode === "lite" ? 0.07 : emphasis ? 0.12 : 0.072,
+          threshold: mode === "lite" ? 0.98 : emphasis ? 0.9 : 0.925
+        }
+      : undefined;
     return () => {
       window.__MiraLithLuBirthPostBloomActive = false;
       window.__MiraLithLuBirthPostBloomMode = "off";
+      window.__MiraLithLuBirthPostBloomConfig = undefined;
     };
-  }, [enabled, mode]);
+  }, [emphasis, enabled, mode, resolutionScale]);
 
   useFrame((_state, delta) => {
     if (!enabled) {
@@ -167,4 +283,12 @@ export function LandingPostBloom({
   }, 1);
 
   return null;
+}
+
+export function LandingPostBloom(props: LandingPostBloomProps) {
+  if (props.mode === "lite") {
+    return <LandingPostBloomLite composition={props.composition} quality={props.quality} />;
+  }
+
+  return <LandingPostBloomComposer {...props} />;
 }

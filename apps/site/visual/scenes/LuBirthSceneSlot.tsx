@@ -20,7 +20,9 @@ import type {
   LandingAtmospherePolicy,
   LandingAtmosphereVariant,
   LandingAuroraProfile,
+  LandingBloomMode,
   LandingCloseAtmosphereTuning,
+  LandingCloudMode,
   LandingCompositionOverrides,
   EarthMoonHeroMode,
   LandingLocationConfig,
@@ -90,7 +92,8 @@ const HIGH_DETAIL_REFERENCE_EARTH_ASSETS: Partial<LandingAssetManifest> = {
   }
 };
 
-const VISITOR_LOCATION_CACHE_KEY = "miralith:lubirth-runtime-location:v1";
+const VISITOR_LOCATION_CACHE_KEY = "miralith:lubirth-runtime-location:v2";
+const VISITOR_LOCATION_CACHE_TTL_MS = 6 * 60 * 60 * 1_000;
 // Matches the reference demo's default slider sunTheta=80, sunPhi=3 without tying light to the camera.
 const REFERENCE_ATMOSPHERE_SUN_DIRECTION: [number, number, number] = [0.34, 0.18, 0.923];
 
@@ -200,6 +203,24 @@ function readQualityOverride(): LandingQuality | undefined {
   return quality === "high" || quality === "medium" || quality === "low" || quality === "auto" ? quality : undefined;
 }
 
+function readBloomModeOverride(): LandingBloomMode | undefined {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+
+  const mode = new URLSearchParams(window.location.search).get("bloom");
+  return mode === "off" || mode === "lite" || mode === "full" ? mode : undefined;
+}
+
+function readCloudModeOverride(): LandingCloudMode | undefined {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+
+  const mode = new URLSearchParams(window.location.search).get("cloud");
+  return mode === "surface" || mode === "shell-lite" || mode === "lookdev" ? mode : undefined;
+}
+
 function readAuroraProfile(): LandingAuroraProfile {
   if (typeof window === "undefined") {
     return "hero";
@@ -276,7 +297,10 @@ function readSunDateOverride(): string | undefined {
 }
 
 function isAtmosphereSpikeRoute() {
-  return typeof window !== "undefined" && window.location.pathname.includes("/lubirth-atmosphere-spike");
+  return typeof window !== "undefined" && (
+    window.location.pathname.includes("/lubirth-atmosphere-spike") ||
+    window.location.pathname.includes("/lubirth-close-atmosphere-spike")
+  );
 }
 
 function hasExplicitRuntimeSolarInput() {
@@ -365,11 +389,14 @@ function readCachedVisitorLocation(endpoint: string): { endpoint: string; locati
     }
 
     const cached = JSON.parse(raw) as {
+      cachedAt?: number;
       endpoint?: string;
       location?: Partial<LandingLocationConfig>;
     };
     const location = cached.location;
     if (
+      typeof cached.cachedAt !== "number" ||
+      Date.now() - cached.cachedAt > VISITOR_LOCATION_CACHE_TTL_MS ||
       cached.endpoint !== endpoint ||
       !location ||
       typeof location.latitudeDeg !== "number" ||
@@ -399,7 +426,7 @@ function cacheVisitorLocation(endpoint: string, location: LandingLocationConfig)
   }
 
   try {
-    const payload = JSON.stringify({ endpoint, location });
+    const payload = JSON.stringify({ cachedAt: Date.now(), endpoint, location });
     window.sessionStorage.setItem(VISITOR_LOCATION_CACHE_KEY, payload);
     window.localStorage.setItem(VISITOR_LOCATION_CACHE_KEY, payload);
   } catch {
@@ -476,6 +503,8 @@ export function LuBirthSceneSlot({
 }: LuBirthSceneSlotProps) {
   const reducedMotion = useReducedMotionPreference();
   const qualityOverride = readQualityOverride();
+  const bloomModeOverride = readBloomModeOverride();
+  const cloudModeOverride = readCloudModeOverride();
   const auroraProfile = readAuroraProfile();
   const renderProfileOverride = readRenderProfileOverride();
   const activeRenderProfile = renderProfileOverride ?? renderProfile;
@@ -493,12 +522,19 @@ export function LuBirthSceneSlot({
       : null;
   const qualityProfile = useQualityTier(qualityOverride ?? quality, reducedMotion);
   const visualPolicy = useMemo(
-    () => resolveLandingVisualPolicy({
-      runtimeProfile,
-      qualityTier: qualityProfile.tier,
-      renderProfile: activeRenderProfile ?? "nasa"
-    }),
-    [activeRenderProfile, qualityProfile.tier, runtimeProfile]
+    () => {
+      const policy = resolveLandingVisualPolicy({
+        runtimeProfile,
+        qualityTier: qualityProfile.tier,
+        renderProfile: activeRenderProfile ?? "nasa"
+      });
+      return {
+        ...policy,
+        ...(bloomModeOverride ? { bloomMode: bloomModeOverride } : {}),
+        ...(cloudModeOverride ? { cloudMode: cloudModeOverride } : {})
+      };
+    },
+    [activeRenderProfile, bloomModeOverride, cloudModeOverride, qualityProfile.tier, runtimeProfile]
   );
   const requestedCloseAtmosphereTuning = useMemo<LandingCloseAtmosphereTuning>(
     () => resolveLandingCloseAtmosphereTuning({
@@ -692,6 +728,10 @@ export function LuBirthSceneSlot({
           typeof payload.latitudeDeg !== "number" ||
           typeof payload.longitudeDeg !== "number"
         ) {
+          if (!cancelled) {
+            setVisitorLocationState(null);
+            window.__MiraLithLuBirthRuntimeLocation = undefined;
+          }
           return;
         }
 

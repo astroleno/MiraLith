@@ -3,6 +3,11 @@ import * as luBirthSceneSlot from "../../apps/site/visual/scenes/LuBirthSceneSlo
 import * as landingCloudLayer from "../../packages/lubirth-hero/src/LandingCloudLayer";
 import { resolveLuBirthAtmospherePolicy } from "../../packages/lubirth-hero/src/atmospherePolicy";
 import { resolveLandingVisualPolicy } from "../../packages/lubirth-hero/src/landingVisualPolicy";
+import {
+  EMPTY_CLOSE_ATMOSPHERE_TUNING,
+  HOME_CLOSE_ATMOSPHERE_TUNING,
+  resolveLandingCloseAtmosphereTuning
+} from "../../packages/lubirth-hero/src/landingAtmosphereTuning";
 import type { LuBirthAtmospherePolicyInput } from "../../packages/lubirth-hero/src/atmospherePolicy";
 
 const baseInput: LuBirthAtmospherePolicyInput = {
@@ -67,6 +72,20 @@ test("keeps study and debug routes on full lookdev policies", () => {
     atmosphereMode: "lookdev",
     bloomMode: "full"
   });
+});
+
+test("gives production home an explicit close atmosphere preset", () => {
+  const homeTuning = resolveLandingCloseAtmosphereTuning({ runtimeProfile: "home-lite" });
+  const studyTuning = resolveLandingCloseAtmosphereTuning({ runtimeProfile: "full" });
+
+  expect(homeTuning).toEqual(HOME_CLOSE_ATMOSPHERE_TUNING);
+  expect(homeTuning.edgeGlowStrength).toBeGreaterThan(0);
+  expect(homeTuning.groundProjectionStrength).toBeGreaterThan(0);
+  expect(studyTuning).toEqual(EMPTY_CLOSE_ATMOSPHERE_TUNING);
+  expect(resolveLandingCloseAtmosphereTuning({
+    runtimeProfile: "home-lite",
+    overrides: { edgeGlowStrength: 1.4 }
+  }).edgeGlowStrength).toBe(1.4);
 });
 
 test("explicit stack policy stays on the stack path", () => {

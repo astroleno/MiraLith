@@ -305,6 +305,7 @@ export function EarthMoonScene({
     window.__MiraLithLuBirthCloudShellsActive = showCloudShells;
     if (activeVisualPolicy.bloomMode === "off") {
       window.__MiraLithLuBirthPostBloomActive = false;
+      window.__MiraLithLuBirthPostBloomMode = "off";
     }
 
     return () => {
@@ -677,6 +678,7 @@ export function EarthMoonScene({
               paused={paused}
               cloudDeckEnabled={cloudDeckEnabled}
               cloudMode={activeVisualPolicy.cloudMode}
+              closeAtmosphereTuning={activeCloseAtmosphereTuning}
             />
             {cloudDeckEnabled && debugClouds && assets.earthCloudDeck ? (
               useCloudDeckV2 ? (
@@ -788,6 +790,14 @@ export function EarthMoonScene({
             closeAtmosphereTuning={activeCloseAtmosphereTuning}
           />
         ) : null}
+        {showAtmosphereStack && activeVisualPolicy.bloomMode !== "off" ? (
+          <LandingPostBloom
+            composition={composition}
+            quality={quality}
+            emphasis={debugAtmosphere}
+            mode={activeVisualPolicy.bloomMode}
+          />
+        ) : null}
         {debugMianyang && showEarth ? (
           <LocationDebugMarker radius={composition.earth.radius} direction={activeLocationDirection} />
         ) : null}
@@ -831,13 +841,6 @@ export function EarthMoonScene({
         />
       ) : null}
 
-      {showAtmosphereStack && activeVisualPolicy.bloomMode !== "off" ? (
-        <LandingPostBloom
-          quality={quality}
-          emphasis={debugAtmosphere}
-          mode={activeVisualPolicy.bloomMode}
-        />
-      ) : null}
       {showVolumetricAtmosphere ? (
         <LandingVolumetricAtmospherePass
           composition={composition}

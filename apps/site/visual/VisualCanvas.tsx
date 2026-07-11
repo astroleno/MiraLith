@@ -47,6 +47,7 @@ class VisualCanvasErrorBoundary extends Component<
 }
 
 interface VisualCanvasProps {
+  antialias?: boolean;
   ariaLabel?: string;
   decorative?: boolean;
   dpr?: number | [number, number];
@@ -55,6 +56,7 @@ interface VisualCanvasProps {
 }
 
 export function VisualCanvas({
+  antialias = true,
   ariaLabel,
   decorative = true,
   dpr = [1, 1.1],
@@ -85,7 +87,7 @@ export function VisualCanvas({
       <VisualCanvasErrorBoundary fallback={fallback}>
         <Canvas
           dpr={dpr}
-          gl={{ antialias: true, alpha: true, powerPreference: "high-performance", preserveDrawingBuffer }}
+          gl={{ antialias, alpha: true, powerPreference: "high-performance", preserveDrawingBuffer }}
           camera={{ fov: 42, position: [0, 2.8, 7.4], near: 0.1, far: 90 }}
           onCreated={({ gl }) => {
             markCanvasCreated();
