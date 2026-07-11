@@ -1,5 +1,6 @@
 "use client";
 
+import { useReducedMotionPreference } from "@miralith/visual-core";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
 import { RadioGagaCopyLayer } from "./RadioGagaCopyLayer";
@@ -76,6 +77,7 @@ export function RadioGagaExperience({
 }: RadioGagaExperienceProps) {
   const rootRef = useRef<HTMLElement | null>(null);
   const observedPresence = useHomeChapterPresence(rootRef, host === "home");
+  const reducedMotion = useReducedMotionPreference();
   const presence: RadioGagaChapterPresence = host === "standalone"
     ? STANDALONE_PRESENCE
     : observedPresence;
@@ -146,6 +148,8 @@ export function RadioGagaExperience({
       data-radio-gaga-experience={host}
       data-radio-gaga-host={host}
       data-radio-gaga-runtime="case-study"
+      data-radio-gaga-motion={reducedMotion ? "reduced" : "full"}
+      data-radio-gaga-particles={reducedMotion ? "disabled" : "enabled"}
     >
       {showFallback
         ? fallback

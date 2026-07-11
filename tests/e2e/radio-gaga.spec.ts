@@ -70,6 +70,17 @@ test("radioGAGA fallback keeps chapter readable", async ({ page }) => {
   await expect(fallback.getByText("一台让距离变近的小机器。")).toBeVisible();
 });
 
+test("Radio Gaga reduced motion keeps the story readable without particles", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/radio-gaga");
+
+  await expect(page.locator('[data-radio-gaga-motion="reduced"]')).toBeVisible();
+  await expect(page.locator('[data-radio-gaga-particles="disabled"]')).toBeVisible();
+  await expect(
+    page.getByText("把附近发生的事，变成家里听得懂的一句提醒", { exact: true })
+  ).toBeVisible();
+});
+
 test("radioGAGA forced fallback is present in the initial server HTML", async ({ request }) => {
   const response = await request.get("/radio-gaga?visual=fallback");
   await expect(response).toBeOK();

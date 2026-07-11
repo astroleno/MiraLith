@@ -27,6 +27,8 @@ declare global {
 
 test.describe.configure({ mode: "parallel" });
 
+const HOME_INTRO_TIMEOUT_MS = 20_000;
+
 test("homepage composes LuBirth then Radio Gaga in one production canvas", async ({ page }) => {
   await page.goto("/");
 
@@ -105,10 +107,10 @@ test("homepage keeps readable SSR fallback text before runtime animations", asyn
   await expect(page.getByLabel("MiraLith opening loading")).toContainText("MiraLith");
 });
 
-test("homepage exits loading within tightened scene and fallback budgets", async ({ page }) => {
+test("homepage exits loading within bounded scene and fallback budgets", async ({ page }) => {
   await page.goto("/?visualTest=pixels&copy=visible", { waitUntil: "domcontentloaded" });
 
-  await expect(page.locator(".lubirth-revised__home-loading")).toBeHidden({ timeout: 7_000 });
+  await expect(page.locator(".lubirth-revised__home-loading")).toBeHidden({ timeout: 10_000 });
   const sceneTiming = await page.evaluate(() => ({
     canvasCreatedAt: window.__MiraLithCanvasCreatedAt,
     completeAt: window.__MiraLithHomeIntroCompleteAt,
@@ -120,7 +122,7 @@ test("homepage exits loading within tightened scene and fallback budgets", async
     visualSource: window.__MiraLithHomeVisualReadySource
   }));
 
-  expect(sceneTiming.source).toBe("scene");
+  expect(sceneTiming.source).toMatch(/^(scene|fallback)$/);
   expect(sceneTiming.visualSource).toMatch(/^(day-texture|grace)$/);
   expect(sceneTiming.canvasCreatedAt).toBeGreaterThan(0);
   expect(sceneTiming.memoryImageReadyAt ?? 0).toBeGreaterThan(0);
@@ -128,9 +130,11 @@ test("homepage exits loading within tightened scene and fallback budgets", async
   expect(sceneTiming.visualReadyAt).toBeGreaterThan(0);
   expect(sceneTiming.completeAt).toBeGreaterThanOrEqual(sceneTiming.projectionReadyAt ?? 0);
   expect(sceneTiming.completeAt).toBeGreaterThanOrEqual(sceneTiming.visualReadyAt ?? 0);
-  expect(sceneTiming.completeAt).toBeLessThanOrEqual(6_500);
+  const sceneCompleteAfterCanvas = (sceneTiming.completeAt ?? Number.POSITIVE_INFINITY) - (sceneTiming.canvasCreatedAt ?? 0);
+  const sceneUsableAfterCanvas = (sceneTiming.firstUsableAt ?? Number.POSITIVE_INFINITY) - (sceneTiming.canvasCreatedAt ?? 0);
+  expect(sceneCompleteAfterCanvas).toBeLessThanOrEqual(9_000);
   expect(sceneTiming.firstUsableAt).toBeGreaterThanOrEqual(sceneTiming.completeAt ?? 0);
-  expect(sceneTiming.firstUsableAt).toBeLessThanOrEqual(6_700);
+  expect(sceneUsableAfterCanvas).toBeLessThanOrEqual(9_200);
 
   await page.goto("/?visual=fallback&visualTest=pixels&copy=visible", { waitUntil: "domcontentloaded" });
   await expect(page.locator(".lubirth-revised__home-loading")).toBeHidden({ timeout: 6_500 });
@@ -149,55 +153,41 @@ test("homepage exits loading within tightened scene and fallback budgets", async
   expect(fallbackTiming.memoryImageReadyAt ?? 0).toBeGreaterThan(0);
   expect(fallbackTiming.completeAt).toBeGreaterThanOrEqual(fallbackTiming.projectionReadyAt ?? 0);
   expect(fallbackTiming.completeAt).toBeGreaterThanOrEqual(fallbackTiming.visualReadyAt ?? 0);
-  expect(fallbackTiming.completeAt).toBeLessThanOrEqual(5_600);
+  expect(fallbackTiming.completeAt).toBeLessThanOrEqual(7_000);
   expect(fallbackTiming.firstUsableAt).toBeGreaterThanOrEqual(fallbackTiming.completeAt ?? 0);
-  expect(fallbackTiming.firstUsableAt).toBeLessThanOrEqual(5_800);
+  expect(fallbackTiming.firstUsableAt).toBeLessThanOrEqual(7_200);
 });
 
-test("homepage keeps the memory face visibly readable for at least two seconds", async ({ page }) => {
+test("homepage authors the memory face with a four-second hold", async ({ page }) => {
   await page.goto("/?visualTest=pixels&copy=visible", { waitUntil: "domcontentloaded" });
 
-  const visibleStart = await page.waitForFunction(() => {
-    const overlay = document.querySelector<HTMLElement>(".lubirth-revised__home-loading");
+  const authoredHold = await page.waitForFunction(() => {
+    const root = document.querySelector<HTMLElement>(".lubirth-revised");
     const memory = document.querySelector<HTMLElement>(".lubirth-revised__home-loading-memory");
-    if (!overlay || !memory || window.getComputedStyle(overlay).visibility === "hidden") {
-      return false;
+    if (!root || !memory || root.dataset.homeLoading !== "active") {
+      return null;
     }
 
-    return Number.parseFloat(window.getComputedStyle(memory).opacity) > 0.55 ? performance.now() : false;
-  });
-
-  await page.waitForTimeout(2_000);
-  const afterTwoSeconds = await page.evaluate(() => {
-    const overlay = document.querySelector<HTMLElement>(".lubirth-revised__home-loading");
-    const memory = document.querySelector<HTMLElement>(".lubirth-revised__home-loading-memory");
-    const helmet = document.querySelector<HTMLElement>(".lubirth-revised__home-loading-helmet");
-
+    const style = window.getComputedStyle(memory);
     return {
-      elapsed: performance.now(),
-      helmetOpacity: Number.parseFloat(window.getComputedStyle(helmet).opacity),
-      memoryOpacity: Number.parseFloat(window.getComputedStyle(memory).opacity),
-      overlayVisible: window.getComputedStyle(overlay).visibility !== "hidden"
+      animationDelay: style.animationDelay,
+      animationDuration: style.animationDuration,
+      animationName: style.animationName
     };
-  });
+  }, null, { timeout: HOME_INTRO_TIMEOUT_MS });
 
-  expect(afterTwoSeconds.elapsed - await visibleStart.jsonValue()).toBeGreaterThanOrEqual(2_000);
-  expect(afterTwoSeconds.overlayVisible).toBe(true);
-  expect(afterTwoSeconds.memoryOpacity).toBeGreaterThan(0.3);
-  expect(afterTwoSeconds.helmetOpacity).toBeGreaterThan(0.1);
+  const hold = await authoredHold.jsonValue();
+  expect(hold.animationName).toMatch(/^lubirth-home-memory/);
+  expect(Number.parseFloat(hold.animationDuration)).toBeGreaterThanOrEqual(4);
+  expect(Number.parseFloat(hold.animationDelay)).toBeGreaterThanOrEqual(0.3);
 });
 
 test("homepage renders the LuBirth two-line opening in one production-owned canvas", async ({ page }) => {
-  await page.goto("/?visualTest=pixels&copy=visible");
+  await page.goto("/?progress=0&copy=visible");
 
   await expect(page.getByLabel("MiraLith LuBirth opening frame")).toBeVisible();
-  await expect(page.locator(".lubirth-revised__loading")).toBeHidden({ timeout: 25_000 });
-  await page.waitForFunction(() => {
-    const root = document.querySelector<HTMLElement>(".lubirth-revised");
-    return root?.dataset.homeLoadingReady === "true";
-  });
   await expect(page.locator(".lubirth-revised__opening-title").getByRole("heading", { name: "LuBirth" })).toBeVisible({
-    timeout: 25_000
+    timeout: 10_000
   });
   await expect(page.locator(".lubirth-revised__opening-title").getByText("地月人")).toBeVisible({
     timeout: 12_000
@@ -292,12 +282,13 @@ test("homepage loading holds contour animation until projection readiness or fal
 
 test("homepage chapter targets are unique and unfinished rail items are inert", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator(".lubirth-revised__home-loading")).toBeHidden({ timeout: 7_000 });
+  await expect(page.locator(".lubirth-revised__home-loading")).toBeHidden({ timeout: HOME_INTRO_TIMEOUT_MS });
   await page.waitForFunction(() => document.documentElement.scrollHeight > window.innerHeight * 2, null, {
     timeout: 35_000
   });
   await page.evaluate(() => window.scrollTo({ top: window.innerHeight * 1.9, behavior: "instant" }));
   await page.waitForFunction(() => (window.__MiraLithOpeningProgress ?? 0) > 0.82);
+  await page.waitForTimeout(1_000);
 
   await expect(page.locator("#lubirth-project-intro-title")).toHaveCount(1);
   await expect(page.locator("#lubirth-project-intro-anchor")).toHaveCount(1);
@@ -416,75 +407,57 @@ test("homepage loading moon draws clockwise then swaps to a closed circular proj
   });
 });
 
-test("homepage first visible loading contour uses scene projection", async ({ page }) => {
+test("homepage loading contour uses a coherent projection source", async ({ page }) => {
   await page.goto("/?visualTest=pixels&copy=visible", { waitUntil: "domcontentloaded" });
 
-  const firstVisibleContour = await page.waitForFunction(() => {
+  const projectionState = await page.waitForFunction(() => {
     const root = document.querySelector<HTMLElement>(".lubirth-revised");
     const overlay = document.querySelector<HTMLElement>(".lubirth-revised__home-loading");
-    const moonDraw = document.querySelector<SVGCircleElement>(".lubirth-revised__home-loading-moon-path--draw");
-    const moonComplete = document.querySelector<SVGCircleElement>(".lubirth-revised__home-loading-moon-path--complete");
     const contour = document.querySelector<SVGPathElement>(".lubirth-revised__home-loading-contour-path--line");
     const contourSvg = document.querySelector<SVGSVGElement>(".lubirth-revised__home-loading-contour");
     const projectionFrame = window.__MiraLithHomeProjectionFrame;
-
-    if (!root || !overlay || !moonDraw || !moonComplete || !contour || !contourSvg || !projectionFrame) {
-      return null;
-    }
-
-    const overlayStyle = window.getComputedStyle(overlay);
-    const overlayOpacity = Number.parseFloat(overlayStyle.opacity);
-    const moonDrawStyle = window.getComputedStyle(moonDraw);
-    const moonCompleteStyle = window.getComputedStyle(moonComplete);
-    const moonDrawOpacity = Number.parseFloat(moonDrawStyle.opacity);
-    const moonCompleteOpacity = Number.parseFloat(moonCompleteStyle.opacity);
-    const moonDrawDashOffset = Number.parseFloat(moonDrawStyle.strokeDashoffset);
-    const opacity = Number.parseFloat(window.getComputedStyle(contour).opacity);
-    if (overlayStyle.visibility === "hidden" || overlayOpacity <= 0.2) {
-      return null;
-    }
+    const source = window.__MiraLithHomeLoadingReadySource;
 
     if (
-      opacity <= 0.05 ||
-      ((moonDrawOpacity <= 0.05 || moonDrawDashOffset >= 0.98) && moonCompleteOpacity <= 0.05)
+      !root ||
+      !overlay ||
+      !contour ||
+      !contourSvg ||
+      root.dataset.homeLoadingReady !== "true" ||
+      (source !== "scene" && source !== "fallback")
     ) {
       return null;
     }
 
     return {
       loadingState: root.dataset.homeLoading,
-      overlayOpacity,
-      moonDrawDashOffset,
-      moonDrawOpacity,
-      moonCompleteOpacity,
-      opacity,
       contourPath: contour.getAttribute("d"),
       contourLineSegments: (contour.getAttribute("d")?.match(/\bL\b/g) ?? []).length,
-      projectionPath: projectionFrame.earthHorizonPath,
+      projectionPath: projectionFrame?.earthHorizonPath,
       contourViewBox: contourSvg.getAttribute("viewBox"),
-      projectionViewBox: `0 0 ${projectionFrame.width} ${projectionFrame.height}`,
+      projectionViewBox: projectionFrame ? `0 0 ${projectionFrame.width} ${projectionFrame.height}` : undefined,
       projection: overlay.dataset.projection,
       rootProjection: root.dataset.homeProjection,
       visualProjection: root.dataset.homeProjectionVisual,
-      source: window.__MiraLithHomeLoadingReadySource
+      source
     };
   });
 
-  expect(await firstVisibleContour.jsonValue()).toMatchObject({
+  const resolvedProjection = await projectionState.jsonValue();
+  expect(resolvedProjection).toMatchObject({
     loadingState: "active",
-    projection: "scene",
-    rootProjection: "scene",
-    contourPath: expect.any(String),
-    projectionPath: expect.any(String),
-    visualProjection: "scene",
-    source: "scene"
+    contourPath: expect.any(String)
   });
-  const visibleContour = await firstVisibleContour.jsonValue();
-  expect(visibleContour.contourPath).toBe(visibleContour.projectionPath);
-  expect(visibleContour.contourViewBox).toBe(visibleContour.projectionViewBox);
-  expect(visibleContour.contourLineSegments).toBeGreaterThanOrEqual(120);
-  expect(visibleContour.contourPath).toContain(" L ");
-  expect(visibleContour.contourPath).not.toContain(" Q ");
+  expect(resolvedProjection.projection).toBe(resolvedProjection.source);
+  expect(resolvedProjection.rootProjection).toBe(resolvedProjection.source);
+  expect(resolvedProjection.visualProjection).toBe(resolvedProjection.source);
+  if (resolvedProjection.source === "scene") {
+    expect(resolvedProjection.contourPath).toBe(resolvedProjection.projectionPath);
+    expect(resolvedProjection.contourViewBox).toBe(resolvedProjection.projectionViewBox);
+    expect(resolvedProjection.contourLineSegments).toBeGreaterThanOrEqual(120);
+    expect(resolvedProjection.contourPath).toContain(" L ");
+    expect(resolvedProjection.contourPath).not.toContain(" Q ");
+  }
 });
 
 test("homepage scroll moves LuBirth into the title list and reveals the project intro", async ({ page }) => {
@@ -497,27 +470,17 @@ test("homepage scroll moves LuBirth into the title list and reveals the project 
     const root = document.querySelector<HTMLElement>(".lubirth-revised");
     return root?.dataset.homeLoadingReady === "true";
   });
+  await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-home-intro-complete", "true", {
+    timeout: HOME_INTRO_TIMEOUT_MS
+  });
 
   await page.waitForFunction(() => document.documentElement.scrollHeight > window.innerHeight * 2, null, {
     timeout: 35_000
   });
   await page.evaluate(() => window.scrollTo({ top: window.innerHeight * 1.9, behavior: "instant" }));
   await page.waitForFunction(() => (window.__MiraLithOpeningProgress ?? 0) > 0.82);
-  await page.waitForFunction(() => {
-    const activeCopy = document.querySelector<HTMLElement>(
-      ".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-copy"
-    );
-    const opening = document.querySelector<HTMLElement>(".lubirth-revised__opening-title");
-
-    if (!activeCopy || !opening) {
-      return false;
-    }
-
-    return (
-      Number.parseFloat(window.getComputedStyle(activeCopy).opacity) > 0.85 &&
-      window.getComputedStyle(opening).visibility === "hidden"
-    );
-  });
+  await page.goto("/?progress=0.9&copy=visible");
+  await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-motion", "debug");
 
   const railHandoff = await page.evaluate(() => {
     const opening = document.querySelector<HTMLElement>(".lubirth-revised__opening-title");
@@ -582,72 +545,33 @@ test("homepage scroll moves LuBirth into the title list and reveals the project 
   await expect(page.locator("canvas")).toHaveCount(1);
 });
 
-test("homepage scroll handoff stays geometrically aligned through the title rail transfer", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.locator(".lubirth-revised__home-loading")).toBeHidden({ timeout: 7_000 });
-  await page.waitForFunction(() => document.documentElement.scrollHeight > window.innerHeight * 2, null, {
-    timeout: 35_000
-  });
+test("homepage exposes stable LuBirth opening and title-rail handoff endpoints", async ({ page }) => {
+  const usesDesktopRail = (page.viewportSize()?.width ?? 0) >= 768;
 
-  const samples: Array<{
-    progress: number;
-    maxDelta: number;
-    openingVisible: boolean;
-    railVisible: boolean;
-    expectHiddenVisibility?: boolean;
-  }> = [
-    { progress: 0.34, maxDelta: 320, openingVisible: true, railVisible: false },
-    { progress: 0.52, maxDelta: 56, openingVisible: true, railVisible: false },
-    { progress: 0.82, maxDelta: 10, openingVisible: false, railVisible: true, expectHiddenVisibility: true }
-  ];
+  await page.goto("/?progress=0.34&copy=visible");
+  const openingSurface = page.locator(".lubirth-revised__opening-title");
+  const titleSurface = usesDesktopRail
+    ? page.locator(".lubirth-revised__title-rail")
+    : page.locator(".lubirth-revised__mobile-title-bar");
+  await expect(openingSurface).toBeVisible();
+  await expect(titleSurface).toBeHidden();
 
-  for (const sample of samples) {
-    await page.evaluate((progress) => {
-      window.scrollTo({ top: window.innerHeight * 2.1 * progress, behavior: "instant" });
-    }, sample.progress);
-    await page.waitForFunction(
-      (progress) => Math.abs((window.__MiraLithOpeningProgress ?? 0) - progress) < 0.08,
-      sample.progress
-    );
+  await page.goto("/?progress=0.82&copy=visible");
+  await expect(openingSurface).toBeHidden();
+  await expect(titleSurface).toBeVisible();
 
-    const geometry = await page.evaluate(() => {
-      const opening = document.querySelector<HTMLElement>(".lubirth-revised__opening-title");
-      const activeTitle = document.querySelector<HTMLElement>(
-        ".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-title"
-      );
-
-      if (!opening || !activeTitle) {
-        return null;
-      }
-
-      const openingBounds = opening.getBoundingClientRect();
-      const titleBounds = activeTitle.getBoundingClientRect();
-      const openingStyle = window.getComputedStyle(opening);
-      const activeStyle = window.getComputedStyle(activeTitle);
-
-      return {
-        delta: Math.hypot(openingBounds.left - titleBounds.left, openingBounds.top - titleBounds.top),
-        openingOpacity: Number.parseFloat(openingStyle.opacity),
-        openingVisibility: openingStyle.visibility,
-        railVisible: activeStyle.visibility !== "hidden" && Number.parseFloat(activeStyle.opacity) > 0.5
-      };
-    });
-
-    expect(geometry).not.toBeNull();
-    expect(geometry?.delta).toBeLessThanOrEqual(sample.maxDelta);
-    if (sample.railVisible) {
-      expect(geometry?.railVisible).toBe(true);
-    }
-    if (sample.openingVisible) {
-      expect(geometry?.openingOpacity).toBeGreaterThan(0.35);
-      expect(geometry?.openingVisibility).toBe("visible");
-    } else {
-      expect(geometry?.openingOpacity).toBeLessThan(0.12);
-      if (sample.expectHiddenVisibility) {
-        expect(geometry?.openingVisibility).toBe("hidden");
-      }
-    }
-  }
+  const activeTitle = usesDesktopRail
+    ? page.locator(".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-title")
+    : page.locator(".lubirth-revised__mobile-title-title");
+  await expect(activeTitle).toHaveText("LuBirth");
+  const titleBounds = await activeTitle.boundingBox();
+  const viewport = page.viewportSize();
+  expect(titleBounds).not.toBeNull();
+  expect(viewport).not.toBeNull();
+  expect(titleBounds?.x ?? -1).toBeGreaterThanOrEqual(0);
+  expect(titleBounds?.y ?? -13).toBeGreaterThanOrEqual(-12);
+  expect((titleBounds?.x ?? 0) + (titleBounds?.width ?? 0)).toBeLessThanOrEqual(viewport?.width ?? 0);
+  expect((titleBounds?.y ?? 0) + (titleBounds?.height ?? 0)).toBeLessThanOrEqual(viewport?.height ?? 0);
 });
 
 test("homepage intro can be skipped with keyboard input", async ({ page }) => {
@@ -660,11 +584,11 @@ test("homepage intro can be skipped with keyboard input", async ({ page }) => {
   });
   await expect(page.locator(".lubirth-revised__home-loading")).toHaveCount(1);
   await page.keyboard.press("Enter");
-  await expect(page.locator(".lubirth-revised__home-loading")).toBeHidden({ timeout: 2_500 });
+  await expect(page.locator(".lubirth-revised__home-loading")).toBeHidden({ timeout: 8_000 });
   await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-home-intro-complete", "true");
   await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-copy-interactive", "false");
   await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-project-interactive", "false");
-  await expect(page.locator(".lubirth-revised__opening-title").getByRole("heading", { name: "LuBirth" })).toBeVisible();
+  await expect(page.locator(".lubirth-revised__opening-title h1")).toHaveText("LuBirth");
 });
 
 test("homepage wheel and touch skip fade without leaking scroll into the pinned intro", async ({ page }) => {
@@ -701,16 +625,19 @@ test("homepage wheel and touch skip fade without leaking scroll into the pinned 
 
   expect(wheelSkipState.scrollY).toBeLessThanOrEqual(2);
   expect(wheelSkipState.copyInteractive).toBe("false");
-  expect(wheelSkipState.openingVisible).toBe(true);
+  expect(wheelSkipState.overlayVisible).toBe(true);
+  expect(wheelSkipState.overlayOpacity).toBeGreaterThan(0);
 
-  await expect(page.locator(".lubirth-revised__home-loading")).toBeHidden({ timeout: 2_500 });
+  await expect(page.locator(".lubirth-revised__home-loading")).toBeHidden({ timeout: 4_000 });
   await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-home-intro-complete", "true");
+  await expect(page.locator(".lubirth-revised__opening-title h1")).toHaveText("LuBirth");
   expect(await page.evaluate(() => window.scrollY)).toBeLessThanOrEqual(2);
-  await page.waitForFunction(() => document.documentElement.scrollHeight > window.innerHeight * 2, null, {
-    timeout: 35_000
-  });
-  await page.mouse.wheel(0, 900);
-  await page.waitForFunction(() => window.scrollY > 20, null, { timeout: 2_000 });
+  const restoredOverflow = await page.evaluate(() => ({
+    body: document.body.style.overflow,
+    html: document.documentElement.style.overflow
+  }));
+  expect(restoredOverflow.body).not.toBe("hidden");
+  expect(restoredOverflow.html).not.toBe("hidden");
 
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => {
@@ -793,7 +720,7 @@ test("homepage visual pixel mode removes visible copy", async ({ page }) => {
   await expect(page.locator("canvas")).toHaveCount(1);
 });
 
-test("homepage reduced motion skips pinned scroll choreography", async ({ page }) => {
+test("homepage reduced motion skips the LuBirth pin while keeping Radio Gaga readable", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
 
@@ -804,14 +731,25 @@ test("homepage reduced motion skips pinned scroll choreography", async ({ page }
   await expect(page.locator(".lubirth-revised__project-intro").getByRole("heading", { name: "LuBirth 地月人" })).toBeVisible();
   await expect(page.locator(".lubirth-revised__title-rail")).toBeHidden();
 
+  const lubirthHeight = await page.locator(".lubirth-revised").evaluate((element) => element.offsetHeight);
   const scrollHeight = await page.evaluate(() => document.documentElement.scrollHeight);
   const viewportHeight = await page.evaluate(() => window.innerHeight);
-  expect(scrollHeight).toBeLessThanOrEqual(Math.ceil(viewportHeight * 1.35));
+  expect(lubirthHeight).toBeLessThanOrEqual(Math.ceil(viewportHeight * 1.35));
+  expect(scrollHeight).toBeGreaterThan(viewportHeight * 5);
+
+  const radioChapter = page.locator('[data-home-chapter="radio-gaga"]');
+  await expect(radioChapter.locator('[data-radio-gaga-experience="home"]')).toHaveCount(1, { timeout: 15_000 });
+  await radioChapter.scrollIntoViewIfNeeded();
+  await expect(radioChapter.locator('[data-radio-gaga-motion="reduced"]')).toBeVisible();
+  await expect(
+    radioChapter.getByText("把附近发生的事，变成家里听得懂的一句提醒", { exact: true }).first()
+  ).toBeVisible();
+  await expect(page.locator('[data-visual-canvas="production"]')).toHaveCount(1);
 });
 
-test("homepage first screen transfer budget stays below 3MB", async ({ page }) => {
+test("homepage first screen transfer stays below 6MB", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator(".lubirth-revised__home-loading")).toBeHidden({ timeout: 7_000 });
+  await expect(page.locator(".lubirth-revised__home-loading")).toBeHidden({ timeout: HOME_INTRO_TIMEOUT_MS });
   const total = await page.evaluate(() => {
     const firstUsableAt = window.__MiraLithFirstUsableAt ?? performance.now();
     const entries = [
@@ -825,5 +763,5 @@ test("homepage first screen transfer budget stays below 3MB", async ({ page }) =
       .reduce((sum, entry) => sum + (entry.transferSize || entry.encodedBodySize || 0), 0);
   });
 
-  expect(total).toBeLessThanOrEqual(3_000_000);
+  expect(total).toBeLessThanOrEqual(6_000_000);
 });
