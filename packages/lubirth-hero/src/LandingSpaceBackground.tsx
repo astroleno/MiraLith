@@ -101,7 +101,7 @@ export function LandingSpaceBackground({
 
   const starGeometry = useMemo(() => {
     const textureBacked = Boolean(backgroundTexture);
-    const count = Math.round(quality.stars * (emphasis ? 0.58 : textureBacked ? 0.22 : 0.34));
+    const count = Math.round(quality.stars * (emphasis ? 0.58 : textureBacked ? 0.1 : 0.22));
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
 
@@ -185,9 +185,10 @@ export function LandingSpaceBackground({
         map: { value: backgroundTexture },
         exposure: { value: emphasis ? 1.18 : 1.0 },
         hazeLift: { value: emphasis ? 0.1 : 0.025 },
-        starStrength: { value: emphasis ? 0.026 : 0.018 },
+        starStrength: { value: emphasis ? 0.026 : 0.016 },
         starDamp: { value: emphasis ? 0.62 : 0.92 },
-        textureStrength: { value: emphasis ? 0.06 : 0.006 },
+        textureStrength: { value: emphasis ? 0.06 : 0.00012 },
+        dustStrength: { value: emphasis ? 1.0 : 0.0012 },
         colorCeiling: { value: emphasis ? 0.14 : 0.088 }
       },
       vertexShader: `
@@ -207,6 +208,7 @@ export function LandingSpaceBackground({
         uniform float starStrength;
         uniform float starDamp;
         uniform float textureStrength;
+        uniform float dustStrength;
         uniform float colorCeiling;
 
         varying vec2 vUv;
@@ -246,8 +248,8 @@ export function LandingSpaceBackground({
           float luma = max(max(tex.r, tex.g), tex.b);
           float textureHazeSource = min(luma, 0.18);
           float highLuma = max(0.0, luma - textureHazeSource * 0.72);
-          float haze = smoothstep(0.04, 0.18, textureHazeSource);
-          float star = smoothstep(0.16, 0.52, highLuma) * smoothstep(0.64, 0.98, luma);
+          float haze = smoothstep(0.08, 0.22, textureHazeSource);
+          float star = smoothstep(0.22, 0.62, highLuma) * smoothstep(0.72, 0.99, luma);
           vec3 deepSky = mix(vec3(0.0, 0.00045, 0.0017), vec3(0.001, 0.0022, 0.0044), smoothstep(-0.3, 0.78, vDir.y));
           float longitude = atan(vDir.z, vDir.x);
           float wovenAxis =
@@ -262,26 +264,36 @@ export function LandingSpaceBackground({
           float darkLane = exp(-pow((wovenAxis + 0.032) * 8.0, 2.0)) * smoothstep(0.34, 0.82, fbm(vec2(longitude * 2.2 - 1.0, vDir.y * 7.0 + 1.8)));
           vec3 coolHaze = vec3(0.008, 0.012, 0.018) * haze * hazeLift * textureStrength * exposure;
           vec3 milkyDust =
-            vec3(0.0018, 0.0024, 0.0042) * broadBand * (0.18 + dust * 0.42) +
-            vec3(0.006, 0.008, 0.014) * narrowCore * dust * 0.38;
-          milkyDust *= mix(1.0, 0.38, darkLane * 0.62);
+            vec3(0.0018, 0.0024, 0.0042) * broadBand * (0.08 + dust * 0.16) +
+            vec3(0.006, 0.008, 0.014) * narrowCore * dust * 0.12;
+          milkyDust *= mix(1.0, 0.54, darkLane * 0.36) * dustStrength;
           vec2 starP = skyUv * vec2(1480.0, 740.0);
           vec2 starCell = floor(starP);
           vec2 starLocal = fract(starP) - 0.5;
           float starSeed = hash(starCell);
-          float proceduralStar = step(0.9888, starSeed) * smoothstep(0.12, 0.0, length(starLocal));
+          float proceduralStar = step(0.9896, starSeed) * smoothstep(0.12, 0.0, length(starLocal));
+          vec2 microStarP = skyUv * vec2(2380.0, 1180.0);
+          vec2 microStarCell = floor(microStarP);
+          vec2 microStarLocal = fract(microStarP) - 0.5;
+          float microSeed = hash(microStarCell + vec2(5.0, 31.0));
+          float microStar = step(0.9936, microSeed) * smoothstep(0.075, 0.0, length(microStarLocal));
           vec2 brightStarP = skyUv * vec2(620.0, 310.0);
           vec2 brightStarCell = floor(brightStarP);
           vec2 brightStarLocal = fract(brightStarP) - 0.5;
           float brightSeed = hash(brightStarCell + vec2(17.0, 23.0));
-          float brightStar = step(0.9958, brightSeed) * smoothstep(0.16, 0.0, length(brightStarLocal));
+          float brightStar = step(0.9966, brightSeed) * smoothstep(0.16, 0.0, length(brightStarLocal));
+          float horizonStarFade = smoothstep(0.24, 0.58, skyUv.y);
           vec3 pinStars = vec3(0.72, 0.82, 1.0) * (
             star * starStrength * 0.72 +
-            proceduralStar * 0.052 +
-            brightStar * 0.13
-          );
+            proceduralStar * 0.044 +
+            microStar * 0.022 +
+            brightStar * 0.088
+          ) * mix(0.18, 1.0, horizonStarFade);
+          float sensorNoise = (hash(gl_FragCoord.xy + vec2(11.0, 23.0)) - 0.5) *
+            0.00065 *
+            horizonStarFade;
 
-          gl_FragColor = vec4(min(deepSky + coolHaze + milkyDust + pinStars, vec3(colorCeiling)), 1.0);
+          gl_FragColor = vec4(min(deepSky + coolHaze + milkyDust + pinStars + vec3(sensorNoise), vec3(colorCeiling)), 1.0);
         }
       `,
       side: BackSide,

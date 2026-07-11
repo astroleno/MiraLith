@@ -231,6 +231,10 @@ export function EarthMoonScene({
     showClouds &&
     quality.tier !== "low" &&
     quality.tier !== "fallback";
+  const useReferenceCloseOrbitFraming =
+    isNasaProfile &&
+    mode === "field" &&
+    useReferenceVolumetricSurfaceClouds;
   const useHeroAuroraProfile = auroraProfile === "hero";
   const auroraVisibilityBoost = debugAurora
     ? (auroraProfile === "debug" ? 2.6 : 2.2)
@@ -281,6 +285,14 @@ export function EarthMoonScene({
       frame.cameraElevation += MathUtils.degToRad(1.7 * orbitalGrazing);
       frame.cameraLookAtY += 0.44 * orbitalGrazing;
       frame.earthY -= 0.02 * orbitalGrazing;
+    }
+    if (useReferenceCloseOrbitFraming) {
+      const closeOrbit = 1 - easeInOut(MathUtils.clamp(progress / 0.72, 0, 1));
+      frame.cameraElevation += MathUtils.degToRad(-1.0 * closeOrbit);
+      frame.cameraLookAtY += 0.12 * closeOrbit;
+      frame.earthScale *= 1.10 + closeOrbit * 0.12;
+      frame.earthY -= 0.10 * closeOrbit;
+      frame.moonScale *= 0.30;
     }
     const fov = composition.camera.fov;
 

@@ -818,7 +818,7 @@ export function LandingEarth({
               texture2D(dayMap, vUv + vec2(0.00022, -0.00011)).rgb +
               texture2D(dayMap, vUv - vec2(0.00022, -0.00011)).rgb
             ) * 0.5;
-            float truthCloseDetailGate = dayW * (0.42 + closeStage * 0.58) * (1.0 - truthHorizonHaze * 0.56);
+            float truthCloseDetailGate = dayW * (0.42 + closeStage * 0.58) * (1.0 - truthHorizonHaze * 0.82);
             truthColor += (truthDayTexRaw - truthDayBlurTiny) * truthCloseDetailGate * 0.052;
             truthColor += (truthDayTexRaw - truthDayMicroBlur) * truthCloseDetailGate * 0.032;
             float truthOceanFresnelDark = pow(fresnel, 2.0) *
@@ -854,6 +854,25 @@ export function LandingEarth({
                 sampleCloud(vec2(fract(truthCloudUv.x - refSoftStep.y), clamp(truthCloudUv.y + refSoftStep.x, 0.001, 0.999)))
               ) * 0.2;
               float refCloudCompositeRaw = mix(truthCloudRaw, refCloudSoftRaw, 0.42);
+              vec2 refSeaUv = vec2(
+                fract(truthCloudUv.x * 0.54 + 0.17),
+                fract(truthCloudUv.y * 0.68 + 0.09)
+              );
+              float refCloudSeaRaw = (
+                sampleCloud(refSeaUv) * 0.46 +
+                sampleCloud(vec2(fract(refSeaUv.x + 0.034), fract(refSeaUv.y + 0.016))) * 0.22 +
+                sampleCloud(vec2(fract(refSeaUv.x - 0.028), fract(refSeaUv.y - 0.021))) * 0.20 +
+                refCloudSoftRaw * 0.12
+              );
+              float refCloudSea = smoothstep(0.22, 0.64, refCloudSeaRaw + refCloudSoftRaw * 0.24);
+              float refCloudSeaBreakup = smoothstep(
+                0.18,
+                0.86,
+                sampleCloud(vec2(fract(refSeaUv.x * 1.7 + 0.31), fract(refSeaUv.y * 1.45 + 0.27))) * 0.58 +
+                  sampleCloud(vec2(fract(refSeaUv.x * 2.4 - 0.19), fract(refSeaUv.y * 2.1 + 0.08))) * 0.42
+              );
+              refCloudSea *= mix(0.54, 1.0, refCloudSeaBreakup);
+              refCloudCompositeRaw = max(refCloudCompositeRaw, refCloudSea * 0.82);
               float refCloudTowardLight = sampleCloud(vec2(
                 fract(truthCloudUv.x + refLightStep.x),
                 fract(truthCloudUv.y + refLightStep.y * 0.62)
@@ -889,7 +908,8 @@ export function LandingEarth({
                 smoothstep(0.44, 0.8, refCloudTowardLight) * truthLowSunShadow * 0.26 +
                 max(refCloudTowardLight - refCloudCompositeRaw, 0.0) * 0.74 +
                 smoothstep(0.54, 0.9, refCloudColumn) * 0.18 +
-                refVolumeSelfShadow * 0.24,
+                refVolumeSelfShadow * 0.24 +
+                refCloudSea * truthLowSunShadow * 0.06,
                 0.0,
                 0.62
               );
@@ -899,13 +919,13 @@ export function LandingEarth({
                 0.22 *
                 smoothstep(-0.16, 0.52, ndl) *
                 smoothstep(0.09, 0.38, refCloudCompositeRaw);
-              refCloudAlpha *= mix(1.0, 0.055, refHorizonFade);
-              refCloudAlpha = clamp(refCloudAlpha, 0.0, 0.12);
-              refCloudAlpha *= 0.0;
+              refCloudAlpha *= mix(1.0, 0.16, refHorizonFade);
+              refCloudAlpha = clamp(refCloudAlpha, 0.0, 0.18);
+              refCloudAlpha *= mix(0.58, 0.74, refCloudSea);
 
               vec3 refCloudLit = mix(
-                vec3(0.52, 0.62, 0.76),
-                vec3(0.82, 0.87, 0.91),
+                vec3(0.52, 0.64, 0.76),
+                vec3(0.76, 0.84, 0.84),
                 refCloudLight
               );
               refCloudLit *= mix(0.86, 1.0, clamp(refCloudRelief * 0.85 + 0.68, 0.0, 1.0));
@@ -924,6 +944,11 @@ export function LandingEarth({
                 smoothstep(0.18, 0.82, refCloudCompositeRaw);
               refCloudColor = mix(
                 refCloudColor,
+                vec3(0.70, 0.78, 0.78) * (0.82 + refCloudLight * 0.18),
+                refCloudSea * 0.34
+              );
+              refCloudColor = mix(
+                refCloudColor,
                 truthAirBlue * (0.34 + dayW * 0.28) + refCloudColor * vec3(0.34, 0.5, 0.78),
                 refHorizonFade * 0.84
               );
@@ -934,7 +959,7 @@ export function LandingEarth({
               truthColor = mix(
                 truthColor,
                 truthColor * vec3(1.10, 1.08, 1.04) + vec3(0.018, 0.020, 0.018),
-                refLandLift * dayW * 0.22
+                refLandLift * dayW * mix(0.12, 0.18, 1.0 - refCloudSea)
               );
 
               float refContactShadow =
@@ -942,7 +967,7 @@ export function LandingEarth({
                 dayW *
                 truthCloudShadowEnable *
                 cloudShadowOpacity *
-                0.12 *
+                0.16 *
                 (1.0 - truthOceanAlbedoMask * 0.55);
 
               float refCastReach =
@@ -962,7 +987,7 @@ export function LandingEarth({
                 dayW *
                 truthCloudShadowEnable *
                 cloudShadowOpacity *
-                0.1 *
+                0.13 *
                 (1.0 - smoothstep(0.62, 0.94, fresnel)) *
                 (1.0 - truthOceanAlbedoMask * 0.45);
               float refGroundShadow = refContactShadow + refCastShadow;
@@ -980,7 +1005,78 @@ export function LandingEarth({
               );
               truthColor *= mix(vec3(1.0), mix(vec3(0.68, 0.76, 0.88), vec3(0.58, 0.66, 0.78), truthLowSunShadow), refGroundShadow);
               truthColor -= truthDayTex * refGroundShadow * 0.018;
-              truthColor = mix(truthColor, refCloudColor, refCloudAlpha);
+              float refCloudMist =
+                dayW *
+                smoothstep(-0.24, 0.62, ndl) *
+                (1.0 - smoothstep(0.94, 1.0, fresnel)) *
+                (0.10 + refCloudSea * 0.18 + smoothstep(0.20, 0.62, refCloudSeaRaw) * 0.10);
+              truthColor = mix(
+                truthColor,
+                mix(truthColor, vec3(0.56, 0.66, 0.70), 0.68),
+                refCloudMist * 0.76
+              );
+              float refCloudSeaAlpha =
+                refCloudSea *
+                dayW *
+                smoothstep(-0.18, 0.58, ndl) *
+                mix(0.30, 0.14, refHorizonFade);
+              float refBroadDeckAlpha =
+                dayW *
+                smoothstep(-0.16, 0.62, ndl) *
+                (1.0 - smoothstep(0.74, 0.98, fresnel)) *
+                (0.18 + refCloudSea * 0.16 + smoothstep(0.30, 0.72, refCloudSeaRaw) * 0.075);
+              vec3 refBroadCloudColor = mix(refCloudColor * vec3(0.70, 0.78, 0.82), vec3(0.44, 0.54, 0.58), 0.62);
+              truthColor = mix(
+                truthColor,
+                refBroadCloudColor,
+                clamp(max(max(refCloudAlpha, refCloudSeaAlpha), refBroadDeckAlpha), 0.0, 0.26)
+              );
+
+              float refAirPath =
+                smoothstep(0.46, 0.98, fresnel) *
+                smoothstep(-0.18, 0.62, ndl);
+              float refAirCore = pow(refAirPath, 1.25) * (1.0 - smoothstep(0.992, 1.0, fresnel));
+              float refCompressedLuma = dot(truthColor, vec3(0.299, 0.587, 0.114));
+              vec3 refAirColor = mix(vec3(0.10, 0.17, 0.28), vec3(0.42, 0.60, 0.78), dayW);
+              truthColor = mix(
+                truthColor,
+                mix(vec3(refCompressedLuma) * vec3(0.66, 0.76, 0.90), refAirColor, 0.46),
+                refAirCore * 0.46
+              );
+              float refCloudAirglow =
+                refCloudSea *
+                smoothstep(0.48, 0.95, fresnel) *
+                (1.0 - smoothstep(0.992, 1.0, fresnel)) *
+                smoothstep(-0.20, 0.62, ndl);
+              truthColor += vec3(0.026, 0.052, 0.052) * refCloudAirglow * dayW;
+              truthColor += vec3(0.018, 0.034, 0.024) * refCloudAirglow * (0.45 + dayW * 0.55);
+              float refVisibleAirglowShelf =
+                smoothstep(0.43, 0.93, fresnel) *
+                (1.0 - smoothstep(0.997, 1.0, fresnel)) *
+                smoothstep(-0.24, 0.68, ndl);
+              float refThinKarmanBand =
+                smoothstep(0.70, 0.985, fresnel) *
+                (1.0 - smoothstep(0.999, 1.0, fresnel)) *
+                smoothstep(-0.30, 0.76, ndl);
+              truthColor += vec3(0.034, 0.078, 0.104) *
+                refVisibleAirglowShelf *
+                (0.30 + dayW * 0.28 + refCloudSea * 0.20);
+              truthColor += vec3(0.024, 0.030, 0.016) *
+                refVisibleAirglowShelf *
+                (0.12 + refCloudMist * 0.22);
+              truthColor += vec3(0.020, 0.086, 0.200) *
+                refThinKarmanBand *
+                (0.24 + dayW * 0.28);
+              truthColor = mix(
+                truthColor,
+                truthColor * vec3(1.10, 1.13, 1.12) + vec3(0.026, 0.036, 0.032),
+                refCloudAirglow * (0.08 + dayW * 0.07)
+              );
+              truthColor = mix(
+                truthColor,
+                truthColor * vec3(0.66, 0.76, 0.90),
+                refAirPath * 0.18
+              );
 
               float refFinalLuma = dot(truthColor, vec3(0.299, 0.587, 0.114));
               float refColorDiscipline = clamp(0.018 + dayW * 0.012 + refOverWhite * 0.02, 0.0, 0.06);
@@ -991,7 +1087,7 @@ export function LandingEarth({
               );
               vec3 refKnee = vec3(0.62);
               truthColor = truthColor / (1.0 + max(truthColor - refKnee, vec3(0.0)) * 0.82);
-              truthColor *= 0.88;
+              truthColor *= 0.91;
               gl_FragColor = vec4(max(truthColor, vec3(0.0)), 1.0);
               return;
             }

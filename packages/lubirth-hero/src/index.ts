@@ -51,6 +51,7 @@ export type {
   LandingAtmosphereVariant,
   LandingAssetManifest,
   LandingAuroraProfile,
+  LandingCloseAtmosphereTuning,
   LandingComposition,
   LandingCompositionOverrides,
   LandingLocationConfig,

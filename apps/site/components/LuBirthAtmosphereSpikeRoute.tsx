@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import type {
   LandingAtmosphereLook,
   LandingAtmosphereVariant,
@@ -173,14 +173,10 @@ function ScenePane({
 }
 
 export function LuBirthAtmosphereSpikeRoute() {
-  const [config, setConfig] = useState<SpikeConfig>(DEFAULT_CONFIG);
+  const [config] = useState<SpikeConfig>(() => readConfig());
   const isSplit = config.atmosphereMode === "split";
   const singleAtmosphereVariant: LandingAtmosphereVariant =
     config.atmosphereMode === "stack" ? "stack" : "volumetric";
-
-  useEffect(() => {
-    setConfig(readConfig());
-  }, []);
 
   useLayoutEffect(() => {
     window.__MiraLithOpeningProgress = config.fixedProgress;

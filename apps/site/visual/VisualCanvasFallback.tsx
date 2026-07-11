@@ -17,7 +17,7 @@ function markVisualFallbackCreated() {
 }
 
 interface VisualCanvasFallbackProps {
-  scene: "lubirth" | "radio-gaga";
+  scene: "lubirth" | "radio-gaga" | "coscroll";
   posterSrc?: string;
   label: string;
   children?: ReactNode;

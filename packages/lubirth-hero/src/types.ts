@@ -6,6 +6,15 @@ export type EarthMoonHeroMode = "field" | "window" | "zoomed" | "expanded";
 export type LandingVisualDebugLayer = "all" | "stars" | "clouds" | "atmosphere" | "aurora";
 export type LandingAtmosphereVariant = "stack" | "volumetric";
 export type LandingAtmosphereLook = "lubirth" | "reference";
+
+export interface LandingCloseAtmosphereTuning {
+  edgeGlowStrength: number;
+  verticalGradientStrength: number;
+  depthShadowStrength: number;
+  groundProjectionStrength: number;
+  cloudVolumeShadowStrength: number;
+}
+
 export type LandingRenderProfile =
   | "clean"
   | "nasa"
@@ -218,6 +227,7 @@ export interface EarthMoonSceneProps {
   useProjectedHorizonPasses?: boolean;
   atmosphereVariant?: LandingAtmosphereVariant;
   atmosphereLook?: LandingAtmosphereLook;
+  closeAtmosphereTuning?: Partial<LandingCloseAtmosphereTuning>;
 }
 
 export interface LuBirthProjectionFrame {

@@ -17,6 +17,7 @@ import type {
   LandingAtmospherePolicy,
   LandingAtmosphereVariant,
   LandingAuroraProfile,
+  LandingCloseAtmosphereTuning,
   LandingCompositionOverrides,
   EarthMoonHeroMode,
   LandingLocationConfig,
@@ -86,7 +87,7 @@ const HIGH_DETAIL_REFERENCE_EARTH_ASSETS: Partial<LandingAssetManifest> = {
 
 const VISITOR_LOCATION_CACHE_KEY = "miralith:lubirth-runtime-location:v1";
 // Matches the reference demo's default slider sunTheta=80, sunPhi=3 without tying light to the camera.
-const REFERENCE_ATMOSPHERE_SUN_DIRECTION: [number, number, number] = [0.1734, 0.0523, 0.9835];
+const REFERENCE_ATMOSPHERE_SUN_DIRECTION: [number, number, number] = [0.34, 0.18, 0.923];
 
 declare global {
   interface Window {
@@ -98,6 +99,11 @@ declare global {
     __MiraLithLuBirthAtmosphereLook?: LandingAtmosphereLook;
     __MiraLithLuBirthMoonPhase?: LandingMoonPhase;
     __MiraLithLuBirthMoonLightingMode?: LandingMoonLightingMode;
+    __MiraLithLuBirthCloseAtmosphereTuning?: {
+      allowed: boolean;
+      effective: LandingCloseAtmosphereTuning;
+      requested: LandingCloseAtmosphereTuning;
+    };
     __MiraLithLuBirthRuntimeLocation?: LandingLocationConfig;
     __MiraLithLuBirthSolarState?: {
       date: string;
@@ -125,10 +131,19 @@ interface LuBirthSceneSlotProps {
   productionSurface?: boolean;
   paused?: boolean;
   cloudDeckEnabled?: boolean;
+  closeAtmosphereTuning?: Partial<LandingCloseAtmosphereTuning>;
   onProjectionFrame?: (frame: LuBirthProjectionFrame) => void;
   onVisualReadyEnough?: () => void;
   onMoonTextureReady?: () => void;
 }
+
+const EMPTY_CLOSE_ATMOSPHERE_TUNING: LandingCloseAtmosphereTuning = {
+  edgeGlowStrength: 0,
+  verticalGradientStrength: 0,
+  depthShadowStrength: 0,
+  groundProjectionStrength: 0,
+  cloudVolumeShadowStrength: 0
+};
 
 function readMoonLightingMode(): LandingMoonLightingMode | undefined {
   if (typeof window === "undefined") {
@@ -417,6 +432,7 @@ export function LuBirthSceneSlot({
   productionSurface,
   paused = false,
   cloudDeckEnabled = true,
+  closeAtmosphereTuning,
   onProjectionFrame,
   onVisualReadyEnough,
   onMoonTextureReady
@@ -438,6 +454,18 @@ export function LuBirthSceneSlot({
       ? buildGeoEndpoint()
       : null;
   const qualityProfile = useQualityTier(qualityOverride ?? quality, reducedMotion);
+  const requestedCloseAtmosphereTuning = useMemo<LandingCloseAtmosphereTuning>(
+    () => ({
+      ...EMPTY_CLOSE_ATMOSPHERE_TUNING,
+      ...closeAtmosphereTuning
+    }),
+    [closeAtmosphereTuning]
+  );
+  const closeAtmosphereAllowed = qualityProfile.tier !== "low" && qualityProfile.tier !== "fallback";
+  const effectiveCloseAtmosphereTuning = useMemo<LandingCloseAtmosphereTuning>(
+    () => closeAtmosphereAllowed ? requestedCloseAtmosphereTuning : EMPTY_CLOSE_ATMOSPHERE_TUNING,
+    [closeAtmosphereAllowed, requestedCloseAtmosphereTuning]
+  );
   const resolvedAtmospherePolicy = resolveLuBirthAtmospherePolicy({
     policy: atmospherePolicy ?? atmosphereVariant,
     routeVariant: activeRouteVariant,
@@ -481,19 +509,42 @@ export function LuBirthSceneSlot({
       return;
     }
 
-    setVisitorLocationState(cachedVisitorLocationState);
-    window.__MiraLithLuBirthRuntimeLocation = cachedVisitorLocationState.location;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
+      }
+
+      setVisitorLocationState(cachedVisitorLocationState);
+      window.__MiraLithLuBirthRuntimeLocation = cachedVisitorLocationState.location;
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [cachedVisitorLocationState, visitorLocationState?.endpoint]);
 
   const compositionOverrides = useMemo<LandingCompositionOverrides>(
     () => {
+      const referenceAtmosphereLook = atmosphereLook === "reference";
+      const unifyReferenceMoonLighting =
+        activeRouteVariant === "spike" &&
+        activeRenderProfile === "nasa" &&
+        referenceAtmosphereLook;
       const useRuntimeSolar =
+        !unifyReferenceMoonLighting &&
         !freezeAtmosphereSpikeSolar &&
         (activeRenderProfile === "nasa" || moonPhaseOverride === "today" || Boolean(activeVisitorLocation));
-      const referenceAtmosphereLook = atmosphereLook === "reference";
+      const referenceCloseOrbitLook = unifyReferenceMoonLighting;
       const resolvedMoonLightingMode =
-        moonLightingMode ?? (moonPhaseOverride === "today" ? "birthPhase" : undefined);
+        moonLightingMode ??
+        (unifyReferenceMoonLighting
+          ? "sceneLit"
+          : moonPhaseOverride === "today"
+            ? "birthPhase"
+            : undefined);
       const moon: NonNullable<LandingCompositionOverrides["moon"]> = {
+        ...(referenceCloseOrbitLook ? { visible: true, nightLift: 0.012 } : {}),
         ...(resolvedMoonLightingMode ? { lightingMode: resolvedMoonLightingMode } : {}),
         ...(moonPhaseOverride === "today"
           ? {
@@ -509,6 +560,7 @@ export function LuBirthSceneSlot({
         ...(useRuntimeSolar ? { light: { fixedSunDir: runtimeSunDirection } } : {}),
         ...(referenceAtmosphereLook
           ? {
+              ...(referenceCloseOrbitLook ? { camera: { fov: 40 } } : {}),
               atmosphere: { intensity: 1.0 },
               earth: {
                 cloudOpacity: 3.0,
@@ -519,8 +571,8 @@ export function LuBirthSceneSlot({
               },
               light: {
                 fixedSunDir: useRuntimeSolar ? runtimeSunDirection : REFERENCE_ATMOSPHERE_SUN_DIRECTION,
-                ambientIntensity: 0.014,
-                intensity: 2.2
+                ambientIntensity: 0.024,
+                intensity: 2.55
               }
             }
           : {}),
@@ -530,6 +582,7 @@ export function LuBirthSceneSlot({
     [
       activeRenderProfile,
       atmosphereLook,
+      activeRouteVariant,
       activeVisitorLocation,
       freezeAtmosphereSpikeSolar,
       moonLightingMode,
@@ -610,6 +663,11 @@ export function LuBirthSceneSlot({
     window.__MiraLithLuBirthAtmospherePolicy = atmospherePolicy ?? atmosphereVariant;
     window.__MiraLithLuBirthAtmospherePolicyReason = resolvedAtmospherePolicy.reason;
     window.__MiraLithLuBirthAtmosphereLook = resolvedAtmospherePolicy.atmosphereLook;
+    window.__MiraLithLuBirthCloseAtmosphereTuning = {
+      allowed: closeAtmosphereAllowed,
+      effective: effectiveCloseAtmosphereTuning,
+      requested: requestedCloseAtmosphereTuning
+    };
     window.__MiraLithLuBirthMoonPhase = composition.moon.fixedPhase;
     window.__MiraLithLuBirthMoonLightingMode = composition.moon.lightingMode;
     const locationVector = geodeticToTextureVector(
@@ -630,12 +688,15 @@ export function LuBirthSceneSlot({
     atmospherePolicy,
     atmosphereVariant,
     auroraProfile,
+    closeAtmosphereAllowed,
     composition.location.latitudeDeg,
     composition.location.longitudeDeg,
     composition.moon.fixedPhase,
     composition.moon.lightingMode,
+    effectiveCloseAtmosphereTuning,
     qualityProfile.aurora,
     qualityProfile.tier,
+    requestedCloseAtmosphereTuning,
     resolvedAtmospherePolicy.atmosphereLook,
     resolvedAtmospherePolicy.reason,
     runtimeSolarDate,
@@ -661,6 +722,7 @@ export function LuBirthSceneSlot({
       reducedMotion={reducedMotion}
       paused={paused}
       cloudDeckEnabled={cloudDeckEnabled}
+      closeAtmosphereTuning={effectiveCloseAtmosphereTuning}
       onProjectionFrame={onProjectionFrame}
       onVisualReadyEnough={onVisualReadyEnough}
       onMoonTextureReady={onMoonTextureReady}

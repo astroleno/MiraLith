@@ -1,0 +1,152 @@
+[
+  {
+    "label": "desktop",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "before": {
+      "text": "",
+      "title": "NASA Earth | MiraLith",
+      "canvasClient": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 900
+      },
+      "canvasBuffer": {
+        "width": 1440,
+        "height": 900
+      },
+      "mainSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "shadeOpacity": "0.58",
+      "shadeBackground": "linear-gradient(90deg, rgba(0, 1, 6, 0.56), rgba(0, 0, 0, 0) 21%, rgba(0, 0, 0, 0) 78%, rgba(0, 1, 6, 0.48)), linear-gradient(rgba(0, 1, 7, 0.44), rgba(0, 0, 0, 0) 26%, rgba(0, 0, 0, 0) 74%, rgba(0, 1, 7, 0.56))",
+      "ariaLabels": [
+        "NASA Earth low orbit view"
+      ],
+      "resources": [
+        "/_next/static/chunks/apps_site_app_nasa-earth_page_tsx_0gvlrxc._.js",
+        "/assets/lubirth/textures/earth-day-2k.jpg",
+        "/assets/lubirth/textures/earth-clouds-2k-light.jpg",
+        "/assets/lubirth/textures/earth-specular-4k.png",
+        "/assets/lubirth/textures/earth-night-2k.jpg"
+      ]
+    },
+    "after": {
+      "activeElement": "BODY",
+      "scrollY": 0,
+      "reducedMotion": false
+    },
+    "consoleMessages": [
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+      },
+      {
+        "type": "log",
+        "text": "[HMR] connected"
+      },
+      {
+        "type": "warning",
+        "text": "[.WebGL-0x114001cae00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      },
+      {
+        "type": "warning",
+        "text": "[.WebGL-0x114001c7200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      },
+      {
+        "type": "warning",
+        "text": "THREE.Clock: This module has been deprecated. Please use THREE.Timer instead."
+      },
+      {
+        "type": "warning",
+        "text": "[.WebGL-0x114001d3e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      },
+      {
+        "type": "warning",
+        "text": "[.WebGL-0x114001d3e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+      },
+      {
+        "type": "log",
+        "text": "[Fast Refresh] rebuilding"
+      },
+      {
+        "type": "log",
+        "text": "[Fast Refresh] done in 237ms"
+      }
+    ],
+    "pageErrors": []
+  },
+  {
+    "label": "mobile",
+    "viewport": {
+      "width": 375,
+      "height": 812
+    },
+    "before": {
+      "text": "",
+      "title": "NASA Earth | MiraLith",
+      "canvasClient": {
+        "x": 0,
+        "y": 0,
+        "width": 375,
+        "height": 812
+      },
+      "canvasBuffer": {
+        "width": 375,
+        "height": 812
+      },
+      "mainSize": {
+        "width": 375,
+        "height": 812
+      },
+      "shadeOpacity": "0.58",
+      "shadeBackground": "linear-gradient(90deg, rgba(0, 1, 6, 0.38), rgba(0, 0, 0, 0) 18%, rgba(0, 0, 0, 0) 82%, rgba(0, 1, 6, 0.34)), linear-gradient(rgba(0, 1, 7, 0.32), rgba(0, 0, 0, 0) 24%, rgba(0, 0, 0, 0) 76%, rgba(0, 1, 7, 0.46))",
+      "ariaLabels": [
+        "NASA Earth low orbit view"
+      ],
+      "resources": [
+        "/_next/static/chunks/apps_site_app_nasa-earth_page_tsx_0gvlrxc._.js",
+        "/assets/lubirth/textures/earth-day-2k.jpg",
+        "/assets/lubirth/textures/earth-specular-4k.png",
+        "/assets/lubirth/textures/earth-night-2k.jpg",
+        "/assets/lubirth/textures/earth-clouds-2k-light.jpg"
+      ]
+    },
+    "after": {
+      "activeElement": "BODY",
+      "scrollY": 0,
+      "reducedMotion": false
+    },
+    "consoleMessages": [
+      {
+        "type": "log",
+        "text": "[HMR] connected"
+      },
+      {
+        "type": "warning",
+        "text": "[.WebGL-0x12c001c8a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      },
+      {
+        "type": "warning",
+        "text": "[.WebGL-0x12c001c4e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      },
+      {
+        "type": "warning",
+        "text": "THREE.Clock: This module has been deprecated. Please use THREE.Timer instead."
+      },
+      {
+        "type": "warning",
+        "text": "[.WebGL-0x12c001d1a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      },
+      {
+        "type": "warning",
+        "text": "[.WebGL-0x12c001d1a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+      }
+    ],
+    "pageErrors": []
+  }
+]

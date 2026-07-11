@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@miralith/coscroll-scene": "workspace:*",
     "@miralith/lubirth-hero": "workspace:*",
     "@miralith/radio-gaga-scene": "workspace:*",
     "@miralith/visual-core": "workspace:*",

@@ -81,7 +81,7 @@ function readProjectionLayer(): LuBirthProjectionLookdevLayer {
   }
 
   const params = new URLSearchParams(window.location.search);
-  const layer = params.get("layer") ?? params.get("debug");
+  const layer = params.get("layer") ?? params.get("mode") ?? params.get("debug");
   if (layer === "clouds" || layer === "limb" || layer === "aurora") {
     return layer;
   }

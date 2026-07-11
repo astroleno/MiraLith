@@ -49,9 +49,9 @@ interface CloudShellLayer {
 const lightDirection = new Vector3();
 const color = new Color();
 const CLOUD_SHELLS: CloudShellLayer[] = [
-  { radius: 1.0064, opacity: 0.56, offset: 0, parallax: 0.00028, shadow: 0.13, baseDepth: 0.36, topCap: 0.14, rimFocus: 0.04, edgeBreak: 0.34 },
-  { radius: 1.0108, opacity: 0.1, offset: 0.014, parallax: 0.00064, shadow: 0.06, baseDepth: 0.18, topCap: 0.26, rimFocus: 0.28, edgeBreak: 0.42, highOnly: true },
-  { radius: 1.0146, opacity: 0.035, offset: 0.031, parallax: 0.00082, shadow: 0.025, baseDepth: 0.1, topCap: 0.18, rimFocus: 0.46, edgeBreak: 0.5, highOnly: true }
+  { radius: 1.0064, opacity: 0.78, offset: 0, parallax: 0.00028, shadow: 0.16, baseDepth: 0.4, topCap: 0.18, rimFocus: 0.04, edgeBreak: 0.34 },
+  { radius: 1.0108, opacity: 0.22, offset: 0.014, parallax: 0.00064, shadow: 0.08, baseDepth: 0.22, topCap: 0.32, rimFocus: 0.28, edgeBreak: 0.42, highOnly: true },
+  { radius: 1.0146, opacity: 0.09, offset: 0.031, parallax: 0.00082, shadow: 0.035, baseDepth: 0.12, topCap: 0.24, rimFocus: 0.46, edgeBreak: 0.5, highOnly: true }
 ];
 const CLOUD_TEXTURE_ART_OFFSET_X = 0.045;
 const CLOUD_TEXTURE_ART_OFFSET_Y = 0.018;
@@ -291,7 +291,7 @@ function createCloudMaterial(
         float normalReliefMask = referenceLookStrength *
           visibleCloudGate *
           smoothstep(0.14, 0.72, max(rawSharp, deckCoverage + deckThickness * 0.32)) *
-          0.72;
+          1.08;
         vec3 fineHeightNormal = normalize(vec3(
           (rawSharp - rawFineX) * (0.85 + closeStage * 0.5),
           (rawSharp - rawFineY) * (0.85 + closeStage * 0.4),
@@ -308,7 +308,7 @@ function createCloudMaterial(
           max(ndl, 0.0) + 0.18
         ));
         float cloudTopLight = mix(1.0, clamp(dot(cloudHeightNormal, sunTangent), 0.0, 1.0), deckInfluence);
-        float cloudNormalHighlight = smoothstep(0.62, 0.98, cloudTopLight) * normalReliefMask * 0.72;
+        float cloudNormalHighlight = smoothstep(0.62, 0.98, cloudTopLight) * normalReliefMask * 0.86;
         float cloudSlopeShadow =
           smoothstep(0.18, 0.86, 1.0 - cloudTopLight) *
           max(deckThickness * deckInfluence, normalReliefMask * 0.3);
@@ -354,8 +354,48 @@ function createCloudMaterial(
         float photoCore = smoothstep(0.24, 0.74, rawSharp) * mix(0.2, 1.0, massGate);
         float photoBright = smoothstep(0.52, 0.9, rawSharp) * mix(0.1, 0.86, weatherMass);
         float bottom = cloudMask(baseUv + wind - parallax * 0.42);
-        float naturalCoverage = clamp(rawMidBlur * 0.18 + rawMassNear * 0.26 + rawMassWide * 0.1 + rawSharp * 0.38 + deckCoverage * deckInfluence * 0.08, 0.0, 1.0);
-        float massBody = weatherMass * 0.32 + weatherCore * 0.1 + photoCore * 0.34 + photoBright * 0.08 + naturalCoverage * 0.16;
+        float referenceCloudSea =
+          referenceLookStrength *
+          visibleCloudGate *
+          smoothstep(
+            0.20,
+            0.62,
+            rawMassWide * 0.52 +
+              rawMidBlur * 0.34 +
+              deckCoverage * deckInfluence * 0.34 +
+              deckThickness * deckInfluence * 0.20 +
+              rawSharp * 0.14
+          );
+        float referenceGyreNoise =
+          noise2(baseUv * vec2(8.0, 4.6) + vec2(shellOffset * 13.0, shellOffset * 5.0)) * 0.58 +
+          noise2(baseUv * vec2(17.0, 9.0) + vec2(shellOffset * 29.0, shellOffset * 11.0)) * 0.42;
+        float referenceDarkGyre =
+          referenceCloudSea *
+          smoothstep(0.46, 0.84, referenceGyreNoise) *
+          smoothstep(0.12, 0.72, weatherMass + rawMassNear * 0.28);
+        float referenceSoftShadow =
+          referenceCloudSea *
+          smoothstep(0.36, 0.78, 1.0 - cloudTopLight) *
+          (0.34 + referenceGyreNoise * 0.42);
+        float referenceSoftDeck =
+          referenceLookStrength *
+          visibleCloudGate *
+          smoothstep(0.10, 0.48, rawMassWide + rawMidBlur * 0.46 + deckCoverage * deckInfluence * 0.18);
+        float referenceMistLayer =
+          referenceLookStrength *
+          visibleCloudGate *
+          smoothstep(0.06, 0.42, rawMassWide * 0.72 + rawMidBlur * 0.38 + deckCoverage * deckInfluence * 0.16);
+        float naturalCoverage = clamp(
+          rawMidBlur * 0.18 +
+            rawMassNear * 0.26 +
+            rawMassWide * 0.1 +
+            rawSharp * 0.38 +
+            deckCoverage * deckInfluence * 0.08 +
+            referenceCloudSea * 0.24,
+          0.0,
+          1.0
+        );
+        float massBody = weatherMass * 0.32 + weatherCore * 0.1 + photoCore * 0.34 + photoBright * 0.08 + naturalCoverage * 0.16 + referenceCloudSea * 0.22;
         float mid = max(cloudMask(midUv) * 0.38 + naturalCoverage * 0.24, massBody);
         float top = cloudMask(baseUv + wind + parallax * 0.38) * 0.78 + naturalCoverage * 0.16;
         float shadowMask = cloudMask(baseUv + wind + sunOffset * (1.8 + limb * 0.9));
@@ -413,14 +453,16 @@ function createCloudMaterial(
         selfShadow = clamp(
           selfShadow +
           referenceLookStrength * (
-            deckAo * 0.16 * deckInfluence +
-            cloudSlopeShadow * 0.24 +
-            normalReliefMask * (1.0 - cloudTopLight) * 0.08 +
-            volumeSelfShadow * 0.42 +
-            weatherCore * 0.095
+            deckAo * 0.22 * deckInfluence +
+            cloudSlopeShadow * 0.32 +
+            normalReliefMask * (1.0 - cloudTopLight) * 0.12 +
+            volumeSelfShadow * 0.78 +
+            weatherCore * 0.18 +
+            referenceDarkGyre * 0.18 +
+            referenceSoftShadow * 0.16
           ),
           0.0,
-          0.7
+          0.78
         );
         float light = mix(0.08, 1.08, sunlitCloud) * (1.0 - selfShadow) + twilight * 0.06 + limb * sunlitCloud * 0.1;
 
@@ -434,6 +476,11 @@ function createCloudMaterial(
         cloudBase += vec3(0.036, 0.042, 0.048) * clamp((rawSharp - rawMidBlur) * (0.06 + closeStage * 0.03) * weatherMass, 0.0, 0.024) * sunlitCloud;
         cloudBase *= mix(0.82, 1.0, smoothstep(0.22, 0.82, textureBody));
         vec3 warmEdge = vec3(1.0, 0.62, 0.28) * twilight * (0.06 + thickness * 0.06);
+        warmEdge = mix(
+          warmEdge,
+          vec3(0.42, 0.56, 0.48) * twilight * (0.032 + thickness * 0.044),
+          referenceLookStrength
+        );
         vec3 blueNight = vec3(0.018, 0.055, 0.13) * nightCloud * (0.07 + thickness * 0.12);
         vec3 finalColor =
           cloudBase * lightColor * light * (0.72 + thickness * 0.5 + debugBoost * 0.2) +
@@ -484,7 +531,7 @@ function createCloudMaterial(
           deckHighCap *
           sunlitCloud *
           deckInfluence *
-          (0.03 + closeStage * 0.024);
+          (0.052 + closeStage * 0.04);
         finalColor += vec3(0.72, 0.84, 0.98) *
           cloudNormalHighlight *
           sunlitCloud *
@@ -505,13 +552,65 @@ function createCloudMaterial(
         finalColor = mix(
           finalColor,
           vec3(0.90, 0.94, 0.92),
-          referenceSunlitTop * 0.09
+          referenceSunlitTop * mix(0.07, 0.16, 1.0 - referenceLookStrength)
         );
         finalColor += vec3(0.90, 0.94, 0.92) *
           referenceLookStrength *
           topCap *
           sunlitCloud *
-          (0.022 + closeStage * 0.018);
+          (0.018 + closeStage * 0.012);
+        float referenceForegroundSoft =
+          referenceLookStrength *
+          (1.0 - smoothstep(0.42, 0.76, rim)) *
+          referenceSoftDeck *
+          (0.46 + sunlitCloud * 0.54);
+        finalColor = mix(
+          finalColor,
+          vec3(0.58, 0.67, 0.70) * (0.76 + sunlitCloud * 0.12),
+          referenceCloudSea * (0.12 + closeStage * 0.052)
+        );
+        finalColor = mix(
+          finalColor,
+          finalColor * vec3(0.34, 0.44, 0.58),
+          (referenceDarkGyre + referenceSoftShadow * 0.9) * (0.24 + (1.0 - sunlitCloud) * 0.14)
+        );
+        finalColor = mix(
+          finalColor,
+          vec3(0.62, 0.70, 0.72),
+          referenceForegroundSoft * 0.14
+        );
+        finalColor = mix(
+          finalColor,
+          vec3(0.54, 0.64, 0.68),
+          referenceMistLayer * (0.12 + closeStage * 0.07) * (0.65 + sunlitCloud * 0.25)
+        );
+        float referenceHorizonGlowLift =
+          referenceLookStrength *
+          smoothstep(0.62, 0.94, rim) *
+          (1.0 - smoothstep(0.992, 1.0, rim)) *
+          max(referenceCloudSea, referenceMistLayer * 0.72) *
+          mix(0.58, 1.0, sunlitCloud);
+        finalColor += vec3(0.18, 0.30, 0.34) * referenceHorizonGlowLift * (0.08 + closeStage * 0.036);
+        finalColor += vec3(0.10, 0.17, 0.14) * referenceHorizonGlowLift * (0.032 + closeStage * 0.018);
+        float referenceHighFibers =
+          referenceLookStrength *
+          sunlitCloud *
+          smoothstep(0.10, 0.52, rawSharp) *
+          (1.0 - smoothstep(0.68, 0.96, rawSharp)) *
+          smoothstep(0.35, 0.88, rim) *
+          smoothstep(
+            0.48,
+            0.86,
+            noise2(baseUv * vec2(240.0, 48.0) + vec2(shellOffset * 19.0, shellOffset * 7.0))
+          );
+        float referenceLimbCompression =
+          referenceLookStrength *
+          smoothstep(0.70, 0.96, rim) *
+          (1.0 - smoothstep(0.988, 1.0, rim)) *
+          smoothstep(0.18, 0.72, max(rawSharp, deckCoverage * 0.72 + deckThickness * 0.28)) *
+          mix(0.46, 1.0, sunlitCloud);
+        finalColor += vec3(0.78, 0.88, 1.0) * referenceHighFibers * (0.018 + closeStage * 0.014);
+        finalColor = mix(finalColor, vec3(0.74, 0.84, 0.88), referenceLimbCompression * 0.12);
         float referenceThicknessShadow = referenceLookStrength * clamp(
           cloudSlopeShadow * 0.42 +
           volumeSelfShadow * 0.28 +
@@ -522,8 +621,8 @@ function createCloudMaterial(
         );
         finalColor = mix(
           finalColor,
-          finalColor * vec3(0.58, 0.66, 0.80),
-          referenceThicknessShadow * mix(0.42, 0.26, sunlitCloud)
+          finalColor * vec3(0.48, 0.58, 0.74),
+          referenceThicknessShadow * mix(0.54, 0.34, sunlitCloud)
         );
         float closeCloudReadability = max(
           closeStage * visibleCloudGate *
@@ -539,6 +638,7 @@ function createCloudMaterial(
           sunlitCloud *
           smoothstep(0.24, 0.82, max(max(weatherMass, weatherCore), closeCloudReadability)) *
           (0.065 + closeCloudReadability * 0.14 + topCap * 0.11);
+        daylightCloudLift *= mix(1.0, 0.70, referenceLookStrength);
         finalColor += vec3(0.84, 0.88, 0.86) * daylightCloudLift;
         finalColor = mix(
           finalColor,
@@ -548,7 +648,12 @@ function createCloudMaterial(
         float nightCloudDim = nightCloud * (1.0 - twilight * 0.48) * (0.48 + closeStage * 0.12);
         finalColor *= mix(1.0, 0.48, nightCloudDim);
         finalColor += vec3(0.56, 0.66, 0.78) * limbVolume * density * thickness * (0.04 + sunlitCloud * 0.08);
-        finalColor += vec3(0.72, 0.8, 0.88) * topCap * sunlitCloud * (0.1 + debugBoost * 0.08);
+        finalColor += vec3(0.30, 0.42, 0.46) *
+          referenceLookStrength *
+          limbVolume *
+          max(referenceCloudSea, referenceMistLayer) *
+          (0.026 + sunlitCloud * 0.045);
+        finalColor += vec3(0.62, 0.70, 0.76) * topCap * sunlitCloud * (0.074 + debugBoost * 0.06);
         finalColor = mix(finalColor, finalColor * vec3(0.66, 0.74, 0.86), clamp(baseMass * (0.78 - debugBoost * 0.18), 0.0, 0.58));
         finalColor *= mix(0.88 + closeStage * 0.04, 1.0, debugBoost);
 
@@ -563,7 +668,7 @@ function createCloudMaterial(
         float referenceDensityFeather = smoothstep(
           0.055,
           0.48,
-          rawSharp + rawMassNear * 0.12 + deckCoverage * deckInfluence * 0.06
+          rawSharp * 0.74 + rawMassNear * 0.12 + deckCoverage * deckInfluence * 0.06 + referenceCloudSea * 0.22 + referenceMistLayer * 0.18
         );
         softDensityFeather = mix(softDensityFeather, referenceDensityFeather, referenceLookStrength * 0.78);
         float cloudLayerSeparation = clamp(
@@ -617,14 +722,21 @@ function createCloudMaterial(
           visibleCloudGate *
           smoothstep(0.1, 0.58, max(rawSharp, deckCoverage * 0.64 + deckThickness * 0.24));
         alpha *= mix(1.0, 1.28, referenceCloudPresence);
-        alpha += referenceCloudPresence * opacity * (0.018 + closeStage * 0.006);
+        alpha += referenceCloudPresence * opacity * (0.03 + closeStage * 0.012);
+        alpha += referenceLookStrength * topCap * sunlitCloud * opacity * (0.012 + closeStage * 0.006);
+        alpha += referenceLimbCompression * opacity * (0.018 + sunlitCloud * 0.026);
+        alpha += referenceHighFibers * opacity * (0.006 + closeStage * 0.004);
+        alpha += referenceCloudSea * opacity * (0.042 + sunlitCloud * 0.026 + closeStage * 0.018);
+        alpha += referenceForegroundSoft * opacity * 0.022;
+        alpha += referenceMistLayer * opacity * (0.042 + closeStage * 0.024);
+        alpha += referenceHorizonGlowLift * opacity * 0.018;
 
         if (alpha < 0.00008) {
           discard;
         }
 
         float alphaCeiling = mix(0.34, 0.66, debugBoost);
-        alphaCeiling = mix(alphaCeiling, max(alphaCeiling, 0.54), referenceLookStrength * (1.0 - debugBoost * 0.35));
+        alphaCeiling = mix(alphaCeiling, max(alphaCeiling, 0.72), referenceLookStrength * (1.0 - debugBoost * 0.35));
         gl_FragColor = vec4(finalColor, clamp(alpha, 0.0, alphaCeiling));
       }
     `,
@@ -668,7 +780,7 @@ export function LandingCloudLayer({
   );
   const activeCloudShells = useMemo(() => {
     if (referenceLook) {
-      return CLOUD_SHELLS.slice(0, 1);
+      return quality.tier === "high" ? CLOUD_SHELLS.slice(0, 3) : CLOUD_SHELLS.slice(0, 1);
     }
 
     return CLOUD_SHELLS.filter((layer) => !layer.highOnly || quality.tier === "high" || quality.tier === "medium" || emphasis);
