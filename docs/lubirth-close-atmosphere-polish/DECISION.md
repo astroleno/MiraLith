@@ -2,13 +2,31 @@
 
 Date: 2026-05-12
 
-## Decision
+Status: Superseded for the production home route on 2026-07-12. Retained below as the historical spike decision.
+
+## Production Promotion Follow-up (2026-07-12)
+
+The home-lite route now deliberately promotes a restrained, non-zero close-atmosphere profile through `HOME_CLOSE_ATMOSPHERE_TUNING`:
+
+```ts
+{
+  edgeGlowStrength: 0.82,
+  verticalGradientStrength: 0.24,
+  depthShadowStrength: 0.18,
+  groundProjectionStrength: 0.32,
+  cloudVolumeShadowStrength: 0.26
+}
+```
+
+This promotion is limited to the production home-lite policy. Study/debug routes keep their explicit policies, low/fallback quality still gates the effective tuning to zero, and the production home remains on the stack atmosphere path. The home policy also uses one packed cloud field for the ground shadow and analytic cloud shell, plus a lightweight analytic halo rather than a sampled post-process bloom pass.
+
+## Historical Spike Decision
 
 Keep the close-atmosphere tuning spike-only for now. Do not promote production tuning in this pass.
 
-The shader path is wired and visually demonstrable, but RAF samples from the desktop run were too sparse to count as valid promotion evidence. The high all-on evidence frame also reads intentionally strong, so production values should be selected only after a calmer visual review pass with valid close-route RAF samples.
+At the time of this spike, the shader path was wired and visually demonstrable, but RAF samples from the desktop run were too sparse to count as valid promotion evidence. The high all-on evidence frame also read intentionally strong, so the spike values were not promoted directly.
 
-Post-review note: shared `LandingEarth` surface air-lift and horizon-haze additions are now gated behind a non-zero close/truth surface-active scalar. Production default `effective` close tuning remains zero, so those close surface formulas do not run as baseline production styling.
+Historical post-review note: shared `LandingEarth` surface air-lift and horizon-haze additions were gated behind a non-zero close/truth surface-active scalar. The 2026-07-12 follow-up above supersedes the old zero-default statement for home-lite only.
 
 ## Evidence
 
@@ -77,7 +95,7 @@ close atmosphere low high-intensity stack: median=650.10ms p95=816.40ms max=816.
 
 These rows are invalid for promotion budgeting because sample counts are below 30. The performance spec passed in non-strict mode, but close-route rows now use a promotion-specific RAF helper and are annotated as `perf-promotion-blocker` when sample counts are too low. Set `LUBIRTH_PERF_PROMOTION_GATE=1` to make those annotations hard failures during a promotion run.
 
-## Invariants
+## Historical Invariants (2026-05-12)
 
 - Production route remains stack by default.
 - Production route receives no effective close-atmosphere tuning by default.

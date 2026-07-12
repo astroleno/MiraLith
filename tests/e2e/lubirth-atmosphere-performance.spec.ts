@@ -9,9 +9,9 @@ declare global {
     __MiraLithLuBirthCloudShellCount?: number;
     __MiraLithLuBirthGroundCloudShadowActive?: boolean;
     __MiraLithLuBirthRuntimeProfile?: string;
-    __MiraLithLuBirthPostBloomMode?: string;
+    __MiraLithLuBirthPostEffectMode?: string;
     __MiraLithLuBirthVisualPolicy?: {
-      bloomMode: string;
+      postEffectMode: string;
       cloudMode: string;
       groundShadow: boolean;
     };
@@ -22,7 +22,7 @@ declare global {
 async function measureHomePage(
   page: import("@playwright/test").Page,
   url: string,
-  expectedPolicy: { bloomMode: string; cloudMode: string; groundShadow: boolean },
+  expectedPolicy: { postEffectMode: string; cloudMode: string; groundShadow: boolean },
   sampleMs = 1_800
 ) {
   await page.goto(url);
@@ -35,8 +35,8 @@ async function measureHomePage(
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthVisualPolicy), { timeout: 25_000 })
     .toMatchObject(expectedPolicy);
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomMode), { timeout: 25_000 })
-    .toBe(expectedPolicy.bloomMode);
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostEffectMode), { timeout: 25_000 })
+    .toBe(expectedPolicy.postEffectMode);
   if (expectedPolicy.cloudMode === "shell-lite") {
     await expect
       .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudShellCount), { timeout: 25_000 })
@@ -53,7 +53,7 @@ async function measureFreshHomePage(
   browser: import("@playwright/test").Browser,
   viewport: { width: number; height: number },
   url: string,
-  expectedPolicy: { bloomMode: string; cloudMode: string; groundShadow: boolean }
+  expectedPolicy: { postEffectMode: string; cloudMode: string; groundShadow: boolean }
 ) {
   const context = await browser.newContext({ viewport });
   const page = await context.newPage();
@@ -262,7 +262,7 @@ test("records production visible-copy RAF performance", async ({ page }, testInf
   }
 });
 
-test("keeps production home cloud and lite bloom inside the frame budget", async ({ browser }, testInfo) => {
+test("keeps production home cloud and analytic halo inside the frame budget", async ({ browser }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "Performance sampling is calibrated for desktop review.");
 
   const desktopViewport = { width: 1440, height: 960 };
@@ -270,35 +270,35 @@ test("keeps production home cloud and lite bloom inside the frame budget", async
     browser,
     desktopViewport,
     "/?progress=0.5&copy=hidden&quality=medium&perfTest=raf",
-    { bloomMode: "lite", cloudMode: "shell-lite", groundShadow: true }
+    { postEffectMode: "analytic-halo", cloudMode: "shell-lite", groundShadow: true }
   );
   const desktopSurface = await measureFreshHomePage(
     browser,
     desktopViewport,
     "/?progress=0.5&copy=hidden&quality=low&perfTest=raf",
-    { bloomMode: "off", cloudMode: "surface", groundShadow: false }
+    { postEffectMode: "off", cloudMode: "surface", groundShadow: false }
   );
 
   const mobileLandscapeLite = await measureFreshHomePage(
     browser,
     { width: 844, height: 390 },
     "/?progress=0.5&copy=hidden&quality=medium&perfTest=raf",
-    { bloomMode: "lite", cloudMode: "shell-lite", groundShadow: true }
+    { postEffectMode: "analytic-halo", cloudMode: "shell-lite", groundShadow: true }
   );
-  const bloomCloudP95Overhead = desktopLite.p95 - desktopSurface.p95;
+  const haloCloudP95Overhead = desktopLite.p95 - desktopSurface.p95;
 
-  logStats("production home desktop shell-lite + bloom-lite", desktopLite);
-  logStats("production home desktop surface + bloom-off", desktopSurface);
-  logStats("production home mobile landscape shell-lite + bloom-lite", mobileLandscapeLite);
-  console.log(`home shell+bloom p95 overhead=${bloomCloudP95Overhead.toFixed(2)}ms`);
+  logStats("production home desktop shell-lite + analytic-halo", desktopLite);
+  logStats("production home desktop surface + post-effect-off", desktopSurface);
+  logStats("production home mobile landscape shell-lite + analytic-halo", mobileLandscapeLite);
+  console.log(`home shell+halo p95 overhead=${haloCloudP95Overhead.toFixed(2)}ms`);
 
-  expectRafSamples("production home desktop shell-lite + bloom-lite", desktopLite, testInfo);
-  expectRafSamples("production home desktop surface + bloom-off", desktopSurface, testInfo);
-  expectRafSamples("production home mobile landscape shell-lite + bloom-lite", mobileLandscapeLite, testInfo);
+  expectRafSamples("production home desktop shell-lite + analytic-halo", desktopLite, testInfo);
+  expectRafSamples("production home desktop surface + post-effect-off", desktopSurface, testInfo);
+  expectRafSamples("production home mobile landscape shell-lite + analytic-halo", mobileLandscapeLite, testInfo);
 
   if (STRICT_PERF) {
     expect(desktopLite.p95).toBeLessThanOrEqual(DESKTOP_HOME_P95_BUDGET_MS);
     expect(mobileLandscapeLite.p95).toBeLessThanOrEqual(34);
-    expect(bloomCloudP95Overhead).toBeLessThanOrEqual(2);
+    expect(haloCloudP95Overhead).toBeLessThanOrEqual(2);
   }
 });

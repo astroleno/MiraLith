@@ -36,7 +36,7 @@ test("resolves the production home medium visual policy", () => {
     cloudMode: "shell-lite",
     groundShadow: true,
     atmosphereMode: "surface-glow",
-    bloomMode: "lite",
+    postEffectMode: "analytic-halo",
     reason: "home-lite"
   });
 });
@@ -50,7 +50,7 @@ test("resolves low quality to the surface-only safety policy", () => {
     cloudMode: "surface",
     groundShadow: false,
     atmosphereMode: "surface-glow",
-    bloomMode: "off",
+    postEffectMode: "off",
     reason: "quality-low"
   });
 });
@@ -60,7 +60,7 @@ test("keeps study and debug routes on full lookdev policies", () => {
     runtimeProfile: "full",
     qualityTier: "medium",
     renderProfile: "nasa"
-  })).toMatchObject({ cloudMode: "lookdev", groundShadow: true, bloomMode: "full" });
+  })).toMatchObject({ cloudMode: "lookdev", groundShadow: true, postEffectMode: "full-bloom" });
 
   expect(resolveLandingVisualPolicy({
     runtimeProfile: "home-lite",
@@ -70,7 +70,7 @@ test("keeps study and debug routes on full lookdev policies", () => {
     cloudMode: "lookdev",
     groundShadow: true,
     atmosphereMode: "lookdev",
-    bloomMode: "full"
+    postEffectMode: "full-bloom"
   });
 });
 

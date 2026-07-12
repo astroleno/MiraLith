@@ -65,7 +65,7 @@ export type {
   LandingLocationConfig,
   LandingMoonLightingMode,
   LandingMoonPhase,
-  LandingBloomMode,
+  LandingPostEffectMode,
   LandingRenderProfile,
   LandingRuntimeProfile,
   LandingResolvedAssets,

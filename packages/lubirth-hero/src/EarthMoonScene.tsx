@@ -27,11 +27,12 @@ import { LandingHorizonAuroraRibbon } from "./LandingHorizonAuroraRibbon";
 import { LandingHorizonCloudBelt } from "./LandingHorizonCloudBelt";
 import { LandingLimbAirglowV2 } from "./LandingLimbAirglowV2";
 import { LandingMoon } from "./LandingMoon";
-import { LandingPostBloom } from "./LandingPostBloom";
+import { LandingPostEffect } from "./LandingPostEffect";
 import { LandingProjectedHorizonComposite } from "./LandingProjectedHorizonComposite";
 import { LandingProjectedLimbScattering } from "./LandingProjectedLimbScattering";
 import { LandingSpaceBackground } from "./LandingSpaceBackground";
 import { LandingVolumetricAtmospherePass } from "./LandingVolumetricAtmospherePass";
+import { HOME_CLOUD_FIELD_SCROLL_SPEED } from "./homeCloudField";
 import { resolveLandingVisualPolicy } from "./landingVisualPolicy";
 import { EMPTY_CLOSE_ATMOSPHERE_TUNING } from "./landingAtmosphereTuning";
 import type {
@@ -87,7 +88,8 @@ declare global {
     __MiraLithLuBirthVolumetricAtmosphereActive?: boolean;
     __MiraLithLuBirthVolumetricAtmosphereQuality?: string;
     __MiraLithLuBirthCloudShellsActive?: boolean;
-    __MiraLithLuBirthPostBloomActive?: boolean;
+    __MiraLithLuBirthPostEffectActive?: boolean;
+    __MiraLithLuBirthPostEffectMode?: "off" | "analytic-halo" | "full-bloom";
   }
 }
 
@@ -197,6 +199,7 @@ export function EarthMoonScene({
   });
   const directionalLightRef = useRef<DirectionalLight>(null);
   const autoEarthYawDeg = useRef(0);
+  const homeCloudOffset = useRef(0);
   const skyCounterRotation = useRef({ yawRad: 0 });
   const smoothedLocationYawOffsetDeg = useRef(0);
   const smoothedLocationPitchOffsetDeg = useRef(0);
@@ -303,17 +306,25 @@ export function EarthMoonScene({
     }
 
     window.__MiraLithLuBirthCloudShellsActive = showCloudShells;
-    if (activeVisualPolicy.bloomMode === "off") {
-      window.__MiraLithLuBirthPostBloomActive = false;
-      window.__MiraLithLuBirthPostBloomMode = "off";
+    if (activeVisualPolicy.postEffectMode === "off") {
+      window.__MiraLithLuBirthPostEffectActive = false;
+      window.__MiraLithLuBirthPostEffectMode = "off";
     }
 
     return () => {
       window.__MiraLithLuBirthCloudShellsActive = false;
     };
-  }, [activeVisualPolicy.bloomMode, showCloudShells]);
+  }, [activeVisualPolicy.postEffectMode, showCloudShells]);
 
   useFrame((_state, delta) => {
+    if (
+      activeVisualPolicy.cloudMode !== "lookdev" &&
+      !paused &&
+      !reducedMotion
+    ) {
+      homeCloudOffset.current =
+        (homeCloudOffset.current + delta * HOME_CLOUD_FIELD_SCROLL_SPEED) % 1;
+    }
     const progress = getRuntimeOpeningProgress(mode === "window" || mode === "expanded" ? 1 : 0);
     const frame = mapOpeningProgress(mode === "expanded" ? 1 : progress);
     const finalFrame = mapOpeningProgress(1);
@@ -656,6 +667,7 @@ export function EarthMoonScene({
             showTextureClouds={showSurfaceTextureClouds}
             reducedMotion={reducedMotion}
             paused={paused}
+            cloudOffsetRef={homeCloudOffset}
             sceneLightDirection={sceneLightDirection}
             onDayTextureReady={onVisualReadyEnough}
             cloudDeckEnabled={cloudDeckEnabled}
@@ -676,6 +688,7 @@ export function EarthMoonScene({
               referenceLook={useReferenceVolumetricSurfaceClouds}
               reducedMotion={reducedMotion}
               paused={paused}
+              cloudOffsetRef={homeCloudOffset}
               cloudDeckEnabled={cloudDeckEnabled}
               cloudMode={activeVisualPolicy.cloudMode}
               closeAtmosphereTuning={activeCloseAtmosphereTuning}
@@ -786,16 +799,17 @@ export function EarthMoonScene({
             quality={quality}
             sceneLightDirection={sceneLightDirection}
             emphasis={debugAtmosphere}
+            mode={activeVisualPolicy.atmosphereMode}
             runtimeProfile={runtimeProfile}
             closeAtmosphereTuning={activeCloseAtmosphereTuning}
           />
         ) : null}
-        {showAtmosphereStack && activeVisualPolicy.bloomMode !== "off" ? (
-          <LandingPostBloom
+        {showAtmosphereStack && activeVisualPolicy.postEffectMode !== "off" ? (
+          <LandingPostEffect
             composition={composition}
             quality={quality}
             emphasis={debugAtmosphere}
-            mode={activeVisualPolicy.bloomMode}
+            mode={activeVisualPolicy.postEffectMode}
           />
         ) : null}
         {debugMianyang && showEarth ? (

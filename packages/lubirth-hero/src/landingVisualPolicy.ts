@@ -23,7 +23,7 @@ export function resolveLandingVisualPolicy(
       cloudMode: "surface",
       groundShadow: false,
       atmosphereMode: "surface-glow",
-      bloomMode: "off",
+      postEffectMode: "off",
       reason: `quality-${input.qualityTier}`
     };
   }
@@ -33,7 +33,7 @@ export function resolveLandingVisualPolicy(
       cloudMode: "lookdev",
       groundShadow: true,
       atmosphereMode: input.renderProfile === "debug-atmosphere" ? "lookdev" : "surface-glow",
-      bloomMode: "full",
+      postEffectMode: "full-bloom",
       reason: "debug-lookdev"
     };
   }
@@ -43,7 +43,7 @@ export function resolveLandingVisualPolicy(
       cloudMode: "shell-lite",
       groundShadow: true,
       atmosphereMode: "surface-glow",
-      bloomMode: "lite",
+      postEffectMode: "analytic-halo",
       reason: "home-lite"
     };
   }
@@ -52,7 +52,7 @@ export function resolveLandingVisualPolicy(
     cloudMode: "lookdev",
     groundShadow: true,
     atmosphereMode: "surface-glow",
-    bloomMode: "full",
+    postEffectMode: "full-bloom",
     reason: "full-lookdev"
   };
 }

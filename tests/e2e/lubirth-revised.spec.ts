@@ -82,6 +82,8 @@ declare global {
     __MiraLithLuBirthAtmospherePolicy?: string;
     __MiraLithLuBirthAtmospherePolicyReason?: string;
     __MiraLithLuBirthAtmosphereStackActive?: boolean;
+    __MiraLithLuBirthAtmosphereStackLayerCount?: number;
+    __MiraLithLuBirthAtmosphereStackMode?: string;
     __MiraLithLuBirthAtmosphereVariant?: string;
     __MiraLithLuBirthCloudDeckActive?: boolean;
     __MiraLithLuBirthCloudDeckTexture?: string;
@@ -90,17 +92,17 @@ declare global {
     __MiraLithLuBirthCloudFieldTexture?: string;
     __MiraLithLuBirthGroundCloudShadowActive?: boolean;
     __MiraLithLuBirthHorizonAuroraRibbonActive?: boolean;
-    __MiraLithLuBirthPostBloomActive?: boolean;
-    __MiraLithLuBirthPostBloomMode?: string;
-    __MiraLithLuBirthPostBloomConfig?: {
-      radius: number;
-      resolutionScale: number;
-      strength: number;
-      threshold: number;
+    __MiraLithLuBirthPostEffectActive?: boolean;
+    __MiraLithLuBirthPostEffectMode?: string;
+    __MiraLithLuBirthAnalyticHaloConfig?: {
+      diameterScale: number;
+      opacityMax: number;
+      opacityMin: number;
+      textureSize: number;
     };
     __MiraLithLuBirthVisualPolicy?: {
       atmosphereMode: string;
-      bloomMode: string;
+      postEffectMode: string;
       cloudMode: string;
       groundShadow: boolean;
       reason: string;
@@ -245,7 +247,7 @@ test("defaults the study route to the nasa Earth-limb profile", async ({ page })
     .toBe(true);
   await expectProductionAtmospherePolicy(page, "policy-stack");
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomActive ?? false), { timeout: 25_000 })
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostEffectActive ?? false), { timeout: 25_000 })
     .toBe(true);
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedLimbScatteringActive ?? false), { timeout: 25_000 })
@@ -290,23 +292,29 @@ test("keeps production home on the lightweight Earth renderer", async ({ page })
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthGroundCloudShadowActive), { timeout: 25_000 })
     .toBe(true);
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomActive), { timeout: 25_000 })
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostEffectActive), { timeout: 25_000 })
     .toBe(true);
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomMode), { timeout: 25_000 })
-    .toBe("lite");
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostEffectMode), { timeout: 25_000 })
+    .toBe("analytic-halo");
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomConfig), { timeout: 25_000 })
-    .toEqual({ radius: 0.35, resolutionScale: 0.5, strength: 0.07, threshold: 0.98 });
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthAnalyticHaloConfig), { timeout: 25_000 })
+    .toEqual({ diameterScale: 2.5, opacityMax: 0.1, opacityMin: 0.085, textureSize: 64 });
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthVisualPolicy), { timeout: 25_000 })
     .toEqual({
       atmosphereMode: "surface-glow",
-      bloomMode: "lite",
+      postEffectMode: "analytic-halo",
       cloudMode: "shell-lite",
       groundShadow: true,
       reason: "home-lite"
     });
+  await expect
+    .poll(() => page.evaluate(() => ({
+      count: window.__MiraLithLuBirthAtmosphereStackLayerCount,
+      mode: window.__MiraLithLuBirthAtmosphereStackMode
+    })), { timeout: 25_000 })
+    .toEqual({ count: 1, mode: "surface-glow" });
   await expect
     .poll(
       () => page.evaluate(() => window.__MiraLithLuBirthCloseAtmosphereTuning?.effective.edgeGlowStrength),
@@ -320,7 +328,8 @@ test("keeps production home on the lightweight Earth renderer", async ({ page })
   const canvasDpr = await page.locator("canvas").evaluate((canvas) =>
     Math.max(canvas.width / canvas.clientWidth, canvas.height / canvas.clientHeight)
   );
-  expect(canvasDpr).toBeLessThanOrEqual(1.26);
+  expect(canvasDpr).toBeGreaterThanOrEqual(0.84);
+  expect(canvasDpr).toBeLessThanOrEqual(0.86);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-day-2k"))).toBe(true);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-night-2k"))).toBe(true);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-cloud-field-home.webp"))).toBe(true);
@@ -467,7 +476,7 @@ test("uses high-detail Earth and sky assets for the nasa profile without project
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthAtmosphereStackActive ?? false), { timeout: 25_000 })
     .toBe(true);
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomActive ?? false), { timeout: 25_000 })
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostEffectActive ?? false), { timeout: 25_000 })
     .toBe(true);
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthAuroraOvalActive ?? false), { timeout: 25_000 })
@@ -518,7 +527,13 @@ test("uses the 3D atmosphere stack for atmosphere review", async ({ page }) => {
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthAtmosphereStackActive), { timeout: 25_000 })
     .toBe(true);
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomActive ?? false), { timeout: 25_000 })
+    .poll(() => page.evaluate(() => ({
+      count: window.__MiraLithLuBirthAtmosphereStackLayerCount,
+      mode: window.__MiraLithLuBirthAtmosphereStackMode
+    })), { timeout: 25_000 })
+    .toEqual({ count: 3, mode: "lookdev" });
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostEffectActive ?? false), { timeout: 25_000 })
     .toBe(true);
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthProjectedHorizonCompositeActive ?? false), { timeout: 25_000 })

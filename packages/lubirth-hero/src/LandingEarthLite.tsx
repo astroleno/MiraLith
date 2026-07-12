@@ -1,9 +1,10 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
 import {
   Color,
+  ClampToEdgeWrapping,
   LinearFilter,
   LinearMipmapLinearFilter,
   MathUtils,
@@ -37,6 +38,7 @@ interface LandingEarthLiteProps {
   visualPolicy: LandingVisualPolicy;
   reducedMotion?: boolean;
   paused?: boolean;
+  cloudOffsetRef?: MutableRefObject<number>;
   sceneLightDirection?: Vector3;
   onDayTextureReady?: () => void;
   closeAtmosphereTuning?: LandingCloseAtmosphereTuning;
@@ -46,6 +48,8 @@ const fallbackLightDirection = new Vector3();
 
 declare global {
   interface Window {
+    __MiraLithLuBirthGroundCloudFieldTextureUuid?: string;
+    __MiraLithLuBirthGroundCloudOffset?: number;
     __MiraLithLuBirthGroundCloudShadowActive?: boolean;
   }
 }
@@ -122,10 +126,8 @@ function createLiteEarthMaterial({
       void main() {
         vUv = uv;
         vec3 localNormal = normalize(position);
-        vec3 localReference = abs(localNormal.y) > 0.98
-          ? vec3(1.0, 0.0, 0.0)
-          : vec3(0.0, 1.0, 0.0);
-        vec3 localEast = normalize(cross(localReference, localNormal));
+        float longitude = uv.x * 6.28318530718;
+        vec3 localEast = vec3(sin(longitude), 0.0, cos(longitude));
         vec3 localNorth = normalize(cross(localNormal, localEast));
         vec4 worldPosition = modelMatrix * vec4(position, 1.0);
         mat3 worldRotation = mat3(modelMatrix);
@@ -290,12 +292,14 @@ export function LandingEarthLite({
   visualPolicy,
   reducedMotion,
   paused,
+  cloudOffsetRef,
   sceneLightDirection,
   onDayTextureReady,
   closeAtmosphereTuning = EMPTY_CLOSE_ATMOSPHERE_TUNING
 }: LandingEarthLiteProps) {
   const earth = useRef<Mesh>(null);
-  const cloudOffset = useRef(0);
+  const localCloudOffset = useRef(0);
+  const activeCloudOffset = cloudOffsetRef ?? localCloudOffset;
   const proceduralDayTexture = useMemo(
     () => createEarthTexture(quality.tier === "low" ? 384 : 512),
     [quality.tier]
@@ -320,7 +324,7 @@ export function LandingEarthLite({
     {
       colorSpace: assets.earthCloudField?.colorSpace ?? "linear",
       wrapS: RepeatWrapping,
-      wrapT: RepeatWrapping,
+      wrapT: ClampToEdgeWrapping,
       anisotropy: 4
     }
   );
@@ -331,7 +335,7 @@ export function LandingEarthLite({
   const material = useMemo(() => {
     activeDayTexture.colorSpace = SRGBColorSpace;
     activeNightTexture.colorSpace = SRGBColorSpace;
-    for (const texture of [activeDayTexture, activeNightTexture, activeCloudFieldTexture]) {
+    for (const texture of [activeDayTexture, activeNightTexture]) {
       texture.wrapS = RepeatWrapping;
       texture.wrapT = RepeatWrapping;
       texture.magFilter = LinearFilter;
@@ -372,8 +376,11 @@ export function LandingEarthLite({
 
     window.__MiraLithLuBirthGroundCloudShadowActive =
       Boolean(cloudFieldTexture) && visualPolicy.groundShadow;
+    window.__MiraLithLuBirthGroundCloudFieldTextureUuid = cloudFieldTexture?.uuid;
     return () => {
       window.__MiraLithLuBirthGroundCloudShadowActive = false;
+      window.__MiraLithLuBirthGroundCloudFieldTextureUuid = undefined;
+      window.__MiraLithLuBirthGroundCloudOffset = undefined;
     };
   }, [cloudFieldTexture, visualPolicy.groundShadow]);
 
@@ -382,14 +389,16 @@ export function LandingEarthLite({
       return;
     }
 
-    if (!paused && !reducedMotion) {
-      cloudOffset.current = (cloudOffset.current + delta * HOME_CLOUD_FIELD_SCROLL_SPEED) % 1;
+    if (!cloudOffsetRef && !paused && !reducedMotion) {
+      localCloudOffset.current =
+        (localCloudOffset.current + delta * HOME_CLOUD_FIELD_SCROLL_SPEED) % 1;
     }
 
     const earthMaterial = earth.current.material as ShaderMaterial;
     const activeLightDirection = sceneLightDirection ?? fallbackLightDirection.set(...composition.light.fixedSunDir);
     earthMaterial.uniforms.lightDir.value.copy(activeLightDirection).normalize();
-    earthMaterial.uniforms.cloudOffset.value = cloudOffset.current;
+    earthMaterial.uniforms.cloudOffset.value = activeCloudOffset.current;
+    window.__MiraLithLuBirthGroundCloudOffset = activeCloudOffset.current;
     earthMaterial.uniforms.closeStage.value = 1 - MathUtils.smoothstep(
       getRuntimeOpeningProgress(0),
       0.18,

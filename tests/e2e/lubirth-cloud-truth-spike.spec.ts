@@ -9,11 +9,15 @@ declare global {
     __MiraLithLuBirthCloudTruthMode?: string;
     __MiraLithLuBirthCloudShellCount?: number;
     __MiraLithLuBirthCloudFieldTexture?: string;
+    __MiraLithLuBirthCloudShellOffset?: number;
+    __MiraLithLuBirthCloudShellTextureUuid?: string;
+    __MiraLithLuBirthGroundCloudFieldTextureUuid?: string;
+    __MiraLithLuBirthGroundCloudOffset?: number;
     __MiraLithLuBirthGroundCloudShadowActive?: boolean;
-    __MiraLithLuBirthPostBloomMode?: string;
+    __MiraLithLuBirthPostEffectMode?: string;
     __MiraLithLuBirthQualityTier?: string;
     __MiraLithLuBirthVisualPolicy?: {
-      bloomMode: string;
+      postEffectMode: string;
       cloudMode: string;
       groundShadow: boolean;
     };
@@ -21,6 +25,16 @@ declare global {
       locationSunDot?: number;
     };
     __MiraLithLuBirthVolumetricAtmosphereActive?: boolean;
+    __MiraLithHomeProjectionFrame?: {
+      width: number;
+      height: number;
+      earthHorizonPath: string;
+      moon: {
+        x: number;
+        y: number;
+        radius: number;
+      };
+    };
   }
 }
 
@@ -80,6 +94,92 @@ async function sampleCanvasVisibility(page: import("@playwright/test").Page) {
   });
 }
 
+async function sampleHomeHorizonBand(page: import("@playwright/test").Page) {
+  return page.evaluate(() => {
+    const source = document.querySelector("canvas");
+    const frame = window.__MiraLithHomeProjectionFrame;
+    if (!source || !frame) {
+      return null;
+    }
+
+    const sample = document.createElement("canvas");
+    sample.width = frame.width;
+    sample.height = frame.height;
+    const context = sample.getContext("2d", { willReadFrequently: true });
+    if (!context) {
+      return null;
+    }
+    context.drawImage(source, 0, 0, sample.width, sample.height);
+    const pixels = context.getImageData(0, 0, sample.width, sample.height).data;
+    const coordinates = (frame.earthHorizonPath.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+    const points: Array<[number, number]> = [];
+    for (let index = 0; index < coordinates.length; index += 2) {
+      points.push([coordinates[index] ?? 0, coordinates[index + 1] ?? 0]);
+    }
+
+    const lumaAt = (x: number, y: number) => {
+      const sampleX = Math.max(0, Math.min(sample.width - 1, Math.round(x)));
+      const sampleY = Math.max(0, Math.min(sample.height - 1, Math.round(y)));
+      const index = (sampleY * sample.width + sampleX) * 4;
+      return (
+        0.2126 * (pixels[index] ?? 0) +
+        0.7152 * (pixels[index + 1] ?? 0) +
+        0.0722 * (pixels[index + 2] ?? 0)
+      );
+    };
+
+    let sampleCount = 0;
+    let readableSampleCount = 0;
+    let darkDipCount = 0;
+    let edgeLuma = 0;
+    let nearSurfaceLuma = 0;
+    let innerSurfaceLuma = 0;
+
+    for (let index = 2; index < points.length - 2; index += 3) {
+      const [x, y] = points[index] ?? [0, 0];
+      if (x < 40 || x > sample.width - 40 || y < 40 || y > sample.height - 40) {
+        continue;
+      }
+      const [previousX, previousY] = points[index - 1] ?? [x - 1, y];
+      const [nextX, nextY] = points[index + 1] ?? [x + 1, y];
+      let normalX = -(nextY - previousY);
+      let normalY = nextX - previousX;
+      const normalLength = Math.max(Math.hypot(normalX, normalY), 1e-5);
+      normalX /= normalLength;
+      normalY /= normalLength;
+      if (normalY < 0) {
+        normalX *= -1;
+        normalY *= -1;
+      }
+
+      const edge = lumaAt(x + normalX, y + normalY);
+      const nearSurface = lumaAt(x + normalX * 3, y + normalY * 3);
+      const midSurface = lumaAt(x + normalX * 6, y + normalY * 6);
+      const innerSurface = lumaAt(x + normalX * 12, y + normalY * 12);
+      edgeLuma += edge;
+      nearSurfaceLuma += nearSurface;
+      innerSurfaceLuma += innerSurface;
+      sampleCount += 1;
+
+      if (innerSurface > 8) {
+        readableSampleCount += 1;
+        if (nearSurface < innerSurface * 0.55 && nearSurface < midSurface * 0.65) {
+          darkDipCount += 1;
+        }
+      }
+    }
+
+    return {
+      darkDipRatio: darkDipCount / Math.max(readableSampleCount, 1),
+      edgeLuma: edgeLuma / Math.max(sampleCount, 1),
+      innerSurfaceLuma: innerSurfaceLuma / Math.max(sampleCount, 1),
+      nearSurfaceLuma: nearSurfaceLuma / Math.max(sampleCount, 1),
+      readableSampleCount,
+      sampleCount
+    };
+  });
+}
+
 test("cloud truth spike renders one production canvas with stack atmosphere", async ({ page }) => {
   const requests = new Set<string>();
   page.on("request", (request) => {
@@ -129,10 +229,24 @@ test("cloud truth baseline does not request cloud deck", async ({ page }) => {
 
 test("production home uses one packed-normal cloud shell and one ground shadow source", async ({ page }) => {
   const requests = new Set<string>();
+  const shaderErrors: string[] = [];
   page.on("request", (request) => {
     const pathname = new URL(request.url()).pathname;
     if (pathname.includes("/assets/lubirth/")) {
       requests.add(pathname);
+    }
+  });
+  page.on("console", (message) => {
+    if (
+      message.type() === "error" &&
+      /WebGLProgram|Shader Error|VALIDATE_STATUS|shader is not compiled/i.test(message.text())
+    ) {
+      shaderErrors.push(message.text());
+    }
+  });
+  page.on("pageerror", (error) => {
+    if (/WebGLProgram|Shader Error|VALIDATE_STATUS|shader is not compiled/i.test(error.message)) {
+      shaderErrors.push(error.message);
     }
   });
 
@@ -145,11 +259,55 @@ test("production home uses one packed-normal cloud shell and one ground shadow s
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthGroundCloudShadowActive), { timeout: 25_000 })
     .toBe(true);
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostBloomMode), { timeout: 25_000 })
-    .toBe("lite");
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthPostEffectMode), { timeout: 25_000 })
+    .toBe("analytic-halo");
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudFieldTexture), { timeout: 25_000 })
     .toBe("/assets/lubirth/textures/earth-cloud-field-home.webp");
+  await expect
+    .poll(
+      () => page.evaluate(() => ({
+        ground: window.__MiraLithLuBirthGroundCloudFieldTextureUuid,
+        shell: window.__MiraLithLuBirthCloudShellTextureUuid
+      })),
+      { timeout: 25_000 }
+    )
+    .toEqual(expect.objectContaining({
+      ground: expect.any(String),
+      shell: expect.any(String)
+    }));
+  await expect
+    .poll(
+      () => page.evaluate(() =>
+        window.__MiraLithLuBirthGroundCloudFieldTextureUuid ===
+        window.__MiraLithLuBirthCloudShellTextureUuid
+      ),
+      { timeout: 25_000 }
+    )
+    .toBe(true);
+  await expect
+    .poll(
+      () => page.evaluate(() => ({
+        ground: window.__MiraLithLuBirthGroundCloudOffset,
+        shell: window.__MiraLithLuBirthCloudShellOffset
+      })),
+      { timeout: 25_000 }
+    )
+    .toEqual({
+      ground: expect.any(Number),
+      shell: expect.any(Number)
+    });
+  await expect
+    .poll(
+      () => page.evaluate(() =>
+        Math.abs(
+          (window.__MiraLithLuBirthGroundCloudOffset ?? 0) -
+          (window.__MiraLithLuBirthCloudShellOffset ?? 0)
+        )
+      ),
+      { timeout: 25_000 }
+    )
+    .toBeLessThan(1e-7);
 
   const packedChannels = await page.evaluate(async () => {
     const image = new Image();
@@ -189,24 +347,26 @@ test("production home uses one packed-normal cloud shell and one ground shadow s
   expect(Array.from(requests).some((pathname) => pathname.includes("earth-cloud-field-home.webp"))).toBe(true);
   expect(Array.from(requests).some((pathname) => pathname.includes("earth-clouds-2k"))).toBe(false);
   expect(Array.from(requests).some((pathname) => pathname.includes("earth-cloud-deck"))).toBe(false);
+  expect(shaderErrors).toEqual([]);
 });
 
 test("home cloud matrix stays visible across progress, lighting, viewport, and fallback modes", async ({ page }) => {
   const lightingSamples = [
-    { label: "day", progress: "0", sunDate: "2026-05-01T03:00:00Z" },
-    { label: "terminator", progress: "0.5", sunDate: "2026-05-01T10:30:00Z" },
-    { label: "backlit", progress: "1", sunDate: "2026-05-01T15:00:00Z" }
+    { label: "day", progress: "0", sunDate: "2026-05-01T03:00:00Z", geoLat: "31.4675", geoLon: "104.6796" },
+    { label: "terminator", progress: "0.5", sunDate: "2026-05-01T10:30:00Z", geoLat: "31.4675", geoLon: "104.6796" },
+    { label: "backlit", progress: "1", sunDate: "2026-05-01T15:00:00Z", geoLat: "31.4675", geoLon: "104.6796" },
+    { label: "north-polar", progress: "0", sunDate: "2026-06-21T12:00:00Z", geoLat: "89", geoLon: "0" }
   ] as const;
   const profiles = [
     {
-      bloomMode: "lite",
+      postEffectMode: "analytic-halo",
       cloudMode: "shell-lite",
       groundShadow: true,
       quality: "medium",
       viewport: { width: 1280, height: 720 }
     },
     {
-      bloomMode: "off",
+      postEffectMode: "off",
       cloudMode: "surface",
       groundShadow: false,
       quality: "low",
@@ -219,9 +379,9 @@ test("home cloud matrix stays visible across progress, lighting, viewport, and f
     for (const sample of lightingSamples) {
       const params = new URLSearchParams({
         copy: "hidden",
-        geoLabel: "Mianyang",
-        geoLat: "31.4675",
-        geoLon: "104.6796",
+        geoLabel: sample.label === "north-polar" ? "North polar test" : "Mianyang",
+        geoLat: sample.geoLat,
+        geoLon: sample.geoLon,
         geoTimeZone: "Asia/Shanghai",
         location: "ip",
         progress: sample.progress,
@@ -234,7 +394,7 @@ test("home cloud matrix stays visible across progress, lighting, viewport, and f
       await expect
         .poll(() => page.evaluate(() => window.__MiraLithLuBirthVisualPolicy), { timeout: 25_000 })
         .toMatchObject({
-          bloomMode: profile.bloomMode,
+          postEffectMode: profile.postEffectMode,
           cloudMode: profile.cloudMode,
           groundShadow: profile.groundShadow
         });
@@ -243,6 +403,19 @@ test("home cloud matrix stays visible across progress, lighting, viewport, and f
       expect(visibility!.maxLuma, `${profile.quality}-${sample.label}`).toBeGreaterThan(20);
       expect(visibility!.litPixelRatio, `${profile.quality}-${sample.label}`).toBeGreaterThan(0.012);
       expect(visibility!.averageLuma, `${profile.quality}-${sample.label}`).toBeGreaterThan(0.7);
+      if (profile.cloudMode === "shell-lite" && sample.progress === "0") {
+        await expect
+          .poll(() => page.evaluate(() => Boolean(window.__MiraLithHomeProjectionFrame)), { timeout: 25_000 })
+          .toBe(true);
+        const horizonBand = await sampleHomeHorizonBand(page);
+        expect(horizonBand, `${profile.quality}-${sample.label}-horizon`).not.toBeNull();
+        expect(horizonBand!.sampleCount, `${profile.quality}-${sample.label}-horizon`).toBeGreaterThan(20);
+        expect(horizonBand!.readableSampleCount, `${profile.quality}-${sample.label}-horizon`).toBeGreaterThan(15);
+        expect(horizonBand!.darkDipRatio, `${profile.quality}-${sample.label}-horizon`).toBeLessThan(0.12);
+        expect(horizonBand!.nearSurfaceLuma, `${profile.quality}-${sample.label}-horizon`).toBeGreaterThan(
+          horizonBand!.innerSurfaceLuma * 0.7
+        );
+      }
     }
   }
 });

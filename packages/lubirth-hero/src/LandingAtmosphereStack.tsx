@@ -17,6 +17,7 @@ import { EMPTY_CLOSE_ATMOSPHERE_TUNING } from "./landingAtmosphereTuning";
 import type {
   LandingCloseAtmosphereTuning,
   LandingComposition,
+  LandingAtmosphereMode,
   LandingResolvedAssets,
   LandingRuntimeProfile
 } from "./types";
@@ -42,6 +43,7 @@ interface LandingAtmosphereStackProps {
   quality: QualityProfile;
   sceneLightDirection?: Vector3;
   emphasis?: boolean;
+  mode?: LandingAtmosphereMode;
   runtimeProfile?: LandingRuntimeProfile;
   closeAtmosphereTuning?: LandingCloseAtmosphereTuning;
 }
@@ -53,6 +55,8 @@ interface AtmosphereLayerProps extends LandingAtmosphereStackProps {
 declare global {
   interface Window {
     __MiraLithLuBirthAtmosphereStackActive?: boolean;
+    __MiraLithLuBirthAtmosphereStackLayerCount?: number;
+    __MiraLithLuBirthAtmosphereStackMode?: LandingAtmosphereMode;
   }
 }
 
@@ -544,11 +548,12 @@ export function LandingAtmosphereStack({
   quality,
   sceneLightDirection,
   emphasis = false,
+  mode = "surface-glow",
   runtimeProfile = "full",
   closeAtmosphereTuning = EMPTY_CLOSE_ATMOSPHERE_TUNING
 }: LandingAtmosphereStackProps) {
   const enabled = quality.tier !== "fallback" && composition.atmosphere.enabled;
-  const layers = !emphasis
+  const layers = mode === "surface-glow"
     ? PRODUCTION_LAYERS
     : quality.tier === "high"
       ? HIGH_LAYERS
@@ -559,14 +564,18 @@ export function LandingAtmosphereStack({
   useEffect(() => {
     if (typeof window !== "undefined") {
       window.__MiraLithLuBirthAtmosphereStackActive = enabled;
+      window.__MiraLithLuBirthAtmosphereStackLayerCount = enabled ? layers.length : 0;
+      window.__MiraLithLuBirthAtmosphereStackMode = mode;
     }
 
     return () => {
       if (typeof window !== "undefined") {
         window.__MiraLithLuBirthAtmosphereStackActive = false;
+        window.__MiraLithLuBirthAtmosphereStackLayerCount = 0;
+        window.__MiraLithLuBirthAtmosphereStackMode = undefined;
       }
     };
-  }, [enabled]);
+  }, [enabled, layers.length, mode]);
 
   if (!enabled) {
     return null;

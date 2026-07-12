@@ -8,14 +8,14 @@ export type LandingAtmosphereVariant = "stack" | "volumetric";
 export type LandingAtmosphereLook = "lubirth" | "reference";
 export type LandingRuntimeProfile = "full" | "home-lite";
 export type LandingCloudMode = "surface" | "shell-lite" | "lookdev";
-export type LandingBloomMode = "off" | "lite" | "full";
+export type LandingPostEffectMode = "off" | "analytic-halo" | "full-bloom";
 export type LandingAtmosphereMode = "surface-glow" | "lookdev";
 
 export interface LandingVisualPolicy {
   cloudMode: LandingCloudMode;
   groundShadow: boolean;
   atmosphereMode: LandingAtmosphereMode;
-  bloomMode: LandingBloomMode;
+  postEffectMode: LandingPostEffectMode;
   reason: string;
 }
 

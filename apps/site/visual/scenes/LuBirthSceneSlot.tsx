@@ -20,7 +20,7 @@ import type {
   LandingAtmospherePolicy,
   LandingAtmosphereVariant,
   LandingAuroraProfile,
-  LandingBloomMode,
+  LandingPostEffectMode,
   LandingCloseAtmosphereTuning,
   LandingCloudMode,
   LandingCompositionOverrides,
@@ -203,13 +203,23 @@ function readQualityOverride(): LandingQuality | undefined {
   return quality === "high" || quality === "medium" || quality === "low" || quality === "auto" ? quality : undefined;
 }
 
-function readBloomModeOverride(): LandingBloomMode | undefined {
+function readPostEffectModeOverride(): LandingPostEffectMode | undefined {
   if (typeof window === "undefined") {
     return undefined;
   }
 
-  const mode = new URLSearchParams(window.location.search).get("bloom");
-  return mode === "off" || mode === "lite" || mode === "full" ? mode : undefined;
+  const params = new URLSearchParams(window.location.search);
+  const mode = params.get("postEffect") ?? params.get("bloom");
+  if (mode === "off") {
+    return "off";
+  }
+  if (mode === "analytic-halo" || mode === "lite") {
+    return "analytic-halo";
+  }
+  if (mode === "full-bloom" || mode === "full") {
+    return "full-bloom";
+  }
+  return undefined;
 }
 
 function readCloudModeOverride(): LandingCloudMode | undefined {
@@ -503,7 +513,7 @@ export function LuBirthSceneSlot({
 }: LuBirthSceneSlotProps) {
   const reducedMotion = useReducedMotionPreference();
   const qualityOverride = readQualityOverride();
-  const bloomModeOverride = readBloomModeOverride();
+  const postEffectModeOverride = readPostEffectModeOverride();
   const cloudModeOverride = readCloudModeOverride();
   const auroraProfile = readAuroraProfile();
   const renderProfileOverride = readRenderProfileOverride();
@@ -530,11 +540,11 @@ export function LuBirthSceneSlot({
       });
       return {
         ...policy,
-        ...(bloomModeOverride ? { bloomMode: bloomModeOverride } : {}),
+        ...(postEffectModeOverride ? { postEffectMode: postEffectModeOverride } : {}),
         ...(cloudModeOverride ? { cloudMode: cloudModeOverride } : {})
       };
     },
-    [activeRenderProfile, bloomModeOverride, cloudModeOverride, qualityProfile.tier, runtimeProfile]
+    [activeRenderProfile, cloudModeOverride, postEffectModeOverride, qualityProfile.tier, runtimeProfile]
   );
   const requestedCloseAtmosphereTuning = useMemo<LandingCloseAtmosphereTuning>(
     () => resolveLandingCloseAtmosphereTuning({

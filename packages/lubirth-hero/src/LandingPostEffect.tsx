@@ -19,24 +19,24 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { getRuntimeOpeningProgress, type QualityProfile } from "@miralith/visual-core";
-import type { LandingBloomMode, LandingComposition } from "./types";
+import type { LandingComposition, LandingPostEffectMode } from "./types";
 
-interface LandingPostBloomProps {
+interface LandingPostEffectProps {
   composition: LandingComposition;
   quality: QualityProfile;
   emphasis?: boolean;
-  mode?: LandingBloomMode;
+  mode?: LandingPostEffectMode;
 }
 
 declare global {
   interface Window {
-    __MiraLithLuBirthPostBloomActive?: boolean;
-    __MiraLithLuBirthPostBloomMode?: LandingBloomMode;
-    __MiraLithLuBirthPostBloomConfig?: {
-      radius: number;
-      resolutionScale: number;
-      strength: number;
-      threshold: number;
+    __MiraLithLuBirthPostEffectActive?: boolean;
+    __MiraLithLuBirthPostEffectMode?: LandingPostEffectMode;
+    __MiraLithLuBirthAnalyticHaloConfig?: {
+      diameterScale: number;
+      opacityMax: number;
+      opacityMin: number;
+      textureSize: number;
     };
   }
 }
@@ -110,10 +110,10 @@ const SHARPEN_SHADER = {
   `
 };
 
-function LandingPostBloomLite({
+function LandingAnalyticHalo({
   composition,
   quality
-}: Pick<LandingPostBloomProps, "composition" | "quality">) {
+}: Pick<LandingPostEffectProps, "composition" | "quality">) {
   const enabled = quality.tier !== "fallback";
   const sprite = useRef<Sprite>(null);
   const bloomTexture = useMemo(() => createLiteBloomTexture(), []);
@@ -125,15 +125,15 @@ function LandingPostBloomLite({
       return undefined;
     }
 
-    window.__MiraLithLuBirthPostBloomActive = enabled;
-    window.__MiraLithLuBirthPostBloomMode = enabled ? "lite" : "off";
-    window.__MiraLithLuBirthPostBloomConfig = enabled
-      ? { radius: 0.35, resolutionScale: 0.5, strength: 0.07, threshold: 0.98 }
+    window.__MiraLithLuBirthPostEffectActive = enabled;
+    window.__MiraLithLuBirthPostEffectMode = enabled ? "analytic-halo" : "off";
+    window.__MiraLithLuBirthAnalyticHaloConfig = enabled
+      ? { diameterScale: 2.5, opacityMax: 0.1, opacityMin: 0.085, textureSize: 64 }
       : undefined;
     return () => {
-      window.__MiraLithLuBirthPostBloomActive = false;
-      window.__MiraLithLuBirthPostBloomMode = "off";
-      window.__MiraLithLuBirthPostBloomConfig = undefined;
+      window.__MiraLithLuBirthPostEffectActive = false;
+      window.__MiraLithLuBirthPostEffectMode = "off";
+      window.__MiraLithLuBirthAnalyticHaloConfig = undefined;
     };
   }, [enabled]);
 
@@ -170,26 +170,26 @@ function LandingPostBloomLite({
   );
 }
 
-function LandingPostBloomComposer({
+function LandingFullBloom({
   quality,
   emphasis = false,
-  mode = "full"
-}: LandingPostBloomProps) {
+  mode = "full-bloom"
+}: LandingPostEffectProps) {
   const { gl, scene, camera, size } = useThree();
-  const enabled = mode !== "off" && quality.tier !== "fallback";
-  const resolutionScale = mode === "lite" ? 0.5 : 1;
+  const enabled = mode === "full-bloom" && quality.tier !== "fallback";
+  const resolutionScale = 1;
   const { composer, bloomPass, renderPass, sharpenPass, outputPass } = useMemo(() => {
     const nextComposer = new EffectComposer(gl);
     const nextRenderPass = new RenderPass(scene, camera);
     const nextBloomPass = new UnrealBloomPass(
       new Vector2(size.width * resolutionScale, size.height * resolutionScale),
-      mode === "lite" ? 0.07 : emphasis ? 0.12 : 0.072,
-      mode === "lite" ? 0.35 : emphasis ? 0.48 : 0.38,
-      mode === "lite" ? 0.98 : emphasis ? 0.9 : 0.925
+      emphasis ? 0.12 : 0.072,
+      emphasis ? 0.48 : 0.38,
+      emphasis ? 0.9 : 0.925
     );
     const nextSharpenPass = new ShaderPass(SHARPEN_SHADER);
     const nextOutputPass = new OutputPass();
-    nextSharpenPass.enabled = mode === "full";
+    nextSharpenPass.enabled = true;
     nextComposer.addPass(nextRenderPass);
     nextComposer.addPass(nextBloomPass);
     nextComposer.addPass(nextSharpenPass);
@@ -229,22 +229,13 @@ function LandingPostBloomComposer({
       return undefined;
     }
 
-    window.__MiraLithLuBirthPostBloomActive = enabled;
-    window.__MiraLithLuBirthPostBloomMode = enabled ? mode : "off";
-    window.__MiraLithLuBirthPostBloomConfig = enabled
-      ? {
-          radius: mode === "lite" ? 0.35 : emphasis ? 0.48 : 0.38,
-          resolutionScale,
-          strength: mode === "lite" ? 0.07 : emphasis ? 0.12 : 0.072,
-          threshold: mode === "lite" ? 0.98 : emphasis ? 0.9 : 0.925
-        }
-      : undefined;
+    window.__MiraLithLuBirthPostEffectActive = enabled;
+    window.__MiraLithLuBirthPostEffectMode = enabled ? "full-bloom" : "off";
     return () => {
-      window.__MiraLithLuBirthPostBloomActive = false;
-      window.__MiraLithLuBirthPostBloomMode = "off";
-      window.__MiraLithLuBirthPostBloomConfig = undefined;
+      window.__MiraLithLuBirthPostEffectActive = false;
+      window.__MiraLithLuBirthPostEffectMode = "off";
     };
-  }, [emphasis, enabled, mode, resolutionScale]);
+  }, [enabled]);
 
   useFrame((_state, delta) => {
     if (!enabled) {
@@ -255,17 +246,6 @@ function LandingPostBloomComposer({
     const fieldStage = smoothstep(0.16, 0.82, progress);
     const closeStage = 1 - smoothstep(0.18, 0.86, progress);
     const emphasisLift = emphasis ? 1 : 0;
-    if (mode === "lite") {
-      bloomPass.strength = 0.07;
-      bloomPass.radius = 0.35;
-      bloomPass.threshold = 0.98;
-      sharpenPass.uniforms.strength.value = 0;
-      renderPass.scene = scene;
-      renderPass.camera = camera;
-      composer.render(delta);
-      return;
-    }
-
     bloomPass.strength = (
       0.11 +
       fieldStage * 0.038 +
@@ -285,10 +265,10 @@ function LandingPostBloomComposer({
   return null;
 }
 
-export function LandingPostBloom(props: LandingPostBloomProps) {
-  if (props.mode === "lite") {
-    return <LandingPostBloomLite composition={props.composition} quality={props.quality} />;
+export function LandingPostEffect(props: LandingPostEffectProps) {
+  if (props.mode === "analytic-halo") {
+    return <LandingAnalyticHalo composition={props.composition} quality={props.quality} />;
   }
 
-  return <LandingPostBloomComposer {...props} />;
+  return <LandingFullBloom {...props} />;
 }

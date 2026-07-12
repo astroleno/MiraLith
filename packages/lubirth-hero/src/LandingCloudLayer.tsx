@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import {
   AddEquation,
@@ -42,6 +42,7 @@ interface LandingCloudLayerProps {
   referenceLook?: boolean;
   reducedMotion?: boolean;
   paused?: boolean;
+  cloudOffsetRef?: MutableRefObject<number>;
   cloudDeckEnabled?: boolean;
   cloudMode?: LandingCloudMode;
   closeAtmosphereTuning?: LandingCloseAtmosphereTuning;
@@ -116,6 +117,8 @@ declare global {
   interface Window {
     __MiraLithLuBirthCloudShellCount?: number;
     __MiraLithLuBirthCloudFieldTexture?: string;
+    __MiraLithLuBirthCloudShellOffset?: number;
+    __MiraLithLuBirthCloudShellTextureUuid?: string;
   }
 }
 
@@ -141,6 +144,8 @@ function createLiteCloudMaterial(
       }
     },
     vertexShader: `
+      uniform vec3 lightDir;
+
       varying vec2 vUv;
       varying vec3 vTangentLight;
       varying vec2 vSunOffset;
@@ -150,10 +155,8 @@ function createLiteCloudMaterial(
       void main() {
         vUv = uv;
         vec3 localNormal = normalize(position);
-        vec3 localReference = abs(localNormal.y) > 0.98
-          ? vec3(1.0, 0.0, 0.0)
-          : vec3(0.0, 1.0, 0.0);
-        vec3 localEast = normalize(cross(localReference, localNormal));
+        float longitude = uv.x * 6.28318530718;
+        vec3 localEast = vec3(sin(longitude), 0.0, cos(longitude));
         vec3 localNorth = normalize(cross(localNormal, localEast));
         vec4 worldPosition = modelMatrix * vec4(position, 1.0);
         mat3 worldRotation = mat3(modelMatrix);
@@ -956,6 +959,7 @@ export function LandingCloudLayer({
   referenceLook = false,
   reducedMotion,
   paused,
+  cloudOffsetRef,
   cloudDeckEnabled = true,
   cloudMode = "lookdev",
   closeAtmosphereTuning
@@ -1041,12 +1045,16 @@ export function LandingCloudLayer({
     window.__MiraLithLuBirthCloudShellCount = enabled ? activeCloudShells.length : 0;
     window.__MiraLithLuBirthCloudFieldTexture =
       enabled && cloudMode === "shell-lite" ? assets.earthCloudField?.src : undefined;
+    window.__MiraLithLuBirthCloudShellTextureUuid =
+      enabled && cloudMode === "shell-lite" ? cloudFieldTexture?.uuid : undefined;
 
     return () => {
       window.__MiraLithLuBirthCloudShellCount = 0;
       window.__MiraLithLuBirthCloudFieldTexture = undefined;
+      window.__MiraLithLuBirthCloudShellOffset = undefined;
+      window.__MiraLithLuBirthCloudShellTextureUuid = undefined;
     };
-  }, [activeCloudShells.length, assets.earthCloudField?.src, cloudMode, enabled]);
+  }, [activeCloudShells.length, assets.earthCloudField?.src, cloudFieldTexture?.uuid, cloudMode, enabled]);
 
   useFrame((_state, delta) => {
     if (!cloudGroup.current || !enabled || !activeTexture) {
@@ -1055,12 +1063,14 @@ export function LandingCloudLayer({
 
     const progress = getRuntimeOpeningProgress(0);
     const closeStage = 1 - smoothstep(0.18, 0.86, progress);
-    if (!paused && !reducedMotion) {
+    if (!paused && !reducedMotion && !(cloudMode === "shell-lite" && cloudOffsetRef)) {
       const driftSpeed = cloudMode === "shell-lite"
         ? HOME_CLOUD_FIELD_SCROLL_SPEED
         : CLOUD_SCROLL_SPEED * (0.04 + (1 - closeStage) * 0.96);
       cloudOffset.current = (cloudOffset.current + delta * driftSpeed) % 1;
     }
+    const activeCloudOffset =
+      cloudMode === "shell-lite" && cloudOffsetRef ? cloudOffsetRef.current : cloudOffset.current;
     if (sceneLightDirection) {
       lightDirection.copy(sceneLightDirection).normalize();
     } else {
@@ -1074,7 +1084,7 @@ export function LandingCloudLayer({
       child.rotation.y = MathUtils.degToRad(composition.earth.yawDeg);
       child.rotation.x = 0;
       child.rotation.z = 0;
-      cloudMaterial.uniforms.cloudOffset.value = cloudOffset.current;
+      cloudMaterial.uniforms.cloudOffset.value = activeCloudOffset;
       cloudMaterial.uniforms.opacity.value = composition.earth.useClouds ? composition.earth.cloudOpacity : 0;
       cloudMaterial.uniforms.debugBoost.value = emphasis ? 1 : 0;
       cloudMaterial.uniforms.lightDir.value.copy(lightDirection);
@@ -1091,6 +1101,7 @@ export function LandingCloudLayer({
       cloudMaterial.uniforms.cloudVolumeShadowStrength.value =
         closeAtmosphereTuning?.cloudVolumeShadowStrength ?? 0;
     });
+    window.__MiraLithLuBirthCloudShellOffset = activeCloudOffset;
   });
 
   if (!enabled) {

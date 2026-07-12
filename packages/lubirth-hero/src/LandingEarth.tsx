@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import {
   CanvasTexture,
   Color,
@@ -35,6 +35,7 @@ interface LandingEarthProps {
   showTextureClouds?: boolean;
   reducedMotion?: boolean;
   paused?: boolean;
+  cloudOffsetRef?: MutableRefObject<number>;
   sceneLightDirection?: Vector3;
   onDayTextureReady?: () => void;
   cloudDeckEnabled?: boolean;
@@ -1468,6 +1469,7 @@ export function LandingEarth(props: LandingEarthProps) {
         closeAtmosphereTuning={props.closeAtmosphereTuning}
         reducedMotion={props.reducedMotion}
         paused={props.paused}
+        cloudOffsetRef={props.cloudOffsetRef}
         sceneLightDirection={props.sceneLightDirection}
         onDayTextureReady={props.onDayTextureReady}
       />
