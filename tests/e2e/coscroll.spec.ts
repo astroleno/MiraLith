@@ -1074,7 +1074,8 @@ test("coscroll source-match shares anchor rotation phase with the caustic field"
   expect(caustics).toContain("uAnchorFacing");
   expect(caustics).toContain("uLensStrength");
   expect(caustics).toContain("THREE.NormalBlending");
-  expect(caustics).toContain("transparent={!sourceMatch}");
+  expect(caustics).toContain("transparent\n");
+  expect(caustics).not.toContain("transparent={!sourceMatch}");
   expect(caustics).toContain('key={sourceMatch ? "source-organic-caustic" : "legacy-caustic"}');
   expect(caustics).toContain("? coScrollSourceCausticFragmentShader");
   expect(caustics).toContain(": legacyFragmentShader");

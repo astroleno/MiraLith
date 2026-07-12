@@ -398,7 +398,7 @@ export function CoScrollCausticLightField({
             ? coScrollSourceCausticFragmentShader
             : legacyFragmentShader
         }
-        transparent={!sourceMatch}
+        transparent
         depthTest
         depthWrite={false}
         blending={sourceMatch ? THREE.NormalBlending : THREE.AdditiveBlending}

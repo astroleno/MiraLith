@@ -4,7 +4,7 @@
 
 **Goal:** Replace the Source Match caustic wallpaper with a MiraLith-native gravity-light field whose macro streams bend around the actual “观” anchor envelope while preserving the existing blue-jade material, opaque lyrics, and model-driven motion.
 
-**Architecture:** Keep the existing single React Three Fiber canvas and the legacy CoScroll shader untouched. Source Match gets one opaque fullscreen `ShaderMaterial`: a multi-capsule SDF approximates the “观” model silhouette, the real projected model center and Y-rotation drive its lens field, and the real smoothed angular speed drives advection, pulse, warp, and restrained chroma. No composer, postprocessing, render target, second canvas, third-party shader code, or new dependency is introduced.
+**Architecture:** Keep the existing single React Three Fiber canvas and the legacy CoScroll shader untouched. Source Match gets one alpha-1 fullscreen `ShaderMaterial`: it stays visually opaque but renders in the transparent queue, after the transmissive shell pass, so the shell sees the same transparent backing as the original CoScroll model canvas instead of sampling the caustic plane. A multi-capsule SDF approximates the “观” model silhouette, the real projected model center and Y-rotation drive its lens field, and the real smoothed angular speed drives advection, pulse, warp, and restrained chroma. No composer, postprocessing, render target, second canvas, third-party shader code, or new dependency is introduced.
 
 **Tech Stack:** React Three Fiber, Three.js `ShaderMaterial`, GLSL, TypeScript, Playwright, pnpm.
 
@@ -14,7 +14,7 @@
 
 **Visual thesis:** A cold blue-jade glyph behaves like a gravitational object in deep black space; soft ivory bands and broken fluid filaments shear around its calligraphic envelope like a solar corona, with only a trace of warm amber and micro-caustic texture at the brightest edges. The background must never resolve into a visible ball, closed ellipse, or black-hole disk behind the model.
 
-**Content order:** opaque shader background → back lyrics → dual-layer jade anchor → front lyrics. Lyrics keep their current position, scale, opacity, depth test, and depth write behavior.
+**Content order:** alpha-1 shader background (transparent queue, depth-tested) → back lyrics → dual-layer jade anchor → front lyrics. Lyrics keep their current position, scale, opacity, depth test, and depth write behavior.
 
 **Interaction:** the model's actual angle controls glyph projection and flow phase; the model's actual smoothed angular speed controls time scale, lens strength, pulse, and chroma; either wheel direction only increases the model's existing rotation direction; reduced-motion freezes both model and background.
 
@@ -37,8 +37,8 @@
 ## File map
 
 - Modify `packages/coscroll-scene/src/sourceCausticMotion.ts`: expose the anchor-facing and lens parameters derived from actual model motion.
-- Modify `packages/coscroll-scene/src/shaders/coScrollSourceCausticShader.ts`: implement the opaque gravity stream, calligraphic SDF well, pulse, micro-caustic, and edge-only chroma.
-- Modify `packages/coscroll-scene/src/CoScrollCausticLightField.tsx`: project the anchor world position into NDC, provide responsive field scale and new uniforms, and select opaque blending only for Source Match.
+- Modify `packages/coscroll-scene/src/shaders/coScrollSourceCausticShader.ts`: implement the alpha-1 gravity stream, calligraphic SDF lens, fluid corona, pulse, micro-caustic, and edge-only chroma.
+- Modify `packages/coscroll-scene/src/CoScrollCausticLightField.tsx`: project the anchor world position into NDC, provide responsive field scale and new uniforms, use normal alpha-1 blending for Source Match, and keep the caustic plane out of the model transmission prepass.
 - Modify `packages/coscroll-scene/src/CoScrollSceneContent.tsx`: define one shared anchor position/scale and pass the same geometry framing to the anchor and light field.
 - Modify `tests/e2e/coscroll.spec.ts`: add pure motion, shader-architecture, desktop/mobile visibility, motion-coupling, and regression coverage.
 
@@ -362,7 +362,7 @@ git push
 
 ---
 
-### Task 3: Wire exact anchor framing and opaque Source Match rendering
+### Task 3: Wire exact anchor framing and alpha-1 Source Match rendering
 
 **Files:**
 
@@ -382,7 +382,7 @@ expect(field).toContain("uAnchorFieldScale");
 expect(field).toContain("uAnchorFacing");
 expect(field).toContain("uLensStrength");
 expect(field).toContain("THREE.NormalBlending");
-expect(field).toContain("transparent={!sourceMatch}");
+expect(field).toContain("transparent");
 ```
 
 - [ ] **Step 2: Run RED**
@@ -449,7 +449,7 @@ liveUniforms.uAnchorFieldScale.value.set(
 );
 ```
 
-Assign `motion.anchorFacing` and `motion.lensStrength` every frame. Use `THREE.NormalBlending` and `transparent={false}` for Source Match; preserve Additive blending and transparency for legacy CoScroll.
+Assign `motion.anchorFacing` and `motion.lensStrength` every frame. Use `THREE.NormalBlending`, alpha `1.0`, and the transparent render queue for Source Match so the plane remains visually opaque without contaminating the shell transmission prepass; preserve Additive blending for legacy CoScroll.
 
 - [ ] **Step 5: Run GREEN, typecheck, commit, and push**
 
