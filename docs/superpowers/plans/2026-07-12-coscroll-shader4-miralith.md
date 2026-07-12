@@ -603,3 +603,12 @@ git push
 - CoScroll typecheck, Site typecheck, Site lint, Site production build, and `git diff --check`: passed.
 - Desktop and mobile idle/scroll frames inspected; the closed well/sphere is absent, the fluid corona remains visible, the alpha-1 background stays fixed, and the original neutral shell/blue core separation is restored.
 - Knowledge graph refreshed with `graphify update .`.
+
+## Follow-up execution record — 2026-07-13
+
+- [x] Split the anchor field into a stable, three-capsule low-frequency hull SDF and the existing six-capsule stroke SDF.
+- [x] Feed the same real anchor facing into both scales while retaining a wider `0.48` projection floor for the hull and the detailed `0.24` projection floor for strokes.
+- [x] Use the hull for macro lensing and an open, side-biased corona; use the stroke field only for local normal perturbation and broken filament energy. The fields are never collapsed with `min()`, so they cannot resolve into a second solid glyph or closed disk.
+- [x] Replace repeated finite-difference SDF evaluation with screen-space derivatives, reducing the combined normal calculation to one hull and one stroke evaluation per pixel.
+- [x] Source Match scoped suite: 29/29 passed. Real model-motion acceleration: 3/3 repeated runs passed.
+- [x] Desktop idle/scroll and mobile idle frames inspected. CoScroll typecheck, Site typecheck, Site lint, Site production build, and scoped `git diff --check`: passed.
