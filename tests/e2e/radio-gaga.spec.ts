@@ -138,6 +138,69 @@ test("radioGAGA canvas renders nonblank pixels", async ({ page }) => {
   expect(await nonblank.jsonValue()).toBe(true);
 });
 
+test("radioGAGA model composite shader compiles without WebGL program errors", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The shader contract only needs one browser project.");
+
+  const shaderErrors: string[] = [];
+  page.on("console", (message) => {
+    const text = message.text();
+    if (/WebGLProgram|Shader Error|program not valid/i.test(text)) {
+      shaderErrors.push(text);
+    }
+  });
+
+  await page.goto("/radio-gaga");
+  await scrollRadioGagaTo(page, 0.2);
+  await page.waitForTimeout(1_500);
+
+  expect(shaderErrors).toEqual([]);
+});
+
+test("radioGAGA keeps a visible center subject through the particle-to-proof handoff", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The center-pixel contract only needs one project.");
+
+  await page.goto("/radio-gaga?visualTest=pixels");
+  await scrollRadioGagaTo(page, 0.2);
+  await expect.poll(async () => {
+    return page.evaluate(() => {
+      const source = document.querySelector("canvas");
+      if (!source) return 0;
+      const sample = document.createElement("canvas");
+      sample.width = 32;
+      sample.height = 32;
+      const context = sample.getContext("2d");
+      if (!context) return 0;
+      context.drawImage(source, 0, 0, 32, 32);
+      return context.getImageData(0, 0, 32, 32).data.reduce((total, channel) => total + channel, 0);
+    });
+  }).toBeGreaterThan(0);
+  await scrollRadioGagaTo(page, 0.3);
+
+  const brightCenterPixelCount = await page.evaluate(() => {
+    const source = document.querySelector("canvas");
+    if (!source) return 0;
+
+    const sample = document.createElement("canvas");
+    sample.width = 64;
+    sample.height = 64;
+    const context = sample.getContext("2d");
+    if (!context) return 0;
+
+    context.drawImage(source, 0, 0, 64, 64);
+    const pixels = context.getImageData(0, 0, 64, 64).data;
+    let brightPixels = 0;
+    for (let y = 14; y < 50; y += 1) {
+      for (let x = 14; x < 50; x += 1) {
+        const index = (y * 64 + x) * 4;
+        if (pixels[index] + pixels[index + 1] + pixels[index + 2] > 48) brightPixels += 1;
+      }
+    }
+    return brightPixels;
+  });
+
+  expect(brightCenterPixelCount).toBeGreaterThan(50);
+});
+
 test("radioGAGA writing phase keeps proof and progress inside the tuner", async ({ page }) => {
   await page.goto("/radio-gaga");
   await scrollRadioGagaTo(page, 0.58);
@@ -151,6 +214,27 @@ test("radioGAGA writing phase keeps proof and progress inside the tuner", async 
   await expect.poll(() => opacityOf(writingReadout)).toBeGreaterThan(0.8);
   await expect(tuner.getByText("写成我会说出口的节目稿", { exact: true })).toHaveCount(1);
   await expect(tuner.getByText("筛出今天真的要回家的消息", { exact: true })).toHaveCount(1);
+});
+
+test("radioGAGA desktop tuner uses one horizontal signal rail", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "This composition contract targets the desktop tuner.");
+
+  await page.setViewportSize({ width: 2048, height: 1153 });
+  await page.goto("/radio-gaga");
+  await scrollRadioGagaTo(page, 0.58);
+
+  const scale = page.locator(".radio-gaga-broadcast-tuner__scale");
+  const scan = scale.locator(".radio-gaga-broadcast-tuner__scan");
+  const steps = scale.locator(".radio-gaga-broadcast-tuner__step");
+  await expect.poll(() => opacityOf(page.locator(".radio-gaga-broadcast-tuner"))).toBeGreaterThan(0.8);
+
+  const firstStep = await requireBoundingBox(steps.first(), "first tuner step");
+  const lastStep = await requireBoundingBox(steps.last(), "last tuner step");
+  const scanBox = await requireBoundingBox(scan, "tuner signal rail");
+
+  expect(Math.abs(firstStep.y - lastStep.y), "all tuner steps should share one row").toBeLessThan(2);
+  expect(lastStep.x, "the last tuner step should sit to the right of the first").toBeGreaterThan(firstStep.x);
+  expect(scanBox.width, "the signal rail should be horizontal").toBeGreaterThan(scanBox.height * 8);
 });
 
 test("radioGAGA desktop reading stage keeps one caption inside the left safe lane", async ({ page }, testInfo) => {
@@ -208,6 +292,10 @@ test("radioGAGA mobile landscape keeps story and tuner in separate lanes", async
   expectBoxInViewport(memoryBox, viewport, "memory copy");
   expectBoxInViewport(tunerBox, viewport, "broadcast tuner");
   expect(boxesOverlap(memoryBox, tunerBox), "story and tuner should not overlap").toBe(false);
+  expect(memoryBox.x + memoryBox.width, "story should leave the center visual lane clear").toBeLessThan(
+    viewport.width * 0.31
+  );
+  expect(tunerBox.x, "tuner should leave the center visual lane clear").toBeGreaterThan(viewport.width * 0.62);
 });
 
 test("radioGAGA particle handoff clears story while the tuner remains contextual", async ({ page }, testInfo) => {

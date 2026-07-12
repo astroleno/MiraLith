@@ -2,11 +2,11 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { Color, DirectionalLight, MathUtils, Vector3 } from "three";
+import { Color, MathUtils, Vector3 } from "three";
 import type { Scene } from "three";
+import { RadioGagaModelComposite } from "./RadioGagaModelComposite";
 import { RadioGagaParticleTransition } from "./RadioGagaParticleTransition";
-import { mapRadioGagaProgress, RADIO_GAGA_TIMELINE } from "./radioGagaTimeline";
-import { RadioGagaModel } from "./RadioGagaModel";
+import { mapRadioGagaProgress } from "./radioGagaTimeline";
 import type { RadioGagaSceneProps } from "./types";
 
 const cameraTarget = new Vector3(0, -0.08, 0);
@@ -26,10 +26,6 @@ export function RadioGagaSceneContent({
   const motionRef = useRef({ rotationX: 0, rotationY: 0 });
   const pointerRef = useRef({ x: 0, y: 0 });
   const readyRef = useRef(false);
-  const keyLight = useRef<DirectionalLight>(null);
-  const openingFill = useRef<DirectionalLight>(null);
-  const rimLight = useRef<DirectionalLight>(null);
-  const frontSoftbox = useRef<DirectionalLight>(null);
   const previousSceneEnvironment = useRef<SceneEnvironment | null>(null);
   const { camera, scene, size } = useThree();
   const backgroundColor = useMemo(() => new Color("#050404"), []);
@@ -82,12 +78,6 @@ export function RadioGagaSceneContent({
       return;
     }
     const nextFrame = mapRadioGagaProgress(progressRef?.current ?? progress);
-    const esp32SolidPresence = MathUtils.smoothstep(
-      nextFrame.progress,
-      RADIO_GAGA_TIMELINE.finale.revealStart,
-      RADIO_GAGA_TIMELINE.finale.revealEnd
-    );
-    const esp32LightPresence = Math.max(nextFrame.esp32Opacity, esp32SolidPresence, nextFrame.esp32SolidMotionProgress);
     const isMobile = size.width < 720;
     const isShortLandscape = size.height < 520 && size.width > size.height;
     const mobilePullback = isMobile
@@ -112,20 +102,7 @@ export function RadioGagaSceneContent({
       nextFrame.cameraZ + mobilePullback + shortLandscapePullback
     );
     camera.lookAt(cameraTarget);
-    if (keyLight.current) {
-      keyLight.current.intensity = 1.08 + nextFrame.backgroundWarmth * 0.42;
-    }
-    if (openingFill.current) {
-      openingFill.current.intensity =
-        0.46 * (1 - nextFrame.signatureMomentProgress * 0.24) + nextFrame.finalLineOpacity * 0.18;
-    }
-    if (rimLight.current) {
-      rimLight.current.intensity = 0.22 + nextFrame.signatureMomentProgress * 0.08 + nextFrame.finalLineOpacity * 0.08;
-    }
-    if (frontSoftbox.current) {
-      frontSoftbox.current.intensity = 0.42 + esp32LightPresence * 0.24 + nextFrame.finalLineOpacity * 0.18;
-    }
-  }, -1);
+  }, -3);
 
   if (!active) {
     return null;
@@ -133,12 +110,7 @@ export function RadioGagaSceneContent({
 
   return (
     <>
-      <ambientLight color="#f3f3ef" intensity={0.68} />
-      <directionalLight ref={keyLight} color="#fffaf0" position={[2.4, 2.6, 3.8]} intensity={1.08} />
-      <directionalLight ref={openingFill} color="#e7eefc" position={[-2.6, 1.7, 3.2]} intensity={0.46} />
-      <directionalLight ref={rimLight} color="#f5d8c8" position={[-3.2, 1.6, -1.8]} intensity={0.22} />
-      <directionalLight ref={frontSoftbox} color="#ffffff" position={[0.2, 1.4, 4.6]} intensity={0.42} />
-      <RadioGagaModel
+      <RadioGagaModelComposite
         frame={frame}
         frameRef={frameRef}
         motionRef={motionRef}

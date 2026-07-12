@@ -52,9 +52,9 @@ export const RADIO_GAGA_TIMELINE = {
     exitEnd: 0.915
   },
   finale: {
-    particleAbsorbStart: 0.875,
-    particleAbsorbEnd: 0.905,
-    revealStart: 0.905,
+    particleAbsorbStart: 0.895,
+    particleAbsorbEnd: 0.925,
+    revealStart: 0.895,
     revealEnd: 0.925,
     frontLockStart: 0.925,
     frontLockEnd: 0.95,
@@ -205,11 +205,11 @@ function mapRadioGagaCopyProgress(
   );
   const tuningSignal = getRadioGagaTuningSignal(progress);
   const stageOpacities = [
-    1 - smooth(range(progress, 0.13, 0.17)),
-    phase(progress, 0.13, 0.17, 0.42, 0.46),
-    phase(progress, 0.42, 0.46, 0.68, 0.72),
-    phase(progress, 0.68, 0.72, 0.885, 0.91),
-    phase(progress, 0.885, 0.91, 0.982, 0.994)
+    1 - smooth(range(progress, 0.13, 0.15)),
+    phase(progress, 0.15, 0.17, 0.42, 0.44),
+    phase(progress, 0.44, 0.46, 0.68, 0.7),
+    phase(progress, 0.7, 0.72, 0.885, 0.8975),
+    phase(progress, 0.8975, 0.91, 0.982, 0.994)
   ] as [number, number, number, number, number];
   const primaryPresence = Math.max(
     readingOpacity,

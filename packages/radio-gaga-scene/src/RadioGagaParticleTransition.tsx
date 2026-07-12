@@ -995,7 +995,7 @@ export function RadioGagaParticleTransition({
     particleMaterial.depthWrite = nextFrame.progress < 0.91;
     const proofReadability = proofArrivalProgress * (1 - proofExitProgress);
     const proofParticleSuppression =
-      smooth(range(nextFrame.progress, 0.245, 0.3)) * (1 - smooth(range(nextFrame.progress, 0.69, 0.75)));
+      smooth(range(nextFrame.progress, 0.29, 0.35)) * (1 - smooth(range(nextFrame.progress, 0.69, 0.75)));
     const proofParticleOpacity = 1 - proofParticleSuppression;
     particleMaterial.size =
       getParticleSize(quality) *
@@ -1004,7 +1004,7 @@ export function RadioGagaParticleTransition({
 
     const proofPlaneOpacity =
       particleOpacity *
-      smooth(range(nextFrame.progress, 0.3, 0.36)) *
+      smooth(range(nextFrame.progress, 0.27, 0.33)) *
       (1 - smooth(range(nextFrame.progress, 0.62, 0.7))) *
       0.92;
     const proofOneOpacity = proofPlaneOpacity * (1 - proofSwitchProgress);

@@ -34,11 +34,8 @@ const ESP32_SCREEN_PATCH_ROTATION: [number, number, number] = [0, Math.PI / 2, 0
 const SCREEN_SUBTITLE_CANVAS_WIDTH = 1024;
 const SCREEN_SUBTITLE_CANVAS_HEIGHT = 320;
 
-interface AnimatedMaterial {
-  depthWrite: boolean;
+interface ClonedMaterial {
   material: Material;
-  opacity: number;
-  transparent: boolean;
 }
 
 interface CloneSceneOptions {
@@ -137,7 +134,7 @@ interface RadioGagaModelProps {
 }
 
 const cloneSceneWithMaterials = (scene: Object3D, options: CloneSceneOptions = {}) => {
-  const materials: AnimatedMaterial[] = [];
+  const materials: ClonedMaterial[] = [];
   const clone = scene.clone(true);
 
   clone.traverse((child) => {
@@ -153,12 +150,7 @@ const cloneSceneWithMaterials = (scene: Object3D, options: CloneSceneOptions = {
               cloneMaterial.opacity = 1;
               cloneMaterial.depthWrite = true;
             }
-            materials.push({
-              depthWrite: cloneMaterial.depthWrite,
-              material: cloneMaterial,
-              opacity: cloneMaterial.opacity,
-              transparent: cloneMaterial.transparent
-            });
+            materials.push({ material: cloneMaterial });
             return cloneMaterial;
           })
         : (() => {
@@ -171,36 +163,13 @@ const cloneSceneWithMaterials = (scene: Object3D, options: CloneSceneOptions = {
               cloneMaterial.opacity = 1;
               cloneMaterial.depthWrite = true;
             }
-            materials.push({
-              depthWrite: cloneMaterial.depthWrite,
-              material: cloneMaterial,
-              opacity: cloneMaterial.opacity,
-              transparent: cloneMaterial.transparent
-            });
+            materials.push({ material: cloneMaterial });
             return cloneMaterial;
           })();
     }
   });
 
   return { materials, scene: clone };
-};
-
-const applyOpacity = (materials: AnimatedMaterial[], opacity: number) => {
-  materials.forEach(({ depthWrite, material, opacity: baseOpacity, transparent: baseTransparent }) => {
-    const nextOpacity = baseOpacity * opacity;
-    const transparent = opacity < 0.999;
-    const nextTransparent = baseTransparent || transparent;
-    const nextDepthWrite = depthWrite && !nextTransparent;
-    const needsMaterialUpdate = material.transparent !== nextTransparent || material.depthWrite !== nextDepthWrite;
-
-    material.transparent = nextTransparent;
-    material.opacity = nextOpacity;
-    material.depthWrite = nextDepthWrite;
-
-    if (needsMaterialUpdate) {
-      material.needsUpdate = true;
-    }
-  });
 };
 
 export function RadioGagaModel({
@@ -260,7 +229,10 @@ export function RadioGagaModel({
     () => cloneSceneWithMaterials(radio.scene, { forceOpaque: true, frontSide: true }),
     [radio.scene]
   );
-  const esp32Model = useMemo(() => cloneSceneWithMaterials(esp32Gltf.scene), [esp32Gltf.scene]);
+  const esp32Model = useMemo(
+    () => cloneSceneWithMaterials(esp32Gltf.scene, { forceOpaque: true, frontSide: true }),
+    [esp32Gltf.scene]
+  );
 
   const updateModel = useCallback((nextFrame: RadioGagaFrame) => {
     const finalVisualOpacity = smooth(
@@ -279,9 +251,6 @@ export function RadioGagaModel({
     );
     const esp32Presence = Math.max(esp32SolidPresence, finalVisualOpacity);
     const radioVisible = nextFrame.radioOpacity > 0.01;
-
-    applyOpacity(solidRadio.materials, nextFrame.radioOpacity);
-    applyOpacity(esp32Model.materials, esp32Presence);
 
     if (finalSubtitleCanvas && finalSubtitleTexture && finalSubtitleMaterial) {
       const outputState = mapRadioGagaFinalOutput(nextFrame.progress, reducedMotion);
@@ -357,7 +326,7 @@ export function RadioGagaModel({
 
   useFrame(() => {
     updateModel(frameRef?.current ?? frame);
-  });
+  }, -2);
 
   useEffect(() => {
     onReady?.();
@@ -395,7 +364,7 @@ export function RadioGagaModel({
         position={ESP32_START_POSITION}
         rotation={[0, ESP32_ROTATION_START_Y, 0]}
         scale={ESP32_SCALE}
-        visible={frame.esp32SolidMotionProgress > 0.01 || frame.finalLineOpacity > 0.01}
+        visible={frame.esp32Opacity > 0.01 || frame.esp32SolidMotionProgress > 0.01 || frame.finalLineOpacity > 0.01}
       >
         <primitive object={esp32Model.scene} />
         {finalSubtitleMaterial ? (

@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import {
   mapRadioGagaChoreography,
@@ -39,6 +41,34 @@ test("radioGAGA clears the particle shell before the ESP32 begins turning", ({},
   expect(turningFrame.esp32SolidMotionProgress).toBeGreaterThan(0);
 });
 
+test("radioGAGA keeps visible energy through the particle-to-solid crossfade", ({}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The timeline contract only needs one project.");
+
+  for (let progress = 0.885; progress <= 0.93; progress += 0.0025) {
+    const frame = mapRadioGagaProgress(progress);
+    const handoffEnergy = frame.particleOpacity + frame.esp32Opacity;
+
+    expect(handoffEnergy, `handoff energy at ${progress.toFixed(4)}`).toBeGreaterThan(0.9);
+  }
+});
+
+test("radioGAGA fades opaque GLB renders through a model composite layer", ({}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The rendering-policy contract only needs one project.");
+
+  const modelSource = readFileSync(
+    resolve(process.cwd(), "packages/radio-gaga-scene/src/RadioGagaModel.tsx"),
+    "utf8"
+  );
+  const sceneSource = readFileSync(
+    resolve(process.cwd(), "packages/radio-gaga-scene/src/RadioGagaSceneContent.tsx"),
+    "utf8"
+  );
+
+  expect(modelSource).not.toContain("applyOpacity");
+  expect(modelSource).not.toContain("material.opacity = nextOpacity");
+  expect(sceneSource).toContain("RadioGagaModelComposite");
+});
+
 test("radioGAGA keeps one broadcast tuner present from reading through playback", ({}, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "The timeline contract only needs one project.");
 
@@ -49,6 +79,20 @@ test("radioGAGA keeps one broadcast tuner present from reading through playback"
   expect(reading.instrumentOpacity).toBeGreaterThan(0.8);
   expect(transmitting.instrumentOpacity).toBeGreaterThan(0.8);
   expect(playback.instrumentOpacity).toBeGreaterThan(0.8);
+});
+
+test("radioGAGA never overlays two broadcast-stage labels", ({}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The timeline contract only needs one project.");
+
+  for (let progress = 0; progress <= 1; progress += 0.0025) {
+    const { stageOpacities } = mapRadioGagaChoreography(progress).copy;
+    const visibleStages = stageOpacities.filter((opacity) => opacity > 0.01);
+
+    expect(
+      visibleStages.length,
+      `visible stages at ${progress.toFixed(4)}`
+    ).toBeLessThanOrEqual(1);
+  }
 });
 
 test("radioGAGA waits for the front lock before starting the final output", ({}, testInfo) => {
