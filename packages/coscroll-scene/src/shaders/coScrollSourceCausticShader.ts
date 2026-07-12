@@ -147,6 +147,44 @@ float ridgeField(vec2 p, float time, float organicPhase) {
   );
 }
 
+float iterativeCorona(vec2 p, float time, float phase) {
+  vec2 q = p * 0.72;
+  vec2 accumulation = vec2(0.0);
+  float totalWeight = 0.0;
+
+  for (int layer = 0; layer < 6; layer++) {
+    float index = float(layer) + 1.0;
+    float weight = 1.0 / (index + 0.65);
+    vec2 drift = vec2(
+      sin(q.y * (1.08 + index * 0.11) + time * (0.2 + index * 0.025) + phase),
+      cos(q.x * (1.02 + index * 0.09) - time * (0.17 + index * 0.021) - phase)
+    );
+    q += drift * weight * 0.34;
+    q = rotate2(0.16 + index * 0.041) * q + vec2(0.14, -0.1);
+    accumulation += vec2(
+      sin(q.x * 1.24 + index * 1.31),
+      cos(q.y * 1.16 - index * 1.07)
+    ) * weight;
+    totalWeight += weight;
+  }
+
+  float cancellation = 1.0 - clamp(
+    length(accumulation) / max(totalWeight, 0.0001),
+    0.0,
+    1.0
+  );
+  float crossFlow =
+    0.5 +
+    0.5 * sin(
+      q.x * 1.14 +
+      q.y * 0.86 +
+      accumulation.x * 0.72 -
+      accumulation.y * 0.48 +
+      time * 0.22
+    );
+  return smoothstep(0.18, 0.82, cancellation * 0.7 + crossFlow * 0.3);
+}
+
 void main() {
   vec2 centered = vUv * 2.0 - 1.0;
   vec2 aspectUv = vec2(centered.x * uAspect, centered.y);
@@ -187,20 +225,21 @@ void main() {
   );
   vec2 lensTangent = vec2(-lensNormal.y, lensNormal.x);
   float lensEnvelope =
-    1.0 - smoothstep(0.04, 1.35, max(anchorDistance, 0.0));
-  float anchorRim = exp(-abs(anchorDistance) * 10.5);
-  float anchorInterior =
-    1.0 - smoothstep(-0.1, 0.12, anchorDistance);
+    1.0 - smoothstep(0.02, 1.46, max(anchorDistance, 0.0));
+  float anchorExterior = smoothstep(-0.11, 0.16, anchorDistance);
+  float anchorRim =
+    exp(-max(anchorDistance, 0.0) * 3.15) *
+    anchorExterior;
 
   vec2 field = rotate2(uFieldRotation - 0.12) * aspectUv * 0.72;
-  field += vec2(uTime * 0.046, -uTime * 0.034);
-  field += lensNormal * lensEnvelope * uLensStrength * 0.22;
+  field += vec2(uTime * 0.056, -uTime * 0.044);
+  field += lensNormal * lensEnvelope * uLensStrength * 0.2;
   field +=
     lensTangent *
     lensEnvelope *
     uLensStrength *
-    0.08 *
-    sin(uTime * 0.38 + anchorDistance * 4.2);
+    mix(0.09, 0.14, uMotionEnergy) *
+    sin(uTime * 0.44 + anchorDistance * 4.6);
 
   float warpX = fbm3(
     field * 0.68 + vec2(uTime * 0.026, -uTime * 0.019)
@@ -213,35 +252,129 @@ void main() {
   float broadNoise = fbm3(
     warped * 0.58 + vec2(uTime * 0.014, -uTime * 0.011)
   );
+  float sceneFlow = iterativeCorona(
+    warped * 0.92,
+    uTime * 0.82,
+    broadNoise * 1.7 + uFieldRotation
+  );
 
-  float macroPhase =
-    warped.x * 1.14 +
-    warped.y * 0.68 +
-    sin(warped.y * 1.52 + broadNoise * 2.6 + uTime * 0.12) * 0.88 +
-    broadNoise * 1.82 +
-    anchorDistance * lensEnvelope * 0.34;
-  float macroBand = 0.5 + 0.5 * sin(macroPhase);
-  float counterBand =
-    0.5 +
-    0.5 * cos(
-      macroPhase * 0.58 -
-      warped.y * 0.76 +
-      broadNoise * 0.72
+  vec2 coronaPoint = rotate2(uFieldRotation * 0.22) * anchorPoint;
+  coronaPoint +=
+    lensTangent *
+    lensEnvelope *
+    (0.1 + uMotionEnergy * 0.09) *
+    sin(uTime * 0.5 + anchorDistance * 3.8);
+  float coronaFlow = iterativeCorona(
+    coronaPoint * mix(0.9, 0.82, uIsMobile),
+    uTime,
+    broadNoise * 2.1 + uAnchorFacing * 0.42
+  );
+  float coronaRidges = ridgeField(
+    coronaPoint * mix(0.72, 0.64, uIsMobile) +
+      lensTangent * coronaFlow * 0.12,
+    uTime * 0.72,
+    coronaFlow
+  );
+  float coronaEnvelope =
+    anchorRim *
+    (1.0 - smoothstep(0.64, 1.38, max(anchorDistance, 0.0)));
+  float brokenCorona =
+    coronaEnvelope *
+    smoothstep(0.43, 0.78, coronaFlow * 0.74 + broadNoise * 0.26);
+  float coronaFilaments =
+    coronaEnvelope *
+    coronaRidges *
+    (0.32 + coronaFlow * 0.68);
+  float coronaPlumes =
+    coronaEnvelope *
+    pow(
+      1.0 - abs(
+        sin(
+          coronaPoint.y * 1.28 +
+          coronaPoint.x * 0.54 +
+          coronaFlow * 2.2 -
+          uTime * 0.3
+        )
+      ),
+      3.0
     );
-  float macroStream = smoothstep(
-    mix(0.68, 0.727, uIsMobile),
-    mix(0.88, 0.91, uIsMobile),
-    macroBand * 0.68 + counterBand * 0.12 + broadNoise * 0.2
+
+  vec2 streamPoint =
+    rotate2(uFieldRotation + 0.52) *
+    (aspectUv - uAnchorCenter);
+  streamPoint +=
+    lensNormal *
+    lensEnvelope *
+    uLensStrength *
+    mix(0.48, 0.38, uIsMobile);
+  streamPoint +=
+    lensTangent *
+    lensEnvelope *
+    uLensStrength *
+    mix(0.11, 0.085, uIsMobile) *
+    sin(uTime * 0.51 + anchorDistance * 3.9 + coronaFlow * 1.2);
+
+  float curveNoise =
+    (broadNoise - 0.5) * 0.26 +
+    (sceneFlow - 0.5) * 0.22;
+  float primaryCurve =
+    streamPoint.x +
+    sin(
+      streamPoint.y * 1.34 +
+      uTime * 0.31 +
+      coronaFlow * lensEnvelope * 0.38
+    ) * 0.3 +
+    curveNoise +
+    uMotionEnergy * 0.34;
+  float secondaryCurve =
+    streamPoint.x * 0.76 -
+    streamPoint.y * 0.28 +
+    cos(streamPoint.y * 0.88 - uTime * 0.25) * 0.22 +
+    curveNoise * 0.72 -
+    mix(0.74, 0.52, uIsMobile) -
+    uMotionEnergy * 0.28;
+  float primaryDistance = abs(primaryCurve);
+  float secondaryDistance = abs(secondaryCurve);
+  float primaryHalo = exp(
+    -primaryDistance * primaryDistance * mix(10.0, 14.0, uIsMobile)
+  );
+  float primaryCore = exp(
+    -primaryDistance * primaryDistance * mix(96.0, 118.0, uIsMobile)
+  );
+  float secondaryHalo = exp(
+    -secondaryDistance * secondaryDistance * mix(18.0, 22.0, uIsMobile)
+  );
+  float secondaryCore = exp(
+    -secondaryDistance * secondaryDistance * mix(132.0, 156.0, uIsMobile)
+  );
+  float organicPhase =
+    warped.x * 1.76 +
+    warped.y * 0.84 +
+    (sceneFlow - 0.5) * 3.1 +
+    sin(warped.y * 1.12 + uTime * 0.21) * 0.58;
+  float organicWave = 1.0 - abs(sin(organicPhase));
+  float organicHalo = pow(organicWave, 2.4);
+  float organicCore = pow(organicWave, 9.0);
+  float macroStream = clamp(
+    primaryHalo * 0.54 +
+    secondaryHalo * 0.34 +
+    organicHalo * 0.24,
+    0.0,
+    1.0
+  );
+  float macroCore = max(
+    max(primaryCore, secondaryCore * 0.72),
+    organicCore * 0.52
   );
 
   float pulseGate = smoothstep(
     0.22,
     0.9,
-    0.5 + 0.5 * sin(uTime * 0.62 + broadNoise * 4.0)
+    0.5 + 0.5 * sin(uTime * 0.62 + broadNoise * 4.0 + coronaFlow)
   );
-  float pulseStreak = pow(
-    1.0 - abs(sin(macroPhase * 2.08 - uTime * 0.2)),
-    6.5
+  float pulseStreak = max(
+    max(primaryCore, secondaryCore * 0.78),
+    coronaFilaments * 0.72
   );
   pulseStreak *= pulseGate * uPulseStrength;
 
@@ -263,40 +396,51 @@ void main() {
     dot(spectralRidge, vec3(0.2126, 0.7152, 0.0722));
   microCaustic *= mix(0.1, 0.18, uMotionEnergy);
 
-  float macroLight = pow(macroStream, 2.4) * 0.7;
+  float macroLight =
+    macroStream * mix(0.058, 0.052, uIsMobile) +
+    macroCore * mix(0.3, 0.27, uIsMobile);
   float pulseLight =
-    smoothstep(0.035, 0.15, pulseStreak) * 0.42;
+    smoothstep(0.035, 0.15, pulseStreak) *
+    0.42;
   float microLight =
-    smoothstep(0.045, 0.2, microCaustic) * 0.1;
-  float rimLight =
-    anchorRim *
-    mix(0.05, 0.12, macroStream) *
-    (1.0 - anchorInterior * 0.45);
-  float lightSignal = macroLight + pulseLight + microLight + rimLight;
-  float highlight = smoothstep(0.08, 0.74, lightSignal);
+    smoothstep(0.045, 0.2, microCaustic) *
+    0.09;
+  float coronaLight =
+    brokenCorona * mix(0.26, 0.21, uIsMobile) +
+    coronaFilaments * mix(0.2, 0.17, uIsMobile) +
+    coronaPlumes * mix(0.2, 0.16, uIsMobile);
+  float lightSignal = macroLight + pulseLight + microLight + coronaLight;
+  float highlight = smoothstep(0.035, 0.5, lightSignal);
 
   float intensity = clamp(uIntensity * uAnchorPresence, 0.0, 1.0);
-  float glyphShadow = mix(
-    0.14,
-    1.0,
-    smoothstep(-0.08, 0.2, anchorDistance)
-  );
   float readingSuppression =
     mix(1.0, 0.92, readingChannel * readingChannel);
   vec3 deepBase = vec3(0.001, 0.002, 0.005);
   vec3 blueAir =
-    uColorA * (0.0015 + broadNoise * 0.0025 + macroStream * 0.01);
-  vec3 streamColor = mix(uColorA * 0.7, uColorB, highlight);
+    uColorA *
+    (0.0012 + broadNoise * 0.0014 + macroStream * 0.0028);
+  vec3 streamColor = mix(
+    mix(uColorA * 0.58, uColorB, 0.28),
+    uColorB,
+    highlight
+  );
   vec3 color =
     deepBase +
-    (blueAir + streamColor * lightSignal * intensity) * glyphShadow;
-  color += uColorB * rimLight * intensity * 0.42;
+    blueAir +
+    streamColor * lightSignal * intensity;
+  color +=
+    uColorB *
+    macroCore *
+    intensity *
+    mix(0.04, 0.15, uIsMobile);
+  color += uColorB * coronaLight * intensity * 0.5;
 
   vec3 amberEdge =
     vec3(0.718, 0.486, 0.286) *
-    anchorRim *
+    macroCore *
+    coronaFilaments *
     highlight *
-    0.075;
+    0.038;
   color += amberEdge * intensity;
 
   float spectralMono =

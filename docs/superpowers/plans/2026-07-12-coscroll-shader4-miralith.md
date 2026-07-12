@@ -12,7 +12,7 @@
 
 ## Locked design
 
-**Visual thesis:** A cold blue-jade glyph behaves like a gravitational object in deep black space; ivory light streams shear around its calligraphic envelope, with only a trace of warm amber and micro-caustic texture at the brightest edges.
+**Visual thesis:** A cold blue-jade glyph behaves like a gravitational object in deep black space; soft ivory bands and broken fluid filaments shear around its calligraphic envelope like a solar corona, with only a trace of warm amber and micro-caustic texture at the brightest edges. The background must never resolve into a visible ball, closed ellipse, or black-hole disk behind the model.
 
 **Content order:** opaque shader background → back lyrics → dual-layer jade anchor → front lyrics. Lyrics keep their current position, scale, opacity, depth test, and depth write behavior.
 
@@ -32,6 +32,7 @@
 - Do not change jade geometry, inner/outer material values, lyrics typography, lyric sizing, lyric opacity, or depth ordering.
 - Do not add `EffectComposer`, chromatic-aberration postprocessing, `WebGLRenderTarget`, a second canvas, textures, HDR assets, or packages.
 - Do not feed raw wheel velocity to the Source Match shader.
+- Do not render a radial `wellDistance`/`wellRim` sphere behind the model. Subject linkage comes from the projected glyph SDF, tangent advection, and an irregular exterior corona only.
 
 ## File map
 
@@ -512,7 +513,7 @@ agent-browser --session coscroll-gravity wait 350
 agent-browser --session coscroll-gravity screenshot output/agent-browser/coscroll-gravity-desktop-scroll.png
 ```
 
-The desktop composition must show one macro stream wrapping the anchor, a dark glyph-linked well, visible but subordinate micro-caustics, no circular black-hole disk, no large RGB split, and no lyric halo or scale change.
+The desktop composition must show one or two soft macro streams wrapping the anchor, a broken Shader4-like fluid corona localized by the glyph field, visible but subordinate micro-caustics, no circular/elliptical well or black-hole disk, no large RGB split, and no lyric halo or scale change.
 
 - [ ] **Step 3: Capture mobile idle/scroll frames**
 
@@ -538,6 +539,8 @@ Tune in this order only:
 3. Pulse visibility and idle/boost ratio.
 4. Micro-caustic amount.
 5. Chroma and amber edge strength.
+
+The Shader4 reference is used for its iterative sine-field motion, soft high-contrast streak hierarchy, and restrained edge chroma. Its closed radial sphere is intentionally not carried over; the MiraLith glyph and its exterior SDF replace that compositional role.
 
 - [ ] **Step 5: Run visual tests, typecheck, commit, and push**
 
