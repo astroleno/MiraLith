@@ -57,7 +57,7 @@
 - Commit existing `packages/coscroll-scene/src/shaders/coScrollSourceCausticShader.ts`
 - Commit existing changes in `tests/e2e/coscroll.spec.ts`
 
-- [ ] **Step 1: Run the current Source Match regression group**
+- [x] **Step 1: Run the current Source Match regression group**
 
 Run:
 
@@ -67,7 +67,7 @@ pnpm exec playwright test tests/e2e/coscroll.spec.ts --project=desktop --grep "c
 
 Expected: every selected test passes. If a known unrelated route assertion is selected, narrow the expression to the Source Match model, lyrics, caustic, mobile, and reduced-motion tests and record the exclusion.
 
-- [ ] **Step 2: Run package typechecks and diff validation**
+- [x] **Step 2: Run package typechecks and diff validation**
 
 ```bash
 pnpm --filter @miralith/coscroll-scene typecheck
@@ -77,7 +77,7 @@ git diff --check
 
 Expected: all commands exit `0`.
 
-- [ ] **Step 3: Commit and push the green baseline**
+- [x] **Step 3: Commit and push the green baseline**
 
 ```bash
 git add packages/coscroll-scene/src/CoScrollCausticLightField.tsx \
@@ -101,7 +101,7 @@ git push -u origin codex/coscroll-shader4-miralith
 - Modify `tests/e2e/coscroll.spec.ts`
 - Modify `packages/coscroll-scene/src/sourceCausticMotion.ts`
 
-- [ ] **Step 1: Add failing pure-motion assertions**
+- [x] **Step 1: Add failing pure-motion assertions**
 
 Extend the base-speed test with:
 
@@ -118,7 +118,7 @@ expect(forward.lensStrength).toBeGreaterThan(0.41);
 expect(forward.lensStrength).toBeLessThanOrEqual(0.42);
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 ```bash
 pnpm exec playwright test tests/e2e/coscroll.spec.ts --project=desktop --grep "source caustic remains calm|source caustic acceleration"
@@ -126,7 +126,7 @@ pnpm exec playwright test tests/e2e/coscroll.spec.ts --project=desktop --grep "s
 
 Expected: both tests fail because `anchorFacing` and `lensStrength` do not exist.
 
-- [ ] **Step 3: Add the new outputs**
+- [x] **Step 3: Add the new outputs**
 
 Update `SourceCausticMotion`:
 
@@ -160,7 +160,7 @@ return {
 
 Update the calm test's expected time scale to `0.3` and chroma offset to `0.00045`.
 
-- [ ] **Step 4: Run GREEN, typecheck, commit, and push**
+- [x] **Step 4: Run GREEN, typecheck, commit, and push**
 
 ```bash
 pnpm exec playwright test tests/e2e/coscroll.spec.ts --project=desktop --grep "source caustic remains calm|source caustic acceleration"
@@ -180,7 +180,7 @@ git push
 - Modify `tests/e2e/coscroll.spec.ts`
 - Modify `packages/coscroll-scene/src/shaders/coScrollSourceCausticShader.ts`
 
-- [ ] **Step 1: Add failing shader-contract assertions**
+- [x] **Step 1: Add failing shader-contract assertions**
 
 The Source Match shader test must assert:
 
@@ -199,7 +199,7 @@ expect(shader).toContain("gl_FragColor = vec4(color, 1.0);");
 expect(shader).not.toContain("WebGLRenderTarget");
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 ```bash
 pnpm exec playwright test tests/e2e/coscroll.spec.ts --project=desktop --grep "source caustic uses organic layers"
@@ -207,7 +207,7 @@ pnpm exec playwright test tests/e2e/coscroll.spec.ts --project=desktop --grep "s
 
 Expected: failure on the new uniform and SDF assertions.
 
-- [ ] **Step 3: Implement the calligraphic SDF**
+- [x] **Step 3: Implement the calligraphic SDF**
 
 Use six smooth-unioned capsules, expressed in local anchor coordinates:
 
@@ -349,7 +349,7 @@ vec3 amberEdge = vec3(0.718, 0.486, 0.286) * anchorRim * highlight * 0.075;
 
 Keep chroma edge-only by multiplying the spectral delta by `microCaustic * highlight`; never offset the final framebuffer or the lyric/model layers.
 
-- [ ] **Step 4: Run GREEN, typecheck, commit, and push**
+- [x] **Step 4: Run GREEN, typecheck, commit, and push**
 
 ```bash
 pnpm exec playwright test tests/e2e/coscroll.spec.ts --project=desktop --grep "source caustic uses organic layers"
@@ -370,7 +370,7 @@ git push
 - Modify `packages/coscroll-scene/src/CoScrollCausticLightField.tsx`
 - Modify `tests/e2e/coscroll.spec.ts`
 
-- [ ] **Step 1: Add failing integration assertions**
+- [x] **Step 1: Add failing integration assertions**
 
 ```ts
 expect(sceneContent).toContain("const sourceAnchorPosition");
@@ -385,7 +385,7 @@ expect(field).toContain("THREE.NormalBlending");
 expect(field).toContain("transparent");
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 ```bash
 pnpm exec playwright test tests/e2e/coscroll.spec.ts --project=desktop --grep "shares anchor rotation phase"
@@ -393,7 +393,7 @@ pnpm exec playwright test tests/e2e/coscroll.spec.ts --project=desktop --grep "s
 
 Expected: failure on the new framing and opaque-blending assertions.
 
-- [ ] **Step 3: Share anchor position and scale in the scene**
+- [x] **Step 3: Share anchor position and scale in the scene**
 
 Define once in `CoScrollSceneContent.tsx`:
 
@@ -410,7 +410,7 @@ const sourceAnchorScale = mobileSourceMatch
 
 Use these values for `CoScrollJadeAnchor` and pass them to `CoScrollCausticLightField`.
 
-- [ ] **Step 4: Project the model center and set responsive field scale**
+- [x] **Step 4: Project the model center and set responsive field scale**
 
 Add props:
 
@@ -451,7 +451,7 @@ liveUniforms.uAnchorFieldScale.value.set(
 
 Assign `motion.anchorFacing` and `motion.lensStrength` every frame. Use `THREE.NormalBlending`, alpha `1.0`, and the transparent render queue for Source Match so the plane remains visually opaque without contaminating the shell transmission prepass; preserve Additive blending for legacy CoScroll.
 
-- [ ] **Step 5: Run GREEN, typecheck, commit, and push**
+- [x] **Step 5: Run GREEN, typecheck, commit, and push**
 
 ```bash
 pnpm exec playwright test tests/e2e/coscroll.spec.ts --project=desktop --grep "shares anchor rotation phase|original black-blue|lyric fills stay opaque"
@@ -475,7 +475,7 @@ git push
 - Modify `packages/coscroll-scene/src/CoScrollCausticLightField.tsx` only if responsive field scale needs correction
 - Modify `tests/e2e/coscroll.spec.ts`
 
-- [ ] **Step 1: Preserve automated visual boundaries**
+- [x] **Step 1: Preserve automated visual boundaries**
 
 Desktop top-band limits:
 
@@ -500,7 +500,7 @@ expect(profile.meanLuma).toBeLessThan(46);
 
 Keep the existing real-frame acceleration requirement at `boosted.meanDelta > idle.meanDelta * 1.2`.
 
-- [ ] **Step 2: Start the site and capture desktop idle/scroll frames**
+- [x] **Step 2: Start the site and capture desktop idle/scroll frames**
 
 ```bash
 pnpm --filter @miralith/site dev
@@ -515,7 +515,7 @@ agent-browser --session coscroll-gravity screenshot output/agent-browser/coscrol
 
 The desktop composition must show one or two soft macro streams wrapping the anchor, a broken Shader4-like fluid corona localized by the glyph field, visible but subordinate micro-caustics, no circular/elliptical well or black-hole disk, no large RGB split, and no lyric halo or scale change.
 
-- [ ] **Step 3: Capture mobile idle/scroll frames**
+- [x] **Step 3: Capture mobile idle/scroll frames**
 
 ```bash
 agent-browser --session coscroll-gravity set viewport 390 844
@@ -530,7 +530,7 @@ agent-browser --session coscroll-gravity close
 
 The mobile composition must keep the anchor and its brightest rim inside the viewport, preserve dark negative space above the lyrics, and avoid a full-frame black disk or clipped dominant band.
 
-- [ ] **Step 4: Adjust one parameter family at a time**
+- [x] **Step 4: Adjust one parameter family at a time**
 
 Tune in this order only:
 
@@ -542,7 +542,7 @@ Tune in this order only:
 
 The Shader4 reference is used for its iterative sine-field motion, soft high-contrast streak hierarchy, and restrained edge chroma. Its closed radial sphere is intentionally not carried over; the MiraLith glyph and its exterior SDF replace that compositional role.
 
-- [ ] **Step 5: Run visual tests, typecheck, commit, and push**
+- [x] **Step 5: Run visual tests, typecheck, commit, and push**
 
 ```bash
 pnpm exec playwright test tests/e2e/coscroll.spec.ts --project=desktop --grep "source caustic|source-match"
@@ -565,7 +565,7 @@ git push
 - Verify all files changed by Tasks 0–4
 - Update this plan's checkboxes to reflect executed work
 
-- [ ] **Step 1: Run full scoped verification**
+- [x] **Step 1: Run full scoped verification**
 
 ```bash
 pnpm exec playwright test tests/e2e/coscroll.spec.ts --project=desktop --grep "source caustic|coscroll source-match"
@@ -578,7 +578,7 @@ git diff --check
 
 Expected: all scoped tests and validation commands exit `0`. If the unfiltered historical test file still contains unrelated poster/home/legacy-asset failures, report them separately and do not conflate them with this feature.
 
-- [ ] **Step 2: Inspect repository scope**
+- [x] **Step 2: Inspect repository scope**
 
 ```bash
 git status --short
@@ -588,10 +588,18 @@ git log --oneline --decorate -6
 
 Expected: commits contain only the plan and CoScroll feature files; unrelated existing files remain unstaged.
 
-- [ ] **Step 3: Commit the completed plan record and push**
+- [x] **Step 3: Commit the completed plan record and push**
 
 ```bash
 git add docs/superpowers/plans/2026-07-12-coscroll-shader4-miralith.md
 git commit -m "docs(coscroll): record gravity shader implementation"
 git push
 ```
+
+## Execution record — 2026-07-12
+
+- Source Match scoped suite: 27/27 passed.
+- Real model-motion acceleration: 3/3 repeated runs passed.
+- CoScroll typecheck, Site typecheck, Site lint, Site production build, and `git diff --check`: passed.
+- Desktop and mobile idle/scroll frames inspected; the closed well/sphere is absent, the fluid corona remains visible, the alpha-1 background stays fixed, and the original neutral shell/blue core separation is restored.
+- Knowledge graph refreshed with `graphify update .`.
