@@ -4,18 +4,28 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { IUniform } from "three";
+import { coScrollSourceCausticFragmentShader } from "./shaders/coScrollSourceCausticShader";
+import { stepSourceCausticMotion } from "./sourceCausticMotion";
+import type { CoScrollRotationSignalRef } from "./types";
 
 interface CausticUniforms {
+  uAnchorRotation: IUniform<number>;
+  uAnchorSpeed: IUniform<number>;
   uAnchorPresence: IUniform<number>;
   uAspect: IUniform<number>;
+  uChromaOffset: IUniform<number>;
   uColorA: IUniform<THREE.Color>;
   uColorB: IUniform<THREE.Color>;
+  uFieldRotation: IUniform<number>;
   uIntensity: IUniform<number>;
   uIsMobile: IUniform<number>;
   uLyricCenters: IUniform<THREE.Vector4>;
+  uMotionEnergy: IUniform<number>;
+  uPulseStrength: IUniform<number>;
   uScrollVelocity: IUniform<number>;
   uSourceMatch: IUniform<number>;
   uTime: IUniform<number>;
+  uWarpAmount: IUniform<number>;
   [uniform: string]: IUniform;
 }
 
@@ -28,6 +38,7 @@ export interface CoScrollCausticLightFieldProps {
   opacity?: number;
   anchorPresence?: number;
   scrollVelocity?: number;
+  rotationSignalRef?: CoScrollRotationSignalRef;
   lyricCenters?: [number, number, number, number];
   colorA?: string;
   colorB?: string;
@@ -35,7 +46,6 @@ export interface CoScrollCausticLightFieldProps {
   renderOrder?: number;
 }
 
-const SOURCE_MATCH_CAUSTIC_SPEED = 0.82;
 const DEFAULT_CAUSTIC_SPEED = 0.22;
 
 const vertexShader = `
@@ -47,10 +57,12 @@ void main() {
 }
 `;
 
-const fragmentShader = `
+const legacyFragmentShader = `
 varying vec2 vUv;
 
 uniform float uAnchorPresence;
+uniform float uAnchorRotation;
+uniform float uAnchorSpeed;
 uniform float uAspect;
 uniform vec3  uColorA;
 uniform vec3  uColorB;
@@ -147,10 +159,12 @@ void main() {
   float readingSuppression = mix(1.0, mix(1.0, 0.58, readingChannel), uSourceMatch);
 
   float velocity = clamp(uScrollVelocity * mix(0.22, 0.46, uSourceMatch), -0.42, 0.42);
-  float time = uTime + velocity * mix(0.45, 0.44, uSourceMatch);
+  float anchorPhase = uAnchorRotation * uSourceMatch;
+  float rotationEnergy = clamp(abs(uAnchorSpeed), 0.0, 2.2) * uSourceMatch;
+  float time = uTime + velocity * mix(0.45, 0.44, uSourceMatch) + rotationEnergy * 0.035;
   vec2 aspectUv = vec2(centered.x * uAspect, centered.y);
   vec2 field = aspectUv * mix(1.06, 0.46, uSourceMatch);
-  field = rotateUv(field, mix(-0.56, -0.14, uSourceMatch) + velocity * 0.18);
+  field = rotateUv(field, mix(-0.56, -0.14, uSourceMatch) + velocity * 0.18 + anchorPhase * 0.24);
   field += vec2(time * mix(0.16, 0.11, uSourceMatch), -time * mix(0.11, 0.085, uSourceMatch));
 
   float lowNoise = fbm(field * mix(1.1, 0.56, uSourceMatch) + vec2(time * mix(0.045, 0.11, uSourceMatch), -time * mix(0.026, 0.064, uSourceMatch)));
@@ -222,8 +236,8 @@ void main() {
   float roamingB = causticBand(roamingField.x * -3.8 + roamingField.y * 5.1 - tideNoise * 2.7 - time * 0.71, 11.5);
   float roamingCaustic = (roamingA * 0.48 + roamingB * 0.4 + pow(clamp(roamingA * roamingB, 0.0, 1.0), 0.72) * 0.52) * roamingBreak * waterEnvelope * uSourceMatch;
 
-  vec2 sourceFlowA = rotateUv(aspectUv * 0.72, -0.28) + vec2(time * 0.2, -time * 0.14);
-  vec2 sourceFlowB = rotateUv(aspectUv * 0.66, 0.46) + vec2(-time * 0.16, time * 0.19);
+  vec2 sourceFlowA = rotateUv(aspectUv * 0.72, -0.28 + anchorPhase * 0.18) + vec2(time * 0.2, -time * 0.14);
+  vec2 sourceFlowB = rotateUv(aspectUv * 0.66, 0.46 - anchorPhase * 0.14) + vec2(-time * 0.16, time * 0.19);
   float sourceFlowWarpA = fbm(sourceFlowA * 0.76 + vec2(-time * 0.06, time * 0.045));
   float sourceFlowWarpB = fbm(sourceFlowB * 0.82 + vec2(time * 0.052, -time * 0.064));
   float sourceFlowBandA = causticBand(sourceFlowA.x * 5.8 + sourceFlowA.y * 2.4 + sourceFlowWarpA * 3.6, 9.2);
@@ -258,6 +272,7 @@ export function CoScrollCausticLightField({
   opacity = 0.18,
   anchorPresence = 1,
   scrollVelocity = 0,
+  rotationSignalRef,
   lyricCenters = [-0.43, -0.18, 0.08, 0.35],
   colorA,
   colorB,
@@ -265,19 +280,27 @@ export function CoScrollCausticLightField({
   renderOrder = -80
 }: CoScrollCausticLightFieldProps) {
   const materialRef = useRef<THREE.ShaderMaterial>(null);
+  const sourceMotionEnergyRef = useRef(0);
   const { viewport } = useThree();
   const uniforms = useMemo<CausticUniforms>(
     () => ({
+      uAnchorRotation: { value: rotationSignalRef?.current.angle ?? 0 },
+      uAnchorSpeed: { value: rotationSignalRef?.current.speed ?? 0 },
       uAnchorPresence: { value: anchorPresence },
       uAspect: { value: Math.max(0.1, viewport.width / Math.max(viewport.height, 0.1)) },
+      uChromaOffset: { value: 0.0006 },
       uColorA: { value: new THREE.Color(colorA ?? (sourceMatch ? "#2d6d8b" : "#386f70")) },
       uColorB: { value: new THREE.Color(colorB ?? (sourceMatch ? "#cbd5f5" : "#e5fff7")) },
+      uFieldRotation: { value: (rotationSignalRef?.current.angle ?? 0) * 0.42 },
       uIntensity: { value: opacity },
       uIsMobile: { value: layout === "mobile" ? 1 : 0 },
       uLyricCenters: { value: new THREE.Vector4(...lyricCenters) },
+      uMotionEnergy: { value: 0 },
+      uPulseStrength: { value: 0.12 },
       uScrollVelocity: { value: scrollVelocity },
       uSourceMatch: { value: sourceMatch ? 1 : 0 },
-      uTime: { value: 0 }
+      uTime: { value: 0 },
+      uWarpAmount: { value: 0.3 }
     }),
     []
   );
@@ -300,11 +323,30 @@ export function CoScrollCausticLightField({
       return;
     }
 
-    const baseSpeed = sourceMatch ? SOURCE_MATCH_CAUSTIC_SPEED : DEFAULT_CAUSTIC_SPEED;
     const liveUniforms = materialRef.current?.uniforms;
-    if (liveUniforms) {
-      liveUniforms.uTime.value += delta * baseSpeed;
+    if (!liveUniforms) {
+      return;
     }
+
+    if (sourceMatch) {
+      const motion = stepSourceCausticMotion({
+        angle: rotationSignalRef?.current.angle ?? 0,
+        speed: rotationSignalRef?.current.speed ?? 0,
+        previousEnergy: sourceMotionEnergyRef.current,
+        delta
+      });
+
+      sourceMotionEnergyRef.current = motion.energy;
+      liveUniforms.uFieldRotation.value = motion.fieldRotation;
+      liveUniforms.uMotionEnergy.value = motion.energy;
+      liveUniforms.uWarpAmount.value = motion.warpAmount;
+      liveUniforms.uPulseStrength.value = motion.pulseStrength;
+      liveUniforms.uChromaOffset.value = motion.chromaOffset;
+      liveUniforms.uTime.value += delta * motion.timeScale;
+      return;
+    }
+
+    liveUniforms.uTime.value += delta * DEFAULT_CAUSTIC_SPEED;
   });
 
   return (
@@ -316,10 +358,15 @@ export function CoScrollCausticLightField({
     >
       <planeGeometry args={[1, 1, 1, 1]} />
       <shaderMaterial
+        key={sourceMatch ? "source-organic-caustic" : "legacy-caustic"}
         ref={materialRef}
         uniforms={uniforms}
         vertexShader={vertexShader}
-        fragmentShader={fragmentShader}
+        fragmentShader={
+          sourceMatch
+            ? coScrollSourceCausticFragmentShader
+            : legacyFragmentShader
+        }
         transparent
         depthTest
         depthWrite={false}

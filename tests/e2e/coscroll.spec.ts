@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { stepSourceCausticMotion } from "../../packages/coscroll-scene/src/sourceCausticMotion";
 
 const repoRoot = process.cwd();
 
@@ -495,6 +496,144 @@ async function measureBackgroundScreenshotMotion(
   );
 }
 
+async function measureBackgroundCanvasFrameMotion(
+  page: import("@playwright/test").Page,
+  frameCount = 4
+) {
+  return page.evaluate(async (requestedFrameCount) => {
+    const source = document.querySelector("canvas");
+    if (!source) {
+      throw new Error("No canvas found for CoScroll frame-motion measurement");
+    }
+
+    const width = 240;
+    const height = 37;
+    const sample = document.createElement("canvas");
+    sample.width = width;
+    sample.height = height;
+    const context = sample.getContext("2d", { willReadFrequently: true });
+    if (!context) {
+      throw new Error("Could not create CoScroll frame-motion context");
+    }
+
+    const frames: number[][] = [];
+    const timestamps: number[] = [];
+    const sourceBandHeight = Math.min(
+      source.height,
+      source.height * (220 / Math.max(1, source.clientHeight))
+    );
+
+    for (let frame = 0; frame < requestedFrameCount; frame += 1) {
+      const timestamp = await new Promise<number>((resolve) => requestAnimationFrame(resolve));
+      context.clearRect(0, 0, width, height);
+      context.drawImage(
+        source,
+        0,
+        0,
+        source.width,
+        sourceBandHeight,
+        0,
+        0,
+        width,
+        height
+      );
+      const pixels = context.getImageData(0, 0, width, height).data;
+      const luma: number[] = [];
+      for (let index = 0; index < pixels.length; index += 4) {
+        luma.push(0.2126 * pixels[index] + 0.7152 * pixels[index + 1] + 0.0722 * pixels[index + 2]);
+      }
+      frames.push(luma);
+      timestamps.push(timestamp);
+    }
+
+    const meanDeltas: number[] = [];
+    const changedShares: number[] = [];
+    for (let frame = 1; frame < frames.length; frame += 1) {
+      const before = frames[frame - 1];
+      const after = frames[frame];
+      const elapsed = Math.max(1, timestamps[frame] - timestamps[frame - 1]);
+      let deltaSum = 0;
+      let changedPixels = 0;
+      for (let index = 0; index < before.length; index += 1) {
+        const delta = Math.abs(before[index] - after[index]) * (16.667 / elapsed);
+        deltaSum += delta;
+        if (delta > 0.75) {
+          changedPixels += 1;
+        }
+      }
+      meanDeltas.push(deltaSum / Math.max(1, before.length));
+      changedShares.push(changedPixels / Math.max(1, before.length));
+    }
+
+    const median = (values: number[]) => {
+      const sorted = [...values].sort((left, right) => left - right);
+      return sorted[Math.floor(sorted.length / 2)] ?? 0;
+    };
+
+    return {
+      meanDelta: median(meanDeltas),
+      changedShare: median(changedShares),
+      meanDeltas,
+      changedShares
+    };
+  }, frameCount);
+}
+
+async function measureBackgroundLumaProfile(
+  page: import("@playwright/test").Page,
+  options: {
+    clipWidth?: number;
+    clipHeight?: number;
+    sampleWidth?: number;
+    sampleHeight?: number;
+  } = {}
+) {
+  const clipWidth = options.clipWidth ?? 1440;
+  const clipHeight = options.clipHeight ?? 220;
+  const sampleWidth = options.sampleWidth ?? 180;
+  const sampleHeight = options.sampleHeight ?? 28;
+  const frame = await page.screenshot({ clip: { x: 0, y: 0, width: clipWidth, height: clipHeight } });
+
+  return page.evaluate(async ({ frameBase64, width, height }) => {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const nextImage = new Image();
+      nextImage.onload = () => resolve(nextImage);
+      nextImage.onerror = () => reject(new Error("Could not decode CoScroll background profile frame"));
+      nextImage.src = `data:image/png;base64,${frameBase64}`;
+    });
+    const sample = document.createElement("canvas");
+    sample.width = width;
+    sample.height = height;
+    const context = sample.getContext("2d");
+    if (!context) {
+      throw new Error("Could not create CoScroll background profile context");
+    }
+    context.drawImage(image, 0, 0, width, height);
+    const pixels = context.getImageData(0, 0, width, height).data;
+    let darkPixels = 0;
+    let brightPixels = 0;
+    let lumaSum = 0;
+
+    for (let index = 0; index < pixels.length; index += 4) {
+      const luma = 0.2126 * pixels[index] + 0.7152 * pixels[index + 1] + 0.0722 * pixels[index + 2];
+      lumaSum += luma;
+      if (luma < 18) {
+        darkPixels += 1;
+      }
+      if (luma > 85) {
+        brightPixels += 1;
+      }
+    }
+
+    const pixelCount = pixels.length / 4;
+    return {
+      darkShare: darkPixels / pixelCount,
+      brightShare: brightPixels / pixelCount,
+      meanLuma: lumaSum / pixelCount
+    };
+  }, { frameBase64: frame.toString("base64"), width: sampleWidth, height: sampleHeight });
+}
+
 async function waitForSourceMatchAnchorEnergy(
   page: import("@playwright/test").Page,
   minimumLitPixels: number,
@@ -722,7 +861,7 @@ test("coscroll scene ports the original SilkR3F background without owning Canvas
   expect(caustics).toContain("uSourceMatch");
   expect(caustics).toContain("THREE.AdditiveBlending");
   expect(caustics).toContain("smoothstep(0.22");
-  expect(caustics).toContain('sourceMatch ? "#6f3b1b"');
+  expect(caustics).toContain('sourceMatch ? "#2d6d8b"');
   expect(sceneContent).toContain("CoScrollSilkBackground");
   expect(sceneContent).toContain("CoScrollCausticLightField");
   expect(sceneContent.indexOf("<CoScrollSilkBackground")).toBeLessThan(sceneContent.indexOf("<CoScrollCausticLightField"));
@@ -875,6 +1014,129 @@ test("coscroll source-match keeps lyric glyph size constant while scrolling", as
   expect(sceneContent).toContain("const SOURCE_MATCH_MOBILE_FONT_SIZE = 0.4;");
   expect(sceneContent).toContain("? SOURCE_MATCH_MOBILE_FONT_SIZE");
   expect(sceneContent).toContain(": SOURCE_MATCH_DESKTOP_FONT_SIZE");
+  expect(sceneContent).not.toContain("sourceCurrentFrontLift");
+  expect(sceneContent).toContain("scale={sourceMatchMode ? 1 : line.scale}");
+});
+
+test("coscroll source-match current lyric changes highlight only", async () => {
+  const sceneContent = await readProjectFile("packages/coscroll-scene/src/CoScrollSceneContent.tsx");
+  const billboard = await readProjectFile("packages/coscroll-scene/src/CoScrollTextBillboard.tsx");
+
+  expect(sceneContent).toContain("opacity={sourceMatchMode ? 1 : line.opacity * layerOpacity}");
+  expect(sceneContent).toContain("edgeFeather={sourceMatchMode ? 0 : line.edgeFeather}");
+  expect(sceneContent).not.toContain("line.isCurrent ? 0.58 : 0.5");
+  expect(sceneContent).not.toContain("line.isCurrent ? 0.56 : 0.46");
+  expect(billboard).toContain('fill: current ? "#f8fafc" : "#cbd5f5"');
+});
+
+test("coscroll source-match lyric fills stay opaque without halo shadows", async () => {
+  const billboard = await readProjectFile("packages/coscroll-scene/src/CoScrollTextBillboard.tsx");
+  const sceneContent = await readProjectFile("packages/coscroll-scene/src/CoScrollSceneContent.tsx");
+
+  expect(billboard).toContain('shadow: "rgba(0, 0, 0, 0)"');
+  expect(billboard).toContain("ctx.shadowBlur = sourceFont ? 0 :");
+  expect(billboard).toContain("if (!sourceFont) {");
+  expect(billboard).toContain("ctx.strokeText(glyph, x, y);");
+  expect(billboard).toContain("transparent\n");
+  expect(billboard).not.toContain("transparent={!sourceFont}");
+  expect(billboard).toContain("opacity={sourceFont ? 1 : opacity * edgeOpacity}");
+  expect(billboard).not.toContain("alphaTest=");
+  expect(billboard).not.toContain("alphaToCoverage=");
+  expect(billboard).toContain("premultipliedAlpha={false}");
+  expect(sceneContent).toContain("depthTest");
+  expect(sceneContent).toContain("depthWrite");
+});
+
+test("coscroll source-match shares anchor rotation phase with the caustic field", async () => {
+  const types = await readProjectFile("packages/coscroll-scene/src/types.ts");
+  const sceneContent = await readProjectFile("packages/coscroll-scene/src/CoScrollSceneContent.tsx");
+  const jade = await readProjectFile("packages/coscroll-scene/src/CoScrollJadeAnchor.tsx");
+  const caustics = await readProjectFile("packages/coscroll-scene/src/CoScrollCausticLightField.tsx");
+
+  expect(types).toContain("export interface CoScrollRotationSignal");
+  expect(sceneContent).toContain("const sourceRotationSignalRef = useRef<CoScrollRotationSignal>");
+  expect(sceneContent.match(/rotationSignalRef=\{sourceRotationSignalRef\}/g)).toHaveLength(2);
+  expect(jade).toContain("rotationSignalRef.current.angle = rotationRef.current");
+  expect(jade).toContain("rotationSignalRef.current.speed = currentSpeedRef.current");
+  expect(caustics).toContain('import { stepSourceCausticMotion } from "./sourceCausticMotion"');
+  expect(caustics).toContain('import { coScrollSourceCausticFragmentShader } from "./shaders/coScrollSourceCausticShader"');
+  expect(caustics).toContain("const legacyFragmentShader = `");
+  expect(caustics).toContain("const sourceMotionEnergyRef = useRef(0);");
+  expect(caustics).toContain("const motion = stepSourceCausticMotion({");
+  expect(caustics).toContain("angle: rotationSignalRef?.current.angle ?? 0");
+  expect(caustics).toContain("speed: rotationSignalRef?.current.speed ?? 0");
+  expect(caustics).toContain('key={sourceMatch ? "source-organic-caustic" : "legacy-caustic"}');
+  expect(caustics).toContain("? coScrollSourceCausticFragmentShader");
+  expect(caustics).toContain(": legacyFragmentShader");
+});
+
+test("source caustic remains calm at the anchor base speed", () => {
+  const motion = stepSourceCausticMotion({
+    angle: -0.62,
+    speed: -0.32,
+    previousEnergy: 0,
+    delta: 1 / 60
+  });
+
+  expect(motion.energy).toBeCloseTo(0, 4);
+  expect(motion.fieldRotation).toBeCloseTo(-0.2604, 4);
+  expect(motion.timeScale).toBeCloseTo(0.34, 4);
+  expect(motion.chromaOffset).toBeCloseTo(0.0006, 5);
+});
+
+test("source caustic acceleration is independent of scroll direction", () => {
+  const forward = stepSourceCausticMotion({
+    angle: 1,
+    speed: 2.2,
+    previousEnergy: 0,
+    delta: 1
+  });
+  const reverse = stepSourceCausticMotion({
+    angle: 1,
+    speed: -2.2,
+    previousEnergy: 0,
+    delta: 1
+  });
+
+  expect(forward).toEqual(reverse);
+  expect(forward.timeScale).toBeGreaterThan(1.28);
+  expect(forward.warpAmount).toBeGreaterThan(0.47);
+  expect(forward.chromaOffset).toBeLessThanOrEqual(0.0022);
+});
+
+test("source caustic uses organic layers without global postprocessing", async () => {
+  const shader = await readProjectFile(
+    "packages/coscroll-scene/src/shaders/coScrollSourceCausticShader.ts"
+  );
+  const field = await readProjectFile(
+    "packages/coscroll-scene/src/CoScrollCausticLightField.tsx"
+  );
+
+  expect(shader).toContain("broadFlow");
+  expect(shader).toContain("pulseStreak");
+  expect(shader).toContain("microCaustic");
+  expect(shader).toContain("spectralRidge");
+  expect(shader).toContain("uFieldRotation");
+  expect(shader).toContain("uMotionEnergy");
+  expect(shader).toContain("float broadAlpha = smoothstep(0.58, 0.88, broadFlow) * 0.34;");
+  expect(shader).toContain("float pulseAlpha = smoothstep(0.04, 0.18, pulseStreak) * 0.28;");
+  expect(shader).toContain("float microAlpha = smoothstep(0.03, 0.16, microCaustic) * 0.2;");
+  expect(shader).toContain("float alphaSignal = broadAlpha + pulseAlpha + microAlpha;");
+  expect(shader).toContain("broadFlow * 0.44");
+  expect(shader).not.toContain("broadFlow * 0.72");
+  expect(shader).toContain("mix(1.0, 0.9, readingChannel * readingChannel)");
+  expect(shader).not.toContain("mix(1.0, 0.46, readingChannel)");
+  expect(field).not.toContain("EffectComposer");
+  expect(field).not.toContain("ChromaticAberration");
+  expect(field).not.toContain("WebGLRenderTarget");
+});
+
+test("coscroll source-match scroll input accelerates rotation in its current direction", async () => {
+  const jade = await readProjectFile("packages/coscroll-scene/src/CoScrollJadeAnchor.tsx");
+
+  expect(jade).toContain("const baseDirection = Math.sign(baseSpeed) || 1;");
+  expect(jade).toContain("baseDirection * Math.abs(scrollVelocity * velocityMultiplier)");
+  expect(jade).not.toContain("const propVelocity = reducedMotion || paused ? 0 : scrollVelocity * velocityMultiplier;");
 });
 
 test("coscroll source-match uses the original black-blue and cold-white palette", async () => {
@@ -886,7 +1148,7 @@ test("coscroll source-match uses the original black-blue and cold-white palette"
   expect(spikeExperience).toContain('background: "#010205"');
   expect(sceneContent).toContain('{sourceMatchMode ? null : <color attach="background" args={["#010205"]} />}');
   expect(billboard).toContain('fill: current ? "#f8fafc" : "#cbd5f5"');
-  expect(billboard).toContain('shadow: "rgba(207, 242, 255, 0.2)"');
+  expect(billboard).toContain('shadow: "rgba(0, 0, 0, 0)"');
   expect(caustics).toContain('sourceMatch ? "#2d6d8b" : "#386f70"');
   expect(caustics).toContain('sourceMatch ? "#cbd5f5" : "#e5fff7"');
 });
@@ -995,7 +1257,7 @@ test("coscroll source-match frame uses the original-project travel composition",
   expect(composition.centerTravelField.litPixels).toBeGreaterThan(70);
   expect(composition.bottomTravelLane.litPixels).toBeGreaterThan(20);
   expect(composition.whole.litPixels).toBeGreaterThan(150);
-  expect(composition.whole.litPixels).toBeLessThan(3600);
+  expect(composition.whole.litPixels).toBeLessThan(6500);
 
   const sceneContent = await readProjectFile("packages/coscroll-scene/src/CoScrollSceneContent.tsx");
   expect(sceneContent).not.toContain("sourcePairAnchorAssets");
@@ -1127,12 +1389,13 @@ test("coscroll source-match wheel input visibly drives bidirectional model motio
   expect(meanSampleDelta(afterForward, afterReverse)).toBeGreaterThan(0.6);
 });
 
-test("coscroll source-match caustics keep an independent animated flow profile", async () => {
+test("coscroll source-match keeps organic flow separate from the legacy profile", async () => {
   const caustics = await readProjectFile("packages/coscroll-scene/src/CoScrollCausticLightField.tsx");
+  const sourceShader = await readProjectFile("packages/coscroll-scene/src/shaders/coScrollSourceCausticShader.ts");
   const jade = await readProjectFile("packages/coscroll-scene/src/CoScrollJadeAnchor.tsx");
   const sceneContent = await readProjectFile("packages/coscroll-scene/src/CoScrollSceneContent.tsx");
 
-  expect(caustics).toContain("const SOURCE_MATCH_CAUSTIC_SPEED = 0.82;");
+  expect(caustics).toContain("const legacyFragmentShader = `");
   expect(caustics).toContain("poolDriftA");
   expect(caustics).toContain("roamingCaustic");
   expect(caustics).toContain("sourceFlowA");
@@ -1143,9 +1406,65 @@ test("coscroll source-match caustics keep an independent animated flow profile",
   expect(caustics).toContain("uLyricCenters");
   expect(caustics).toContain("verticalReadingChannel(centered, uLyricCenters.x");
   expect(caustics).toContain("if (!active || paused || reducedMotion)");
+  expect(sourceShader).toContain("broadFlow");
+  expect(sourceShader).toContain("pulseStreak");
+  expect(sourceShader).toContain("microCaustic");
   expect(sceneContent).toContain("lyricCenters={sourceCausticLyricCenters}");
   expect(jade).not.toContain("SOURCE_MATCH_MODEL_CAUSTICS_OPACITY_SCALE");
   expect(jade).not.toContain("SOURCE_MATCH_MODEL_CAUSTICS_MAX_OPACITY");
+});
+
+test("source caustic preserves dark space with visible organic highlights", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/coscroll-spike?sourceMatch=1&visualTest=pixels");
+  await waitForCoScrollPixels(page, 18);
+
+  const profile = await measureBackgroundLumaProfile(page);
+  const profileSummary = JSON.stringify(profile);
+  expect(profile.darkShare, profileSummary).toBeGreaterThan(0.55);
+  expect(profile.brightShare, profileSummary).toBeGreaterThan(0.01);
+  expect(profile.brightShare, profileSummary).toBeLessThan(0.18);
+  expect(profile.meanLuma, profileSummary).toBeGreaterThan(4);
+  expect(profile.meanLuma, profileSummary).toBeLessThan(42);
+});
+
+test("source caustic remains visible on mobile without filling the frame", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/coscroll-spike?sourceMatch=1&visualTest=pixels");
+  await waitForCoScrollPixels(page, 18);
+
+  const profile = await measureBackgroundLumaProfile(page, {
+    clipWidth: 390,
+    clipHeight: 180,
+    sampleWidth: 98,
+    sampleHeight: 45
+  });
+  const profileSummary = JSON.stringify(profile);
+  expect(profile.darkShare, profileSummary).toBeGreaterThan(0.55);
+  expect(profile.darkShare, profileSummary).toBeLessThan(0.98);
+  expect(profile.brightShare, profileSummary).toBeGreaterThan(0.005);
+  expect(profile.brightShare, profileSummary).toBeLessThan(0.18);
+  expect(profile.meanLuma, profileSummary).toBeGreaterThan(3);
+  expect(profile.meanLuma, profileSummary).toBeLessThan(42);
+});
+
+test("source caustic does not collapse to black during mobile motion", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/coscroll-spike?sourceMatch=1&motionTest=1");
+  await waitForCoScrollPixels(page, 18);
+
+  for (let frame = 0; frame < 3; frame += 1) {
+    const profile = await measureBackgroundLumaProfile(page, {
+      clipWidth: 390,
+      clipHeight: 180,
+      sampleWidth: 98,
+      sampleHeight: 45
+    });
+    const profileSummary = JSON.stringify({ frame, ...profile });
+    expect(profile.darkShare, profileSummary).toBeLessThan(0.985);
+    expect(profile.meanLuma, profileSummary).toBeGreaterThan(3);
+    await page.waitForTimeout(480);
+  }
 });
 
 test("coscroll source-match renders a neutral outer shell over the blue core", async ({ page }) => {
@@ -1170,6 +1489,24 @@ test("coscroll source-match caustics visibly advect across the empty background 
   const motion = await measureBackgroundScreenshotMotion(page);
   expect(motion.meanDelta).toBeGreaterThan(1.2);
   expect(motion.changedShare).toBeGreaterThan(0.08);
+});
+
+test("source caustic visibly accelerates with actual model motion", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/coscroll-spike?sourceMatch=1&motionTest=1");
+  await waitForCoScrollPixels(page, 18);
+  await page.waitForTimeout(1_200);
+
+  const idle = await measureBackgroundCanvasFrameMotion(page);
+
+  await page.mouse.move(720, 450);
+  await page.mouse.wheel(0, 110);
+  await page.waitForTimeout(100);
+  const boosted = await measureBackgroundCanvasFrameMotion(page);
+  const motionSummary = JSON.stringify({ idle, boosted });
+
+  expect(boosted.meanDelta, motionSummary).toBeGreaterThan(idle.meanDelta * 1.2);
+  expect(boosted.changedShare, motionSummary).toBeGreaterThan(0.08);
 });
 
 test("coscroll reduced motion keeps a static anchor instead of collapsing to background-only pixels", async ({ page }) => {

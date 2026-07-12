@@ -9,7 +9,7 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { TessellateModifier } from "three/examples/jsm/modifiers/TessellateModifier.js";
 import { mergeVertices, toCreasedNormals } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import type { CoScrollAnchorAsset, CoScrollFallbackReason } from "./types";
+import type { CoScrollAnchorAsset, CoScrollFallbackReason, CoScrollRotationSignalRef } from "./types";
 
 interface CoScrollJadeAnchorProps {
   modelSrc: string;
@@ -25,6 +25,7 @@ interface CoScrollJadeAnchorProps {
   maxRotationPerFrame?: number;
   deterministicPose?: boolean;
   sourceMaterial?: boolean;
+  rotationSignalRef?: CoScrollRotationSignalRef;
   renderOrder?: number;
   listenToScrollInput?: boolean;
   onReady?: () => void;
@@ -341,6 +342,7 @@ export function CoScrollJadeAnchor({
   maxRotationPerFrame = 0.09,
   deterministicPose = false,
   sourceMaterial = false,
+  rotationSignalRef,
   renderOrder = 2000,
   listenToScrollInput = true,
   onReady,
@@ -538,6 +540,9 @@ export function CoScrollJadeAnchor({
 
   useFrame((_state, delta) => {
     if (!anchorGroup.current) {
+      if (rotationSignalRef) {
+        rotationSignalRef.current.speed = 0;
+      }
       return;
     }
 
@@ -545,10 +550,19 @@ export function CoScrollJadeAnchor({
       anchorGroup.current.rotation.y = rotationRef.current;
       anchorGroup.current.rotation.x = -0.08;
       anchorGroup.current.rotation.z = 0.04;
+      if (rotationSignalRef) {
+        rotationSignalRef.current.angle = rotationRef.current;
+        rotationSignalRef.current.speed = 0;
+      }
       return;
     }
 
-    const propVelocity = reducedMotion || paused ? 0 : scrollVelocity * velocityMultiplier;
+    const baseDirection = Math.sign(baseSpeed) || 1;
+    const propVelocity = reducedMotion || paused
+      ? 0
+      : sourceMaterial
+        ? baseDirection * Math.abs(scrollVelocity * velocityMultiplier)
+        : scrollVelocity * velocityMultiplier;
     const manualInputDisabled = reducedMotion || paused || !listenToScrollInput;
     const manualVelocity = manualInputDisabled ? 0 : smoothedManualVelocityRef.current * velocityMultiplier;
     targetSpeedRef.current = clamp(reducedMotion || paused ? 0 : baseSpeed + propVelocity + manualVelocity, -maxAngularVelocity, maxAngularVelocity);
@@ -561,7 +575,11 @@ export function CoScrollJadeAnchor({
     anchorGroup.current.rotation.y = rotationRef.current;
     anchorGroup.current.rotation.x = Math.sin(rotationRef.current * 0.45) * 0.045;
     anchorGroup.current.rotation.z = Math.sin(rotationRef.current * 0.25) * 0.018;
-  });
+    if (rotationSignalRef) {
+      rotationSignalRef.current.angle = rotationRef.current;
+      rotationSignalRef.current.speed = currentSpeedRef.current;
+    }
+  }, -1);
 
   if (!clonedGeometry) {
     return null;

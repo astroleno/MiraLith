@@ -1,9 +1,9 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { Component, useEffect, useMemo, type ErrorInfo, type ReactNode } from "react";
+import { Component, useEffect, useMemo, useRef, type ErrorInfo, type ReactNode } from "react";
 import * as THREE from "three";
-import type { CoScrollFallbackReason, CoScrollSceneContentProps } from "./types";
+import type { CoScrollFallbackReason, CoScrollRotationSignal, CoScrollSceneContentProps } from "./types";
 import { CoScrollCausticLightField } from "./CoScrollCausticLightField";
 import { CoScrollJadeAnchor, preloadCoScrollAnchorGeometry } from "./CoScrollJadeAnchor";
 import { CoScrollSilkBackground } from "./CoScrollSilkBackground";
@@ -57,6 +57,10 @@ export function CoScrollSceneContent({
   const sourceMatchMode = quality.reason === "source-match";
   const mobileSourceMatch = sourceMatchMode && viewport === "mobile";
   const { gl, viewport: sceneViewport } = useThree();
+  const sourceRotationSignalRef = useRef<CoScrollRotationSignal>({
+    angle: sourceMatchMode ? -0.62 : 0,
+    speed: 0
+  });
 
   useEffect(() => {
     if (!sourceMatchMode) {
@@ -196,21 +200,14 @@ export function CoScrollSceneContent({
   const lyricYOffset = sourceMatchMode ? (mobileSourceMatch ? -0.02 : -0.82 + SOURCE_MATCH_DESKTOP_Y_LIFT) : 0;
   const renderLyric = (line: CoScrollLayeredLyricItem) => {
     const isFront = line.layer === "front";
-    const sourceLayerOpacity =
-      isFront
-        ? (line.isCurrent ? 0.58 : 0.5)
-        : line.layer === "back-near"
-          ? (line.isCurrent ? 0.56 : 0.46)
-          : 0.36;
-    const layerOpacity = sourceMatchMode ? sourceLayerOpacity : isFront ? state.frontLayerOpacity : state.backLayerOpacity;
-    const sourceCurrentFrontLift = sourceMatchMode && isFront && line.isCurrent ? (mobileSourceMatch ? -0.1 : 0.02) : 0;
+    const layerOpacity = isFront ? state.frontLayerOpacity : state.backLayerOpacity;
 
     return (
       <CoScrollTextBillboard
         key={line.key}
         text={line.text}
-        position={[line.x, line.y + lyricYOffset + sourceCurrentFrontLift, line.z]}
-        opacity={line.opacity * layerOpacity}
+        position={[line.x, line.y + lyricYOffset, line.z]}
+        opacity={sourceMatchMode ? 1 : line.opacity * layerOpacity}
         fontSize={
           sourceMatchMode
             ? mobileSourceMatch
@@ -224,8 +221,8 @@ export function CoScrollSceneContent({
         current={line.isCurrent}
         emphasis={line.emphasis}
         verticalAlign={line.verticalAlign}
-        edgeFeather={line.edgeFeather}
-        scale={line.scale}
+        edgeFeather={sourceMatchMode ? 0 : line.edgeFeather}
+        scale={sourceMatchMode ? 1 : line.scale}
         sourceFont={sourceMatchMode}
         depthTest
         depthWrite
@@ -271,6 +268,7 @@ export function CoScrollSceneContent({
         anchorPresence={state.shouldLoadModel ? 1 : 0.45}
         scrollVelocity={state.scrollVelocity}
         lyricCenters={sourceCausticLyricCenters}
+        rotationSignalRef={sourceRotationSignalRef}
         positionZ={sourceMatchMode ? -5.05 : -5.22}
       />
 
@@ -298,6 +296,7 @@ export function CoScrollSceneContent({
             velocityMultiplier={sourceMatchMode ? -7.5 : undefined}
             deterministicPose={sourceMatchMode && paused}
             sourceMaterial={sourceMatchMode}
+            rotationSignalRef={sourceRotationSignalRef}
             renderOrder={sourceMatchMode ? 2600 : undefined}
             listenToScrollInput={!sourceMatchMode}
             onReady={onReady}

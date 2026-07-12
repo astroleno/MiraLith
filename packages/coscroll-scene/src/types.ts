@@ -77,6 +77,15 @@ export interface CoScrollVisualState {
   shouldLoadModel: boolean;
 }
 
+export interface CoScrollRotationSignal {
+  angle: number;
+  speed: number;
+}
+
+export interface CoScrollRotationSignalRef {
+  current: CoScrollRotationSignal;
+}
+
 export interface CoScrollSceneContentProps {
   progress: number;
   active: boolean;

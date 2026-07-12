@@ -99,8 +99,8 @@ function createVerticalTextBillboard({
   const style = sourceFont
     ? {
         fill: current ? "#f8fafc" : "#cbd5f5",
-        stroke: "rgba(1, 2, 5, 0.72)",
-        shadow: "rgba(207, 242, 255, 0.2)"
+        stroke: "rgba(0, 0, 0, 0)",
+        shadow: "rgba(0, 0, 0, 0)"
       }
     : emphasisStyles[emphasis];
 
@@ -114,15 +114,17 @@ function createVerticalTextBillboard({
   ctx.lineJoin = "round";
   ctx.miterLimit = 2;
   ctx.shadowColor = style.shadow;
-  ctx.shadowBlur = layer === "front" ? fontPx * 0.18 : fontPx * 0.11;
-  ctx.lineWidth = Math.max(1.5 * dpr, fontPx * (sourceFont ? 0.026 : 0.035));
+  ctx.shadowBlur = sourceFont ? 0 : layer === "front" ? fontPx * 0.18 : fontPx * 0.11;
+  ctx.lineWidth = Math.max(1.5 * dpr, fontPx * 0.035);
   ctx.strokeStyle = style.stroke;
   ctx.fillStyle = style.fill;
 
   glyphs.forEach((glyph, index) => {
     const x = canvasWidth / 2;
     const y = padding + verticalSpacing * (index + 0.5);
-    ctx.strokeText(glyph, x, y);
+    if (!sourceFont) {
+      ctx.strokeText(glyph, x, y);
+    }
     ctx.fillText(glyph, x, y);
   });
 
@@ -245,9 +247,10 @@ export function CoScrollTextBillboard({
       <meshBasicMaterial
         map={billboard.texture}
         transparent
-        opacity={opacity * edgeOpacity}
+        opacity={sourceFont ? 1 : opacity * edgeOpacity}
         depthTest={depthTest}
         depthWrite={depthWrite}
+        premultipliedAlpha={false}
         toneMapped={false}
       />
     </mesh>
