@@ -2,6 +2,9 @@ export const coScrollSourceCausticFragmentShader = `
 varying vec2 vUv;
 
 uniform float uAnchorPresence;
+uniform vec2 uAnchorCenter;
+uniform vec2 uAnchorFieldScale;
+uniform float uAnchorFacing;
 uniform float uAspect;
 uniform float uChromaOffset;
 uniform vec3 uColorA;
@@ -10,6 +13,7 @@ uniform float uFieldRotation;
 uniform float uIntensity;
 uniform float uIsMobile;
 uniform vec4 uLyricCenters;
+uniform float uLensStrength;
 uniform float uMotionEnergy;
 uniform float uPulseStrength;
 uniform float uTime;
@@ -65,6 +69,57 @@ float lyricColumn(vec2 centered, float center, float width) {
   return horizontal * vertical;
 }
 
+float capsuleSdf(vec2 p, vec2 a, vec2 b, float radius) {
+  vec2 pa = p - a;
+  vec2 ba = b - a;
+  float h = clamp(dot(pa, ba) / max(dot(ba, ba), 0.0001), 0.0, 1.0);
+  return length(pa - ba * h) - radius;
+}
+
+float smoothUnion(float a, float b, float softness) {
+  float h = clamp(0.5 + 0.5 * (b - a) / softness, 0.0, 1.0);
+  return mix(b, a, h) - softness * h * (1.0 - h);
+}
+
+float sourceAnchorSdf(vec2 p, float facing) {
+  float projection = mix(0.24, 1.0, smoothstep(0.0, 0.92, abs(facing)));
+  p.x /= projection;
+  p.x *= facing < 0.0 ? -1.0 : 1.0;
+
+  float distanceField = capsuleSdf(
+    p,
+    vec2(0.27, 0.78),
+    vec2(0.25, -0.18),
+    0.13
+  );
+  distanceField = smoothUnion(
+    distanceField,
+    capsuleSdf(p, vec2(-0.02, 0.58), vec2(-0.07, -0.6), 0.12),
+    0.11
+  );
+  distanceField = smoothUnion(
+    distanceField,
+    capsuleSdf(p, vec2(-0.39, 0.34), vec2(-0.08, 0.04), 0.13),
+    0.12
+  );
+  distanceField = smoothUnion(
+    distanceField,
+    capsuleSdf(p, vec2(-0.42, -0.04), vec2(-0.08, -0.25), 0.13),
+    0.11
+  );
+  distanceField = smoothUnion(
+    distanceField,
+    capsuleSdf(p, vec2(-0.06, -0.58), vec2(0.34, -0.56), 0.12),
+    0.1
+  );
+  distanceField = smoothUnion(
+    distanceField,
+    capsuleSdf(p, vec2(0.34, -0.56), vec2(0.43, -0.28), 0.11),
+    0.09
+  );
+  return distanceField;
+}
+
 float ridgeField(vec2 p, float time, float organicPhase) {
   float primaryPhase =
     p.x * 4.1 +
@@ -114,127 +169,143 @@ void main() {
     lyricColumn(centered, uLyricCenters.w, 0.034)
   );
 
-  vec2 field = rotate2(uFieldRotation - 0.14) * aspectUv * 0.96;
-  field += vec2(uTime * 0.055, -uTime * 0.042);
+  vec2 anchorScale = max(uAnchorFieldScale, vec2(0.08));
+  vec2 anchorPoint = (aspectUv - uAnchorCenter) / anchorScale;
+  float anchorDistance = sourceAnchorSdf(anchorPoint, uAnchorFacing);
+  float distanceStep = 0.018;
+  vec2 lensNormal = normalize(
+    vec2(
+      sourceAnchorSdf(
+        anchorPoint + vec2(distanceStep, 0.0),
+        uAnchorFacing
+      ) - anchorDistance,
+      sourceAnchorSdf(
+        anchorPoint + vec2(0.0, distanceStep),
+        uAnchorFacing
+      ) - anchorDistance
+    ) + vec2(0.0001)
+  );
+  vec2 lensTangent = vec2(-lensNormal.y, lensNormal.x);
+  float lensEnvelope =
+    1.0 - smoothstep(0.04, 1.35, max(anchorDistance, 0.0));
+  float anchorRim = exp(-abs(anchorDistance) * 10.5);
+  float anchorInterior =
+    1.0 - smoothstep(-0.1, 0.12, anchorDistance);
 
-  float warpX = fbm3(field * 0.64 + vec2(uTime * 0.032, -uTime * 0.024));
-  float warpY = fbm3(field * 0.73 + vec2(-uTime * 0.027, uTime * 0.035));
+  vec2 field = rotate2(uFieldRotation - 0.12) * aspectUv * 0.72;
+  field += vec2(uTime * 0.046, -uTime * 0.034);
+  field += lensNormal * lensEnvelope * uLensStrength * 0.22;
+  field +=
+    lensTangent *
+    lensEnvelope *
+    uLensStrength *
+    0.08 *
+    sin(uTime * 0.38 + anchorDistance * 4.2);
+
+  float warpX = fbm3(
+    field * 0.68 + vec2(uTime * 0.026, -uTime * 0.019)
+  );
+  float warpY = fbm3(
+    field * 0.76 + vec2(-uTime * 0.021, uTime * 0.028)
+  );
   vec2 warped =
     field + (vec2(warpX, warpY) - 0.5) * uWarpAmount;
-
   float broadNoise = fbm3(
-    warped * 0.62 + vec2(uTime * 0.018, -uTime * 0.014)
+    warped * 0.58 + vec2(uTime * 0.014, -uTime * 0.011)
   );
 
-  float broadPhase =
-    warped.x * 1.25 +
-    warped.y * 1.15 +
-    sin(warped.y * 2.05 + broadNoise * 2.4 + uTime * 0.16) * 0.72 +
-    broadNoise * 2.0;
-
-  float broadBand = 0.5 + 0.5 * sin(broadPhase);
-  float counterFlow =
+  float macroPhase =
+    warped.x * 1.14 +
+    warped.y * 0.68 +
+    sin(warped.y * 1.52 + broadNoise * 2.6 + uTime * 0.12) * 0.88 +
+    broadNoise * 1.82 +
+    anchorDistance * lensEnvelope * 0.34;
+  float macroBand = 0.5 + 0.5 * sin(macroPhase);
+  float counterBand =
     0.5 +
     0.5 * cos(
-      broadPhase * 0.52 +
-      warped.x * 0.46 -
-      warped.y * 0.72 +
-      broadNoise * 0.65
+      macroPhase * 0.58 -
+      warped.y * 0.76 +
+      broadNoise * 0.72
     );
-  float broadFlow = smoothstep(
-    mix(0.68, 0.695, uIsMobile),
-    mix(0.93, 0.94, uIsMobile),
-    broadBand * 0.62 + counterFlow * 0.16 + broadNoise * 0.22
+  float macroStream = smoothstep(
+    mix(0.57, 0.55, uIsMobile),
+    mix(0.86, 0.84, uIsMobile),
+    macroBand * 0.68 + counterBand * 0.12 + broadNoise * 0.2
   );
 
-  float pulseCycle =
-    0.5 + 0.5 * sin(uTime * 0.68 + broadNoise * 4.2);
-
-  float pulseGate = smoothstep(0.28, 0.88, pulseCycle);
+  float pulseGate = smoothstep(
+    0.22,
+    0.9,
+    0.5 + 0.5 * sin(uTime * 0.62 + broadNoise * 4.0)
+  );
   float pulseStreak = pow(
-    1.0 - abs(sin(broadPhase * 2.2 - uTime * 0.24)),
-    6.0
+    1.0 - abs(sin(macroPhase * 2.08 - uTime * 0.2)),
+    6.5
   );
   pulseStreak *= pulseGate * uPulseStrength;
 
-  float mobileChromaScale = mix(1.0, 0.72, uIsMobile);
-  float chroma = uChromaOffset * mobileChromaScale;
-
-  vec2 microField = warped * mix(1.38, 1.24, uIsMobile);
-  microField += vec2(
-    sin(warped.y * 1.7 + broadNoise * 3.6),
-    cos(warped.x * 1.5 - broadNoise * 3.2)
-  ) * 0.24;
+  float chroma = uChromaOffset * mix(1.0, 0.68, uIsMobile);
+  vec2 microField = warped * mix(1.32, 1.18, uIsMobile);
   float ridgeR = ridgeField(
-    microField - vec2(chroma, 0.0),
+    microField - lensNormal * chroma,
     uTime,
     broadNoise
   );
   float ridgeG = ridgeField(microField, uTime, broadNoise);
   float ridgeB = ridgeField(
-    microField + vec2(chroma, 0.0),
+    microField + lensNormal * chroma,
     uTime,
     broadNoise
   );
   vec3 spectralRidge = vec3(ridgeR, ridgeG, ridgeB);
-
   float microCaustic =
     dot(spectralRidge, vec3(0.2126, 0.7152, 0.0722));
-  microCaustic *= mix(0.16, 0.24, uMotionEnergy);
+  microCaustic *= mix(0.1, 0.18, uMotionEnergy);
 
-  float wideEnvelope =
-    1.0 - smoothstep(
-      0.52,
-      mix(1.58, 1.28, uIsMobile),
-      length(vec2(centered.x * uAspect * 0.58, centered.y * 0.8))
-    );
+  float macroLight =
+    smoothstep(0.28, 0.92, macroStream) * 0.42;
+  float pulseLight =
+    smoothstep(0.025, 0.18, pulseStreak) * 0.3;
+  float microLight =
+    smoothstep(0.035, 0.2, microCaustic) * 0.11;
+  float rimLight =
+    anchorRim *
+    mix(0.05, 0.12, macroStream) *
+    (1.0 - anchorInterior * 0.45);
+  float lightSignal = macroLight + pulseLight + microLight + rimLight;
+  float highlight = smoothstep(0.08, 0.74, lightSignal);
 
-  float coverage = max(0.18, wideEnvelope);
-  float readingSuppression = mix(1.0, 0.9, readingChannel * readingChannel);
-
-  float lightSignal =
-    broadFlow * 0.44 +
-    pulseStreak * 0.56 +
-    microCaustic * 0.34;
-
-  float broadAlpha = smoothstep(0.58, 0.88, broadFlow) * 0.34;
-  float pulseAlpha = smoothstep(0.04, 0.18, pulseStreak) * 0.28;
-  float microAlpha = smoothstep(0.03, 0.16, microCaustic) * 0.2;
-  float alphaSignal = broadAlpha + pulseAlpha + microAlpha;
-  alphaSignal = min(
+  float intensity = clamp(uIntensity * uAnchorPresence, 0.0, 1.0);
+  float glyphShadow = mix(
+    0.14,
     1.0,
-    alphaSignal * mix(1.75, 2.2, uIsMobile)
+    smoothstep(-0.08, 0.2, anchorDistance)
   );
+  float readingSuppression =
+    mix(1.0, 0.92, readingChannel * readingChannel);
+  vec3 deepBase = vec3(0.003, 0.006, 0.014);
+  vec3 blueAir =
+    uColorA * (0.018 + broadNoise * 0.024 + macroStream * 0.028);
+  vec3 streamColor = mix(uColorA * 0.7, uColorB, highlight);
+  vec3 color =
+    deepBase +
+    (blueAir + streamColor * lightSignal * intensity) * glyphShadow;
+  color += uColorB * rimLight * intensity * 0.42;
 
-  float alpha =
-    alphaSignal *
-    coverage *
-    readingSuppression *
-    uIntensity *
-    uAnchorPresence;
-
-  float highlightSignal = max(
-    smoothstep(0.48, 0.94, broadFlow) * 0.88,
-    max(
-      smoothstep(0.03, 0.18, pulseStreak) * 0.82,
-      smoothstep(0.025, 0.16, microCaustic) * 0.58
-    )
-  );
-
-  vec3 color = mix(
-    uColorA * 0.5,
-    uColorB,
-    smoothstep(0.06, 0.78, highlightSignal)
-  );
+  vec3 amberEdge =
+    vec3(0.718, 0.486, 0.286) *
+    anchorRim *
+    highlight *
+    0.075;
+  color += amberEdge * intensity;
 
   float spectralMono =
     dot(spectralRidge, vec3(0.2126, 0.7152, 0.0722));
   vec3 spectralDelta = spectralRidge - vec3(spectralMono);
-  color = max(
-    vec3(0.0),
-    color + spectralDelta * 0.14 * uPulseStrength
-  );
+  color += spectralDelta * microCaustic * highlight * 0.08;
+  color *= readingSuppression;
 
-  gl_FragColor = vec4(color, alpha);
+  gl_FragColor = vec4(color, 1.0);
 }
 `;

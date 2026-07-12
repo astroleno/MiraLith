@@ -1117,23 +1117,32 @@ test("source caustic uses organic layers without global postprocessing", async (
     "packages/coscroll-scene/src/CoScrollCausticLightField.tsx"
   );
 
-  expect(shader).toContain("broadFlow");
+  expect(shader).toContain("macroStream");
   expect(shader).toContain("pulseStreak");
   expect(shader).toContain("microCaustic");
   expect(shader).toContain("spectralRidge");
   expect(shader).toContain("uFieldRotation");
   expect(shader).toContain("uMotionEnergy");
-  expect(shader).toContain("float broadAlpha = smoothstep(0.58, 0.88, broadFlow) * 0.34;");
-  expect(shader).toContain("float pulseAlpha = smoothstep(0.04, 0.18, pulseStreak) * 0.28;");
-  expect(shader).toContain("float microAlpha = smoothstep(0.03, 0.16, microCaustic) * 0.2;");
-  expect(shader).toContain("float alphaSignal = broadAlpha + pulseAlpha + microAlpha;");
-  expect(shader).toContain("broadFlow * 0.44");
-  expect(shader).not.toContain("broadFlow * 0.72");
-  expect(shader).toContain("mix(1.0, 0.9, readingChannel * readingChannel)");
+  expect(shader).toContain("uniform vec2 uAnchorCenter");
+  expect(shader).toContain("uniform vec2 uAnchorFieldScale");
+  expect(shader).toContain("uniform float uAnchorFacing");
+  expect(shader).toContain("uniform float uLensStrength");
+  expect(shader).toContain("float capsuleSdf(");
+  expect(shader).toContain("float sourceAnchorSdf(");
+  expect(shader).toContain("float macroStream");
+  expect(shader).toContain("float anchorRim");
+  expect(shader).toContain("vec3 amberEdge");
+  expect(shader).toContain("gl_FragColor = vec4(color, 1.0);");
+  expect(shader).toContain("float macroLight =");
+  expect(shader).toContain("float pulseLight =");
+  expect(shader).toContain("float microLight =");
+  expect(shader).toContain("float lightSignal = macroLight + pulseLight + microLight + rimLight;");
+  expect(shader).toContain("mix(1.0, 0.92, readingChannel * readingChannel)");
   expect(shader).not.toContain("mix(1.0, 0.46, readingChannel)");
   expect(field).not.toContain("EffectComposer");
   expect(field).not.toContain("ChromaticAberration");
   expect(field).not.toContain("WebGLRenderTarget");
+  expect(shader).not.toContain("WebGLRenderTarget");
 });
 
 test("coscroll source-match scroll input accelerates rotation in its current direction", async () => {
@@ -1411,7 +1420,7 @@ test("coscroll source-match keeps organic flow separate from the legacy profile"
   expect(caustics).toContain("uLyricCenters");
   expect(caustics).toContain("verticalReadingChannel(centered, uLyricCenters.x");
   expect(caustics).toContain("if (!active || paused || reducedMotion)");
-  expect(sourceShader).toContain("broadFlow");
+  expect(sourceShader).toContain("macroStream");
   expect(sourceShader).toContain("pulseStreak");
   expect(sourceShader).toContain("microCaustic");
   expect(sceneContent).toContain("lyricCenters={sourceCausticLyricCenters}");
