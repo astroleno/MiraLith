@@ -1176,6 +1176,8 @@ test("source caustic separates the broad glyph hull from stroke-local detail", a
   expect(shader).toContain("mix(hullNormal, strokeNormal, strokeInfluence");
   expect(shader).toContain("float hullCoronaEnvelope");
   expect(shader).toContain("float coronaSideBias");
+  expect(shader).toContain("float coronaOpenBias");
+  expect(shader).toContain("float lensFlowEnvelope");
   expect(shader).toContain("float coronaBreakup");
   expect(shader).toContain("float coronaEnvelope = hullCoronaEnvelope * coronaBreakup");
   expect(shader).toContain("float strokeFilamentEnvelope");
@@ -1184,6 +1186,7 @@ test("source caustic separates the broad glyph hull from stroke-local detail", a
   expect(shader).toContain("sourceAnchorLocalPoint(p, facing, 0.24)");
   expect(shader).toContain("sourceAnchorLocalPoint(p, facing, 0.48)");
   expect(shader).not.toContain("float coronaEnvelope = hullCoronaEnvelope;");
+  expect(shader).not.toContain("field += flowNormal * lensEnvelope");
   expect(shader).not.toContain("min(hullDistance, strokeDistance)");
 });
 

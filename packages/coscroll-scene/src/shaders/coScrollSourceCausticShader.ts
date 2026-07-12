@@ -276,17 +276,38 @@ void main() {
     1.0,
     smoothstep(0.16, 0.82, abs(hullNormal.x))
   );
+  float coronaOpenDirection = clamp(
+    uAnchorFacing * 1.4 +
+      sin(uTime * 0.19 + uFieldRotation) * 0.35,
+    -1.0,
+    1.0
+  );
+  float coronaOpenBias = mix(
+    0.08,
+    1.0,
+    smoothstep(
+      -0.34,
+      0.48,
+      hullNormal.x * coronaOpenDirection +
+        sin(anchorPoint.y * 1.74 - uTime * 0.21) * 0.2
+    )
+  );
+  float lensFlowEnvelope =
+    lensEnvelope *
+    mix(0.14, 0.68, coronaSideBias) *
+    mix(0.38, 1.0, coronaOpenBias);
   float hullCoronaEnvelope =
     anchorRim *
     (1.0 - smoothstep(0.64, 1.36, max(hullDistance, 0.0))) *
-    coronaSideBias;
+    coronaSideBias *
+    coronaOpenBias;
 
   vec2 field = rotate2(uFieldRotation - 0.12) * aspectUv * 0.72;
   field += vec2(uTime * 0.056, -uTime * 0.044);
-  field += flowNormal * lensEnvelope * uLensStrength * 0.2;
+  field += flowNormal * lensFlowEnvelope * uLensStrength * 0.2;
   field +=
     flowTangent *
-    lensEnvelope *
+    lensFlowEnvelope *
     uLensStrength *
     mix(0.09, 0.14, uMotionEnergy) *
     sin(uTime * 0.44 + hullDistance * 4.6);
@@ -311,7 +332,7 @@ void main() {
   vec2 coronaPoint = rotate2(uFieldRotation * 0.22) * anchorPoint;
   coronaPoint +=
     flowTangent *
-    lensEnvelope *
+    lensFlowEnvelope *
     (0.1 + uMotionEnergy * 0.09) *
     sin(uTime * 0.5 + hullDistance * 3.8);
   float coronaFlow = iterativeCorona(
@@ -375,12 +396,12 @@ void main() {
     (aspectUv - uAnchorCenter);
   streamPoint +=
     flowNormal *
-    lensEnvelope *
+    lensFlowEnvelope *
     uLensStrength *
     mix(0.48, 0.38, uIsMobile);
   streamPoint +=
     flowTangent *
-    lensEnvelope *
+    lensFlowEnvelope *
     uLensStrength *
     mix(0.11, 0.085, uIsMobile) *
     sin(uTime * 0.51 + hullDistance * 3.9 + coronaFlow * 1.2);
@@ -393,7 +414,7 @@ void main() {
     sin(
       streamPoint.y * 1.34 +
       uTime * 0.31 +
-      coronaFlow * lensEnvelope * 0.38
+      coronaFlow * lensFlowEnvelope * 0.38
     ) * 0.3 +
     curveNoise +
     uMotionEnergy * 0.34;
