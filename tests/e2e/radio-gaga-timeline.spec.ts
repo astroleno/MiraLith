@@ -69,6 +69,22 @@ test("radioGAGA fades opaque GLB renders through a model composite layer", ({}, 
   expect(sceneSource).toContain("RadioGagaModelComposite");
 });
 
+test("radioGAGA skips the offscreen model pass while its composite is invisible", ({}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The rendering-policy contract only needs one project.");
+
+  const compositeSource = readFileSync(
+    resolve(process.cwd(), "packages/radio-gaga-scene/src/RadioGagaModelComposite.tsx"),
+    "utf8"
+  );
+  const visibilityGate = compositeSource.indexOf("if (compositeOpacity <= MODEL_COMPOSITE_VISIBILITY_THRESHOLD)");
+  const offscreenPass = compositeSource.indexOf("gl.setRenderTarget(renderTarget)");
+
+  expect(visibilityGate, "the invisible composite should exit before binding the FBO").toBeGreaterThan(-1);
+  expect(visibilityGate, "the visibility gate should precede the offscreen pass").toBeLessThan(offscreenPass);
+  expect(compositeSource).toContain("compositeMaterial.visible = compositeOpacity > MODEL_COMPOSITE_VISIBILITY_THRESHOLD");
+  expect(compositeSource).not.toContain("gl.clear(");
+});
+
 test("radioGAGA keeps one broadcast tuner present from reading through playback", ({}, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "The timeline contract only needs one project.");
 
@@ -81,17 +97,18 @@ test("radioGAGA keeps one broadcast tuner present from reading through playback"
   expect(playback.instrumentOpacity).toBeGreaterThan(0.8);
 });
 
-test("radioGAGA never overlays two broadcast-stage labels", ({}, testInfo) => {
+test("radioGAGA keeps exactly one broadcast-stage label visible", ({}, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "The timeline contract only needs one project.");
 
   for (let progress = 0; progress <= 1; progress += 0.0025) {
     const { stageOpacities } = mapRadioGagaChoreography(progress).copy;
     const visibleStages = stageOpacities.filter((opacity) => opacity > 0.01);
 
+    expect(visibleStages, `visible stages at ${progress.toFixed(4)}`).toHaveLength(1);
     expect(
-      visibleStages.length,
-      `visible stages at ${progress.toFixed(4)}`
-    ).toBeLessThanOrEqual(1);
+      Math.max(...stageOpacities),
+      `strongest stage at ${progress.toFixed(4)}`
+    ).toBeGreaterThanOrEqual(0.99);
   }
 });
 

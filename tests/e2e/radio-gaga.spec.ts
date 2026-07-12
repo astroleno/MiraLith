@@ -237,6 +237,19 @@ test("radioGAGA desktop tuner uses one horizontal signal rail", async ({ page },
   expect(scanBox.width, "the signal rail should be horizontal").toBeGreaterThan(scanBox.height * 8);
 });
 
+test("radioGAGA hides the scan head after tuning resolves", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "This composition contract targets the desktop tuner.");
+
+  await page.setViewportSize({ width: 2048, height: 1153 });
+  await page.goto("/radio-gaga");
+  await scrollRadioGagaTo(page, 0.78);
+
+  const tuner = page.locator(".radio-gaga-broadcast-tuner");
+  const scan = tuner.locator(".radio-gaga-broadcast-tuner__scan");
+  await expect.poll(() => opacityOf(tuner)).toBeGreaterThan(0.8);
+  await expect.poll(() => opacityOf(scan)).toBeLessThan(0.01);
+});
+
 test("radioGAGA desktop reading stage keeps one caption inside the left safe lane", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "This composition contract targets the desktop reading lane.");
 

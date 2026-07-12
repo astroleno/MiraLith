@@ -2822,7 +2822,7 @@ body::before {
   width: var(--radio-gaga-tuner-position-x);
   height: 1px;
   background: rgba(217, 183, 117, 0.7);
-  opacity: calc(0.12 + var(--radio-gaga-tuner-scan-opacity) * 0.82);
+  opacity: var(--radio-gaga-tuner-scan-opacity);
   transform-origin: left center;
   box-shadow: 0 5px 16px rgba(217, 183, 117, 0.08);
 }

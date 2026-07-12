@@ -24,6 +24,7 @@ interface RadioGagaModelCompositeProps {
   onReady?: () => void;
 }
 
+const MODEL_COMPOSITE_VISIBILITY_THRESHOLD = 0.001;
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 const range = (value: number, start: number, end: number) =>
   clamp01((value - start) / Math.max(end - start, 0.0001));
@@ -100,6 +101,14 @@ export function RadioGagaModelComposite({
 
   useFrame(({ camera, gl }) => {
     const nextFrame = frameRef?.current ?? frame;
+    const compositeOpacity = modelCompositeOpacity(nextFrame);
+
+    compositeMaterial.uniforms.uOpacity.value = compositeOpacity;
+    compositeMaterial.visible = compositeOpacity > MODEL_COMPOSITE_VISIBILITY_THRESHOLD;
+    if (compositeOpacity <= MODEL_COMPOSITE_VISIBILITY_THRESHOLD) {
+      return;
+    }
+
     const esp32LightPresence = Math.max(
       nextFrame.esp32Opacity,
       nextFrame.esp32SolidMotionProgress,
@@ -108,7 +117,6 @@ export function RadioGagaModelComposite({
     const previousTarget = gl.getRenderTarget();
     const previousClearAlpha = gl.getClearAlpha();
 
-    compositeMaterial.uniforms.uOpacity.value = modelCompositeOpacity(nextFrame);
     if (keyLight.current) {
       keyLight.current.intensity = 1.08 + nextFrame.backgroundWarmth * 0.42;
     }
@@ -127,7 +135,6 @@ export function RadioGagaModelComposite({
     gl.getClearColor(restoreClearColor);
     gl.setRenderTarget(renderTarget);
     gl.setClearColor(0x000000, 0);
-    gl.clear(true, true, true);
     gl.render(modelScene, camera);
     gl.setRenderTarget(previousTarget);
     gl.setClearColor(restoreClearColor, previousClearAlpha);

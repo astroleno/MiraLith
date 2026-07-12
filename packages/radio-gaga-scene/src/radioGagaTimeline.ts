@@ -204,13 +204,17 @@ function mapRadioGagaCopyProgress(
     instrument.exitEnd
   );
   const tuningSignal = getRadioGagaTuningSignal(progress);
-  const stageOpacities = [
-    1 - smooth(range(progress, 0.13, 0.15)),
-    phase(progress, 0.15, 0.17, 0.42, 0.44),
-    phase(progress, 0.44, 0.46, 0.68, 0.7),
-    phase(progress, 0.7, 0.72, 0.885, 0.8975),
-    phase(progress, 0.8975, 0.91, 0.982, 0.994)
-  ] as [number, number, number, number, number];
+  const activeStageIndex = progress < 0.15
+    ? 0
+    : progress < 0.44
+      ? 1
+      : progress < 0.7
+        ? 2
+        : progress < 0.8975
+          ? 3
+          : 4;
+  const stageOpacities: [number, number, number, number, number] = [0, 0, 0, 0, 0];
+  stageOpacities[activeStageIndex] = 1;
   const primaryPresence = Math.max(
     readingOpacity,
     memoryOpacity,
