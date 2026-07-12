@@ -1139,7 +1139,8 @@ test("source caustic uses organic layers without global postprocessing", async (
   expect(shader).toContain("uniform float uAnchorFacing");
   expect(shader).toContain("uniform float uLensStrength");
   expect(shader).toContain("float capsuleSdf(");
-  expect(shader).toContain("float sourceAnchorSdf(");
+  expect(shader).toContain("float sourceAnchorStrokeSdf(");
+  expect(shader).toContain("float sourceAnchorHullSdf(");
   expect(shader).toContain("float iterativeCorona(");
   expect(shader).toContain("float macroStream");
   expect(shader).toContain("float anchorRim");
@@ -1160,6 +1161,43 @@ test("source caustic uses organic layers without global postprocessing", async (
   expect(field).not.toContain("ChromaticAberration");
   expect(field).not.toContain("WebGLRenderTarget");
   expect(shader).not.toContain("WebGLRenderTarget");
+});
+
+test("source caustic separates the broad glyph hull from stroke-local detail", async () => {
+  const shader = await readProjectFile(
+    "packages/coscroll-scene/src/shaders/coScrollSourceCausticShader.ts"
+  );
+
+  expect(shader).toContain("float hullDistance");
+  expect(shader).toContain("float strokeDistance");
+  expect(shader).toContain("vec2 hullNormal");
+  expect(shader).toContain("vec2 strokeNormal");
+  expect(shader).toContain("float strokeInfluence");
+  expect(shader).toContain("mix(hullNormal, strokeNormal, strokeInfluence");
+  expect(shader).toContain("float hullCoronaEnvelope");
+  expect(shader).toContain("float coronaSideBias");
+  expect(shader).toContain("float coronaBreakup");
+  expect(shader).toContain("float coronaEnvelope = hullCoronaEnvelope * coronaBreakup");
+  expect(shader).toContain("float strokeFilamentEnvelope");
+  expect(shader).toContain("coronaEnvelope * (0.24 + coronaFlow * 0.46)");
+  expect(shader).toContain("strokeFilamentEnvelope * (0.18 + strokeProximity * 0.42)");
+  expect(shader).toContain("sourceAnchorLocalPoint(p, facing, 0.24)");
+  expect(shader).toContain("sourceAnchorLocalPoint(p, facing, 0.48)");
+  expect(shader).not.toContain("float coronaEnvelope = hullCoronaEnvelope;");
+  expect(shader).not.toContain("min(hullDistance, strokeDistance)");
+});
+
+test("source caustic derives both SDF normals without repeating capsule fields", async () => {
+  const shader = await readProjectFile(
+    "packages/coscroll-scene/src/shaders/coScrollSourceCausticShader.ts"
+  );
+
+  expect(shader).toContain("dFdx(hullDistance)");
+  expect(shader).toContain("dFdy(hullDistance)");
+  expect(shader).toContain("dFdx(strokeDistance)");
+  expect(shader).toContain("dFdy(strokeDistance)");
+  expect(shader).not.toContain("float distanceStep");
+  expect(shader).not.toContain("anchorPoint + vec2(distanceStep");
 });
 
 test("coscroll source-match scroll input accelerates rotation in its current direction", async () => {

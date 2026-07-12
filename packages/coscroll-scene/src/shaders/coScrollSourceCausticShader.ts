@@ -81,10 +81,23 @@ float smoothUnion(float a, float b, float softness) {
   return mix(b, a, h) - softness * h * (1.0 - h);
 }
 
-float sourceAnchorSdf(vec2 p, float facing) {
-  float projection = mix(0.24, 1.0, smoothstep(0.0, 0.92, abs(facing)));
+vec2 sourceAnchorLocalPoint(
+  vec2 p,
+  float facing,
+  float projectionFloor
+) {
+  float projection = mix(
+    projectionFloor,
+    1.0,
+    smoothstep(0.0, 0.92, abs(facing))
+  );
   p.x /= projection;
   p.x *= facing < 0.0 ? -1.0 : 1.0;
+  return p;
+}
+
+float sourceAnchorStrokeSdf(vec2 p, float facing) {
+  p = sourceAnchorLocalPoint(p, facing, 0.24);
 
   float distanceField = capsuleSdf(
     p,
@@ -116,6 +129,28 @@ float sourceAnchorSdf(vec2 p, float facing) {
     distanceField,
     capsuleSdf(p, vec2(0.34, -0.56), vec2(0.43, -0.28), 0.11),
     0.09
+  );
+  return distanceField;
+}
+
+float sourceAnchorHullSdf(vec2 p, float facing) {
+  p = sourceAnchorLocalPoint(p, facing, 0.48);
+
+  float distanceField = capsuleSdf(
+    p,
+    vec2(0.15, 0.72),
+    vec2(0.11, -0.43),
+    0.32
+  );
+  distanceField = smoothUnion(
+    distanceField,
+    capsuleSdf(p, vec2(-0.34, 0.34), vec2(0.08, -0.17), 0.3),
+    0.22
+  );
+  distanceField = smoothUnion(
+    distanceField,
+    capsuleSdf(p, vec2(-0.12, -0.49), vec2(0.35, -0.43), 0.29),
+    0.2
   );
   return distanceField;
 }
@@ -209,37 +244,52 @@ void main() {
 
   vec2 anchorScale = max(uAnchorFieldScale, vec2(0.08));
   vec2 anchorPoint = (aspectUv - uAnchorCenter) / anchorScale;
-  float anchorDistance = sourceAnchorSdf(anchorPoint, uAnchorFacing);
-  float distanceStep = 0.018;
-  vec2 lensNormal = normalize(
-    vec2(
-      sourceAnchorSdf(
-        anchorPoint + vec2(distanceStep, 0.0),
-        uAnchorFacing
-      ) - anchorDistance,
-      sourceAnchorSdf(
-        anchorPoint + vec2(0.0, distanceStep),
-        uAnchorFacing
-      ) - anchorDistance
-    ) + vec2(0.0001)
+  float hullDistance = sourceAnchorHullSdf(anchorPoint, uAnchorFacing);
+  float strokeDistance = sourceAnchorStrokeSdf(anchorPoint, uAnchorFacing);
+  vec2 hullNormal = normalize(
+    vec2(dFdx(hullDistance), dFdy(hullDistance)) + vec2(0.0001)
   );
-  vec2 lensTangent = vec2(-lensNormal.y, lensNormal.x);
+  vec2 strokeNormal = normalize(
+    vec2(dFdx(strokeDistance), dFdy(strokeDistance)) + vec2(0.0001)
+  );
+  float strokeProximity =
+    1.0 - smoothstep(0.08, 0.68, abs(strokeDistance));
+  float strokeFieldReach =
+    1.0 - smoothstep(0.36, 1.12, max(hullDistance, 0.0));
+  float strokeInfluence =
+    strokeProximity *
+    strokeFieldReach *
+    mix(0.32, 0.24, uIsMobile);
+  vec2 flowNormal = normalize(
+    mix(hullNormal, strokeNormal, strokeInfluence) + vec2(0.0001)
+  );
+  vec2 flowTangent = vec2(-flowNormal.y, flowNormal.x);
+  vec2 strokeTangent = vec2(-strokeNormal.y, strokeNormal.x);
   float lensEnvelope =
-    1.0 - smoothstep(0.02, 1.46, max(anchorDistance, 0.0));
-  float anchorExterior = smoothstep(-0.11, 0.16, anchorDistance);
+    1.0 - smoothstep(0.02, 1.52, max(hullDistance, 0.0));
+  float anchorExterior = smoothstep(-0.11, 0.14, hullDistance);
   float anchorRim =
-    exp(-max(anchorDistance, 0.0) * 3.15) *
+    exp(-max(hullDistance, 0.0) * 2.85) *
     anchorExterior;
+  float coronaSideBias = mix(
+    0.08,
+    1.0,
+    smoothstep(0.16, 0.82, abs(hullNormal.x))
+  );
+  float hullCoronaEnvelope =
+    anchorRim *
+    (1.0 - smoothstep(0.64, 1.36, max(hullDistance, 0.0))) *
+    coronaSideBias;
 
   vec2 field = rotate2(uFieldRotation - 0.12) * aspectUv * 0.72;
   field += vec2(uTime * 0.056, -uTime * 0.044);
-  field += lensNormal * lensEnvelope * uLensStrength * 0.2;
+  field += flowNormal * lensEnvelope * uLensStrength * 0.2;
   field +=
-    lensTangent *
+    flowTangent *
     lensEnvelope *
     uLensStrength *
     mix(0.09, 0.14, uMotionEnergy) *
-    sin(uTime * 0.44 + anchorDistance * 4.6);
+    sin(uTime * 0.44 + hullDistance * 4.6);
 
   float warpX = fbm3(
     field * 0.68 + vec2(uTime * 0.026, -uTime * 0.019)
@@ -260,10 +310,10 @@ void main() {
 
   vec2 coronaPoint = rotate2(uFieldRotation * 0.22) * anchorPoint;
   coronaPoint +=
-    lensTangent *
+    flowTangent *
     lensEnvelope *
     (0.1 + uMotionEnergy * 0.09) *
-    sin(uTime * 0.5 + anchorDistance * 3.8);
+    sin(uTime * 0.5 + hullDistance * 3.8);
   float coronaFlow = iterativeCorona(
     coronaPoint * mix(0.9, 0.82, uIsMobile),
     uTime,
@@ -271,20 +321,41 @@ void main() {
   );
   float coronaRidges = ridgeField(
     coronaPoint * mix(0.72, 0.64, uIsMobile) +
-      lensTangent * coronaFlow * 0.12,
+      flowTangent * coronaFlow * 0.08 +
+      strokeTangent * strokeInfluence * 0.16,
     uTime * 0.72,
     coronaFlow
   );
-  float coronaEnvelope =
-    anchorRim *
-    (1.0 - smoothstep(0.64, 1.38, max(anchorDistance, 0.0)));
+  float coronaBreakup = mix(
+    0.18,
+    1.0,
+    smoothstep(
+      0.44,
+      0.74,
+      coronaFlow * 0.5 +
+        broadNoise * 0.27 +
+        (0.5 + 0.5 * sin(
+          coronaPoint.y * 2.08 -
+          coronaPoint.x * 1.16 -
+          uTime * 0.31
+        )) * 0.23
+    )
+  );
+  float coronaEnvelope = hullCoronaEnvelope * coronaBreakup;
+  float strokeFilamentEnvelope =
+    exp(-max(strokeDistance, 0.0) * 4.1) *
+    smoothstep(-0.06, 0.16, strokeDistance) *
+    strokeFieldReach *
+    coronaBreakup;
   float brokenCorona =
     coronaEnvelope *
-    smoothstep(0.43, 0.78, coronaFlow * 0.74 + broadNoise * 0.26);
+    smoothstep(0.5, 0.8, coronaFlow * 0.7 + broadNoise * 0.3);
   float coronaFilaments =
-    coronaEnvelope *
     coronaRidges *
-    (0.32 + coronaFlow * 0.68);
+    (
+      coronaEnvelope * (0.24 + coronaFlow * 0.46) +
+      strokeFilamentEnvelope * (0.18 + strokeProximity * 0.42)
+    );
   float coronaPlumes =
     coronaEnvelope *
     pow(
@@ -303,16 +374,16 @@ void main() {
     rotate2(uFieldRotation + 0.52) *
     (aspectUv - uAnchorCenter);
   streamPoint +=
-    lensNormal *
+    flowNormal *
     lensEnvelope *
     uLensStrength *
     mix(0.48, 0.38, uIsMobile);
   streamPoint +=
-    lensTangent *
+    flowTangent *
     lensEnvelope *
     uLensStrength *
     mix(0.11, 0.085, uIsMobile) *
-    sin(uTime * 0.51 + anchorDistance * 3.9 + coronaFlow * 1.2);
+    sin(uTime * 0.51 + hullDistance * 3.9 + coronaFlow * 1.2);
 
   float curveNoise =
     (broadNoise - 0.5) * 0.26 +
@@ -381,13 +452,13 @@ void main() {
   float chroma = uChromaOffset * mix(1.0, 0.68, uIsMobile);
   vec2 microField = warped * mix(1.32, 1.18, uIsMobile);
   float ridgeR = ridgeField(
-    microField - lensNormal * chroma,
+    microField - flowNormal * chroma,
     uTime,
     broadNoise
   );
   float ridgeG = ridgeField(microField, uTime, broadNoise);
   float ridgeB = ridgeField(
-    microField + lensNormal * chroma,
+    microField + flowNormal * chroma,
     uTime,
     broadNoise
   );
@@ -406,9 +477,9 @@ void main() {
     smoothstep(0.045, 0.2, microCaustic) *
     0.09;
   float coronaLight =
-    brokenCorona * mix(0.26, 0.21, uIsMobile) +
-    coronaFilaments * mix(0.2, 0.17, uIsMobile) +
-    coronaPlumes * mix(0.2, 0.16, uIsMobile);
+    brokenCorona * mix(0.24, 0.19, uIsMobile) +
+    coronaFilaments * mix(0.48, 0.38, uIsMobile) +
+    coronaPlumes * mix(0.32, 0.25, uIsMobile);
   float lightSignal = macroLight + pulseLight + microLight + coronaLight;
   float highlight = smoothstep(0.035, 0.5, lightSignal);
 
@@ -433,7 +504,7 @@ void main() {
     macroCore *
     intensity *
     mix(0.04, 0.15, uIsMobile);
-  color += uColorB * coronaLight * intensity * 0.5;
+  color += uColorB * coronaLight * intensity * 0.7;
 
   vec3 amberEdge =
     vec3(0.718, 0.486, 0.286) *
