@@ -1056,6 +1056,10 @@ test("coscroll source-match shares anchor rotation phase with the caustic field"
   expect(types).toContain("export interface CoScrollRotationSignal");
   expect(sceneContent).toContain("const sourceRotationSignalRef = useRef<CoScrollRotationSignal>");
   expect(sceneContent.match(/rotationSignalRef=\{sourceRotationSignalRef\}/g)).toHaveLength(2);
+  expect(sceneContent).toContain("const sourceAnchorPosition");
+  expect(sceneContent).toContain("const sourceAnchorScale");
+  expect(sceneContent).toContain("anchorPosition={sourceAnchorPosition}");
+  expect(sceneContent).toContain("anchorScale={sourceAnchorScale}");
   expect(jade).toContain("rotationSignalRef.current.angle = rotationRef.current");
   expect(jade).toContain("rotationSignalRef.current.speed = currentSpeedRef.current");
   expect(caustics).toContain('import { stepSourceCausticMotion } from "./sourceCausticMotion"');
@@ -1065,6 +1069,12 @@ test("coscroll source-match shares anchor rotation phase with the caustic field"
   expect(caustics).toContain("const motion = stepSourceCausticMotion({");
   expect(caustics).toContain("angle: rotationSignalRef?.current.angle ?? 0");
   expect(caustics).toContain("speed: rotationSignalRef?.current.speed ?? 0");
+  expect(caustics).toContain("uAnchorCenter");
+  expect(caustics).toContain("uAnchorFieldScale");
+  expect(caustics).toContain("uAnchorFacing");
+  expect(caustics).toContain("uLensStrength");
+  expect(caustics).toContain("THREE.NormalBlending");
+  expect(caustics).toContain("transparent={!sourceMatch}");
   expect(caustics).toContain('key={sourceMatch ? "source-organic-caustic" : "legacy-caustic"}');
   expect(caustics).toContain("? coScrollSourceCausticFragmentShader");
   expect(caustics).toContain(": legacyFragmentShader");

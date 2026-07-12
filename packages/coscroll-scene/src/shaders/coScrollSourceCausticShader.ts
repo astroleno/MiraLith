@@ -229,8 +229,8 @@ void main() {
       broadNoise * 0.72
     );
   float macroStream = smoothstep(
-    mix(0.57, 0.55, uIsMobile),
-    mix(0.86, 0.84, uIsMobile),
+    mix(0.68, 0.727, uIsMobile),
+    mix(0.88, 0.91, uIsMobile),
     macroBand * 0.68 + counterBand * 0.12 + broadNoise * 0.2
   );
 
@@ -263,12 +263,11 @@ void main() {
     dot(spectralRidge, vec3(0.2126, 0.7152, 0.0722));
   microCaustic *= mix(0.1, 0.18, uMotionEnergy);
 
-  float macroLight =
-    smoothstep(0.28, 0.92, macroStream) * 0.42;
+  float macroLight = pow(macroStream, 2.4) * 0.7;
   float pulseLight =
-    smoothstep(0.025, 0.18, pulseStreak) * 0.3;
+    smoothstep(0.035, 0.15, pulseStreak) * 0.42;
   float microLight =
-    smoothstep(0.035, 0.2, microCaustic) * 0.11;
+    smoothstep(0.045, 0.2, microCaustic) * 0.1;
   float rimLight =
     anchorRim *
     mix(0.05, 0.12, macroStream) *
@@ -284,9 +283,9 @@ void main() {
   );
   float readingSuppression =
     mix(1.0, 0.92, readingChannel * readingChannel);
-  vec3 deepBase = vec3(0.003, 0.006, 0.014);
+  vec3 deepBase = vec3(0.001, 0.002, 0.005);
   vec3 blueAir =
-    uColorA * (0.018 + broadNoise * 0.024 + macroStream * 0.028);
+    uColorA * (0.0015 + broadNoise * 0.0025 + macroStream * 0.01);
   vec3 streamColor = mix(uColorA * 0.7, uColorB, highlight);
   vec3 color =
     deepBase +

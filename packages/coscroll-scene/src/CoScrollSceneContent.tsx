@@ -61,6 +61,14 @@ export function CoScrollSceneContent({
     angle: sourceMatchMode ? -0.62 : 0,
     speed: 0
   });
+  const sourceAnchorPosition: [number, number, number] = [
+    0,
+    mobileSourceMatch ? 0.95 : -0.41 + SOURCE_MATCH_DESKTOP_Y_LIFT,
+    0
+  ];
+  const sourceAnchorScale = mobileSourceMatch
+    ? 2.2 * 1.2 * 1.1
+    : SOURCE_MATCH_MODEL_SCALE;
 
   useEffect(() => {
     if (!sourceMatchMode) {
@@ -269,6 +277,8 @@ export function CoScrollSceneContent({
         scrollVelocity={state.scrollVelocity}
         lyricCenters={sourceCausticLyricCenters}
         rotationSignalRef={sourceRotationSignalRef}
+        anchorPosition={sourceAnchorPosition}
+        anchorScale={sourceAnchorScale}
         positionZ={sourceMatchMode ? -5.05 : -5.22}
       />
 
@@ -279,12 +289,10 @@ export function CoScrollSceneContent({
           <CoScrollJadeAnchor
             modelSrc={currentAnchorAsset.modelSrc}
             materialPreset={currentAnchorAsset.materialPreset}
-            position={sourceMatchMode ? [0, mobileSourceMatch ? 0.95 : -0.41 + SOURCE_MATCH_DESKTOP_Y_LIFT, 0] : [0, 0, 0]}
+            position={sourceMatchMode ? sourceAnchorPosition : [0, 0, 0]}
             scale={
               sourceMatchMode
-                ? mobileSourceMatch
-                  ? 2.2 * 1.2 * 1.1
-                  : SOURCE_MATCH_MODEL_SCALE
+                ? sourceAnchorScale
                 : quality.tier === "low"
                   ? 0.9
                   : 1
