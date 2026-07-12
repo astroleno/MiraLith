@@ -3,44 +3,8 @@
 import { radioGagaFinalOutputs } from "@miralith/radio-gaga-scene";
 import {
   radioGagaBroadcastStages,
-  radioGagaCopy,
-  radioGagaSiteChapters
+  radioGagaCopy
 } from "../content/radioGaga";
-
-function RadioGagaTitleRail() {
-  const activeIndex = Math.max(0, radioGagaSiteChapters.findIndex((chapter) => chapter.active));
-  const activeChapter = radioGagaSiteChapters[activeIndex] ?? radioGagaSiteChapters[0];
-  const visibleChapters = radioGagaSiteChapters.filter((_, index) => Math.abs(index - activeIndex) <= 1);
-
-  return (
-    <>
-      <aside className="radio-gaga-title-rail">
-        <ol>
-          {visibleChapters.map((chapter) => (
-            <li key={chapter.index} data-active={chapter.active ? "true" : "false"}>
-              <span className="radio-gaga-title-rail__item">
-                <span className="radio-gaga-title-rail__index">{chapter.index}</span>
-                <span className="radio-gaga-title-rail__copy">
-                  <span className="radio-gaga-title-rail__title">{chapter.title}</span>
-                  <span className="radio-gaga-title-rail__meta">
-                    {chapter.zh} / <span>{chapter.en}</span>
-                  </span>
-                </span>
-              </span>
-            </li>
-          ))}
-        </ol>
-      </aside>
-      <div className="radio-gaga-mobile-title-bar">
-        <span className="radio-gaga-mobile-title-bar__main">
-          <span>{activeChapter.index}</span>
-          <span className="radio-gaga-mobile-title-bar__title">{activeChapter.title}</span>
-        </span>
-        <span className="radio-gaga-mobile-title-bar__label">{activeChapter.zh}</span>
-      </div>
-    </>
-  );
-}
 
 interface RadioGagaCopyLayerProps {
   activeFinalOutputIndex: number;
@@ -124,7 +88,6 @@ export function RadioGagaCopyLayer({
 }: RadioGagaCopyLayerProps) {
   return (
     <div className="radio-gaga-copy" aria-hidden="true">
-      <RadioGagaTitleRail />
       <div className="radio-gaga-copy__panel">
         <p className="radio-gaga-copy__eyebrow">{radioGagaCopy.eyebrow}</p>
         <h1>{radioGagaCopy.title}</h1>
