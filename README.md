@@ -8,6 +8,10 @@ It is not planned as a normal portfolio. The first goal is to establish taste an
 
 - **Primary reference**: Shopify Editions-style interactive release pages.
 - **Core metaphor**: LuBirth as the origin field, followed by family systems, digital ritual, ambient browser work, experiment constellations, commissions, current building, and contact.
+- **v1.0 release scope**: make the LuBirth first two screens feel exceptional before expanding the full homepage.
+- **Current homepage state**: the home route now starts with a LuBirth-specific loading ritual that uses the Three scene's projected Earth horizon and Moon position when available, then hands off into the LuBirth field, title rail, and project intro.
+- **Language rhythm**: Chinese primary copy with English secondary lines.
+- **Motion strategy**: Theatre.js participates from the start for the opening field-to-window timeline, while simple hover / idle motion stays outside Theatre.
 - **Primary audience**: collaborators, clients, hiring / partnership contacts, creative technologists, designers, and people curious about AI-native visual products.
 - **Tone**: mineral, lunar, ritual, archival, precise, restrained.
 
@@ -23,16 +27,18 @@ It is not planned as a normal portfolio. The first goal is to establish taste an
 ## Source Drafts
 
 - [PRD](docs/prd.md)
+- [MVP definition](docs/mvp.md)
+- [Source project audit](docs/source-project-audit.md)
 - [Tech stack](docs/tech-stack.md)
 - [Top plan](docs/top-plan.md)
+- [Home LuBirth next-stage plan](docs/home-lubirth-next-stage-plan.md)
 - [Interfaces](docs/interfaces.md)
 - [LuBirth migration plan](docs/migration-plan.md)
+- [LuBirth earth-moon visual gap review](docs/lubirth-earthmoon-visual-gap-review.md)
 - [CoScroll integration brief](docs/coscroll-integration-brief.md)
+- [CoScroll scene interface](docs/coscroll-scene-interface.md)
 - [Shopify reference](reference/shopify.md)
 
-## Next Decision
+## Next Build Step
 
-The planning recommendation is to keep the current stack direction: Next.js App Router, TypeScript, pnpm workspace, R3F / Three.js, a light visual-core package, and staged Theatre.js adoption after the first static LuBirth render works.
-
-Before scaffolding the application, the main open choices are content language, first-release depth, and how aggressively to pursue the Shopify-level motion system in v1.
-
+Continue from `docs/home-lubirth-next-stage-plan.md`. The next phase is LuBirth visual hardening: make the projection-based loading deterministic on slow starts, then resolve the earth-moon visual blockers recorded in `docs/lubirth-earthmoon-visual-gap-review.md` with screenshot-based acceptance.

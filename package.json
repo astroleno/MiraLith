@@ -1,0 +1,25 @@
+{
+  "name": "miralith",
+  "private": true,
+  "packageManager": "pnpm@8.15.1",
+  "scripts": {
+    "dev": "pnpm --filter @miralith/site dev",
+    "build": "pnpm --filter @miralith/site build",
+    "start": "pnpm --filter @miralith/site start",
+    "lint": "pnpm --filter @miralith/site lint",
+    "typecheck": "pnpm -r typecheck",
+    "test:e2e": "playwright test",
+    "verify": "pnpm lint && pnpm typecheck && pnpm build"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@playwright/test": "1.59.1",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@types/three": "0.184.0",
+    "eslint": "9.39.2",
+    "eslint-config-next": "16.2.4",
+    "typescript": "6.0.3"
+  }
+}

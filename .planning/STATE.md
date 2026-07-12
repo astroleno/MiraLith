@@ -4,11 +4,17 @@
 
 See: `.planning/PROJECT.md` (updated 2026-04-24)
 
-**Core value:** Turn many projects and identities into one memorable field of vision.
+**Core value:** Make the LuBirth opening unforgettable first, then let the rest of MiraLith grow from that field without losing coherence.
 
 ## Current Status
 
 Initialized planning for a greenfield implementation with existing product docs as source material. Git has been initialized on `main`, GSD config exists in `.planning/config.json`, and the initial requirements / roadmap are drafted from the repository docs.
+
+User decisions locked on 2026-04-24:
+
+- v1.0 scope: make the LuBirth first two screens exceptional.
+- Language: Chinese primary copy with English secondary lines.
+- Motion: Theatre.js from the start for the Shopify-style opening timeline.
 
 ## Workspace Notes
 
@@ -19,22 +25,14 @@ Initialized planning for a greenfield implementation with existing product docs 
 
 ## Recommended Next Step
 
-Discuss and lock the high-impact choices before Phase 1 scaffolding:
-
-1. Language strategy: Chinese-first, English-first, or bilingual from v1.
-2. Launch depth: polished first two screens vs broader but shallower full homepage.
-3. Motion ambition: staged Theatre.js after static LuBirth vs Theatre.js from the start.
-4. Contact intent: subtle collaboration layer vs explicit job/client CTA.
+Start Phase 1 scaffolding with the locked decisions above: Next.js / pnpm workspace, typed content, visual-core contracts, and Theatre-ready scroll orchestration.
 
 ## Open Questions
 
-- Should the public site default to English, Chinese, or a bilingual rhythm?
-- Should v1 prioritize the first two screens until they feel exceptional?
-- Should CoScroll v1 use a true lightweight 3D scene or start with a poster / short-loop fallback?
-- Should the first release include project detail pages, or only homepage anchors and outbound links?
+- Should v1.0 include a minimal contact affordance, or should contact wait for v1.1?
+- Should v1.0 include project detail pages, or only the LuBirth opening and project-window CTA?
 - Should the site track analytics, and if so with Vercel Analytics, Plausible, or no analytics for v1?
 
 ## Last Updated
 
-2026-04-24 after initialization.
-
+2026-04-24 after scope/language/motion alignment.

@@ -1,9 +1,16 @@
 # MiraLith PRD
 
-状态：草案 v0.1  
+状态：草案 v0.2  
 日期：2026-04-24  
 产品类型：个人场域站 / 互动叙事作品集 / 世界观入口  
 核心参考：Shopify Editions 式固定 WebGL 视觉层 + DOM 内容层 + scroll timeline
+
+## 0. 当前对齐决策
+
+- v1.0 先把 LuBirth 前两屏做到惊艳：`Opening / LuBirth Ritual Field` + `LuBirth Zoomable Project Window`。
+- 主站文案采用中文为主、英文副句的节奏。
+- Theatre.js 从第一阶段进入主转场管线，用于第一屏到第二屏的 camera、shader、light、mesh transform 编排。
+- Radio Gaga、CoScroll、ArtBreeze、实验星群、商业作品、Now Building、About / Contact 作为 v1.1+ 扩展，不阻塞 v1.0。
 
 ## 1. 产品一句话
 
@@ -15,7 +22,7 @@ MiraLith 是一个以 LuBirth 为世界观入口的个人场域站：它把项�
 
 - 第一屏建立强记忆点：MiraLith 不是简历站，而是个人宇宙入口。
 - 用 LuBirth 地月系统承载「看见」「出生」「轨道」「铭刻」这些核心意象。
-- 用 Shopify Editions 式滚动叙事，把多个项目串成一条生成路径。
+- 用 Shopify Editions 式滚动叙事能力，先把 LuBirth opening 打磨成可扩展的视觉母体。
 - 让项目多但不乱：主线章节 + 实验星群 + 现实交付。
 - 支持未来持续加入项目、组件和章节。
 
@@ -38,9 +45,10 @@ MiraLith 是一个以 LuBirth 为世界观入口的个人场域站：它把项�
 
 - 第一版不做完整 CMS。
 - 第一版不做全量多语言后台。
+- 第一版不做完整长首页，先发布 LuBirth 前两屏。
 - 第一版不把 LuBirth 所有功能搬进首页。
 - 第一版不复刻 Shopify 全部复杂彩蛋。
-- 第一版不追求每个项目都有完整 3D 场景，先保主线体验。
+- 第一版不追求每个项目都有完整 3D 场景，先保 LuBirth 前两屏。
 - 第一版不把 CoScroll 全量应用搬进首页，只迁入轻量章节场景。
 - CoScroll 不取代 LuBirth 第二屏；站点第二屏仍然是 LuBirth Zoomable Project Window。
 
@@ -60,12 +68,32 @@ MiraLith 是一个以 LuBirth 为世界观入口的个人场域站：它把项�
 
 ## 5. 信息架构
 
-首页顺序：
+长期首页顺序：
 
 ```text
 00 Intro / Loading Mark
 01 Opening / LuBirth Ritual Field
 02 LuBirth Zoomable Project Window
+03 Radio Gaga
+04 CoScroll
+05 ArtBreeze
+06 Constellation of Experiments
+07 Selected Commissions
+08 Now Building
+09 About / Manual / Contact
+```
+
+v1.0 发布范围：
+
+```text
+00 Intro / Loading Mark
+01 Opening / LuBirth Ritual Field
+02 LuBirth Zoomable Project Window
+```
+
+v1.1+ 扩展范围：
+
+```text
 03 Radio Gaga
 04 CoScroll
 05 ArtBreeze
@@ -118,7 +146,7 @@ MiraLith 是一个以 LuBirth 为世界观入口的个人场域站：它把项�
 
 - 全屏 WebGL / Canvas。
 - 地球缓慢自转。
-- 固定日期月球，默认 `1993-08-01`。
+- 固定日期月球，默认 `1993-08-01T12:00:00Z`。
 - 地弧辉光、卡门线感、少量 aurora。
 - 深蓝黑、黑曜石、月光、旧纸金、细颗粒。
 - 文字像刻在光里，不放在普通卡片里。
@@ -152,7 +180,7 @@ A personal field of vision, intelligence, and form.
 
 - 从第一屏全屏地月场收束成一个 project viewport。
 - 保留小图、zoom-in、expanded 大图。
-- 同一套 `EarthMoonHero` 内核驱动，不重建完整场景。
+- 同一套 `@miralith/lubirth-hero` visual kernel 驱动；生产首页挂载 `EarthMoonScene`，不重建完整场景，也不另起 Canvas。
 - 右侧或下方出现项目说明，不做厚重卡片。
 
 文案方向：
@@ -217,12 +245,14 @@ MiraLith 版实现原则：
 - 用章节 `progress` 驱动视觉时间，不复用 CoScroll 音频时间轴。
 - 第一版只保留 1-3 个锚字模型和少量经文/短句。
 - 低性能设备使用 poster 或短循环视频 fallback。
+- `CoScrollScene` 接口文档先以 v0.1 草案固定边界，正式实现前用 visual spike 确认一个锚字、前后文字层和压缩资产仍能保留原体验的精神。
 
 验收：
 
 - 不影响 LuBirth 首屏和第二屏资源预算。
 - WebGL 失败时，DOM 中仍有 CoScroll 的项目标题、说明和链接。
 - reduced-motion 下不强制滚轮驱动，保留静态玉字/经文构图。
+- 首页模式下不另起独立 Canvas，必须挂入 MiraLith 共享视觉层。
 
 ### 05 ArtBreeze
 
@@ -311,8 +341,8 @@ AIGC video / short drama production platform.
 
 ### 功能需求
 
-- 使用 MiraLith 专用轻量版 `EarthMoonHero`。
-- 支持 `field`、`window`、`expanded` 三种 mode。
+- 使用 MiraLith 专用轻量包 `@miralith/lubirth-hero`；生产首页使用 `EarthMoonScene`，`EarthMoonHero` 仅作为 demo/dev standalone wrapper。
+- 支持 `field`、`window`、`zoomed`、`expanded` 四种 mode。
 - 支持固定日期，默认 `1993-08-01T12:00:00Z`。
 - 地球自转速度可配置。
 - 固定太阳方向可配置。
@@ -406,8 +436,8 @@ AIGC video / short drama production platform.
 
 ### M1 LuBirth Hero 内核
 
-- `EarthMoonHero` 轻量包。
-- `field/window/expanded` preset。
+- `@miralith/lubirth-hero` 轻量包。
+- `field/window/zoomed/expanded` preset。
 - 低清地球/月球资产。
 - 大气、地弧辉光、aurora 初版。
 - 移动横屏验证。
@@ -420,46 +450,52 @@ AIGC video / short drama production platform.
 - 滚动过渡。
 - 首屏性能预算检查。
 
-### M3 主线章节
+### M3 v1.0 性能与发布
+
+- Quality tiers。
+- Fallback poster。
+- Lighthouse / Playwright 验证。
+- SEO / OG 基础。
+- 首版发布。
+
+### M4 v1.1 主线章节
 
 - Radio Gaga。
 - CoScroll。
 - ArtBreeze。
-- 基础 scroll timeline。
-- `CoScrollScene` 第一版接口和 fallback。
-- CoScroll 资产预算表和压缩后模型。
+- 基础 scroll timeline 扩展。
+- `CoScrollScene` 接口文档、visual spike 和 fallback 方案。
+- CoScroll 资产预算表、压缩后模型和 poster/video fallback。
+- 通过 readiness gate 后再进入文件级迁移实现。
 
-### M4 星群与项目详情
+### M5 v1.1 星群与落地信息
 
 - Constellation of Experiments。
 - Selected Commissions。
 - 项目详情页模板。
 - About / Contact。
 
-### M5 性能与发布
-
-- Quality tiers。
-- Fallback poster。
-- Lighthouse / Playwright 验证。
-- SEO / OG。
-- 首版发布。
-
 ## 14. 风险
 
 - WebGL 资产过重导致首屏超过 3MB。
-- 过早引入 Theatre/Rive/复杂 3D，拖慢 M1。
+- Theatre.js 从第一阶段引入后，如果管理范围过大，会把 M1 变成调参黑洞。
+- 过早引入 Rive/复杂 3D，拖慢 LuBirth 前两屏。
 - LuBirth 全量代码耦合太重，抽取成本高。
 - CoScroll 全量迁入导致音频、模型、字体和配置系统污染主站。
 - CoScroll 如果另起 Canvas 或每帧 React setState，会破坏固定视觉层架构。
+- CoScroll 如果只按 `progress/active/quality/reducedMotion` 四个 props 开工，会遗漏 `visualTime`、`duration`、`lyrics`、`currentAnchor`、`scrollVelocity` 等真实视觉状态。
 - 手机横屏构图被文字遮挡。
 - 动画过密，让 MiraLith 从“仪式感”变成“炫技站”。
 
 ## 15. 当前决策
 
 - 技术栈采用 Next.js App Router，不采用纯 Vite 主站。
+- v1.0 范围锁定 LuBirth 前两屏，不追求一次完成整条首页长叙事。
+- 主站文案采用中文为主、英文副句。
+- Theatre.js 从第一阶段接入，但只服务 Opening → LuBirth Window 的主转场和少量可调视觉参数。
 - LuBirth 两屏都要：第一屏全屏仪式场，第二屏可 zoom 项目窗口。
 - 首页版 LuBirth 是轻量视觉摘录，不是全量 app 嵌入。
 - 首屏硬预算 3MB。
 - Shopify 是工程和体验参考，不是逐像素复刻对象。
-- CoScroll 是 M3 主线章节，不是站点第二屏。
-- CoScroll 采用轻量 scene package 迁移策略，下一步产出迁移计划和接口文档。
+- CoScroll 是 v1.1 主线章节，不是站点第二屏。
+- CoScroll 采用轻量 scene package 迁移策略；接口文档已建立 v0.1 草案，下一步先做 Phase 1 scaffolding 和 visual spike，再写文件级迁移计划。

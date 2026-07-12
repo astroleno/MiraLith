@@ -1,12 +1,19 @@
 # MiraLith 技术栈决策
 
-状态：草案 v0.1  
+状态：草案 v0.2  
 日期：2026-04-24  
 目标：搭建一个对标 Shopify Editions 级别体验的个人场域站，同时保持首屏轻、移动端可用、后续组件可持续扩展。
 
+## 0. 范围对齐
+
+- v1.0 只要求 LuBirth 前两屏达到发布级体验：Intro、Opening / LuBirth Ritual Field、LuBirth Zoomable Project Window。
+- Radio Gaga、CoScroll、ArtBreeze、实验星群和商业/主业信息进入 v1.1+。
+- 主站文案采用中文为主、英文副句。
+- Theatre.js 从第一阶段接入 Opening → LuBirth Window 主转场，但不接管普通 hover、地球自转或每帧状态。
+
 ## 1. 技术判断
 
-MiraLith 不是普通作品集，也不是单个 WebGL demo。它需要同时承载：
+MiraLith 不是普通作品集，也不是单个 WebGL demo。长期它需要同时承载：
 
 - 首页长滚动叙事与固定 WebGL 主视觉。
 - LuBirth、Radio Gaga、CoScroll、ArtBreeze 等多个章节场景。
@@ -29,7 +36,8 @@ MiraLith 不是普通作品集，也不是单个 WebGL demo。它需要同时承
 | State | zustand | section index、scroll progress、quality tier、modal/expanded 状态 |
 | DOM Motion | motion + CSS transitions | 仅用于文字、卡片、导航等轻量 DOM 动效 |
 | Vector Motion | Rive, lazy loaded | 小型 hover/icon/装置动画，不进首屏关键路径 |
-| Content | 本地 typed data + MDX | 先不上 CMS，保证开发速度和内容可控 |
+| Content | 本地 typed data + MDX + representation types | 先不上 CMS，保证开发速度和内容可控；不同项目不强行都做成 WebGL scene |
+| Media / Demo Assets | posters + short loops + diagrams + compressed models | v1.1+ 项目需要 curated media，不直接搬原项目 raw assets |
 | Asset Pipeline | gltf-transform + meshopt + KTX2/Basis + WebP/AVIF | 3D/纹理压缩，降低传输体积和 GPU 内存 |
 | Testing | Playwright + Lighthouse CI + bundle analyzer | 首屏、移动横屏、WebGL 非空、性能预算 |
 | Deploy | Vercel | 保留 Next 标准能力，页面尽量静态生成 |
@@ -72,7 +80,7 @@ MiraLith/
 MiraLith 首页专用的 LuBirth 视觉摘录，不直接嵌入 LuBirth 全量应用。它只保留：
 
 - 自转地球。
-- 固定日期月球，默认 `1993-08-01`。
+- 固定日期月球，默认 `1993-08-01T12:00:00Z`。
 - 固定太阳方向。
 - 部分大气、地弧辉光、aurora。
 - 小图、zoom-in、expanded 大图三种 preset。
@@ -108,6 +116,31 @@ MiraLith 首页 CoScroll 章节专用的轻量视觉摘录，不直接嵌入 CoS
 - WebGL fallback helpers。
 - section scene interface types。
 - asset budget registry。
+
+### content representation types
+
+v1.1+ 项目不应该都被强行做成 WebGL scene。内容模型需要支持：
+
+```ts
+type ProjectRepresentation =
+  | 'hero-scene'
+  | 'lightweight-scene'
+  | 'dom-vignette'
+  | 'case-study-flow'
+  | 'poster-loop'
+  | 'selected-commission'
+  | 'external-artifact';
+```
+
+对应策略：
+
+- `hero-scene`：LuBirth 这种主视觉章节。
+- `lightweight-scene`：CoScroll 这类保留核心视觉但不搬全量应用的章节。
+- `dom-vignette`：ArtBreeze 这类浏览器微体验，用模拟 UI 和小交互表达。
+- `case-study-flow`：Radio Gaga / UGCFlow / VoyaTide 这类系统项目，用流程图、artifact、少量 motion 表达。
+- `poster-loop`：视觉研究、动效草稿、alpha video 等，用短循环媒体，不进入主 WebGL 负载。
+- `selected-commission`：客户项目背书，重在可信度和强预览。
+- `external-artifact`：CLI、agent、research 系统，只做外链/文档/成果物展示。
 
 ## 4. 首页视觉架构
 
@@ -145,21 +178,22 @@ LuBirth 在 MiraLith 首页承担两个状态：
 2. **LuBirth / Zoomable Project Window**  
    第二屏项目窗口，保留小图、hover/scroll zoom-in、expanded 大图。
 
-两屏使用同一个 `EarthMoonHero` 内核，不复制两套 Canvas。
+两屏使用同一个 `@miralith/lubirth-hero` visual kernel，不复制两套 Canvas。生产首页由 `apps/site` / `visual-core` 拥有 fixed Canvas，并在其中挂载 `EarthMoonScene`；`EarthMoonHero` 只作为 demo/dev standalone wrapper、独立预览页或 fallback wrapper。
 
 ```tsx
-<EarthMoonHero
-  mode="field"
-  date="1993-08-01T12:00:00Z"
-  quality="auto"
-/>
+// Production homepage path
+<VisualCanvas>
+  <EarthMoonScene
+    mode={sectionMode}
+    composition={resolvedComposition}
+    assets={resolvedAssets}
+    quality={resolvedQuality}
+    sectionProgress={sectionProgress}
+  />
+</VisualCanvas>
 
-<EarthMoonHero
-  mode="window"
-  interaction="hover-and-click-expand"
-  date="1993-08-01T12:00:00Z"
-  quality="auto"
-/>
+// Standalone demo/dev preview only
+<EarthMoonHero mode="field" date="1993-08-01T12:00:00Z" quality="auto" />
 ```
 
 ### 不做的事
@@ -172,7 +206,7 @@ LuBirth 在 MiraLith 首页承担两个状态：
 ### 必须保留的观感
 
 - 自转地球。
-- 近满月月球，固定日期默认 `1993-08-01`。
+- 近满月月球，固定日期默认 `1993-08-01T12:00:00Z`。
 - 固定太阳方向，画面稳定。
 - 地弧辉光与卡门线感。
 - 少量 aurora，使用 procedural noise/FBM，不加载 aurora 贴图。
@@ -210,14 +244,14 @@ fallback
 ### 加载顺序
 
 1. CSS/SVG intro 和 DOM 文案先出现。
-2. WebGL canvas 初始化，用 placeholder material 或极低清纹理。
+2. WebGL canvas 初始化，用临时 material 或极低清纹理。
 3. 地球和月球低清纹理就绪后进入运动。
 4. 空闲时根据 quality tier 加载 aurora/post effect/更高质量资源。
 5. 用户进入 expanded 大图时再提升画质。
 
 ## 7. CoScroll 接入策略
 
-CoScroll 在 MiraLith 中作为 **M3 主线章节** 接入，而不是首页第二屏，也不是 iframe/全量应用迁移。
+CoScroll 在 MiraLith 中作为 **v1.1 主线章节** 接入，而不是首页第二屏，也不是 iframe/全量应用迁移。
 
 ### 保留精髓
 
@@ -226,7 +260,7 @@ CoScroll 在 MiraLith 中作为 **M3 主线章节** 接入，而不是首页第�
 - 背景氛围：保留丝绸/矿物暗场，但优先使用轻量 shader、CSS 或视频 fallback。
 - 滚动仪式：用 MiraLith 的 section progress 驱动，而不是复用 CoScroll 的音频时间轴。
 
-### 第一版接口草案
+### 外部壳层接口草案（非最终实现合约）
 
 ```tsx
 <CoScrollScene
@@ -244,12 +278,30 @@ CoScroll 在 MiraLith 中作为 **M3 主线章节** 接入，而不是首页第�
 - `quality` 控制模型数量、DPR、后处理和粒子强度。
 - `reducedMotion` 下必须退化为慢速/静态或 poster。
 
+注意：这个接口只定义 MiraLith 调用 CoScroll 章节的最外层入口，还不足以直接开始实现。CoScroll 真实视觉还依赖 `audioTime`、`duration`、`lyrics`、`currentAnchor`、`scrollVelocity` 等状态；MiraLith 版已在 `docs/coscroll-scene-interface.md` 建立 v0.1 草案，后续必须通过 visual spike 验证这些状态如何由 scroll timeline 派生或由 scene adapter 管理。
+
+### Canvas 边界
+
+- MiraLith homepage 长期采用共享 fixed Canvas。
+- `CoScrollScene` 在 homepage 模式下不能创建自己的 Canvas。
+- 独立 Canvas 只允许出现在 `CoScrollStandaloneDemo`、visual spike 或调试页。
+- CoScroll 的前后遮挡必须在同一个 WebGL 深度关系中解决，不能靠两个互不知情的 Canvas 伪造首版主路径。
+
 ### 资产约束
 
 - OBJ 迁入前必须转 GLB，并经过 meshopt/gltf-transform 压缩。
 - 第一版只允许 1-3 个锚字模型，不迁入全量模型库。
 - 字体使用系统字体、图片化字贴图或极小 subset，不直接迁入 5MB+ 字体。
 - CoScroll 章节资产不进入首屏关键路径，只在接近章节时预加载。
+
+### 开工前 gate
+
+CoScroll v1.1 进入实现前，需要先完成：
+
+1. Phase 1 scaffolding：`apps/site`、`packages/visual-core`、`packages/coscroll-scene` 可运行。
+2. `docs/coscroll-scene-interface.md`：v0.1 草案已建立，visual spike 后回填 visual state、quality tier、fallback、shared Canvas contract 的最终决策。
+3. Visual spike：证明一个锚字、前后文字层、压缩 GLB 和 fallback 能保住 CoScroll 的核心感受。
+4. 章节预算表：明确模型、字体/文字贴图、背景、poster/video fallback 的体积和加载时机。
 
 ## 8. 动画与滚动
 
@@ -259,8 +311,8 @@ Theatre.js 用于：
 
 - 第一屏到第二屏的 camera transition。
 - LuBirth field 到 project window 的形态转换。
-- Radio Gaga、CoScroll、ArtBreeze 等章节切换。
 - shader uniform、light intensity、mesh transform 的可调时间轴。
+- v1.1 后可继续用于 Radio Gaga、CoScroll、ArtBreeze 等章节切换。
 
 不用 Theatre.js 管：
 
@@ -289,11 +341,31 @@ Theatre.js 用于：
 - 所有视觉章节必须有 reduced-motion 体验。
 - 任何页面都不能依赖 WebGL 才能读懂内容。
 - CoScroll、Radio Gaga、ArtBreeze 等章节不得迁入原项目全量应用，只迁入可控 scene package。
+- ArtBreeze 不迁入 Chrome extension runtime、content script selector、`chrome.*` API 或全局 injected CSS；MiraLith 只重建一个 DOM vignette。
+- Radio Gaga 不迁入 Vite SPA、Jotai/TanStack Query、Cloudflare Worker、n8n workflow 或 ListenHub runtime；MiraLith 只展示案例流程和轻量硬件/声波场景。
+- Python/CLI/agent 系统不进入前端 runtime；只作为 case-study artifact 或外链。
+- GSAP 可以在 v1.1+ 的 isolated visual-study module 中局部使用，但不能成为全站叙事时间轴，也不能进入 v1.0 critical path。
 
-## 11. 待确认
+## 11. v1.1+ 项目接入结论
+
+多项目扫描后的优先级：
+
+| Priority | Project | MiraLith 表达 |
+| --- | --- | --- |
+| 1 | CoScroll | v1.1 核心章节：轻量数字经卷 scene 或 poster-backed scroll vignette |
+| 2 | Radio Gaga | 静态案例 + DOM 流程图 + 轻量硬件/声波场景 |
+| 3 | ArtBreeze / AeScape | Ambient browser rituals：DOM vignette + poster fallback |
+| 4 | Anicca | v1.2+ thinking instrument / 正反合图谱 |
+| 5 | SonoScope | 实验星群 anchor：声象 / audio-visual systems |
+| 6 | UGCFlow + fv_website | Now Building / current work credibility |
+| 7 | VoyaTide | Non-visual systems case study，展示 artifact / pipeline |
+
+这轮扫描不改变 v1.0：仍然无后端、无完整长首页、无原项目 runtime 迁入。
+
+## 12. 待确认
 
 - 是否使用 Vercel Analytics 还是更隐私友好的 Plausible/Umami。
-- 项目详情页是否需要中英文双语。
-- Rive 是否第一阶段引入，还是等 Radio Gaga/ArtBreeze 再引入。
+- v1.0 是否需要最小 Contact 入口，还是等 v1.1 的 About / Contact。
+- Rive 是否等 Radio Gaga/ArtBreeze 再引入；v1.0 不进入首屏关键路径。
 - 是否把 LuBirth hero 包独立发布成 npm package，还是仅 monorepo 内部使用。
 - CoScroll 第一版保留哪个锚字模型：`心`、`空`、`道`，或三者切换。

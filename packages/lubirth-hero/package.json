@@ -1,0 +1,27 @@
+{
+  "name": "@miralith/lubirth-hero",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "generate:cloud-deck": "node scripts/generate-cloud-deck-texture.mjs",
+    "generate:home-cloud-field": "node scripts/generate-home-cloud-field.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@miralith/visual-core": "workspace:*",
+    "@react-three/drei": "10.7.7",
+    "@react-three/fiber": "9.6.0",
+    "three": "0.184.0"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-dom": ">=19"
+  },
+  "devDependencies": {
+    "sharp": "0.34.5"
+  }
+}
