@@ -18,11 +18,13 @@ export interface SourceCausticMotionInput {
 
 export interface SourceCausticMotion {
   energy: number;
+  anchorFacing: number;
   fieldRotation: number;
   timeScale: number;
   warpAmount: number;
   pulseStrength: number;
   chromaOffset: number;
+  lensStrength: number;
 }
 
 export function stepSourceCausticMotion({
@@ -44,10 +46,12 @@ export function stepSourceCausticMotion({
 
   return {
     energy,
+    anchorFacing: Math.sin(angle),
     fieldRotation: angle * 0.42,
-    timeScale: 0.34 + energy * 0.96,
+    timeScale: 0.3 + energy,
     warpAmount: 0.3 + energy * 0.18,
     pulseStrength: 0.12 + energy * 0.18,
-    chromaOffset: 0.0006 + energy * 0.0016
+    chromaOffset: 0.00045 + energy * 0.00135,
+    lensStrength: 0.32 + energy * 0.1
   };
 }

@@ -1079,9 +1079,11 @@ test("source caustic remains calm at the anchor base speed", () => {
   });
 
   expect(motion.energy).toBeCloseTo(0, 4);
+  expect(motion.anchorFacing).toBeCloseTo(Math.sin(-0.62), 4);
+  expect(motion.lensStrength).toBeCloseTo(0.32, 4);
   expect(motion.fieldRotation).toBeCloseTo(-0.2604, 4);
-  expect(motion.timeScale).toBeCloseTo(0.34, 4);
-  expect(motion.chromaOffset).toBeCloseTo(0.0006, 5);
+  expect(motion.timeScale).toBeCloseTo(0.3, 4);
+  expect(motion.chromaOffset).toBeCloseTo(0.00045, 5);
 });
 
 test("source caustic acceleration is independent of scroll direction", () => {
@@ -1099,6 +1101,9 @@ test("source caustic acceleration is independent of scroll direction", () => {
   });
 
   expect(forward).toEqual(reverse);
+  expect(forward.anchorFacing).toBeCloseTo(Math.sin(1), 4);
+  expect(forward.lensStrength).toBeGreaterThan(0.41);
+  expect(forward.lensStrength).toBeLessThanOrEqual(0.42);
   expect(forward.timeScale).toBeGreaterThan(1.28);
   expect(forward.warpAmount).toBeGreaterThan(0.47);
   expect(forward.chromaOffset).toBeLessThanOrEqual(0.0022);
