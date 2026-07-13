@@ -1,6 +1,6 @@
 "use client";
 
-import { useFrame, useThree } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { IUniform } from "three";
@@ -16,6 +16,15 @@ interface SilkUniforms {
   [uniform: string]: IUniform;
 }
 
+function hexToNormalizedRgb(hex: string): [number, number, number] {
+  const clean = hex.replace("#", "");
+  return [
+    Number.parseInt(clean.slice(0, 2), 16) / 255,
+    Number.parseInt(clean.slice(2, 4), 16) / 255,
+    Number.parseInt(clean.slice(4, 6), 16) / 255
+  ];
+}
+
 const vertexShader = `
 varying vec2 vUv;
 varying vec3 vPosition;
@@ -23,7 +32,7 @@ varying vec3 vPosition;
 void main() {
   vPosition = position;
   vUv = uv;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  gl_Position = vec4(position.xy * 2.0, 0.999, 1.0);
 }
 `;
 
@@ -83,7 +92,7 @@ export interface CoScrollSilkBackgroundProps {
   noiseIntensity?: number;
   rotation?: number;
   opacity?: number;
-  positionZ?: number;
+  isolateFromTransmission?: boolean;
 }
 
 export function CoScrollSilkBackground({
@@ -96,13 +105,12 @@ export function CoScrollSilkBackground({
   noiseIntensity = 1.3,
   rotation = 2.42,
   opacity = 1,
-  positionZ = -5.8
+  isolateFromTransmission = false
 }: CoScrollSilkBackgroundProps) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const { viewport } = useThree();
   const uniforms = useMemo<SilkUniforms>(
     () => ({
-      uColor: { value: new THREE.Color(color) },
+      uColor: { value: new THREE.Color().setRGB(...hexToNormalizedRgb(color)) },
       uNoiseIntensity: { value: noiseIntensity },
       uOpacity: { value: opacity },
       uRotation: { value: rotation },
@@ -114,7 +122,7 @@ export function CoScrollSilkBackground({
   );
 
   useEffect(() => {
-    uniforms.uColor.value.set(color);
+    uniforms.uColor.value.setRGB(...hexToNormalizedRgb(color));
     uniforms.uNoiseIntensity.value = noiseIntensity;
     uniforms.uOpacity.value = opacity;
     uniforms.uRotation.value = rotation;
@@ -127,14 +135,17 @@ export function CoScrollSilkBackground({
       return;
     }
 
-    uniforms.uTime.value += 0.1 * delta;
+    const material = meshRef.current?.material as THREE.ShaderMaterial | undefined;
+    if (!material) {
+      return;
+    }
+
+    material.uniforms.uTime.value += 0.1 * delta;
   });
 
   return (
     <mesh
       ref={meshRef}
-      position={[0, 0, positionZ]}
-      scale={[viewport.width * 1.65, viewport.height * 1.65, 1]}
       renderOrder={-100}
       frustumCulled={false}
     >
@@ -143,8 +154,8 @@ export function CoScrollSilkBackground({
         uniforms={uniforms}
         vertexShader={vertexShader}
         fragmentShader={fragmentShader}
-        transparent={opacity < 1}
-        depthTest={false}
+        transparent={isolateFromTransmission || opacity < 1}
+        depthTest={isolateFromTransmission}
         depthWrite={false}
         toneMapped={false}
       />

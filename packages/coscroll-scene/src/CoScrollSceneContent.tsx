@@ -1,9 +1,9 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { Component, useEffect, useMemo, useRef, type ErrorInfo, type ReactNode } from "react";
+import { Component, useEffect, useMemo, type ErrorInfo, type ReactNode } from "react";
 import * as THREE from "three";
-import type { CoScrollFallbackReason, CoScrollRotationSignal, CoScrollSceneContentProps } from "./types";
+import type { CoScrollFallbackReason, CoScrollSceneContentProps } from "./types";
 import { CoScrollCausticLightField } from "./CoScrollCausticLightField";
 import { CoScrollJadeAnchor, preloadCoScrollAnchorGeometry } from "./CoScrollJadeAnchor";
 import { CoScrollSilkBackground } from "./CoScrollSilkBackground";
@@ -56,11 +56,7 @@ export function CoScrollSceneContent({
 }: CoScrollSceneContentProps) {
   const sourceMatchMode = quality.reason === "source-match";
   const mobileSourceMatch = sourceMatchMode && viewport === "mobile";
-  const { gl, viewport: sceneViewport } = useThree();
-  const sourceRotationSignalRef = useRef<CoScrollRotationSignal>({
-    angle: sourceMatchMode ? -0.62 : 0,
-    speed: 0
-  });
+  const { gl } = useThree();
   const sourceAnchorPosition: [number, number, number] = [
     0,
     mobileSourceMatch ? 0.95 : -0.41 + SOURCE_MATCH_DESKTOP_Y_LIFT,
@@ -148,26 +144,6 @@ export function CoScrollSceneContent({
       }),
     [mobileSourceMatch, quality.tier, sourceMatchMode, state.duration, state.visualTime, timeline.lyricSegments]
   );
-  const sourceCausticLyricCenters = useMemo<[number, number, number, number]>(() => {
-    const fallback: [number, number, number, number] = [-0.43, -0.18, 0.08, 0.35];
-    if (!sourceMatchMode) {
-      return fallback;
-    }
-
-    const visibleColumns = [...layeredLyrics.back, ...layeredLyrics.front]
-      .filter((line) => line.opacity > 0.08 && line.edgeFeather < 0.92)
-      .sort((a, b) => a.x - b.x);
-    if (visibleColumns.length === 0) {
-      return fallback;
-    }
-
-    const halfWidth = Math.max(0.01, sceneViewport.width * 0.5);
-    const sampleAt = (ratio: number) => {
-      const index = Math.min(visibleColumns.length - 1, Math.round((visibleColumns.length - 1) * ratio));
-      return Math.max(-0.92, Math.min(0.92, visibleColumns[index].x / halfWidth));
-    };
-    return [sampleAt(0.14), sampleAt(0.38), sampleAt(0.62), sampleAt(0.86)];
-  }, [layeredLyrics, sceneViewport.width, sourceMatchMode]);
   const currentAnchorAsset = useMemo(
     () => assets.anchors.find((asset) => asset.id === state.currentAnchor),
     [assets.anchors, state.currentAnchor]
@@ -254,33 +230,30 @@ export function CoScrollSceneContent({
         intensity={sourceMatchMode ? 0.3 : 0.48}
         color={sourceMatchMode ? "#4A90E2" : "#7ed6e8"}
       />
-      {sourceMatchMode ? null : (
-        <CoScrollSilkBackground
-          active={active}
-          paused={paused}
-          reducedMotion={reducedMotion}
-          opacity={state.backgroundIntensity}
-        />
-      )}
-      <CoScrollCausticLightField
+      <CoScrollSilkBackground
         active={active}
         paused={paused}
         reducedMotion={reducedMotion}
-        sourceMatch={sourceMatchMode}
-        layout={viewport}
-        opacity={
-          sourceMatchMode
-            ? state.backgroundIntensity * (mobileSourceMatch ? 0.76 : 0.82)
-            : state.backgroundIntensity * (quality.tier === "low" ? 0.12 : 0.2)
-        }
-        anchorPresence={state.shouldLoadModel ? 1 : 0.45}
-        scrollVelocity={state.scrollVelocity}
-        lyricCenters={sourceCausticLyricCenters}
-        rotationSignalRef={sourceRotationSignalRef}
-        anchorPosition={sourceAnchorPosition}
-        anchorScale={sourceAnchorScale}
-        positionZ={sourceMatchMode ? -5.05 : -5.22}
+        speed={4.9}
+        scale={1}
+        color="#1f2e38"
+        noiseIntensity={1.3}
+        rotation={2.42}
+        opacity={sourceMatchMode ? 1 : state.backgroundIntensity}
+        isolateFromTransmission={sourceMatchMode}
       />
+      {sourceMatchMode ? null : (
+        <CoScrollCausticLightField
+          active={active}
+          paused={paused}
+          reducedMotion={reducedMotion}
+          layout={viewport}
+          opacity={state.backgroundIntensity * (quality.tier === "low" ? 0.12 : 0.2)}
+          anchorPresence={state.shouldLoadModel ? 1 : 0.45}
+          scrollVelocity={state.scrollVelocity}
+          positionZ={-5.22}
+        />
+      )}
 
       <group renderOrder={2000}>{layeredLyrics.back.map(renderLyric)}</group>
 
@@ -304,7 +277,6 @@ export function CoScrollSceneContent({
             velocityMultiplier={sourceMatchMode ? -7.5 : undefined}
             deterministicPose={sourceMatchMode && paused}
             sourceMaterial={sourceMatchMode}
-            rotationSignalRef={sourceRotationSignalRef}
             renderOrder={sourceMatchMode ? 2600 : undefined}
             listenToScrollInput={!sourceMatchMode}
             onReady={onReady}

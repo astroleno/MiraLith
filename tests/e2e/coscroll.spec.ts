@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test";
-import { stepSourceCausticMotion } from "../../packages/coscroll-scene/src/sourceCausticMotion";
 
 const repoRoot = process.cwd();
 
@@ -496,89 +495,6 @@ async function measureBackgroundScreenshotMotion(
   );
 }
 
-async function measureBackgroundCanvasFrameMotion(
-  page: import("@playwright/test").Page,
-  frameCount = 4
-) {
-  return page.evaluate(async (requestedFrameCount) => {
-    const source = document.querySelector("canvas");
-    if (!source) {
-      throw new Error("No canvas found for CoScroll frame-motion measurement");
-    }
-
-    const width = 240;
-    const height = 37;
-    const sample = document.createElement("canvas");
-    sample.width = width;
-    sample.height = height;
-    const context = sample.getContext("2d", { willReadFrequently: true });
-    if (!context) {
-      throw new Error("Could not create CoScroll frame-motion context");
-    }
-
-    const frames: number[][] = [];
-    const timestamps: number[] = [];
-    const sourceBandHeight = Math.min(
-      source.height,
-      source.height * (220 / Math.max(1, source.clientHeight))
-    );
-
-    for (let frame = 0; frame < requestedFrameCount; frame += 1) {
-      const timestamp = await new Promise<number>((resolve) => requestAnimationFrame(resolve));
-      context.clearRect(0, 0, width, height);
-      context.drawImage(
-        source,
-        0,
-        0,
-        source.width,
-        sourceBandHeight,
-        0,
-        0,
-        width,
-        height
-      );
-      const pixels = context.getImageData(0, 0, width, height).data;
-      const luma: number[] = [];
-      for (let index = 0; index < pixels.length; index += 4) {
-        luma.push(0.2126 * pixels[index] + 0.7152 * pixels[index + 1] + 0.0722 * pixels[index + 2]);
-      }
-      frames.push(luma);
-      timestamps.push(timestamp);
-    }
-
-    const meanDeltas: number[] = [];
-    const changedShares: number[] = [];
-    for (let frame = 1; frame < frames.length; frame += 1) {
-      const before = frames[frame - 1];
-      const after = frames[frame];
-      const elapsed = Math.max(1, timestamps[frame] - timestamps[frame - 1]);
-      let deltaSum = 0;
-      let changedPixels = 0;
-      for (let index = 0; index < before.length; index += 1) {
-        const delta = Math.abs(before[index] - after[index]) * (16.667 / elapsed);
-        deltaSum += delta;
-        if (delta > 0.75) {
-          changedPixels += 1;
-        }
-      }
-      meanDeltas.push(deltaSum / Math.max(1, before.length));
-      changedShares.push(changedPixels / Math.max(1, before.length));
-    }
-
-    const median = (values: number[]) => {
-      const sorted = [...values].sort((left, right) => left - right);
-      return sorted[Math.floor(sorted.length / 2)] ?? 0;
-    };
-
-    return {
-      meanDelta: median(meanDeltas),
-      changedShare: median(changedShares),
-      meanDeltas,
-      changedShares
-    };
-  }, frameCount);
-}
-
 async function measureBackgroundLumaProfile(
   page: import("@playwright/test").Page,
   options: {
@@ -840,9 +756,8 @@ test("coscroll scene stays canvasless without blocking source-match palette", as
   }
 });
 
-test("coscroll scene ports the original SilkR3F background without owning Canvas", async () => {
+test("coscroll source-match renders the original SilkR3F background at its source settings", async () => {
   const silk = await readProjectFile("packages/coscroll-scene/src/CoScrollSilkBackground.tsx");
-  const caustics = await readProjectFile("packages/coscroll-scene/src/CoScrollCausticLightField.tsx");
   const sceneContent = await readProjectFile("packages/coscroll-scene/src/CoScrollSceneContent.tsx");
   const packageIndex = await readProjectFile("packages/coscroll-scene/src/index.ts");
 
@@ -853,21 +768,48 @@ test("coscroll scene ports the original SilkR3F background without owning Canvas
   expect(silk).toContain("noiseIntensity = 1.3");
   expect(silk).toContain("rotation = 2.42");
   expect(silk).toContain('"#1f2e38"');
-  expect(caustics).not.toContain("Canvas");
-  expect(caustics).not.toContain("WebGLRenderTarget");
-  expect(caustics).toContain("fragmentShader");
-  expect(caustics).toContain("uAnchorPresence");
-  expect(caustics).toContain("uScrollVelocity");
-  expect(caustics).toContain("uSourceMatch");
-  expect(caustics).toContain("THREE.AdditiveBlending");
-  expect(caustics).toContain("smoothstep(0.22");
-  expect(caustics).toContain('sourceMatch ? "#2d6d8b"');
+  expect(silk).toContain("function hexToNormalizedRgb");
+  expect(silk).toContain("new THREE.Color().setRGB(...hexToNormalizedRgb(color))");
+  expect(silk).toContain("uniforms.uColor.value.setRGB(...hexToNormalizedRgb(color))");
+  expect(silk).not.toContain("new THREE.Color(color)");
+  expect(silk).toContain("const meshRef = useRef<THREE.Mesh>(null)");
+  expect(silk).toContain("const material = meshRef.current?.material as THREE.ShaderMaterial | undefined");
+  expect(silk).toContain("material.uniforms.uTime.value += 0.1 * delta");
+  expect(silk).toContain("ref={meshRef}");
+  expect(silk).toContain("isolateFromTransmission?: boolean");
+  expect(silk).toContain("gl_Position = vec4(position.xy * 2.0, 0.999, 1.0);");
+  expect(silk).not.toContain("useThree");
+  expect(silk).toContain("transparent={isolateFromTransmission || opacity < 1}");
+  expect(silk).toContain("depthTest={isolateFromTransmission}");
   expect(sceneContent).toContain("CoScrollSilkBackground");
-  expect(sceneContent).toContain("CoScrollCausticLightField");
-  expect(sceneContent.indexOf("<CoScrollSilkBackground")).toBeLessThan(sceneContent.indexOf("<CoScrollCausticLightField"));
+  expect(sceneContent).toContain("speed={4.9}");
+  expect(sceneContent).toContain("scale={1}");
+  expect(sceneContent).toContain('color="#1f2e38"');
+  expect(sceneContent).toContain("noiseIntensity={1.3}");
+  expect(sceneContent).toContain("rotation={2.42}");
+  expect(sceneContent).toContain("opacity={sourceMatchMode ? 1 : state.backgroundIntensity}");
+  expect(sceneContent).toContain("isolateFromTransmission={sourceMatchMode}");
   expect(sceneContent).not.toContain("CoScrollMineralField");
   expect(packageIndex).toContain("CoScrollSilkBackground");
+});
+
+test("coscroll source-match excludes the caustic and glyph-corona render path", async () => {
+  const [{ existsSync }, path] = await Promise.all([import("node:fs"), import("node:path")]);
+  const sceneContent = await readProjectFile("packages/coscroll-scene/src/CoScrollSceneContent.tsx");
+  const caustics = await readProjectFile("packages/coscroll-scene/src/CoScrollCausticLightField.tsx");
+  const packageIndex = await readProjectFile("packages/coscroll-scene/src/index.ts");
+
+  expect(sceneContent).toContain("{sourceMatchMode ? null : (\n        <CoScrollCausticLightField");
+  expect(sceneContent).not.toContain("sourceMatch={sourceMatchMode}");
+  expect(sceneContent).not.toContain("rotationSignalRef={sourceRotationSignalRef}");
+  expect(caustics).not.toContain("coScrollSourceCausticFragmentShader");
+  expect(caustics).not.toContain("stepSourceCausticMotion");
+  expect(caustics).toContain("THREE.AdditiveBlending");
   expect(packageIndex).toContain("CoScrollCausticLightField");
+  expect(
+    existsSync(path.join(repoRoot, "packages/coscroll-scene/src/shaders/coScrollSourceCausticShader.ts"))
+  ).toBe(false);
+  expect(existsSync(path.join(repoRoot, "packages/coscroll-scene/src/sourceCausticMotion.ts"))).toBe(false);
 });
 
 test("coscroll source-match lyrics use horizontal travel lanes instead of clustered index positions", async () => {
@@ -1047,205 +989,6 @@ test("coscroll source-match lyric fills stay opaque without halo shadows", async
   expect(sceneContent).toContain("depthWrite");
 });
 
-test("coscroll source-match shares anchor rotation phase with the caustic field", async () => {
-  const types = await readProjectFile("packages/coscroll-scene/src/types.ts");
-  const sceneContent = await readProjectFile("packages/coscroll-scene/src/CoScrollSceneContent.tsx");
-  const jade = await readProjectFile("packages/coscroll-scene/src/CoScrollJadeAnchor.tsx");
-  const caustics = await readProjectFile("packages/coscroll-scene/src/CoScrollCausticLightField.tsx");
-
-  expect(types).toContain("export interface CoScrollRotationSignal");
-  expect(sceneContent).toContain("const sourceRotationSignalRef = useRef<CoScrollRotationSignal>");
-  expect(sceneContent.match(/rotationSignalRef=\{sourceRotationSignalRef\}/g)).toHaveLength(2);
-  expect(sceneContent).toContain("const sourceAnchorPosition");
-  expect(sceneContent).toContain("const sourceAnchorScale");
-  expect(sceneContent).toContain("anchorPosition={sourceAnchorPosition}");
-  expect(sceneContent).toContain("anchorScale={sourceAnchorScale}");
-  expect(jade).toContain("rotationSignalRef.current.angle = rotationRef.current");
-  expect(jade).toContain("rotationSignalRef.current.speed = currentSpeedRef.current");
-  expect(caustics).toContain('import { stepSourceCausticMotion } from "./sourceCausticMotion"');
-  expect(caustics).toContain('import { coScrollSourceCausticFragmentShader } from "./shaders/coScrollSourceCausticShader"');
-  expect(caustics).toContain("const legacyFragmentShader = `");
-  expect(caustics).toContain("const sourceMotionEnergyRef = useRef(0);");
-  expect(caustics).toContain("const motion = stepSourceCausticMotion({");
-  expect(caustics).toContain("angle: rotationSignalRef?.current.angle ?? 0");
-  expect(caustics).toContain("speed: rotationSignalRef?.current.speed ?? 0");
-  expect(caustics).toContain("uAnchorCenter");
-  expect(caustics).toContain("uAnchorFieldScale");
-  expect(caustics).toContain("uAnchorFacing");
-  expect(caustics).toContain("uLensStrength");
-  expect(caustics).toContain("THREE.NormalBlending");
-  expect(caustics).toContain("transparent\n");
-  expect(caustics).not.toContain("transparent={!sourceMatch}");
-  expect(caustics).toContain('key={sourceMatch ? "source-organic-caustic" : "legacy-caustic"}');
-  expect(caustics).toContain("? coScrollSourceCausticFragmentShader");
-  expect(caustics).toContain(": legacyFragmentShader");
-});
-
-test("source caustic remains calm at the anchor base speed", () => {
-  const motion = stepSourceCausticMotion({
-    angle: -0.62,
-    speed: -0.32,
-    previousEnergy: 0,
-    delta: 1 / 60
-  });
-
-  expect(motion.energy).toBeCloseTo(0, 4);
-  expect(motion.anchorFacing).toBeCloseTo(Math.sin(-0.62), 4);
-  expect(motion.lensStrength).toBeCloseTo(0.32, 4);
-  expect(motion.fieldRotation).toBeCloseTo(-0.2604, 4);
-  expect(motion.timeScale).toBeCloseTo(0.3, 4);
-  expect(motion.chromaOffset).toBeCloseTo(0.00045, 5);
-});
-
-test("source caustic acceleration is independent of scroll direction", () => {
-  const forward = stepSourceCausticMotion({
-    angle: 1,
-    speed: 2.2,
-    previousEnergy: 0,
-    delta: 1
-  });
-  const reverse = stepSourceCausticMotion({
-    angle: 1,
-    speed: -2.2,
-    previousEnergy: 0,
-    delta: 1
-  });
-
-  expect(forward).toEqual(reverse);
-  expect(forward.anchorFacing).toBeCloseTo(Math.sin(1), 4);
-  expect(forward.lensStrength).toBeGreaterThan(0.41);
-  expect(forward.lensStrength).toBeLessThanOrEqual(0.42);
-  expect(forward.timeScale).toBeGreaterThan(1.28);
-  expect(forward.warpAmount).toBeGreaterThan(0.47);
-  expect(forward.chromaOffset).toBeLessThanOrEqual(0.0022);
-});
-
-test("source caustic uses organic layers without global postprocessing", async () => {
-  const shader = await readProjectFile(
-    "packages/coscroll-scene/src/shaders/coScrollSourceCausticShader.ts"
-  );
-  const field = await readProjectFile(
-    "packages/coscroll-scene/src/CoScrollCausticLightField.tsx"
-  );
-
-  expect(shader).toContain("macroStream");
-  expect(shader).toContain("pulseStreak");
-  expect(shader).toContain("microCaustic");
-  expect(shader).toContain("spectralRidge");
-  expect(shader).toContain("uFieldRotation");
-  expect(shader).toContain("uMotionEnergy");
-  expect(shader).toContain("uniform vec2 uAnchorCenter");
-  expect(shader).toContain("uniform vec2 uAnchorFieldScale");
-  expect(shader).toContain("uniform float uAnchorFacing");
-  expect(shader).toContain("uniform float uLensStrength");
-  expect(shader).toContain("float capsuleSdf(");
-  expect(shader).toContain("float sourceAnchorStrokeSdf(");
-  expect(shader).toContain("float sourceAnchorHullSdf(");
-  expect(shader).toContain("float iterativeCorona(");
-  expect(shader).toContain("float macroStream");
-  expect(shader).toContain("float anchorRim");
-  expect(shader).toContain("float coronaFlow");
-  expect(shader).toContain("vec3 amberEdge");
-  expect(shader).toContain("gl_FragColor = vec4(color, 1.0);");
-  expect(shader).toContain("float macroLight =");
-  expect(shader).toContain("float pulseLight =");
-  expect(shader).toContain("float microLight =");
-  expect(shader).toContain("float coronaLight =");
-  expect(shader).toContain("float lightSignal = macroLight + pulseLight + microLight + coronaLight;");
-  expect(shader).toContain("mix(1.0, 0.92, readingChannel * readingChannel)");
-  expect(shader).not.toContain("mix(1.0, 0.46, readingChannel)");
-  expect(shader).not.toContain("wellDistance");
-  expect(shader).not.toContain("wellRim");
-  expect(shader).not.toContain("wellShadow");
-  expect(field).not.toContain("EffectComposer");
-  expect(field).not.toContain("ChromaticAberration");
-  expect(field).not.toContain("WebGLRenderTarget");
-  expect(shader).not.toContain("WebGLRenderTarget");
-});
-
-test("source caustic separates the broad glyph hull from stroke-local detail", async () => {
-  const shader = await readProjectFile(
-    "packages/coscroll-scene/src/shaders/coScrollSourceCausticShader.ts"
-  );
-
-  expect(shader).toContain("float hullDistance");
-  expect(shader).toContain("float strokeDistance");
-  expect(shader).toContain("vec2 hullNormal");
-  expect(shader).toContain("vec2 strokeNormal");
-  expect(shader).toContain("float strokeInfluence");
-  expect(shader).toContain("mix(hullNormal, strokeNormal, strokeInfluence");
-  expect(shader).toContain("float hullCoronaEnvelope");
-  expect(shader).toContain("float coronaSideBias");
-  expect(shader).toContain("float coronaOpenBias");
-  expect(shader).toContain("float lensFlowEnvelope");
-  expect(shader).toContain("float coronaBreakup");
-  expect(shader).toContain("float coronaEnvelope = hullCoronaEnvelope * coronaBreakup");
-  expect(shader).toContain("float filamentReach");
-  expect(shader).toContain("float coronaFilaments");
-  expect(shader).toContain("sourceAnchorLocalPoint(p, facing, 0.24)");
-  expect(shader).toContain("sourceAnchorLocalPoint(p, facing, 0.48)");
-  expect(shader).not.toContain("float coronaEnvelope = hullCoronaEnvelope;");
-  expect(shader).not.toContain("field += flowNormal * lensEnvelope");
-  expect(shader).not.toContain("min(hullDistance, strokeDistance)");
-});
-
-test("source caustic grows long tangent filaments without another noise pass", async () => {
-  const shader = await readProjectFile(
-    "packages/coscroll-scene/src/shaders/coScrollSourceCausticShader.ts"
-  );
-
-  expect(shader).toContain("float filamentExterior");
-  expect(shader).toContain("float filamentTangentCoordinate");
-  expect(shader).toContain("float filamentPhaseA");
-  expect(shader).toContain("float filamentPhaseB");
-  expect(shader).toContain("float filamentWidthA");
-  expect(shader).toContain("float filamentWidthB");
-  expect(shader).toContain("fwidth(filamentPhaseA)");
-  expect(shader).toContain("fwidth(filamentPhaseB)");
-  expect(shader).toContain("clamp(fwidth(filamentPhaseA) * 0.55, 0.006, 0.035)");
-  expect(shader).toContain("clamp(fwidth(filamentPhaseB) * 0.52, 0.006, 0.035)");
-  expect(shader).toContain("float filamentCoreA");
-  expect(shader).toContain("float filamentCoreB");
-  expect(shader).toContain("float filamentCore");
-  expect(shader).toContain("float filamentHalo");
-  expect(shader).toContain("float filamentShear");
-  expect(shader).toContain("float filamentBandModulation");
-  expect(shader).toContain("float filamentSegments");
-  expect(shader).toContain("float filamentReach");
-  expect(shader).not.toContain("pow(1.0 - abs(sin(filamentPhaseA)), 24.0)");
-  expect(shader).not.toContain("pow(1.0 - abs(sin(filamentPhaseB)), 30.0)");
-  expect(shader).not.toContain("0.025 + filamentWidthA");
-  expect(shader).not.toContain("0.022 + filamentWidthB");
-  expect(shader).toContain("filamentBandModulation *");
-  expect(shader.match(/fbm3\(/g)).toHaveLength(4);
-  expect(shader).not.toContain("float coronaFilaments =\n    coronaRidges *");
-});
-
-test("source caustic keeps soft macro bands subordinate to tangent filaments", async () => {
-  const shader = await readProjectFile(
-    "packages/coscroll-scene/src/shaders/coScrollSourceCausticShader.ts"
-  );
-
-  expect(shader).toContain("macroStream * mix(0.026, 0.024, uIsMobile)");
-  expect(shader).toContain("macroCore * mix(0.31, 0.28, uIsMobile)");
-  expect(shader).toContain("coronaFilaments * mix(0.78, 0.62, uIsMobile)");
-  expect(shader).toContain("mix(0.03, 0.1, uIsMobile)");
-  expect(shader).not.toContain("macroStream * mix(0.058, 0.052, uIsMobile)");
-});
-
-test("source caustic derives both SDF normals without repeating capsule fields", async () => {
-  const shader = await readProjectFile(
-    "packages/coscroll-scene/src/shaders/coScrollSourceCausticShader.ts"
-  );
-
-  expect(shader).toContain("dFdx(hullDistance)");
-  expect(shader).toContain("dFdy(hullDistance)");
-  expect(shader).toContain("dFdx(strokeDistance)");
-  expect(shader).toContain("dFdy(strokeDistance)");
-  expect(shader).not.toContain("float distanceStep");
-  expect(shader).not.toContain("anchorPoint + vec2(distanceStep");
-});
-
 test("coscroll source-match scroll input accelerates rotation in its current direction", async () => {
   const jade = await readProjectFile("packages/coscroll-scene/src/CoScrollJadeAnchor.tsx");
 
@@ -1257,15 +1000,15 @@ test("coscroll source-match scroll input accelerates rotation in its current dir
 test("coscroll source-match uses the original black-blue and cold-white palette", async () => {
   const spikeExperience = await readProjectFile("apps/site/app/coscroll-spike/CoScrollSpikeExperience.tsx");
   const sceneContent = await readProjectFile("packages/coscroll-scene/src/CoScrollSceneContent.tsx");
+  const silk = await readProjectFile("packages/coscroll-scene/src/CoScrollSilkBackground.tsx");
   const billboard = await readProjectFile("packages/coscroll-scene/src/CoScrollTextBillboard.tsx");
-  const caustics = await readProjectFile("packages/coscroll-scene/src/CoScrollCausticLightField.tsx");
 
   expect(spikeExperience).toContain('background: "#010205"');
   expect(sceneContent).toContain('{sourceMatchMode ? null : <color attach="background" args={["#010205"]} />}');
+  expect(sceneContent).toContain('color="#1f2e38"');
+  expect(silk).toContain('color = "#1f2e38"');
   expect(billboard).toContain('fill: current ? "#f8fafc" : "#cbd5f5"');
   expect(billboard).toContain('shadow: "rgba(0, 0, 0, 0)"');
-  expect(caustics).toContain('sourceMatch ? "#2d6d8b" : "#386f70"');
-  expect(caustics).toContain('sourceMatch ? "#cbd5f5" : "#e5fff7"');
 });
 
 test("coscroll source-match keeps the original transmissive shell isolated from the backdrop", async () => {
@@ -1504,46 +1247,20 @@ test("coscroll source-match wheel input visibly drives bidirectional model motio
   expect(meanSampleDelta(afterForward, afterReverse)).toBeGreaterThan(0.6);
 });
 
-test("coscroll source-match keeps organic flow separate from the legacy profile", async () => {
-  const caustics = await readProjectFile("packages/coscroll-scene/src/CoScrollCausticLightField.tsx");
-  const sourceShader = await readProjectFile("packages/coscroll-scene/src/shaders/coScrollSourceCausticShader.ts");
-  const jade = await readProjectFile("packages/coscroll-scene/src/CoScrollJadeAnchor.tsx");
-  const sceneContent = await readProjectFile("packages/coscroll-scene/src/CoScrollSceneContent.tsx");
-
-  expect(caustics).toContain("const legacyFragmentShader = `");
-  expect(caustics).toContain("poolDriftA");
-  expect(caustics).toContain("roamingCaustic");
-  expect(caustics).toContain("sourceFlowA");
-  expect(caustics).toContain("sourceFlowB");
-  expect(caustics).toContain("sourceCoverageFloor");
-  expect(caustics).toContain("float perlinNoise(vec2 p)");
-  expect(caustics).toContain("float perlinFbm(vec2 p)");
-  expect(caustics).toContain("uLyricCenters");
-  expect(caustics).toContain("verticalReadingChannel(centered, uLyricCenters.x");
-  expect(caustics).toContain("if (!active || paused || reducedMotion)");
-  expect(sourceShader).toContain("macroStream");
-  expect(sourceShader).toContain("pulseStreak");
-  expect(sourceShader).toContain("microCaustic");
-  expect(sceneContent).toContain("lyricCenters={sourceCausticLyricCenters}");
-  expect(jade).not.toContain("SOURCE_MATCH_MODEL_CAUSTICS_OPACITY_SCALE");
-  expect(jade).not.toContain("SOURCE_MATCH_MODEL_CAUSTICS_MAX_OPACITY");
-});
-
-test("source caustic preserves dark space with visible organic highlights", async ({ page }) => {
+test("source-match original Silk background preserves a dark black-blue field", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/coscroll-spike?sourceMatch=1&visualTest=pixels");
   await waitForCoScrollPixels(page, 18);
 
   const profile = await measureBackgroundLumaProfile(page);
   const profileSummary = JSON.stringify(profile);
-  expect(profile.darkShare, profileSummary).toBeGreaterThan(0.55);
-  expect(profile.brightShare, profileSummary).toBeGreaterThan(0.01);
+  expect(profile.darkShare, profileSummary).toBeLessThan(0.98);
   expect(profile.brightShare, profileSummary).toBeLessThan(0.18);
-  expect(profile.meanLuma, profileSummary).toBeGreaterThan(4);
+  expect(profile.meanLuma, profileSummary).toBeGreaterThan(3);
   expect(profile.meanLuma, profileSummary).toBeLessThan(42);
 });
 
-test("source caustic remains visible on mobile without filling the frame", async ({ page }) => {
+test("source-match original Silk background remains visible on mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/coscroll-spike?sourceMatch=1&visualTest=pixels");
   await waitForCoScrollPixels(page, 18);
@@ -1555,15 +1272,13 @@ test("source caustic remains visible on mobile without filling the frame", async
     sampleHeight: 45
   });
   const profileSummary = JSON.stringify(profile);
-  expect(profile.darkShare, profileSummary).toBeGreaterThan(0.55);
   expect(profile.darkShare, profileSummary).toBeLessThan(0.98);
-  expect(profile.brightShare, profileSummary).toBeGreaterThan(0.005);
   expect(profile.brightShare, profileSummary).toBeLessThan(0.18);
   expect(profile.meanLuma, profileSummary).toBeGreaterThan(3);
   expect(profile.meanLuma, profileSummary).toBeLessThan(42);
 });
 
-test("source caustic does not collapse to black during mobile motion", async ({ page }) => {
+test("source-match original Silk background does not collapse to black during mobile motion", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/coscroll-spike?sourceMatch=1&motionTest=1");
   await waitForCoScrollPixels(page, 18);
@@ -1595,7 +1310,7 @@ test("coscroll source-match renders a neutral outer shell over the blue core", a
   expect(balance.cyanCoreShare).toBeGreaterThan(0.015);
 });
 
-test("coscroll source-match caustics visibly advect across the empty background band", async ({ page }) => {
+test("coscroll source-match original Silk visibly flows across the empty background band", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/coscroll-spike?sourceMatch=1&motionTest=1");
   await waitForCoScrollPixels(page, 18);
@@ -1604,24 +1319,6 @@ test("coscroll source-match caustics visibly advect across the empty background 
   const motion = await measureBackgroundScreenshotMotion(page);
   expect(motion.meanDelta).toBeGreaterThan(1.2);
   expect(motion.changedShare).toBeGreaterThan(0.08);
-});
-
-test("source caustic visibly accelerates with actual model motion", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/coscroll-spike?sourceMatch=1&motionTest=1");
-  await waitForCoScrollPixels(page, 18);
-  await page.waitForTimeout(1_200);
-
-  const idle = await measureBackgroundCanvasFrameMotion(page);
-
-  await page.mouse.move(720, 450);
-  await page.mouse.wheel(0, 110);
-  await page.waitForTimeout(100);
-  const boosted = await measureBackgroundCanvasFrameMotion(page);
-  const motionSummary = JSON.stringify({ idle, boosted });
-
-  expect(boosted.meanDelta, motionSummary).toBeGreaterThan(idle.meanDelta * 1.2);
-  expect(boosted.changedShare, motionSummary).toBeGreaterThan(0.08);
 });
 
 test("coscroll reduced motion keeps a static anchor instead of collapsing to background-only pixels", async ({ page }) => {

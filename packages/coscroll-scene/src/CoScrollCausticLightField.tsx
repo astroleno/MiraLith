@@ -4,9 +4,6 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { IUniform } from "three";
-import { coScrollSourceCausticFragmentShader } from "./shaders/coScrollSourceCausticShader";
-import { stepSourceCausticMotion } from "./sourceCausticMotion";
-import type { CoScrollRotationSignalRef } from "./types";
 
 interface CausticUniforms {
   uAnchorCenter: IUniform<THREE.Vector2>;
@@ -37,14 +34,10 @@ export interface CoScrollCausticLightFieldProps {
   active?: boolean;
   paused?: boolean;
   reducedMotion?: boolean;
-  sourceMatch?: boolean;
   layout?: "desktop" | "mobile";
   opacity?: number;
   anchorPresence?: number;
-  anchorPosition?: [number, number, number];
-  anchorScale?: number;
   scrollVelocity?: number;
-  rotationSignalRef?: CoScrollRotationSignalRef;
   lyricCenters?: [number, number, number, number];
   colorA?: string;
   colorB?: string;
@@ -53,7 +46,6 @@ export interface CoScrollCausticLightFieldProps {
 }
 
 const DEFAULT_CAUSTIC_SPEED = 0.22;
-const SOURCE_MATCH_MODEL_SCALE_REFERENCE = 2.8 * 1.2 * 1.1;
 
 const vertexShader = `
 varying vec2 vUv;
@@ -274,14 +266,10 @@ export function CoScrollCausticLightField({
   active = true,
   paused = false,
   reducedMotion = false,
-  sourceMatch = false,
   layout = "desktop",
   opacity = 0.18,
   anchorPresence = 1,
-  anchorPosition = [0, 0, 0],
-  anchorScale = SOURCE_MATCH_MODEL_SCALE_REFERENCE,
   scrollVelocity = 0,
-  rotationSignalRef,
   lyricCenters = [-0.43, -0.18, 0.08, 0.35],
   colorA,
   colorB,
@@ -289,22 +277,20 @@ export function CoScrollCausticLightField({
   renderOrder = -80
 }: CoScrollCausticLightFieldProps) {
   const materialRef = useRef<THREE.ShaderMaterial>(null);
-  const sourceMotionEnergyRef = useRef(0);
-  const anchorProjectionPoint = useMemo(() => new THREE.Vector3(), []);
-  const { camera, viewport } = useThree();
+  const { viewport } = useThree();
   const uniforms = useMemo<CausticUniforms>(
     () => ({
       uAnchorCenter: { value: new THREE.Vector2(0, 0) },
-      uAnchorFacing: { value: Math.sin(rotationSignalRef?.current.angle ?? 0) },
+      uAnchorFacing: { value: 0 },
       uAnchorFieldScale: { value: new THREE.Vector2(0.27, 0.42) },
-      uAnchorRotation: { value: rotationSignalRef?.current.angle ?? 0 },
-      uAnchorSpeed: { value: rotationSignalRef?.current.speed ?? 0 },
+      uAnchorRotation: { value: 0 },
+      uAnchorSpeed: { value: 0 },
       uAnchorPresence: { value: anchorPresence },
       uAspect: { value: Math.max(0.1, viewport.width / Math.max(viewport.height, 0.1)) },
       uChromaOffset: { value: 0.00045 },
-      uColorA: { value: new THREE.Color(colorA ?? (sourceMatch ? "#2d6d8b" : "#386f70")) },
-      uColorB: { value: new THREE.Color(colorB ?? (sourceMatch ? "#cbd5f5" : "#e5fff7")) },
-      uFieldRotation: { value: (rotationSignalRef?.current.angle ?? 0) * 0.42 },
+      uColorA: { value: new THREE.Color(colorA ?? "#386f70") },
+      uColorB: { value: new THREE.Color(colorB ?? "#e5fff7") },
+      uFieldRotation: { value: 0 },
       uIntensity: { value: opacity },
       uIsMobile: { value: layout === "mobile" ? 1 : 0 },
       uLyricCenters: { value: new THREE.Vector4(...lyricCenters) },
@@ -312,7 +298,7 @@ export function CoScrollCausticLightField({
       uMotionEnergy: { value: 0 },
       uPulseStrength: { value: 0.12 },
       uScrollVelocity: { value: scrollVelocity },
-      uSourceMatch: { value: sourceMatch ? 1 : 0 },
+      uSourceMatch: { value: 0 },
       uTime: { value: 0 },
       uWarpAmount: { value: 0.3 }
     }),
@@ -323,53 +309,18 @@ export function CoScrollCausticLightField({
     const liveUniforms = materialRef.current?.uniforms ?? uniforms;
     liveUniforms.uAnchorPresence.value = anchorPresence;
     liveUniforms.uAspect.value = Math.max(0.1, viewport.width / Math.max(viewport.height, 0.1));
-    const normalizedAnchorScale = Math.max(
-      0.2,
-      anchorScale / SOURCE_MATCH_MODEL_SCALE_REFERENCE
-    );
-    liveUniforms.uAnchorFieldScale.value.set(
-      (layout === "mobile" ? 0.31 : 0.27) * normalizedAnchorScale,
-      (layout === "mobile" ? 0.36 : 0.42) * normalizedAnchorScale
-    );
-    liveUniforms.uColorA.value.set(colorA ?? (sourceMatch ? "#2d6d8b" : "#386f70"));
-    liveUniforms.uColorB.value.set(colorB ?? (sourceMatch ? "#cbd5f5" : "#e5fff7"));
+    liveUniforms.uColorA.value.set(colorA ?? "#386f70");
+    liveUniforms.uColorB.value.set(colorB ?? "#e5fff7");
     liveUniforms.uIntensity.value = opacity;
     liveUniforms.uIsMobile.value = layout === "mobile" ? 1 : 0;
     liveUniforms.uLyricCenters.value.set(...lyricCenters);
     liveUniforms.uScrollVelocity.value = scrollVelocity;
-    liveUniforms.uSourceMatch.value = sourceMatch ? 1 : 0;
-  }, [anchorPresence, anchorScale, colorA, colorB, layout, lyricCenters, opacity, scrollVelocity, sourceMatch, uniforms, viewport.height, viewport.width]);
+    liveUniforms.uSourceMatch.value = 0;
+  }, [anchorPresence, colorA, colorB, layout, lyricCenters, opacity, scrollVelocity, uniforms, viewport.height, viewport.width]);
 
   useFrame((_state, delta) => {
     const liveUniforms = materialRef.current?.uniforms;
     if (!liveUniforms) {
-      return;
-    }
-
-    if (sourceMatch) {
-      anchorProjectionPoint.set(...anchorPosition).project(camera);
-      liveUniforms.uAnchorCenter.value.set(
-        anchorProjectionPoint.x * liveUniforms.uAspect.value,
-        anchorProjectionPoint.y
-      );
-      const motion = stepSourceCausticMotion({
-        angle: rotationSignalRef?.current.angle ?? 0,
-        speed: rotationSignalRef?.current.speed ?? 0,
-        previousEnergy: sourceMotionEnergyRef.current,
-        delta: active && !paused && !reducedMotion ? delta : 0
-      });
-
-      sourceMotionEnergyRef.current = motion.energy;
-      liveUniforms.uAnchorFacing.value = motion.anchorFacing;
-      liveUniforms.uFieldRotation.value = motion.fieldRotation;
-      liveUniforms.uLensStrength.value = motion.lensStrength;
-      liveUniforms.uMotionEnergy.value = motion.energy;
-      liveUniforms.uWarpAmount.value = motion.warpAmount;
-      liveUniforms.uPulseStrength.value = motion.pulseStrength;
-      liveUniforms.uChromaOffset.value = motion.chromaOffset;
-      if (active && !paused && !reducedMotion) {
-        liveUniforms.uTime.value += delta * motion.timeScale;
-      }
       return;
     }
 
@@ -389,19 +340,15 @@ export function CoScrollCausticLightField({
     >
       <planeGeometry args={[1, 1, 1, 1]} />
       <shaderMaterial
-        key={sourceMatch ? "source-organic-caustic" : "legacy-caustic"}
+        key="legacy-caustic"
         ref={materialRef}
         uniforms={uniforms}
         vertexShader={vertexShader}
-        fragmentShader={
-          sourceMatch
-            ? coScrollSourceCausticFragmentShader
-            : legacyFragmentShader
-        }
+        fragmentShader={legacyFragmentShader}
         transparent
         depthTest
         depthWrite={false}
-        blending={sourceMatch ? THREE.NormalBlending : THREE.AdditiveBlending}
+        blending={THREE.AdditiveBlending}
         toneMapped={false}
       />
     </mesh>

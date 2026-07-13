@@ -621,3 +621,14 @@ git push
 - [x] Reduce the broad macro haze while preserving its narrow core, leaving the soft bands as context beneath the brighter filament hierarchy.
 - [x] Source Match scoped suite: 31/31 passed. Real model-motion acceleration: 3/3 repeated runs passed.
 - [x] Desktop idle/scroll and mobile idle frames inspected. CoScroll typecheck, Site typecheck, Site lint, Site production build, and `git diff --check`: passed.
+
+## Original Silk rollback — 2026-07-13
+
+The later Shader4/corona direction is superseded by the user's decision to restore the original CoScroll background. Source Match now uses the original `SilkR3F` fragment program and its exact published settings (`speed=4.9`, `scale=1`, `noiseIntensity=1.3`, `rotation=2.42`, `color=#1f2e38`). The glyph corona, custom caustic shader, and model-to-background motion coupling are removed from this route.
+
+- [x] Preserve the original shader math, animation rate, and raw normalized-RGB color semantics.
+- [x] Adapt only the vertex carrier to clip space so the shader fills MiraLith's shared Canvas without camera overscan or scroll exposure.
+- [x] Keep the Silk material isolated from the transmissive outer shell while preserving the neutral shell / blue-core separation.
+- [x] Remove Source Match's caustic/corona render path and its now-unused shader and motion modules; keep the legacy caustic path unchanged for non-Source-Match rendering.
+- [x] Verify desktop idle/scroll and mobile frames: the black-blue Silk field is visible, animated, full-viewport, and no corona remains.
+- [x] Run the 26-test Source Match suite, CoScroll/Site typechecks, Site lint and production build; refresh the knowledge graph before commit and push.
