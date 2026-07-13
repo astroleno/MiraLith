@@ -340,13 +340,6 @@ void main() {
     uTime,
     broadNoise * 2.1 + uAnchorFacing * 0.42
   );
-  float coronaRidges = ridgeField(
-    coronaPoint * mix(0.72, 0.64, uIsMobile) +
-      flowTangent * coronaFlow * 0.08 +
-      strokeTangent * strokeInfluence * 0.16,
-    uTime * 0.72,
-    coronaFlow
-  );
   float coronaBreakup = mix(
     0.18,
     1.0,
@@ -363,20 +356,121 @@ void main() {
     )
   );
   float coronaEnvelope = hullCoronaEnvelope * coronaBreakup;
-  float strokeFilamentEnvelope =
-    exp(-max(strokeDistance, 0.0) * 4.1) *
-    smoothstep(-0.06, 0.16, strokeDistance) *
-    strokeFieldReach *
+  float filamentExterior = max(hullDistance, 0.0);
+  vec2 filamentTangent = normalize(
+    mix(
+      flowTangent,
+      strokeTangent,
+      min(0.55, strokeInfluence + strokeProximity * 0.18)
+    ) + vec2(0.0001)
+  );
+  float filamentTangentCoordinate = dot(coronaPoint, filamentTangent);
+  float filamentWarp =
+    (coronaFlow - 0.5) * 2.4 +
+    (broadNoise - 0.5) * 1.2 +
+    sin(filamentExterior * 2.3 - uTime * 0.3) * 0.35;
+  float filamentShear =
+    sin(
+      filamentTangentCoordinate * 2.2 +
+      filamentExterior * 1.3 -
+      uTime * 0.25
+    ) * 0.85 +
+    sin(
+      filamentExterior * 3.1 -
+      coronaFlow * 4.2 +
+      uTime * 0.18
+    ) * 0.55;
+  float filamentPhaseA =
+    filamentTangentCoordinate * mix(8.5, 11.5, coronaFlow) +
+    filamentExterior * (1.35 + uMotionEnergy * 0.9) +
+    filamentWarp -
+    filamentShear -
+    uTime * (0.68 + uMotionEnergy * 0.5);
+  float filamentPhaseB =
+    filamentTangentCoordinate * mix(13.0, 17.0, broadNoise) -
+    filamentExterior * (2.1 + uMotionEnergy * 1.2) -
+    filamentWarp * 0.75 +
+    filamentShear * 0.6 +
+    uTime * (0.48 + uMotionEnergy * 0.64) +
+    1.7;
+  float filamentDistanceA = abs(sin(filamentPhaseA));
+  float filamentDistanceB = abs(sin(filamentPhaseB));
+  float filamentWidthA =
+    clamp(fwidth(filamentPhaseA) * 0.55, 0.006, 0.035);
+  float filamentWidthB =
+    clamp(fwidth(filamentPhaseB) * 0.52, 0.006, 0.035);
+  float filamentCoreA =
+    1.0 - smoothstep(
+      0.042 - filamentWidthA,
+      0.042 + filamentWidthA,
+      filamentDistanceA
+    );
+  float filamentCoreB =
+    1.0 - smoothstep(
+      0.036 - filamentWidthB,
+      0.036 + filamentWidthB,
+      filamentDistanceB
+    );
+  float filamentCore = max(filamentCoreA, filamentCoreB * 0.74);
+  float filamentHaloA =
+    1.0 - smoothstep(
+      0.09 - filamentWidthA,
+      0.34 + filamentWidthA * 1.2,
+      filamentDistanceA
+    );
+  float filamentHaloB =
+    1.0 - smoothstep(
+      0.08 - filamentWidthB,
+      0.3 + filamentWidthB * 1.15,
+      filamentDistanceB
+    );
+  float filamentHalo = max(
+    filamentHaloA * 0.32,
+    filamentHaloB * 0.22
+  );
+  float filamentBandModulation = mix(
+    0.14,
+    1.0,
+    smoothstep(
+      0.12,
+      0.88,
+      0.5 + 0.5 * sin(
+        filamentTangentCoordinate * 1.37 +
+        filamentExterior * 0.83 +
+        coronaFlow * 2.1 -
+        uTime * 0.17
+      )
+    )
+  );
+  float filamentSegments = mix(
+    0.03,
+    1.0,
+    smoothstep(
+      0.2,
+      0.76,
+      0.5 + 0.5 * sin(
+        filamentExterior * 4.8 +
+        filamentTangentCoordinate * 1.9 -
+        coronaFlow * 2.4 -
+        uTime * 0.52
+      )
+    )
+  );
+  float filamentReach =
+    exp(-filamentExterior * mix(1.0, 1.25, uIsMobile)) *
+    (1.0 - smoothstep(1.65, 2.5, filamentExterior)) *
+    smoothstep(-0.08, 0.18, hullDistance) *
+    coronaSideBias *
+    coronaOpenBias *
     coronaBreakup;
   float brokenCorona =
     coronaEnvelope *
     smoothstep(0.5, 0.8, coronaFlow * 0.7 + broadNoise * 0.3);
   float coronaFilaments =
-    coronaRidges *
-    (
-      coronaEnvelope * (0.24 + coronaFlow * 0.46) +
-      strokeFilamentEnvelope * (0.18 + strokeProximity * 0.42)
-    );
+    filamentReach *
+    filamentSegments *
+    filamentBandModulation *
+    (filamentCore * 0.9 + filamentHalo * 0.24);
   float coronaPlumes =
     coronaEnvelope *
     pow(
@@ -489,8 +583,8 @@ void main() {
   microCaustic *= mix(0.1, 0.18, uMotionEnergy);
 
   float macroLight =
-    macroStream * mix(0.058, 0.052, uIsMobile) +
-    macroCore * mix(0.3, 0.27, uIsMobile);
+    macroStream * mix(0.026, 0.024, uIsMobile) +
+    macroCore * mix(0.31, 0.28, uIsMobile);
   float pulseLight =
     smoothstep(0.035, 0.15, pulseStreak) *
     0.42;
@@ -498,9 +592,9 @@ void main() {
     smoothstep(0.045, 0.2, microCaustic) *
     0.09;
   float coronaLight =
-    brokenCorona * mix(0.24, 0.19, uIsMobile) +
-    coronaFilaments * mix(0.48, 0.38, uIsMobile) +
-    coronaPlumes * mix(0.32, 0.25, uIsMobile);
+    brokenCorona * mix(0.18, 0.14, uIsMobile) +
+    coronaFilaments * mix(0.78, 0.62, uIsMobile) +
+    coronaPlumes * mix(0.24, 0.19, uIsMobile);
   float lightSignal = macroLight + pulseLight + microLight + coronaLight;
   float highlight = smoothstep(0.035, 0.5, lightSignal);
 
@@ -524,8 +618,8 @@ void main() {
     uColorB *
     macroCore *
     intensity *
-    mix(0.04, 0.15, uIsMobile);
-  color += uColorB * coronaLight * intensity * 0.7;
+    mix(0.03, 0.1, uIsMobile);
+  color += uColorB * coronaLight * intensity * 0.82;
 
   vec3 amberEdge =
     vec3(0.718, 0.486, 0.286) *

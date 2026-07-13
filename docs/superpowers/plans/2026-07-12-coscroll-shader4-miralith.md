@@ -612,3 +612,12 @@ git push
 - [x] Replace repeated finite-difference SDF evaluation with screen-space derivatives, reducing the combined normal calculation to one hull and one stroke evaluation per pixel.
 - [x] Source Match scoped suite: 29/29 passed. Real model-motion acceleration: 3/3 repeated runs passed.
 - [x] Desktop idle/scroll and mobile idle frames inspected. CoScroll typecheck, Site typecheck, Site lint, Site production build, and scoped `git diff --check`: passed.
+
+## Filament-corona follow-up — 2026-07-13
+
+- [x] Replace the low-frequency ridge mask with two explicit tangent-space filament families derived from the shared glyph hull/stroke flow and real model-facing data.
+- [x] Give the filaments independent long-range falloff, phase shear, segmented breakup, band modulation, thin cores, and soft halos so the result reads as an open corona rather than a duplicate glyph or a closed sphere.
+- [x] Use capped `fwidth` antialiasing for stable thin strands on desktop and mobile without adding another FBM pass, SDF evaluation, render target, or shader loop.
+- [x] Reduce the broad macro haze while preserving its narrow core, leaving the soft bands as context beneath the brighter filament hierarchy.
+- [x] Source Match scoped suite: 31/31 passed. Real model-motion acceleration: 3/3 repeated runs passed.
+- [x] Desktop idle/scroll and mobile idle frames inspected. CoScroll typecheck, Site typecheck, Site lint, Site production build, and `git diff --check`: passed.

@@ -1180,14 +1180,57 @@ test("source caustic separates the broad glyph hull from stroke-local detail", a
   expect(shader).toContain("float lensFlowEnvelope");
   expect(shader).toContain("float coronaBreakup");
   expect(shader).toContain("float coronaEnvelope = hullCoronaEnvelope * coronaBreakup");
-  expect(shader).toContain("float strokeFilamentEnvelope");
-  expect(shader).toContain("coronaEnvelope * (0.24 + coronaFlow * 0.46)");
-  expect(shader).toContain("strokeFilamentEnvelope * (0.18 + strokeProximity * 0.42)");
+  expect(shader).toContain("float filamentReach");
+  expect(shader).toContain("float coronaFilaments");
   expect(shader).toContain("sourceAnchorLocalPoint(p, facing, 0.24)");
   expect(shader).toContain("sourceAnchorLocalPoint(p, facing, 0.48)");
   expect(shader).not.toContain("float coronaEnvelope = hullCoronaEnvelope;");
   expect(shader).not.toContain("field += flowNormal * lensEnvelope");
   expect(shader).not.toContain("min(hullDistance, strokeDistance)");
+});
+
+test("source caustic grows long tangent filaments without another noise pass", async () => {
+  const shader = await readProjectFile(
+    "packages/coscroll-scene/src/shaders/coScrollSourceCausticShader.ts"
+  );
+
+  expect(shader).toContain("float filamentExterior");
+  expect(shader).toContain("float filamentTangentCoordinate");
+  expect(shader).toContain("float filamentPhaseA");
+  expect(shader).toContain("float filamentPhaseB");
+  expect(shader).toContain("float filamentWidthA");
+  expect(shader).toContain("float filamentWidthB");
+  expect(shader).toContain("fwidth(filamentPhaseA)");
+  expect(shader).toContain("fwidth(filamentPhaseB)");
+  expect(shader).toContain("clamp(fwidth(filamentPhaseA) * 0.55, 0.006, 0.035)");
+  expect(shader).toContain("clamp(fwidth(filamentPhaseB) * 0.52, 0.006, 0.035)");
+  expect(shader).toContain("float filamentCoreA");
+  expect(shader).toContain("float filamentCoreB");
+  expect(shader).toContain("float filamentCore");
+  expect(shader).toContain("float filamentHalo");
+  expect(shader).toContain("float filamentShear");
+  expect(shader).toContain("float filamentBandModulation");
+  expect(shader).toContain("float filamentSegments");
+  expect(shader).toContain("float filamentReach");
+  expect(shader).not.toContain("pow(1.0 - abs(sin(filamentPhaseA)), 24.0)");
+  expect(shader).not.toContain("pow(1.0 - abs(sin(filamentPhaseB)), 30.0)");
+  expect(shader).not.toContain("0.025 + filamentWidthA");
+  expect(shader).not.toContain("0.022 + filamentWidthB");
+  expect(shader).toContain("filamentBandModulation *");
+  expect(shader.match(/fbm3\(/g)).toHaveLength(4);
+  expect(shader).not.toContain("float coronaFilaments =\n    coronaRidges *");
+});
+
+test("source caustic keeps soft macro bands subordinate to tangent filaments", async () => {
+  const shader = await readProjectFile(
+    "packages/coscroll-scene/src/shaders/coScrollSourceCausticShader.ts"
+  );
+
+  expect(shader).toContain("macroStream * mix(0.026, 0.024, uIsMobile)");
+  expect(shader).toContain("macroCore * mix(0.31, 0.28, uIsMobile)");
+  expect(shader).toContain("coronaFilaments * mix(0.78, 0.62, uIsMobile)");
+  expect(shader).toContain("mix(0.03, 0.1, uIsMobile)");
+  expect(shader).not.toContain("macroStream * mix(0.058, 0.052, uIsMobile)");
 });
 
 test("source caustic derives both SDF normals without repeating capsule fields", async () => {
