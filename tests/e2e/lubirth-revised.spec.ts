@@ -90,10 +90,14 @@ declare global {
     __MiraLithLuBirthCloudShellsActive?: boolean;
     __MiraLithLuBirthCloudShellCount?: number;
     __MiraLithLuBirthCloudFieldTexture?: string;
+    __MiraLithLuBirthCloudHeightScale?: number;
+    __MiraLithLuBirthCloudReliefSamples?: number;
     __MiraLithLuBirthGroundCloudShadowActive?: boolean;
     __MiraLithLuBirthHorizonAuroraRibbonActive?: boolean;
     __MiraLithLuBirthPostEffectActive?: boolean;
     __MiraLithLuBirthPostEffectMode?: string;
+    __MiraLithLuBirthSpaceBackgroundTexture?: string;
+    __MiraLithLuBirthSpaceBackgroundResolution?: [number, number];
     __MiraLithLuBirthAnalyticHaloConfig?: {
       diameterScale: number;
       opacityMax: number;
@@ -114,6 +118,7 @@ declare global {
       };
     };
     __MiraLithLuBirthMoonPhase?: { date: string; source: string; phaseAngleRad: number };
+    __MiraLithLuBirthMoonPhaseMode?: "birth" | "today";
     __MiraLithLuBirthProjectedAuroraCurtainActive?: boolean;
     __MiraLithLuBirthProjectedCloudPlateActive?: boolean;
     __MiraLithLuBirthProjectedCloudPlateTexture?: string;
@@ -123,6 +128,7 @@ declare global {
     __MiraLithLuBirthProjectedLimbScatteringActive?: boolean;
     __MiraLithLuBirthQualityTier?: string;
     __MiraLithLuBirthRuntimeProfile?: string;
+    __MiraLithLuBirthSceneLightDirection?: [number, number, number];
     __MiraLithLuBirthVolumetricAtmosphereActive?: boolean;
     __MiraLithLuBirthRuntimeLocation?: {
       latitudeDeg: number;
@@ -289,6 +295,18 @@ test("keeps production home on the lightweight Earth renderer", async ({ page })
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudFieldTexture), { timeout: 25_000 })
     .toBe("/assets/lubirth/textures/earth-cloud-field-home.webp");
   await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudHeightScale), { timeout: 25_000 })
+    .toBeGreaterThan(0);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudReliefSamples), { timeout: 25_000 })
+    .toBe(1);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthSpaceBackgroundTexture), { timeout: 25_000 })
+    .toBe("/assets/lubirth/backgrounds/stars-milky-way-2k.webp");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthSpaceBackgroundResolution), { timeout: 25_000 })
+    .toEqual([2048, 1024]);
+  await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthGroundCloudShadowActive), { timeout: 25_000 })
     .toBe(true);
   await expect
@@ -299,7 +317,7 @@ test("keeps production home on the lightweight Earth renderer", async ({ page })
     .toBe("analytic-halo");
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthAnalyticHaloConfig), { timeout: 25_000 })
-    .toEqual({ diameterScale: 2.5, opacityMax: 0.1, opacityMin: 0.085, textureSize: 64 });
+    .toEqual({ diameterScale: 2.16, opacityMax: 0.055, opacityMin: 0.045, textureSize: 64 });
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthVisualPolicy), { timeout: 25_000 })
     .toEqual({
@@ -328,28 +346,97 @@ test("keeps production home on the lightweight Earth renderer", async ({ page })
   const canvasDpr = await page.locator("canvas").evaluate((canvas) =>
     Math.max(canvas.width / canvas.clientWidth, canvas.height / canvas.clientHeight)
   );
+  const canvasAntialias = await page.locator("canvas").evaluate((canvas) => {
+    const context = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
+    return context?.getContextAttributes()?.antialias;
+  });
   expect(canvasDpr).toBeGreaterThanOrEqual(0.84);
   expect(canvasDpr).toBeLessThanOrEqual(0.86);
+  expect(canvasAntialias).toBe(false);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-day-2k"))).toBe(true);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-night-2k"))).toBe(true);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-cloud-field-home.webp"))).toBe(true);
   expect(Array.from(assetRequests).some((path) => path.includes("moon-2k"))).toBe(true);
+  expect(Array.from(assetRequests).some((path) => path.includes("stars-milky-way-2k.webp"))).toBe(true);
   expect(Array.from(assetRequests).some((path) => path.includes("8k"))).toBe(false);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-clouds-2k"))).toBe(false);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-cloud-deck"))).toBe(false);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-specular-4k"))).toBe(false);
 
   const firstViewportTextures = [
-    "earth-day-2k.jpg",
-    "earth-night-2k.jpg",
-    "earth-cloud-field-home.webp",
-    "moon-2k.jpg"
-  ].map((fileName) =>
-    statSync(path.join(process.cwd(), "apps/site/public/assets/lubirth/textures", fileName)).size
+    path.join("textures", "earth-day-2k.jpg"),
+    path.join("textures", "earth-night-2k.jpg"),
+    path.join("textures", "earth-cloud-field-home.webp"),
+    path.join("textures", "moon-2k.jpg"),
+    path.join("backgrounds", "stars-milky-way-2k.webp")
+  ].map((relativePath) =>
+    statSync(path.join(process.cwd(), "apps/site/public/assets/lubirth", relativePath)).size
   );
   const cloudFieldBytes = firstViewportTextures[2] ?? Number.POSITIVE_INFINITY;
   expect(cloudFieldBytes).toBeLessThanOrEqual(650_000);
   expect(firstViewportTextures.reduce((total, bytes) => total + bytes, 0)).toBeLessThan(3_000_000);
+});
+
+test("defaults production home to the birth moon while keeping today explicit", async ({ page }) => {
+  await page.goto("/?progress=0&copy=hidden&visualTest=pixels");
+
+  await expect
+    .poll(
+      () => page.evaluate(() => ({
+        mode: window.__MiraLithLuBirthMoonPhaseMode,
+        phase: window.__MiraLithLuBirthMoonPhase
+      })),
+      { timeout: 25_000 }
+    )
+    .toMatchObject({
+      mode: "birth",
+      phase: {
+        date: "1993-08-01T11:03:00",
+        source: "precomputed"
+      }
+    });
+
+  await page.goto("/?progress=0&copy=hidden&visualTest=pixels&moonPhase=today&moonDate=2026-07-12T12:00:00Z");
+  await expect
+    .poll(
+      () => page.evaluate(() => ({
+        mode: window.__MiraLithLuBirthMoonPhaseMode,
+        phase: window.__MiraLithLuBirthMoonPhase
+      })),
+      { timeout: 25_000 }
+    )
+    .toMatchObject({
+      mode: "today",
+      phase: {
+        date: "2026-07-12",
+        source: "runtime-ephemeris"
+      }
+    });
+});
+
+test("keeps one scene light direction across near, middle, and far progress", async ({ page }) => {
+  const directions: [number, number, number][] = [];
+  for (const progress of [0, 0.5, 1]) {
+    await page.goto(
+      `/?progress=${progress}&copy=hidden&visualTest=pixels&quality=medium&location=birth&moonPhase=birth&sunDate=2026-07-12T09:00:00Z`
+    );
+    await expect
+      .poll(
+        () => page.evaluate(() => window.__MiraLithLuBirthSceneLightDirection),
+        { timeout: 25_000 }
+      )
+      .toBeTruthy();
+    const direction = await page.evaluate(() => window.__MiraLithLuBirthSceneLightDirection);
+
+    expect(direction).toHaveLength(3);
+    directions.push(direction as [number, number, number]);
+  }
+
+  const dot = (a: readonly number[], b: readonly number[]) =>
+    a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  expect(dot(directions[0], directions[1])).toBeGreaterThan(0.999);
+  expect(dot(directions[0], directions[2])).toBeGreaterThan(0.999);
+  expect(dot(directions[1], directions[2])).toBeGreaterThan(0.999);
 });
 
 test("keeps the loading and prelude phase branded as MiraLith with one continuous moon path", async ({ page }) => {

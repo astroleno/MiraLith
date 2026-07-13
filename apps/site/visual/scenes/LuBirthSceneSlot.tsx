@@ -124,8 +124,8 @@ export function resolveHomeEarthSurfaceProfile(
   return {
     segments: 144,
     cloudOpacity: 0.62,
-    nightIntensity: 1.05,
-    nightSurfaceLift: 1
+    nightIntensity: 0.76,
+    nightSurfaceLift: 0.16
   };
 }
 
@@ -146,6 +146,7 @@ declare global {
     __MiraLithLuBirthAtmospherePolicyReason?: string;
     __MiraLithLuBirthAtmosphereLook?: LandingAtmosphereLook;
     __MiraLithLuBirthMoonPhase?: LandingMoonPhase;
+    __MiraLithLuBirthMoonPhaseMode?: "birth" | "today";
     __MiraLithLuBirthMoonLightingMode?: LandingMoonLightingMode;
     __MiraLithLuBirthCloseAtmosphereTuning?: {
       allowed: boolean;
@@ -260,13 +261,16 @@ function readRenderProfileOverride(): LandingRenderProfile | undefined {
   return undefined;
 }
 
-function readMoonPhaseOverride(activeRenderProfile: LandingRenderProfile | undefined): "birth" | "today" {
-  if (typeof window === "undefined") {
-    return "birth";
-  }
-
-  const params = new URLSearchParams(window.location.search);
-  const mode = params.get("moonPhase");
+export function resolveMoonPhaseMode({
+  renderProfile,
+  requestedMode,
+  routeVariant
+}: {
+  renderProfile?: LandingRenderProfile;
+  requestedMode?: string | null;
+  routeVariant: LuBirthAtmosphereRouteVariant;
+}): "birth" | "today" {
+  const mode = requestedMode;
   if (mode === "birth" || mode === "fixed") {
     return "birth";
   }
@@ -274,7 +278,24 @@ function readMoonPhaseOverride(activeRenderProfile: LandingRenderProfile | undef
     return "today";
   }
 
-  return activeRenderProfile === "nasa" ? "today" : "birth";
+  if (routeVariant === "home") {
+    return "birth";
+  }
+
+  return renderProfile === "nasa" ? "today" : "birth";
+}
+
+function readMoonPhaseOverride(
+  activeRenderProfile: LandingRenderProfile | undefined,
+  routeVariant: LuBirthAtmosphereRouteVariant
+): "birth" | "today" {
+  return resolveMoonPhaseMode({
+    renderProfile: activeRenderProfile,
+    requestedMode: typeof window === "undefined"
+      ? null
+      : new URLSearchParams(window.location.search).get("moonPhase"),
+    routeVariant
+  });
 }
 
 function readMoonDateOverride(): string | undefined {
@@ -521,7 +542,7 @@ export function LuBirthSceneSlot({
   const activeRouteVariant: LuBirthAtmosphereRouteVariant =
     routeVariant ?? (isAtmosphereSpikeRoute() ? "spike" : "study");
   const runtimeProfile = resolveLandingRuntimeProfile(activeRouteVariant);
-  const moonPhaseOverride = readMoonPhaseOverride(activeRenderProfile);
+  const moonPhaseOverride = readMoonPhaseOverride(activeRenderProfile, activeRouteVariant);
   const moonDateOverride = readMoonDateOverride();
   const sunDateOverride = readSunDateOverride();
   const locationOverride = readLocationOverride(activeRenderProfile);
@@ -778,6 +799,7 @@ export function LuBirthSceneSlot({
       requested: requestedCloseAtmosphereTuning
     };
     window.__MiraLithLuBirthMoonPhase = composition.moon.fixedPhase;
+    window.__MiraLithLuBirthMoonPhaseMode = moonPhaseOverride;
     window.__MiraLithLuBirthMoonLightingMode = composition.moon.lightingMode;
     const locationVector = geodeticToTextureVector(
       composition.location.latitudeDeg,
@@ -805,6 +827,7 @@ export function LuBirthSceneSlot({
     effectiveCloseAtmosphereTuning,
     qualityProfile.aurora,
     qualityProfile.tier,
+    moonPhaseOverride,
     runtimeProfile,
     visualPolicy,
     requestedCloseAtmosphereTuning,

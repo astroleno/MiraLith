@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const playwrightPort = process.env.MIRALITH_PLAYWRIGHT_PORT ?? "3100";
+const playwrightBaseUrl = `http://127.0.0.1:${playwrightPort}`;
+
 export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 60_000,
@@ -8,12 +11,13 @@ export default defineConfig({
     timeout: 10_000
   },
   use: {
-    baseURL: "http://127.0.0.1:3100",
+    baseURL: playwrightBaseUrl,
     trace: "on-first-retry"
   },
   webServer: {
-    command: "pnpm build && pnpm --filter @miralith/site exec next start -H 127.0.0.1 -p 3100",
-    url: "http://127.0.0.1:3100",
+    command: `pnpm build && pnpm --filter @miralith/site exec next start -H 127.0.0.1 -p ${playwrightPort}`,
+    cwd: process.cwd(),
+    url: playwrightBaseUrl,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000
   },

@@ -11,6 +11,7 @@ import {
   ClampToEdgeWrapping,
   Group,
   MathUtils,
+  MeshBasicMaterial,
   PointsMaterial,
   RepeatWrapping,
   SRGBColorSpace,
@@ -26,6 +27,13 @@ interface LandingSpaceBackgroundProps {
   spaceBackground?: TextureRef;
   emphasis?: boolean;
   counterRotation?: MutableRefObject<{ yawRad: number }>;
+}
+
+declare global {
+  interface Window {
+    __MiraLithLuBirthSpaceBackgroundTexture?: string;
+    __MiraLithLuBirthSpaceBackgroundResolution?: [number, number];
+  }
 }
 
 function random(seed: number) {
@@ -48,7 +56,11 @@ export function LandingSpaceBackground({
     setBackgroundTexture(null);
     setBackgroundFailed(false);
 
-    if (!spaceBackground?.src || quality.tier !== "high") {
+    if (
+      !spaceBackground?.src ||
+      quality.tier === "low" ||
+      quality.tier === "fallback"
+    ) {
       return undefined;
     }
 
@@ -98,6 +110,24 @@ export function LandingSpaceBackground({
       loadedTexture?.dispose();
     };
   }, [quality.tier, spaceBackground?.colorSpace, spaceBackground?.src]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    window.__MiraLithLuBirthSpaceBackgroundTexture = backgroundTexture
+      ? spaceBackground?.src
+      : undefined;
+    window.__MiraLithLuBirthSpaceBackgroundResolution = backgroundTexture && spaceBackground
+      ? [spaceBackground.width, spaceBackground.height]
+      : undefined;
+
+    return () => {
+      window.__MiraLithLuBirthSpaceBackgroundTexture = undefined;
+      window.__MiraLithLuBirthSpaceBackgroundResolution = undefined;
+    };
+  }, [backgroundTexture, spaceBackground]);
 
   const starGeometry = useMemo(() => {
     const textureBacked = Boolean(backgroundTexture);
@@ -180,130 +210,26 @@ export function LandingSpaceBackground({
       return null;
     }
 
-    return new ShaderMaterial({
-      uniforms: {
-        map: { value: backgroundTexture },
-        exposure: { value: emphasis ? 1.18 : 1.0 },
-        hazeLift: { value: emphasis ? 0.1 : 0.025 },
-        starStrength: { value: emphasis ? 0.026 : 0.016 },
-        starDamp: { value: emphasis ? 0.62 : 0.92 },
-        textureStrength: { value: emphasis ? 0.06 : 0.00012 },
-        dustStrength: { value: emphasis ? 1.0 : 0.0012 },
-        colorCeiling: { value: emphasis ? 0.14 : 0.088 }
-      },
-      vertexShader: `
-        varying vec2 vUv;
-        varying vec3 vDir;
-
-        void main() {
-          vUv = uv;
-          vDir = normalize(position);
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform sampler2D map;
-        uniform float exposure;
-        uniform float hazeLift;
-        uniform float starStrength;
-        uniform float starDamp;
-        uniform float textureStrength;
-        uniform float dustStrength;
-        uniform float colorCeiling;
-
-        varying vec2 vUv;
-        varying vec3 vDir;
-
-        float hash(vec2 p) {
-          p = fract(p * vec2(123.34, 456.21));
-          p += dot(p, p + 45.32);
-          return fract(p.x * p.y);
-        }
-
-        float noise(vec2 p) {
-          vec2 i = floor(p);
-          vec2 f = fract(p);
-          f = f * f * (3.0 - 2.0 * f);
-          float a = hash(i);
-          float b = hash(i + vec2(1.0, 0.0));
-          float c = hash(i + vec2(0.0, 1.0));
-          float d = hash(i + vec2(1.0, 1.0));
-          return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
-        }
-
-        float fbm(vec2 p) {
-          float v = 0.0;
-          float a = 0.5;
-          for (int i = 0; i < 5; i++) {
-            v += noise(p) * a;
-            p = p * 2.07 + vec2(13.7, 4.3);
-            a *= 0.52;
-          }
-          return v;
-        }
-
-        void main() {
-          vec2 skyUv = vec2(vUv.x, clamp(vUv.y, 0.0, 1.0));
-          vec3 tex = texture2D(map, skyUv).rgb;
-          float luma = max(max(tex.r, tex.g), tex.b);
-          float textureHazeSource = min(luma, 0.18);
-          float highLuma = max(0.0, luma - textureHazeSource * 0.72);
-          float haze = smoothstep(0.08, 0.22, textureHazeSource);
-          float star = smoothstep(0.22, 0.62, highLuma) * smoothstep(0.72, 0.99, luma);
-          vec3 deepSky = mix(vec3(0.0, 0.00045, 0.0017), vec3(0.001, 0.0022, 0.0044), smoothstep(-0.3, 0.78, vDir.y));
-          float longitude = atan(vDir.z, vDir.x);
-          float wovenAxis =
-            vDir.y -
-            0.045 +
-            sin(longitude * 1.7 + 0.8) * 0.038 +
-            sin(longitude * 4.4 - 1.6) * 0.018;
-          float broadBand = exp(-pow(wovenAxis * 4.1, 2.0));
-          float narrowCore = exp(-pow(wovenAxis * 9.2, 2.0));
-          float dustNoise = fbm(vec2(longitude * 1.25 + 2.0, vDir.y * 4.2 - 0.6));
-          float dust = broadBand * smoothstep(0.24, 0.82, dustNoise);
-          float darkLane = exp(-pow((wovenAxis + 0.032) * 8.0, 2.0)) * smoothstep(0.34, 0.82, fbm(vec2(longitude * 2.2 - 1.0, vDir.y * 7.0 + 1.8)));
-          vec3 coolHaze = vec3(0.008, 0.012, 0.018) * haze * hazeLift * textureStrength * exposure;
-          vec3 milkyDust =
-            vec3(0.0018, 0.0024, 0.0042) * broadBand * (0.08 + dust * 0.16) +
-            vec3(0.006, 0.008, 0.014) * narrowCore * dust * 0.12;
-          milkyDust *= mix(1.0, 0.54, darkLane * 0.36) * dustStrength;
-          vec2 starP = skyUv * vec2(1480.0, 740.0);
-          vec2 starCell = floor(starP);
-          vec2 starLocal = fract(starP) - 0.5;
-          float starSeed = hash(starCell);
-          float proceduralStar = step(0.9896, starSeed) * smoothstep(0.12, 0.0, length(starLocal));
-          vec2 microStarP = skyUv * vec2(2380.0, 1180.0);
-          vec2 microStarCell = floor(microStarP);
-          vec2 microStarLocal = fract(microStarP) - 0.5;
-          float microSeed = hash(microStarCell + vec2(5.0, 31.0));
-          float microStar = step(0.9936, microSeed) * smoothstep(0.075, 0.0, length(microStarLocal));
-          vec2 brightStarP = skyUv * vec2(620.0, 310.0);
-          vec2 brightStarCell = floor(brightStarP);
-          vec2 brightStarLocal = fract(brightStarP) - 0.5;
-          float brightSeed = hash(brightStarCell + vec2(17.0, 23.0));
-          float brightStar = step(0.9966, brightSeed) * smoothstep(0.16, 0.0, length(brightStarLocal));
-          float horizonStarFade = smoothstep(0.24, 0.58, skyUv.y);
-          vec3 pinStars = vec3(0.72, 0.82, 1.0) * (
-            star * starStrength * 0.72 +
-            proceduralStar * 0.044 +
-            microStar * 0.022 +
-            brightStar * 0.088
-          ) * mix(0.18, 1.0, horizonStarFade);
-          float sensorNoise = (hash(gl_FragCoord.xy + vec2(11.0, 23.0)) - 0.5) *
-            0.00065 *
-            horizonStarFade;
-
-          gl_FragColor = vec4(min(deepSky + coolHaze + milkyDust + pinStars + vec3(sensorNoise), vec3(colorCeiling)), 1.0);
-        }
-      `,
+    return new MeshBasicMaterial({
+      map: backgroundTexture,
+      color: new Color(emphasis ? "#ffffff" : "#e8efff"),
+      opacity: emphasis ? 0.82 : 0.42,
+      transparent: true,
       side: BackSide,
       depthWrite: false,
-      depthTest: false
+      depthTest: false,
+      fog: false,
+      toneMapped: true
     });
   }, [backgroundFailed, backgroundTexture, emphasis]);
 
+  useEffect(() => () => textureMaterial?.dispose(), [textureMaterial]);
+  useEffect(() => () => skyMaterial.dispose(), [skyMaterial]);
+  useEffect(() => () => starGeometry.dispose(), [starGeometry]);
+  useEffect(() => () => starMaterial.dispose(), [starMaterial]);
+
   const useTextureBackdrop = Boolean(textureMaterial && !backgroundFailed);
-  const showPointStars = quality.stars > 0 && !backgroundTexture;
+  const showPointStars = quality.stars > 0 && (!backgroundTexture || backgroundFailed);
 
   useFrame(() => {
     if (!fixedSky.current) {

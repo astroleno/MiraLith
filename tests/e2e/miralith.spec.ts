@@ -246,7 +246,7 @@ test("homepage chapter targets are unique and unfinished rail items are inert", 
   );
 });
 
-test("homepage loading moon draws clockwise then swaps to a closed circular projection", async ({ page }) => {
+test("homepage loading moon draws clockwise then holds one closed circular path", async ({ page }, testInfo) => {
   await page.goto("/?visual=fallback&visualTest=pixels&copy=visible", { waitUntil: "domcontentloaded" });
 
   const moonProjection = await page.waitForFunction(() => {
@@ -254,96 +254,84 @@ test("homepage loading moon draws clockwise then swaps to a closed circular proj
     const moonSvg = document.querySelector<SVGSVGElement>(".lubirth-revised__home-loading-moon");
     const circles = Array.from(document.querySelectorAll<SVGCircleElement>(".lubirth-revised__home-loading-moon-path"));
     const draw = document.querySelector<SVGCircleElement>(".lubirth-revised__home-loading-moon-path--draw");
-    const complete = document.querySelector<SVGCircleElement>(".lubirth-revised__home-loading-moon-path--complete");
 
-    if (!root || !moonSvg || !draw || !complete) {
+    if (!root || !moonSvg || !draw || root.dataset.homeLoading !== "active") {
       return null;
     }
 
     const drawBounds = draw.getBBox();
-    const completeBounds = complete.getBBox();
     const drawStyle = window.getComputedStyle(draw);
-    const completeStyle = window.getComputedStyle(complete);
 
     return {
       drawAnimationName: drawStyle.animationName,
       drawDasharray: drawStyle.strokeDasharray,
       drawPathLength: draw.getAttribute("pathLength"),
-      completeAnimationName: completeStyle.animationName,
-      completeDasharray: completeStyle.strokeDasharray,
-      completePathLength: complete.getAttribute("pathLength"),
       circleCount: circles.length,
       drawCx: draw.getAttribute("cx"),
       drawCy: draw.getAttribute("cy"),
       drawR: draw.getAttribute("r"),
-      completeCx: complete.getAttribute("cx"),
-      completeCy: complete.getAttribute("cy"),
-      completeR: complete.getAttribute("r"),
-      sameStrokeWidth: drawStyle.strokeWidth === completeStyle.strokeWidth,
       strokeLinecap: drawStyle.strokeLinecap,
-      completeStrokeLinecap: completeStyle.strokeLinecap,
       transform: draw.getAttribute("transform"),
-      completeTransform: complete.getAttribute("transform"),
       width: Math.round(drawBounds.width),
-      height: Math.round(drawBounds.height),
-      completeWidth: Math.round(completeBounds.width),
-      completeHeight: Math.round(completeBounds.height)
+      height: Math.round(drawBounds.height)
     };
   });
 
   expect(await moonProjection.jsonValue()).toMatchObject({
-    circleCount: 2,
+    circleCount: 1,
     drawCx: "60",
     drawCy: "60",
     drawR: "52",
-    completeCx: "60",
-    completeCy: "60",
-    completeR: "52",
     drawDasharray: "1px",
     drawPathLength: "1",
-    completeDasharray: "none",
-    completePathLength: null,
-    sameStrokeWidth: true,
     strokeLinecap: "butt",
-    completeStrokeLinecap: "butt",
     transform: "rotate(-90 60 60)",
-    completeTransform: null,
     width: 104,
-    height: 104,
-    completeWidth: 104,
-    completeHeight: 104
+    height: 104
   });
 
   const closedMoonProjection = await page.waitForFunction(() => {
     const draw = document.querySelector<SVGCircleElement>(".lubirth-revised__home-loading-moon-path--draw");
-    const complete = document.querySelector<SVGCircleElement>(".lubirth-revised__home-loading-moon-path--complete");
 
-    if (!draw || !complete) {
+    if (!draw) {
       return null;
     }
 
     const drawStyle = window.getComputedStyle(draw);
-    const completeStyle = window.getComputedStyle(complete);
     const drawOpacity = Number.parseFloat(drawStyle.opacity);
-    const completeOpacity = Number.parseFloat(completeStyle.opacity);
     const drawDashOffset = Number.parseFloat(drawStyle.strokeDashoffset);
+    const closedPattern = drawStyle.strokeDasharray === "none" || /1px,\s*0px/.test(drawStyle.strokeDasharray);
 
-    if (completeOpacity < 0.82 || drawOpacity > 0.12 || drawDashOffset > 0.02) {
+    if (!closedPattern || drawOpacity < 0.82 || drawDashOffset > 0.02) {
       return null;
     }
 
     return {
-      completeOpacity,
-      completeDasharray: completeStyle.strokeDasharray,
       drawOpacity,
       drawDashOffset,
-      sameStrokeWidth: drawStyle.strokeWidth === completeStyle.strokeWidth
+      drawDasharray: drawStyle.strokeDasharray,
+      reachedAt: performance.now()
+    };
+  }, undefined, { timeout: 5_000 });
+
+  const closedState = await closedMoonProjection.jsonValue();
+  expect(closedState.drawDasharray).toMatch(/^(none|1px,\s*0px)$/);
+
+  await page.waitForTimeout(600);
+  const heldState = await page.locator(".lubirth-revised__home-loading-moon-path--draw").evaluate((draw) => {
+    const style = window.getComputedStyle(draw);
+    return {
+      dasharray: style.strokeDasharray,
+      elapsed: performance.now(),
+      opacity: Number.parseFloat(style.opacity)
     };
   });
-
-  expect(await closedMoonProjection.jsonValue()).toMatchObject({
-    completeDasharray: "none",
-    sameStrokeWidth: true
+  expect(heldState.elapsed - closedState.reachedAt).toBeGreaterThanOrEqual(600);
+  expect(heldState.dasharray).toMatch(/^(none|1px,\s*0px)$/);
+  expect(heldState.opacity).toBeGreaterThan(0.3);
+  await testInfo.attach("loading-moon-closed-hold", {
+    body: await page.screenshot(),
+    contentType: "image/png"
   });
 });
 
@@ -354,21 +342,18 @@ test("homepage first visible loading contour uses scene projection", async ({ pa
     const root = document.querySelector<HTMLElement>(".lubirth-revised");
     const overlay = document.querySelector<HTMLElement>(".lubirth-revised__home-loading");
     const moonDraw = document.querySelector<SVGCircleElement>(".lubirth-revised__home-loading-moon-path--draw");
-    const moonComplete = document.querySelector<SVGCircleElement>(".lubirth-revised__home-loading-moon-path--complete");
     const contour = document.querySelector<SVGPathElement>(".lubirth-revised__home-loading-contour-path--line");
     const contourSvg = document.querySelector<SVGSVGElement>(".lubirth-revised__home-loading-contour");
     const projectionFrame = window.__MiraLithHomeProjectionFrame;
 
-    if (!root || !overlay || !moonDraw || !moonComplete || !contour || !contourSvg || !projectionFrame) {
+    if (!root || !overlay || !moonDraw || !contour || !contourSvg || !projectionFrame) {
       return null;
     }
 
     const overlayStyle = window.getComputedStyle(overlay);
     const overlayOpacity = Number.parseFloat(overlayStyle.opacity);
     const moonDrawStyle = window.getComputedStyle(moonDraw);
-    const moonCompleteStyle = window.getComputedStyle(moonComplete);
     const moonDrawOpacity = Number.parseFloat(moonDrawStyle.opacity);
-    const moonCompleteOpacity = Number.parseFloat(moonCompleteStyle.opacity);
     const moonDrawDashOffset = Number.parseFloat(moonDrawStyle.strokeDashoffset);
     const opacity = Number.parseFloat(window.getComputedStyle(contour).opacity);
     if (overlayStyle.visibility === "hidden" || overlayOpacity <= 0.2) {
@@ -377,7 +362,7 @@ test("homepage first visible loading contour uses scene projection", async ({ pa
 
     if (
       opacity <= 0.05 ||
-      ((moonDrawOpacity <= 0.05 || moonDrawDashOffset >= 0.98) && moonCompleteOpacity <= 0.05)
+      (moonDrawOpacity <= 0.05 || moonDrawDashOffset >= 0.98)
     ) {
       return null;
     }
@@ -387,7 +372,6 @@ test("homepage first visible loading contour uses scene projection", async ({ pa
       overlayOpacity,
       moonDrawDashOffset,
       moonDrawOpacity,
-      moonCompleteOpacity,
       opacity,
       contourPath: contour.getAttribute("d"),
       contourLineSegments: (contour.getAttribute("d")?.match(/\bL\b/g) ?? []).length,

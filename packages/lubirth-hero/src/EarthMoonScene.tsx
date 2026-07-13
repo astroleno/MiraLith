@@ -2,7 +2,7 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import { type Camera, Color, DirectionalLight, Euler, MathUtils, Group, Vector2, Vector3 } from "three";
+import { type Camera, Color, DirectionalLight, Euler, MathUtils, Group, Quaternion, Vector2, Vector3 } from "three";
 import {
   OPENING_FIELD_AUTO_ROTATE_START,
   getRuntimeOpeningProgress,
@@ -32,6 +32,7 @@ import { LandingProjectedHorizonComposite } from "./LandingProjectedHorizonCompo
 import { LandingProjectedLimbScattering } from "./LandingProjectedLimbScattering";
 import { LandingSpaceBackground } from "./LandingSpaceBackground";
 import { LandingVolumetricAtmospherePass } from "./LandingVolumetricAtmospherePass";
+import { LUBIRTH_EXPANDED_SPACE_BACKGROUND } from "./assetManifest";
 import { HOME_CLOUD_FIELD_SCROLL_SPEED } from "./homeCloudField";
 import { resolveLandingVisualPolicy } from "./landingVisualPolicy";
 import { EMPTY_CLOSE_ATMOSPHERE_TUNING } from "./landingAtmosphereTuning";
@@ -51,9 +52,20 @@ const earthTargetScale = new Vector3();
 const moonLocalPosition = new Vector3();
 const moonTargetPosition = new Vector3();
 const moonTargetScale = new Vector3();
-const fieldSunDirection = new Vector3(...DEFAULT_LUBIRTH_FIELD_SUN_DIRECTION).normalize();
-const finalSunDirection = new Vector3();
-const earthLightEuler = new Euler(0, 0, 0, "YXZ");
+const earthLightQuaternion = new Quaternion();
+const inverseEarthLightQuaternion = new Quaternion();
+const resolvedEarthLocalLightDirection = new Vector3();
+const legacyEarthLightEuler = new Euler(0, 0, 0, "YXZ");
+const legacyFieldSunDirection = new Vector3(...DEFAULT_LUBIRTH_FIELD_SUN_DIRECTION).normalize();
+const legacySceneSunDirection = new Vector3();
+const canonicalSunDirectionDiagnostic: [number, number, number] = [0, 0, 0];
+const worldSunDirectionDiagnostic: [number, number, number] = [0, 0, 0];
+const projectedEarthLightingDiagnostic = {
+  center: [0, 0] as [number, number],
+  progress: 0,
+  radius: 0,
+  sunDirection: [0, 0] as [number, number]
+};
 const easeInOut = (value: number) => value * value * (3 - 2 * value);
 const mianyangSurfacePosition = new Vector3();
 const mianyangWorldPosition = new Vector3();
@@ -90,6 +102,15 @@ declare global {
     __MiraLithLuBirthCloudShellsActive?: boolean;
     __MiraLithLuBirthPostEffectActive?: boolean;
     __MiraLithLuBirthPostEffectMode?: "off" | "analytic-halo" | "full-bloom";
+    __MiraLithLuBirthSceneLightDirection?: [number, number, number];
+    __MiraLithLuBirthSceneLightDirectionSpace?: "earth-local";
+    __MiraLithLuBirthWorldLightDirection?: [number, number, number];
+    __MiraLithLuBirthProjectedEarthLighting?: {
+      center: [number, number];
+      progress: number;
+      radius: number;
+      sunDirection: [number, number];
+    };
   }
 }
 
@@ -205,7 +226,18 @@ export function EarthMoonScene({
   const smoothedLocationPitchOffsetDeg = useRef(0);
   const lastProjectionSignature = useRef("");
   const { camera, size } = useThree();
-  const sceneLightDirection = useMemo(() => fieldSunDirection.clone(), []);
+  const earthLocalLightDirection = useMemo(
+    () => new Vector3(...composition.light.fixedSunDir).normalize(),
+    [composition.light.fixedSunDir]
+  );
+  const sceneLightDirection = useMemo(
+    () => earthLocalLightDirection.clone(),
+    [earthLocalLightDirection]
+  );
+  const exposeLightingDiagnostics = useMemo(
+    () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("visualTest") === "pixels",
+    []
+  );
   const activeRenderProfile = resolveRenderProfile(renderProfile, visualDebugLayer);
   const isNasaProfile = activeRenderProfile === "nasa";
   const isCleanProfile = activeRenderProfile === "clean";
@@ -287,6 +319,18 @@ export function EarthMoonScene({
   useEffect(() => {
     onSceneReady?.();
   }, [onSceneReady]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    canonicalSunDirectionDiagnostic[0] = earthLocalLightDirection.x;
+    canonicalSunDirectionDiagnostic[1] = earthLocalLightDirection.y;
+    canonicalSunDirectionDiagnostic[2] = earthLocalLightDirection.z;
+    window.__MiraLithLuBirthSceneLightDirection = canonicalSunDirectionDiagnostic;
+    window.__MiraLithLuBirthSceneLightDirectionSpace = "earth-local";
+  }, [earthLocalLightDirection]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -441,17 +485,44 @@ export function EarthMoonScene({
       }
     }
 
-    finalSunDirection
-      .set(...composition.light.fixedSunDir)
-      .normalize()
-      .applyEuler(earthLightEuler.set(
-        -MathUtils.degToRad(earthPitchDeg),
-        -MathUtils.degToRad(earthYawDeg),
-        0,
-        "YXZ"
-      ));
-    const fieldSunProgress = mode === "expanded" ? 1 : easeInOut(MathUtils.clamp((progress - 0.18) / 0.74, 0, 1));
-    sceneLightDirection.copy(finalSunDirection).lerp(fieldSunDirection, fieldSunProgress).normalize();
+    if (runtimeProfile === "home-lite") {
+      sceneLightDirection.copy(earthLocalLightDirection);
+      if (earthGroup.current) {
+        earthLightQuaternion.copy(earthGroup.current.quaternion);
+        sceneLightDirection.applyQuaternion(earthLightQuaternion).normalize();
+      }
+    } else {
+      legacySceneSunDirection
+        .copy(earthLocalLightDirection)
+        .applyEuler(legacyEarthLightEuler.set(
+          -MathUtils.degToRad(earthPitchDeg),
+          -MathUtils.degToRad(earthYawDeg),
+          0,
+          "YXZ"
+        ));
+      const legacyFieldSunProgress = mode === "expanded"
+        ? 1
+        : easeInOut(MathUtils.clamp((progress - 0.18) / 0.74, 0, 1));
+      sceneLightDirection
+        .copy(legacySceneSunDirection)
+        .lerp(legacyFieldSunDirection, legacyFieldSunProgress)
+        .normalize();
+    }
+    if (exposeLightingDiagnostics && typeof window !== "undefined") {
+      if (earthGroup.current && runtimeProfile === "home-lite") {
+        resolvedEarthLocalLightDirection.copy(sceneLightDirection);
+        inverseEarthLightQuaternion.copy(earthGroup.current.quaternion).invert();
+        resolvedEarthLocalLightDirection.applyQuaternion(inverseEarthLightQuaternion).normalize();
+        canonicalSunDirectionDiagnostic[0] = resolvedEarthLocalLightDirection.x;
+        canonicalSunDirectionDiagnostic[1] = resolvedEarthLocalLightDirection.y;
+        canonicalSunDirectionDiagnostic[2] = resolvedEarthLocalLightDirection.z;
+        window.__MiraLithLuBirthSceneLightDirection = canonicalSunDirectionDiagnostic;
+      }
+      worldSunDirectionDiagnostic[0] = sceneLightDirection.x;
+      worldSunDirectionDiagnostic[1] = sceneLightDirection.y;
+      worldSunDirectionDiagnostic[2] = sceneLightDirection.z;
+      window.__MiraLithLuBirthWorldLightDirection = worldSunDirectionDiagnostic;
+    }
     if (directionalLightRef.current) {
       directionalLightRef.current.position.copy(sceneLightDirection);
     }
@@ -537,6 +608,15 @@ export function EarthMoonScene({
         projectedEarthFrame.current.sunDirection.set(0, 1);
       } else {
         projectedEarthFrame.current.sunDirection.normalize();
+      }
+      if (exposeLightingDiagnostics && typeof window !== "undefined") {
+        projectedEarthLightingDiagnostic.center[0] = projectedEarthFrame.current.center.x;
+        projectedEarthLightingDiagnostic.center[1] = size.height - projectedEarthFrame.current.center.y;
+        projectedEarthLightingDiagnostic.progress = progress;
+        projectedEarthLightingDiagnostic.radius = projectedEarthFrame.current.radius;
+        projectedEarthLightingDiagnostic.sunDirection[0] = projectedEarthFrame.current.sunDirection.x;
+        projectedEarthLightingDiagnostic.sunDirection[1] = -projectedEarthFrame.current.sunDirection.y;
+        window.__MiraLithLuBirthProjectedEarthLighting = projectedEarthLightingDiagnostic;
       }
     }
 
@@ -644,7 +724,11 @@ export function EarthMoonScene({
       <fog attach="fog" args={["#000102", 16, 48]} />
       <LandingSpaceBackground
         quality={quality}
-        spaceBackground={assets.spaceBackground}
+        spaceBackground={
+          runtimeProfile === "home-lite"
+            ? assets.spaceBackground
+            : LUBIRTH_EXPANDED_SPACE_BACKGROUND
+        }
         emphasis={debugStars}
         counterRotation={skyCounterRotation}
       />

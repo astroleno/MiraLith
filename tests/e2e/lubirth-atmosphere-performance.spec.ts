@@ -73,7 +73,9 @@ interface RafStats {
 
 const STRICT_PERF = process.env.LUBIRTH_PERF_STRICT === "1";
 // A 60 Hz RAF interval is 16.67 ms; allow sub-millisecond headless scheduler jitter.
-const DESKTOP_HOME_P95_BUDGET_MS = 18.5;
+const DESKTOP_HOME_P95_BUDGET_MS = 18;
+const MOBILE_LANDSCAPE_HOME_P95_BUDGET_MS = 18.5;
+const ANALYTIC_HALO_P95_OVERHEAD_BUDGET_MS = 0.5;
 
 function percentile(values: number[], percentileValue: number) {
   const sorted = [...values].sort((a, b) => a - b);
@@ -272,11 +274,11 @@ test("keeps production home cloud and analytic halo inside the frame budget", as
     "/?progress=0.5&copy=hidden&quality=medium&perfTest=raf",
     { postEffectMode: "analytic-halo", cloudMode: "shell-lite", groundShadow: true }
   );
-  const desktopSurface = await measureFreshHomePage(
+  const desktopNoHalo = await measureFreshHomePage(
     browser,
     desktopViewport,
-    "/?progress=0.5&copy=hidden&quality=low&perfTest=raf",
-    { postEffectMode: "off", cloudMode: "surface", groundShadow: false }
+    "/?progress=0.5&copy=hidden&quality=medium&postEffect=off&perfTest=raf",
+    { postEffectMode: "off", cloudMode: "shell-lite", groundShadow: true }
   );
 
   const mobileLandscapeLite = await measureFreshHomePage(
@@ -285,20 +287,20 @@ test("keeps production home cloud and analytic halo inside the frame budget", as
     "/?progress=0.5&copy=hidden&quality=medium&perfTest=raf",
     { postEffectMode: "analytic-halo", cloudMode: "shell-lite", groundShadow: true }
   );
-  const haloCloudP95Overhead = desktopLite.p95 - desktopSurface.p95;
+  const analyticHaloP95Overhead = desktopLite.p95 - desktopNoHalo.p95;
 
   logStats("production home desktop shell-lite + analytic-halo", desktopLite);
-  logStats("production home desktop surface + post-effect-off", desktopSurface);
+  logStats("production home desktop shell-lite + post-effect-off", desktopNoHalo);
   logStats("production home mobile landscape shell-lite + analytic-halo", mobileLandscapeLite);
-  console.log(`home shell+halo p95 overhead=${haloCloudP95Overhead.toFixed(2)}ms`);
+  console.log(`home analytic-halo p95 overhead=${analyticHaloP95Overhead.toFixed(2)}ms`);
 
   expectRafSamples("production home desktop shell-lite + analytic-halo", desktopLite, testInfo);
-  expectRafSamples("production home desktop surface + post-effect-off", desktopSurface, testInfo);
+  expectRafSamples("production home desktop shell-lite + post-effect-off", desktopNoHalo, testInfo);
   expectRafSamples("production home mobile landscape shell-lite + analytic-halo", mobileLandscapeLite, testInfo);
 
   if (STRICT_PERF) {
     expect(desktopLite.p95).toBeLessThanOrEqual(DESKTOP_HOME_P95_BUDGET_MS);
-    expect(mobileLandscapeLite.p95).toBeLessThanOrEqual(34);
-    expect(haloCloudP95Overhead).toBeLessThanOrEqual(2);
+    expect(mobileLandscapeLite.p95).toBeLessThanOrEqual(MOBILE_LANDSCAPE_HOME_P95_BUDGET_MS);
+    expect(analyticHaloP95Overhead).toBeLessThanOrEqual(ANALYTIC_HALO_P95_OVERHEAD_BUDGET_MS);
   }
 });

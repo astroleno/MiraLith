@@ -1,5 +1,14 @@
-import type { LandingAsset, LandingAssetManifest } from "./types";
+import type { LandingAsset, LandingAssetManifest, TextureRef } from "./types";
 import { LUBIRTH_CLOUD_DECK_TEXTURE } from "./cloudDeckTexture";
+
+export const LUBIRTH_EXPANDED_SPACE_BACKGROUND: TextureRef = {
+  id: "8k-stars-milky-way",
+  src: "/assets/lubirth/backgrounds/8k_stars_milky_way.webp",
+  width: 8192,
+  height: 4096,
+  format: "webp",
+  colorSpace: "srgb"
+};
 
 export const DEFAULT_LUBIRTH_ASSETS: LandingAssetManifest = {
   earthDay: {
@@ -60,10 +69,10 @@ export const DEFAULT_LUBIRTH_ASSETS: LandingAssetManifest = {
     colorSpace: "srgb"
   },
   spaceBackground: {
-    id: "8k-stars-milky-way",
-    src: "/assets/lubirth/backgrounds/8k_stars_milky_way.webp",
-    width: 8192,
-    height: 4096,
+    id: "stars-milky-way-home-2k",
+    src: "/assets/lubirth/backgrounds/stars-milky-way-2k.webp",
+    width: 2048,
+    height: 1024,
     format: "webp",
     colorSpace: "srgb"
   },
@@ -178,8 +187,9 @@ export function getLandingAssetBudget(assets: Partial<LandingAssetManifest> = {}
   ];
 
   if (resolvedAssets.spaceBackground) {
-    budget.push(textureBudget(resolvedAssets.spaceBackground, 700_000, "idle", false));
+    budget.push(textureBudget(resolvedAssets.spaceBackground, 160_000, "idle", false));
   }
+  budget.push(textureBudget(LUBIRTH_EXPANDED_SPACE_BACKGROUND, 700_000, "expanded", false));
 
   return budget;
 }

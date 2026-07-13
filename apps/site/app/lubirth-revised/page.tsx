@@ -5,6 +5,23 @@ export const metadata = {
   description: "A revised LuBirth opening route for MiraLith."
 };
 
-export default function LuBirthRevisedPage() {
-  return <LuBirthRevisedRoute variant="study" />;
+interface LuBirthRevisedPageProps {
+  searchParams?: Promise<{
+    visual?: string | string[];
+  }>;
+}
+
+function hasForcedVisualFallback(visual: string | string[] | undefined) {
+  return Array.isArray(visual) ? visual.includes("fallback") : visual === "fallback";
+}
+
+export default async function LuBirthRevisedPage({ searchParams }: LuBirthRevisedPageProps) {
+  const resolvedSearchParams = await searchParams;
+
+  return (
+    <LuBirthRevisedRoute
+      variant="study"
+      initialForcedVisualFallback={hasForcedVisualFallback(resolvedSearchParams?.visual)}
+    />
+  );
 }

@@ -28,6 +28,15 @@ import type { LandingProjectedEarthFrame } from "@miralith/lubirth-hero";
 export type LuBirthLookdevPass = "clouds" | "limb" | "aurora" | "projection";
 type LuBirthProjectionLookdevLayer = "all" | "clouds" | "limb" | "aurora";
 
+const LUBIRTH_LOOKDEV_SPACE_BACKGROUND = {
+  id: "8k-stars-milky-way",
+  src: "/assets/lubirth/backgrounds/8k_stars_milky_way.webp",
+  width: 8192,
+  height: 4096,
+  format: "webp" as const,
+  colorSpace: "srgb" as const
+};
+
 declare global {
   interface Window {
     __MiraLithLuBirthLookdevPass?: LuBirthLookdevPass;
@@ -222,7 +231,10 @@ function LookdevScene({ pass, quality, reducedMotion, paused = false }: LookdevS
     <>
       <color attach="background" args={["#000307"]} />
       <fog attach="fog" args={["#000307", 16, 48]} />
-      <LandingSpaceBackground quality={quality} spaceBackground={assets.spaceBackground} />
+      <LandingSpaceBackground
+        quality={quality}
+        spaceBackground={LUBIRTH_LOOKDEV_SPACE_BACKGROUND}
+      />
       <ambientLight intensity={composition.light.ambientIntensity} color="#d9e2e4" />
       <directionalLight
         ref={directionalLightRef}

@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 import * as luBirthSceneSlot from "../../apps/site/visual/scenes/LuBirthSceneSlot";
 import * as landingCloudLayer from "../../packages/lubirth-hero/src/LandingCloudLayer";
+import * as landingEarthLite from "../../packages/lubirth-hero/src/LandingEarthLite";
+import * as landingPostEffect from "../../packages/lubirth-hero/src/LandingPostEffect";
 import { resolveLuBirthAtmospherePolicy } from "../../packages/lubirth-hero/src/atmospherePolicy";
 import { resolveLandingVisualPolicy } from "../../packages/lubirth-hero/src/landingVisualPolicy";
 import {
@@ -26,6 +28,87 @@ const baseInput: LuBirthAtmospherePolicyInput = {
 function resolve(overrides: Partial<LuBirthAtmospherePolicyInput>) {
   return resolveLuBirthAtmospherePolicy({ ...baseInput, ...overrides });
 }
+
+test("defaults only the production home to the birth moon unless today is explicit", () => {
+  type ResolveMoonPhaseMode = (input: {
+    renderProfile?: "clean" | "nasa";
+    requestedMode?: string | null;
+    routeVariant: "home" | "study" | "spike";
+  }) => "birth" | "today";
+  const resolveMoonPhaseMode = (
+    luBirthSceneSlot as unknown as { resolveMoonPhaseMode?: ResolveMoonPhaseMode }
+  ).resolveMoonPhaseMode;
+
+  expect(resolveMoonPhaseMode).toBeDefined();
+  expect(resolveMoonPhaseMode?.({ renderProfile: "nasa", routeVariant: "home" })).toBe("birth");
+  expect(resolveMoonPhaseMode?.({ renderProfile: "nasa", requestedMode: "today", routeVariant: "home" })).toBe("today");
+  expect(resolveMoonPhaseMode?.({ renderProfile: "nasa", requestedMode: "runtime", routeVariant: "home" })).toBe("today");
+  expect(resolveMoonPhaseMode?.({ renderProfile: "nasa", requestedMode: "fixed", routeVariant: "home" })).toBe("birth");
+  expect(resolveMoonPhaseMode?.({ renderProfile: "nasa", routeVariant: "study" })).toBe("today");
+});
+
+test("keeps every analytic halo texture boundary pixel fully transparent", () => {
+  type CreateLiteBloomTextureData = () => {
+    pixels: Uint8Array;
+    size: number;
+  };
+  const createLiteBloomTextureData = (
+    landingPostEffect as unknown as { createLiteBloomTextureData?: CreateLiteBloomTextureData }
+  ).createLiteBloomTextureData;
+
+  expect(createLiteBloomTextureData).toBeDefined();
+  const data = createLiteBloomTextureData?.();
+  expect(data).toBeDefined();
+  if (!data) {
+    return;
+  }
+
+  const boundaryAlpha: number[] = [];
+  for (let index = 0; index < data.size; index += 1) {
+    const top = index * 4 + 3;
+    const bottom = ((data.size - 1) * data.size + index) * 4 + 3;
+    const left = (index * data.size) * 4 + 3;
+    const right = (index * data.size + data.size - 1) * 4 + 3;
+    boundaryAlpha.push(data.pixels[top], data.pixels[bottom], data.pixels[left], data.pixels[right]);
+  }
+
+  expect(Math.max(...boundaryAlpha)).toBe(0);
+});
+
+test("separates lite Earth day, deep night, city gate, and a narrow terminator", () => {
+  type ResolveLiteEarthLightingWeights = (ndl: number, terminatorSoftness: number) => {
+    cityGate: number;
+    dayWeight: number;
+    deepNightWeight: number;
+    nightWeight: number;
+    terminatorBand: number;
+  };
+  const resolveLiteEarthLightingWeights = (
+    landingEarthLite as unknown as { resolveLiteEarthLightingWeights?: ResolveLiteEarthLightingWeights }
+  ).resolveLiteEarthLightingWeights;
+
+  expect(resolveLiteEarthLightingWeights).toBeDefined();
+  const day = resolveLiteEarthLightingWeights?.(0.65, 0.13);
+  const twilight = resolveLiteEarthLightingWeights?.(0, 0.13);
+  const deepNight = resolveLiteEarthLightingWeights?.(-0.65, 0.13);
+
+  expect(day).toMatchObject({ dayWeight: 1, nightWeight: 0, cityGate: 0 });
+  expect(deepNight).toMatchObject({ dayWeight: 0, nightWeight: 1, deepNightWeight: 1 });
+  expect((day?.cityGate ?? 1) / Math.max(deepNight?.cityGate ?? 0, 1e-6)).toBeLessThan(0.05);
+  expect(twilight?.terminatorBand).toBeGreaterThan(0.95);
+  expect(twilight?.dayWeight).toBeCloseTo(0.5, 6);
+  expect((twilight?.dayWeight ?? 0) + (twilight?.nightWeight ?? 0)).toBeCloseTo(1, 6);
+
+  const model = (
+    landingEarthLite as unknown as {
+      LITE_EARTH_LIGHTING_MODEL?: { closeExposureMax: number; closeExposureMin: number; terminatorTintStrength: number };
+    }
+  ).LITE_EARTH_LIGHTING_MODEL;
+  expect(model).toBeDefined();
+  expect((model?.closeExposureMax ?? 2) - (model?.closeExposureMin ?? 0)).toBeLessThanOrEqual(0.1);
+  expect(model?.terminatorTintStrength).toBeGreaterThanOrEqual(0.035);
+  expect(model?.terminatorTintStrength).toBeLessThanOrEqual(0.065);
+});
 
 test("resolves the production home medium visual policy", () => {
   expect(resolveLandingVisualPolicy({
@@ -264,12 +347,13 @@ test("keeps the production home night surface readable without changing study ro
 
   expect(resolveHomeEarthSurfaceProfile).toBeDefined();
   expect(resolveHomeEarthSurfaceProfile?.("home")).toMatchObject({
-    nightIntensity: 1.05,
-    nightSurfaceLift: 1,
+    nightIntensity: 0.76,
+    nightSurfaceLift: 0.16,
     segments: 144
   });
-  expect(resolveHomeEarthSurfaceProfile?.("home")?.nightIntensity).toBeGreaterThanOrEqual(0.62);
-  expect(resolveHomeEarthSurfaceProfile?.("home")?.nightSurfaceLift).toBeGreaterThanOrEqual(0.3);
+  expect(resolveHomeEarthSurfaceProfile?.("home")?.nightIntensity).toBeLessThan(0.9);
+  expect(resolveHomeEarthSurfaceProfile?.("home")?.nightSurfaceLift).toBeLessThanOrEqual(0.22);
+  expect(resolveHomeEarthSurfaceProfile?.("home")?.nightSurfaceLift).toBeGreaterThanOrEqual(0.1);
   expect(resolveHomeEarthSurfaceProfile?.("study")).toBeUndefined();
   expect(resolveHomeEarthSurfaceProfile?.("spike")).toBeUndefined();
 });
