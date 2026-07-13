@@ -46,6 +46,48 @@ interface LandingEarthLiteProps {
 
 const fallbackLightDirection = new Vector3();
 
+export const LITE_EARTH_LIGHTING_MODEL = {
+  cityGateNightEdge: -0.18,
+  cityGateDayEdge: 0.08,
+  closeExposureMin: 0.96,
+  closeExposureMax: 1.04,
+  deepNightOuterMultiplier: 2.2,
+  deepNightInnerMultiplier: 0.65,
+  terminatorBandInnerMultiplier: 0.18,
+  terminatorBandOuterMultiplier: 1.25,
+  terminatorTintStrength: 0.05
+} as const;
+
+function smoothstepNumber(edge0: number, edge1: number, value: number) {
+  const t = Math.min(1, Math.max(0, (value - edge0) / Math.max(edge1 - edge0, 1e-6)));
+  return t * t * (3 - 2 * t);
+}
+
+export function resolveLiteEarthLightingWeights(ndl: number, terminatorSoftness: number) {
+  const edge = Math.max(terminatorSoftness, 0.001);
+  const dayWeight = smoothstepNumber(-edge, edge, ndl);
+  const nightWeight = 1 - dayWeight;
+  const deepNightWeight = 1 - smoothstepNumber(
+    -edge * LITE_EARTH_LIGHTING_MODEL.deepNightOuterMultiplier,
+    -edge * LITE_EARTH_LIGHTING_MODEL.deepNightInnerMultiplier,
+    ndl
+  );
+  const cityGate = (
+    1 - smoothstepNumber(
+      LITE_EARTH_LIGHTING_MODEL.cityGateNightEdge,
+      LITE_EARTH_LIGHTING_MODEL.cityGateDayEdge,
+      ndl
+    )
+  ) * nightWeight;
+  const terminatorBand = 1 - smoothstepNumber(
+    edge * LITE_EARTH_LIGHTING_MODEL.terminatorBandInnerMultiplier,
+    edge * LITE_EARTH_LIGHTING_MODEL.terminatorBandOuterMultiplier,
+    Math.abs(ndl)
+  );
+
+  return { cityGate, dayWeight, deepNightWeight, nightWeight, terminatorBand };
+}
+
 declare global {
   interface Window {
     __MiraLithLuBirthGroundCloudFieldTextureUuid?: string;
@@ -175,32 +217,41 @@ function createLiteEarthMaterial({
         vec3 viewDirection = normalize(vViewDirection);
         vec3 sunDirection = normalize(lightDir);
         float ndl = dot(normalDirection, sunDirection);
-        float dayWeight = smoothstep(-terminatorSoftness, terminatorSoftness, ndl);
+        float terminatorEdge = max(terminatorSoftness, 0.001);
+        float dayWeight = smoothstep(-terminatorEdge, terminatorEdge, ndl);
         float directLight = max(ndl, 0.0);
         float nightWeight = 1.0 - dayWeight;
+        float deepNightWeight = 1.0 - smoothstep(
+          -terminatorEdge * ${LITE_EARTH_LIGHTING_MODEL.deepNightOuterMultiplier.toFixed(2)},
+          -terminatorEdge * ${LITE_EARTH_LIGHTING_MODEL.deepNightInnerMultiplier.toFixed(2)},
+          ndl
+        );
+        float cityGate = (
+          1.0 - smoothstep(
+            ${LITE_EARTH_LIGHTING_MODEL.cityGateNightEdge.toFixed(2)},
+            ${LITE_EARTH_LIGHTING_MODEL.cityGateDayEdge.toFixed(2)},
+            ndl
+          )
+        ) * nightWeight;
+        float terminatorBand = 1.0 - smoothstep(
+          terminatorEdge * ${LITE_EARTH_LIGHTING_MODEL.terminatorBandInnerMultiplier.toFixed(2)},
+          terminatorEdge * ${LITE_EARTH_LIGHTING_MODEL.terminatorBandOuterMultiplier.toFixed(2)},
+          abs(ndl)
+        );
 
         vec3 dayColor = texture2D(dayMap, vUv).rgb;
         vec3 nightColor = texture2D(nightMap, vUv).rgb;
         float dayLuma = dot(dayColor, vec3(0.299, 0.587, 0.114));
         float oceanMask = smoothstep(0.015, 0.16, dayColor.b - max(dayColor.r, dayColor.g) * 0.72);
 
-        vec3 litSurface = dayColor * lightColor * (
+        vec3 daySurface = dayColor * lightColor * (
           0.075 + ambientIntensity * 1.6 + directLight * sunIntensity * 0.39
-        );
-        vec3 readableNight = dayColor * (
-          0.032 +
-          nightSurfaceLift * 0.4 +
-          smoothstep(-0.52, 0.04, ndl) * 0.035 +
-          closeStage * 0.15
-        );
-        vec3 cityLight = nightColor * nightIntensity * (
-          0.58 + nightWeight * 1.62 + closeStage * 2.1
-        );
-        vec3 color = mix(readableNight + cityLight, litSurface, dayWeight);
-        float closeSurfaceDetail = smoothstep(0.025, 0.32, dayLuma);
-        color += dayColor * nightWeight * closeStage * (
-          0.22 + closeSurfaceDetail * 0.48
-        );
+        ) * dayWeight;
+        vec3 coolNightTint = vec3(0.26, 0.36, 0.56);
+        float nightAlbedoStrength = 0.08 + nightSurfaceLift * 0.92;
+        vec3 nightAlbedo = dayColor * coolNightTint * nightAlbedoStrength * deepNightWeight;
+        vec3 cityLight = nightColor * nightIntensity * cityGate;
+        vec3 color = daySurface + nightAlbedo + cityLight;
 
         vec3 halfVector = normalize(sunDirection + viewDirection);
         float oceanSpecular = pow(max(dot(normalDirection, halfVector), 0.0), 74.0) *
@@ -240,8 +291,8 @@ function createLiteEarthMaterial({
         );
         color = mix(color, surfaceCloudColor * (0.42 + directLight * 0.62), surfaceCloudAlpha);
 
-        float twilight = 1.0 - smoothstep(0.02, 0.38, abs(ndl));
-        color += vec3(0.19, 0.11, 0.075) * twilight * (1.0 - oceanMask * 0.3) * 0.09;
+        color += vec3(0.22, 0.105, 0.04) * terminatorBand *
+          (1.0 - oceanMask * 0.3) * ${LITE_EARTH_LIGHTING_MODEL.terminatorTintStrength.toFixed(3)};
 
         float facing = max(dot(normalDirection, viewDirection), 0.0);
         float fresnel = pow(1.0 - facing, max(rimWidth, 1.0));
@@ -276,6 +327,11 @@ function createLiteEarthMaterial({
         color += contactColor * contactLine * contactStrength;
 
         color = max(color, dayColor * nightWeight * 0.018);
+        color *= mix(
+          ${LITE_EARTH_LIGHTING_MODEL.closeExposureMin.toFixed(2)},
+          ${LITE_EARTH_LIGHTING_MODEL.closeExposureMax.toFixed(2)},
+          closeStage
+        );
         color = color / (1.0 + max(color - vec3(0.72), vec3(0.0)) * 0.72);
         float colorLuma = dot(color, vec3(0.299, 0.587, 0.114));
         color = mix(vec3(colorLuma), color, 0.97 + dayLuma * 0.02);

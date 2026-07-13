@@ -46,7 +46,11 @@ const smoothstep = (edge0: number, edge1: number, value: number) => {
   return t * t * (3 - 2 * t);
 };
 
-function createLiteBloomTexture() {
+const ANALYTIC_HALO_DIAMETER_SCALE = 2.16;
+const ANALYTIC_HALO_OPACITY_MIN = 0.045;
+const ANALYTIC_HALO_OPACITY_MAX = 0.055;
+
+export function createLiteBloomTextureData() {
   const size = 64;
   const pixels = new Uint8Array(size * size * 4);
 
@@ -55,9 +59,10 @@ function createLiteBloomTexture() {
       const dx = ((x + 0.5) / size - 0.5) * 2;
       const dy = ((y + 0.5) / size - 0.5) * 2;
       const radius = Math.sqrt(dx * dx + dy * dy);
-      const inner = smoothstep(0.7, 0.83, radius);
-      const outer = 1 - smoothstep(0.83, 1.08, radius);
-      const alpha = inner * outer;
+      const inner = smoothstep(0.72, 0.84, radius);
+      const outer = 1 - smoothstep(0.84, 0.985, radius);
+      const boundaryPixel = x === 0 || y === 0 || x === size - 1 || y === size - 1;
+      const alpha = boundaryPixel ? 0 : inner * outer;
       const offset = (y * size + x) * 4;
       pixels[offset] = 132;
       pixels[offset + 1] = 194;
@@ -66,6 +71,11 @@ function createLiteBloomTexture() {
     }
   }
 
+  return { pixels, size };
+}
+
+function createLiteBloomTexture() {
+  const { pixels, size } = createLiteBloomTextureData();
   const texture = new DataTexture(pixels, size, size, RGBAFormat, UnsignedByteType);
   texture.magFilter = LinearFilter;
   texture.minFilter = LinearFilter;
@@ -128,7 +138,12 @@ function LandingAnalyticHalo({
     window.__MiraLithLuBirthPostEffectActive = enabled;
     window.__MiraLithLuBirthPostEffectMode = enabled ? "analytic-halo" : "off";
     window.__MiraLithLuBirthAnalyticHaloConfig = enabled
-      ? { diameterScale: 2.5, opacityMax: 0.1, opacityMin: 0.085, textureSize: 64 }
+      ? {
+          diameterScale: ANALYTIC_HALO_DIAMETER_SCALE,
+          opacityMax: ANALYTIC_HALO_OPACITY_MAX,
+          opacityMin: ANALYTIC_HALO_OPACITY_MIN,
+          textureSize: 64
+        }
       : undefined;
     return () => {
       window.__MiraLithLuBirthPostEffectActive = false;
@@ -145,7 +160,7 @@ function LandingAnalyticHalo({
     const progress = getRuntimeOpeningProgress(0);
     const fieldStage = smoothstep(0.16, 0.82, progress);
     (sprite.current.material as SpriteMaterial).opacity = enabled
-      ? 0.085 + fieldStage * 0.015
+      ? ANALYTIC_HALO_OPACITY_MIN + fieldStage * (ANALYTIC_HALO_OPACITY_MAX - ANALYTIC_HALO_OPACITY_MIN)
       : 0;
   });
 
@@ -153,13 +168,13 @@ function LandingAnalyticHalo({
     return null;
   }
 
-  const diameter = composition.earth.radius * 2.5;
+  const diameter = composition.earth.radius * ANALYTIC_HALO_DIAMETER_SCALE;
   return (
     <sprite ref={sprite} scale={[diameter, diameter, 1]} renderOrder={18}>
       <spriteMaterial
         map={bloomTexture}
         color="#8ac7ff"
-        opacity={0.085}
+        opacity={ANALYTIC_HALO_OPACITY_MIN}
         transparent
         blending={AdditiveBlending}
         depthTest={false}

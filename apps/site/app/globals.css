@@ -1758,16 +1758,19 @@ body::before {
 
   52% {
     opacity: 1;
+    stroke-dasharray: 1 0;
     stroke-dashoffset: 0;
   }
 
   90% {
     opacity: 1;
+    stroke-dasharray: 1 0;
     stroke-dashoffset: 0;
   }
 
   100% {
     opacity: 0;
+    stroke-dasharray: 1 0;
     stroke-dashoffset: 0;
   }
 }
