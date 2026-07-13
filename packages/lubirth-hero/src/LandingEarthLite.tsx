@@ -53,6 +53,9 @@ export const LITE_EARTH_LIGHTING_MODEL = {
   closeExposureMax: 1.04,
   deepNightOuterMultiplier: 2.2,
   deepNightInnerMultiplier: 0.65,
+  nightAlbedoBase: 0.22,
+  nightAlbedoLiftMultiplier: 2.4,
+  nightAlbedoFloor: 0.04,
   terminatorBandInnerMultiplier: 0.18,
   terminatorBandOuterMultiplier: 1.25,
   terminatorTintStrength: 0.05
@@ -247,11 +250,23 @@ function createLiteEarthMaterial({
         vec3 daySurface = dayColor * lightColor * (
           0.075 + ambientIntensity * 1.6 + directLight * sunIntensity * 0.39
         ) * dayWeight;
-        vec3 coolNightTint = vec3(0.26, 0.36, 0.56);
-        float nightAlbedoStrength = 0.08 + nightSurfaceLift * 0.92;
-        vec3 nightAlbedo = dayColor * coolNightTint * nightAlbedoStrength * deepNightWeight;
+        vec3 coolNightTint = vec3(0.38, 0.48, 0.68);
+        float nightAlbedoStrength =
+          ${LITE_EARTH_LIGHTING_MODEL.nightAlbedoBase.toFixed(3)} +
+          nightSurfaceLift * ${LITE_EARTH_LIGHTING_MODEL.nightAlbedoLiftMultiplier.toFixed(2)};
+        float unlitSurfaceWeight = 1.0 - smoothstep(0.06, 0.32, directLight);
+        float readableNightGate = max(
+          sqrt(clamp(nightWeight, 0.0, 1.0)),
+          unlitSurfaceWeight * 0.82
+        );
+        float nightAlbedoWeight = readableNightGate * (0.42 + deepNightWeight * 0.58);
+        vec3 nightAlbedo = dayColor * coolNightTint * nightAlbedoStrength * nightAlbedoWeight;
+        float nightTerrainDetail = smoothstep(0.012, 0.34, dayLuma);
+        vec3 nightAmbient = vec3(0.05, 0.075, 0.115) * readableNightGate *
+          (0.72 + deepNightWeight * 0.28) *
+          (0.72 + nightTerrainDetail * 0.28);
         vec3 cityLight = nightColor * nightIntensity * cityGate;
-        vec3 color = daySurface + nightAlbedo + cityLight;
+        vec3 color = daySurface + nightAlbedo + nightAmbient + cityLight;
 
         vec3 halfVector = normalize(sunDirection + viewDirection);
         float oceanSpecular = pow(max(dot(normalDirection, halfVector), 0.0), 74.0) *
@@ -326,7 +341,10 @@ function createLiteEarthMaterial({
           contactDepth;
         color += contactColor * contactLine * contactStrength;
 
-        color = max(color, dayColor * nightWeight * 0.018);
+        color = max(
+          color,
+          dayColor * nightWeight * ${LITE_EARTH_LIGHTING_MODEL.nightAlbedoFloor.toFixed(3)}
+        );
         color *= mix(
           ${LITE_EARTH_LIGHTING_MODEL.closeExposureMin.toFixed(2)},
           ${LITE_EARTH_LIGHTING_MODEL.closeExposureMax.toFixed(2)},

@@ -89,11 +89,23 @@ async function sampleEarthLighting(page: import("@playwright/test").Page) {
       patchRadius
     );
 
-    return { background, day, night, ratio: day / Math.max(night, 1) };
+    return {
+      background,
+      day,
+      night,
+      ratio: day / Math.max(night, 1),
+      sampleFrame: {
+        center: [centerX, centerY],
+        dayPoint: [centerX + sunX * interiorOffset, centerY + sunY * interiorOffset],
+        nightPoint: [centerX - sunX * interiorOffset, centerY - sunY * interiorOffset],
+        radius: frame.radius,
+        sunDirection: [sunX, sunY]
+      }
+    };
   });
 }
 
-test("far view keeps a readable dark side and at least 2:1 day-night separation", async ({ page }, testInfo) => {
+test("far view keeps a readable dark side with bounded day-night contrast", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "Lighting pixels are calibrated once at 1440×960.");
   await page.setViewportSize({ width: 1440, height: 960 });
   await page.goto(
@@ -104,9 +116,11 @@ test("far view keeps a readable dark side and at least 2:1 day-night separation"
   const lighting = await sampleEarthLighting(page);
   expect(lighting).not.toBeNull();
   console.log(`far Earth lighting ${JSON.stringify(lighting)}`);
+  await page.screenshot({ path: lightingEvidencePath("earth-far-night-readability"), timeout: 30_000 });
   expect(lighting?.ratio).toBeGreaterThanOrEqual(2);
-  expect(lighting?.night).toBeGreaterThan(2.5);
-  expect(lighting?.night).toBeGreaterThan((lighting?.background ?? 0) + 1);
+  expect(lighting?.ratio).toBeLessThanOrEqual(20);
+  expect(lighting?.night).toBeGreaterThanOrEqual(5.5);
+  expect(lighting?.night).toBeGreaterThanOrEqual((lighting?.background ?? 0) + 3.5);
   await testInfo.attach("far-day-night-lighting-metrics", {
     body: Buffer.from(JSON.stringify(lighting, null, 2)),
     contentType: "application/json"
@@ -115,6 +129,93 @@ test("far view keeps a readable dark side and at least 2:1 day-night separation"
     body: await page.screenshot(),
     contentType: "image/png"
   });
+});
+
+test("production home renders the 2K photographic star field above black", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "Star-field pixels are calibrated once at 1440×960.");
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await page.goto(
+    "/?progress=1&copy=hidden&quality=medium&visualTest=pixels&location=birth&sunDate=2026-07-12T09:00:00Z&moonPhase=birth&postEffect=off"
+  );
+  await waitForLightingFrame(page);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthSpaceBackgroundTexture), { timeout: 25_000 })
+    .toBe("/assets/lubirth/backgrounds/stars-milky-way-2k.webp");
+
+  const sky = await page.evaluate(() => {
+    const source = document.querySelector("canvas");
+    if (!source) {
+      return null;
+    }
+
+    const sample = document.createElement("canvas");
+    sample.width = Math.max(1, source.clientWidth);
+    sample.height = Math.max(1, source.clientHeight);
+    const context = sample.getContext("2d", { willReadFrequently: true });
+    if (!context) {
+      return null;
+    }
+    context.drawImage(source, 0, 0, sample.width, sample.height);
+    const pixels = context.getImageData(0, 0, sample.width, sample.height).data;
+    const values: number[] = [];
+    const minX = Math.floor(sample.width * 0.06);
+    const maxX = Math.floor(sample.width * 0.4);
+    const minY = Math.floor(sample.height * 0.12);
+    const maxY = Math.floor(sample.height * 0.44);
+    for (let y = minY; y < maxY; y += 2) {
+      for (let x = minX; x < maxX; x += 2) {
+        const index = (y * sample.width + x) * 4;
+        values.push(
+          0.2126 * (pixels[index] ?? 0) +
+          0.7152 * (pixels[index + 1] ?? 0) +
+          0.0722 * (pixels[index + 2] ?? 0)
+        );
+      }
+    }
+    values.sort((a, b) => a - b);
+    const mean = values.reduce((total, value) => total + value, 0) / Math.max(values.length, 1);
+    const p95 = values[Math.floor(values.length * 0.95)] ?? 0;
+    const brightFraction = values.filter((value) => value >= 3).length / Math.max(values.length, 1);
+    return { brightFraction, mean, p95 };
+  });
+
+  expect(sky).not.toBeNull();
+  console.log(`production sky lighting ${JSON.stringify(sky)}`);
+  expect(sky?.mean).toBeGreaterThanOrEqual(0.4);
+  expect(sky?.p95).toBeGreaterThanOrEqual(0.75);
+  expect(sky?.brightFraction).toBeGreaterThanOrEqual(0.002);
+});
+
+test("forced fallback is hydration-stable and serves its poster", async ({ page }) => {
+  const runtimeErrors: string[] = [];
+  const failedAssets: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" && /hydration|server rendered html|did not match/i.test(message.text())) {
+      runtimeErrors.push(message.text());
+    }
+  });
+  page.on("pageerror", (error) => {
+    if (/hydration|server rendered html|did not match/i.test(error.message)) {
+      runtimeErrors.push(error.message);
+    }
+  });
+  page.on("response", (response) => {
+    const url = new URL(response.url());
+    if (url.pathname.includes("/assets/lubirth/") && response.status() >= 400) {
+      failedAssets.push(`${response.status()} ${url.pathname}`);
+    }
+  });
+
+  const posterResponse = page.waitForResponse((response) =>
+    new URL(response.url()).pathname === "/assets/lubirth/poster-field.webp"
+  );
+  await page.goto("/?visual=fallback&copy=visible", { waitUntil: "domcontentloaded" });
+  await expect(page.locator("canvas")).toHaveCount(0);
+  await expect(page.locator('[data-visual-fallback="lubirth"]')).toBeVisible();
+  expect((await posterResponse).status()).toBe(200);
+  await page.waitForTimeout(150);
+  expect(runtimeErrors).toEqual([]);
+  expect(failedAssets).toEqual([]);
 });
 
 test("captures the deterministic loading, halo, moon, progress, and landscape matrix", async ({ page }, testInfo) => {

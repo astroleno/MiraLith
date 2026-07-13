@@ -456,8 +456,8 @@ quality: medium
 
 - 新增 halo 边界、月相解析、昼夜权重、近远太阳状态、Loading 闭环和像素亮度断言。
 - 固定视觉矩阵保存在 `output/playwright/lubirth-lighting-revision/`，覆盖 Loading draw/hold、halo on/off、近中远、birth/today 与 844×390 横屏。
-- 固定远景像素采样结果：日面中位亮度 `104.38`，暗面 `3.08`，背景 `0.86`，日暗比 `33.89:1`；暗面高于背景且未黑裁切。
-- strict RAF 最终验收结果：桌面 p95 `17.60ms`，844×390 p95 `17.40ms`，analytic halo 相对同配置 no-halo 的 p95 成本 `0.10ms`。
+- 固定远景像素采样结果：日面中位亮度 `85.76`，暗面 `5.94`，背景 `0.86`，日暗比 `14.44:1`；暗面与背景的亮度差约 `5.08`，保留地形轮廓且未黑裁切。
+- strict RAF 最终验收结果：桌面 analytic-halo p95 `17.10ms`，844×390 横屏 analytic-halo p95 `17.00ms`。本轮 no-halo 对照受到一次调度长帧干扰，因此不据此宣称 halo 的精确增量成本。
 - 单云壳、packed 云纹理、DPR 0.85、MSAA off 与首页无全屏 Bloom 的既有回归继续保留。
 - Playwright 支持 `MIRALITH_PLAYWRIGHT_PORT`，并固定从当前 worktree 启动服务，避免并行 worktree 误复用旧构建。
 
@@ -470,3 +470,12 @@ quality: medium
 - 9 项旧首页用例仍引用已移除的 helmet / `opening-title` 节点、旧滚动交接或易受并行负载影响的 loading 来源。
 
 这些失败未通过放宽断言掩盖，也未在本轮跨范围修改 CoScroll 或标题编排；验收以本方案列出的目标回归、独立 strict 性能测试、lint、typecheck 与 production build 为准。
+
+### 11.6 星空、云体积、暗面与 fallback 闭环
+
+- 首页 medium/high 改为直接采样 `2048×1024` 的 equirect 星空 WebP；文件约 `40KB`，RGBA8 + mipmap 的估算 GPU 占用约 `10.7MiB`。原 8K 星空只保留给 full/study 与 lookdev，首页不再承担约 `170.7MiB` 的解码后纹理占用。
+- 固定天空区域采样结果为平均亮度 `0.825/255`、p95 `0.860/255`、亮度至少 `3/255` 的像素占比 `0.00334`；既能读到真实星场，也不抬高黑场底色。
+- 云层继续保持“一张 packed 纹理 + 一层云壳”：R 为覆盖度、GB 为切线法线、A 为厚度；A 参与最高 `0.0045R` 的径向顶点置换，fragment 只增加一次视向 relief sample，并继续复用现有太阳偏移自遮蔽和地表云影。
+- EarthLite 为未受直射光的表面增加低强度冷色地形环境光，城市灯仍使用独立 strict night gate；近景与暗面可读性因此不再依赖抬高城市灯或全局曝光。
+- `visual=fallback` 改为由服务端 search params 决定初始渲染，首帧不再先挂载 Canvas；新增约 `18KB` 的真实 WebP poster，消除了 hydration mismatch 与 poster 404。
+- 本轮目标回归 `5/5` 通过，独立首页性能用例 `1/1` 通过；LuBirth/site TypeScript、site ESLint 与 production build 均通过。全套 Playwright 未在本轮重复执行，性能数据仍是桌面浏览器与移动横屏 viewport 仿真，不代表真实移动 GPU。

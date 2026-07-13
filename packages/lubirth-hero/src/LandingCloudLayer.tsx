@@ -78,6 +78,8 @@ const REFERENCE_CLOUD_SHELLS: readonly CloudShellLayer[] = [
 const CLOUD_TEXTURE_ART_OFFSET_X = 0.045;
 const CLOUD_TEXTURE_ART_OFFSET_Y = 0.018;
 const CLOUD_SCROLL_SPEED = 0.022;
+const HOME_LITE_CLOUD_HEIGHT_SCALE = 0.0045;
+const HOME_LITE_CLOUD_RELIEF_UV_SCALE = 0.0022;
 const HOME_LITE_CLOUD_SHELL: CloudShellLayer = {
   radius: HOME_CLOUD_SHELL_RADIUS,
   opacity: 0.66,
@@ -119,6 +121,8 @@ declare global {
     __MiraLithLuBirthCloudFieldTexture?: string;
     __MiraLithLuBirthCloudShellOffset?: number;
     __MiraLithLuBirthCloudShellTextureUuid?: string;
+    __MiraLithLuBirthCloudHeightScale?: number;
+    __MiraLithLuBirthCloudReliefSamples?: number;
   }
 }
 
@@ -130,6 +134,7 @@ function createLiteCloudMaterial(
     uniforms: {
       cloudFieldMap: { value: cloudFieldTexture },
       cloudOffset: { value: 0 },
+      heightScale: { value: composition.earth.radius * HOME_LITE_CLOUD_HEIGHT_SCALE },
       opacity: { value: composition.earth.useClouds ? composition.earth.cloudOpacity : 0 },
       debugBoost: { value: 0 },
       lightDir: {
@@ -144,10 +149,14 @@ function createLiteCloudMaterial(
       }
     },
     vertexShader: `
+      uniform sampler2D cloudFieldMap;
+      uniform float cloudOffset;
+      uniform float heightScale;
       uniform vec3 lightDir;
 
       varying vec2 vUv;
       varying vec3 vTangentLight;
+      varying vec3 vTangentView;
       varying vec2 vSunOffset;
       varying float vViewFacing;
       varying float vDaylight;
@@ -155,26 +164,37 @@ function createLiteCloudMaterial(
       void main() {
         vUv = uv;
         vec3 localNormal = normalize(position);
+        vec2 cloudUv = vec2(
+          fract(uv.x + ${HOME_CLOUD_FIELD_OFFSET_X.toFixed(3)} + cloudOffset),
+          clamp(uv.y + ${HOME_CLOUD_FIELD_OFFSET_Y.toFixed(3)}, 0.001, 0.999)
+        );
+        vec4 vertexCloudField = texture2D(cloudFieldMap, cloudUv);
+        float vertexCoverage = smoothstep(0.12, 0.82, vertexCloudField.r);
+        float vertexHeight = vertexCoverage * vertexCloudField.a;
+        vec3 displacedPosition = position + localNormal * heightScale * vertexHeight;
         float longitude = uv.x * 6.28318530718;
         vec3 localEast = vec3(sin(longitude), 0.0, cos(longitude));
         vec3 localNorth = normalize(cross(localNormal, localEast));
-        vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+        vec4 worldPosition = modelMatrix * vec4(displacedPosition, 1.0);
         mat3 worldRotation = mat3(modelMatrix);
-        vec3 worldNormal = normalize(worldRotation * normal);
+        vec3 worldNormal = normalize(worldRotation * localNormal);
         vec3 worldEast = normalize(worldRotation * localEast);
         vec3 worldNorth = normalize(worldRotation * localNorth);
         vec3 sunDirection = normalize(lightDir);
+        vec3 viewDirection = normalize(cameraPosition - worldPosition.xyz);
         vTangentLight = vec3(
           dot(sunDirection, worldEast),
           dot(sunDirection, worldNorth),
           dot(sunDirection, worldNormal)
         );
+        vTangentView = vec3(
+          dot(viewDirection, worldEast),
+          dot(viewDirection, worldNorth),
+          dot(viewDirection, worldNormal)
+        );
         vSunOffset = vTangentLight.xy / max(length(vTangentLight.xy), 0.001);
         vDaylight = smoothstep(-0.12, 0.3, vTangentLight.z);
-        vViewFacing = max(
-          dot(worldNormal, normalize(cameraPosition - worldPosition.xyz)),
-          0.0
-        );
+        vViewFacing = max(vTangentView.z, 0.0);
         gl_Position = projectionMatrix * viewMatrix * worldPosition;
       }
     `,
@@ -188,6 +208,7 @@ function createLiteCloudMaterial(
 
       varying vec2 vUv;
       varying vec3 vTangentLight;
+      varying vec3 vTangentView;
       varying vec2 vSunOffset;
       varying float vViewFacing;
       varying float vDaylight;
@@ -198,6 +219,24 @@ function createLiteCloudMaterial(
           clamp(vUv.y + ${HOME_CLOUD_FIELD_OFFSET_Y.toFixed(3)}, 0.001, 0.999)
         );
         vec4 cloudField = texture2D(cloudFieldMap, cloudUv);
+        float grazingView = 1.0 - clamp(vViewFacing, 0.0, 1.0);
+        vec2 reliefDirection = vTangentView.xy / max(vTangentView.z, 0.32);
+        float reliefDepth = (0.34 + cloudField.a * 0.66) *
+          smoothstep(0.12, 0.86, grazingView);
+        vec2 reliefUv = vec2(
+          fract(cloudUv.x - reliefDirection.x * ${HOME_LITE_CLOUD_RELIEF_UV_SCALE.toFixed(4)} * reliefDepth),
+          clamp(
+            cloudUv.y - reliefDirection.y * ${(HOME_LITE_CLOUD_RELIEF_UV_SCALE * 0.5).toFixed(4)} * reliefDepth,
+            0.001,
+            0.999
+          )
+        );
+        vec4 reliefField = texture2D(cloudFieldMap, reliefUv);
+        float reliefWeight = smoothstep(0.16, 0.78, grazingView) *
+          smoothstep(0.12, 0.72, reliefField.a);
+        cloudField.r = max(cloudField.r, reliefField.r * (0.82 + reliefWeight * 0.12));
+        cloudField.a = max(cloudField.a, reliefField.a * (0.78 + reliefWeight * 0.14));
+        cloudField.gb = mix(cloudField.gb, reliefField.gb, reliefWeight * 0.55);
         if (cloudField.r < 0.12) {
           discard;
         }
@@ -1047,12 +1086,18 @@ export function LandingCloudLayer({
       enabled && cloudMode === "shell-lite" ? assets.earthCloudField?.src : undefined;
     window.__MiraLithLuBirthCloudShellTextureUuid =
       enabled && cloudMode === "shell-lite" ? cloudFieldTexture?.uuid : undefined;
+    window.__MiraLithLuBirthCloudHeightScale =
+      enabled && cloudMode === "shell-lite" ? HOME_LITE_CLOUD_HEIGHT_SCALE : undefined;
+    window.__MiraLithLuBirthCloudReliefSamples =
+      enabled && cloudMode === "shell-lite" ? 1 : undefined;
 
     return () => {
       window.__MiraLithLuBirthCloudShellCount = 0;
       window.__MiraLithLuBirthCloudFieldTexture = undefined;
       window.__MiraLithLuBirthCloudShellOffset = undefined;
       window.__MiraLithLuBirthCloudShellTextureUuid = undefined;
+      window.__MiraLithLuBirthCloudHeightScale = undefined;
+      window.__MiraLithLuBirthCloudReliefSamples = undefined;
     };
   }, [activeCloudShells.length, assets.earthCloudField?.src, cloudFieldTexture?.uuid, cloudMode, enabled]);
 
@@ -1116,10 +1161,10 @@ export function LandingCloudLayer({
             args={[
               composition.earth.radius * layer.radius,
               cloudMode === "shell-lite"
-                ? quality.tier === "high" ? 128 : quality.tier === "medium" ? 96 : 64
+                ? quality.tier === "high" ? 144 : quality.tier === "medium" ? 128 : 80
                 : quality.tier === "high" ? Math.max(288, quality.segments * 4) : quality.tier === "medium" ? Math.max(160, quality.segments * 3) : 48,
               cloudMode === "shell-lite"
-                ? quality.tier === "high" ? 72 : quality.tier === "medium" ? 56 : 40
+                ? quality.tier === "high" ? 84 : quality.tier === "medium" ? 72 : 48
                 : quality.tier === "high" ? 180 : quality.tier === "medium" ? 96 : 32
             ]}
           />

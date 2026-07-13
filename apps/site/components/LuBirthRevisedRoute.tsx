@@ -58,6 +58,7 @@ interface LuBirthRevisedRouteProps {
   variant?: LuBirthRevisedRouteVariant;
   ariaLabel?: string;
   stageLabel?: string;
+  initialForcedVisualFallback?: boolean;
 }
 
 const DEFAULT_SCREENSHOT_DEBUG_OPTIONS: ScreenshotDebugOptions = {
@@ -558,7 +559,8 @@ function ScrollHint() {
 export function LuBirthRevisedRoute({
   variant = "study",
   ariaLabel,
-  stageLabel
+  stageLabel,
+  initialForcedVisualFallback = false
 }: LuBirthRevisedRouteProps) {
   const rootRef = useRef<HTMLElement>(null);
   const isHome = variant === "home";
@@ -734,7 +736,7 @@ export function LuBirthRevisedRoute({
 
       const rootElement = rootRef.current;
       const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const forcedFallback = new URLSearchParams(window.location.search).get("visual") === "fallback";
+      const forcedFallback = initialForcedVisualFallback;
       const screenshotDebug = debugOptions;
       setRuntimeReady(true);
       setCopyInteractive(false);
@@ -1441,7 +1443,24 @@ export function LuBirthRevisedRoute({
       disposed = true;
       cleanupAnimations?.();
     };
-  }, [debugOptions, debugOptionsReady, isHome, markHomeLoadingReady, markHomeVisualReady, triggerId, variant]);
+  }, [
+    debugOptions,
+    debugOptionsReady,
+    initialForcedVisualFallback,
+    isHome,
+    markHomeLoadingReady,
+    markHomeVisualReady,
+    triggerId,
+    variant
+  ]);
+
+  const visualFallback = (
+    <VisualCanvasFallback
+      scene="lubirth"
+      label="LuBirth near-earth arc and moon field"
+      posterSrc="/assets/lubirth/poster-field.webp"
+    />
+  );
 
   return (
     <main
@@ -1485,35 +1504,31 @@ export function LuBirthRevisedRoute({
       </section>
 
       {sceneEnabled ? (
-        <VisualCanvas
-          key={isScreenshotMode ? "lubirth-screenshot-canvas" : isHome ? "lubirth-home-canvas" : "lubirth-runtime-canvas"}
-          antialias={!isHome}
-          decorative
-          dpr={isScreenshotMode && !isHome ? 2 : isHome ? 0.85 : [1.5, 2.1]}
-          fallback={
-            <VisualCanvasFallback
-              scene="lubirth"
-              label="LuBirth near-earth arc and moon field"
-              posterSrc="/assets/lubirth/poster-field.webp"
+        initialForcedVisualFallback ? visualFallback : (
+          <VisualCanvas
+            key={isScreenshotMode ? "lubirth-screenshot-canvas" : isHome ? "lubirth-home-canvas" : "lubirth-runtime-canvas"}
+            antialias={!isHome}
+            decorative
+            dpr={isScreenshotMode && !isHome ? 2 : isHome ? 0.85 : [1.5, 2.1]}
+            fallback={visualFallback}
+          >
+            <LuBirthSceneSlot
+              mode="field"
+              quality={isHome ? "medium" : isScreenshotMode ? "high" : "auto"}
+              paused={isScreenshotMode}
+              cloudDeckEnabled={!isHome}
+              visualDebugLayer={debugOptions.visualDebugLayer}
+              renderProfile={debugOptions.renderProfile}
+              atmospherePolicy={debugOptions.atmospherePolicy}
+              routeVariant={variant}
+              homeIntroRendering={homeIntroRendering}
+              productionSurface
+              onProjectionFrame={isHome ? handleProjectionFrame : undefined}
+              onVisualReadyEnough={isHome ? () => markHomeVisualAssetReady("day-texture") : undefined}
+              onMoonTextureReady={isHome ? () => markHomeVisualAssetReady("moon-texture") : undefined}
             />
-          }
-        >
-          <LuBirthSceneSlot
-            mode="field"
-            quality={isHome ? "medium" : isScreenshotMode ? "high" : "auto"}
-            paused={isScreenshotMode}
-            cloudDeckEnabled={!isHome}
-            visualDebugLayer={debugOptions.visualDebugLayer}
-            renderProfile={debugOptions.renderProfile}
-            atmospherePolicy={debugOptions.atmospherePolicy}
-            routeVariant={variant}
-            homeIntroRendering={homeIntroRendering}
-            productionSurface
-            onProjectionFrame={isHome ? handleProjectionFrame : undefined}
-            onVisualReadyEnough={isHome ? () => markHomeVisualAssetReady("day-texture") : undefined}
-            onMoonTextureReady={isHome ? () => markHomeVisualAssetReady("moon-texture") : undefined}
-          />
-        </VisualCanvas>
+          </VisualCanvas>
+        )
       ) : null}
     </main>
   );

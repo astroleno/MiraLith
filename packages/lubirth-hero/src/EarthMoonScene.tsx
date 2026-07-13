@@ -32,6 +32,7 @@ import { LandingProjectedHorizonComposite } from "./LandingProjectedHorizonCompo
 import { LandingProjectedLimbScattering } from "./LandingProjectedLimbScattering";
 import { LandingSpaceBackground } from "./LandingSpaceBackground";
 import { LandingVolumetricAtmospherePass } from "./LandingVolumetricAtmospherePass";
+import { LUBIRTH_EXPANDED_SPACE_BACKGROUND } from "./assetManifest";
 import { HOME_CLOUD_FIELD_SCROLL_SPEED } from "./homeCloudField";
 import { resolveLandingVisualPolicy } from "./landingVisualPolicy";
 import { EMPTY_CLOSE_ATMOSPHERE_TUNING } from "./landingAtmosphereTuning";
@@ -723,7 +724,11 @@ export function EarthMoonScene({
       <fog attach="fog" args={["#000102", 16, 48]} />
       <LandingSpaceBackground
         quality={quality}
-        spaceBackground={assets.spaceBackground}
+        spaceBackground={
+          runtimeProfile === "home-lite"
+            ? assets.spaceBackground
+            : LUBIRTH_EXPANDED_SPACE_BACKGROUND
+        }
         emphasis={debugStars}
         counterRotation={skyCounterRotation}
       />

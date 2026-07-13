@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { Component, type ErrorInfo, type ReactNode, Suspense, useState } from "react";
+import { Component, type ErrorInfo, type ReactNode, Suspense, useState, useSyncExternalStore } from "react";
 
 declare global {
   interface Window {
@@ -15,6 +15,18 @@ function markCanvasCreated() {
   }
 
   window.__MiraLithCanvasCreatedAt = performance.now();
+}
+
+function subscribeForcedVisualFallback(_onStoreChange: () => void) {
+  return () => undefined;
+}
+
+function getForcedVisualFallbackSnapshot() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return new URLSearchParams(window.location.search).get("visual") === "fallback";
 }
 
 interface VisualCanvasErrorBoundaryProps {
@@ -64,8 +76,11 @@ export function VisualCanvas({
   children
 }: VisualCanvasProps) {
   const [contextLost, setContextLost] = useState(false);
-  const forcedFallback =
-    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("visual") === "fallback";
+  const forcedFallback = useSyncExternalStore(
+    subscribeForcedVisualFallback,
+    getForcedVisualFallbackSnapshot,
+    () => false
+  );
   const preserveDrawingBuffer = typeof window !== "undefined"
     ? (() => {
         const params = new URLSearchParams(window.location.search);

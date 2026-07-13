@@ -90,10 +90,14 @@ declare global {
     __MiraLithLuBirthCloudShellsActive?: boolean;
     __MiraLithLuBirthCloudShellCount?: number;
     __MiraLithLuBirthCloudFieldTexture?: string;
+    __MiraLithLuBirthCloudHeightScale?: number;
+    __MiraLithLuBirthCloudReliefSamples?: number;
     __MiraLithLuBirthGroundCloudShadowActive?: boolean;
     __MiraLithLuBirthHorizonAuroraRibbonActive?: boolean;
     __MiraLithLuBirthPostEffectActive?: boolean;
     __MiraLithLuBirthPostEffectMode?: string;
+    __MiraLithLuBirthSpaceBackgroundTexture?: string;
+    __MiraLithLuBirthSpaceBackgroundResolution?: [number, number];
     __MiraLithLuBirthAnalyticHaloConfig?: {
       diameterScale: number;
       opacityMax: number;
@@ -291,6 +295,18 @@ test("keeps production home on the lightweight Earth renderer", async ({ page })
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudFieldTexture), { timeout: 25_000 })
     .toBe("/assets/lubirth/textures/earth-cloud-field-home.webp");
   await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudHeightScale), { timeout: 25_000 })
+    .toBeGreaterThan(0);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudReliefSamples), { timeout: 25_000 })
+    .toBe(1);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthSpaceBackgroundTexture), { timeout: 25_000 })
+    .toBe("/assets/lubirth/backgrounds/stars-milky-way-2k.webp");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthSpaceBackgroundResolution), { timeout: 25_000 })
+    .toEqual([2048, 1024]);
+  await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthGroundCloudShadowActive), { timeout: 25_000 })
     .toBe(true);
   await expect
@@ -341,18 +357,20 @@ test("keeps production home on the lightweight Earth renderer", async ({ page })
   expect(Array.from(assetRequests).some((path) => path.includes("earth-night-2k"))).toBe(true);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-cloud-field-home.webp"))).toBe(true);
   expect(Array.from(assetRequests).some((path) => path.includes("moon-2k"))).toBe(true);
+  expect(Array.from(assetRequests).some((path) => path.includes("stars-milky-way-2k.webp"))).toBe(true);
   expect(Array.from(assetRequests).some((path) => path.includes("8k"))).toBe(false);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-clouds-2k"))).toBe(false);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-cloud-deck"))).toBe(false);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-specular-4k"))).toBe(false);
 
   const firstViewportTextures = [
-    "earth-day-2k.jpg",
-    "earth-night-2k.jpg",
-    "earth-cloud-field-home.webp",
-    "moon-2k.jpg"
-  ].map((fileName) =>
-    statSync(path.join(process.cwd(), "apps/site/public/assets/lubirth/textures", fileName)).size
+    path.join("textures", "earth-day-2k.jpg"),
+    path.join("textures", "earth-night-2k.jpg"),
+    path.join("textures", "earth-cloud-field-home.webp"),
+    path.join("textures", "moon-2k.jpg"),
+    path.join("backgrounds", "stars-milky-way-2k.webp")
+  ].map((relativePath) =>
+    statSync(path.join(process.cwd(), "apps/site/public/assets/lubirth", relativePath)).size
   );
   const cloudFieldBytes = firstViewportTextures[2] ?? Number.POSITIVE_INFINITY;
   expect(cloudFieldBytes).toBeLessThanOrEqual(650_000);
