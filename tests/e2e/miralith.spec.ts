@@ -236,9 +236,10 @@ test("homepage chapter targets are unique and unfinished rail items are inert", 
   await expect(page.locator("#miralith-chapter-coscroll")).toHaveCount(0);
 
   const rail = page.locator(".lubirth-revised__title-rail");
-  await expect(rail.locator("a")).toHaveCount(1);
-  await expect(rail.locator("a")).toHaveAttribute("href", /#lubirth-project-intro-anchor$/);
-  await expect(rail.locator("[aria-disabled='true']")).toHaveCount(6);
+  await expect(rail.locator("a")).toHaveCount(2);
+  await expect(rail.locator("a").first()).toHaveAttribute("href", /#lubirth-project-intro-anchor$/);
+  await expect(rail.locator("a", { hasText: "Radio Gaga" })).toHaveAttribute("href", "/radio-gaga");
+  await expect(rail.locator("[aria-disabled='true']")).toHaveCount(5);
   await expect(rail.locator("[aria-disabled='true']").first()).toHaveAttribute("tabindex", "-1");
   await expect(page.locator(".lubirth-revised__mobile-title-bar a")).toHaveAttribute(
     "href",
@@ -420,42 +421,42 @@ test("homepage scroll moves LuBirth into the title list and reveals the project 
   await page.waitForFunction(() => (window.__MiraLithOpeningProgress ?? 0) > 0.82);
   await page.waitForFunction(() => {
     const activeCopy = document.querySelector<HTMLElement>(
-      ".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-copy"
+      ".lubirth-revised__title-rail li[data-active='true'] .miralith-chapter-nav__copy"
     );
-    const opening = document.querySelector<HTMLElement>(".lubirth-revised__opening-title");
+    const persistentTitle = document.querySelector<HTMLElement>(".lubirth-revised__travelling-title");
 
-    if (!activeCopy || !opening) {
+    if (!activeCopy || !persistentTitle) {
       return false;
     }
 
     return (
       Number.parseFloat(window.getComputedStyle(activeCopy).opacity) > 0.85 &&
-      window.getComputedStyle(opening).visibility === "hidden"
+      Number.parseFloat(window.getComputedStyle(persistentTitle).opacity) > 0.85
     );
   });
 
   const railHandoff = await page.evaluate(() => {
-    const opening = document.querySelector<HTMLElement>(".lubirth-revised__opening-title");
+    const persistentTitle = document.querySelector<HTMLElement>(".lubirth-revised__travelling-title");
     const activeTitle = window.innerWidth >= 768
       ? document.querySelector<HTMLElement>(
-          ".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-title"
+          ".lubirth-revised__title-rail li[data-active='true'] .miralith-chapter-nav__title-anchor"
         )
-      : document.querySelector<HTMLElement>(".lubirth-revised__mobile-title-title");
+      : document.querySelector<HTMLElement>(".lubirth-revised__mobile-title-bar .miralith-chapter-bar__title-anchor");
     const activeMeta = document.querySelector<HTMLElement>(
-      ".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-meta"
+      ".lubirth-revised__title-rail li[data-active='true'] .miralith-chapter-nav__meta"
     );
     const inactiveTitle = document.querySelector<HTMLElement>(
-      ".lubirth-revised__title-rail li:not([data-active='true']) .lubirth-revised__rail-title"
+      ".lubirth-revised__title-rail li:not([data-active='true']) .miralith-chapter-nav__title"
     );
     const activeCopy = document.querySelector<HTMLElement>(
-      ".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-copy"
+      ".lubirth-revised__title-rail li[data-active='true'] .miralith-chapter-nav__copy"
     );
 
-    if (!opening || !activeTitle || !inactiveTitle || !activeCopy) {
+    if (!persistentTitle || !activeTitle || !inactiveTitle || !activeCopy) {
       return null;
     }
 
-    const openingStyle = window.getComputedStyle(opening);
+    const persistentTitleStyle = window.getComputedStyle(persistentTitle);
     const activeTitleStyle = window.getComputedStyle(activeTitle);
     const inactiveTitleStyle = window.getComputedStyle(inactiveTitle);
     const activeCopyStyle = window.getComputedStyle(activeCopy);
@@ -465,8 +466,8 @@ test("homepage scroll moves LuBirth into the title list and reveals the project 
       activeFontSize: activeTitleStyle.fontSize,
       inactiveFontSize: inactiveTitleStyle.fontSize,
       metaText: activeMeta?.textContent?.replace(/\s+/g, " ").trim(),
-      openingOpacity: Number.parseFloat(openingStyle.opacity),
-      openingVisibility: openingStyle.visibility
+      persistentTitleOpacity: Number.parseFloat(persistentTitleStyle.opacity),
+      persistentTitleVisibility: persistentTitleStyle.visibility
     };
   });
   expect(railHandoff).not.toBeNull();
@@ -477,15 +478,15 @@ test("homepage scroll moves LuBirth into the title list and reveals the project 
     expect(Number.parseFloat(railHandoff?.activeFontSize ?? "0")).toBeGreaterThanOrEqual(15);
   }
   expect(railHandoff?.metaText).toBe("出生时刻的地月合影 / Birth-Time Earth-Moon Portrait");
-  expect(railHandoff?.openingOpacity).toBeLessThan(0.08);
-  expect(railHandoff?.openingVisibility).toBe("hidden");
+  expect(railHandoff?.persistentTitleOpacity).toBeGreaterThan(0.85);
+  expect(railHandoff?.persistentTitleVisibility).toBe("visible");
   if (usesDesktopRail) {
     await expect(page.locator(".lubirth-revised__title-rail")).toBeVisible();
     await expect(page.locator(".lubirth-revised__title-rail").getByText("Radio Gaga")).toBeVisible();
-    await expect(page.locator(".lubirth-revised__title-rail a")).toHaveCount(1);
-    await expect(page.locator(".lubirth-revised__title-rail [aria-disabled='true']")).toHaveCount(6);
+    await expect(page.locator(".lubirth-revised__title-rail a")).toHaveCount(2);
+    await expect(page.locator(".lubirth-revised__title-rail [aria-disabled='true']")).toHaveCount(5);
     await expect(page.locator(".lubirth-revised__title-rail a", { hasText: "LuBirth" })).toHaveAttribute("aria-current", "page");
-    await expect(page.locator(".lubirth-revised__title-rail [aria-disabled='true']", { hasText: "Radio Gaga" })).toBeVisible();
+    await expect(page.locator(".lubirth-revised__title-rail a", { hasText: "Radio Gaga" })).toHaveAttribute("href", "/radio-gaga");
   } else {
     await expect(page.locator(".lubirth-revised__mobile-title-bar")).toBeVisible();
     await expect(page.locator(".lubirth-revised__mobile-title-bar a")).toHaveAttribute("aria-current", "page");
@@ -507,13 +508,11 @@ test("homepage scroll handoff stays geometrically aligned through the title rail
   const samples: Array<{
     progress: number;
     maxDelta: number;
-    openingVisible: boolean;
     railVisible: boolean;
-    expectHiddenVisibility?: boolean;
   }> = [
-    { progress: 0.34, maxDelta: 320, openingVisible: true, railVisible: false },
-    { progress: 0.52, maxDelta: 56, openingVisible: true, railVisible: false },
-    { progress: 0.82, maxDelta: 10, openingVisible: false, railVisible: true, expectHiddenVisibility: true }
+    { progress: 0.34, maxDelta: 720, railVisible: false },
+    { progress: 0.52, maxDelta: 560, railVisible: false },
+    { progress: 0.9, maxDelta: 10, railVisible: true }
   ];
 
   for (const sample of samples) {
@@ -524,27 +523,32 @@ test("homepage scroll handoff stays geometrically aligned through the title rail
       (progress) => Math.abs((window.__MiraLithOpeningProgress ?? 0) - progress) < 0.08,
       sample.progress
     );
+    await page.evaluate(() => new Promise((resolveFrame) => requestAnimationFrame(() => requestAnimationFrame(resolveFrame))));
 
     const geometry = await page.evaluate(() => {
-      const opening = document.querySelector<HTMLElement>(".lubirth-revised__opening-title");
+      const persistentTitle = document.querySelector<HTMLElement>(".lubirth-revised__travelling-title h1");
       const activeTitle = document.querySelector<HTMLElement>(
-        ".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-title"
+        ".lubirth-revised__title-rail li[data-active='true'] .miralith-chapter-nav__title-anchor"
       );
+      const rail = document.querySelector<HTMLElement>(".lubirth-revised__title-rail");
 
-      if (!opening || !activeTitle) {
+      if (!persistentTitle || !activeTitle || !rail) {
         return null;
       }
 
-      const openingBounds = opening.getBoundingClientRect();
+      const persistentTitleBounds = persistentTitle.getBoundingClientRect();
       const titleBounds = activeTitle.getBoundingClientRect();
-      const openingStyle = window.getComputedStyle(opening);
-      const activeStyle = window.getComputedStyle(activeTitle);
+      const persistentTitleStyle = window.getComputedStyle(persistentTitle);
+      const railStyle = window.getComputedStyle(rail);
 
       return {
-        delta: Math.hypot(openingBounds.left - titleBounds.left, openingBounds.top - titleBounds.top),
-        openingOpacity: Number.parseFloat(openingStyle.opacity),
-        openingVisibility: openingStyle.visibility,
-        railVisible: activeStyle.visibility !== "hidden" && Number.parseFloat(activeStyle.opacity) > 0.5
+        delta: Math.hypot(
+          persistentTitleBounds.left - titleBounds.left,
+          persistentTitleBounds.top - titleBounds.top
+        ),
+        persistentTitleOpacity: Number.parseFloat(persistentTitleStyle.opacity),
+        persistentTitleVisibility: persistentTitleStyle.visibility,
+        railVisible: railStyle.visibility !== "hidden" && Number.parseFloat(railStyle.opacity) > 0.5
       };
     });
 
@@ -553,15 +557,8 @@ test("homepage scroll handoff stays geometrically aligned through the title rail
     if (sample.railVisible) {
       expect(geometry?.railVisible).toBe(true);
     }
-    if (sample.openingVisible) {
-      expect(geometry?.openingOpacity).toBeGreaterThan(0.35);
-      expect(geometry?.openingVisibility).toBe("visible");
-    } else {
-      expect(geometry?.openingOpacity).toBeLessThan(0.12);
-      if (sample.expectHiddenVisibility) {
-        expect(geometry?.openingVisibility).toBe("hidden");
-      }
-    }
+    expect(geometry?.persistentTitleOpacity).toBeGreaterThan(0.35);
+    expect(geometry?.persistentTitleVisibility).toBe("visible");
   }
 });
 

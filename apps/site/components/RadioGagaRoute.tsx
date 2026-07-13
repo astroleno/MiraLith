@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { VisualCanvas } from "../visual/VisualCanvas";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
 import { RadioGagaSceneSlot } from "../visual/scenes/RadioGagaSceneSlot";
+import { MiraLithChapterNavigation } from "./MiraLithChapterNavigation";
 import { RadioGagaCopyLayer } from "./RadioGagaCopyLayer";
 
 const radioGagaModelAssets = [
@@ -12,6 +13,7 @@ const radioGagaModelAssets = [
   "/model/xiaozhi_esp32.glb"
 ] as const;
 const RADIO_GAGA_SCROLL_DISTANCE_VH = 11.6;
+const RADIO_GAGA_NAV_ACCESS_PROGRESS = 0.14;
 
 type RadioGagaAssetState = "checking" | "ready" | "failed";
 
@@ -63,7 +65,9 @@ interface RadioGagaRouteProps {
 export function RadioGagaRoute({ initialForcedVisualFallback = false }: RadioGagaRouteProps) {
   const routeRef = useRef<HTMLElement>(null);
   const progressRef = useRef(0);
+  const chapterNavigationInteractiveRef = useRef(false);
   const [assetState, setAssetState] = useState<RadioGagaAssetState>("checking");
+  const [chapterNavigationInteractive, setChapterNavigationInteractive] = useState(false);
   const [finalOutputState, setFinalOutputState] = useState(() => mapRadioGagaFinalOutput(0));
   const forcedVisualFallback = useSyncExternalStore(
     subscribeForcedVisualFallback,
@@ -76,6 +80,12 @@ export function RadioGagaRoute({ initialForcedVisualFallback = false }: RadioGag
     let cleanup: (() => void) | undefined;
     const updateProgress = (nextProgress: number) => {
       progressRef.current = nextProgress;
+
+      const nextChapterNavigationInteractive = nextProgress >= RADIO_GAGA_NAV_ACCESS_PROGRESS;
+      if (chapterNavigationInteractiveRef.current !== nextChapterNavigationInteractive) {
+        chapterNavigationInteractiveRef.current = nextChapterNavigationInteractive;
+        setChapterNavigationInteractive(nextChapterNavigationInteractive);
+      }
 
       if (routeRef.current) {
         applyRadioGagaProgressStyles(routeRef.current, nextProgress);
@@ -188,7 +198,12 @@ export function RadioGagaRoute({ initialForcedVisualFallback = false }: RadioGag
   const showFallback = forcedVisualFallback || assetState === "failed";
 
   return (
-    <main ref={routeRef} className="radio-gaga-route" aria-label="radioGAGA care radio scene">
+    <main
+      ref={routeRef}
+      className="radio-gaga-route"
+      data-visual-fallback={showFallback ? "true" : "false"}
+      aria-label="radioGAGA care radio scene"
+    >
       {showFallback ? (
         fallback
       ) : (
@@ -203,6 +218,13 @@ export function RadioGagaRoute({ initialForcedVisualFallback = false }: RadioGag
           activeFinalOutputText={finalOutputState.displayText}
         />
       )}
+      <MiraLithChapterNavigation
+        activeIndex="02"
+        interactive={showFallback || chapterNavigationInteractive}
+        className="radio-gaga-title-rail"
+        compactClassName="radio-gaga-mobile-title-bar"
+        chapterHrefs={{ "01": "/", "02": "/radio-gaga" }}
+      />
       <div className="sr-only">
         02 - Care. radioGAGA. A radio of local news, family memory, and my own voice.
         I filter local news through my own perspective, then let it return home in my voice.

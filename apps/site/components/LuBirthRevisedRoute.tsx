@@ -11,6 +11,7 @@ import type {
 import { VisualCanvas } from "../visual/VisualCanvas";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
 import { LuBirthSceneSlot } from "../visual/scenes/LuBirthSceneSlot";
+import { MiraLithChapterNavigation } from "./MiraLithChapterNavigation";
 
 declare global {
   interface Window {
@@ -99,63 +100,6 @@ const copy = {
       "LuBirth imagines birth as an alignment of heaven, earth, and human presence. It is not an astronomical diagram, but a witness of arrival."
   }
 };
-
-const chapters = [
-  {
-    index: "01",
-    targetId: LUBIRTH_PROJECT_INTRO_ANCHOR_ID,
-    title: "LuBirth",
-    zh: "出生时刻的地月合影",
-    en: "Birth-Time Earth-Moon Portrait",
-    active: true
-  },
-  {
-    index: "02",
-    title: "Radio Gaga",
-    zh: "照护",
-    en: "Care",
-    active: false
-  },
-  {
-    index: "03",
-    title: "CoScroll",
-    zh: "赛博转经筒",
-    en: "Devotion",
-    active: false
-  },
-  {
-    index: "04",
-    title: "ArtBreeze",
-    zh: "艺息",
-    en: "Art Flow",
-    active: false
-  },
-  {
-    index: "05",
-    title: "Floating Constellation",
-    zh: "群星项目",
-    en: "Project Field",
-    active: false
-  },
-  {
-    index: "06",
-    title: "Client Works",
-    zh: "商业作品",
-    en: "Commissioned Systems",
-    active: false
-  },
-  {
-    index: "07",
-    title: "Now Building",
-    zh: "主业与关于",
-    en: "Work / About",
-    active: false
-  }
-] as const;
-
-type Chapter = (typeof chapters)[number];
-
-const activeChapter = chapters.find((chapter) => chapter.active) ?? chapters[0];
 
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value));
@@ -462,88 +406,6 @@ function ProjectIntro({ interactive = true }: { interactive?: boolean }) {
   );
 }
 
-function TitleRail({ activeChapter, interactive }: { activeChapter: Chapter; interactive: boolean }) {
-  return (
-    <nav
-      className="lubirth-revised__title-rail"
-      aria-label="MiraLith chapters"
-      aria-hidden={interactive ? undefined : "true"}
-      inert={interactive ? undefined : true}
-    >
-      <ol>
-        {chapters.map((chapter) => {
-          const isActive = chapter.index === activeChapter.index;
-
-          const titleContent = isActive ? (
-            <span className="lubirth-revised__rail-title-anchor" aria-hidden="true">
-              <span className="lubirth-revised__rail-title-placeholder">{chapter.title}</span>
-            </span>
-          ) : (
-            <span className="lubirth-revised__rail-title">{chapter.title}</span>
-          );
-
-          const linkContent = (
-            <>
-              <span className="lubirth-revised__rail-index">{chapter.index}</span>
-              <span className="lubirth-revised__rail-copy">
-                {titleContent}
-                <span className="lubirth-revised__rail-meta">
-                  {chapter.zh} / <span>{chapter.en}</span>
-                </span>
-              </span>
-            </>
-          );
-
-          return (
-            <li key={chapter.index} data-active={isActive ? "true" : "false"}>
-              {isActive ? (
-                <a
-                  className="lubirth-revised__rail-link"
-                  href={`#${LUBIRTH_PROJECT_INTRO_ANCHOR_ID}`}
-                  aria-current="page"
-                  aria-label={`${chapter.index} ${chapter.title} ${chapter.zh}`}
-                  tabIndex={interactive ? undefined : -1}
-                >
-                  {linkContent}
-                </a>
-              ) : (
-                <span
-                  className="lubirth-revised__rail-link"
-                  aria-disabled="true"
-                  tabIndex={-1}
-                >
-                  {linkContent}
-                </span>
-              )}
-            </li>
-          );
-        })}
-      </ol>
-    </nav>
-  );
-}
-
-function MobileTitleBar({ activeChapter, interactive }: { activeChapter: Chapter; interactive: boolean }) {
-  return (
-    <nav
-      className="lubirth-revised__mobile-title-bar"
-      aria-label="Current MiraLith chapter"
-      aria-hidden={interactive ? undefined : "true"}
-      inert={interactive ? undefined : true}
-    >
-      <a href={`#${LUBIRTH_PROJECT_INTRO_ANCHOR_ID}`} aria-current="page" tabIndex={interactive ? undefined : -1}>
-        <span className="lubirth-revised__mobile-title-main">
-          <span>{activeChapter.index}</span>
-          <span className="lubirth-revised__mobile-title-anchor" aria-hidden="true">
-            <span className="lubirth-revised__mobile-title-placeholder">{activeChapter.title}</span>
-          </span>
-        </span>
-        <span className="lubirth-revised__mobile-title-label">{activeChapter.zh}</span>
-      </a>
-    </nav>
-  );
-}
-
 function ScrollHint() {
   return (
     <div className="lubirth-revised__scroll-hint" aria-hidden="true">
@@ -775,6 +637,8 @@ export function LuBirthRevisedRoute({
             gsap.set(targets, vars);
           }
         };
+        const usesDesktopChapterRail = () =>
+          window.matchMedia("(min-width: 768px) and (min-height: 521px)").matches;
 
         const getOpeningTitleTarget = () => {
           const sourceContainer = selector(".lubirth-revised__travelling-title")[0] as HTMLElement | undefined;
@@ -784,11 +648,11 @@ export function LuBirthRevisedRoute({
             | HTMLElement
             | undefined;
           const desktopTitle = selector(
-            ".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-title-anchor"
+            ".lubirth-revised__title-rail li[data-active='true'] .miralith-chapter-nav__title-anchor"
           )[0] as HTMLElement | undefined;
           const mobileTitleBar = selector(".lubirth-revised__mobile-title-bar")[0] as HTMLElement | undefined;
-          const mobileTitle = selector(".lubirth-revised__mobile-title-anchor")[0] as HTMLElement | undefined;
-          const canUseRail = window.innerWidth >= 768 && desktopTitle;
+          const mobileTitle = selector(".lubirth-revised__mobile-title-bar .miralith-chapter-bar__title-anchor")[0] as HTMLElement | undefined;
+          const canUseRail = usesDesktopChapterRail() && desktopTitle;
           const targetTitle = canUseRail ? desktopTitle : mobileTitle;
           const targetBounds = targetTitle?.getBoundingClientRect();
           const stageBounds = stage?.getBoundingClientRect();
@@ -837,7 +701,7 @@ export function LuBirthRevisedRoute({
         setIfPresent(".lubirth-revised__title-rail", { autoAlpha: 0, y: isHome ? 18 : 16 });
         if (isHome) {
           setIfPresent(".lubirth-revised__title-rail li", { autoAlpha: 0, x: -14, y: 6 });
-          setIfPresent(".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-copy", {
+          setIfPresent(".lubirth-revised__title-rail li[data-active='true'] .miralith-chapter-nav__copy", {
             autoAlpha: 0
           });
           setIfPresent(
@@ -883,9 +747,13 @@ export function LuBirthRevisedRoute({
             });
             setIfPresent(".lubirth-revised__hero-copy", { autoAlpha: isHome ? 0 : 1, y: 0, scale: 1 });
             setIfPresent(".lubirth-revised__world-mark", { autoAlpha: isHome ? 0 : 1, y: 0 });
+            setIfPresent(".lubirth-revised__home-signature", {
+              autoAlpha: isHome && homeRailVisible && !usesDesktopChapterRail() ? 0 : 1,
+              y: 0
+            });
             setIfPresent(".lubirth-revised__title-rail", { autoAlpha: isHome && homeRailVisible ? 1 : 0, y: 0 });
             setIfPresent(".lubirth-revised__title-rail li", { autoAlpha: isHome && homeRailVisible ? 1 : 0, x: 0, y: 0 });
-            setIfPresent(".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-copy", {
+            setIfPresent(".lubirth-revised__title-rail li[data-active='true'] .miralith-chapter-nav__copy", {
               autoAlpha: isHome && homeRailVisible ? 1 : 0
             });
             setIfPresent(".lubirth-revised__project-intro", { autoAlpha: isHome && homeProjectVisible ? 1 : 0, y: 0 });
@@ -990,7 +858,7 @@ export function LuBirthRevisedRoute({
           }
 
           if (isHome) {
-            if (window.innerWidth < 768) {
+            if (!usesDesktopChapterRail()) {
               timeline
                 .to(selector(".lubirth-revised__scroll-hint"), { autoAlpha: 0, y: 12, duration: 0.12 }, 0)
                 .to(
@@ -1053,7 +921,7 @@ export function LuBirthRevisedRoute({
                 0.34
               )
               .to(
-                selector(".lubirth-revised__title-rail li[data-active='true'] .lubirth-revised__rail-copy"),
+                selector(".lubirth-revised__title-rail li[data-active='true'] .miralith-chapter-nav__copy"),
                 { autoAlpha: 1, duration: 0.24, ease: "power2.out" },
                 0.4
               )
@@ -1498,8 +1366,16 @@ export function LuBirthRevisedRoute({
           <LoadingOverlay />
         ) : null}
         {showCopy ? isHome ? <ProjectIntro interactive={projectInteractive} /> : <HeroText /> : null}
-        {showCopy ? <TitleRail activeChapter={activeChapter} interactive={copyInteractive} /> : null}
-        {showCopy ? <MobileTitleBar activeChapter={activeChapter} interactive={copyInteractive} /> : null}
+        {showCopy ? (
+          <MiraLithChapterNavigation
+            activeIndex="01"
+            interactive={copyInteractive}
+            className="lubirth-revised__title-rail"
+            compactClassName="lubirth-revised__mobile-title-bar"
+            chapterHrefs={{ "01": `#${LUBIRTH_PROJECT_INTRO_ANCHOR_ID}`, "02": "/radio-gaga" }}
+            reserveActiveTitle
+          />
+        ) : null}
         {showCopy ? <ScrollHint /> : null}
       </section>
 

@@ -46,14 +46,18 @@ test("renders radioGAGA route in one production canvas", async ({ page }, testIn
   await expect(page.locator(".visual-canvas")).toHaveCount(1);
   await expect.poll(() => opacityOf(titlePanel)).toBeGreaterThan(0.85);
 
+  await scrollRadioGagaTo(page, 0.2);
+
   if (testInfo.project.name === "desktop") {
-    await expect(page.locator(".radio-gaga-title-rail li[data-active='true'] .radio-gaga-title-rail__title")).toHaveText(
+    await expect(page.locator(".radio-gaga-title-rail li[data-active='true'] .miralith-chapter-nav__title-anchor")).toHaveText(
       "Radio Gaga"
     );
   }
 
-  if (testInfo.project.name === "mobile-portrait") {
-    await expect(page.locator(".radio-gaga-mobile-title-bar__title")).toHaveText("Radio Gaga");
+  if (testInfo.project.name !== "desktop") {
+    await expect(page.locator(".radio-gaga-mobile-title-bar .miralith-chapter-bar__title-anchor")).toHaveText(
+      "Radio Gaga"
+    );
   }
 });
 

@@ -229,7 +229,7 @@ function mapRadioGagaCopyProgress(
     voiceOpacity: readingOpacity,
     memoryOpacity,
     finalOpacity: scene.finalLineOpacity,
-    titleRailOpacity: 1 - smooth(range(progress, 0.035, 0.095)),
+    titleRailOpacity: smooth(range(progress, 0.08, 0.16)),
     copyScrimOpacity,
     instrumentOpacity,
     stageOpacities,

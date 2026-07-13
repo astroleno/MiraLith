@@ -456,7 +456,7 @@ test("uses one persistent LuBirth title node from the home hero to the chapter r
 
   await expect(page.locator(".lubirth-revised__travelling-title")).toHaveCount(1);
   await expect(page.locator(".lubirth-revised__travelling-title")).toBeVisible();
-  await expect(page.locator(".lubirth-revised__rail-title-anchor")).toHaveCount(1);
+  await expect(page.locator(".miralith-chapter-nav__title-anchor")).toHaveCount(1);
   await expect(page.locator(".lubirth-revised__opening-title")).toHaveCount(0);
 });
 
