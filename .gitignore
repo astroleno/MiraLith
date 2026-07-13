@@ -9,6 +9,8 @@ build/
 coverage/
 playwright-report/
 test-results/
+.playwright-cli/
+output/playwright/
 
 .env
 .env.*
@@ -19,4 +21,3 @@ test-results/
 
 reference/
 .codex/
-
