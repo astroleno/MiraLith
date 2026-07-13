@@ -1372,7 +1372,7 @@ export function LuBirthRevisedRoute({
             interactive={copyInteractive}
             className="lubirth-revised__title-rail"
             compactClassName="lubirth-revised__mobile-title-bar"
-            chapterHrefs={{ "01": `#${LUBIRTH_PROJECT_INTRO_ANCHOR_ID}`, "02": "/radio-gaga" }}
+            chapterHrefs={{ "01": `#${LUBIRTH_PROJECT_INTRO_ANCHOR_ID}` }}
             reserveActiveTitle
           />
         ) : null}

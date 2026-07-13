@@ -223,7 +223,6 @@ export function RadioGagaRoute({ initialForcedVisualFallback = false }: RadioGag
         interactive={showFallback || chapterNavigationInteractive}
         className="radio-gaga-title-rail"
         compactClassName="radio-gaga-mobile-title-bar"
-        chapterHrefs={{ "01": "/", "02": "/radio-gaga" }}
       />
       <div className="sr-only">
         02 - Care. radioGAGA. A radio of local news, family memory, and my own voice.

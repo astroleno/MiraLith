@@ -10,6 +10,7 @@ import {
   type CoScrollTimelineConfig
 } from "@miralith/coscroll-scene";
 import type { QualityProfile } from "@miralith/visual-core";
+import { MiraLithChapterNavigation } from "../../components/MiraLithChapterNavigation";
 import { VisualCanvasFallback } from "../../visual/VisualCanvasFallback";
 
 interface CoScrollSpikeExperienceProps {
@@ -19,6 +20,7 @@ interface CoScrollSpikeExperienceProps {
   timeline: CoScrollTimelineConfig;
   assets: CoScrollAssetManifest;
   lyrics: CoScrollLyricSegment[];
+  chapterNavigation?: boolean;
 }
 
 const PIXELS_PER_SECOND = 22;
@@ -34,7 +36,8 @@ export function CoScrollSpikeExperience({
   initialProgress,
   timeline,
   assets,
-  lyrics
+  lyrics,
+  chapterNavigation = false
 }: CoScrollSpikeExperienceProps) {
   const duration = Math.max(1, timeline.duration);
   const initialTime = initialProgress * duration;
@@ -250,6 +253,21 @@ export function CoScrollSpikeExperience({
           <li key={line.id}>{line.text}</li>
         ))}
       </ol>
+
+      {chapterNavigation ? (
+        <>
+          <MiraLithChapterNavigation
+            activeIndex="03"
+            interactive
+            className="coscroll-chapter-nav"
+            compactClassName="coscroll-chapter-bar"
+          />
+          <section className="sr-only" aria-labelledby="coscroll-public-title">
+            <h1 id="coscroll-public-title">CoScroll Heart Sutra</h1>
+            <p>CoScroll is MiraLith&apos;s digital sutra chapter, driven by scrolling through a source-matched Heart Sutra field.</p>
+          </section>
+        </>
+      ) : null}
     </main>
   );
 }

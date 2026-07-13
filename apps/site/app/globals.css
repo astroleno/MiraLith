@@ -1548,7 +1548,50 @@ body::before {
   text-transform: uppercase;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--lubirth-revised-dim);
+  color: var(--miralith-chapter-detail, var(--lubirth-revised-dim, rgba(246, 241, 232, 0.58)));
+}
+
+.coscroll-chapter-nav {
+  position: fixed;
+  left: clamp(20px, 3.5vw, 52px);
+  bottom: clamp(22px, 4vh, 38px);
+  z-index: 12;
+  display: none;
+  width: min(332px, calc(100vw - 40px));
+  padding: 18px 28px 18px 26px;
+  border-left: 1px solid rgba(153, 195, 214, 0.2);
+  color: rgba(235, 244, 248, 0.94);
+  background: linear-gradient(90deg, rgba(1, 2, 5, 0.985), rgba(1, 2, 5, 0.95) 72%, rgba(1, 2, 5, 0.08));
+  box-shadow: -22px 0 52px rgba(1, 2, 5, 0.5);
+  --miralith-chapter-active: rgba(235, 244, 248, 0.94);
+  --miralith-chapter-inactive: rgba(190, 210, 220, 0.48);
+  --miralith-chapter-line: rgba(153, 195, 214, 0.18);
+  --miralith-chapter-gold: rgba(165, 208, 226, 0.78);
+  --miralith-chapter-detail: rgba(190, 210, 220, 0.62);
+  backdrop-filter: blur(12px);
+}
+
+.coscroll-chapter-nav .miralith-chapter-nav__meta {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+}
+
+.coscroll-chapter-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 12;
+  display: none;
+  align-items: center;
+  min-height: calc(58px + env(safe-area-inset-top));
+  padding: calc(14px + env(safe-area-inset-top)) 20px 14px;
+  border-bottom: 1px solid rgba(153, 195, 214, 0.14);
+  color: rgba(235, 244, 248, 0.94);
+  background: linear-gradient(180deg, rgba(1, 2, 5, 0.88), rgba(1, 2, 5, 0.58));
+  --miralith-chapter-gold: rgba(165, 208, 226, 0.82);
+  --miralith-chapter-detail: rgba(190, 210, 220, 0.62);
+  backdrop-filter: blur(14px);
 }
 
 .miralith-chapter-bar__detail span {
@@ -3223,7 +3266,8 @@ body::before {
 }
 
 @media (min-width: 768px) and (min-height: 521px) {
-  .radio-gaga-title-rail {
+  .radio-gaga-title-rail,
+  .coscroll-chapter-nav {
     display: block;
   }
 }
@@ -3408,7 +3452,8 @@ body::before {
 }
 
 @media (max-width: 767px) {
-  .radio-gaga-mobile-title-bar {
+  .radio-gaga-mobile-title-bar,
+  .coscroll-chapter-bar {
     display: flex;
   }
 
@@ -3421,12 +3466,14 @@ body::before {
 
 @media (max-height: 520px) and (orientation: landscape) {
   .lubirth-revised__title-rail,
-  .radio-gaga-title-rail {
+  .radio-gaga-title-rail,
+  .coscroll-chapter-nav {
     display: none;
   }
 
   .lubirth-revised__mobile-title-bar,
-  .radio-gaga-mobile-title-bar {
+  .radio-gaga-mobile-title-bar,
+  .coscroll-chapter-bar {
     display: flex;
   }
 

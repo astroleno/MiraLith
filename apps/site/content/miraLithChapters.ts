@@ -45,3 +45,9 @@ export const miraLithChapters = [
 
 export type MiraLithChapter = (typeof miraLithChapters)[number];
 export type MiraLithChapterIndex = MiraLithChapter["index"];
+
+export const publishedMiraLithChapterHrefs = {
+  "01": "/",
+  "02": "/radio-gaga",
+  "03": "/coscroll"
+} satisfies Partial<Record<MiraLithChapterIndex, string>>;

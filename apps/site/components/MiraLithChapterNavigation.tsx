@@ -1,5 +1,6 @@
 import {
   miraLithChapters,
+  publishedMiraLithChapterHrefs,
   type MiraLithChapterIndex
 } from "../content/miraLithChapters";
 
@@ -21,11 +22,15 @@ export function MiraLithChapterNavigation({
   interactive,
   className,
   compactClassName,
-  chapterHrefs = {},
+  chapterHrefs,
   reserveActiveTitle = false
 }: MiraLithChapterNavigationProps) {
+  const resolvedChapterHrefs = {
+    ...publishedMiraLithChapterHrefs,
+    ...chapterHrefs
+  };
   const activeChapter = miraLithChapters.find((chapter) => chapter.index === activeIndex) ?? miraLithChapters[0];
-  const activeHref = chapterHrefs[activeChapter.index];
+  const activeHref = resolvedChapterHrefs[activeChapter.index];
   const activeTitle = (
     <span className="miralith-chapter-bar__title-anchor" aria-hidden={reserveActiveTitle ? "true" : undefined}>
       <span className={reserveActiveTitle ? "miralith-chapter-bar__title-placeholder" : undefined}>
@@ -57,7 +62,7 @@ export function MiraLithChapterNavigation({
         <ol>
           {miraLithChapters.map((chapter) => {
             const isActive = chapter.index === activeChapter.index;
-            const href = chapterHrefs[chapter.index];
+            const href = resolvedChapterHrefs[chapter.index];
             const title = isActive ? (
               <span
                 className="miralith-chapter-nav__title-anchor"
