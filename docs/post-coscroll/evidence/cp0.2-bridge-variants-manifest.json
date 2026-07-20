@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "checkpoint": "CP0.2",
+  "status": "IN REVIEW",
+  "createdAt": "2026-07-20",
+  "notEditorialGo": true,
+  "notProductionImplementation": true,
+  "mediaRoot": "apps/site/.generated/post-coscroll-editorial/cp02-v1",
+  "commonCoScrollEvidence": {
+    "capture": {
+      "path": "coscroll-live-end/capture.json",
+      "sha256": "d885c4f8fe992b6c540059eced9019c793db81326699a8c1f44d3acc5cfa9c89",
+      "note": "45 native JPEG screenshots captured from the current live /coscroll source at data-coscroll-progress=0.9994; the 2.5s proxy uses the first 15 screenshots at 6fps expanded to 30fps. It is a review capture, not a production terminal."
+    },
+    "liveEndpointProxy": {
+      "path": "coscroll-live-end/coscroll-live-end-2.5s.mp4",
+      "sha256": "e7b8702077dd384d28646905760f4589ed8edf1775ec258c9d13235f8db0c217",
+      "codec": "H.264 1920x1080 30fps",
+      "durationSeconds": 2.5
+    },
+    "offlineParticleBridge": {
+      "path": "bridge-proxy/coscroll-live-yaw-to-artbreeze-ring-offline-editorial-proxy.mp4",
+      "sha256": "56f9eeb9b55e52e191213b855dad35ffcfa2f95d372dd98082612b70ddf38998",
+      "constraints": "bridge-proxy/bridge-proxy.json",
+      "durationSeconds": 2.0,
+      "note": "Offline editorial renderer only. It samples the captured endpoint fixture, depicts clockwise accelerating disassembly and resolves to the CP0.1 ArtBreeze target geometry. Stage 1 must project/sample live yaw and speed at runtime."
+    }
+  },
+  "variantMedia": [
+    {
+      "id": "A-source-order-v1",
+      "linear": {
+        "path": "linear/A-source-order-linear.mp4",
+        "sha256": "6db63f6a32322c7d113afbb60b912cb303259161f163edf3c6f4f97a15203acb",
+        "durationSeconds": 23.053,
+        "frames": 691
+      },
+      "scrub": {
+        "path": "scrub/A-source-order-scrub-demo.mp4",
+        "sha256": "81b9ceb8eb1051af86afeeac45b3094911d525d6ecdc5de2a8f4f8cd7fb5d586",
+        "durationSeconds": 34.566667,
+        "frames": 1037
+      }
+    },
+    {
+      "id": "B-ring-first-v1",
+      "linear": {
+        "path": "linear/B-ring-first-linear.mp4",
+        "sha256": "05cbc26328ddc9b57dcd7dc42bac2fbdcbc269039b91cbf24bf1a1111021f346",
+        "durationSeconds": 23.053,
+        "frames": 691
+      },
+      "scrub": {
+        "path": "scrub/B-ring-first-scrub-demo.mp4",
+        "sha256": "bba0c504fdb0fea69d2a231098800de82790872a38407b496ee384597410a810",
+        "durationSeconds": 34.566667,
+        "frames": 1037
+      }
+    },
+    {
+      "id": "C-hybrid-v1",
+      "linear": {
+        "path": "linear/C-hybrid-linear.mp4",
+        "sha256": "b2193c1fa32d30536889bed3bcf82fe2cad1912879cf01f1d08c1907b874f3ec",
+        "durationSeconds": 23.053,
+        "frames": 691
+      },
+      "scrub": {
+        "path": "scrub/C-hybrid-scrub-demo.mp4",
+        "sha256": "987d8b1ec3170e00ea4b4cc65fdb04331c9f44a4bf9c908afe142baf2ee04d49",
+        "durationSeconds": 34.566667,
+        "frames": 1037
+      }
+    }
+  ],
+  "provisionalSoundComparison": {
+    "visualLeadForSoundTest": "A-source-order-v1",
+    "notAnEditorialSelection": true,
+    "variants": [
+      {
+        "id": "A-audio-1-artbreeze-original",
+        "path": "audio/A-source-order-audio-1-artbreeze-original.mp4",
+        "sha256": "0e19c6e5ac13a1c69087111e74f939e8683856088f592d7535ee88b261ca22e4",
+        "entry": "ArtBreeze source-content audio begins with source order at editorial t=4.500s; its measured source non-silence follows at t≈4.639s."
+      },
+      {
+        "id": "A-audio-2-silent-until-dilemma",
+        "path": "audio/A-source-order-audio-2-silent-until-dilemma.mp4",
+        "sha256": "e07d116352bd40d26e15a5f4a3db941acffebbbe7783c1d73ab64f77eaa6ed18",
+        "entry": "Silence holds through CoScroll, bridge, QR/loading; ArtBreeze source content enters with waiter n=116 at editorial t=8.367s."
+      },
+      {
+        "id": "A-audio-3-review-residue-then-artbreeze",
+        "path": "audio/A-source-order-audio-3-residue-then-artbreeze.mp4",
+        "sha256": "a94139348d927439b23da53b5274439cc83acc93fe3cbad5cc6cbfb4cfa41e2a",
+        "entry": "A low-level synthetic 72Hz review residue spans t=0–4.500s and fades through the ring; ArtBreeze source content then begins. CoScroll currently has no inheritable production audio, so this is timing-only and cannot be frozen as source sound."
+      }
+    ]
+  },
+  "reviewStill": {
+    "path": "review/CP02-bridge-variants-contact-sheet.jpg",
+    "sha256": "0fd5fac3cd0080aef82b48c942b8fdd2340b03363e10409b094d529a860bf977"
+  }
+}

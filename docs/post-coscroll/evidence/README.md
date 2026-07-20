@@ -1,4 +1,4 @@
-# CP0.1 durable evidence snapshot
+# Stage 0 durable evidence snapshot
 
 This directory intentionally stores small, reviewable CP0.1 facts outside the ignored editorial-media tree. It contains no master video, proxy clip, contact sheet, PNG frame, or other large media.
 
@@ -17,3 +17,14 @@ This directory intentionally stores small, reviewable CP0.1 facts outside the ig
 The equivalent generated evidence and all visual/audio review media remain local-only under `apps/site/.generated/post-coscroll-editorial/`, as required by `.gitignore`. The shot map links both the durable snapshot and the local visual evidence.
 
 Version-control handoff: this directory is intentionally **not ignored** and is included in the CP0.1 documentation commit; the local-only media remain excluded.
+
+## CP0.2 review identity
+
+CP0.2 remains `IN REVIEW`; these files do not contain the large local movies and do not signify Editorial GO.
+
+| File | Purpose |
+| --- | --- |
+| `cp0.2-bridge-variants-manifest.json` | IDs, SHA-256s, durations and limitations for the common capture/bridge, A/B/C linear & scrub media, and A sound comparison. |
+| `cp0.2-scrub-interaction-trace.json` | Actual native scroll input trace against the ignored local review surface, proving forward accumulation, reverse withdrawal and resume mapping for all three variants. |
+
+The referenced review media remain local-only under `apps/site/.generated/post-coscroll-editorial/cp02-v1/`. The durable comparison rationale is [CP0.2 bridge variants](../cp0.2-bridge-variants.md).

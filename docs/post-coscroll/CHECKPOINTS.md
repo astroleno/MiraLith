@@ -1,7 +1,7 @@
 # Post-CoScroll Stage 0 Checkpoints
 
-状态：`CP0.1 — PASS`
-本轮范围：只建立 Asset Truth。没有授权、制作或复用 CP0.2 的 A/B/C 样片，也没有进入 CP0.3、CP0.4、Stage 1 或 Stage 2。
+状态：`CP0.1 — PASS / CP0.2 — IN REVIEW`
+本轮范围：CP0.1 的 Asset Truth 已通过；作者随后明确要求继续，现已完成 CP0.2 的 A/B/C 本地评审媒体与声音比较。尚未进入 CP0.3、CP0.4、Stage 1 或 Stage 2。
 
 ## CP0.1 — Asset Truth
 
@@ -11,7 +11,7 @@
 ### 作者 PASS 记录
 
 作者确认：**“保留黑边、实时 yaw、接受 n354。CP0.1：PASS。”**
-范围说明：此 PASS 不代表 CP0.2 授权，也不是 Editorial GO；CP0.2 保持 `NOT STARTED`。
+范围说明：此 PASS 不代表 CP0.2 授权，也不是 Editorial GO；**在该确认时** CP0.2 为 `NOT STARTED`。
 
 | 验收项 | 已交付的可核验证据 |
 | --- | --- |
@@ -40,15 +40,29 @@
 2. 字符从实时用户 yaw / speed 解体；静态 matte 只作 reference fixture。
 3. 接受 `n=354` 为首个 coherent-ring 候选，`[n=355,n=363)` 为实际技术交棒窗。
 
-作者确认的是“asset truth 可作为下一阶段输入”，不是 Editorial GO。**CP0.2 继续为 `NOT STARTED`，尚未获得授权。**
+作者确认的是“asset truth 可作为下一阶段输入”，不是 Editorial GO。该 PASS 当时并不自行打开 CP0.2；后续由作者明确要求继续，才开始以下的 CP0.2 review。
 
 版本控制交接：CP0.1 结论提交时必须纳入 `docs/post-coscroll/evidence/`；`apps/site/.generated/post-coscroll-editorial/` 继续只作本地媒体证据。
 
 ## CP0.2 — Bridge Variants
 
-状态：`NOT STARTED — 未获授权`
+状态：`IN REVIEW — 作者尚未作出 Editorial GO`
 
-CP0.1 PASS 不构成 CP0.2 授权。本次没有生成 A/B/C 线性样片、scroll-scrub 演示或声音比较。输出根目录中若保留任何更早的 `linear/`、`scrub/`、`audio/` 代理，它们不属于本 checkpoint，不能作为 CP0.2 或 CP0.3 证据。
+作者在 CP0.1 PASS 后明确要求继续。该指示仅打开 CP0.2 制作和评审，不等于选择某一版本，也不等于 CP0.3 GO。
+
+| 验收项 | CP0.2 本地证据 |
+| --- | --- |
+| 三版同等完成度线性样片 | [A — Source Order](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/linear/A-source-order-linear.mp4)、[B — Ring First](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/linear/B-ring-first-linear.mp4)、[C — Hybrid](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/linear/C-hybrid-linear.mp4)。三版均为 691 帧的同一 `2.5s + 2.0s + 18.533333s` review 范围。 |
+| 同一真实 CoScroll source end | [live capture metadata](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/coscroll-live-end/capture.json)、[live endpoint proxy](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/coscroll-live-end/coscroll-live-end-2.5s.mp4)、[offline bridge constraints](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/bridge-proxy/bridge-proxy.json)。离线 bridge 不是正式粒子实现。 |
+| 真实影片接管边界 | B/C 均从 `[n=355,n=556)` 进入真实影片，严格区别于仅作 coherent 候选的 `n=354`；A 保持 `[n=0,n=556)` source order。 |
+| 低保真 scrub | [A scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/scrub/A-source-order-scrub-demo.mp4)、[B scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/scrub/B-ring-first-scrub-demo.mp4)、[C scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/scrub/C-hybrid-scrub-demo.mp4)；[native scroll interaction trace](evidence/cp0.2-scrub-interaction-trace.json) 验证 `0→15→30→45→30→23→60` 的前进、撤回、再前进帧映射。没有 production ScrollTrigger。 |
+| 比较表（中心、尺寸、方向、gap 相位、亮度、声音、节奏、情绪） | [CP0.2 comparison](cp0.2-bridge-variants.md#4-连续性与读法比较)；[contact sheet](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/review/CP02-bridge-variants-contact-sheet.jpg)。 |
+| 领先视觉版的三种声音入点 | 暂定视觉领先 A 的 [source sound](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/audio/A-source-order-audio-1-artbreeze-original.mp4)、[silent-until-dilemma](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/audio/A-source-order-audio-2-silent-until-dilemma.mp4)、[review-only residue](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/audio/A-source-order-audio-3-residue-then-artbreeze.mp4)。详见 [声音比较](cp0.2-bridge-variants.md#5-暂定领先视觉方案的声音对比)。 |
+| 可跨机器复核媒体身份 | [CP0.2 media manifest](evidence/cp0.2-bridge-variants-manifest.json)。本地大型媒体继续由 `.gitignore` 排除；manifest、滚动 trace 和评审说明不被忽略。 |
+
+评审结论（执行者观察，**不是作者选择**）：B 的环交棒最直接，A 的“等待 → 白场 → 困境”因果最完整，C 最清楚暴露 persistent DOM ring 容易被读为 spinner。A 仅被用作声音 1/2/3 对比的暂定领先版；不得把此记录理解为 CP0.3 GO。
+
+完整媒体索引、source-order/重排说明、连续性参数和待作者回答的问题在 [CP0.2 bridge variants](cp0.2-bridge-variants.md)。
 
 ## CP0.3 — Editorial GO
 
