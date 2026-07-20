@@ -1,0 +1,13 @@
+# CP0.1 snapshot checksum index. Generated on the capture machine.
+# The first path is the external source master; the remaining durable paths are repository-relative.
+0ab8f26484ad1fe0814df44ba849581c22b948e6d7f1c2d7f2d1c89adab6396d  /Users/aitoshuu/Downloads/portfolio/artbreeze-full.MP4
+b7eaa0f149912f7c42dcc549ef3d4568c184b2cb93da8e59ad5e18ce010afdc2  artbreeze-full.identity.json
+b5730436905ca7ea2d1166f91ee017db7031a66f1749d015f2de0c9a514482db  artbreeze-full.ffprobe.json
+4a6947d19f66c73fb96bc95550c613404b7f3d958bd2063ae8c9be4b6ef59002  artbreeze-0000-1853.framemd5
+774fc0f2e9af24c6ca481953483ddcdbcd30f4cea021b6c4897847226838d4f4  artbreeze-0000-1853-source-slice-manifest.json
+7432fb84a67c046a6151a71b69b0457a7ecc4f50db3ddd87bd4e4c3d37c7d74e  artbreeze-ring-constraints.json
+c85414c27e153d69a3094a17fd4be71d205ced2698a1d576d86c587e8f0acd6b  artbreeze-active-aperture.json
+81d4212538958491ac98529edb0b50794dbcb417c3c6ae8beca1c4356685ddf1  ring-color-provenance.json
+6a6824635dd89f86632b773ac43c2460c4f3e46d13fa766dc8aeb086c2159d35  coscroll-source-end-measurements.json
+# Local-only visual fixture (not intended for Git):
+6d106a9a0cc4b8fa4d0d06603bffdd977a6c1a0f854bf77f61118068627085ee  ../../../apps/site/.generated/post-coscroll-editorial/ring-frames/stable-target-ffmpeg-bt709.png

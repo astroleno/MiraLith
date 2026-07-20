@@ -1,0 +1,32 @@
+{
+  "masterSha256": "0ab8f26484ad1fe0814df44ba849581c22b948e6d7f1c2d7f2d1c89adab6396d",
+  "sourceFrame": 359,
+  "sourcePTS": 1077000,
+  "sourceColorSignalling": {
+    "pixelFormat": "yuv420p",
+    "colorRange": "tv (limited)",
+    "colorSpace": "bt709",
+    "colorTransfer": "bt709",
+    "colorPrimaries": "bt709"
+  },
+  "measurementMask": {
+    "file": "stable-target-orange-mask.png",
+    "pixels": 2591,
+    "note": "The mask is spatially reusable for this same coded raster, but the RGB values depend on the YUV-to-RGB decode path."
+  },
+  "cp01AnalyticCanonical": {
+    "decoder": "FFmpeg",
+    "filter": "scale=in_range=tv:out_range=pc:in_color_matrix=bt709:out_color_matrix=bt709,format=rgb24",
+    "frameOutput": "stable-target-ffmpeg-bt709.png",
+    "frameOutputSha256": "6d106a9a0cc4b8fa4d0d06603bffdd977a6c1a0f854bf77f61118068627085ee",
+    "medianRgb": [243, 131, 47],
+    "medianHex": "#F3832F",
+    "status": "Canonical CP0.1 analytic measurement; not a production presentation-color freeze."
+  },
+  "noncanonicalOpenCvVideoCaptureMeasurement": {
+    "medianRgb": [231, 125, 51],
+    "medianHex": "#E77D33",
+    "status": "Historical OpenCV VideoCapture measurement only. Do not treat as a source-fact hex or carry it into a production color token."
+  },
+  "productionFreezeRule": "Before CP0.4, choose and record either an agreed FFmpeg conversion contract or a real target-browser screenshot measurement under the actual playback/color-management pipeline."
+}

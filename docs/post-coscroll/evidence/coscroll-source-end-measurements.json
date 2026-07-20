@@ -1,0 +1,79 @@
+{
+  "rasterSizePx": [
+    1912,
+    1080
+  ],
+  "glyphBoundingBoxPx": {
+    "x": 887,
+    "y": 365,
+    "width": 150,
+    "height": 365
+  },
+  "glyphCenterPx": [
+    961.5,
+    547.0
+  ],
+  "glyphCenterNormalized": [
+    0.502877,
+    0.506481
+  ],
+  "visibleMaskPixels": 25491,
+  "maskThreshold": "central largest connected component of screenshot luma > 130 within x=720..1199, y=250..829, then a 7px elliptical morphological opening to remove thin lyric overlays",
+  "maskUseConstraint": "Author confirmed on 2026-07-20 that the transition starts at the user's live yaw/speed. This is a reference matte/fixture at one instantaneous yaw only; production must use real-time projected sampling rather than this static mask.",
+  "jadeRgbMedian": [
+    176,
+    197,
+    213
+  ],
+  "jadeRgbMean": [
+    176.3,
+    196.3,
+    212.1
+  ],
+  "jadeLumaMedian": 193.2,
+  "jadeLumaMean": 193.2,
+  "backgroundSamplesRgb": {
+    "upperLeft": [
+      10,
+      11,
+      15
+    ],
+    "nearCenterOutsideGlyph": [
+      29,
+      38,
+      47
+    ],
+    "lowerRight": [
+      11,
+      12,
+      14
+    ]
+  },
+  "idleSequence": [
+    "source-end-live-00.png",
+    "source-end-live-01.png",
+    "source-end-live-02.png",
+    "source-end-live-03.png",
+    "source-end-live-04.png",
+    "source-end-live-05.png",
+    "source-end-live-06.png"
+  ],
+  "capture": {
+    "route": "http://localhost:3011/coscroll",
+    "capturedProgressAttribute": "0.9994",
+    "sourceTerminalInterpretation": "The public source route wraps an exact timeline time of 48s to 0; this capture approaches the real final source state from below and visibly uses anchor 空. It is not a fabricated terminal.",
+    "domFallbackReference": "source-end-fallback.png is a temporary, code-instantiated rendering of the actual VisualCanvasFallback markup and current CSS in a disposable local browser tab. It deliberately records the real fallback glyph 心, not 空; it is not a runtime-failure screenshot."
+  },
+  "rotationCodeConstraints": {
+    "axis": "Y axis; negative values in current source implementation",
+    "idleAngularVelocityRadPerSecond": -0.32,
+    "sourceWheelVelocityMultiplier": -7.5,
+    "sourceWheelStateLimit": 0.22,
+    "sourceInteractiveTargetRangeRadPerSecond": [
+      -1.97,
+      -0.32
+    ],
+    "componentHardCapRadPerSecond": -2.2,
+    "interpretation": "Idle is a negative Y rotation. Current source wheel input can only increase negative-magnitude rotation; it does not reverse direction. This describes the existing source behavior, not a future terminal acceleration effect."
+  }
+}

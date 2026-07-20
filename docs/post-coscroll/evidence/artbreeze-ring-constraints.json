@@ -1,0 +1,47 @@
+{
+  "masterSha256": "0ab8f26484ad1fe0814df44ba849581c22b948e6d7f1c2d7f2d1c89adab6396d",
+  "codedRasterPx": [1920, 1080],
+  "angleConvention": "screen coordinates: 0 degrees at right, positive clockwise",
+  "landmarks": {
+    "firstNeutralLoader": { "frame": 298, "pts": 894000, "timeSeconds": 9.933333333 },
+    "firstOrangeVisible": {
+      "frame": 337,
+      "pts": 1011000,
+      "timeSeconds": 11.233333333,
+      "centerPx": [945.32, 549.62],
+      "centerlineRadiusPx": 46.71,
+      "estimatedOuterDiameterPx": 101.0,
+      "estimatedLineWidthPx": 8.06,
+      "gapDegrees": 235.0,
+      "gapCenterDegrees": 57.5
+    },
+    "firstCoherentOpenRingCandidate": {
+      "frame": 354,
+      "pts": 1062000,
+      "timeSeconds": 11.8,
+      "centerPx": [949.77, 555.71],
+      "centerlineRadiusPx": 53.09,
+      "estimatedOuterDiameterPx": 114.01,
+      "estimatedLineWidthPx": 8.17,
+      "gapDegrees": 146.0,
+      "gapCenterDegrees": 109.0,
+      "labelStatus": "Frame-level candidate label; author confirmed it on 2026-07-20 as the first coherent-ring candidate."
+    },
+    "stableTakeoverCandidate": {
+      "frameRangeHalfOpen": [355, 363],
+      "ptsRangeHalfOpen": [1065000, 1089000],
+      "timeRangeHalfOpenSeconds": [11.833333333, 12.1],
+      "representativeFrame": 359,
+      "positionAndRadiusStability": "fitted center plus/minus 0.3 px and centerline radius plus/minus 0.1 px over n=355..362",
+      "rotationDirection": "clockwise",
+      "authorConfirmedTechnicalHandoffWindow": true,
+      "measuredGapPhaseSpeedDegreesPerSecond": 396.4,
+      "measuredGapPhaseSpeedRevolutionsPerSecond": 1.101
+    },
+    "lastOrangeVisible": { "frame": 372, "pts": 1116000, "timeSeconds": 12.4 },
+    "firstSentenceCharacter": { "frame": 377, "pts": 1131000, "timeSeconds": 12.566666667, "text": "我" }
+  },
+  "activeApertureEvidence": "artbreeze-active-aperture.json",
+  "colorProvenanceEvidence": "ring-color-provenance.json",
+  "geometryMethod": "least-squares circle fit to thresholded orange arc pixels. Open arcs change shape frame-to-frame, so gap/phase are frame-specific constraints, not universal logo parameters."
+}

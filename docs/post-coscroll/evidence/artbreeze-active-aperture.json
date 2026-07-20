@@ -1,0 +1,33 @@
+{
+  "masterSha256": "0ab8f26484ad1fe0814df44ba849581c22b948e6d7f1c2d7f2d1c89adab6396d",
+  "representativeSourceFrame": 359,
+  "representativePTS": 1077000,
+  "codedRasterPx": [1920, 1080],
+  "observedActivePicture": {
+    "xRangeHalfOpenPx": [0, 1920],
+    "yRangeHalfOpenPx": [135, 945],
+    "sizePx": [1920, 810],
+    "status": "Observed active picture / letterbox boundary in source frame n=359; not container clean-aperture metadata."
+  },
+  "detectionEvidence": {
+    "activeTopFirstRow": 135,
+    "activeBottomLastRow": 944,
+    "topBarLastRow": 134,
+    "bottomBarFirstRow": 945,
+    "method": "Explicit BT.709 limited-range to full-range RGB decode; rows 135 and 944 are content white while rows 134 and 945 are near-black letterbox."
+  },
+  "displayGeometryImplications": {
+    "preserveLetterbox": {
+      "ringCenterPxInCodedRaster": [949.67, 556.25],
+      "ringOuterDiameterPx": 114.38
+    },
+    "fillViewportByScalingActivePictureTo1080PxHigh": {
+      "scale": 1.333333333,
+      "scaledRasterPx": [2560, 1080],
+      "centerCropHorizontalPxEachSide": 320,
+      "ringCenterPxAfterCenterCrop": [946.23, 561.67],
+      "ringOuterDiameterPx": 152.51
+    },
+    "decisionStatus": "Author confirmed on 2026-07-20: preserve letterbox on desktop. Crop-to-fill remains an unselected alternate geometry."
+  }
+}

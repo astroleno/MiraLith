@@ -1,0 +1,8 @@
+{
+  "sourcePath": "/Users/aitoshuu/Downloads/portfolio/artbreeze-full.MP4",
+  "sha256": "0ab8f26484ad1fe0814df44ba849581c22b948e6d7f1c2d7f2d1c89adab6396d",
+  "hashAlgorithm": "SHA-256",
+  "hashScope": "entire source file bytes",
+  "ffprobeReport": "artbreeze-full.ffprobe.json",
+  "recordingNote": "FFprobe reports stream/container facts; the companion SHA-256 is recorded separately because it is a whole-file byte hash rather than a stream probe field."
+}
