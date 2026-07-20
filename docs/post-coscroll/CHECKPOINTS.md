@@ -50,6 +50,20 @@
 
 作者在 CP0.1 PASS 后明确要求继续。该指示仅打开 CP0.2 制作和评审，不等于选择某一版本，也不等于 CP0.3 GO。
 
+### 当前评审：cp02-v2 continuous-blue bridge
+
+v1 的共同桥段已经被作者明确 NO-GO：它让“空”看起来是停止旋转后才粒子化，并且粒子过早暖化。v1 保留为历史证据；以下才是当前可供评审的版本。
+
+| 验收项 | 当前 v2 本地证据 |
+| --- | --- |
+| 共同运动约束 | 实体“空”从真实 live yaw / 非零速度继续顺时针加速，旋转中从笔画内部解体；粒子保持 `#65B1D9` 冷玉蓝，先读成蓝色缺口环，最终才暖化交给实际 `n=355` 影片环。见 [v2 motion contact sheet](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/review/bridge-motion-0-2000ms-contact-sheet.jpg) 与 [bridge proxy](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/bridge-proxy-continuous-blue-v2c/coscroll-continuous-blue-particles-v2c.mp4)。 |
+| 三版同等完成度线性样片 | [A — Source Order v2](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/linear/A-source-order-continuous-blue-v2.mp4)、[B — Ring First v2](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/linear/B-ring-first-continuous-blue-v2.mp4)、[C — Hybrid v2](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/linear/C-hybrid-continuous-blue-v2.mp4)。三版均为 `691` 个视觉帧 / `23.033333s`（`23.053s` 容器时长仅含 AAC padding），使用同一 `2.5s + 2.0s` CoScroll / bridge 基线与同一 ArtBreeze 候选窗。 |
+| 低保真 scroll-scrub | [A scrub v2](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/scrub/A-source-order-continuous-blue-v2-scrub-demo.mp4)、[B scrub v2](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/scrub/B-ring-first-continuous-blue-v2-scrub-demo.mp4)、[C scrub v2](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/scrub/C-hybrid-continuous-blue-v2-scrub-demo.mp4)：都显示同一 `0.000 → 0.369 → 0.152 → 1.000` 的前进、撤回、恢复，不接 production ScrollTrigger。 |
+| 可跨机器复核媒体身份 | [v2 continuous-blue manifest](evidence/cp0.2-v2-continuous-blue-bridge-manifest.json)。大型媒体仍由 `.gitignore` 排除。 |
+| 比较结论与待作者决定 | [v2 comparison](cp0.2-bridge-variants-v2.md#5-v2-比较本轮应由作者判断的内容)。没有任何执行者观察可替代作者针对确切样片的 GO。 |
+
+### 历史记录：cp02-v1（已 NO-GO）
+
 | 验收项 | CP0.2 本地证据 |
 | --- | --- |
 | 三版同等完成度线性样片 | [A — Source Order](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/linear/A-source-order-linear.mp4)、[B — Ring First](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/linear/B-ring-first-linear.mp4)、[C — Hybrid](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/linear/C-hybrid-linear.mp4)。三版均为 691 帧的同一 `2.5s + 2.0s + 18.533333s` review 范围。 |
@@ -60,9 +74,9 @@
 | 领先视觉版的三种声音入点 | 暂定视觉领先 A 的 [source sound](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/audio/A-source-order-audio-1-artbreeze-original.mp4)、[silent-until-dilemma](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/audio/A-source-order-audio-2-silent-until-dilemma.mp4)、[review-only residue](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/audio/A-source-order-audio-3-residue-then-artbreeze.mp4)。详见 [声音比较](cp0.2-bridge-variants.md#5-暂定领先视觉方案的声音对比)。 |
 | 可跨机器复核媒体身份 | [CP0.2 media manifest](evidence/cp0.2-bridge-variants-manifest.json)。本地大型媒体继续由 `.gitignore` 排除；manifest、滚动 trace 和评审说明不被忽略。 |
 
-评审结论（执行者观察，**不是作者选择**）：B 的环交棒最直接，A 的“等待 → 白场 → 困境”因果最完整，C 最清楚暴露 persistent DOM ring 容易被读为 spinner。A 仅被用作声音 1/2/3 对比的暂定领先版；不得把此记录理解为 CP0.3 GO。
+历史 v1 的执行者观察（**不是作者选择，且已被 v1 NO-GO 覆盖**）：B 的环交棒最直接，A 的“等待 → 白场 → 困境”因果最完整，C 最清楚暴露 persistent DOM ring 容易被读为 spinner。A 的旧声音 1/2/3 对比不能自动迁移为 v2 声音结论；不得把此记录理解为 CP0.3 GO。
 
-完整媒体索引、source-order/重排说明、连续性参数和待作者回答的问题在 [CP0.2 bridge variants](cp0.2-bridge-variants.md)。
+当前完整媒体索引、source-order/重排说明、连续性参数和待作者回答的问题在 [CP0.2 v2 bridge variants](cp0.2-bridge-variants-v2.md)；[v1 bridge variants](cp0.2-bridge-variants.md) 仅保留为 NO-GO 历史记录。
 
 ## CP0.3 — Editorial GO
 

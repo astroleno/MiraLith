@@ -26,5 +26,6 @@ CP0.2 remains `IN REVIEW`; these files do not contain the large local movies and
 | --- | --- |
 | `cp0.2-bridge-variants-manifest.json` | IDs, SHA-256s, durations and limitations for the common capture/bridge, A/B/C linear & scrub media, and A sound comparison. |
 | `cp0.2-scrub-interaction-trace.json` | Actual native scroll input trace against the ignored local review surface, proving forward accumulation, reverse withdrawal and resume mapping for all three variants. |
+| `cp0.2-v2-continuous-blue-bridge-manifest.json` | Current v2 media hashes, exact continuous-rotation / blue-particle constraints, A/B/C linear & scrub identity, and explicit v1 NO-GO provenance. |
 
-The referenced review media remain local-only under `apps/site/.generated/post-coscroll-editorial/cp02-v1/`. The durable comparison rationale is [CP0.2 bridge variants](../cp0.2-bridge-variants.md).
+`cp0.2-bridge-variants-manifest.json` and its native scroll trace describe the historical `cp02-v1` review only; v1 was author-NO-GO because the solid character read as stopping before particleization and its particles warmed too soon. The current referenced review media remain local-only under `apps/site/.generated/post-coscroll-editorial/cp02-v2/`. The durable current comparison rationale is [CP0.2 v2 bridge variants](../cp0.2-bridge-variants-v2.md).

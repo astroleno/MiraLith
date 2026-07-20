@@ -1,10 +1,12 @@
 # CP0.2 — CoScroll → ArtBreeze Bridge Variants
 
-状态：`IN REVIEW`
+状态：`HISTORICAL NO-GO — superseded for bridge motion / colour`
 
 版本：`cp02-v1`
 
 本文件记录三个同等完成度的本地评审样片及比较结论。它不是 CP0.3 Editorial GO，不是 CP0.4 freeze，也不实现正式路由、Canvas 残影、ScrollTrigger、production media contract 或 CDN。
+
+> 作者已否决本版共同桥段：它被读成“空”停住后才变粒子，且粒子过早暖化。v1 因而保留为 NO-GO 历史证据；当前评审版本是 [cp02-v2 continuous blue bridge](cp0.2-bridge-variants-v2.md)，CP0.2 仍为 `IN REVIEW`，CP0.3 仍未打开。
 
 ## 1. 共同评审基线
 

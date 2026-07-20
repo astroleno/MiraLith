@@ -2,6 +2,12 @@
   "schemaVersion": 1,
   "checkpoint": "CP0.2",
   "status": "IN REVIEW",
+  "reviewOutcome": {
+    "currentStatus": "HISTORICAL_NO_GO",
+    "authorFeedback": "The common v1 bridge read as the character stopping before becoming particles, and its particles were not blue enough.",
+    "supersededBy": "cp0.2-v2-continuous-blue-bridge-manifest.json",
+    "note": "This manifest remains a reproducible identity record for v1 media; it must not be treated as the current CP0.2 candidate set or an Editorial GO."
+  },
   "createdAt": "2026-07-20",
   "notEditorialGo": true,
   "notProductionImplementation": true,

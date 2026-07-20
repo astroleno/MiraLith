@@ -1,34 +1,37 @@
 # First-Sequence Editorial Decision
 
 状态：`CP0.2 IN REVIEW / CP0.3 NOT OPEN`
-当前版本：`0.5`
+当前版本：`0.6`
 CP0.4 freeze hash：`未生成`
 
-CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求继续，现已生成 A/B/C 本地样片并进入作者评审。尚未有作者对一个确切版本的 GO，因此本文件仍不包含冻结项。
+CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求继续。第一轮 `cp02-v1` 已被作者 NO-GO，原因是“空”看起来在粒子化前停止了旋转、且粒子过早暖化。当前 `cp02-v2` 已重做 A/B/C 并进入作者评审。尚未有作者对一个确切版本的 GO，因此本文件仍不包含冻结项。
 
 ## 当前可审阅输入
 
 - [CP0.1 shot map](first-sequence-shot-map.md)
 - [CP0.1 checkpoint ledger](CHECKPOINTS.md)
 - [durable CP0.1 evidence snapshot](evidence/README.md)
-- [CP0.2 variants comparison](cp0.2-bridge-variants.md)
-- [CP0.2 media identity manifest](evidence/cp0.2-bridge-variants-manifest.json)
-- [CP0.2 native scroll trace](evidence/cp0.2-scrub-interaction-trace.json)
-- 本地证据根目录：`/Users/aitoshuu/Documents/GitHub/MiraLith/apps/site/.generated/post-coscroll-editorial/cp02-v1/`
+- [current CP0.2 v2 variants comparison](cp0.2-bridge-variants-v2.md)
+- [CP0.2 v2 media identity manifest](evidence/cp0.2-v2-continuous-blue-bridge-manifest.json)
+- [historical v1 variants comparison / NO-GO](cp0.2-bridge-variants.md)
+- [historical v1 media identity manifest](evidence/cp0.2-bridge-variants-manifest.json)
+- 本地 v2 证据根目录：`/Users/aitoshuu/Documents/GitHub/MiraLith/apps/site/.generated/post-coscroll-editorial/cp02-v2/`
 
 CP0.1 PASS 只代表素材事实可作为下一阶段输入。作者的后续明确继续指示已经打开 CP0.2 review；它仍然**不等于 Editorial GO**。
 
 CP0.1 已确认：桌面保留 letterbox、字符从实时 yaw / speed 解体、`n=354` 为 coherent-ring 候选、`[n=355,n=363)` 为技术交棒窗。详见 checkpoint ledger。
 
-## CP0.2 已交付候选（待作者评审）
+## CP0.2 当前已交付候选（待作者评审）
+
+共同 bridge 已按作者反馈改为：实体“空”持续顺时针加速、在笔画内旋转中剥落；粒子与其形成的缺口环保持冷玉蓝，最后才暖化给真实 ArtBreeze 环。它不是生产实现，也不能替代未来的 live yaw / speed 采样。
 
 | 视觉版本 | 线性样片 | 当前声音 | 备注 |
 | --- | --- | --- | --- |
-| `A-source-order-v1` | [A-source-order-linear.mp4](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/linear/A-source-order-linear.mp4) | [audio 1](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/audio/A-source-order-audio-1-artbreeze-original.mp4)、[audio 2](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/audio/A-source-order-audio-2-silent-until-dilemma.mp4)、[audio 3](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/audio/A-source-order-audio-3-residue-then-artbreeze.mp4) | 仅作为声音比较的暂定领先视觉版；不是选择。 |
-| `B-ring-first-v1` | [B-ring-first-linear.mp4](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/linear/B-ring-first-linear.mp4) | 线性样片内的 source-content audio | 真实影片从稳定窗 `n=355` 直接接管，之后为测试目的回到候选窗前段。 |
-| `C-hybrid-v1` | [C-hybrid-linear.mp4](../../apps/site/.generated/post-coscroll-editorial/cp02-v1/linear/C-hybrid-linear.mp4) | 线性样片内静默至等待者 | persistent DOM ring 只是一层本地 review stand-in，不是正式 DOM 实现。 |
+| `A-source-order-continuous-blue-v2` | [A linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/linear/A-source-order-continuous-blue-v2.mp4) | bridge 后的 source-content AAC review transcode | 保留 LOADING → 等待 → 白场 → 困境的 source order。 |
+| `B-ring-first-continuous-blue-v2` | [B linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/linear/B-ring-first-continuous-blue-v2.mp4) | 从真实 `n=355` 起的 source-content AAC review transcode | 真实稳定环直接接管，之后才回到前段等待素材。 |
+| `C-hybrid-continuous-blue-v2` | [C linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/linear/C-hybrid-continuous-blue-v2.mp4) | bridge 后的 source-content AAC review transcode | DOM ring 仅是 local review stand-in；它是否该存在仍待作者判断。 |
 
-对应 scrub review movies 与真实 native-scroll trace 在 [CP0.2 比较文档](cp0.2-bridge-variants.md#3-低保真-scroll-scrub-证据)。
+对应 v2 scrub review movies、连续运动 contact sheet 和比较在 [CP0.2 v2 比较文档](cp0.2-bridge-variants-v2.md)。三版的 v1 前身是明确的 NO-GO，仍可在 [历史 v1 文档](cp0.2-bridge-variants.md) 中复核，不可作为视觉或声音选择。
 
 ## CP0.3 GO 记录
 

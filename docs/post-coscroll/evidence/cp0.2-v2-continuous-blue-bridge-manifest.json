@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 1,
+  "checkpoint": "CP0.2",
+  "status": "IN REVIEW",
+  "version": "cp02-v2-continuous-blue",
+  "createdAt": "2026-07-20",
+  "notEditorialGo": true,
+  "notProductionImplementation": true,
+  "mediaRoot": "apps/site/.generated/post-coscroll-editorial/cp02-v2",
+  "supersedes": {
+    "version": "cp02-v1",
+    "scope": "common bridge motion and particle colour only; v1 remains locally available as historical NO-GO evidence",
+    "authorFeedback": "The v1 common bridge read as the character stopping before becoming particles, and the particles were not blue enough."
+  },
+  "authorCorrectionContract": {
+    "solidCharacter": "The live 空 body continues to rotate and accelerate while it dissolves; it does not pause or fade out before particleization.",
+    "disassembly": "Particles originate from the character's edges and stroke interiors while sharing its clockwise rotational momentum.",
+    "bluePhase": "Particles and the first legible open ring remain cold jade blue. Target orange belongs only to the final ArtBreeze-film handoff.",
+    "runtimeLimitation": "This offline fixture starts from a captured reference pose. A future authorised Stage 1 implementation must sample/project live user yaw and speed rather than reuse this pose or static matte."
+  },
+  "commonCoScrollEvidence": {
+    "capturePath": "../cp02-v1/coscroll-live-end/capture.json",
+    "captureSha256": "d885c4f8fe992b6c540059eced9019c793db81326699a8c1f44d3acc5cfa9c89",
+    "liveEndpointPath": "../cp02-v1/coscroll-live-end/coscroll-live-end-2.5s.mp4",
+    "liveEndpointSha256": "e7b8702077dd384d28646905760f4589ed8edf1775ec258c9d13235f8db0c217",
+    "capturedState": "Current live /coscroll, data-coscroll-progress=0.9994, visible anchor 空; no existing terminal, particle trail, or formal CoScroll audio.",
+    "durationSeconds": 2.5,
+    "reviewProxy": "H.264 1920x1080 30fps"
+  },
+  "continuousBlueBridge": {
+    "path": "bridge-proxy-continuous-blue-v2c/coscroll-continuous-blue-particles-v2c.mp4",
+    "sha256": "d024b58f1bf4a50426b32e7bb452da79dc6f97ee8b926e7aa5291b3f58024a99",
+    "constraintsPath": "bridge-proxy-continuous-blue-v2c/bridge-v2-proxy.json",
+    "codec": "H.264 1920x1080 30fps",
+    "durationSeconds": 2.0,
+    "frames": 60,
+    "decodeValidated": true,
+    "continuousRotation": {
+      "screenDirection": "clockwise",
+      "initialAngularSpeedRadPerSecond": 0.32,
+      "targetAngularSpeedRadPerSecond": 6.9184851549,
+      "accelerationRadPerSecond2": 3.2992425775,
+      "totalRotationRadians": 7.2384851549,
+      "totalRotationDegrees": 414.7346494442
+    },
+    "particleColour": {
+      "sourceScreenMedian": "#B0C5D5",
+      "reviewParticleBlue": "#65B1D9",
+      "orangeTransitionStartsAtProgress": 0.87,
+      "filmTargetColour": "#F3832F"
+    },
+    "filmTarget": {
+      "letterboxPreserved": true,
+      "actualFilmStartFrame": 355,
+      "targetWindow": "[n=355,n=363)",
+      "center": [949.67, 556.25],
+      "outerDiameter": 114.38,
+      "lineWidth": 8.04,
+      "gapCenterDegrees": 222.0,
+      "gapWidthDegrees": 80.0,
+      "direction": "clockwise",
+      "angularSpeedDegreesPerSecond": 396.4
+    }
+  },
+  "variantMedia": [
+    {
+      "id": "A-source-order-continuous-blue-v2",
+      "editorialOrder": "CoScroll 2.5s -> continuous blue bridge 2.0s -> ArtBreeze [n=0,n=556)",
+      "linear": {
+        "path": "linear/A-source-order-continuous-blue-v2.mp4",
+        "sha256": "6d7c5e64558a6a57927cff2fbc5fd0ac1173e9a044a46496098afa8cad23d018",
+        "containerDurationSeconds": 23.053,
+        "visualDurationSeconds": 23.0333333333,
+        "frames": 691,
+        "video": "H.264 1920x1080 30fps",
+        "audio": "AAC stereo 48kHz; source-content review transcode begins after the 4.5s CoScroll/bridge prefix"
+      },
+      "scrub": {
+        "path": "scrub/A-source-order-continuous-blue-v2-scrub-demo.mp4",
+        "sha256": "f1430f68981c1704a56f985537acd76b54d3d7dc6bcfce19386ee832a73fd3d4",
+        "durationSeconds": 33.033333,
+        "frames": 991,
+        "audio": "none; visual scrub capture only"
+      }
+    },
+    {
+      "id": "B-ring-first-continuous-blue-v2",
+      "editorialOrder": "CoScroll 2.5s -> continuous blue bridge 2.0s -> ArtBreeze [n=355,n=556) -> [n=0,n=355)",
+      "linear": {
+        "path": "linear/B-ring-first-continuous-blue-v2.mp4",
+        "sha256": "f4cbd067b6ee2df881d6426c9be3cc9f31d6a3c81ff3c254d7f5fa1a856289e3",
+        "containerDurationSeconds": 23.053,
+        "visualDurationSeconds": 23.0333333333,
+        "frames": 691,
+        "video": "H.264 1920x1080 30fps",
+        "audio": "AAC stereo 48kHz; source-content review transcode begins with the actual n=355 film segment"
+      },
+      "scrub": {
+        "path": "scrub/B-ring-first-continuous-blue-v2-scrub-demo.mp4",
+        "sha256": "87dc145e7c38e2c60b1fe83bf251120e788a34cbae808a086a70e3af2d389bd0",
+        "durationSeconds": 33.033333,
+        "frames": 991,
+        "audio": "none; visual scrub capture only"
+      }
+    },
+    {
+      "id": "C-hybrid-continuous-blue-v2",
+      "editorialOrder": "CoScroll 2.5s -> continuous blue bridge 2.0s -> ArtBreeze [n=0,n=355) with local DOM-ring review stand-in -> actual ArtBreeze [n=355,n=556)",
+      "linear": {
+        "path": "linear/C-hybrid-continuous-blue-v2.mp4",
+        "sha256": "9673c57093723fd1fdcb12d6512681678caeeae1c798ec4a330f9857dd518e67",
+        "containerDurationSeconds": 23.053,
+        "visualDurationSeconds": 23.0333333333,
+        "frames": 691,
+        "video": "H.264 1920x1080 30fps",
+        "audio": "AAC stereo 48kHz; source-content review transcode begins after the bridge"
+      },
+      "scrub": {
+        "path": "scrub/C-hybrid-continuous-blue-v2-scrub-demo.mp4",
+        "sha256": "e49da1fc42b0b5ab8682e17c2bbb27d4295446c5de7773a2e33e4bb774296012",
+        "durationSeconds": 33.033333,
+        "frames": 991,
+        "audio": "none; visual scrub capture only"
+      },
+      "domRingBoundary": "Local review stand-in only. It neither represents a current CoScroll terminal nor authorises a production DOM ring."
+    }
+  ],
+  "scrubCaptureProtocol": {
+    "notProductionScrollTrigger": true,
+    "forward": {"linearTimeSeconds": [0.0, 8.5], "progress": [0.0, 0.3690303907]},
+    "reverse": {"linearTimeSeconds": [8.5, 3.5], "progress": [0.3690303907, 0.1519536903]},
+    "resume": {"linearTimeSeconds": [3.5, 23.0333333333], "progress": [0.1519536903, 1.0]},
+    "claim": "The captures demonstrate accumulation, visual withdrawal, and re-advance along the same monotonic editorial timeline."
+  },
+  "reviewStill": {
+    "path": "review/bridge-motion-0-2000ms-contact-sheet.jpg",
+    "sha256": "54ccfec372394f5bccd8404e1eb46d793d5b33d56872677bd3428c5e3e6dfc4a",
+    "frameIndices": [0, 7, 15, 22, 30, 37, 45, 52, 59],
+    "purpose": "Visual proof that the body changes orientation while disassembling, the particle phase is blue, and the blue ring arrives before final orange target handoff."
+  },
+  "validation": {
+    "allBridgeLinearAndScrubMoviesDecoded": true,
+    "decodedMovieCount": 7,
+    "gitignoreBoundary": "The media root remains ignored; this manifest and the CP0.2 v2 rationale are durable tracked evidence."
+  }
+}

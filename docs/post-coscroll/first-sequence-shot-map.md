@@ -2,7 +2,7 @@
 
 状态：`CP0.1 — PASS / CP0.2 — IN REVIEW`
 版本：`0.5`
-范围：本文件保留 CP0.1 的真实母版、当前 CoScroll 源末态与粒子交棒约束；CP0.2 的本地 A/B/C 评审媒体另见 [bridge variants](cp0.2-bridge-variants.md)。仍未实现路由、Canvas 残影、ScrollTrigger、正式粒子系统或 production media contract。
+范围：本文件保留 CP0.1 的真实母版、当前 CoScroll 源末态与粒子交棒约束；当前 CP0.2 本地 A/B/C 评审媒体见 [v2 bridge variants](cp0.2-bridge-variants-v2.md)，v1 留在 [historical NO-GO record](cp0.2-bridge-variants.md)。仍未实现路由、Canvas 残影、ScrollTrigger、正式粒子系统或 production media contract。
 
 ## 0. 证据边界
 
@@ -11,11 +11,11 @@
 - ArtBreeze 母版：`/Users/aitoshuu/Downloads/portfolio/artbreeze-full.MP4`
 - 当前本地 CoScroll 页面：`http://localhost:3011/coscroll`，source-match 状态、可见锚字为“空”。
 
-`apps/site/.generated/post-coscroll-editorial/` 下早于 `cp02-v1/` 的 `linear/`、`scrub/`、`audio/` 代理不构成 evidence。当前可审阅的 CP0.2 媒体严格位于 `cp02-v1/`，并由 [CP0.2 media manifest](evidence/cp0.2-bridge-variants-manifest.json) 和 [checkpoint ledger](CHECKPOINTS.md) 绑定；它们仍不是 Editorial GO。
+`apps/site/.generated/post-coscroll-editorial/` 下早于 `cp02-v1/` 的 `linear/`、`scrub/`、`audio/` 代理不构成 evidence。`cp02-v1/` 已因旋转连续性与粒子色彩问题被作者 NO-GO；当前可审阅的 CP0.2 媒体位于 `cp02-v2/`，并由 [v2 media manifest](evidence/cp0.2-v2-continuous-blue-bridge-manifest.json) 和 [checkpoint ledger](CHECKPOINTS.md) 绑定；它们仍不是 Editorial GO。
 
 未来转场的目标仅作为约束记录，尚未实现：
 
-> “空”继续旋转并加速 → 产生粒子残留 → 字符本体从边缘和笔画内部粒子化/解体 → 粒子保留旋转动势并重组为 loading 圆环 → 圆环的中心、半径、缺口、方向和相位贴合真实影片圆环 → 网页粒子圆环交给影片圆环。
+> “空”继续旋转并加速 → 在旋转中产生冷玉蓝粒子残留 → 字符本体从边缘和笔画内部粒子化/解体 → 蓝粒子保留旋转动势并重组为 blue loading ring → 仅在最终交棒时暖化，圆环的中心、半径、缺口、方向和相位贴合真实影片圆环 → 网页粒子圆环交给影片圆环。
 
 这不是“字符淡出”，也不是把未来 terminal 效果伪装成当前页面。
 
