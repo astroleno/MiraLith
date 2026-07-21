@@ -1,14 +1,16 @@
 # CP0.2 — CoScroll → ArtBreeze Bridge Variants v3
 
-状态：`IN REVIEW — CP0.3 NOT OPEN`
+状态：`SUPERSEDED — NOT A CURRENT CP0.2 CANDIDATE`
 
 版本：`cp02-v3-source-direction`
+
+> 历史记录：本版恢复了 source 的负 yaw 符号，却把 captured glyph 作为平面图像进行 screen-plane rotation。作者要求实体“空”保持真实 `rotation.y` 姿态解体；当前评审应使用 [v4 real-yaw variants](cp0.2-bridge-variants-v4.md)。本文件和本地媒体只用于复核被替换的配置，绝不是 Editorial GO。
 
 本轮仅替换本地评审桥段，修正“空”被错误反向的问题。它不实现正式 Canvas / 粒子系统、路由、ScrollTrigger、production media contract 或 CDN。
 
 ## 1. 本轮纠正：方向必须从真实 CoScroll source 继承
 
-`cp02-v1` 已被作者否决：它读起来像“空”先停住、随后才粒子化，且粒子过早暖化。`cp02-v2` 修复了停转与色彩问题，却又把真实 source 的负 yaw 归一化成了正向 screen rotation；这不是允许的运动改写，故不再是当前评审输入。
+`cp02-v1` 已被作者否决：它读起来像“空”先停住、随后才粒子化，且粒子过早暖化。`cp02-v2` 修复了停转与色彩问题，却又把真实 source 的负 yaw 归一化成了正向 screen rotation；v3 再次出错于把真实 yaw 展平为平面转字。当前输入是 v4。
 
 真实 source 代码是唯一方向基准：source-match 给 `CoScrollJadeAnchor` 传入 `baseSpeed={-0.32}` 与 `velocityMultiplier={-7.5}`，[CoScrollSceneContent.tsx](../../packages/coscroll-scene/src/CoScrollSceneContent.tsx#L411)；锚字的 `rotationRef.current` 累加后直接写入 `rotation.y`，[CoScrollJadeAnchor.tsx](../../packages/coscroll-scene/src/CoScrollJadeAnchor.tsx#L606)。因此当前作者修正确认的共同约束是：**实体“空”、从它剥落的蓝粒子、以及蓝色缺口环都保持该负 yaw 的同一方向，绝不在桥段内翻向。**
 

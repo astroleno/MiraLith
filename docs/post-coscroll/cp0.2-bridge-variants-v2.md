@@ -4,7 +4,7 @@
 
 版本：`cp02-v2-continuous-blue`
 
-> 历史记录：本版在修复 v1 的停转与暖化问题时，错误地把真实 CoScroll source 的负 yaw 归一化为正向 screen rotation。作者随后要求“空”保持自身旋转方向；当前评审应使用 [v3 source-direction variants](cp0.2-bridge-variants-v3.md)。本文件和它的本地媒体只用于复核被替换的配置，绝不是 Editorial GO。
+> 历史记录：本版在修复 v1 的停转与暖化问题时，错误地把真实 CoScroll source 的负 yaw 归一化为正向 screen rotation。随后 v3 又把真实 yaw flatten 成平面转字；当前评审应使用 [v4 real-yaw variants](cp0.2-bridge-variants-v4.md)。本文件和它的本地媒体只用于复核被替换的配置，绝不是 Editorial GO。
 
 本轮只重做本地评审代理。它不实现正式 Canvas / 粒子系统、路由、ScrollTrigger、production media contract 或 CDN。
 

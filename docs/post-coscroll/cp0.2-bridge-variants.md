@@ -6,7 +6,7 @@
 
 本文件记录三个同等完成度的本地评审样片及比较结论。它不是 CP0.3 Editorial GO，不是 CP0.4 freeze，也不实现正式路由、Canvas 残影、ScrollTrigger、production media contract 或 CDN。
 
-> 作者已否决本版共同桥段：它被读成“空”停住后才变粒子，且粒子过早暖化。v1 因而保留为 NO-GO 历史证据；v2 又因错误改变 source yaw 方向而被取代。当前评审版本是 [cp02-v3 source-direction bridge](cp0.2-bridge-variants-v3.md)，CP0.2 仍为 `IN REVIEW`，CP0.3 仍未打开。
+> 作者已否决本版共同桥段：它被读成“空”停住后才变粒子，且粒子过早暖化。v1 因而保留为 NO-GO 历史证据；v2 错误改变 source yaw 方向，v3 又把真实 yaw flatten 成平面转字。当前评审版本是 [cp02-v4 real-yaw bridge](cp0.2-bridge-variants-v4.md)，CP0.2 仍为 `IN REVIEW`，CP0.3 仍未打开。
 
 ## 1. 共同评审基线
 

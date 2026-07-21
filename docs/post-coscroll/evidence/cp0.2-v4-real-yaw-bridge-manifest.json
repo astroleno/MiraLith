@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "checkpoint": "CP0.2",
+  "status": "IN REVIEW",
+  "version": "cp02-v4-real-yaw",
+  "createdAt": "2026-07-21",
+  "notEditorialGo": true,
+  "notProductionImplementation": true,
+  "mediaRoot": "apps/site/.generated/post-coscroll-editorial/cp02-v4",
+  "supersedes": {
+    "version": "cp02-v3-source-direction",
+    "scope": "projection of the solid 空 body only; v3 remains historical evidence",
+    "authorFeedback": "Why make 空 rotate in a third/screen plane? The body must remain on its real CoScroll yaw path while it becomes blue particles."
+  },
+  "sourceRotationFact": {
+    "propsEvidence": "packages/coscroll-scene/src/CoScrollSceneContent.tsx:411-414",
+    "applicationEvidence": "packages/coscroll-scene/src/CoScrollJadeAnchor.tsx:606-626",
+    "mainAxis": "rotation.y = rotationRef.current",
+    "secondarySourceWobble": {
+      "rotationX": "sin(rotationRef * 0.45) * 0.045",
+      "rotationZ": "sin(rotationRef * 0.25) * 0.018",
+      "rule": "These small existing source terms are not permission to reproject the glyph as a screen-plane spin."
+    },
+    "sourceMatchBaseSpeedRadPerSecond": -0.32,
+    "sourceMatchVelocityMultiplier": -7.5
+  },
+  "realYawBodyEvidence": {
+    "capturePath": "../cp02-v1/coscroll-live-end/capture.json",
+    "captureSha256": "d885c4f8fe992b6c540059eced9019c793db81326699a8c1f44d3acc5cfa9c89",
+    "sourceFrames": {
+      "start": {"index": 14, "path": "../cp02-v1/coscroll-live-end/frames/frame-014.jpg", "sha256": "91181e14fc92964a14147173e22879d75dc4f795b3598c64ccd9177e36e998f5"},
+      "end": {"index": 44, "path": "../cp02-v1/coscroll-live-end/frames/frame-044.jpg", "sha256": "05feb6515c4e9f8ffefb8a0f38a6bc7d9ee97ae6c6444090ee9c4f2d830d6463"}
+    },
+    "bodyDissolveProgress": [0.08, 0.47],
+    "solidGlyphBridgeFramesInclusive": [0, 27],
+    "bodyDissolveBridgeFramesInclusive": [5, 27],
+    "solidGlyphFixtureIndexTrace": [14, 14, 14, 14, 15, 15, 15, 16, 17, 18, 18, 19, 20, 22, 23, 25, 25, 26, 27, 28, 29, 30, 32, 35, 37, 39, 41, 43],
+    "solidGlyphFixtureRange": [14, 43],
+    "fixtureChangesWhileSolidGlyphVisible": 20,
+    "postDissolveParticleTerminalFixture": 44,
+    "bodyProjectionRule": "Real captured rotation.y poses are composited at their captured perspective. No PIL/Image plane rotation and no 2D rotation matrix are applied to the solid glyph.",
+    "runtimeLimitation": "A separately authorised implementation must sample/project live user yaw and speed. These capture poses and their matte extraction are review fixtures, not production pose data."
+  },
+  "realYawBlueBridge": {
+    "path": "bridge-real-yaw/coscroll-real-yaw-blue-particles-v4.mp4",
+    "sha256": "4be55afdbe92c4dbe838e21cf39716a82b34f4d9c009c90adfd9a50692473cae",
+    "constraintsPath": "bridge-real-yaw/bridge-v4-real-yaw-projection.json",
+    "constraintsSha256": "a8bab3e6f5eac3f81f0627d40c4f63d93108a5a13a0c348b6c9b768a44a95a47",
+    "codec": "H.264 1920x1080 30fps",
+    "durationSeconds": 2.0,
+    "frames": 60,
+    "decodeValidated": true,
+    "continuousRotation": {
+      "sourceYawDirection": "negative",
+      "initialAngularSpeedRadPerSecond": -0.32,
+      "targetAngularSpeedRadPerSecond": -6.9184851549,
+      "accelerationRadPerSecond2": -3.2992425775,
+      "totalRotationRadians": -7.2384851549,
+      "phaseRule": "phi(t) = theta(t) - theta(2.0); a constant phase offset adds no opposing angular velocity."
+    },
+    "particleColour": {
+      "reviewParticleBlue": "#65B1D9",
+      "orangeTransitionStartsAtProgress": 0.87,
+      "filmTargetColour": "#F3832F"
+    },
+    "filmTarget": {
+      "letterboxPreserved": true,
+      "actualFilmStartFrame": 355,
+      "targetWindow": "[n=355,n=363)",
+      "center": [949.67, 556.25],
+      "outerDiameter": 114.38,
+      "lineWidth": 8.04,
+      "gapCenterDegrees": 222.0,
+      "gapWidthDegrees": 80.0,
+      "measuredFilmScreenDirection": "clockwise",
+      "continuityBoundary": "v4 preserves real source yaw for body/particles and only lands the final geometry/phase; it does not fabricate a source-direction reversal."
+    }
+  },
+  "variantMedia": [
+    {
+      "id": "A-source-order-real-yaw-v4",
+      "editorialOrder": "CoScroll 2.5s -> real-yaw blue bridge 2.0s -> ArtBreeze [n=0,n=556)",
+      "linear": {"path": "linear/A-source-order-real-yaw-v4.mp4", "sha256": "11bc59624d3be154cedab325362b6807b95b72b46687bdd6a36eb222b06e1af9", "containerDurationSeconds": 23.053, "visualDurationSeconds": 23.0333333333, "frames": 691, "video": "H.264 1920x1080 30fps", "audio": "AAC stereo 48kHz; source-content review transcode begins after the 4.5s CoScroll/bridge prefix"},
+      "scrub": {"path": "scrub/A-source-order-real-yaw-v4-scrub-demo.mp4", "sha256": "d992a150cee0451b31df535a04bf917de064942b30a102e60a83f112243b1e35", "durationSeconds": 33.033333, "frames": 991, "audio": "none; visual scrub capture only"}
+    },
+    {
+      "id": "B-ring-first-real-yaw-v4",
+      "editorialOrder": "CoScroll 2.5s -> real-yaw blue bridge 2.0s -> ArtBreeze [n=355,n=556) -> [n=0,n=355)",
+      "linear": {"path": "linear/B-ring-first-real-yaw-v4.mp4", "sha256": "4afeb2145d880ae38592810b2944e04eb5da723fb1d2172b19ff832a5807c635", "containerDurationSeconds": 23.053, "visualDurationSeconds": 23.0333333333, "frames": 691, "video": "H.264 1920x1080 30fps", "audio": "AAC stereo 48kHz; source-content review transcode begins with the actual n=355 film segment"},
+      "scrub": {"path": "scrub/B-ring-first-real-yaw-v4-scrub-demo.mp4", "sha256": "cf82fa3bb508f4fb44f4a62c53912d579fd41a8f1c5edebcd1fa0c1c3245c79a", "durationSeconds": 33.033333, "frames": 991, "audio": "none; visual scrub capture only"}
+    },
+    {
+      "id": "C-hybrid-real-yaw-v4",
+      "editorialOrder": "CoScroll 2.5s -> real-yaw blue bridge 2.0s -> ArtBreeze [n=0,n=355) with local DOM-ring review stand-in -> actual ArtBreeze [n=355,n=556)",
+      "linear": {"path": "linear/C-hybrid-real-yaw-v4.mp4", "sha256": "3eea9f2666f0193f9fe9e45d9a9c198bc94a89ce0d916ef97c406279c597b4c0", "containerDurationSeconds": 23.053, "visualDurationSeconds": 23.0333333333, "frames": 691, "video": "H.264 1920x1080 30fps", "audio": "AAC stereo 48kHz; source-content review transcode begins after the bridge"},
+      "scrub": {"path": "scrub/C-hybrid-real-yaw-v4-scrub-demo.mp4", "sha256": "645f6fedcd9d6e3d1d9389cb07711687a2b11f13eb066b713729833f77957f3b", "durationSeconds": 33.033333, "frames": 991, "audio": "none; visual scrub capture only"},
+      "domRingBoundary": "Local review stand-in only. It neither represents a current CoScroll terminal nor authorises a production DOM ring."
+    }
+  ],
+  "scrubCaptureProtocol": {
+    "notProductionScrollTrigger": true,
+    "forward": {"linearTimeSeconds": [0.0, 8.5], "progress": [0.0, 0.3690303907]},
+    "reverse": {"linearTimeSeconds": [8.5, 3.5], "progress": [0.3690303907, 0.1519536903]},
+    "resume": {"linearTimeSeconds": [3.5, 23.0333333333], "progress": [0.1519536903, 1.0]}
+  },
+  "reviewStill": {
+    "path": "review/bridge-motion-real-yaw-contact-sheet.jpg",
+    "sha256": "1e72ae8d6afd0ff9b2eb3fcd69cd263742c415c72771df268ea48fbb62966980",
+    "frameIndices": [0, 7, 15, 22, 30, 37, 45, 52, 59],
+    "purpose": "Shows the actual 3D yaw pose before body dissolution, blue particle continuity, blue ring, and final film-target handoff pose."
+  },
+  "validation": {
+    "allBridgeLinearAndScrubMoviesDecoded": true,
+    "decodedMovieCount": 7,
+    "gitignoreBoundary": "The media root remains ignored; this manifest is durable tracked evidence."
+  }
+}

@@ -1,12 +1,17 @@
 {
   "schemaVersion": 1,
   "checkpoint": "CP0.2",
-  "status": "IN REVIEW",
+  "status": "SUPERSEDED",
   "version": "cp02-v3-source-direction",
   "createdAt": "2026-07-21",
   "notEditorialGo": true,
   "notProductionImplementation": true,
   "mediaRoot": "apps/site/.generated/post-coscroll-editorial/cp02-v3",
+  "supersededBy": "cp02-v4-real-yaw",
+  "reviewOutcome": {
+    "currentStatus": "historical; not a current CP0.2 candidate",
+    "reason": "v3 kept the negative yaw sign but flattened the captured 空 glyph into a screen-plane rotation. v4 uses real rotation.y capture poses during dissolution."
+  },
   "supersedes": {
     "version": "cp02-v2-continuous-blue",
     "scope": "common bridge rotation sign and phase handling; v2 remains local historical evidence",
