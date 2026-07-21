@@ -1,8 +1,10 @@
 # CP0.2 — CoScroll → ArtBreeze Bridge Variants v2
 
-状态：`IN REVIEW — CP0.3 NOT OPEN`
+状态：`SUPERSEDED — NOT A CURRENT CP0.2 CANDIDATE`
 
 版本：`cp02-v2-continuous-blue`
+
+> 历史记录：本版在修复 v1 的停转与暖化问题时，错误地把真实 CoScroll source 的负 yaw 归一化为正向 screen rotation。作者随后要求“空”保持自身旋转方向；当前评审应使用 [v3 source-direction variants](cp0.2-bridge-variants-v3.md)。本文件和它的本地媒体只用于复核被替换的配置，绝不是 Editorial GO。
 
 本轮只重做本地评审代理。它不实现正式 Canvas / 粒子系统、路由、ScrollTrigger、production media contract 或 CDN。
 
@@ -10,14 +12,14 @@
 
 作者否决 `cp02-v1` 的共同桥段，原因是它把“空”读成了**停住后**才变粒子，且粒子过早暖化。v1 留作历史 NO-GO 证据，不可再被当作候选结论。
 
-v2 的共同不可变约束是：
+v2 当时采用、现已被否定的共同运动参数是：
 
-1. 当前真实 “空” 的旋转不停止；从 live source end 的瞬时 yaw / 非零速度继续顺时针加速。
+1. 当前真实 “空” 的旋转不停止；但它从 live source end 的负 yaw 被错误翻为顺时针 screen rotation。
 2. 字符实体仍在转动时，边缘和笔画内部同时剥落成粒子；不是淡出后另起一团粒子。
 3. 剥落粒子及其先形成的缺口环保持冷玉蓝；只有最终交给 ArtBreeze 的真实环时才暖化为目标橙色。
 4. 粒子环在交棒前继续保留顺时针相位运动，并在结尾匹配 CP0.1 已确认的电影目标 `[n=355,n=363)`。
 
-这仍是离线 editorial fixture：Stage 1 若获单独授权，必须从实际用户当下 yaw / speed 采样或投影，不能把此截帧或静态 mask 当作 production pose。
+这仍是离线 editorial fixture：Stage 1 若获单独授权，必须从实际用户当下 yaw / speed 采样或投影，不能把此截帧或静态 mask 当作 production pose。v3 同时移除了任何动态 phase lock，避免在最后一段暗中抵消 source 方向。
 
 ## 2. 共同桥段与真实目标
 

@@ -1,12 +1,17 @@
 {
   "schemaVersion": 1,
   "checkpoint": "CP0.2",
-  "status": "IN REVIEW",
+  "status": "SUPERSEDED",
   "version": "cp02-v2-continuous-blue",
   "createdAt": "2026-07-20",
   "notEditorialGo": true,
   "notProductionImplementation": true,
   "mediaRoot": "apps/site/.generated/post-coscroll-editorial/cp02-v2",
+  "supersededBy": "cp02-v3-source-direction",
+  "reviewOutcome": {
+    "currentStatus": "historical; not a current CP0.2 candidate",
+    "reason": "v2 normalized the real negative CoScroll source yaw to positive screen rotation. The author required the 空 character to retain its own rotation direction while becoming blue particles."
+  },
   "supersedes": {
     "version": "cp02-v1",
     "scope": "common bridge motion and particle colour only; v1 remains locally available as historical NO-GO evidence",

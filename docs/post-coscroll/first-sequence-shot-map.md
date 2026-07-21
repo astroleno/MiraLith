@@ -1,8 +1,8 @@
 # Stage 0 — CoScroll → ArtBreeze 首段镜头图（CP0.1）
 
 状态：`CP0.1 — PASS / CP0.2 — IN REVIEW`
-版本：`0.5`
-范围：本文件保留 CP0.1 的真实母版、当前 CoScroll 源末态与粒子交棒约束；当前 CP0.2 本地 A/B/C 评审媒体见 [v2 bridge variants](cp0.2-bridge-variants-v2.md)，v1 留在 [historical NO-GO record](cp0.2-bridge-variants.md)。仍未实现路由、Canvas 残影、ScrollTrigger、正式粒子系统或 production media contract。
+版本：`0.6`
+范围：本文件保留 CP0.1 的真实母版、当前 CoScroll 源末态与粒子交棒约束；当前 CP0.2 本地 A/B/C 评审媒体见 [v3 bridge variants](cp0.2-bridge-variants-v3.md)，v2 / v1 留在历史记录。仍未实现路由、Canvas 残影、ScrollTrigger、正式粒子系统或 production media contract。
 
 ## 0. 证据边界
 
@@ -11,11 +11,11 @@
 - ArtBreeze 母版：`/Users/aitoshuu/Downloads/portfolio/artbreeze-full.MP4`
 - 当前本地 CoScroll 页面：`http://localhost:3011/coscroll`，source-match 状态、可见锚字为“空”。
 
-`apps/site/.generated/post-coscroll-editorial/` 下早于 `cp02-v1/` 的 `linear/`、`scrub/`、`audio/` 代理不构成 evidence。`cp02-v1/` 已因旋转连续性与粒子色彩问题被作者 NO-GO；当前可审阅的 CP0.2 媒体位于 `cp02-v2/`，并由 [v2 media manifest](evidence/cp0.2-v2-continuous-blue-bridge-manifest.json) 和 [checkpoint ledger](CHECKPOINTS.md) 绑定；它们仍不是 Editorial GO。
+`apps/site/.generated/post-coscroll-editorial/` 下早于 `cp02-v1/` 的 `linear/`、`scrub/`、`audio/` 代理不构成 evidence。`cp02-v1/` 已因旋转连续性与粒子色彩问题被作者 NO-GO；`cp02-v2/` 又因把真实 source 的负 yaw 正向归一化而被 source-direction correction 取代。当前可审阅的 CP0.2 媒体位于 `cp02-v3/`，并由 [v3 media manifest](evidence/cp0.2-v3-source-direction-bridge-manifest.json) 和 [checkpoint ledger](CHECKPOINTS.md) 绑定；它们仍不是 Editorial GO。
 
 未来转场的目标仅作为约束记录，尚未实现：
 
-> “空”继续旋转并加速 → 在旋转中产生冷玉蓝粒子残留 → 字符本体从边缘和笔画内部粒子化/解体 → 蓝粒子保留旋转动势并重组为 blue loading ring → 仅在最终交棒时暖化，圆环的中心、半径、缺口、方向和相位贴合真实影片圆环 → 网页粒子圆环交给影片圆环。
+> “空”继续沿真实 source yaw 方向旋转并加速 → 在旋转中产生冷玉蓝粒子残留 → 字符本体从边缘和笔画内部粒子化/解体 → 蓝粒子保留**同一方向**的旋转动势并重组为 blue loading ring → 仅在最终交棒时暖化，圆环的中心、半径、缺口与相位贴合真实影片圆环；绝不可为贴合影片 screen-direction 而在桥段内翻向 → 网页粒子圆环交给影片圆环。
 
 这不是“字符淡出”，也不是把未来 terminal 效果伪装成当前页面。
 
@@ -164,7 +164,7 @@
 | --- | --- | --- | --- |
 | 中心 | 归一化 `(50.288%, 50.648%)`；换算到 `1920×1080` 约 `(965.5, 547.0)` | `(949.67, 556.25)`；`(49.462%, 51.505%)` | 需要约 `−15.8px` x、`+9.3px` y 的归一化迁移；不能在一帧里跳位。 |
 | 外形 / 尺寸 | 高而窄的“空” matte，约 `150×365px` | 近圆形 open ring，外径约 `114px`、线宽约 `8px` | 不能仅缩放字符：笔画/边缘必须变成粒子，再重排为圆周与明确 gap。 |
-| 运动 | 3D 负 Y yaw，空闲 `−0.32rad/s`，滚动时同方向加速 | 屏幕坐标顺时针 open arc，稳定窗约 `+396.4°/s` | 在释放形体时保留角动势，并把 3D yaw 解释为 2D 圆周相位；不能凭空反向。 |
+| 运动 | 3D 负 Y yaw，空闲 `−0.32rad/s`，滚动时同方向加速 | 屏幕坐标顺时针 open arc，稳定窗约 `+396.4°/s` | 当前作者指示优先保留 source 的负 yaw：桥段可匹配中心、尺寸、gap 与最终 phase，但不能凭空反向。影片 screen-direction 的事实差异须在后续确切样片评审，而非被桥段掩盖。 |
 | gap / phase | 字符无 gap，无法直接映射 | 代表接管帧 `n=359`：gap `80°`、gap center `222°` | 粒子重组完成时要进入这个 phase，而不是只画一个泛用 spinner。 |
 | 明暗 / 色温 | 深蓝黑 + 冷玉 `#B0C5D5` | 母版 letterbox 内的近白 + 暖橙；CP0.1 analytic RGB 为 `#F3832F`，OpenCV `#E77D33` 仅作历史测量 | 需要分阶段处理白场和暖色收束，并在生产冻结前按目标色彩管理管线复测；直切会同时产生色温、亮度与语义跳变。 |
 | 有效画幅 | 无对应 | coded raster `1920×1080`，观察到 active picture `1920×810`、`y=[135,945)` | 桌面已确认保留 letterbox：圆环维持约 `114px`。crop-to-fill 会变为约 `153px`，不能作为默认替代。 |
@@ -174,8 +174,8 @@
 
 ## 6. 仍未决定的事项
 
-1. 等待者、白闪 / UI card、灰色 loader、橙色环和“推石头”文字的三种候选排序已在 [CP0.2](cp0.2-bridge-variants.md) 制成 review media，但作者尚未选择。
-2. 粒子化桥的 production 时长、密度、残影层数与运动曲线，以及是否需要补镜头或新场景。`cp02-v1` 的粒子桥明确只是 offline proxy。
+1. 等待者、白闪 / UI card、灰色 loader、橙色环和“推石头”文字的三种候选排序已在 [CP0.2 v3](cp0.2-bridge-variants-v3.md) 制成 review media，但作者尚未选择。
+2. 粒子化桥的 production 时长、密度、残影层数与运动曲线，以及是否需要补镜头或新场景。`cp02-v3` 的粒子桥明确只是 offline proxy。
 3. 声音何时进入，以及是否允许制作正式 CoScroll 残响素材。A 的三种 review sound 已可耳审；请不要把码流验证替代听感判断。
 4. 作者是否认为任一候选读作“周而复始地推石头”；该判断属于 CP0.3，不属于 Asset Truth PASS。
 

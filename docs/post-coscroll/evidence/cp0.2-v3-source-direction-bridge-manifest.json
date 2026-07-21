@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "checkpoint": "CP0.2",
+  "status": "IN REVIEW",
+  "version": "cp02-v3-source-direction",
+  "createdAt": "2026-07-21",
+  "notEditorialGo": true,
+  "notProductionImplementation": true,
+  "mediaRoot": "apps/site/.generated/post-coscroll-editorial/cp02-v3",
+  "supersedes": {
+    "version": "cp02-v2-continuous-blue",
+    "scope": "common bridge rotation sign and phase handling; v2 remains local historical evidence",
+    "authorFeedback": "空 must keep its own rotation direction while it becomes particles; do not change that direction. The particles must be blue."
+  },
+  "sourceRotationFact": {
+    "codeEvidence": {
+      "sourceMatchProps": "packages/coscroll-scene/src/CoScrollSceneContent.tsx:411-414",
+      "rotationApplication": "packages/coscroll-scene/src/CoScrollJadeAnchor.tsx:606-626"
+    },
+    "sourceMatchBaseSpeedRadPerSecond": -0.32,
+    "sourceMatchVelocityMultiplier": -7.5,
+    "signRule": "baseDirection preserves the negative baseSpeed for source material; rotationRef is accumulated and written directly to rotation.y.",
+    "runtimeRequirement": "Any separately authorised production work must sample/project the user's live yaw and speed. This capture fixture and static matte are not production pose data."
+  },
+  "commonCoScrollEvidence": {
+    "capturePath": "../cp02-v1/coscroll-live-end/capture.json",
+    "captureSha256": "d885c4f8fe992b6c540059eced9019c793db81326699a8c1f44d3acc5cfa9c89",
+    "liveEndpointPath": "../cp02-v1/coscroll-live-end/coscroll-live-end-2.5s.mp4",
+    "liveEndpointSha256": "e7b8702077dd384d28646905760f4589ed8edf1775ec258c9d13235f8db0c217",
+    "capturedState": "Current live /coscroll, data-coscroll-progress=0.9994, visible anchor 空; no existing terminal, particle trail, or formal CoScroll audio.",
+    "durationSeconds": 2.5,
+    "reviewProxy": "H.264 1920x1080 30fps"
+  },
+  "sourceDirectionBlueBridge": {
+    "path": "bridge-proxy-source-direction/coscroll-source-direction-blue-particles-v3.mp4",
+    "sha256": "d44a1db8b8d6e32799eef5df09f883f52c08911e3a5080c2871076ab9b4c3e41",
+    "constraintsPath": "bridge-proxy-source-direction/bridge-v3-source-direction-proxy.json",
+    "constraintsSha256": "0f154828ecb7027050ec8ad1f62d457c88401aa0ac71901588f63cb1a185830e",
+    "codec": "H.264 1920x1080 30fps",
+    "durationSeconds": 2.0,
+    "frames": 60,
+    "decodeValidated": true,
+    "continuousRotation": {
+      "sourceYawDirection": "negative",
+      "reviewImageDirection": "counter-clockwise; an offline 2D sign-preserving projection only",
+      "initialAngularSpeedRadPerSecond": -0.32,
+      "targetAngularSpeedRadPerSecond": -6.9184851549,
+      "accelerationRadPerSecond2": -3.2992425775,
+      "totalRotationRadians": -7.2384851549,
+      "totalRotationDegrees": -414.7346494442,
+      "phaseTrajectory": "phi(t) = theta(t) - theta(2.0); this constant offset lands at the n=355 phase without adding an opposing velocity term.",
+      "monotonicEvidenceDegreesPerSecond": [
+        -18.334649,
+        -112.850987,
+        -207.367325,
+        -301.883662,
+        -396.4
+      ]
+    },
+    "particleColour": {
+      "sourceScreenMedian": "#B0C5D5",
+      "reviewParticleBlue": "#65B1D9",
+      "orangeTransitionStartsAtProgress": 0.87,
+      "filmTargetColour": "#F3832F",
+      "rule": "Particles and the first legible open ring stay blue until the final handoff; orange is not a pre-existing CoScroll effect."
+    },
+    "filmTarget": {
+      "letterboxPreserved": true,
+      "actualFilmStartFrame": 355,
+      "targetWindow": "[n=355,n=363)",
+      "center": [949.67, 556.25],
+      "outerDiameter": 114.38,
+      "lineWidth": 8.04,
+      "gapCenterDegrees": 222.0,
+      "gapWidthDegrees": 80.0,
+      "measuredFilmScreenDirection": "clockwise",
+      "angularSpeedDegreesPerSecond": 396.4,
+      "continuityBoundary": "v3 matches geometry and final phase only. It does not reverse the negative source yaw to conceal the measured film screen-direction difference."
+    }
+  },
+  "variantMedia": [
+    {
+      "id": "A-source-order-source-direction-v3",
+      "editorialOrder": "CoScroll 2.5s -> source-direction blue bridge 2.0s -> ArtBreeze [n=0,n=556)",
+      "linear": {
+        "path": "linear/A-source-order-source-direction-v3.mp4",
+        "sha256": "0514ceb4f4aa585724da81dcbdf44e4e48db30d5cdd62d1a14c7ad2ee145df15",
+        "containerDurationSeconds": 23.053,
+        "visualDurationSeconds": 23.0333333333,
+        "frames": 691,
+        "video": "H.264 1920x1080 30fps",
+        "audio": "AAC stereo 48kHz; source-content review transcode begins after the 4.5s CoScroll/bridge prefix"
+      },
+      "scrub": {
+        "path": "scrub/A-source-order-source-direction-v3-scrub-demo.mp4",
+        "sha256": "b4facd1ef741d15760430a967cecd59757a41facfd57fbd17af7ea146825de31",
+        "durationSeconds": 33.033333,
+        "frames": 991,
+        "audio": "none; visual scrub capture only"
+      }
+    },
+    {
+      "id": "B-ring-first-source-direction-v3",
+      "editorialOrder": "CoScroll 2.5s -> source-direction blue bridge 2.0s -> ArtBreeze [n=355,n=556) -> [n=0,n=355)",
+      "linear": {
+        "path": "linear/B-ring-first-source-direction-v3.mp4",
+        "sha256": "c4fd4b6bd1096ba3e99fdc3c46d9522338c26aca1ebb6033eeef442940923b3a",
+        "containerDurationSeconds": 23.053,
+        "visualDurationSeconds": 23.0333333333,
+        "frames": 691,
+        "video": "H.264 1920x1080 30fps",
+        "audio": "AAC stereo 48kHz; source-content review transcode begins with the actual n=355 film segment"
+      },
+      "scrub": {
+        "path": "scrub/B-ring-first-source-direction-v3-scrub-demo.mp4",
+        "sha256": "746a90b35684f727c492bf02254d8de13f61c093a5528d43e995286cbd79ac8e",
+        "durationSeconds": 33.033333,
+        "frames": 991,
+        "audio": "none; visual scrub capture only"
+      }
+    },
+    {
+      "id": "C-hybrid-source-direction-v3",
+      "editorialOrder": "CoScroll 2.5s -> source-direction blue bridge 2.0s -> ArtBreeze [n=0,n=355) with local DOM-ring review stand-in -> actual ArtBreeze [n=355,n=556)",
+      "linear": {
+        "path": "linear/C-hybrid-source-direction-v3.mp4",
+        "sha256": "5e175240b522a1efc0cd88dd475f477b9fb9e5547f354b86e0e8b5aeced58f7b",
+        "containerDurationSeconds": 23.053,
+        "visualDurationSeconds": 23.0333333333,
+        "frames": 691,
+        "video": "H.264 1920x1080 30fps",
+        "audio": "AAC stereo 48kHz; source-content review transcode begins after the bridge"
+      },
+      "scrub": {
+        "path": "scrub/C-hybrid-source-direction-v3-scrub-demo.mp4",
+        "sha256": "87721a55bd527afb9f0c2ffd64ef1289b62a83371e5eb8f03fc82fbabc615686",
+        "durationSeconds": 33.033333,
+        "frames": 991,
+        "audio": "none; visual scrub capture only"
+      },
+      "domRingBoundary": "Local review stand-in only. It neither represents a current CoScroll terminal nor authorises a production DOM ring."
+    }
+  ],
+  "scrubCaptureProtocol": {
+    "notProductionScrollTrigger": true,
+    "forward": {"linearTimeSeconds": [0.0, 8.5], "progress": [0.0, 0.3690303907]},
+    "reverse": {"linearTimeSeconds": [8.5, 3.5], "progress": [0.3690303907, 0.1519536903]},
+    "resume": {"linearTimeSeconds": [3.5, 23.0333333333], "progress": [0.1519536903, 1.0]},
+    "claim": "The captures demonstrate accumulation, visual withdrawal, and re-advance along the same editorial timeline."
+  },
+  "reviewStill": {
+    "path": "review/bridge-motion-source-direction-contact-sheet.jpg",
+    "sha256": "999d96310a9449e11c03f64c543bf6ef26b76e1672e3c1bf31a5264649db8d19",
+    "frameIndices": [0, 7, 15, 22, 30, 37, 45, 52, 59],
+    "purpose": "Visual proof that the body remains moving while disassembling, the particle phase is blue, and no phase-easing reversal is used before final film-target handoff."
+  },
+  "validation": {
+    "allBridgeLinearAndScrubMoviesDecoded": true,
+    "decodedMovieCount": 7,
+    "gitignoreBoundary": "The media root remains ignored; this manifest and the v3 rationale are durable tracked evidence."
+  }
+}

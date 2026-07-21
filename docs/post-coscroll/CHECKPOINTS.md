@@ -1,7 +1,7 @@
 # Post-CoScroll Stage 0 Checkpoints
 
 状态：`CP0.1 — PASS / CP0.2 — IN REVIEW`
-本轮范围：CP0.1 的 Asset Truth 已通过；作者随后明确要求继续，现已完成 CP0.2 的 A/B/C 本地评审媒体与声音比较。尚未进入 CP0.3、CP0.4、Stage 1 或 Stage 2。
+本轮范围：CP0.1 的 Asset Truth 已通过；作者随后明确要求继续，现已完成 CP0.2 的 A/B/C 本地评审媒体。历史声音比较不自动迁移为当前 v3 结论。尚未进入 CP0.3、CP0.4、Stage 1 或 Stage 2。
 
 ## CP0.1 — Asset Truth
 
@@ -50,17 +50,21 @@
 
 作者在 CP0.1 PASS 后明确要求继续。该指示仅打开 CP0.2 制作和评审，不等于选择某一版本，也不等于 CP0.3 GO。
 
-### 当前评审：cp02-v2 continuous-blue bridge
+### 当前评审：cp02-v3 source-direction blue bridge
 
-v1 的共同桥段已经被作者明确 NO-GO：它让“空”看起来是停止旋转后才粒子化，并且粒子过早暖化。v1 保留为历史证据；以下才是当前可供评审的版本。
+v1 已因“停住后才粒子化 / 粒子过早暖化”被作者否决。v2 虽修正这两点，却错误把真实 CoScroll 的负 yaw 归一化为正向 screen rotation；作者已要求“空”保持自身旋转方向。v2 因此降为历史证据，以下才是当前可供评审的版本。
 
-| 验收项 | 当前 v2 本地证据 |
+| 验收项 | 当前 v3 本地证据 |
 | --- | --- |
-| 共同运动约束 | 实体“空”从真实 live yaw / 非零速度继续顺时针加速，旋转中从笔画内部解体；粒子保持 `#65B1D9` 冷玉蓝，先读成蓝色缺口环，最终才暖化交给实际 `n=355` 影片环。见 [v2 motion contact sheet](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/review/bridge-motion-0-2000ms-contact-sheet.jpg) 与 [bridge proxy](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/bridge-proxy-continuous-blue-v2c/coscroll-continuous-blue-particles-v2c.mp4)。 |
-| 三版同等完成度线性样片 | [A — Source Order v2](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/linear/A-source-order-continuous-blue-v2.mp4)、[B — Ring First v2](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/linear/B-ring-first-continuous-blue-v2.mp4)、[C — Hybrid v2](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/linear/C-hybrid-continuous-blue-v2.mp4)。三版均为 `691` 个视觉帧 / `23.033333s`（`23.053s` 容器时长仅含 AAC padding），使用同一 `2.5s + 2.0s` CoScroll / bridge 基线与同一 ArtBreeze 候选窗。 |
-| 低保真 scroll-scrub | [A scrub v2](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/scrub/A-source-order-continuous-blue-v2-scrub-demo.mp4)、[B scrub v2](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/scrub/B-ring-first-continuous-blue-v2-scrub-demo.mp4)、[C scrub v2](../../apps/site/.generated/post-coscroll-editorial/cp02-v2/scrub/C-hybrid-continuous-blue-v2-scrub-demo.mp4)：都显示同一 `0.000 → 0.369 → 0.152 → 1.000` 的前进、撤回、恢复，不接 production ScrollTrigger。 |
-| 可跨机器复核媒体身份 | [v2 continuous-blue manifest](evidence/cp0.2-v2-continuous-blue-bridge-manifest.json)。大型媒体仍由 `.gitignore` 排除。 |
-| 比较结论与待作者决定 | [v2 comparison](cp0.2-bridge-variants-v2.md#5-v2-比较本轮应由作者判断的内容)。没有任何执行者观察可替代作者针对确切样片的 GO。 |
+| 共同运动约束 | 真实 source-match 是 `baseSpeed=-0.32`，且该符号直接写入 `rotation.y`。实体“空”从真实 live yaw / 非零速度继续**负 yaw**加速，在笔画内部解体；蓝粒子与蓝色缺口环保持同一方向。`φ(t)=θ(t)-θ(2.0)` 是常量相位偏移，绝不在末段反向。见 [v3 motion contact sheet](../../apps/site/.generated/post-coscroll-editorial/cp02-v3/review/bridge-motion-source-direction-contact-sheet.jpg) 与 [bridge proxy](../../apps/site/.generated/post-coscroll-editorial/cp02-v3/bridge-proxy-source-direction/coscroll-source-direction-blue-particles-v3.mp4)。 |
+| 三版同等完成度线性样片 | [A — Source Order v3](../../apps/site/.generated/post-coscroll-editorial/cp02-v3/linear/A-source-order-source-direction-v3.mp4)、[B — Ring First v3](../../apps/site/.generated/post-coscroll-editorial/cp02-v3/linear/B-ring-first-source-direction-v3.mp4)、[C — Hybrid v3](../../apps/site/.generated/post-coscroll-editorial/cp02-v3/linear/C-hybrid-source-direction-v3.mp4)。三版均为 `691` 个视觉帧 / `23.033333s`，使用同一 `2.5s + 2.0s` CoScroll / bridge 基线与同一 ArtBreeze 候选窗。 |
+| 低保真 scroll-scrub | [A scrub v3](../../apps/site/.generated/post-coscroll-editorial/cp02-v3/scrub/A-source-order-source-direction-v3-scrub-demo.mp4)、[B scrub v3](../../apps/site/.generated/post-coscroll-editorial/cp02-v3/scrub/B-ring-first-source-direction-v3-scrub-demo.mp4)、[C scrub v3](../../apps/site/.generated/post-coscroll-editorial/cp02-v3/scrub/C-hybrid-source-direction-v3-scrub-demo.mp4)：都显示同一 `0.000 → 0.369 → 0.152 → 1.000` 的前进、撤回、恢复，不接 production ScrollTrigger。 |
+| 可跨机器复核媒体身份 | [v3 source-direction manifest](evidence/cp0.2-v3-source-direction-bridge-manifest.json)。大型媒体仍由 `.gitignore` 排除。 |
+| 比较结论与待作者决定 | [v3 comparison](cp0.2-bridge-variants-v3.md#5-v3-比较仍需作者判断的内容)。没有任何执行者观察可替代作者针对确切样片的 GO。 |
+
+### 历史记录：cp02-v2（已被 source-direction correction 取代）
+
+v2 的实体、粒子和蓝环被设为正向 screen rotation，以求贴合 ArtBreeze 的量测方向。这覆盖了 CoScroll `baseSpeed=-0.32` 的实际符号，故不得再作为当前候选。媒体和 [v2 manifest](evidence/cp0.2-v2-continuous-blue-bridge-manifest.json) 仅保留以复核该错误及其替换关系。
 
 ### 历史记录：cp02-v1（已 NO-GO）
 
@@ -76,7 +80,7 @@ v1 的共同桥段已经被作者明确 NO-GO：它让“空”看起来是停�
 
 历史 v1 的执行者观察（**不是作者选择，且已被 v1 NO-GO 覆盖**）：B 的环交棒最直接，A 的“等待 → 白场 → 困境”因果最完整，C 最清楚暴露 persistent DOM ring 容易被读为 spinner。A 的旧声音 1/2/3 对比不能自动迁移为 v2 声音结论；不得把此记录理解为 CP0.3 GO。
 
-当前完整媒体索引、source-order/重排说明、连续性参数和待作者回答的问题在 [CP0.2 v2 bridge variants](cp0.2-bridge-variants-v2.md)；[v1 bridge variants](cp0.2-bridge-variants.md) 仅保留为 NO-GO 历史记录。
+当前完整媒体索引、source-order/重排说明、连续性参数和待作者回答的问题在 [CP0.2 v3 bridge variants](cp0.2-bridge-variants-v3.md)；[v2 bridge variants](cp0.2-bridge-variants-v2.md) 与 [v1 bridge variants](cp0.2-bridge-variants.md) 均只保留为历史记录。
 
 ## CP0.3 — Editorial GO
 
