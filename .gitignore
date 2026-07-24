@@ -24,3 +24,4 @@ reference/
 
 # Stage 0 editorial proxies, captures, and review media are local-only.
 /apps/site/.generated/post-coscroll-editorial/
+/apps/site/public/.generated/post-coscroll-editorial/

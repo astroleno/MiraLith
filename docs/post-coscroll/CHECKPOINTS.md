@@ -62,6 +62,20 @@ v1 已因“停住后才粒子化 / 粒子过早暖化”被作者否决。v2 �
 | 可跨机器复核媒体身份 | [v4 real-yaw manifest](evidence/cp0.2-v4-real-yaw-bridge-manifest.json)。大型媒体仍由 `.gitignore` 排除。 |
 | 比较结论与待作者决定 | [v4 comparison](cp0.2-bridge-variants-v4.md#5-作者评审入口)。没有任何执行者观察可替代作者针对确切样片的 GO。 |
 
+### 当前精确 B 复核对象：cp02-v8 complete-original-order
+
+作者选择了**保留原始 B 顺序**，而不是把 v7 缺失的等待者段默认为删除。`cp02-v8` 因此不是新 B 定义：它只完成既有 `B-ring-first-real-yaw-v4` 的实际顺序，并修复 v7 的三项可复核缺口。
+
+| 验收项 | v8 证据 / 结论 |
+| --- | --- |
+| 完整 B 顺序 | [B v8 linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/B-ring-first-v8-complete-n355-phase-aligned-faded-source-audio.mp4)：网页 bridge `[0,109)` → ArtBreeze `[n=355,n=556)` / `PTS=[1,065,000,1,668,000)` → ArtBreeze `[n=0,n=355)` / `PTS=[0,1,065,000)`；`665` 帧 / `22.166667s`。等待者、LOADING、白场和首段回到样片，未被删除。 |
+| 网页 → 影片交棒 | [30fps boundary proof](../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/web-to-n355-boundary-30fps-v8.mp4)、[boundary sheet](../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/B-ring-first-v8-complete-boundaries-contact-sheet.png)。解码终片中网页 `n=108` 与影片 `n=109 / source n=355` 的中心差 `0.06px`、半径差 `0.15px`、gap 中心 `155° → 154°`；ROI 中位 RGB 差 `[4,5,3]`。 |
+| 原 B 源端回跳 | [endpoint → n0 proof](../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/n556-to-n0-boundary-30fps-v8.mp4)。这里的 `n=556` 是半开 endpoint PTS；最后包含帧仍是 `n=555`，随后明确落到 `n=0`。 |
+| 声音切口 | 两个剪点均采用 `12ms` review fade。解码 PCM 的相邻样本跳变分别为 web→`n=355` `[0.00001127,0.00003319]`、endpoint→`n=0` `[0.00017822,0.00040887]`；它们是内容保留的 AAC review transcode，不是原 AAC packets。 |
+| 可跨机器复核 | [v8 durable manifest](evidence/cp0.2-v8-b-ring-first-complete-manifest.json)、[boundary measurements](evidence/cp0.2-v8-b-ring-first-complete-boundary-measurements.json)。大型媒体与本地 checksum index 继续由 `.gitignore` 排除。 |
+
+**状态不变：`CP0.2 — IN REVIEW`，`CP0.3 — NOT OPEN`。** v8 只是一个确切、完整的 B 评审对象；它不构成 Editorial GO，也不冻结声音、路由或任何 production media contract。
+
 ### 历史记录：cp02-v3（已被 real-yaw correction 取代）
 
 v3 正确保留了负 yaw 符号，但错误把 captured glyph 当作平面图像旋转；它不再是当前候选。媒体和 [v3 manifest](evidence/cp0.2-v3-source-direction-bridge-manifest.json) 仅保留以复核该错误与 v4 替换关系。

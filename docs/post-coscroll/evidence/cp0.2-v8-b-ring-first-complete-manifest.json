@@ -1,0 +1,56 @@
+{
+  "kind": "Stage 0 CP0.2 durable review identity — not production media",
+  "variant": "cp02-v8 / B-ring-first / complete-original-order",
+  "status": "CP0.2 IN REVIEW; CP0.3 NOT OPEN; no Editorial GO",
+  "supersedesForReview": {
+    "version": "cp02-v7 / B-ring-first / n355-phase-aligned",
+    "reason": "v7 stopped at source n=534 and omitted the original B after-positioned [n=0,n=355) waiter section. v8 restores the declared B order rather than redefining it."
+  },
+  "master": {
+    "path": "/Users/aitoshuu/Downloads/portfolio/artbreeze-full.MP4",
+    "sha256": "0ab8f26484ad1fe0814df44ba849581c22b948e6d7f1c2d7f2d1c89adab6396d",
+    "sourceTimeBase": "1/90000",
+    "sourceFrameRate": "30/1"
+  },
+  "editorialOrder": [
+    "CoScroll review bridge: opaque real-yaw 空 -> pale-jade particle conversion -> visible blue open ring -> brief warm ring",
+    "ArtBreeze [n=355,n=556)",
+    "ArtBreeze [n=0,n=355)"
+  ],
+  "outputs": [
+    {
+      "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/B-ring-first-v8-complete-n355-phase-aligned-faded-source-audio.mp4",
+      "sha256": "37ed1628a20e0d0d3aad60bdbd87add859adaa3d3c03798962643dc319a63ca0",
+      "purpose": "complete linear B review candidate",
+      "video": "H.264 960x540 CFR 30fps / 665 frames / 22.166667s",
+      "audio": "AAC stereo 44.1kHz review transcode with 12ms fades at both editorial audio joins"
+    },
+    {
+      "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/candidate/web-opaque-yaw-particles-to-n355-v8.mp4",
+      "sha256": "96f2539b28d1f1ae56885c919c9e7ac15b9eccd37a92108174965734fac3f61b",
+      "purpose": "browser-captured web bridge source / 109 frames / 3.633333s"
+    },
+    {
+      "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/web-to-n355-boundary-30fps-v8.mp4",
+      "sha256": "6377fc8b30df5335f5cab512448a18a3acd595c9881797b975b5254e03854360",
+      "purpose": "24-frame 30fps web-to-n355 proof"
+    },
+    {
+      "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/n556-to-n0-boundary-30fps-v8.mp4",
+      "sha256": "20f37cc0952048d68446461cac1dc5606e1ad9f24ee4e7fa47d8f2c42c3f4791",
+      "purpose": "24-frame 30fps original-B reorder proof; endpoint is PTS n=556 after last included n=555"
+    },
+    {
+      "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/B-ring-first-v8-complete-contact-sheet.png",
+      "sha256": "e038971e0424edc6074f10eedc7590e966b5849c4cf237eb69bda02f0f13b019",
+      "purpose": "complete sequence contact sheet"
+    },
+    {
+      "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/B-ring-first-v8-complete-boundaries-contact-sheet.png",
+      "sha256": "2424f9af373b178d1f2ec593f8a5d82cf615fe43752b1a2786d5c7c8e6f32ce9",
+      "purpose": "both editorial-boundary contact sheet"
+    }
+  ],
+  "boundaryMeasurement": "cp0.2-v8-b-ring-first-complete-boundary-measurements.json",
+  "reviewConclusion": "This document identifies an exact review object and its completed original B sequence. It does not grant CP0.2 PASS, CP0.3 Editorial GO, or CP0.4 freeze."
+}

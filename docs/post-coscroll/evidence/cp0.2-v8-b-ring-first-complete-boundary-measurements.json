@@ -1,0 +1,93 @@
+{
+  "kind": "Stage 0 CP0.2 local editorial-review boundary snapshot — not production media",
+  "variant": "cp02-v8 / B-ring-first / complete-original-order",
+  "checkpointStatus": {
+    "cp02": "IN REVIEW — not PASS",
+    "cp03": "NOT OPEN",
+    "editorialGo": "not granted"
+  },
+  "candidate": {
+    "path": "../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/B-ring-first-v8-complete-n355-phase-aligned-faded-source-audio.mp4",
+    "sha256": "37ed1628a20e0d0d3aad60bdbd87add859adaa3d3c03798962643dc319a63ca0",
+    "video": "H.264 960x540 CFR 30fps",
+    "audio": "AAC stereo 44.1kHz review transcode",
+    "visualFrames": 665,
+    "visualDurationSeconds": 22.166667
+  },
+  "frameMap": {
+    "webBridge": {
+      "outputFrames": "[0,109)",
+      "durationSeconds": 3.633333333,
+      "source": "Current local CoScroll review capture: opaque real-yaw 空 -> cutout/pale-jade particles -> blue open ring -> short warm ring. It is not a production terminal."
+    },
+    "artbreezeRingFirst": {
+      "outputFrames": "[109,310)",
+      "sourceFrames": "[n=355,n=556)",
+      "startPTS": 1065000,
+      "endPTSExclusive": 1668000,
+      "startSeconds": 11.833333333,
+      "endSecondsExclusive": 18.533333333,
+      "lastIncludedFrame": 555,
+      "lastIncludedPTS": 1665000
+    },
+    "artbreezeWaiterAfter": {
+      "outputFrames": "[310,665)",
+      "sourceFrames": "[n=0,n=355)",
+      "startPTS": 0,
+      "endPTSExclusive": 1065000,
+      "startSeconds": 0,
+      "endSecondsExclusive": 11.833333333,
+      "lastIncludedFrame": 354,
+      "lastIncludedPTS": 1062000
+    }
+  },
+  "webToFilmBoundary": {
+    "outputFrames": {
+      "lastWeb": 108,
+      "firstFilm": 109,
+      "filmSourceFrame": 355
+    },
+    "geometryAt960x540": {
+      "web": { "center": [474.66, 277.83], "centerlineRadius": 26.48, "gapCenterDegrees": 155.0 },
+      "film": { "center": [474.69, 277.88], "centerlineRadius": 26.63, "gapCenterDegrees": 154.0 },
+      "screenAngleConvention": "0 degrees is right; positive is clockwise",
+      "delta": { "centerPixels": 0.06, "radiusPixels": 0.15, "gapDegrees": 1.0 }
+    },
+    "decodedCandidateRingRoiRgb": {
+      "webMedian": [237, 114, 52],
+      "filmMedian": [233, 109, 49],
+      "absoluteMedianDelta": [4, 5, 3],
+      "method": "Thresholded orange-ring ROI from the decoded final candidate. The local additive review shader input #D8512C is an output calibration only; CP0.1 source truth remains the separately recorded FFmpeg BT.709 measurement #F3832F."
+    },
+    "sourceSimilarity": {
+      "candidateOutputFrame109_vs_sourceN355": 0.995704,
+      "candidateOutputFrame309_vs_sourceN555": 0.996667,
+      "candidateOutputFrame310_vs_sourceN0": 0.998992,
+      "method": "FFmpeg SSIM after the same 1920x1080 -> 960x540 Lanczos review scaling and H.264 review transcode."
+    }
+  },
+  "audioBoundaryChecks": {
+    "codecNote": "Audio preserves ArtBreeze content/timing but is AAC-reencoded review audio, not the original AAC packets.",
+    "webToN355": {
+      "visualTimeSeconds": 3.633333333,
+      "pcmSampleAt44100Hz": 160230,
+      "fadeInSeconds": 0.012,
+      "leftRightBoundaryJump": [0.00001127, 0.00003319],
+      "maxAbsoluteJumpIn40SampleWindow": 0.00047937
+    },
+    "sourceEndpointN556ToN0": {
+      "visualTimeSeconds": 10.333333333,
+      "pcmSampleAt44100Hz": 455700,
+      "lastIncludedSourceFrame": 555,
+      "sourceEndpointPTS": 1668000,
+      "fadeOutAndFadeInSeconds": 0.012,
+      "leftRightBoundaryJump": [0.00017822, 0.00040887],
+      "maxAbsoluteJumpIn40SampleWindow": 0.00045556
+    }
+  },
+  "reviewOnlyLimitations": [
+    "The 960x540 calibration is proof for this review fixture, not a production viewport-scale contract. Future implementation must derive object-fit: contain scale at runtime.",
+    "The browser harness uses a 34ms n=355 evidence hold; the offline v8 candidate advances at ordinary 30fps and contains no added hold.",
+    "No route, production media contract, Canvas terminal, ScrollTrigger timeline, or CDN behaviour is implied by this artifact."
+  ]
+}

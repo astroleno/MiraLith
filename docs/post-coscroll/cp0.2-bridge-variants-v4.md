@@ -55,3 +55,19 @@ C 的 DOM ring 仍只是被忽略的本地 review stand-in；它不是当前页�
 请先判断共同 bridge：实体“空”是否已读作真实 3D yaw 中解体，而不再像一张平面字绕屏幕旋转；蓝粒子和环是否仍保留同一方向的动势。之后再在 A/B/C 中判断等待者、白场与困境的排序。
 
 `cp02-v4` 只是新的确切 review version，不构成 CP0.3 GO，也不冻结声音或进入 Stage 1。
+
+## 6. v8：完成原始 B 顺序的精确复核对象
+
+`cp02-v7` 已完成 `n=355` 相位和几何修正，但只播放到母版 `n=534`，没有包含 B 定义里的 `[n=0,n=355)` 等待者后置段。作者选择**保留原始 B 顺序**，所以 v8 不把等待段删掉，也不将 v7 重新命名为新的编辑方案。
+
+v8 的完整顺序为：网页 review bridge `[0,109)` / `3.633333s` → ArtBreeze `[n=355,n=556)` / `PTS=[1,065,000,1,668,000)` → ArtBreeze `[n=0,n=355)` / `PTS=[0,1,065,000)`。终片为 `665` 帧 / `22.166667s`，因此包含 B 所需的影片圆环与“我们每天都在推着一块看不见的石头”，随后完整回到 `LOADING`、等待者、白场和真实圆环的原始首段。
+
+| 项 | v8 复核结果 |
+| --- | --- |
+| 网页 → 影片 | 解码终片的最后网页环与 `source n=355` 的中心差 `0.06px`、半径差 `0.15px`、gap `155° → 154°`；环 ROI 中位 RGB 差 `[4,5,3]`。同一 browser/web review 输出经短暖化后交给真实影片环。 |
+| 源片内容 | `n=355`、`n=555`、`n=0` 的终片与同缩放母版 SSIM 分别为 `0.995704`、`0.996667`、`0.998992`；差异来自 H.264 review transcode。 |
+| 声音 | 网页保持静默，进入 `n=355` 及半开 endpoint 回跳均用 `12ms` review fade，消除了 v7 静默直拼的高幅度瞬态。 |
+| 评审媒体 | [v8 linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/B-ring-first-v8-complete-n355-phase-aligned-faded-source-audio.mp4)、[complete contact sheet](../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/B-ring-first-v8-complete-contact-sheet.png)、[both-boundary contact sheet](../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/B-ring-first-v8-complete-boundaries-contact-sheet.png)。 |
+| Durable identity | [v8 manifest](evidence/cp0.2-v8-b-ring-first-complete-manifest.json)、[boundary snapshot](evidence/cp0.2-v8-b-ring-first-complete-boundary-measurements.json)。 |
+
+这仍是 CP0.2 的精确评审对象：**`CP0.2 — IN REVIEW`、`CP0.3 — NOT OPEN`。** 它不替代作者的 Editorial GO，也不授权 production 路由、Canvas terminal、ScrollTrigger、CDN 或 Stage 1。
