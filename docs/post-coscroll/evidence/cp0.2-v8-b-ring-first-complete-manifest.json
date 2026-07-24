@@ -17,6 +17,11 @@
     "ArtBreeze [n=355,n=556)",
     "ArtBreeze [n=0,n=355)"
   ],
+  "knownEditorialBlockers": [
+    "The reordered [n=0,n=355) segment begins with the source n=0..2 ArtBreeze/QR title slate and source n=3 blank-black frame. The author must decide whether to delete it, move it to the true end, or retain an explicit restart reading.",
+    "The web-to-film handoff has ring-level continuity but a decoded full-frame YAVG jump from 30.2625 to 177.852. The author must decide whether this dark-to-white hard cut is the intended beat.",
+    "v8 upgrades B only. A/C and all three scrub proofs must be regenerated on the same bridge/format/audio baseline before CP0.2 can pass or CP0.3 can open."
+  ],
   "outputs": [
     {
       "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/B-ring-first-v8-complete-n355-phase-aligned-faded-source-audio.mp4",

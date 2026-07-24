@@ -7,7 +7,7 @@
     "editorialGo": "not granted"
   },
   "candidate": {
-    "path": "../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/B-ring-first-v8-complete-n355-phase-aligned-faded-source-audio.mp4",
+    "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/B-ring-first-v8-complete-n355-phase-aligned-faded-source-audio.mp4",
     "sha256": "37ed1628a20e0d0d3aad60bdbd87add859adaa3d3c03798962643dc319a63ca0",
     "video": "H.264 960x540 CFR 30fps",
     "audio": "AAC stereo 44.1kHz review transcode",
@@ -59,6 +59,12 @@
       "absoluteMedianDelta": [4, 5, 3],
       "method": "Thresholded orange-ring ROI from the decoded final candidate. The local additive review shader input #D8512C is an output calibration only; CP0.1 source truth remains the separately recorded FFmpeg BT.709 measurement #F3832F."
     },
+    "decodedCandidateFullFrameLuma": {
+      "lastWeb": { "outputFrame": 108, "ptsTimeSeconds": 3.6, "yavg": 30.2625 },
+      "firstFilm": { "outputFrame": 109, "ptsTimeSeconds": 3.633333333, "yavg": 177.852, "ydif": 154.31 },
+      "method": "FFmpeg signalstats on the decoded final candidate at 960x540.",
+      "interpretation": "Ring geometry and ring-ROI colour match do not make the full frame continuous: this is a documented dark CoScroll to near-white ArtBreeze hard cut. Whether that flash is the intended editorial beat remains an author decision."
+    },
     "sourceSimilarity": {
       "candidateOutputFrame109_vs_sourceN355": 0.995704,
       "candidateOutputFrame309_vs_sourceN555": 0.996667,
@@ -88,6 +94,8 @@
   "reviewOnlyLimitations": [
     "The 960x540 calibration is proof for this review fixture, not a production viewport-scale contract. Future implementation must derive object-fit: contain scale at runtime.",
     "The browser harness uses a 34ms n=355 evidence hold; the offline v8 candidate advances at ordinary 30fps and contains no added hold.",
-    "No route, production media contract, Canvas terminal, ScrollTrigger timeline, or CDN behaviour is implied by this artifact."
+    "No route, production media contract, Canvas terminal, ScrollTrigger timeline, or CDN behaviour is implied by this artifact.",
+    "This v8 artifact upgrades B only. A and C remain v4 review media, so it cannot satisfy the CP0.2 controlled A/B/C parity requirement or open CP0.3.",
+    "The reordered [n=0,n=355) section starts with source n=0..2 QR/title slate and n=3 blank black. Its delete, move-to-true-end, or retain decision is reserved to the author."
   ]
 }

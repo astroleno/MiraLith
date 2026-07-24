@@ -1,10 +1,10 @@
 # First-Sequence Editorial Decision
 
 状态：`CP0.2 IN REVIEW / CP0.3 NOT OPEN`
-当前版本：`0.8`
+当前版本：`0.9`
 CP0.4 freeze hash：`未生成`
 
-CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求继续。`cp02-v1` 被否决为“停住后才粒子化 / 过早暖化”；`cp02-v2` 错误反转 source yaw；`cp02-v3` 又把真实 yaw flattened 为平面转字。当前 `cp02-v4` 以真实 `rotation.y` capture pose 重做 A/B/C。尚未有作者对一个确切版本的 GO，因此本文件仍不包含冻结项。
+CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求继续。`cp02-v1` 被否决为“停住后才粒子化 / 过早暖化”；`cp02-v2` 错误反转 source yaw；`cp02-v3` 又把真实 yaw flattened 为平面转字。`cp02-v4` 是最后一组受控 A/B/C 基线；`cp02-v8` 是仅升级 B 的完整原始顺序修复。尚未有作者对一个确切版本的 GO，因此本文件仍不包含冻结项。
 
 ## 当前可审阅输入
 
@@ -13,6 +13,8 @@ CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求�
 - [durable CP0.1 evidence snapshot](evidence/README.md)
 - [current CP0.2 v4 variants comparison](cp0.2-bridge-variants-v4.md)
 - [CP0.2 v4 media identity manifest](evidence/cp0.2-v4-real-yaw-bridge-manifest.json)
+- [CP0.2 v8 exact B identity manifest](evidence/cp0.2-v8-b-ring-first-complete-manifest.json)
+- [CP0.2 v8 boundary measurements](evidence/cp0.2-v8-b-ring-first-complete-boundary-measurements.json)
 - [historical v3 variants / real-yaw correction](cp0.2-bridge-variants-v3.md)
 - [historical v3 media identity manifest](evidence/cp0.2-v3-source-direction-bridge-manifest.json)
 - [historical v2 variants / source-direction correction](cp0.2-bridge-variants-v2.md)
@@ -20,6 +22,7 @@ CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求�
 - [historical v1 variants comparison / NO-GO](cp0.2-bridge-variants.md)
 - [historical v1 media identity manifest](evidence/cp0.2-bridge-variants-manifest.json)
 - 本地 v4 证据根目录：`/Users/aitoshuu/Documents/GitHub/MiraLith/apps/site/.generated/post-coscroll-editorial/cp02-v4/`
+- 本地 v8 B 证据根目录：`/Users/aitoshuu/Documents/GitHub/MiraLith/apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/`
 
 CP0.1 PASS 只代表素材事实可作为下一阶段输入。作者的后续明确继续指示已经打开 CP0.2 review；它仍然**不等于 Editorial GO**。
 
@@ -37,11 +40,22 @@ CP0.1 已确认：桌面保留 letterbox、字符从实时 yaw / speed 解体、
 
 对应 v4 scrub review movies、真实 yaw motion contact sheet 和比较在 [CP0.2 v4 比较文档](cp0.2-bridge-variants-v4.md)。v3 已因平面转字错误降为历史记录；v2 / v1 也均不可作为视觉或声音选择。
 
+### v8 精确 B 复核对象（不是 GO 输入）
+
+`cp02-v8 / B-ring-first / complete-original-order` 的确切线性文件为 [B-ring-first-v8-complete-n355-phase-aligned-faded-source-audio.mp4](../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/B-ring-first-v8-complete-n355-phase-aligned-faded-source-audio.mp4)，SHA-256 为 `37ed1628a20e0d0d3aad60bdbd87add859adaa3d3c03798962643dc319a63ca0`。它使用 `109` 帧网页 bridge，随后为影片 `[n=355,n=556)` → `[n=0,n=355)`，共 `665` 帧 / `22.166667s`；两个 review 音频剪点均为 `12ms` fade。
+
+它**不能**被当成当前 A/B/C 的胜出版本：A/C 仍是 v4 的 `4.5s / 1920×1080` 旧 bridge，v8 是 `3.633333s / 960×540` 新 bridge，且 v8 尚无对应 scrub。任何 CP0.3 GO 都会错误地把制作基线差异当成剪辑选择。
+
+在重做同基线 A/C 和三版 scrub 之前，作者还须决定两项叙事边界：
+
+1. 重排后的 `[n=0,n=355)` 开头包含 `n=0…2` 的 ArtBreeze/QR 卡与 `n=3` 黑帧：删除、移到真实片尾，或明确保留“结束后重启”的读法。
+2. 网页 `n=108` → 影片 `n=355` 的全帧 `YAVG` 为 `30.2625 → 177.852`（`YDIF=154.31`）。环本身连续不等于背景连续；是否保留暗场→白场硬切为作者决定。
+
 ## CP0.3 GO 记录
 
 状态：`NOT OPEN — 等待作者针对确切样片给出 GO`
 
-只有在 CP0.2 生成并复核了具体版本后，才填写以下字段：
+只有在 CP0.2 恢复同基线 A/B/C + scrub 比较、并由作者解决 QR 与全帧白闪的剪辑决定后，才填写以下字段：
 
 | 字段 | 值 |
 | --- | --- |

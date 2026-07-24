@@ -74,6 +74,13 @@ v1 已因“停住后才粒子化 / 粒子过早暖化”被作者否决。v2 �
 | 声音切口 | 两个剪点均采用 `12ms` review fade。解码 PCM 的相邻样本跳变分别为 web→`n=355` `[0.00001127,0.00003319]`、endpoint→`n=0` `[0.00017822,0.00040887]`；它们是内容保留的 AAC review transcode，不是原 AAC packets。 |
 | 可跨机器复核 | [v8 durable manifest](evidence/cp0.2-v8-b-ring-first-complete-manifest.json)、[boundary measurements](evidence/cp0.2-v8-b-ring-first-complete-boundary-measurements.json)。大型媒体与本地 checksum index 继续由 `.gitignore` 排除。 |
 
+#### v8 对抗复核后的 CP0.2 阻断项
+
+1. **QR 叙事决定：** `n=0…2` 是 ArtBreeze / QR 卡、`n=3` 是黑帧；v8 把它们置于“推石头”文本之后、等待段之前。作者必须选择删除、后移到真正片尾，或明确接受“结束后重启”的读法。
+2. **全帧亮度决定：** FFmpeg 对解码终片的 `n=108 → n=109` 测得 `YAVG=30.2625 → 177.852`、`YDIF=154.31`。环 ROI 的几何/颜色连续不消除暗场→白场硬切；是否保留该白闪由作者决定。
+3. **受控比较恢复：** v8 只升级 B；A/C 仍为 v4、且 v8 未提供三版 scrub。因此必须在上述两项决定后，以同一网页 bridge、格式、声音基线重制 A/C 和 A/B/C scrub，才能继续 CP0.2。
+4. **声音主观确认：** `12ms` fade 已消除样本级 click，仍须由作者戴耳机听 `n=555 → n=0` 的音乐/情绪回跳，选择保留原声、延迟入声或 CoScroll 残响。
+
 **状态不变：`CP0.2 — IN REVIEW`，`CP0.3 — NOT OPEN`。** v8 只是一个确切、完整的 B 评审对象；它不构成 Editorial GO，也不冻结声音、路由或任何 production media contract。
 
 ### 历史记录：cp02-v3（已被 real-yaw correction 取代）
