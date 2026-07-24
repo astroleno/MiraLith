@@ -1,10 +1,10 @@
 # First-Sequence Editorial Decision
 
 状态：`CP0.2 IN REVIEW / CP0.3 NOT OPEN`
-当前版本：`0.9`
+当前版本：`1.0`
 CP0.4 freeze hash：`未生成`
 
-CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求继续。`cp02-v1` 被否决为“停住后才粒子化 / 过早暖化”；`cp02-v2` 错误反转 source yaw；`cp02-v3` 又把真实 yaw flattened 为平面转字。`cp02-v4` 是最后一组受控 A/B/C 基线；`cp02-v8` 是仅升级 B 的完整原始顺序修复。尚未有作者对一个确切版本的 GO，因此本文件仍不包含冻结项。
+CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求继续。`cp02-v1` 被否决为“停住后才粒子化 / 过早暖化”；`cp02-v2` 错误反转 source yaw；`cp02-v3` 又把真实 yaw flattened 为平面转字。`cp02-v8` 只升级了 B，因而不能作为 GO 输入。当前 `cp02-v9` 已按作者决定补回同基线 A/B/C 与 scrub；尚未有作者对一个确切版本的 GO，因此本文件仍不包含冻结项。
 
 ## 当前可审阅输入
 
@@ -15,6 +15,8 @@ CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求�
 - [CP0.2 v4 media identity manifest](evidence/cp0.2-v4-real-yaw-bridge-manifest.json)
 - [CP0.2 v8 exact B identity manifest](evidence/cp0.2-v8-b-ring-first-complete-manifest.json)
 - [CP0.2 v8 boundary measurements](evidence/cp0.2-v8-b-ring-first-complete-boundary-measurements.json)
+- [CP0.2 v9 A/B/C parity manifest](evidence/cp0.2-v9-parity-qr-deferred-exposure-manifest.json)
+- [CP0.2 v9 exposure and reorder measurements](evidence/cp0.2-v9-parity-qr-deferred-exposure-boundary-measurements.json)
 - [historical v3 variants / real-yaw correction](cp0.2-bridge-variants-v3.md)
 - [historical v3 media identity manifest](evidence/cp0.2-v3-source-direction-bridge-manifest.json)
 - [historical v2 variants / source-direction correction](cp0.2-bridge-variants-v2.md)
@@ -23,6 +25,7 @@ CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求�
 - [historical v1 media identity manifest](evidence/cp0.2-bridge-variants-manifest.json)
 - 本地 v4 证据根目录：`/Users/aitoshuu/Documents/GitHub/MiraLith/apps/site/.generated/post-coscroll-editorial/cp02-v4/`
 - 本地 v8 B 证据根目录：`/Users/aitoshuu/Documents/GitHub/MiraLith/apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/`
+- 本地 v9 A/B/C 证据根目录：`/Users/aitoshuu/Documents/GitHub/MiraLith/apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/`
 
 CP0.1 PASS 只代表素材事实可作为下一阶段输入。作者的后续明确继续指示已经打开 CP0.2 review；它仍然**不等于 Editorial GO**。
 
@@ -31,6 +34,20 @@ CP0.1 已确认：桌面保留 letterbox、字符从实时 yaw / speed 解体、
 ## CP0.2 当前已交付候选（待作者评审）
 
 共同 bridge 已按作者反馈改为：实体“空”保持真实 source 的**负 `rotation.y` yaw**并加速，在真实 capture pose 中从笔画内剥落；它不再被当成平面字旋转。粒子与其形成的缺口环保持相同方向与冷玉蓝，最后才交给真实 ArtBreeze 环。桥段相位只使用常量 offset，不为贴合影片而翻转。它不是生产实现，也不能替代未来的 live yaw / speed 采样。
+
+### 当前 v9 同基线比较
+
+作者已明确：`n=0…2` 的 QR / title slate 与 `n=3` 黑帧后移至真正体验片尾，本轮首段从 `n=4` 开始；B 的暗场→白场接力用四帧曝光退场，而不是单帧硬切。三版都使用同一 `109` 帧 browser-captured review bridge、`960×540 / 30fps` 格式、静默网页前缀和 `12ms` source-audio fade 基线；每版都配有 `900` 帧 / `30s` 的同一 scrub trace。
+
+| 视觉版本 | 线性样片 | scrub | 当前声音 / 剪辑含义 |
+| --- | --- | --- | --- |
+| `A-source-order-v9` | [A linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/A-source-order-v9-qr-deferred-exposure.mp4) — SHA `8584eb473c95ef1160ad3a381584ccab9830646c663f34d92f90b0dd0a8e1987` | [A scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/A-source-order-v9-qr-deferred-exposure-scrub.mp4) | ring 暗化进入 `n=4` LOADING，随后按等待 → 白场 → 困境的 source order；不含 QR。 |
+| `B-ring-first-v9` | [B linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/B-ring-first-v9-qr-deferred-exposure.mp4) — SHA `803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e` | [B scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/B-ring-first-v9-qr-deferred-exposure-scrub.mp4) | 四帧曝光交给 `n=355` 圆环与“推石头”，再经暗化回 `n=4` 等待段；两个 source audio 段各有 `12ms` fade，中间 `0.1s` 静默 pocket。 |
+| `C-hybrid-v9` | [C linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/C-hybrid-v9-qr-deferred-exposure.mp4) — SHA `06324b6bc62656c6914b5ac534105415e44cc084d842028ec44232e1895da14f` | [C scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/C-hybrid-v9-qr-deferred-exposure-scrub.mp4) | local DOM-ring stand-in 穿过等待段，`n=337…354` 淡出并让真实环接手；它刻意保留 spinner 风险以供比较。 |
+
+v9 的 B 全帧亮度为 `30.5777 → 67.6324 → 104.667 → 141.724 → 178.628`，不再是 v8 的单帧 `30.2625 → 177.852` 硬切。详见 [v9 boundary evidence](evidence/cp0.2-v9-parity-qr-deferred-exposure-boundary-measurements.json)。
+
+### 历史 v4 基线与 v8 B 修复
 
 | 视觉版本 | 线性样片 | 当前声音 | 备注 |
 | --- | --- | --- | --- |
@@ -46,16 +63,13 @@ CP0.1 已确认：桌面保留 letterbox、字符从实时 yaw / speed 解体、
 
 它**不能**被当成当前 A/B/C 的胜出版本：A/C 仍是 v4 的 `4.5s / 1920×1080` 旧 bridge，v8 是 `3.633333s / 960×540` 新 bridge，且 v8 尚无对应 scrub。任何 CP0.3 GO 都会错误地把制作基线差异当成剪辑选择。
 
-在重做同基线 A/C 和三版 scrub 之前，作者还须决定两项叙事边界：
-
-1. 重排后的 `[n=0,n=355)` 开头包含 `n=0…2` 的 ArtBreeze/QR 卡与 `n=3` 黑帧：删除、移到真实片尾，或明确保留“结束后重启”的读法。
-2. 网页 `n=108` → 影片 `n=355` 的全帧 `YAVG` 为 `30.2625 → 177.852`（`YDIF=154.31`）。环本身连续不等于背景连续；是否保留暗场→白场硬切为作者决定。
+这两项 v8 阻断已由作者决定并在 v9 实施：QR 后移、四帧曝光。v8 仍作为历史复核对象保留，不应作为当前 A/B/C 选择或 GO 文件。
 
 ## CP0.3 GO 记录
 
 状态：`NOT OPEN — 等待作者针对确切样片给出 GO`
 
-只有在 CP0.2 恢复同基线 A/B/C + scrub 比较、并由作者解决 QR 与全帧白闪的剪辑决定后，才填写以下字段：
+只有在作者审阅 v9 的同基线 A/B/C + scrub、对一个确切版本给出 GO，并完成 B 的主观声音确认后，才填写以下字段：
 
 | 字段 | 值 |
 | --- | --- |

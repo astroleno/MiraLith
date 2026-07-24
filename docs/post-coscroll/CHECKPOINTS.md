@@ -1,7 +1,7 @@
 # Post-CoScroll Stage 0 Checkpoints
 
 状态：`CP0.1 — PASS / CP0.2 — IN REVIEW`
-本轮范围：CP0.1 的 Asset Truth 已通过；作者随后明确要求继续，现已完成 CP0.2 的 A/B/C 本地评审媒体。历史声音比较不自动迁移为当前 v4 结论。尚未进入 CP0.3、CP0.4、Stage 1 或 Stage 2。
+本轮范围：CP0.1 的 Asset Truth 已通过；作者随后明确要求继续，现已完成 CP0.2 v9 的 A/B/C 本地评审媒体与 scrub。历史声音比较不自动迁移为 v9 结论。尚未进入 CP0.3、CP0.4、Stage 1 或 Stage 2。
 
 ## CP0.1 — Asset Truth
 
@@ -50,9 +50,9 @@
 
 作者在 CP0.1 PASS 后明确要求继续。该指示仅打开 CP0.2 制作和评审，不等于选择某一版本，也不等于 CP0.3 GO。
 
-### 当前评审：cp02-v4 real-yaw blue bridge
+### 历史受控基线：cp02-v4 real-yaw blue bridge
 
-v1 已因“停住后才粒子化 / 粒子过早暖化”被作者否决。v2 错误把真实 CoScroll 的负 yaw 归一化为正向 screen rotation。v3 虽恢复负 yaw 符号，却把 captured glyph 平面旋转。作者要求实体“空”沿真实 `rotation.y` 姿态解体；以下 v4 才是当前可供评审的版本。
+v1 已因“停住后才粒子化 / 粒子过早暖化”被作者否决。v2 错误把真实 CoScroll 的负 yaw 归一化为正向 screen rotation。v3 虽恢复负 yaw 符号，却把 captured glyph 平面旋转。作者要求实体“空”沿真实 `rotation.y` 姿态解体；v4 建立了后来 v8/v9 均复用的真实 yaw 基线。
 
 | 验收项 | 当前 v4 本地证据 |
 | --- | --- |
@@ -81,7 +81,23 @@ v1 已因“停住后才粒子化 / 粒子过早暖化”被作者否决。v2 �
 3. **受控比较恢复：** v8 只升级 B；A/C 仍为 v4、且 v8 未提供三版 scrub。因此必须在上述两项决定后，以同一网页 bridge、格式、声音基线重制 A/C 和 A/B/C scrub，才能继续 CP0.2。
 4. **声音主观确认：** `12ms` fade 已消除样本级 click，仍须由作者戴耳机听 `n=555 → n=0` 的音乐/情绪回跳，选择保留原声、延迟入声或 CoScroll 残响。
 
-**状态不变：`CP0.2 — IN REVIEW`，`CP0.3 — NOT OPEN`。** v8 只是一个确切、完整的 B 评审对象；它不构成 Editorial GO，也不冻结声音、路由或任何 production media contract。
+**v8 现为历史 B 复核对象。** 它不构成 Editorial GO，也不冻结声音、路由或任何 production media contract。
+
+### 当前受控评审：cp02-v9 parity / QR deferred / exposure
+
+作者随后选择了上述两项推荐：QR / title slate 后移至真实体验片尾，暗场→白场改为极短曝光退场。`cp02-v9` 以**同一** v8 browser-captured real-yaw / opaque-cutout / pale-jade-particles / blue-ring / warm-ring 前缀、`960×540 / 30fps`、静默网页前缀和 `12ms` review audio fade 基线，重新制作 A、B、C 和每版 scrub。
+
+| 验收项 | v9 证据 / 结论 |
+| --- | --- |
+| QR 不再插入首段 | 三版均排除 `n=0…3`；首段逻辑 source 从 `n=4` / `PTS=12,000` 开始。QR / title slate 被记录为真正体验片尾的后续素材，不以“结束后重启”读法出现在本轮。 |
+| A / B / C 同基线线性样片 | [A linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/A-source-order-v9-qr-deferred-exposure.mp4)、[B linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/B-ring-first-v9-qr-deferred-exposure.mp4)、[C linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/C-hybrid-v9-qr-deferred-exposure.mp4)。A/C 各 `664` 帧 / `22.133333s`，B `667` 帧 / `22.233333s`；只因 B 的第二个四帧重排过渡和三帧静默 pocket 多出 `0.1s`。 |
+| 同基线 scrub | [A scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/A-source-order-v9-qr-deferred-exposure-scrub.mp4)、[B scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/B-ring-first-v9-qr-deferred-exposure-scrub.mp4)、[C scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/C-hybrid-v9-qr-deferred-exposure-scrub.mp4)。三版均为 `900` 帧 / `30s`，共享 `0.000 → 0.369 → 0.152 → 1.000` 前进、撤回、恢复 trace；不接 production ScrollTrigger。 |
+| B 曝光交棒 | [30fps exposure boundary](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/contact-sheets/B-web-to-n355-exposure-boundary-v9.jpg)。解码全帧 `YAVG` 依次为 `30.5777 → 67.6324 → 104.667 → 141.724 → 178.628`，每步 `YDIF≈38.6–38.9`，替代 v8 单帧 `154.31` 的白场跳变。 |
+| B 回到等待 | [n555 → n4 boundary](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/contact-sheets/B-n555-to-n4-qr-deferred-boundary-v9.jpg)：`n=555` 后经四帧暗化落到 `n=4` LOADING，不回到 QR。两个 source 声音段使用 `12ms` fade，中间 `0.1s` 静默 pocket；仍需作者戴耳机作主观判断。 |
+| C 的 DOM ring 职责 | [C stand-in evidence](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/contact-sheets/C-dom-ring-takeover-v9.jpg)。它是明确的 local composited stand-in，用于测试“等待中的 persistent ring 会读成 spinner”的风险；不是正式 DOM ring 授权。 |
+| 可跨机器复核 | [v9 durable manifest](evidence/cp0.2-v9-parity-qr-deferred-exposure-manifest.json)、[boundary measurements](evidence/cp0.2-v9-parity-qr-deferred-exposure-boundary-measurements.json)、[root checksum index](evidence/cp0.2-v9-parity-qr-deferred-exposure-checksums.sha256)。 |
+
+**状态仍为：`CP0.2 — IN REVIEW`，`CP0.3 — NOT OPEN`。** v9 恢复公平比较，但作者尚未在 A / B / C 中选择确切样片，且未完成 B 的主观声音确认；因此不能自行标记 CP0.2 PASS 或记录 Editorial GO。
 
 ### 历史记录：cp02-v3（已被 real-yaw correction 取代）
 

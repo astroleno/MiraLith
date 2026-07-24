@@ -1,0 +1,83 @@
+{
+  "kind": "Stage 0 CP0.2 durable v9 parity-review identity — not production media",
+  "variantSet": "cp02-v9 / A-B-C parity / QR deferred / four-frame exposure",
+  "status": "CP0.2 IN REVIEW; CP0.3 NOT OPEN; no Editorial GO",
+  "authorDecisionsApplied": {
+    "qr": "Defer source n=0..2 ArtBreeze/QR title slate and source n=3 blank-black frame to the true experience end. The reviewed first sequence begins at source n=4.",
+    "darkToWhite": "Use a four-frame exposure exit, rather than the former one-frame dark-to-white hard cut, for the B web-ring to real n=355 handoff."
+  },
+  "master": {
+    "path": "/Users/aitoshuu/Downloads/portfolio/artbreeze-full.MP4",
+    "sha256": "0ab8f26484ad1fe0814df44ba849581c22b948e6d7f1c2d7f2d1c89adab6396d",
+    "sourceTimeBase": "1/90000",
+    "sourceFrameRate": "30/1"
+  },
+  "commonWebBridge": {
+    "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/candidate/web-opaque-yaw-particles-to-n355-v8.mp4",
+    "sha256": "96f2539b28d1f1ae56885c919c9e7ac15b9eccd37a92108174965734fac3f61b",
+    "frameRange": "[0,109)",
+    "description": "The same browser-captured local review bridge is used by A, B and C: real negative rotation.y yaw, opaque glyph cutout, pale-jade particles, visible blue open ring, then brief warmth. It is not a production terminal."
+  },
+  "format": {
+    "linear": "H.264 960x540 CFR 30fps with AAC stereo 44.1kHz review audio",
+    "scrub": "H.264 960x540 CFR 30fps, muted low-fidelity review capture",
+    "sharedScrubTrace": "0.000→0.369 over 300 frames; 0.369→0.152 over 180 frames; 0.152→1.000 over 420 frames"
+  },
+  "variants": [
+    {
+      "id": "A-source-order-v9",
+      "linear": {
+        "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/A-source-order-v9-qr-deferred-exposure.mp4",
+        "sha256": "8584eb473c95ef1160ad3a381584ccab9830646c663f34d92f90b0dd0a8e1987",
+        "frames": 664,
+        "durationSeconds": 22.133333333
+      },
+      "scrub": {
+        "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/A-source-order-v9-qr-deferred-exposure-scrub.mp4",
+        "sha256": "f4d82364fd54626154c18fe21a28c975110a09ab02678bd68e75103db404c58f",
+        "frames": 900,
+        "durationSeconds": 30.0
+      },
+      "sourceOrder": "web[0,109) → 4-frame dim-to-source-n4 (final frame n=4) → source[n=5,n=556). Logical source content is [n=4,n=556); QR n=0..3 is absent."
+    },
+    {
+      "id": "B-ring-first-v9",
+      "linear": {
+        "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/B-ring-first-v9-qr-deferred-exposure.mp4",
+        "sha256": "803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e",
+        "frames": 667,
+        "durationSeconds": 22.233333333
+      },
+      "scrub": {
+        "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/B-ring-first-v9-qr-deferred-exposure-scrub.mp4",
+        "sha256": "3168c035eefcceada6bd8bc099f9192871ab6305e42f39244e03aabcbfb1cabb",
+        "frames": 900,
+        "durationSeconds": 30.0
+      },
+      "sourceOrder": "web[0,109) → 4-frame exposure-to-source-n355 (final frame n=355) → source[n=356,n=556) → 4-frame dim-to-source-n4 (final frame n=4) → source[n=5,n=355). Logical source content is [n=355,n=556) → [n=4,n=355); QR n=0..3 is absent."
+    },
+    {
+      "id": "C-hybrid-v9",
+      "linear": {
+        "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/C-hybrid-v9-qr-deferred-exposure.mp4",
+        "sha256": "06324b6bc62656c6914b5ac534105415e44cc084d842028ec44232e1895da14f",
+        "frames": 664,
+        "durationSeconds": 22.133333333
+      },
+      "scrub": {
+        "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/C-hybrid-v9-qr-deferred-exposure-scrub.mp4",
+        "sha256": "71312177dc5dcfe54c114402324ca40bb01fcaed21ed6ac58acd8e9e7bd26a81",
+        "frames": 900,
+        "durationSeconds": 30.0
+      },
+      "sourceOrder": "web[0,109) → 4-frame dim-to-source-n4 plus local DOM-ring stand-in (final frame n=4) → source[n=5,n=355) with stand-in → source[n=355,n=556). Logical source content is [n=4,n=556); QR n=0..3 is absent."
+    }
+  ],
+  "localRecipe": {
+    "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/recipe/miralith_generate_cp02_v9.py",
+    "sha256": "340a2336aafb8c2051a1a3d66fe1ecc2b88e38a9de0acbb5116c985f9f1640d8",
+    "localChecksumIndex": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/v9-checksums.sha256",
+    "localChecksumIndexSha256": "e9e3b56938320a63d1775be3cfc332e8cac862b5d7dc500a77c2845ecea097ce"
+  },
+  "reviewConclusion": "v9 restores a controlled A/B/C review baseline after v8 upgraded B alone. It records the author-approved QR deferral and exposure choice, but does not select a leading variant, grant CP0.2 PASS, grant CP0.3 Editorial GO, or freeze any production behavior."
+}

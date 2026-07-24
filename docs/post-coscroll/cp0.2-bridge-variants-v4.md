@@ -71,3 +71,24 @@ v8 的完整顺序为：网页 review bridge `[0,109)` / `3.633333s` → ArtBree
 | Durable identity | [v8 manifest](evidence/cp0.2-v8-b-ring-first-complete-manifest.json)、[boundary snapshot](evidence/cp0.2-v8-b-ring-first-complete-boundary-measurements.json)。 |
 
 这仍是 CP0.2 的精确评审对象：**`CP0.2 — IN REVIEW`、`CP0.3 — NOT OPEN`。** 它不替代作者的 Editorial GO，也不授权 production 路由、Canvas terminal、ScrollTrigger、CDN 或 Stage 1。
+
+## 7. v9：同基线 A/B/C、QR 后移与四帧曝光
+
+作者选择：**QR / title slate 后移至真正体验片尾，首段从 `n=4` 开始；暗场→白场采用四帧曝光退场。** 因此 v9 不再让 `n=0…2` QR 卡或 `n=3` 黑帧在“推石头”文本之后插入等待段。
+
+三版共用 v8 已验证的 `109` 帧网页前缀（真实负 `rotation.y` yaw、opaque cutout、浅玉粒子、可读蓝环、短暖化）、`960×540 / 30fps`、网页静默和 `12ms` source-audio fade 基线；每版都提供 `900` 帧 / `30s` 的同一 `0.000 → 0.369 → 0.152 → 1.000` scrub trace。
+
+| 版 | 编辑顺序 | 线性样片 | scrub |
+| --- | --- | --- | --- |
+| `A-source-order-v9` | web `[0,109)` → 四帧暗化至 `n=4` → source `[n=5,n=556)`；逻辑 source `[n=4,n=556)`。 | [A linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/A-source-order-v9-qr-deferred-exposure.mp4) | [A scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/A-source-order-v9-qr-deferred-exposure-scrub.mp4) |
+| `B-ring-first-v9` | web `[0,109)` → 四帧曝光至 `n=355` → source `[n=356,n=556)` → 四帧暗化至 `n=4` → source `[n=5,n=355)`；逻辑 source `[n=355,n=556) → [n=4,n=355)`。 | [B linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/B-ring-first-v9-qr-deferred-exposure.mp4) | [B scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/B-ring-first-v9-qr-deferred-exposure-scrub.mp4) |
+| `C-hybrid-v9` | web `[0,109)` → 四帧暗化至 `n=4` + local DOM-ring stand-in → source `[n=5,n=355)` + stand-in → source `[n=355,n=556)`。 | [C linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/C-hybrid-v9-qr-deferred-exposure.mp4) | [C scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/C-hybrid-v9-qr-deferred-exposure-scrub.mp4) |
+
+### v9 连续性与限制
+
+- B 的解码全帧 YAVG 从 `30.5777` 经 `67.6324`、`104.667`、`141.724` 到 `178.628`；每步 YDIF 约 `38.6–38.9`，不再是 v8 的单帧 `154.31` 跳变。见 [exposure proof](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/contact-sheets/B-web-to-n355-exposure-boundary-v9.jpg)。
+- B 从 `n=555` 返回时同样经四帧暗化落到 `n=4` LOADING，且没有 QR；两个 source audio 段各有 `12ms` fade，保留 `0.1s` 静默 pocket，仍须作者戴耳机确认情绪/音乐回跳。见 [return proof](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/contact-sheets/B-n555-to-n4-qr-deferred-boundary-v9.jpg)。
+- C 的 persistent ring 是**故意保留的风险测试**：它在等待者和 UI 上可能读作 spinner。见 [C takeover proof](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/contact-sheets/C-dom-ring-takeover-v9.jpg)。它不是正式 DOM / Canvas 设计决定。
+- v9 的稳定 identity、source mapping、SSIM 与完整 checksum 位于 [durable manifest](evidence/cp0.2-v9-parity-qr-deferred-exposure-manifest.json)、[boundary snapshot](evidence/cp0.2-v9-parity-qr-deferred-exposure-boundary-measurements.json) 和 [checksum index](evidence/cp0.2-v9-parity-qr-deferred-exposure-checksums.sha256)。
+
+**状态不变：`CP0.2 — IN REVIEW`，`CP0.3 — NOT OPEN`。** 现在的工作是作者在相同完成度下评审 A/B/C；任何选择仍须指向确切 v9 文件和 SHA，不能由执行者替代为 Editorial GO。

@@ -1,0 +1,60 @@
+{
+  "kind": "Stage 0 CP0.2 v9 parity-review boundary snapshot — not production media",
+  "variantSet": "cp02-v9 / A-B-C parity / QR deferred / four-frame exposure",
+  "checkpointStatus": {
+    "cp02": "IN REVIEW — not PASS",
+    "cp03": "NOT OPEN",
+    "editorialGo": "not granted"
+  },
+  "qrDeferral": {
+    "excludedSourceFrames": "n=0..3",
+    "sourceFacts": {
+      "n0ToN2": "ArtBreeze / QR title slate",
+      "n3": "one blank-black frame"
+    },
+    "firstSequenceStart": "n=4 / PTS 12,000 / 00:00.133333",
+    "decision": "Deferred to the true experience end; it is not part of the Stage 0 first-sequence review candidates."
+  },
+  "BWebToFilmExposure": {
+    "outputFrames": {
+      "lastWeb": 108,
+      "blendFrames": "[109,113)",
+      "finalExactFilmFrame": 112,
+      "firstOrdinaryFilmFrame": 113,
+      "filmSourceFrames": "n=355 at output 112; n=356 at output 113"
+    },
+    "blend": {
+      "method": "Four-frame linear RGB blend from v8 web frame 108 to scaled source n=355",
+      "alphas": [0.25, 0.5, 0.75, 1.0],
+      "durationSeconds": 0.133333333
+    },
+    "decodedFullFrameLumaAt960x540": [
+      { "outputFrame": 108, "ptsTimeSeconds": 3.6, "yavg": 30.5777, "ydif": 0.0 },
+      { "outputFrame": 109, "ptsTimeSeconds": 3.633333333, "yavg": 67.6324, "ydif": 38.7498 },
+      { "outputFrame": 110, "ptsTimeSeconds": 3.666666667, "yavg": 104.667, "ydif": 38.8428 },
+      { "outputFrame": 111, "ptsTimeSeconds": 3.7, "yavg": 141.724, "ydif": 38.8139 },
+      { "outputFrame": 112, "ptsTimeSeconds": 3.733333333, "yavg": 178.628, "ydif": 38.633 },
+      { "outputFrame": 113, "ptsTimeSeconds": 3.766666667, "yavg": 178.627, "ydif": 0.0218711 }
+    ],
+    "interpretation": "The former one-frame 154.31 YDIF dark-to-white cut is replaced by four approximately 38.6–38.9 YDIF exposure steps. The circle is still the continuity anchor; the exposure is a local editorial proxy, not a production rendering contract."
+  },
+  "BReorderReturn": {
+    "outputFrames": "source n=555 at output 312 → blend [313,317) → source n=4 at output 316 → source n=5 at output 317",
+    "sourceOrder": "[n=355,n=556) → [n=4,n=355)",
+    "qr": "No n=0..3 output frame exists in this return.",
+    "audio": "n=355..555 receives 12ms fade-in and fade-out; a 0.100000s silent visual-reorder pocket spans the first three blend frames; n=4 receives a 12ms fade-in. This removes sample clicks but still needs author headphone review for musical/emotional continuity."
+  },
+  "decodedSourceSimilarity": {
+    "method": "FFmpeg SSIM between decoded final-candidate frames and the same 1920x1080 master frames scaled to 960x540 with Lanczos. Values include H.264 review encoding; C source n=4..354 is intentionally excluded because the DOM-ring stand-in overlays it.",
+    "AOutput112_vs_sourceN4": 0.999908,
+    "BOutput112_vs_sourceN355": 0.999693,
+    "BOutput312_vs_sourceN555": 0.999998,
+    "BOutput316_vs_sourceN4": 0.993260,
+    "COutput463_vs_sourceN355": 0.999463
+  },
+  "CStandIn": {
+    "purpose": "A local composited persistent DOM-ring stand-in to test the hybrid reading.",
+    "visualRule": "Warm open ring remains across n=4..354, rotates at the measured clockwise 396.4 degrees/s and fades out while source n=337..354 forms its real orange arc.",
+    "nonProductionBoundary": "It is intentionally allowed to read as a spinner in order to make that editorial risk comparable; it is not a formal DOM implementation decision."
+  }
+}
