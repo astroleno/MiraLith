@@ -1,7 +1,7 @@
 # Post-CoScroll Stage 0 Checkpoints
 
-状态：`CP0.1 — PASS / CP0.2 — IN REVIEW`
-本轮范围：CP0.1 的 Asset Truth 已通过；作者随后明确要求继续，现已完成 CP0.2 v9 的 A/B/C 本地评审媒体与 scrub。历史声音比较不自动迁移为 v9 结论。尚未进入 CP0.3、CP0.4、Stage 1 或 Stage 2。
+状态：`CP0.1 — PASS / CP0.2 — PASS (TECH) / CP0.3 — IN REVIEW (AUTHOR)`
+本轮范围：CP0.1 的 Asset Truth 已通过；CP0.2 v9 的 A/B/C 本地评审媒体、scrub 与统一技术比较表已通过 TECH 门禁。作者尚未给出 Editorial GO，CP0.4、Stage 1 与 Stage 2 仍未进入。
 
 ## CP0.1 — Asset Truth
 
@@ -46,9 +46,9 @@
 
 ## CP0.2 — Bridge Variants
 
-状态：`IN REVIEW — 作者尚未作出 Editorial GO`
+状态：`PASS — TECH evidence complete，2026-07-24`
 
-作者在 CP0.1 PASS 后明确要求继续。该指示仅打开 CP0.2 制作和评审，不等于选择某一版本，也不等于 CP0.3 GO。
+作者在 CP0.1 PASS 后明确要求继续。CP0.2 只验证三版是否可公平比较；它不要求作者先选版。作者选择与声音主观确认属于 CP0.3，不能再作为 CP0.2 的循环门禁。
 
 ### 历史受控基线：cp02-v4 real-yaw blue bridge
 
@@ -97,7 +97,7 @@ v1 已因“停住后才粒子化 / 粒子过早暖化”被作者否决。v2 �
 | C 的 DOM ring 职责 | [C stand-in evidence](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/contact-sheets/C-dom-ring-takeover-v9.jpg)。它是明确的 local composited stand-in，用于测试“等待中的 persistent ring 会读成 spinner”的风险；不是正式 DOM ring 授权。 |
 | 可跨机器复核 | [v9 durable manifest](evidence/cp0.2-v9-parity-qr-deferred-exposure-manifest.json)、[boundary measurements](evidence/cp0.2-v9-parity-qr-deferred-exposure-boundary-measurements.json)、[root checksum index](evidence/cp0.2-v9-parity-qr-deferred-exposure-checksums.sha256)。 |
 
-**状态仍为：`CP0.2 — IN REVIEW`，`CP0.3 — NOT OPEN`。** v9 恢复公平比较，但作者尚未在 A / B / C 中选择确切样片，且未完成 B 的主观声音确认；因此不能自行标记 CP0.2 PASS 或记录 Editorial GO。
+**CP0.2 PASS — TECH，2026-07-24。** v9 已恢复同基线 A/B/C、每版 scrub，并由 [v9 统一比较表](cp0.2-v9-parity-comparison.md) 集中覆盖中心、尺寸、方向、相位、明暗、声音、节奏与情绪含义；它满足计划的 TECH pass 条件。此 PASS 不选择 A / B / C，不记录 Editorial GO，也不解除 CP0.4 / Stage 1 / Stage 2 的锁定。
 
 ### 历史记录：cp02-v3（已被 real-yaw correction 取代）
 
@@ -125,9 +125,9 @@ v2 的实体、粒子和蓝环被设为正向 screen rotation，以求贴合 Art
 
 ## CP0.3 — Editorial GO
 
-状态：`NOT OPEN`
+状态：`IN REVIEW — AUTHOR`
 
-须先完成同等完成度的 CP0.2 样片。作者对一个确切样片版本的 GO 才能打开本 checkpoint；修改建议、混合意见或 NO-GO 都不算通过。
+CP0.2 已以 TECH 证据通过。当前建议作者优先审阅 `B-ring-first-v9-qr-deferred-exposure.mp4`（SHA-256 `803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e`），但它不是已授权的胜出版本。现在等待作者对一个确切 v9 样片文件与 SHA 给出 GO，并说明它为何读作“重复、等待与推石头”而非 spinner、品牌 loading 或炫技转场。`B-ring-first-v9` 还需作者戴耳机确认 `10.433288–10.539274s` 的断章是否读作有意循环重启；技术审计已排除 sample-click，不能代替主观试听。修改建议、混合意见或 NO-GO 都不算通过，必须先生成新的本地样片再 review。
 
 ## CP0.4 — Editorial Freeze
 

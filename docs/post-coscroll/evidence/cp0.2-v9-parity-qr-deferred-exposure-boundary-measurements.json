@@ -2,8 +2,8 @@
   "kind": "Stage 0 CP0.2 v9 parity-review boundary snapshot — not production media",
   "variantSet": "cp02-v9 / A-B-C parity / QR deferred / four-frame exposure",
   "checkpointStatus": {
-    "cp02": "IN REVIEW — not PASS",
-    "cp03": "NOT OPEN",
+    "cp02": "PASS — TECH evidence complete",
+    "cp03": "IN REVIEW — AUTHOR selection and subjective audio review required",
     "editorialGo": "not granted"
   },
   "qrDeferral": {
@@ -43,6 +43,17 @@
     "sourceOrder": "[n=355,n=556) → [n=4,n=355)",
     "qr": "No n=0..3 output frame exists in this return.",
     "audio": "n=355..555 receives 12ms fade-in and fade-out; a 0.100000s silent visual-reorder pocket spans the first three blend frames; n=4 receives a 12ms fade-in. This removes sample clicks but still needs author headphone review for musical/emotional continuity."
+  },
+  "BReorderAudioTechnicalAudit": {
+    "provenance": "Independent adversarial review supplied on 2026-07-24; technical measurement only, not a subjective listening result.",
+    "silentIntervalSeconds": [10.433288, 10.539274],
+    "silentDurationMilliseconds": 105.986,
+    "rmsDbfs200msBefore": -14.06,
+    "rmsDbfs200msAfter": -30.83,
+    "energyDropDb": 16.77,
+    "maxAdjacentSampleJump": 0.0134,
+    "wholeCandidateMaxAdjacentSampleJump": 0.167,
+    "interpretation": "The fade/pocket prevents a sample-level click, but the roughly 16.77dB energy drop can be heard as a deliberate restart. The author must review this exact B candidate with headphones before an Editorial GO; a rejection requires an audio-only successor sample rather than retroactive approval."
   },
   "decodedSourceSimilarity": {
     "method": "FFmpeg SSIM between decoded final-candidate frames and the same 1920x1080 master frames scaled to 960x540 with Lanczos. Values include H.264 review encoding; C source n=4..354 is intentionally excluded because the DOM-ring stand-in overlays it.",

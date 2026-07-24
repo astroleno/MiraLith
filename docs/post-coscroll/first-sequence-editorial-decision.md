@@ -1,10 +1,10 @@
 # First-Sequence Editorial Decision
 
-状态：`CP0.2 IN REVIEW / CP0.3 NOT OPEN`
-当前版本：`1.0`
+状态：`CP0.2 PASS (TECH) / CP0.3 IN REVIEW (AUTHOR)`
+当前版本：`1.1`
 CP0.4 freeze hash：`未生成`
 
-CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求继续。`cp02-v1` 被否决为“停住后才粒子化 / 过早暖化”；`cp02-v2` 错误反转 source yaw；`cp02-v3` 又把真实 yaw flattened 为平面转字。`cp02-v8` 只升级了 B，因而不能作为 GO 输入。当前 `cp02-v9` 已按作者决定补回同基线 A/B/C 与 scrub；尚未有作者对一个确切版本的 GO，因此本文件仍不包含冻结项。
+CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求继续。`cp02-v1` 被否决为“停住后才粒子化 / 过早暖化”；`cp02-v2` 错误反转 source yaw；`cp02-v3` 又把真实 yaw flattened 为平面转字。`cp02-v8` 只升级了 B，因而不能作为 GO 输入。当前 `cp02-v9` 已按作者决定补回同基线 A/B/C 与 scrub，并以 TECH 证据通过 CP0.2；尚未有作者对一个确切版本的 GO，因此本文件仍不包含冻结项。
 
 ## 当前可审阅输入
 
@@ -12,6 +12,7 @@ CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求�
 - [CP0.1 checkpoint ledger](CHECKPOINTS.md)
 - [durable CP0.1 evidence snapshot](evidence/README.md)
 - [current CP0.2 v4 variants comparison](cp0.2-bridge-variants-v4.md)
+- [current CP0.2 v9 parity comparison](cp0.2-v9-parity-comparison.md)
 - [CP0.2 v4 media identity manifest](evidence/cp0.2-v4-real-yaw-bridge-manifest.json)
 - [CP0.2 v8 exact B identity manifest](evidence/cp0.2-v8-b-ring-first-complete-manifest.json)
 - [CP0.2 v8 boundary measurements](evidence/cp0.2-v8-b-ring-first-complete-boundary-measurements.json)
@@ -27,11 +28,11 @@ CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求�
 - 本地 v8 B 证据根目录：`/Users/aitoshuu/Documents/GitHub/MiraLith/apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/`
 - 本地 v9 A/B/C 证据根目录：`/Users/aitoshuu/Documents/GitHub/MiraLith/apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/`
 
-CP0.1 PASS 只代表素材事实可作为下一阶段输入。作者的后续明确继续指示已经打开 CP0.2 review；它仍然**不等于 Editorial GO**。
+CP0.1 PASS 只代表素材事实可作为下一阶段输入。`CP0.2 PASS (TECH)` 只代表 A/B/C 已在同一完成度下可公平比较；它仍然**不等于 Editorial GO**。
 
 CP0.1 已确认：桌面保留 letterbox、字符从实时 yaw / speed 解体、`n=354` 为 coherent-ring 候选、`[n=355,n=363)` 为技术交棒窗。详见 checkpoint ledger。
 
-## CP0.2 当前已交付候选（待作者评审）
+## CP0.2 已通过的技术比较；CP0.3 待作者评审
 
 共同 bridge 已按作者反馈改为：实体“空”保持真实 source 的**负 `rotation.y` yaw**并加速，在真实 capture pose 中从笔画内剥落；它不再被当成平面字旋转。粒子与其形成的缺口环保持相同方向与冷玉蓝，最后才交给真实 ArtBreeze 环。桥段相位只使用常量 offset，不为贴合影片而翻转。它不是生产实现，也不能替代未来的 live yaw / speed 采样。
 
@@ -46,6 +47,8 @@ CP0.1 已确认：桌面保留 letterbox、字符从实时 yaw / speed 解体、
 | `C-hybrid-v9` | [C linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/C-hybrid-v9-qr-deferred-exposure.mp4) — SHA `06324b6bc62656c6914b5ac534105415e44cc084d842028ec44232e1895da14f` | [C scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/C-hybrid-v9-qr-deferred-exposure-scrub.mp4) | local DOM-ring stand-in 穿过等待段，`n=337…354` 淡出并让真实环接手；它刻意保留 spinner 风险以供比较。 |
 
 v9 的 B 全帧亮度为 `30.5777 → 67.6324 → 104.667 → 141.724 → 178.628`，不再是 v8 的单帧 `30.2625 → 177.852` 硬切。详见 [v9 boundary evidence](evidence/cp0.2-v9-parity-qr-deferred-exposure-boundary-measurements.json)。
+
+计划要求的当前统一比较表（中心、尺寸、方向、相位、明暗、声音、节奏、情绪）见 [CP0.2 v9 parity comparison](cp0.2-v9-parity-comparison.md)。它以 TECH 身份通过 CP0.2，不选择版本。
 
 ### 历史 v4 基线与 v8 B 修复
 
@@ -67,9 +70,9 @@ v9 的 B 全帧亮度为 `30.5777 → 67.6324 → 104.667 → 141.724 → 178.62
 
 ## CP0.3 GO 记录
 
-状态：`NOT OPEN — 等待作者针对确切样片给出 GO`
+状态：`IN REVIEW — 等待作者针对确切样片给出 GO`
 
-只有在作者审阅 v9 的同基线 A/B/C + scrub、对一个确切版本给出 GO，并完成 B 的主观声音确认后，才填写以下字段：
+作者现在可审阅 v9 的同基线 A/B/C + scrub。当前建议优先审阅 `B-ring-first-v9-qr-deferred-exposure.mp4`（SHA-256 `803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e`）；这只是建议，不是 GO。只有在作者对一个确切版本给出 GO，并完成 B 的主观声音确认（如选择 B）后，才填写以下字段：
 
 | 字段 | 值 |
 | --- | --- |

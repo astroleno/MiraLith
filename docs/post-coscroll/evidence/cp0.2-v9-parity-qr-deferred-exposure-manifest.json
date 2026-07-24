@@ -1,7 +1,7 @@
 {
   "kind": "Stage 0 CP0.2 durable v9 parity-review identity — not production media",
   "variantSet": "cp02-v9 / A-B-C parity / QR deferred / four-frame exposure",
-  "status": "CP0.2 IN REVIEW; CP0.3 NOT OPEN; no Editorial GO",
+  "status": "CP0.2 PASS — TECH evidence complete; CP0.3 IN REVIEW — AUTHOR; no Editorial GO",
   "authorDecisionsApplied": {
     "qr": "Defer source n=0..2 ArtBreeze/QR title slate and source n=3 blank-black frame to the true experience end. The reviewed first sequence begins at source n=4.",
     "darkToWhite": "Use a four-frame exposure exit, rather than the former one-frame dark-to-white hard cut, for the B web-ring to real n=355 handoff."
@@ -77,7 +77,7 @@
     "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/recipe/miralith_generate_cp02_v9.py",
     "sha256": "340a2336aafb8c2051a1a3d66fe1ecc2b88e38a9de0acbb5116c985f9f1640d8",
     "localChecksumIndex": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/v9-checksums.sha256",
-    "localChecksumIndexSha256": "e9e3b56938320a63d1775be3cfc332e8cac862b5d7dc500a77c2845ecea097ce"
+    "localChecksumIndexSha256": "2ed176297898a807da58d4718b9fd5304842a36ffb927915aed42cbe02965125"
   },
-  "reviewConclusion": "v9 restores a controlled A/B/C review baseline after v8 upgraded B alone. It records the author-approved QR deferral and exposure choice, but does not select a leading variant, grant CP0.2 PASS, grant CP0.3 Editorial GO, or freeze any production behavior."
+  "reviewConclusion": "v9 restores a controlled A/B/C review baseline after v8 upgraded B alone. The current parity comparison supplies the plan-required unified center/size/direction/brightness/audio table, so CP0.2 is PASS as a TECH checkpoint. It records the author-approved QR deferral and exposure choice, but does not select a leading variant, grant CP0.3 Editorial GO, or freeze any production behavior."
 }

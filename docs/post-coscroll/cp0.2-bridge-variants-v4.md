@@ -1,6 +1,6 @@
 # CP0.2 — CoScroll → ArtBreeze Bridge Variants v4
 
-状态：`IN REVIEW — CP0.3 NOT OPEN`
+状态：`CP0.2 PASS — TECH / CP0.3 IN REVIEW — AUTHOR`
 
 版本：`cp02-v4-real-yaw`
 
@@ -70,7 +70,7 @@ v8 的完整顺序为：网页 review bridge `[0,109)` / `3.633333s` → ArtBree
 | 评审媒体 | [v8 linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/B-ring-first-v8-complete-n355-phase-aligned-faded-source-audio.mp4)、[complete contact sheet](../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/B-ring-first-v8-complete-contact-sheet.png)、[both-boundary contact sheet](../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/B-ring-first-v8-complete-boundaries-contact-sheet.png)。 |
 | Durable identity | [v8 manifest](evidence/cp0.2-v8-b-ring-first-complete-manifest.json)、[boundary snapshot](evidence/cp0.2-v8-b-ring-first-complete-boundary-measurements.json)。 |
 
-这仍是 CP0.2 的精确评审对象：**`CP0.2 — IN REVIEW`、`CP0.3 — NOT OPEN`。** 它不替代作者的 Editorial GO，也不授权 production 路由、Canvas terminal、ScrollTrigger、CDN 或 Stage 1。
+这仍是历史 B 的精确复核对象，不替代当前 v9 的受控三版集合，也不授权 production 路由、Canvas terminal、ScrollTrigger、CDN 或 Stage 1。
 
 ## 7. v9：同基线 A/B/C、QR 后移与四帧曝光
 
@@ -91,4 +91,4 @@ v8 的完整顺序为：网页 review bridge `[0,109)` / `3.633333s` → ArtBree
 - C 的 persistent ring 是**故意保留的风险测试**：它在等待者和 UI 上可能读作 spinner。见 [C takeover proof](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/contact-sheets/C-dom-ring-takeover-v9.jpg)。它不是正式 DOM / Canvas 设计决定。
 - v9 的稳定 identity、source mapping、SSIM 与完整 checksum 位于 [durable manifest](evidence/cp0.2-v9-parity-qr-deferred-exposure-manifest.json)、[boundary snapshot](evidence/cp0.2-v9-parity-qr-deferred-exposure-boundary-measurements.json) 和 [checksum index](evidence/cp0.2-v9-parity-qr-deferred-exposure-checksums.sha256)。
 
-**状态不变：`CP0.2 — IN REVIEW`，`CP0.3 — NOT OPEN`。** 现在的工作是作者在相同完成度下评审 A/B/C；任何选择仍须指向确切 v9 文件和 SHA，不能由执行者替代为 Editorial GO。
+**`CP0.2 — PASS (TECH)`，`CP0.3 — IN REVIEW (AUTHOR)`。** v9 已恢复同基线的 A/B/C、公平 scrub 与当前统一比较表；详见 [v9 parity comparison](cp0.2-v9-parity-comparison.md)。作者现在评审 A/B/C；任何选择仍须指向确切 v9 文件和 SHA，不能由执行者替代为 Editorial GO。

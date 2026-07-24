@@ -20,7 +20,7 @@ Version-control handoff: this directory is intentionally **not ignored** and is 
 
 ## CP0.2 review identity
 
-CP0.2 remains `IN REVIEW`; these files do not contain the large local movies and do not signify Editorial GO.
+CP0.2 is `PASS — TECH`; these files do not contain the large local movies and do not signify Editorial GO. CP0.3 is `IN REVIEW — AUTHOR`.
 
 | File | Purpose |
 | --- | --- |
@@ -31,9 +31,9 @@ CP0.2 remains `IN REVIEW`; these files do not contain the large local movies and
 | `cp0.2-v8-b-ring-first-complete-boundary-measurements.json` | Durable v8 geometry/phase/color/audio-boundary snapshot for the web → `n=355` and source-endpoint → `n=0` cuts. |
 | `cp0.2-v8-b-ring-first-complete-checksums.sha256` | Root-relative SHA-256 index for the master, durable v8 JSON and ignored local review media. |
 | `cp0.2-v9-parity-qr-deferred-exposure-manifest.json` | Current controlled A/B/C identity: author-approved QR deferral, shared browser bridge, exact source mapping, file SHA-256s and no-GO status. |
-| `cp0.2-v9-parity-qr-deferred-exposure-boundary-measurements.json` | v9 exposure luma trace, QR exclusion, source SSIM, B reorder-audio boundary and C DOM-ring review limitation. |
+| `cp0.2-v9-parity-qr-deferred-exposure-boundary-measurements.json` | v9 exposure luma trace, QR exclusion, source SSIM, B reorder-audio boundary plus the independent technical audio audit, and C DOM-ring review limitation. |
 | `cp0.2-v9-parity-qr-deferred-exposure-checksums.sha256` | Root-relative SHA-256 index for the master, v8 common bridge, durable v9 JSON, ignored v9 linear/scrub media and key proof sheets. |
 | `cp0.2-v3-source-direction-bridge-manifest.json` | Historical v3 identity. It preserved the sign but incorrectly flattened the captured glyph into a screen-plane rotation. |
 | `cp0.2-v2-continuous-blue-bridge-manifest.json` | Historical v2 identity. It normalized the real negative source yaw to positive screen rotation. |
 
-`cp0.2-bridge-variants-manifest.json` and its native scroll trace describe the historical `cp02-v1` review only; v1 was author-NO-GO because the solid character read as stopping before particleization and its particles warmed too soon. `cp02-v2` reversed the live source sign; `cp02-v3` flattened its real yaw into planar rotation. `cp02-v8` is the targeted B repair that exposed the QR and brightness issues. Current `cp02-v9` restores the controlled A/B/C set after the author chose QR deferral and a four-frame exposure. Its large local media remain under `apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/`. The durable current comparison rationale is [CP0.2 v4 bridge variants](../cp0.2-bridge-variants-v4.md).
+`cp0.2-bridge-variants-manifest.json` and its native scroll trace describe the historical `cp02-v1` review only; v1 was author-NO-GO because the solid character read as stopping before particleization and its particles warmed too soon. `cp02-v2` reversed the live source sign; `cp02-v3` flattened its real yaw into planar rotation. `cp02-v8` is the targeted B repair that exposed the QR and brightness issues. Current `cp02-v9` restores the controlled A/B/C set after the author chose QR deferral and a four-frame exposure. Its large local media remain under `apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/`. The durable current comparison rationale is [CP0.2 v9 parity comparison](../cp0.2-v9-parity-comparison.md).
