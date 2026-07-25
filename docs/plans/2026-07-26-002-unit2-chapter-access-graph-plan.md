@@ -54,6 +54,8 @@ The calculation must include untracked non-ignored files inside those paths and 
 | --- | --- |
 | `apps/site/content/miraLithChapters.ts` | Canonical registry and pure access resolver; legacy published exports remain derived views. |
 | `apps/site/lib/chapter-preview/resolveChapterPreviewScope.ts` | Node-only, deterministic scope generation and override validation for Next config. |
+| `playwright.unit.config.ts` | Node-only Playwright test runner configuration with no browser project and no web server. |
+| `tests/unit/miraLithChapters.spec.ts` | Pure canonical-registry and resolver matrix tests. |
 | `apps/site/components/chapter-transition/chapterPreviewSession.ts` | Browser-only bootstrap, storage/history parsing, validation, scope propagation, and query cleanup. |
 | `apps/site/components/chapter-transition/chapterTransitionTypes.ts` | Registry-aware snapshot and transition types. |
 | `apps/site/components/chapter-transition/ChapterTransitionProvider.tsx` | Owns current validated preview context; uses resolver for begin/popstate/registration. |
@@ -85,31 +87,57 @@ pnpm exec playwright install chromium
 CI=1 MIRALITH_PLAYWRIGHT_PORT=3106 pnpm exec playwright test tests/e2e/chapter-transition.spec.ts tests/e2e/chapter-navigation.spec.ts --project=desktop
 ```
 
-Expected: all 36 desktop tests pass with no server reuse. The current known baseline is `29 passed / 4 failed / 3 skipped`; fix those four failures before any foundation patch is staged.
+Expected: the current dirty-worktree observation remains `29 passed / 4 failed / 3 expected skipped` with no server reuse. The three skips are two mobile-layout tests and one touch-handoff test, which are intentionally desktop-inapplicable. Do not repair or classify the four failures in this tree; replay them only after applying the candidate in Step 3. The foundation qualification target is exactly `33 passed / 3 expected skipped` there.
 
 - [ ] **Step 2: Define a full hunk-level foundation patch, including package contracts.**
 
-Select only transition hunks from every candidate file. Include the exact supporting package hunks for CoScroll `readinessGeneration`/`forceFallback`/ready-fallback callbacks and RadioGaga `preloadRadioGagaFinaleAssets`/`loadFinale` if the app foundation still calls them. Otherwise remove those app calls from the patch. Do not select an app hunk whose imported symbol is absent from the patch.
+Select only transition hunks from every candidate file. Include the exact CoScroll `readinessGeneration`/`forceFallback`/ready-fallback API hunks. Exclude `preloadRadioGagaFinaleAssets`, `loadFinale`, and all associated RadioGaga scene/composite/type hunks; retain the `ec3cb9a` finale-loading semantics. If the existing opening warmup is retained, include only its source/export hunk. Do not select an app hunk whose imported symbol is absent from the patch.
 
-Use intent-to-add plus interactive hunk staging for the candidate paths; this changes only the index, not the dirty working files. Build the candidate patch, then inspect both sides:
+Use an isolated temporary Git index seeded from `ec3cb9a`. Never invoke `git add`, `git add -p`, or an unscoped `git diff --cached` against the caller's index. The candidate list is intentionally file-exact: do not substitute a directory such as `apps/site` or `apps/site/components/chapter-transition`, because new or unrelated dirty files must not enter the foundation patch. Build the candidate patch with these exact pathspecs, then inspect it:
 
 ```bash
-git add -N apps/site/components/chapter-transition apps/site/app/layout.tsx \
-  apps/site/content/miraLithChapters.ts apps/site/components/MiraLithChapterNavigation.tsx \
-  apps/site/app/globals.css apps/site/visual/VisualCanvas.tsx \
-  apps/site/visual/scenes/CoScrollSceneSlot.tsx apps/site/visual/scenes/RadioGagaSceneSlot.tsx \
-  apps/site/components/RadioGagaRoute.tsx apps/site/app/coscroll-spike/CoScrollSpikeExperience.tsx \
-  apps/site/components/LuBirthRevisedRoute.tsx \
-  packages/coscroll-scene/src/types.ts packages/coscroll-scene/src/CoScrollStandaloneDemo.tsx packages/coscroll-scene/src/CoScrollSceneContent.tsx \
-  packages/radio-gaga-scene/src/preloadRadioGagaAssets.ts packages/radio-gaga-scene/src/index.ts packages/radio-gaga-scene/src/types.ts packages/radio-gaga-scene/src/RadioGagaSceneContent.tsx packages/radio-gaga-scene/src/RadioGagaModelComposite.tsx \
-  tests/e2e/chapter-transition.spec.ts tests/e2e/chapter-navigation.spec.ts
-git add -p -- apps/site packages/coscroll-scene packages/radio-gaga-scene tests/e2e
-git diff --cached --binary > /tmp/miralith-unit2-foundation.patch
-git diff --cached --name-only
-git diff --name-only
+(
+  set -e
+  unit2_patch_index="$(mktemp /tmp/miralith-unit2-index-XXXXXX)"
+  rm -f "$unit2_patch_index"
+  trap 'rm -f "$unit2_patch_index"' EXIT
+  export GIT_INDEX_FILE="$unit2_patch_index"
+  unit2_candidate_paths=(
+    apps/site/components/chapter-transition/ChapterTransitionLayer.tsx
+    apps/site/components/chapter-transition/ChapterTransitionProvider.tsx
+    apps/site/components/chapter-transition/ChapterTransitionVisual.tsx
+    apps/site/components/chapter-transition/chapterTransitionAbort.ts
+    apps/site/components/chapter-transition/chapterTransitionTypes.ts
+    apps/site/components/chapter-transition/preloadChapterTarget.ts
+    apps/site/components/chapter-transition/useChapterTerminalGate.ts
+    apps/site/app/layout.tsx
+    apps/site/content/miraLithChapters.ts
+    apps/site/components/MiraLithChapterNavigation.tsx
+    apps/site/app/globals.css
+    apps/site/visual/VisualCanvas.tsx
+    apps/site/visual/scenes/CoScrollSceneSlot.tsx
+    apps/site/visual/scenes/RadioGagaSceneSlot.tsx
+    apps/site/components/RadioGagaRoute.tsx
+    apps/site/app/coscroll-spike/CoScrollSpikeExperience.tsx
+    apps/site/components/LuBirthRevisedRoute.tsx
+    packages/coscroll-scene/src/types.ts
+    packages/coscroll-scene/src/CoScrollStandaloneDemo.tsx
+    packages/coscroll-scene/src/CoScrollSceneContent.tsx
+    packages/radio-gaga-scene/src/preloadRadioGagaAssets.ts
+    packages/radio-gaga-scene/src/index.ts
+    tests/e2e/chapter-transition.spec.ts
+    tests/e2e/chapter-navigation.spec.ts
+  )
+  git read-tree ec3cb9a
+  git add -N -- "${unit2_candidate_paths[@]}"
+  git add -p -- "${unit2_candidate_paths[@]}"
+  git diff --cached --check -- "${unit2_candidate_paths[@]}"
+  git diff --cached --binary -- "${unit2_candidate_paths[@]}" > /tmp/miralith-unit2-foundation.patch
+  git diff --cached --name-only -- "${unit2_candidate_paths[@]}"
+)
 ```
 
-Expected: the candidate contains no `resolveLandingVisualPolicy`, `ReliefLiteValidationHarness`, atmosphere/cloud/DPR changes, residue visual work, or unrelated finale visual work. Every package import resolves from the same candidate patch.
+Expected: the caller's Git index is unchanged. The candidate contains no `resolveLandingVisualPolicy`, `ReliefLiteValidationHarness`, atmosphere/cloud/DPR changes, residue visual work, `preloadRadioGagaFinaleAssets`, `loadFinale`, or unrelated finale visual work. Every package import resolves from the same candidate patch.
 
 - [ ] **Step 3: Validate the patch from a clean `ec3cb9a` worktree.**
 
@@ -120,11 +148,12 @@ git worktree add --detach "$unit2_baseline_worktree" ec3cb9a
 git -C "$unit2_baseline_worktree" apply --check /tmp/miralith-unit2-foundation.patch
 git -C "$unit2_baseline_worktree" apply /tmp/miralith-unit2-foundation.patch
 git -C "$unit2_baseline_worktree" diff --check
+pnpm --dir "$unit2_baseline_worktree" install --frozen-lockfile
 pnpm --dir "$unit2_baseline_worktree" --filter @miralith/site typecheck
 CI=1 MIRALITH_PLAYWRIGHT_PORT=3107 pnpm --dir "$unit2_baseline_worktree" exec playwright test tests/e2e/chapter-transition.spec.ts tests/e2e/chapter-navigation.spec.ts --project=desktop
 ```
 
-Expected: the clean worktree typechecks and all 36 tests pass without reading the original dirty worktree. A failed import proves the candidate omitted a required package hunk; a visual regression proves the candidate included an incorrect hunk or changed an existing contract.
+Expected: the clean worktree typechecks and reports `33 passed / 3 expected skipped` without reading the original dirty worktree. A failed import proves the candidate omitted a required package hunk; a changed observation proves the dirty-tree result was not a foundation regression; a regression proves the candidate included an incorrect hunk or changed an existing contract.
 
 - [ ] **Step 4: Commit only the already-proven patch.**
 
@@ -141,21 +170,30 @@ Expected: only the clean worktree receives the commit. Record its SHA in `docs/p
 
 - Modify: `apps/site/content/miraLithChapters.ts`
 - Modify: `apps/site/components/chapter-transition/chapterTransitionTypes.ts`
-- Test: `tests/e2e/chapter-transition.spec.ts`, `tests/e2e/chapter-navigation.spec.ts`
+- Create: `playwright.unit.config.ts`
+- Create/Test: `tests/unit/miraLithChapters.spec.ts`
 
-- [ ] **Step 1: Add failing access-matrix assertions before changing the registry.**
+- [ ] **Step 1: Add failing pure resolver matrix tests before changing the registry.**
 
-Add browser assertions that demonstrate the current failure: `/artbreeze` is direct-loadable once its shell exists but has no terminal link without a session; `/coscroll?preview=post-coscroll-v1` exposes a review-rail link to 04 while its actual CoScroll terminal remains absent; a fabricated route is never selected.
+Use Playwright's TypeScript runner in Node-only mode: `playwright.unit.config.ts` sets `testDir: "./tests/unit"`, `workers: 1`, and no `webServer` or browser projects. The first test exercises only the registry/resolver functions that Unit 2A owns; it does not use a query parameter, session storage, navigation component, or route shell.
 
 ```ts
-await page.goto("/coscroll");
-await expect(page.locator("[data-chapter-terminal] a")).toHaveCount(0);
-await page.goto("/coscroll?preview=post-coscroll-v1");
-await expect(page.locator("a[aria-label^='04 ArtBreeze']")).toHaveAttribute("href", "/artbreeze");
-await expect(page.locator("[data-chapter-terminal] a")).toHaveCount(0);
+test("resolves the public rail and preview candidate without browser state", () => {
+  expect(getNextAccessibleMiraLithChapter("/coscroll", { previewActive: false })).toBeUndefined();
+  expect(getNextAccessibleMiraLithChapter("/coscroll", { previewActive: true })).toMatchObject({
+    index: "04",
+    href: "/artbreeze",
+    availability: "preview"
+  });
+  expect(resolveMiraLithChapterAccess("/artbreeze", { previewActive: false })).toMatchObject({
+    level: "known",
+    directEntryAllowed: true,
+    coordinatorAllowed: false
+  });
+});
 ```
 
-Expected before implementation: the preview assertion fails because the registry only recognises published chapters.
+Expected before implementation: the imports/functions do not exist and the test fails without starting Next or Chromium.
 
 - [ ] **Step 2: Replace the href-map-first model with an explicit seven-entry registry.**
 
@@ -225,12 +263,12 @@ Do not add handoff, media playback, or semantic recovery fields in this task.
 
 ```bash
 pnpm --filter @miralith/site typecheck
-pnpm exec playwright test tests/e2e/chapter-transition.spec.ts tests/e2e/chapter-navigation.spec.ts --project=desktop
-git add apps/site/content/miraLithChapters.ts apps/site/components/chapter-transition/chapterTransitionTypes.ts tests/e2e/chapter-transition.spec.ts tests/e2e/chapter-navigation.spec.ts
+pnpm exec playwright test -c playwright.unit.config.ts tests/unit/miraLithChapters.spec.ts
+git add apps/site/content/miraLithChapters.ts apps/site/components/chapter-transition/chapterTransitionTypes.ts playwright.unit.config.ts tests/unit/miraLithChapters.spec.ts
 git commit -m "feat(chapters): add canonical access registry"
 ```
 
-Expected: no-preview 01 → 02 → 03 behaviour remains unchanged; 04–07 have canonical hrefs but cannot be coordinator targets yet.
+Expected: the pure matrix passes. 04–07 have canonical hrefs, but no session, navigation component, browser flow, route shell, or coordinator integration is claimed by this commit.
 
 ### Task 2: Unit 2B — preview session and robust chapter-preview scope
 
@@ -311,7 +349,7 @@ Expected: query activation is tab-local, query-free after bootstrap, preserved t
 
 - [ ] **Step 1: Add failing parity tests for all consumers.**
 
-For an active preview session, assert that automatic prefetch, explicit review link, and `beginTransition` agree on `/artbreeze`, while the CoScroll terminal stays disabled. Without a session, assert they all refuse 04 while direct `/artbreeze` navigation stays native.
+For an active preview session, assert that the pure resolver candidate, automatic prefetch decision, and explicit review-link visibility agree on `/artbreeze`, while the CoScroll terminal stays disabled. Without a session, assert they all refuse 04 while direct `/artbreeze` navigation stays native. Do not click 03 → 04 or claim a successful `beginTransition` in Task 2C: `/artbreeze` and its destination controls do not exist until Task 2D. The real coordinator/reveal assertion moves to Task 2D.
 
 ```ts
 await page.goto("/coscroll?preview=post-coscroll-v1");
@@ -344,7 +382,7 @@ git add apps/site/components/chapter-transition/ChapterTransitionProvider.tsx ap
 git commit -m "feat(chapters): share access resolution across the rail"
 ```
 
-Expected: no-preview 01 → 02 → 03 passes unchanged. Preview is the sole way to coordinate into 04–07. Direct known history always settles without a permanent veil.
+Expected: no-preview 01 → 02 → 03 passes unchanged. Preview is the sole way for the resolver, preloader, and review rail to make 04–07 eligible; Task 2D is the first commit allowed to exercise a real coordinator transition into 04. Direct known history always settles without a permanent veil.
 
 ### Task 4: Unit 2D — known route shells and real local media consumption
 
@@ -358,7 +396,7 @@ Expected: no-preview 01 → 02 → 03 passes unchanged. Preview is the sole way 
 - Create: `tests/e2e/post-coscroll-route-shell.spec.ts`
 - Modify: `tests/e2e/post-coscroll-media.spec.ts` only if route evidence needs a reusable fixture
 
-- [ ] **Step 1: Add failing direct-entry and local-playback tests.**
+- [ ] **Step 1: Add failing direct-entry, coordinator-readiness, and local-playback tests.**
 
 ```ts
 await page.goto("/artbreeze");
@@ -369,6 +407,8 @@ await page.goto("/artbreeze?preview=post-coscroll-v1");
 await page.getByRole("button", { name: "Play verified local ArtBreeze media" }).click();
 await expect(page.locator("video")).toHaveJSProperty("readyState", expect.any(Number));
 ```
+
+Add a separate controlled coordinator test. Stub/delay the selected ArtBreeze poster response (or the shell's declared fallback-ready fixture) before clicking `a[aria-label^='04 ArtBreeze']` from `/coscroll?preview=post-coscroll-v1`. Assert `[data-chapter-transition-layer][data-state='waiting-ready']` while that ready signal is withheld; release the poster/fallback, then assert the ArtBreeze shell is visible and the transition layer reaches `idle`. The same test must prove that a direct `/artbreeze` mount never creates a transition veil. This is the first permitted end-to-end `beginTransition` assertion for 03 → 04.
 
 Run the second case only under `MIRALITH_POST_COSCROLL_MEDIA_MODE=local-preview` with the CP1.1 generated catalog present. It must fail if the manifest resolver reports `disabled`, `invalid`, or a missing required ArtBreeze item.
 

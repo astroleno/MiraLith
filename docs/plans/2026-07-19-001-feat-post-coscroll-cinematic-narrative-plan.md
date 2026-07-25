@@ -237,7 +237,7 @@ route snapshot 使用以下稳定 semantic stop id；视觉实现可以增加内
 ### Institutional Learnings
 
 - 仓库没有 `docs/solutions/`，没有可复用的历史解决方案条目。
-- 现有实现反复证明：React mount 不能等同于视觉 ready；视频章节也必须以 poster/metadata/可解码首帧或明确 fallback 作为 reveal 条件。
+- 现有实现反复证明：React mount 不能等同于视觉 ready。Unit 2 route shell 的 reveal 条件固定为 decoded/cached poster 或明确 fallback；metadata/可解码首帧是后续用户显式播放后的媒体状态，不得阻塞 Unit 2 揭幕。
 - 首页首屏与重场景对资源数量敏感。后半段不得在进入 04 前预加载全部影片。
 
 ### External Research
@@ -565,12 +565,13 @@ route snapshot 使用以下稳定 semantic stop id；视觉实现可以增加内
 - Modify/Test: `tests/e2e/chapter-transition.spec.ts`
 
 **Approach:**
+- Unit 2 的精确执行顺序、测试边界、terminal defer 和 destination readiness 以 `2026-07-26-002-unit2-chapter-access-graph-plan.md` 为准；本节只保留范围与长期架构约束。
 - 单一 registry 为 01–07 提供 href 和 `known/preview/published` availability；production rail 仍只消费 published filter。
 - `post-coscroll-v1` query bootstrap 激活当前 tab/build 的 preview session，scope 传播到 sessionStorage 和 history entry；Provider、preloader 和 preview rail 全部通过同一 access resolver 工作。Unit 2 只让 resolver 产出 03→04 的 next candidate，不启用真实 CoScroll terminal；现有 01/02 terminal gate 仅改为使用同一 resolver。
 - known route 可直接访问和注册 destination controls；只有 preview session 或 published 状态允许 coordinator transition。scope 失效时不会把 preview route 自动当成 published。
 - transition snapshot 的 source/target chapter type 从 published-only 改为 registry chapter + resolved access level；Unit 3 再在同一类型文件上增加 handoff/recovery union。
-- 增加有限 edge kinds：`sutra-to-loop`、`focus-to-field`、`field-to-proof`、`proof-to-building`；不建立任意动画 DSL。
-- 视频 destination ready 至少要求 poster 可见、metadata 已知且第一目标帧可以提交；失败时必须在 3 秒预算内切 poster/DOM fallback。
+- Unit 2 不增加新的 edge kind；`sutra-to-loop`、`focus-to-field`、`field-to-proof`、`proof-to-building` 与任何视觉 handoff 留给后续 Stage 2 单元，且不建立任意动画 DSL。
+- Unit 2 destination gate 只要求 decoded/cached poster 可见，或可诊断的 DOM fallback 已提交；video metadata 与首帧属于用户显式播放后的媒体状态，不能阻塞 route-shell 揭幕。
 - route preloader 只预热当前 accessible edge 的下一章入口媒体，不批量预载后半段。
 - 直接访问 `/artbreeze` 时从本章静态 loading ring 开始；其余 known route 从第一语义 stop 和 poster-ready 状态开始，且不自动有声播放。
 
