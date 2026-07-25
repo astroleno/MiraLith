@@ -127,7 +127,7 @@ v2 的实体、粒子和蓝环被设为正向 screen rotation，以求贴合 Art
 
 状态：`IN REVIEW — AUTHOR`
 
-CP0.2 已以 TECH 证据通过。当前建议作者优先审阅 `B-ring-first-v9-qr-deferred-exposure.mp4`（SHA-256 `803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e`），但它不是已授权的胜出版本。现在等待作者对一个确切 v9 样片文件与 SHA 给出 GO，并说明它为何读作“重复、等待与推石头”而非 spinner、品牌 loading 或炫技转场。`B-ring-first-v9` 还需作者戴耳机确认 `10.433288–10.539274s` 的断章是否读作有意循环重启；[技术审计方法](evidence/cp0.2-v9-b-audio-audit-method.md) 已排除 sample-click，不能代替主观试听。修改建议、混合意见或 NO-GO 都不算通过，必须先生成新的本地样片再 review。
+CP0.2 已以 TECH 证据通过。作者于 2026-07-25 的当前评审笔记是：`B-ring-first-v9` 的 [scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/B-ring-first-v9-qr-deferred-exposure-scrub.mp4) “更自然一些”。它是对 B 的视觉顺序 / scrub 读法的偏好；该 scrub 为静音低保真 capture，故不是对线性声音的确认，也不是 Editorial GO。当前建议作者优先审阅 `B-ring-first-v9-qr-deferred-exposure.mp4`（SHA-256 `803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e`），但它不是已授权的胜出版本。现在等待作者对一个确切 v9 样片文件与 SHA 给出 GO，并说明它为何读作“重复、等待与推石头”而非 spinner、品牌 loading 或炫技转场。`B-ring-first-v9` 还需作者戴耳机确认 `10.433288–10.539274s` 的断章是否读作有意循环重启；[技术审计方法](evidence/cp0.2-v9-b-audio-audit-method.md) 已排除 sample-click，不能代替主观试听。修改建议、混合意见或 NO-GO 都不算通过，必须先生成新的本地样片再 review。
 
 ## CP0.4 — Editorial Freeze
 

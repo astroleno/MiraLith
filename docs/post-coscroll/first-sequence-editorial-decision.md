@@ -1,7 +1,7 @@
 # First-Sequence Editorial Decision
 
 状态：`CP0.2 PASS (TECH) / CP0.3 IN REVIEW (AUTHOR)`
-当前版本：`1.2`
+当前版本：`1.3`
 CP0.4 freeze hash：`未生成`
 
 CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求继续。`cp02-v1` 被否决为“停住后才粒子化 / 过早暖化”；`cp02-v2` 错误反转 source yaw；`cp02-v3` 又把真实 yaw flattened 为平面转字。`cp02-v8` 只升级了 B，因而不能作为 GO 输入。当前 `cp02-v9` 已按作者决定补回同基线 A/B/C 与 scrub，并以 TECH 证据通过 CP0.2；尚未有作者对一个确切版本的 GO，因此本文件仍不包含冻结项。
@@ -72,6 +72,10 @@ v9 的 B 全帧亮度为 `30.5777 → 67.6324 → 104.667 → 141.724 → 178.62
 ## CP0.3 GO 记录
 
 状态：`IN REVIEW — 等待作者针对确切样片给出 GO`
+
+### 作者评审笔记（2026-07-25）
+
+作者对 [B-ring-first-v9 scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/B-ring-first-v9-qr-deferred-exposure-scrub.mp4)（SHA-256 `3168c035eefcceada6bd8bc099f9192871ab6305e42f39244e03aabcbfb1cabb`）的反馈是：**“B 用这个更自然一些。”** 这记录为 B 的视觉 / scrub 偏好，不是对其静音 scrub 之外的线性声音确认，也不是对任何确切线性样片的 Editorial GO。
 
 作者现在可审阅 v9 的同基线 A/B/C + scrub。当前建议优先审阅 `B-ring-first-v9-qr-deferred-exposure.mp4`（SHA-256 `803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e`）；这只是建议，不是 GO。只有在作者对一个确切版本给出 GO，并完成 B 的主观声音确认（如选择 B）后，才填写以下字段：
 
