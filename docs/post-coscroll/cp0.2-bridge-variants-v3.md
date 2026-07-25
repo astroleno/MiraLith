@@ -4,13 +4,13 @@
 
 版本：`cp02-v3-source-direction`
 
-> 历史记录：本版恢复了 source 的负 yaw 符号，却把 captured glyph 作为平面图像进行 screen-plane rotation。作者要求实体“空”保持真实 `rotation.y` 姿态解体；当前评审应使用 [v4 real-yaw variants](cp0.2-bridge-variants-v4.md)。本文件和本地媒体只用于复核被替换的配置，绝不是 Editorial GO。
+> 历史记录：本版恢复了 source 的负 yaw 符号，却把 captured glyph 作为平面图像进行 screen-plane rotation。作者要求实体“空”保持真实 `rotation.y` 姿态解体；v4 是随后建立的真实-yaw 历史基线，当前作者评审应使用 [v9 parity comparison](cp0.2-v9-parity-comparison.md)。本文件和本地媒体只用于复核被替换的配置，绝不是 Editorial GO。
 
 本轮仅替换本地评审桥段，修正“空”被错误反向的问题。它不实现正式 Canvas / 粒子系统、路由、ScrollTrigger、production media contract 或 CDN。
 
 ## 1. 本轮纠正：方向必须从真实 CoScroll source 继承
 
-`cp02-v1` 已被作者否决：它读起来像“空”先停住、随后才粒子化，且粒子过早暖化。`cp02-v2` 修复了停转与色彩问题，却又把真实 source 的负 yaw 归一化成了正向 screen rotation；v3 再次出错于把真实 yaw 展平为平面转字。当前输入是 v4。
+`cp02-v1` 已被作者否决：它读起来像“空”先停住、随后才粒子化，且粒子过早暖化。`cp02-v2` 修复了停转与色彩问题，却又把真实 source 的负 yaw 归一化成了正向 screen rotation；v3 再次出错于把真实 yaw 展平为平面转字。v4 随后修正了真实 yaw 姿态，但当前输入是 v9 的同基线 A/B/C。
 
 真实 source 代码是唯一方向基准：source-match 给 `CoScrollJadeAnchor` 传入 `baseSpeed={-0.32}` 与 `velocityMultiplier={-7.5}`，[CoScrollSceneContent.tsx](../../packages/coscroll-scene/src/CoScrollSceneContent.tsx#L411)；锚字的 `rotationRef.current` 累加后直接写入 `rotation.y`，[CoScrollJadeAnchor.tsx](../../packages/coscroll-scene/src/CoScrollJadeAnchor.tsx#L606)。因此当前作者修正确认的共同约束是：**实体“空”、从它剥落的蓝粒子、以及蓝色缺口环都保持该负 yaw 的同一方向，绝不在桥段内翻向。**
 
@@ -38,7 +38,7 @@ ArtBreeze 的真实 stable-window 仍测得为屏幕坐标顺时针。v3 只让�
 
 三版均为 `691` 个视觉帧 / `23.033333s`：真实 CoScroll `2.5s` + v3 bridge `2.0s` + 同量 ArtBreeze 候选窗 `18.533333s`。容器多出的 AAC padding 不代表新增画面。前 `4.5s` 没有 CoScroll production audio；之后是母版音频内容的 AAC review transcode。
 
-| 版 | 真实编辑顺序 | 线性样片 | 当前声音 |
+| 版 | 真实编辑顺序 | 线性样片 | 历史声音 |
 | --- | --- | --- | --- |
 | `A-source-order-source-direction-v3` | CoScroll → v3 bridge → ArtBreeze `[n=0,n=556)`，不重排。 | [A linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v3/linear/A-source-order-source-direction-v3.mp4) | bridge 后按 source order 进入母版音频内容。 |
 | `B-ring-first-source-direction-v3` | CoScroll → v3 bridge → 真实 `[n=355,n=556)` → `[n=0,n=355)`。 | [B linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v3/linear/B-ring-first-source-direction-v3.mp4) | 从真实 `n=355` 影片段进入母版音频内容。 |
@@ -66,7 +66,7 @@ C 的 DOM ring 只存在于被忽略的本地 review proxy；它不是当前 CoS
 | 粒子 → 电影环 | 交棒后叙事回到 `n=0` 黑场 / LOADING，几何承诺会被叙事重启打断。 | 直接落入 `n=355`，中心、尺寸、gap 相位与暖橙最直接；但影片 screen-direction 的事实差异应被有意识地审阅。 | bridge 的蓝环先交给本地 stand-in，再交真实影片；连续性多一层非电影对象。 |
 | 等待 / 白场 / 困境 | LOADING → 等待者 → 白场 → 困境的因果最完整。 | 先困境、后回等待，可能读作循环，也可能读作普通 seek。 | 仍保留等待，但 DOM ring 易被读成 spinner / 品牌 loading。 |
 | DOM / 影片职责 | 无 DOM ring；影片 ring 只在其真实 source 时刻出现。 | 无 DOM ring；影片 ring 直接承担交棒。 | DOM ring 仅是 review stand-in；影片 ring 才承载真实语义。 |
-| 声音 | 当前仅为 source-content 基线，未冻结。 | 当前仅为 source-content 基线，未冻结。 | 当前仅为 source-content 基线，未冻结。 |
+| 声音 | 历史样片仅为 source-content 基线，未冻结。 | 历史样片仅为 source-content 基线，未冻结。 | 历史样片仅为 source-content 基线，未冻结。 |
 
 v3 修复的是共同运动方向，不替作者选择 A/B/C，也不把历史 v1 的声音实验迁移为 v3 声音结论。
 

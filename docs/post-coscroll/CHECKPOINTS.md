@@ -54,7 +54,7 @@
 
 v1 已因“停住后才粒子化 / 粒子过早暖化”被作者否决。v2 错误把真实 CoScroll 的负 yaw 归一化为正向 screen rotation。v3 虽恢复负 yaw 符号，却把 captured glyph 平面旋转。作者要求实体“空”沿真实 `rotation.y` 姿态解体；v4 建立了后来 v8/v9 均复用的真实 yaw 基线。
 
-| 验收项 | 当前 v4 本地证据 |
+| 验收项 | 历史 v4 本地证据 |
 | --- | --- |
 | 共同运动约束 | 真实 source-match 是 `baseSpeed=-0.32`，并直接写入 `rotation.y`。实体“空”在 bridge 第 `0…27` 帧使用真实 live capture `frame-014 → frame-043` 的 yaw pose 解体；不使用平面 `Image.rotate` 或二维旋转矩阵。蓝粒子与蓝色缺口环继续保持负 yaw 动势；`φ(t)=θ(t)-θ(2.0)` 仅固定终点相位。见 [v4 motion contact sheet](../../apps/site/.generated/post-coscroll-editorial/cp02-v4/review/bridge-motion-real-yaw-contact-sheet.jpg) 与 [bridge proxy](../../apps/site/.generated/post-coscroll-editorial/cp02-v4/bridge-real-yaw/coscroll-real-yaw-blue-particles-v4.mp4)。 |
 | 三版同等完成度线性样片 | [A — Source Order v4](../../apps/site/.generated/post-coscroll-editorial/cp02-v4/linear/A-source-order-real-yaw-v4.mp4)、[B — Ring First v4](../../apps/site/.generated/post-coscroll-editorial/cp02-v4/linear/B-ring-first-real-yaw-v4.mp4)、[C — Hybrid v4](../../apps/site/.generated/post-coscroll-editorial/cp02-v4/linear/C-hybrid-real-yaw-v4.mp4)。三版均为 `691` 个视觉帧 / `23.033333s`，使用同一 `2.5s + 2.0s` CoScroll / bridge 基线与同一 ArtBreeze 候选窗。 |
@@ -62,7 +62,7 @@ v1 已因“停住后才粒子化 / 粒子过早暖化”被作者否决。v2 �
 | 可跨机器复核媒体身份 | [v4 real-yaw manifest](evidence/cp0.2-v4-real-yaw-bridge-manifest.json)。大型媒体仍由 `.gitignore` 排除。 |
 | 比较结论与待作者决定 | [v4 comparison](cp0.2-bridge-variants-v4.md#5-作者评审入口)。没有任何执行者观察可替代作者针对确切样片的 GO。 |
 
-### 当前精确 B 复核对象：cp02-v8 complete-original-order
+### 历史精确 B 复核对象：cp02-v8 complete-original-order
 
 作者选择了**保留原始 B 顺序**，而不是把 v7 缺失的等待者段默认为删除。`cp02-v8` 因此不是新 B 定义：它只完成既有 `B-ring-first-real-yaw-v4` 的实际顺序，并修复 v7 的三项可复核缺口。
 
@@ -121,13 +121,13 @@ v2 的实体、粒子和蓝环被设为正向 screen rotation，以求贴合 Art
 
 历史 v1 的执行者观察（**不是作者选择，且已被 v1 NO-GO 覆盖**）：B 的环交棒最直接，A 的“等待 → 白场 → 困境”因果最完整，C 最清楚暴露 persistent DOM ring 容易被读为 spinner。A 的旧声音 1/2/3 对比不能自动迁移为 v2 声音结论；不得把此记录理解为 CP0.3 GO。
 
-当前完整媒体索引、source-order/重排说明、连续性参数和待作者回答的问题在 [CP0.2 v4 bridge variants](cp0.2-bridge-variants-v4.md)；v3、v2 与 v1 均只保留为历史记录。
+当前完整媒体索引、source-order/重排说明、连续性参数和待作者回答的问题在 [CP0.2 v9 parity comparison](cp0.2-v9-parity-comparison.md)；v4、v3、v2 与 v1 均只保留为历史记录。
 
 ## CP0.3 — Editorial GO
 
 状态：`IN REVIEW — AUTHOR`
 
-CP0.2 已以 TECH 证据通过。当前建议作者优先审阅 `B-ring-first-v9-qr-deferred-exposure.mp4`（SHA-256 `803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e`），但它不是已授权的胜出版本。现在等待作者对一个确切 v9 样片文件与 SHA 给出 GO，并说明它为何读作“重复、等待与推石头”而非 spinner、品牌 loading 或炫技转场。`B-ring-first-v9` 还需作者戴耳机确认 `10.433288–10.539274s` 的断章是否读作有意循环重启；技术审计已排除 sample-click，不能代替主观试听。修改建议、混合意见或 NO-GO 都不算通过，必须先生成新的本地样片再 review。
+CP0.2 已以 TECH 证据通过。当前建议作者优先审阅 `B-ring-first-v9-qr-deferred-exposure.mp4`（SHA-256 `803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e`），但它不是已授权的胜出版本。现在等待作者对一个确切 v9 样片文件与 SHA 给出 GO，并说明它为何读作“重复、等待与推石头”而非 spinner、品牌 loading 或炫技转场。`B-ring-first-v9` 还需作者戴耳机确认 `10.433288–10.539274s` 的断章是否读作有意循环重启；[技术审计方法](evidence/cp0.2-v9-b-audio-audit-method.md) 已排除 sample-click，不能代替主观试听。修改建议、混合意见或 NO-GO 都不算通过，必须先生成新的本地样片再 review。
 
 ## CP0.4 — Editorial Freeze
 

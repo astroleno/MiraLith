@@ -1,8 +1,8 @@
 # Stage 0 — CoScroll → ArtBreeze 首段镜头图（CP0.1）
 
-状态：`CP0.1 — PASS / CP0.2 — IN REVIEW`
-版本：`0.7`
-范围：本文件保留 CP0.1 的真实母版、当前 CoScroll 源末态与粒子交棒约束；当前 CP0.2 本地 A/B/C 评审媒体见 [v4 bridge variants](cp0.2-bridge-variants-v4.md)，v3 / v2 / v1 留在历史记录。仍未实现路由、Canvas 残影、ScrollTrigger、正式粒子系统或 production media contract。
+状态：`CP0.1 — PASS / CP0.2 — PASS (TECH) / CP0.3 — IN REVIEW (AUTHOR)`
+版本：`0.8`
+范围：本文件保留 CP0.1 的真实母版、当前 CoScroll 源末态与粒子交棒约束；当前 CP0.3 作者评审输入是 [v9 parity comparison](cp0.2-v9-parity-comparison.md) 的 A/B/C。v4 / v3 / v2 / v1 都只保留为历史记录。仍未实现路由、Canvas 残影、ScrollTrigger、正式粒子系统或 production media contract。
 
 ## 0. 证据边界
 
@@ -11,7 +11,7 @@
 - ArtBreeze 母版：`/Users/aitoshuu/Downloads/portfolio/artbreeze-full.MP4`
 - 当前本地 CoScroll 页面：`http://localhost:3011/coscroll`，source-match 状态、可见锚字为“空”。
 
-`apps/site/.generated/post-coscroll-editorial/` 下早于 `cp02-v1/` 的 `linear/`、`scrub/`、`audio/` 代理不构成 evidence。`cp02-v1/` 已因旋转连续性与粒子色彩问题被作者 NO-GO；`cp02-v2/` 把真实 source 的负 yaw 正向归一化；`cp02-v3/` 又把 captured glyph 误作 screen-plane 转字。当前可审阅的 CP0.2 媒体位于 `cp02-v4/`，并由 [v4 media manifest](evidence/cp0.2-v4-real-yaw-bridge-manifest.json) 和 [checkpoint ledger](CHECKPOINTS.md) 绑定；它们仍不是 Editorial GO。
+`apps/site/.generated/post-coscroll-editorial/` 下早于 `cp02-v1/` 的 `linear/`、`scrub/`、`audio/` 代理不构成 evidence。`cp02-v1/` 已因旋转连续性与粒子色彩问题被作者 NO-GO；`cp02-v2/` 把真实 source 的负 yaw 正向归一化；`cp02-v3/` 又把 captured glyph 误作 screen-plane 转字。当前可审阅媒体是 `cp02-v9-parity-qr-deferred-exposure/` 的同基线 A/B/C，由 [v9 manifest](evidence/cp0.2-v9-parity-qr-deferred-exposure-manifest.json)、[v9 comparison](cp0.2-v9-parity-comparison.md) 和 [checkpoint ledger](CHECKPOINTS.md) 绑定；`cp02-v4/` 是真实 yaw 的历史基线。它们均不是 Editorial GO。
 
 未来转场的目标仅作为约束记录，尚未实现：
 
@@ -25,7 +25,7 @@
 - “空”从用户当下的实时 yaw / speed 直接解体；静态 mask 仅作为 reference fixture。
 - `n=354` 是首个 coherent-ring 候选；实际技术交棒窗是 `[n=355, n=363)`。
 
-这只通过 Asset Truth；当时不自行构成 CP0.2 授权、A/B/C 样片选择或 Editorial GO。作者之后明确要求继续，CP0.2 已打开为 `IN REVIEW`；仍不存在任何作者选择或 Editorial GO。
+这只通过 Asset Truth；当时不自行构成 CP0.2 授权、A/B/C 样片选择或 Editorial GO。作者之后明确要求继续，v9 已使 CP0.2 以 `PASS (TECH)` 通过；当前门禁是 `CP0.3 IN REVIEW (AUTHOR)`，仍不存在任何作者选择或 Editorial GO。
 
 ## 1. ArtBreeze 母版事实
 
@@ -174,13 +174,13 @@
 
 ## 6. 仍未决定的事项
 
-1. 等待者、白闪 / UI card、灰色 loader、橙色环和“推石头”文字的三种候选排序已在 [CP0.2 v4](cp0.2-bridge-variants-v4.md) 制成 review media，但作者尚未选择。
-2. 粒子化桥的 production 时长、密度、残影层数与运动曲线，以及是否需要补镜头或新场景。`cp02-v4` 的粒子桥明确只是 offline proxy。
-3. 声音何时进入，以及是否允许制作正式 CoScroll 残响素材。A 的三种 review sound 已可耳审；请不要把码流验证替代听感判断。
+1. 等待者、白闪 / UI card、灰色 loader、橙色环和“推石头”文字的三种候选排序已在 [CP0.2 v9 parity comparison](cp0.2-v9-parity-comparison.md) 制成同基线 review media，但作者尚未选择。
+2. 粒子化桥的 production 时长、密度、残影层数与运动曲线，以及是否需要补镜头或新场景。`cp02-v9` 的粒子桥明确只是 local editorial proxy。
+3. 声音何时进入，以及是否允许制作正式 CoScroll 残响素材。当前 v9 B 的 `105.986ms` 重排断章仍待作者戴耳机判断；v1 A 的旧声音 1/2/3 比较不迁移到 v9。请不要把码流验证替代听感判断。
 4. 作者是否认为任一候选读作“周而复始地推石头”；该判断属于 CP0.3，不属于 Asset Truth PASS。
 
 ## 7. 本轮明确未做
 
 - 未实现正式 CoScroll terminal、Canvas 残影、字符粒子系统、DOM ring、路由或 `/artbreeze` 页面。
-- 未实现 ScrollTrigger、正式 scroll-scrub、production media manifest、CDN 或任何 Stage 1 / Stage 2 工作；`cp02-v1/scrub` 仅是 ignored 的本地 review surface / capture。
+- 未实现 ScrollTrigger、正式 scroll-scrub、production media manifest、CDN 或任何 Stage 1 / Stage 2 工作；`cp02-v9/scrub` 与更早版本都仅是 ignored 的本地 review capture。
 - 已产生 A/B/C review samples，但未给出 Editorial GO，也未写 CP0.4 freeze。

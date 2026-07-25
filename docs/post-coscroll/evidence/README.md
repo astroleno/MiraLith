@@ -26,12 +26,13 @@ CP0.2 is `PASS — TECH`; these files do not contain the large local movies and 
 | --- | --- |
 | `cp0.2-bridge-variants-manifest.json` | IDs, SHA-256s, durations and limitations for the common capture/bridge, A/B/C linear & scrub media, and A sound comparison. |
 | `cp0.2-scrub-interaction-trace.json` | Actual native scroll input trace against the ignored local review surface, proving forward accumulation, reverse withdrawal and resume mapping for all three variants. |
-| `cp0.2-v4-real-yaw-bridge-manifest.json` | Current v4 hashes, real `rotation.y` capture-pose evidence, no-screen-plane rule, blue-particle constraints, and A/B/C linear & scrub identity. |
+| `cp0.2-v4-real-yaw-bridge-manifest.json` | Historical v4 hashes: real `rotation.y` capture-pose evidence, no-screen-plane rule, blue-particle constraints, and the superseded A/B/C linear & scrub identity. |
 | `cp0.2-v8-b-ring-first-complete-manifest.json` | Exact completed-original-B candidate identity: SHA-256, frame mapping, source half-open PTS, media links, and explicit non-GO status. |
 | `cp0.2-v8-b-ring-first-complete-boundary-measurements.json` | Durable v8 geometry/phase/color/audio-boundary snapshot for the web → `n=355` and source-endpoint → `n=0` cuts. |
 | `cp0.2-v8-b-ring-first-complete-checksums.sha256` | Root-relative SHA-256 index for the master, durable v8 JSON and ignored local review media. |
 | `cp0.2-v9-parity-qr-deferred-exposure-manifest.json` | Current controlled A/B/C identity: author-approved QR deferral, shared browser bridge, exact source mapping, file SHA-256s and no-GO status. |
 | `cp0.2-v9-parity-qr-deferred-exposure-boundary-measurements.json` | v9 exposure luma trace, QR exclusion, source SSIM, B reorder-audio boundary plus the independent technical audio audit, and C DOM-ring review limitation. |
+| `cp0.2-v9-b-audio-audit-method.md` | Reproducible FFmpeg/PCM/RMS/adjacent-sample procedure for the exact v9 B review candidate. |
 | `cp0.2-v9-parity-qr-deferred-exposure-checksums.sha256` | Root-relative SHA-256 index for the master, v8 common bridge, durable v9 JSON, ignored v9 linear/scrub media and key proof sheets. |
 | `cp0.2-v3-source-direction-bridge-manifest.json` | Historical v3 identity. It preserved the sign but incorrectly flattened the captured glyph into a screen-plane rotation. |
 | `cp0.2-v2-continuous-blue-bridge-manifest.json` | Historical v2 identity. It normalized the real negative source yaw to positive screen rotation. |

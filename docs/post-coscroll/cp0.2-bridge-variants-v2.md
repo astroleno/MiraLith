@@ -4,7 +4,7 @@
 
 版本：`cp02-v2-continuous-blue`
 
-> 历史记录：本版在修复 v1 的停转与暖化问题时，错误地把真实 CoScroll source 的负 yaw 归一化为正向 screen rotation。随后 v3 又把真实 yaw flatten 成平面转字；当前评审应使用 [v4 real-yaw variants](cp0.2-bridge-variants-v4.md)。本文件和它的本地媒体只用于复核被替换的配置，绝不是 Editorial GO。
+> 历史记录：本版在修复 v1 的停转与暖化问题时，错误地把真实 CoScroll source 的负 yaw 归一化为正向 screen rotation。随后 v3 又把真实 yaw flatten 成平面转字，v4 成为真实-yaw 历史基线；当前作者评审应使用 [v9 parity comparison](cp0.2-v9-parity-comparison.md)。本文件和它的本地媒体只用于复核被替换的配置，绝不是 Editorial GO。
 
 本轮只重做本地评审代理。它不实现正式 Canvas / 粒子系统、路由、ScrollTrigger、production media contract 或 CDN。
 
@@ -69,7 +69,7 @@ capture 的固定段落为线性 `t=0–8.5s` 前进、`t=8.5–3.5s` 反向、`
 | 等待 / 白场 / 困境 | 保留原始的 LOADING → 等待者 → 白场 → 真实环 / “我们每天…”。 | 先给真实环 / 困境，再回到等待首段；可读作循环，也可能读作普通 seek。 | 等待镜头仍在，但 persistent DOM ring 易压过人的状态。 |
 | “周而复始推石头” | 因果最直：等待先积累、困境后揭示。 | 机械循环最直，但需要作者确认“先果后因”的回跳是不是有意。 | 最像持续推转，但也是最容易被误读为 spinner / 品牌 loading。 |
 | DOM / 影片职责 | 无 DOM ring；影片 ring 只在其真实 source 时刻出现。 | 无 DOM ring；影片 ring 直接负责交棒。 | DOM ring 仅负责 bridge 后的临时连续性；影片 ring 负责最终真实语义。它是否应存在仍未决定。 |
-| 声音状态 | 当前是基本 source-content 方案；尚未冻结。 | 当前是基本 source-content 方案；尚未冻结。 | 当前是基本 source-content 方案；尚未冻结。 |
+| 声音状态 | 历史样片使用基本 source-content 方案；尚未冻结。 | 历史样片使用基本 source-content 方案；尚未冻结。 | 历史样片使用基本 source-content 方案；尚未冻结。 |
 
 执行者观察（**不是作者选择**）：v2 已消除 v1 的“停转后变粒子 / 过早暖化”错误；B 的几何交棒仍最直接，A 的叙事因果仍最完整，C 仍暴露 DOM ring 的 spinner 风险。没有一个观察构成 CP0.3 GO。
 

@@ -1,7 +1,7 @@
 # First-Sequence Editorial Decision
 
 状态：`CP0.2 PASS (TECH) / CP0.3 IN REVIEW (AUTHOR)`
-当前版本：`1.1`
+当前版本：`1.2`
 CP0.4 freeze hash：`未生成`
 
 CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求继续。`cp02-v1` 被否决为“停住后才粒子化 / 过早暖化”；`cp02-v2` 错误反转 source yaw；`cp02-v3` 又把真实 yaw flattened 为平面转字。`cp02-v8` 只升级了 B，因而不能作为 GO 输入。当前 `cp02-v9` 已按作者决定补回同基线 A/B/C 与 scrub，并以 TECH 证据通过 CP0.2；尚未有作者对一个确切版本的 GO，因此本文件仍不包含冻结项。
@@ -11,20 +11,21 @@ CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求�
 - [CP0.1 shot map](first-sequence-shot-map.md)
 - [CP0.1 checkpoint ledger](CHECKPOINTS.md)
 - [durable CP0.1 evidence snapshot](evidence/README.md)
-- [current CP0.2 v4 variants comparison](cp0.2-bridge-variants-v4.md)
+- [historical CP0.2 v4 real-yaw baseline](cp0.2-bridge-variants-v4.md)
 - [current CP0.2 v9 parity comparison](cp0.2-v9-parity-comparison.md)
-- [CP0.2 v4 media identity manifest](evidence/cp0.2-v4-real-yaw-bridge-manifest.json)
+- [historical CP0.2 v4 media identity manifest](evidence/cp0.2-v4-real-yaw-bridge-manifest.json)
 - [CP0.2 v8 exact B identity manifest](evidence/cp0.2-v8-b-ring-first-complete-manifest.json)
 - [CP0.2 v8 boundary measurements](evidence/cp0.2-v8-b-ring-first-complete-boundary-measurements.json)
 - [CP0.2 v9 A/B/C parity manifest](evidence/cp0.2-v9-parity-qr-deferred-exposure-manifest.json)
 - [CP0.2 v9 exposure and reorder measurements](evidence/cp0.2-v9-parity-qr-deferred-exposure-boundary-measurements.json)
+- [CP0.2 v9 B audio audit reproduction method](evidence/cp0.2-v9-b-audio-audit-method.md)
 - [historical v3 variants / real-yaw correction](cp0.2-bridge-variants-v3.md)
 - [historical v3 media identity manifest](evidence/cp0.2-v3-source-direction-bridge-manifest.json)
 - [historical v2 variants / source-direction correction](cp0.2-bridge-variants-v2.md)
 - [historical v2 media identity manifest](evidence/cp0.2-v2-continuous-blue-bridge-manifest.json)
 - [historical v1 variants comparison / NO-GO](cp0.2-bridge-variants.md)
 - [historical v1 media identity manifest](evidence/cp0.2-bridge-variants-manifest.json)
-- 本地 v4 证据根目录：`/Users/aitoshuu/Documents/GitHub/MiraLith/apps/site/.generated/post-coscroll-editorial/cp02-v4/`
+- 本地历史 v4 证据根目录：`/Users/aitoshuu/Documents/GitHub/MiraLith/apps/site/.generated/post-coscroll-editorial/cp02-v4/`
 - 本地 v8 B 证据根目录：`/Users/aitoshuu/Documents/GitHub/MiraLith/apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/`
 - 本地 v9 A/B/C 证据根目录：`/Users/aitoshuu/Documents/GitHub/MiraLith/apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/`
 
@@ -52,7 +53,7 @@ v9 的 B 全帧亮度为 `30.5777 → 67.6324 → 104.667 → 141.724 → 178.62
 
 ### 历史 v4 基线与 v8 B 修复
 
-| 视觉版本 | 线性样片 | 当前声音 | 备注 |
+| 视觉版本 | 线性样片 | 历史声音 | 备注 |
 | --- | --- | --- | --- |
 | `A-source-order-real-yaw-v4` | [A linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v4/linear/A-source-order-real-yaw-v4.mp4) | bridge 后的 source-content AAC review transcode | 保留 LOADING → 等待 → 白场 → 困境的 source order。 |
 | `B-ring-first-real-yaw-v4` | [B linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v4/linear/B-ring-first-real-yaw-v4.mp4) | 从真实 `n=355` 起的 source-content AAC review transcode | 真实稳定环直接接管，之后才回到前段等待素材。 |

@@ -6,7 +6,7 @@
 
 本文件记录三个同等完成度的本地评审样片及比较结论。它不是 CP0.3 Editorial GO，不是 CP0.4 freeze，也不实现正式路由、Canvas 残影、ScrollTrigger、production media contract 或 CDN。
 
-> 作者已否决本版共同桥段：它被读成“空”停住后才变粒子，且粒子过早暖化。v1 因而保留为 NO-GO 历史证据；v2 错误改变 source yaw 方向，v3 又把真实 yaw flatten 成平面转字。当前评审版本是 [cp02-v4 real-yaw bridge](cp0.2-bridge-variants-v4.md)，CP0.2 仍为 `IN REVIEW`，CP0.3 仍未打开。
+> 作者已否决本版共同桥段：它被读成“空”停住后才变粒子，且粒子过早暖化。v1 因而保留为 NO-GO 历史证据；v2 错误改变 source yaw 方向，v3 又把真实 yaw flatten 成平面转字，v4 是其真实-yaw 历史基线。当前作者评审输入是 [cp02-v9 parity comparison](cp0.2-v9-parity-comparison.md)：`CP0.2 PASS (TECH)`，`CP0.3 IN REVIEW (AUTHOR)`。
 
 ## 1. 共同评审基线
 
@@ -61,7 +61,7 @@
 
 ## 5. 暂定领先视觉方案的声音对比
 
-基于当前本地比较，**A 仅作为声音测试的暂定领先样片**：它保留“等待 → 白场 → 困境文字”的因果，并未被选择为最终剪辑。此选择不构成 CP0.3 GO。
+基于当时的 v1 本地比较，**A 仅作为声音测试的暂定领先样片**：它保留“等待 → 白场 → 困境文字”的因果，并未被选择为最终剪辑。此历史选择不构成 CP0.3 GO，也不迁移到当前 v9。
 
 | 声音版 | 文件 | 精确入点 / 限制 |
 | --- | --- | --- |

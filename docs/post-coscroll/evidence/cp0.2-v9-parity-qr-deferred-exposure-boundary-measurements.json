@@ -45,7 +45,63 @@
     "audio": "n=355..555 receives 12ms fade-in and fade-out; a 0.100000s silent visual-reorder pocket spans the first three blend frames; n=4 receives a 12ms fade-in. This removes sample clicks but still needs author headphone review for musical/emotional continuity."
   },
   "BReorderAudioTechnicalAudit": {
-    "provenance": "Independent adversarial review supplied on 2026-07-24; technical measurement only, not a subjective listening result.",
+    "provenance": "Independent adversarial review supplied on 2026-07-24; re-run locally with the documented FFmpeg/PCM method on 2026-07-25. Technical measurement only, not a subjective listening result.",
+    "reproducibilityDocument": "docs/post-coscroll/evidence/cp0.2-v9-b-audio-audit-method.md",
+    "candidate": {
+      "sha256": "803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e",
+      "visualFrameCount": 667,
+      "visualDurationSeconds": 22.233333333,
+      "analysisSampleFrames": 980490,
+      "analysisEndRule": "Use 667/30 seconds, not the decoded AAC tail/padding beyond the visual candidate duration."
+    },
+    "ffmpeg": {
+      "observedVersion": "8.1",
+      "silenceDetectFilter": "silencedetect=noise=-60dB:d=0.05",
+      "pcmDecode": "-map 0:a:0 -vn -ac 2 -ar 44100 -f f32le -",
+      "pcmFormat": "interleaved IEEE-754 little-endian float32, stereo, 44100 Hz; values are normalized to approximately [-1, 1]."
+    },
+    "silenceDetection": {
+      "thresholdDb": -60.0,
+      "minimumDurationSeconds": 0.05,
+      "result": {
+        "silenceStartSeconds": 10.433288,
+        "silenceEndSeconds": 10.539274,
+        "silenceDurationSeconds": 0.105986
+      }
+    },
+    "rmsMethod": {
+      "windowsHalfOpenSeconds": {
+        "before": [10.233288, 10.433288],
+        "after": [10.539274, 10.739274]
+      },
+      "ffmpegFilter": "atrim=start=START:end=END,asetpts=PTS-STARTPTS,aformat=sample_fmts=flt:sample_rates=44100:channel_layouts=stereo,astats=metadata=0:reset=0",
+      "formula": "overallRmsDbfs = 20 * log10(sqrt(sum(channelSample^2) / (2 * N))) for the N sample frames in the half-open window; use FFmpeg astats Overall RMS level dB and round only for the summary.",
+      "resultsDbfs": {
+        "beforeExact": -14.057522,
+        "afterExact": -30.830711,
+        "beforeRounded": -14.06,
+        "afterRounded": -30.83,
+        "energyDropExactDb": 16.773189,
+        "energyDropRoundedDb": 16.77
+      }
+    },
+    "adjacentSampleJumpMethod": {
+      "formula": "max(abs(x[channel][n + 1] - x[channel][n])) over each stereo channel; do not compare adjacent interleaved left/right values.",
+      "edgeSearchWindowsHalfOpenSeconds": {
+        "silenceStartPlusMinus20ms": [10.413288, 10.453288],
+        "silenceEndPlusMinus20ms": [10.519274, 10.559274]
+      },
+      "edgeResults": {
+        "silenceStart": 0.002096433,
+        "silenceEnd": 0.013424266,
+        "maximumRounded": 0.0134
+      },
+      "wholeCandidateSearch": {
+        "sampleFrameRangeHalfOpen": [0, 980490],
+        "maximum": 0.167042723,
+        "maximumRounded": 0.167
+      }
+    },
     "silentIntervalSeconds": [10.433288, 10.539274],
     "silentDurationMilliseconds": 105.986,
     "rmsDbfs200msBefore": -14.06,

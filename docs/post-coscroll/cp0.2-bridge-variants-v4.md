@@ -4,6 +4,8 @@
 
 版本：`cp02-v4-real-yaw`
 
+定位：`历史 real-yaw motion baseline；当前作者评审集合为 cp02-v9`。当前状态与 A/B/C 入口见 [v9 parity comparison](cp0.2-v9-parity-comparison.md)。
+
 本轮只替换本地评审桥段的字符运动投影；不实现正式 Canvas / 粒子系统、路由、ScrollTrigger、production media contract 或 CDN。
 
 ## 1. v3 的平面转字错误与 v4 修正
