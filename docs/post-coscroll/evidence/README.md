@@ -40,3 +40,11 @@ CP0.2 is `PASS — TECH`; its historical evidence does not itself signify Editor
 | `cp0.4-b-ring-first-v9-editorial-freeze-checksums.sha256` | Root-relative identity index for the master, frozen B media, bridge and durable source/freeze evidence. |
 
 `cp0.2-bridge-variants-manifest.json` and its native scroll trace describe the historical `cp02-v1` review only; v1 was author-NO-GO because the solid character read as stopping before particleization and its particles warmed too soon. `cp02-v2` reversed the live source sign; `cp02-v3` flattened its real yaw into planar rotation. `cp02-v8` is the targeted B repair that exposed the QR and brightness issues. `cp02-v9` restored the controlled A/B/C set after the author chose QR deferral and a four-frame exposure. The author then selected B; [CP0.4 B v9 freeze](cp0.4-b-ring-first-v9-editorial-freeze.json) is authoritative. Its large local media remain under `apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/`.
+
+## Stage 1 local media contract
+
+| File | Purpose |
+| --- | --- |
+| `cp1.1-local-media-contract-status.json` | Passed Unit 1 contract identity: exact freeze/source-spec binding, complete local-preview catalog totals, Dulwich source/range identity, focused derivative hashes, resolver result and production-isolation checks. |
+
+Local derivatives and `manifest.preview.json` remain ignored under `apps/site/public/media/post-coscroll/`. Li / UGCFlow remain honest pending dossier entries; all currently available real sources, including the complete Dulwich film, resolve through the verified local manifest.

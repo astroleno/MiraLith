@@ -25,3 +25,6 @@ reference/
 # Stage 0 editorial proxies, captures, and review media are local-only.
 /apps/site/.generated/post-coscroll-editorial/
 /apps/site/public/.generated/post-coscroll-editorial/
+
+# Stage 1 local preview derivatives and manifest are generated from private masters.
+/apps/site/public/media/post-coscroll/

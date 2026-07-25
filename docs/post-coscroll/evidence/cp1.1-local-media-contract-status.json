@@ -1,0 +1,152 @@
+{
+  "kind": "Stage 1 CP1.1 local media contract status",
+  "recordedAt": "2026-07-25",
+  "status": "PASS — TECH",
+  "authorization": {
+    "authorWords": "继续·1；提供 dulwich-homepage-video-2026.mp4 后回复“继续”",
+    "scope": "Unit 1 local media source spec, derivatives, resolver and isolation only; Stage 2 is not opened."
+  },
+  "identity": {
+    "editorialFreezeSha256": "d906937cc0b885b12fc942f91ce50e9af919878142cead5c0b36d8bd648140a1",
+    "selectedBv9LinearSha256": "803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e",
+    "sourceSpecSha256": "0abfd288738e0197ccea9ec6808d3a23064e177c7a4d72e287cc4a3599b0ebbd",
+    "localPreviewManifestGeneratedAt": "2026-07-25T12:54:26.511Z",
+    "localPreviewManifestSha256": "eca952d73852f46f66bc10e839d7e7e3301dc054902ce3a899768a3fb62f670e"
+  },
+  "sourceAvailability": {
+    "availableAndBound": [
+      "artbreeze",
+      "aescape",
+      "focuence",
+      "sonoscope",
+      "sadine",
+      "cosmic",
+      "dulwich"
+    ],
+    "missingRequired": [],
+    "pendingByPlan": [
+      "li",
+      "ugcflow"
+    ]
+  },
+  "dulwichSource": {
+    "sourceFileLabel": "dulwich-homepage-video-2026.mp4",
+    "sourceSha256": "a197358cf11b240ea8d9ed4cdf9cafa05d686d044eb523b64ac1b772045c17be",
+    "sourceBytes": 2910645,
+    "video": {
+      "codec": "h264",
+      "raster": "1280x720",
+      "sourceTimeBase": "1/15360",
+      "sourceFrameRate": "30/1",
+      "frameStepPTS": 512,
+      "durationPTS": 257536,
+      "frameCount": 503,
+      "durationSeconds": 16.766667
+    },
+    "audio": {
+      "codec": "aac",
+      "sampleRate": 44100,
+      "channels": 2,
+      "durationSeconds": 16.786009
+    },
+    "selectedRange": {
+      "interval": "[0,257536)",
+      "firstFrameMd5": "3d30ffbff1bf8d66cf7b5e148bd0f032",
+      "lastIncludedFrameMd5": "a485c10eb970552246a62f75eeaaea39",
+      "disposition": "Use the complete final film. The opening begins on picture; the ending intentionally decomposes the LIVE WORLDWISE mark into an off-white hold."
+    }
+  },
+  "toolchain": {
+    "ffmpegVersion": "ffmpeg version 8.1 Copyright (c) 2000-2026 the FFmpeg developers",
+    "ffprobeVersion": "ffprobe version 8.1 Copyright (c) 2007-2026 the FFmpeg developers",
+    "libx264": true,
+    "posterEncoder": "mjpeg",
+    "mp4Muxer": true
+  },
+  "encodingPolicy": {
+    "videoRateControl": "two-pass-abr",
+    "desktopInitialAverageBitrateBitsPerSecond": 2800000,
+    "mobileInitialAverageBitrateBitsPerSecond": 1400000,
+    "perVariantBudgetHeadroomRatio": 0.05,
+    "outputPixelFormat": "yuv420p",
+    "outputColorRange": "tv",
+    "sadineFullRangeHandling": "The BT.709 full-range yuvj420p source is numerically converted to limited range and tagged yuv420p/tv; validation is not relaxed."
+  },
+  "fullPreviewGeneration": {
+    "itemCount": 15,
+    "readyItemCount": 13,
+    "pendingItemCount": 2,
+    "readyMediaIds": [
+      "artbreeze-first-sequence",
+      "artbreeze-cycle",
+      "artbreeze-prompt",
+      "artbreeze-send",
+      "artbreeze-answer",
+      "artbreeze-frame-hold",
+      "aescape-scrub",
+      "aescape-showcase",
+      "focuence-showcase",
+      "sonoscope-showcase",
+      "sadine-loop",
+      "cosmic-threshold",
+      "dulwich-film"
+    ],
+    "catalogBytes": 101211814,
+    "catalogMaxBytes": 160000000,
+    "resolver": {
+      "status": "ready",
+      "diagnostics": []
+    },
+    "pathPolicy": {
+      "generatedOutput": "gitignored apps/site/public/media/post-coscroll/",
+      "manifestContainsAbsolutePaths": false,
+      "splitSourceRoots": "The CLI accepts an explicit per-source --source-file override; overrides are never persisted."
+    },
+    "focusedItems": {
+      "artbreeze-first-sequence": {
+        "frameCount": 555,
+        "durationSeconds": 18.5,
+        "desktopBytes": 7025460,
+        "mobileBytes": 3532714,
+        "desktopSha256": "69ad3d92d587b7fbcfdb9617014069c91e8927ebba6864f96bf44dcbdab01b09",
+        "mobileSha256": "f47d3cb5ac81c12c580e4ca6d0de02b73363c104165bec8886991a9debcc04ec"
+      },
+      "sadine-loop": {
+        "frameCount": 360,
+        "durationSeconds": 12,
+        "desktopBytes": 4256368,
+        "mobileBytes": 2125258,
+        "desktopSha256": "d9a664bbbc863715356ab62f89e84541bf14ac50fc330fa06a65aca342a533d6",
+        "mobileSha256": "d8a3e3a69cc7ec296d09d010d10ce7689a19148bedc2413f997b6a3001158af6"
+      },
+      "dulwich-film": {
+        "frameCount": 503,
+        "durationSeconds": 16.766667,
+        "posterBytes": 33195,
+        "desktopBytes": 6092582,
+        "mobileBytes": 3181137,
+        "desktopSha256": "791c11853f801d07d9e3539e4a737bb6ac0ed6223dee3855b9501ecda572ba41",
+        "mobileSha256": "fb895a4b2e4fd8899b00f0b75645acb6c728009a02001f5887f07d94f0ac2eda",
+        "desktopOutputFirstFrameMd5": "0febefd995130727e188f4ba8846b914",
+        "desktopOutputLastFrameMd5": "b224416ee52e5de04b86680ebc49c9c0",
+        "mobileOutputFirstFrameMd5": "abc732e640a04077fde407c08ed037f2",
+        "mobileOutputLastFrameMd5": "716c92e5b22dce50d40860b84b042e95"
+      }
+    }
+  },
+  "verification": {
+    "unit1PlaywrightContracts": "13/13 passed",
+    "siteTypecheck": "passed",
+    "siteLint": "passed",
+    "normalProductionBuildWithoutPreviewResidue": "passed",
+    "productionBuildWithLocalPreviewFlag": "rejected as required",
+    "productionBuildWithPreviewResidue": "rejected as required",
+    "strictPrepareAndTranscode": "passed",
+    "realManifestResolver": "ready with zero diagnostics"
+  },
+  "remainingScope": {
+    "liAndUgcflow": "Remain pending by the approved plan and expose dossier fallbacks without fabricated URLs.",
+    "stage2RoutePlayback": "Not claimed by CP1.1. Unit 2 must add the known/preview route shell before the local manifest can receive an in-route playback review.",
+    "productionPublication": "Not opened; immutable upload, remote verification and deploy manifest remain Unit 9."
+  }
+}

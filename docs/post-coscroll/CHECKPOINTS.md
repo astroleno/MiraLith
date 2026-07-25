@@ -137,4 +137,24 @@ v2 的实体、粒子和蓝环被设为正向 screen rotation，以求贴合 Art
 
 [冻结清单](evidence/cp0.4-b-ring-first-v9-editorial-freeze.json)（freeze hash `d906937cc0b885b12fc942f91ce50e9af919878142cead5c0b36d8bd648140a1`）锁定 B 的镜头顺序、每段半开 PTS、首尾 raw-frame MD5、文字时机、声音处理、补充素材决定、DOM / 影片职责边界及连续性测量。[checksum index](evidence/cp0.4-b-ring-first-v9-editorial-freeze-checksums.sha256) 将小型冻结记录与本地忽略的媒体身份共同绑定。
 
-冻结版保留母版 letterbox；网页 bridge 使用真实负 `rotation.y` yaw 的不透明“空”与低饱和玉粒子，影片圆环从 exact `n=355` 起唯一接管。此为 editorial freeze，**不是** production media/render/viewport contract。任何冻结项变更均须把 CP0.4 标为 `REOPENED` 并产出新的 Stage 0 review artifact。Stage 0 到此结束，不进入 Stage 1 或 Stage 2。
+冻结版保留母版 letterbox；网页 bridge 使用真实负 `rotation.y` yaw 的不透明“空”与低饱和玉粒子，影片圆环从 exact `n=355` 起唯一接管。此为 editorial freeze，**不是** production media/render/viewport contract。任何冻结项变更均须把 CP0.4 标为 `REOPENED` 并产出新的 Stage 0 review artifact。该冻结提交本身不进入 Stage 1 或 Stage 2；作者之后以“继续·1”单独授权了下列 Unit 1 工作。
+
+## CP1.1 — Local Media Contract
+
+状态：`PASS — TECH，2026-07-25`
+
+Unit 1 已在隔离分支建立 committed source spec、共享 manifest facade、server-only local resolver、toolchain/preparation scripts、production isolation 与 E2E 合同，并用全部现有真实母版生成完整 local-preview catalog；没有进入 Stage 2 route、ScrollTrigger 或正式 CoScroll terminal。
+
+| 验收项 | 当前结果 |
+| --- | --- |
+| CP0.4 绑定 | source spec 固定 freeze SHA `d906937…40a1`、B v9 linear SHA `803219…b135e`、`[n=355,n=556) → [n=4,n=355)`、四帧回跳、`0.1s` silence 与 `12ms` source-audio fade。加入 Dulwich 后 source-spec SHA 为 `0abfd288738e0197ccea9ec6808d3a23064e177c7a4d72e287cc4a3599b0ebbd`。 |
+| PTS / frame truth | AeScape 的 scrub/showcase 共用 `PTS=1,482,000` 半开边界；宇宙片段为 `[6,057,000,6,681,000)`，最后包含 `n=2226` 眼睛，`n=2229 / PTS=6,687,000` 首个泳池帧作为排除 sentinel。 |
+| Dulwich 总成片 | 使用完整 `dulwich-homepage-video-2026.mp4`：SHA `a197358…c17be`，`1280×720`、CFR 30、503 帧、`[0,257536)`；片头直接起画，片尾字标有意解构到暖白，不裁切。 |
+| manifest / resolver | 生成 15 个 item：13 个 ready、Li / UGCFlow 2 个 pending；真实 resolver 返回 `ready` 且零诊断。asset key、bytes、SHA、source/output frame MD5、duration、frame rate、faststart 与预算均 fail closed；manifest 不含绝对路径。 |
+| production isolation | 正常 `next build` 通过；`MIRALITH_POST_COSCROLL_MEDIA_MODE=local-preview next build` 在 next config 阶段拒绝。`public/media/post-coscroll/` 残留也由同一 production gate 拒绝。 |
+| 全量转码 | 13 个 ready item 的 poster 与 desktop/mobile（frame-hold 除外）均在真实母版上通过。视频使用按预算计算的 two-pass ABR、H.264、CFR 30、faststart；Sadine 的 BT.709 full-range 母版做数值范围转换后统一为 `yuv420p/tv`。catalog 为 `101,211,814B`，低于 `160,000,000B` 上限。 |
+| 自动验证 | `13/13` Unit 1 E2E 合同通过；site typecheck、lint、正常 production build、两种 production isolation 反例、toolchain check 与真实 manifest resolver 均通过。identity 见 [CP1.1 status evidence](evidence/cp1.1-local-media-contract-status.json)。 |
+
+CP1.1 的 source / derivative / resolver / isolation contract 已关闭。Dulwich 与其余母版位于不同目录，因此 prepare 新增显式 `--source-file dulwich=…` 覆盖；该绝对路径只存在于本地命令参数，绝不进入 source spec 或 preview manifest。Li / UGCFlow 按计划保留 `pending`，不会伪造时间码、视频或 URL。
+
+本 checkpoint 不声称 Stage 2 route 已存在或完成页内播放；Unit 2 必须先建立 known / preview route shell，届时再用此已验证 manifest 做实际路由播放复核。production publication、远端 Range/cache 验证与 deploy manifest 仍属于 Unit 9。

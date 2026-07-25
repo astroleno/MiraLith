@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "media:post-coscroll:check": "node scripts/check-post-coscroll-media-toolchain.mjs --json",
+    "media:post-coscroll:plan": "node scripts/prepare-post-coscroll-media.mjs --print-plan",
+    "media:post-coscroll:prepare": "node scripts/prepare-post-coscroll-media.mjs"
   },
   "dependencies": {
     "@miralith/coscroll-scene": "workspace:*",
