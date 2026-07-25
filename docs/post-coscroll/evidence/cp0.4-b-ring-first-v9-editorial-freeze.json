@@ -1,0 +1,195 @@
+{
+  "kind": "Stage 0 CP0.4 editorial freeze — B ring-first v9 — not a production media contract",
+  "freezeVersion": "cp0.4-b-ring-first-v9-2026-07-25",
+  "status": "FROZEN — CP0.3 AUTHOR GO and CP0.4 AUTHOR+TECH PASS",
+  "authorConfirmation": {
+    "recordedAt": "2026-07-25",
+    "visualReview": {
+      "file": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/B-ring-first-v9-qr-deferred-exposure-scrub.mp4",
+      "sha256": "3168c035eefcceada6bd8bc099f9192871ab6305e42f39244e03aabcbfb1cabb",
+      "authorWords": "B 用这个更自然一些。",
+      "scope": "B ring-first 的视觉顺序 / scroll-scrub 读法。"
+    },
+    "go": {
+      "authorWords": "可以，继续吧",
+      "interpretation": "Author authorizes the B selection to move from CP0.3 review into this exact Stage 0 freeze, including the selected linear review-audio treatment.",
+      "selectedLinearCandidate": "B-ring-first-v9-qr-deferred-exposure.mp4",
+      "audioDisposition": "The 105.986ms deliberate restart pocket is accepted for the frozen review edit; no audio-only v10 is requested."
+    },
+    "editorialMeaning": "B is frozen because the ring-first ordering reads as the more natural continuation: the rotating 空 resolves into the film ring and the Sisyphus sentence before the sequence returns to waiting. C's persistent DOM-ring/spinner reading is rejected; no additional shot or scene is requested."
+  },
+  "selectedMedia": {
+    "linear": {
+      "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/B-ring-first-v9-qr-deferred-exposure.mp4",
+      "sha256": "803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e",
+      "format": "H.264 960x540 CFR 30fps with AAC stereo 44.1kHz review audio",
+      "frameCount": 667,
+      "durationSeconds": 22.233333333
+    },
+    "supportingScrub": {
+      "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/B-ring-first-v9-qr-deferred-exposure-scrub.mp4",
+      "sha256": "3168c035eefcceada6bd8bc099f9192871ab6305e42f39244e03aabcbfb1cabb",
+      "format": "H.264 960x540 CFR 30fps muted low-fidelity scroll review capture",
+      "frameCount": 900,
+      "durationSeconds": 30.0,
+      "scope": "Author visual-review evidence only; it is not the frozen audio carrier."
+    },
+    "commonWebBridge": {
+      "path": "../../../apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/candidate/web-opaque-yaw-particles-to-n355-v8.mp4",
+      "sha256": "96f2539b28d1f1ae56885c919c9e7ac15b9eccd37a92108174965734fac3f61b",
+      "outputFrameRangeHalfOpen": [0, 109],
+      "durationSeconds": 3.633333333,
+      "scope": "Browser-captured local editorial proxy: real negative rotation.y yaw, opaque glyph cutout, pale-jade particles, blue open ring, brief warmth. It is not an existing production terminal."
+    }
+  },
+  "sourceEvidence": {
+    "master": {
+      "path": "/Users/aitoshuu/Downloads/portfolio/artbreeze-full.MP4",
+      "sha256": "0ab8f26484ad1fe0814df44ba849581c22b948e6d7f1c2d7f2d1c89adab6396d",
+      "sourceTimeBase": "1/90000",
+      "sourceFrameRate": "30/1",
+      "frameStepPTS": 3000
+    },
+    "sliceManifest": {
+      "path": "artbreeze-0000-1853-source-slice-manifest.json",
+      "sha256": "774fc0f2e9af24c6ca481953483ddcdbcd30f4cea021b6c4897847226838d4f4"
+    },
+    "frameLedger": {
+      "path": "artbreeze-0000-1853.framemd5",
+      "sha256": "4a6947d19f66c73fb96bc95550c613404b7f3d958bd2063ae8c9be4b6ef59002",
+      "method": "FFmpeg framemd5 of decoded source yuv420p; raw source n maps to PTS n*3000."
+    },
+    "ringConstraints": {
+      "path": "artbreeze-ring-constraints.json",
+      "sha256": "7432fb84a67c046a6151a71b69b0457a7ecc4f50db3ddd87bd4e4c3d37c7d74e"
+    },
+    "coscrollSourceEnd": {
+      "path": "coscroll-source-end-measurements.json",
+      "sha256": "6a6824635dd89f86632b773ac43c2460c4f3e46d13fa766dc8aeb086c2159d35"
+    }
+  },
+  "editorialSequence": {
+    "outputFrameRate": "30/1",
+    "letterboxPolicy": "Preserve the ArtBreeze master letterbox; active picture is 1920x810 at y=[135,945) inside the 1920x1080 coded raster.",
+    "steps": [
+      {
+        "id": "B-00-web-source-end",
+        "outputFrameRangeHalfOpen": [0, 109],
+        "outputTimeRangeHalfOpenSeconds": [0.0, 3.633333333],
+        "content": "CoScroll source-end review bridge: 空 stays in real negative Y yaw and accelerates; opaque character strokes disassemble into low-saturation jade particles, then a blue open ring and short warmth."
+      },
+      {
+        "id": "B-01-web-to-film-exposure",
+        "outputFrames": [109, 110, 111, 112],
+        "outputTimeRangeHalfOpenSeconds": [3.633333333, 3.766666667],
+        "content": "Four linear-RGB exposure frames from web frame 108 to source n=355 at alpha 0.25, 0.50, 0.75, 1.00; n=355 is exact on output frame 112.",
+        "filmSourceStart": {
+          "sourceFrame": 355,
+          "startPTS": 1065000,
+          "firstFrameMD5": "9fb23e4d30cf5d743e46e7ad012a94ca"
+        }
+      },
+      {
+        "id": "B-02-film-ring-text",
+        "outputFrameRangeHalfOpen": [113, 313],
+        "outputTimeRangeHalfOpenSeconds": [3.766666667, 10.433333333],
+        "logicalFilmSourceRangeHalfOpen": [355, 556],
+        "sourcePTSRangeHalfOpen": [1065000, 1668000],
+        "firstSourceFrameMD5": "9fb23e4d30cf5d743e46e7ad012a94ca",
+        "lastSourceFrame": 555,
+        "lastSourceFrameMD5": "49301f8b7a26c5f371c0673252cbb59f",
+        "sourceSliceCoverage": [
+          "ab-008 trimmed to [n=355,n=366)",
+          "ab-009", "ab-010", "ab-011", "ab-012", "ab-013", "ab-014", "ab-015", "ab-016", "ab-017", "ab-018", "ab-019", "ab-020", "ab-021", "ab-022", "ab-023", "ab-024", "ab-025", "ab-026", "ab-027"
+        ],
+        "content": "Real orange coherent ring → ring exit → white beat → progressively written Sisyphus sentence → full sentence fades toward black."
+      },
+      {
+        "id": "B-03-film-to-loading-return",
+        "outputFrames": [313, 314, 315, 316],
+        "outputTimeRangeHalfOpenSeconds": [10.433333333, 10.566666667],
+        "content": "Four-frame dim return from source n=555 to source n=4; n=4 is exact on output frame 316. QR/title slate n=0..2 and black n=3 remain absent."
+      },
+      {
+        "id": "B-04-film-waiting-return",
+        "outputFrameRangeHalfOpen": [317, 667],
+        "outputTimeRangeHalfOpenSeconds": [10.566666667, 22.233333333],
+        "logicalFilmSourceRangeHalfOpen": [4, 355],
+        "sourcePTSRangeHalfOpen": [12000, 1065000],
+        "firstSourceFrameMD5": "575222c1865ec8a9d036b416d1306f6f",
+        "lastSourceFrame": 354,
+        "lastSourceFrameMD5": "63c8775a4e1ed3f714bb9adf48bd5484",
+        "sourceSliceCoverage": ["ab-002", "ab-003", "ab-004", "ab-005", "ab-006", "ab-007", "ab-008 trimmed to [n=354,n=355)"],
+        "content": "LOADING → front waiter → rear waiter → white flash/UI → neutral loader → orange-ring formation → coherent ring candidate. The ending returns to the ring state without reintroducing QR."
+      }
+    ]
+  },
+  "textTiming": {
+    "mapping": "For source n>=355, frozen B output frame = n-243 and output seconds = (n-243)/30. Full raw frame hashes are bound by sourceSliceManifest above.",
+    "cues": [
+      {"sourceSlice": "ab-011", "sourcePTSRangeHalfOpen": [1131000, 1152000], "outputFrameRangeHalfOpen": [134, 141], "text": "我"},
+      {"sourceSlice": "ab-012", "sourcePTSRangeHalfOpen": [1152000, 1164000], "outputFrameRangeHalfOpen": [141, 145], "text": "我们"},
+      {"sourceSlice": "ab-013", "sourcePTSRangeHalfOpen": [1164000, 1194000], "outputFrameRangeHalfOpen": [145, 155], "text": "我们每"},
+      {"sourceSlice": "ab-014", "sourcePTSRangeHalfOpen": [1194000, 1200000], "outputFrameRangeHalfOpen": [155, 157], "text": "我们每天"},
+      {"sourceSlice": "ab-015", "sourcePTSRangeHalfOpen": [1200000, 1215000], "outputFrameRangeHalfOpen": [157, 162], "text": "我们每天都"},
+      {"sourceSlice": "ab-016", "sourcePTSRangeHalfOpen": [1215000, 1221000], "outputFrameRangeHalfOpen": [162, 164], "text": "我们每天都在"},
+      {"sourceSlice": "ab-017", "sourcePTSRangeHalfOpen": [1221000, 1257000], "outputFrameRangeHalfOpen": [164, 176], "text": "我们每天都在推"},
+      {"sourceSlice": "ab-018", "sourcePTSRangeHalfOpen": [1257000, 1260000], "outputFrameRangeHalfOpen": [176, 177], "text": "我们每天都在推着"},
+      {"sourceSlice": "ab-019", "sourcePTSRangeHalfOpen": [1260000, 1272000], "outputFrameRangeHalfOpen": [177, 181], "text": "我们每天都在推着一"},
+      {"sourceSlice": "ab-020", "sourcePTSRangeHalfOpen": [1272000, 1293000], "outputFrameRangeHalfOpen": [181, 188], "text": "我们每天都在推着一块"},
+      {"sourceSlice": "ab-021", "sourcePTSRangeHalfOpen": [1293000, 1299000], "outputFrameRangeHalfOpen": [188, 190], "text": "我们每天都在推着一块 / 看"},
+      {"sourceSlice": "ab-022", "sourcePTSRangeHalfOpen": [1299000, 1302000], "outputFrameRangeHalfOpen": [190, 191], "text": "我们每天都在推着一块 / 看不"},
+      {"sourceSlice": "ab-023", "sourcePTSRangeHalfOpen": [1302000, 1314000], "outputFrameRangeHalfOpen": [191, 195], "text": "我们每天都在推着一块 / 看不见"},
+      {"sourceSlice": "ab-024", "sourcePTSRangeHalfOpen": [1314000, 1335000], "outputFrameRangeHalfOpen": [195, 202], "text": "我们每天都在推着一块 / 看不见的"},
+      {"sourceSlice": "ab-025", "sourcePTSRangeHalfOpen": [1335000, 1344000], "outputFrameRangeHalfOpen": [202, 205], "text": "我们每天都在推着一块 / 看不见的石"},
+      {"sourceSlice": "ab-026", "sourcePTSRangeHalfOpen": [1344000, 1443000], "outputFrameRangeHalfOpen": [205, 238], "text": "我们每天都在推着一块 / 看不见的石头"},
+      {"sourceSlice": "ab-027", "sourcePTSRangeHalfOpen": [1443000, 1668000], "outputFrameRangeHalfOpen": [238, 313], "text": "我们每天都在推着一块 / 看不见的石头", "note": "Full sentence holds while white background fades toward black."}
+    ]
+  },
+  "sound": {
+    "carrier": "Selected B linear review MP4 AAC stereo 44.1kHz; it preserves source audio content/timing through an AAC review transcode, not original AAC packets.",
+    "webPrefix": "Silent through output frame 111; source n=355 fades in for 12ms at the exact output n=355 frame 112.",
+    "ringAndTextSource": "ArtBreeze source audio [11.833333333,18.533333333) / source frames [355,556), with 12ms fade-in and 12ms fade-out.",
+    "restart": "A 105.986ms silent pocket is accepted as the deliberate loop/restart between the n=555 content and n=4 return. Boundary silence is [10.433288,10.539274] in the selected linear candidate; no sample-level click is indicated by the documented audit.",
+    "waitingReturnSource": "ArtBreeze source audio [0.133333333,11.833333333) / source frames [4,355), with 12ms fade-in at the n=4 return.",
+    "audit": "cp0.2-v9-b-audio-audit-method.md"
+  },
+  "responsibilityBoundary": {
+    "coscrollGlyphAndParticles": "The glyph remains visually opaque while rotating in its real negative Y yaw; the residual/disassembly effect is particle visibility, not GLB transparency. Future production must sample live yaw/speed rather than reuse the static CP0.1 mask.",
+    "webRing": "Only the local review bridge's particle/open-ring representation carries the handoff. Its 960x540 calibration is frozen as editorial continuity evidence, not a production Canvas or viewport contract.",
+    "domRing": "None in the selected B edit. C's persistent local DOM-ring stand-in is rejected as a final responsibility because it risks reading as a spinner.",
+    "filmRing": "The real ArtBreeze ring owns the scene from exact source n=355 onward; no web/DOM ring remains as a parallel owner after handoff.",
+    "fallback": "Current CoScroll fallback remains its real 心 markup and is not a source for the frozen 空 handoff."
+  },
+  "continuityParameters": {
+    "geometryAt960x540": {
+      "web": {"center": [474.66, 277.83], "centerlineRadius": 26.48, "gapCenterDegrees": 155.0},
+      "filmN355": {"center": [474.69, 277.88], "centerlineRadius": 26.63, "gapCenterDegrees": 154.0},
+      "delta": {"centerPixels": 0.06, "radiusPixels": 0.15, "gapDegrees": 1.0},
+      "screenAngleConvention": "0 degrees is right; positive is clockwise"
+    },
+    "filmTarget": {
+      "stableSourceRangeHalfOpen": [355, 363],
+      "rotationDirection": "clockwise",
+      "gapPhaseSpeedDegreesPerSecond": 396.4,
+      "letterboxedCodedRaster": [1920, 1080],
+      "activePicture": {"width": 1920, "height": 810, "yRangeHalfOpen": [135, 945]}
+    },
+    "exposure": {
+      "outputYAVG": [30.5777, 67.6324, 104.667, 141.724, 178.628],
+      "perStepYDIFApproximate": [38.7498, 38.8428, 38.8139, 38.633],
+      "purpose": "Four-frame review proxy that avoids the former one-frame dark-to-white 154.31 YDIF cut."
+    },
+    "colour": {
+      "sourceJadeReferenceRgbMedian": [176, 197, 213],
+      "filmAnalyticBt709Rgb": [243, 131, 47],
+      "reviewRingRoi": {"webMedianRgb": [237, 114, 52], "filmMedianRgb": [233, 109, 49], "absoluteMedianDelta": [4, 5, 3]},
+      "scope": "These values freeze editorial continuity evidence; production colour management must be revalidated in its real browser/render pipeline."
+    }
+  },
+  "supplementaryMaterial": {
+    "required": [],
+    "deferred": "ArtBreeze source n=0..2 QR/title slate and n=3 blank-black frame remain deferred to the true experience end; they are not part of this first-sequence freeze."
+  },
+  "changeControl": "Any change to selected media SHA, source order, half-open PTS, frame hash, text timing, audio treatment, DOM/video boundary, continuity parameter, or supplementary-material decision marks CP0.4 REOPENED and requires a new Stage 0 review artifact. This freeze does not authorize Stage 1, Stage 2, a production terminal, route, ScrollTrigger, Canvas residue system, CDN, or production media contract."
+}

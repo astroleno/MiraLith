@@ -1,8 +1,8 @@
 # Stage 0 — CoScroll → ArtBreeze 首段镜头图（CP0.1）
 
-状态：`CP0.1 — PASS / CP0.2 — PASS (TECH) / CP0.3 — IN REVIEW (AUTHOR)`
-版本：`0.8`
-范围：本文件保留 CP0.1 的真实母版、当前 CoScroll 源末态与粒子交棒约束；当前 CP0.3 作者评审输入是 [v9 parity comparison](cp0.2-v9-parity-comparison.md) 的 A/B/C。v4 / v3 / v2 / v1 都只保留为历史记录。仍未实现路由、Canvas 残影、ScrollTrigger、正式粒子系统或 production media contract。
+状态：`CP0.1 — PASS / CP0.2 — PASS (TECH) / CP0.3 — PASS (AUTHOR) / CP0.4 — PASS (AUTHOR + TECH)`
+版本：`0.9`
+范围：本文件保留 CP0.1 的真实母版、当前 CoScroll 源末态与粒子交棒约束；v9 的 A/B/C 是历史受控比较，最终 B 选择见 [CP0.4 editorial freeze](evidence/cp0.4-b-ring-first-v9-editorial-freeze.json)。v4 / v3 / v2 / v1 都只保留为历史记录。仍未实现路由、Canvas 残影、ScrollTrigger、正式粒子系统或 production media contract。
 
 ## 0. 证据边界
 
@@ -11,7 +11,7 @@
 - ArtBreeze 母版：`/Users/aitoshuu/Downloads/portfolio/artbreeze-full.MP4`
 - 当前本地 CoScroll 页面：`http://localhost:3011/coscroll`，source-match 状态、可见锚字为“空”。
 
-`apps/site/.generated/post-coscroll-editorial/` 下早于 `cp02-v1/` 的 `linear/`、`scrub/`、`audio/` 代理不构成 evidence。`cp02-v1/` 已因旋转连续性与粒子色彩问题被作者 NO-GO；`cp02-v2/` 把真实 source 的负 yaw 正向归一化；`cp02-v3/` 又把 captured glyph 误作 screen-plane 转字。当前可审阅媒体是 `cp02-v9-parity-qr-deferred-exposure/` 的同基线 A/B/C，由 [v9 manifest](evidence/cp0.2-v9-parity-qr-deferred-exposure-manifest.json)、[v9 comparison](cp0.2-v9-parity-comparison.md) 和 [checkpoint ledger](CHECKPOINTS.md) 绑定；`cp02-v4/` 是真实 yaw 的历史基线。它们均不是 Editorial GO。
+`apps/site/.generated/post-coscroll-editorial/` 下早于 `cp02-v1/` 的 `linear/`、`scrub/`、`audio/` 代理不构成 evidence。`cp02-v1/` 已因旋转连续性与粒子色彩问题被作者 NO-GO；`cp02-v2/` 把真实 source 的负 yaw 正向归一化；`cp02-v3/` 又把 captured glyph 误作 screen-plane 转字。`cp02-v9-parity-qr-deferred-exposure/` 的同基线 A/B/C 是已完成的受控比较；作者最终选择其 B，确切媒体、SHA、源帧与声音冻结由 [CP0.4 freeze](evidence/cp0.4-b-ring-first-v9-editorial-freeze.json) 和 [checkpoint ledger](CHECKPOINTS.md) 绑定；`cp02-v4/` 是真实 yaw 的历史基线。
 
 未来转场的目标仅作为约束记录，尚未实现：
 
@@ -25,7 +25,7 @@
 - “空”从用户当下的实时 yaw / speed 直接解体；静态 mask 仅作为 reference fixture。
 - `n=354` 是首个 coherent-ring 候选；实际技术交棒窗是 `[n=355, n=363)`。
 
-这只通过 Asset Truth；当时不自行构成 CP0.2 授权、A/B/C 样片选择或 Editorial GO。作者之后明确要求继续，v9 已使 CP0.2 以 `PASS (TECH)` 通过；当前门禁是 `CP0.3 IN REVIEW (AUTHOR)`，仍不存在任何作者选择或 Editorial GO。
+这只通过 Asset Truth；当时不自行构成 CP0.2 授权、A/B/C 样片选择或 Editorial GO。作者之后明确要求继续，v9 使 CP0.2 以 `PASS (TECH)` 通过；作者随后的 B 选择及“可以，继续吧”已使 CP0.3/CP0.4 冻结。冻结并不授权 production implementation。
 
 ## 1. ArtBreeze 母版事实
 

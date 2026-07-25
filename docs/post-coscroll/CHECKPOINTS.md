@@ -1,7 +1,7 @@
 # Post-CoScroll Stage 0 Checkpoints
 
-状态：`CP0.1 — PASS / CP0.2 — PASS (TECH) / CP0.3 — IN REVIEW (AUTHOR)`
-本轮范围：CP0.1 的 Asset Truth 已通过；CP0.2 v9 的 A/B/C 本地评审媒体、scrub 与统一技术比较表已通过 TECH 门禁。作者尚未给出 Editorial GO，CP0.4、Stage 1 与 Stage 2 仍未进入。
+状态：`CP0.1 — PASS / CP0.2 — PASS (TECH) / CP0.3 — PASS (AUTHOR) / CP0.4 — PASS (AUTHOR + TECH)`
+本轮范围：CP0.1 的 Asset Truth、CP0.2 v9 的公平 A/B/C 比较、作者对确切 B v9 的 GO 与 CP0.4 editorial freeze 均已完成。Stage 0 至此结束；Stage 1、Stage 2 仍未获授权。
 
 ## CP0.1 — Asset Truth
 
@@ -93,11 +93,11 @@ v1 已因“停住后才粒子化 / 粒子过早暖化”被作者否决。v2 �
 | A / B / C 同基线线性样片 | [A linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/A-source-order-v9-qr-deferred-exposure.mp4)、[B linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/B-ring-first-v9-qr-deferred-exposure.mp4)、[C linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/C-hybrid-v9-qr-deferred-exposure.mp4)。A/C 各 `664` 帧 / `22.133333s`，B `667` 帧 / `22.233333s`；只因 B 的第二个四帧重排过渡和三帧静默 pocket 多出 `0.1s`。 |
 | 同基线 scrub | [A scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/A-source-order-v9-qr-deferred-exposure-scrub.mp4)、[B scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/B-ring-first-v9-qr-deferred-exposure-scrub.mp4)、[C scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/C-hybrid-v9-qr-deferred-exposure-scrub.mp4)。三版均为 `900` 帧 / `30s`，共享 `0.000 → 0.369 → 0.152 → 1.000` 前进、撤回、恢复 trace；不接 production ScrollTrigger。 |
 | B 曝光交棒 | [30fps exposure boundary](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/contact-sheets/B-web-to-n355-exposure-boundary-v9.jpg)。解码全帧 `YAVG` 依次为 `30.5777 → 67.6324 → 104.667 → 141.724 → 178.628`，每步 `YDIF≈38.6–38.9`，替代 v8 单帧 `154.31` 的白场跳变。 |
-| B 回到等待 | [n555 → n4 boundary](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/contact-sheets/B-n555-to-n4-qr-deferred-boundary-v9.jpg)：`n=555` 后经四帧暗化落到 `n=4` LOADING，不回到 QR。两个 source 声音段使用 `12ms` fade，中间 `0.1s` 静默 pocket；仍需作者戴耳机作主观判断。 |
+| B 回到等待 | [n555 → n4 boundary](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/contact-sheets/B-n555-to-n4-qr-deferred-boundary-v9.jpg)：`n=555` 后经四帧暗化落到 `n=4` LOADING，不回到 QR。两个 source 声音段使用 `12ms` fade，中间 `0.1s` 静默 pocket；作者已将其接受为 deliberate restart。 |
 | C 的 DOM ring 职责 | [C stand-in evidence](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/contact-sheets/C-dom-ring-takeover-v9.jpg)。它是明确的 local composited stand-in，用于测试“等待中的 persistent ring 会读成 spinner”的风险；不是正式 DOM ring 授权。 |
 | 可跨机器复核 | [v9 durable manifest](evidence/cp0.2-v9-parity-qr-deferred-exposure-manifest.json)、[boundary measurements](evidence/cp0.2-v9-parity-qr-deferred-exposure-boundary-measurements.json)、[root checksum index](evidence/cp0.2-v9-parity-qr-deferred-exposure-checksums.sha256)。 |
 
-**CP0.2 PASS — TECH，2026-07-24。** v9 已恢复同基线 A/B/C、每版 scrub，并由 [v9 统一比较表](cp0.2-v9-parity-comparison.md) 集中覆盖中心、尺寸、方向、相位、明暗、声音、节奏与情绪含义；它满足计划的 TECH pass 条件。此 PASS 不选择 A / B / C，不记录 Editorial GO，也不解除 CP0.4 / Stage 1 / Stage 2 的锁定。
+**CP0.2 PASS — TECH，2026-07-24。** v9 已恢复同基线 A/B/C、每版 scrub，并由 [v9 统一比较表](cp0.2-v9-parity-comparison.md) 集中覆盖中心、尺寸、方向、相位、明暗、声音、节奏与情绪含义；它满足计划的 TECH pass 条件。它当时不选择 A / B / C；后续作者在 CP0.3 选择 B，并由 CP0.4 freeze 固定其结果。
 
 ### 历史记录：cp02-v3（已被 real-yaw correction 取代）
 
@@ -125,12 +125,16 @@ v2 的实体、粒子和蓝环被设为正向 screen rotation，以求贴合 Art
 
 ## CP0.3 — Editorial GO
 
-状态：`IN REVIEW — AUTHOR`
+状态：`PASS — AUTHOR，2026-07-25`
 
-CP0.2 已以 TECH 证据通过。作者于 2026-07-25 的当前评审笔记是：`B-ring-first-v9` 的 [scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/B-ring-first-v9-qr-deferred-exposure-scrub.mp4) “更自然一些”。它是对 B 的视觉顺序 / scrub 读法的偏好；该 scrub 为静音低保真 capture，故不是对线性声音的确认，也不是 Editorial GO。当前建议作者优先审阅 `B-ring-first-v9-qr-deferred-exposure.mp4`（SHA-256 `803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e`），但它不是已授权的胜出版本。现在等待作者对一个确切 v9 样片文件与 SHA 给出 GO，并说明它为何读作“重复、等待与推石头”而非 spinner、品牌 loading 或炫技转场。`B-ring-first-v9` 还需作者戴耳机确认 `10.433288–10.539274s` 的断章是否读作有意循环重启；[技术审计方法](evidence/cp0.2-v9-b-audio-audit-method.md) 已排除 sample-click，不能代替主观试听。修改建议、混合意见或 NO-GO 都不算通过，必须先生成新的本地样片再 review。
+作者先对 [B-ring-first-v9 scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/B-ring-first-v9-qr-deferred-exposure-scrub.mp4)（SHA-256 `3168c035eefcceada6bd8bc099f9192871ab6305e42f39244e03aabcbfb1cabb`）确认：**“B 用这个更自然一些。”**，再确认：**“可以，继续吧”**。该授权将 B 视觉选择及其 selected linear review-audio treatment 固定为 [B-ring-first-v9 linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/B-ring-first-v9-qr-deferred-exposure.mp4)（SHA-256 `803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e`）。
+
+作者选择 B 的含义是：持续旋转的“空”经粒子 / 开口环先接到影片真实圆环与“推石头”，再回到 LOADING / 等待，读作循环而非普通 seek。C 的 persistent DOM ring 因 spinner 风险没有进入冻结版；不补拍新镜头，QR/title slate 继续后移。`105.986ms` 的声音 restart pocket 已随“继续”接受为有意循环，不制作 audio-only v10；可复算技术参数见 [audio audit method](evidence/cp0.2-v9-b-audio-audit-method.md)。
 
 ## CP0.4 — Editorial Freeze
 
-状态：`LOCKED — CP0.3 required`
+状态：`PASS — AUTHOR + TECH，2026-07-25`
 
-尚未冻结镜头顺序、PTS、声音、文字时机、补充素材、DOM / 视频职责或 freeze hash。任何后续实现不得把本 CP0.1 的测量结果误写为已批准剪辑决定。
+[冻结清单](evidence/cp0.4-b-ring-first-v9-editorial-freeze.json)（freeze hash `d906937cc0b885b12fc942f91ce50e9af919878142cead5c0b36d8bd648140a1`）锁定 B 的镜头顺序、每段半开 PTS、首尾 raw-frame MD5、文字时机、声音处理、补充素材决定、DOM / 影片职责边界及连续性测量。[checksum index](evidence/cp0.4-b-ring-first-v9-editorial-freeze-checksums.sha256) 将小型冻结记录与本地忽略的媒体身份共同绑定。
+
+冻结版保留母版 letterbox；网页 bridge 使用真实负 `rotation.y` yaw 的不透明“空”与低饱和玉粒子，影片圆环从 exact `n=355` 起唯一接管。此为 editorial freeze，**不是** production media/render/viewport contract。任何冻结项变更均须把 CP0.4 标为 `REOPENED` 并产出新的 Stage 0 review artifact。Stage 0 到此结束，不进入 Stage 1 或 Stage 2。

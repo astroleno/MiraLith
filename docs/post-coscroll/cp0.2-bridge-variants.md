@@ -6,7 +6,7 @@
 
 本文件记录三个同等完成度的本地评审样片及比较结论。它不是 CP0.3 Editorial GO，不是 CP0.4 freeze，也不实现正式路由、Canvas 残影、ScrollTrigger、production media contract 或 CDN。
 
-> 作者已否决本版共同桥段：它被读成“空”停住后才变粒子，且粒子过早暖化。v1 因而保留为 NO-GO 历史证据；v2 错误改变 source yaw 方向，v3 又把真实 yaw flatten 成平面转字，v4 是其真实-yaw 历史基线。当前作者评审输入是 [cp02-v9 parity comparison](cp0.2-v9-parity-comparison.md)：`CP0.2 PASS (TECH)`，`CP0.3 IN REVIEW (AUTHOR)`。
+> 作者已否决本版共同桥段：它被读成“空”停住后才变粒子，且粒子过早暖化。v1 因而保留为 NO-GO 历史证据；v2 错误改变 source yaw 方向，v3 又把真实 yaw flatten 成平面转字，v4 是其真实-yaw 历史基线。最终作者选择是 [cp02-v9 B](cp0.2-v9-parity-comparison.md)：`CP0.2 PASS (TECH)`、`CP0.3 PASS (AUTHOR)`、`CP0.4 PASS (AUTHOR + TECH)`；确切记录见 [freeze manifest](evidence/cp0.4-b-ring-first-v9-editorial-freeze.json)。
 
 ## 1. 共同评审基线
 

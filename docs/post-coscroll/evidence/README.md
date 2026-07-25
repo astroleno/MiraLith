@@ -20,7 +20,7 @@ Version-control handoff: this directory is intentionally **not ignored** and is 
 
 ## CP0.2 review identity
 
-CP0.2 is `PASS — TECH`; these files do not contain the large local movies and do not signify Editorial GO. CP0.3 is `IN REVIEW — AUTHOR`.
+CP0.2 is `PASS — TECH`; its historical evidence does not itself signify Editorial GO. Author selection of B v9 then passed CP0.3 and CP0.4; the exact freeze identity is listed below. Large local movies remain ignored.
 
 | File | Purpose |
 | --- | --- |
@@ -36,5 +36,7 @@ CP0.2 is `PASS — TECH`; these files do not contain the large local movies and 
 | `cp0.2-v9-parity-qr-deferred-exposure-checksums.sha256` | Root-relative SHA-256 index for the master, v8 common bridge, durable v9 JSON, ignored v9 linear/scrub media and key proof sheets. |
 | `cp0.2-v3-source-direction-bridge-manifest.json` | Historical v3 identity. It preserved the sign but incorrectly flattened the captured glyph into a screen-plane rotation. |
 | `cp0.2-v2-continuous-blue-bridge-manifest.json` | Historical v2 identity. It normalized the real negative source yaw to positive screen rotation. |
+| `cp0.4-b-ring-first-v9-editorial-freeze.json` | Author-approved final Stage 0 B order: exact local media SHA, source half-open PTS, frame hashes, text timing, audio treatment, responsibility boundary, continuity measurements and change control. |
+| `cp0.4-b-ring-first-v9-editorial-freeze-checksums.sha256` | Root-relative identity index for the master, frozen B media, bridge and durable source/freeze evidence. |
 
-`cp0.2-bridge-variants-manifest.json` and its native scroll trace describe the historical `cp02-v1` review only; v1 was author-NO-GO because the solid character read as stopping before particleization and its particles warmed too soon. `cp02-v2` reversed the live source sign; `cp02-v3` flattened its real yaw into planar rotation. `cp02-v8` is the targeted B repair that exposed the QR and brightness issues. Current `cp02-v9` restores the controlled A/B/C set after the author chose QR deferral and a four-frame exposure. Its large local media remain under `apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/`. The durable current comparison rationale is [CP0.2 v9 parity comparison](../cp0.2-v9-parity-comparison.md).
+`cp0.2-bridge-variants-manifest.json` and its native scroll trace describe the historical `cp02-v1` review only; v1 was author-NO-GO because the solid character read as stopping before particleization and its particles warmed too soon. `cp02-v2` reversed the live source sign; `cp02-v3` flattened its real yaw into planar rotation. `cp02-v8` is the targeted B repair that exposed the QR and brightness issues. `cp02-v9` restored the controlled A/B/C set after the author chose QR deferral and a four-frame exposure. The author then selected B; [CP0.4 B v9 freeze](cp0.4-b-ring-first-v9-editorial-freeze.json) is authoritative. Its large local media remain under `apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/`.

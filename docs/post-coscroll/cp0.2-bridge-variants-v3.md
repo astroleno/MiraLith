@@ -4,7 +4,7 @@
 
 版本：`cp02-v3-source-direction`
 
-> 历史记录：本版恢复了 source 的负 yaw 符号，却把 captured glyph 作为平面图像进行 screen-plane rotation。作者要求实体“空”保持真实 `rotation.y` 姿态解体；v4 是随后建立的真实-yaw 历史基线，当前作者评审应使用 [v9 parity comparison](cp0.2-v9-parity-comparison.md)。本文件和本地媒体只用于复核被替换的配置，绝不是 Editorial GO。
+> 历史记录：本版恢复了 source 的负 yaw 符号，却把 captured glyph 作为平面图像进行 screen-plane rotation。作者要求实体“空”保持真实 `rotation.y` 姿态解体；v4 是随后建立的真实-yaw 历史基线，最终作者选择为 [v9 B](cp0.2-v9-parity-comparison.md)，冻结记录见 [CP0.4 freeze](evidence/cp0.4-b-ring-first-v9-editorial-freeze.json)。本文件和本地媒体只用于复核被替换的配置，绝不是 Editorial GO。
 
 本轮仅替换本地评审桥段，修正“空”被错误反向的问题。它不实现正式 Canvas / 粒子系统、路由、ScrollTrigger、production media contract 或 CDN。
 

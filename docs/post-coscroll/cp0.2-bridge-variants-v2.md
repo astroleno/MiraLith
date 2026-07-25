@@ -4,7 +4,7 @@
 
 版本：`cp02-v2-continuous-blue`
 
-> 历史记录：本版在修复 v1 的停转与暖化问题时，错误地把真实 CoScroll source 的负 yaw 归一化为正向 screen rotation。随后 v3 又把真实 yaw flatten 成平面转字，v4 成为真实-yaw 历史基线；当前作者评审应使用 [v9 parity comparison](cp0.2-v9-parity-comparison.md)。本文件和它的本地媒体只用于复核被替换的配置，绝不是 Editorial GO。
+> 历史记录：本版在修复 v1 的停转与暖化问题时，错误地把真实 CoScroll source 的负 yaw 归一化为正向 screen rotation。随后 v3 又把真实 yaw flatten 成平面转字，v4 成为真实-yaw 历史基线；最终作者选择为 [v9 B](cp0.2-v9-parity-comparison.md)，冻结记录见 [CP0.4 freeze](evidence/cp0.4-b-ring-first-v9-editorial-freeze.json)。本文件和它的本地媒体只用于复核被替换的配置，绝不是 Editorial GO。
 
 本轮只重做本地评审代理。它不实现正式 Canvas / 粒子系统、路由、ScrollTrigger、production media contract 或 CDN。
 

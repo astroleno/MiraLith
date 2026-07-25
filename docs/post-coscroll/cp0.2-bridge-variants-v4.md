@@ -1,10 +1,10 @@
 # CP0.2 — CoScroll → ArtBreeze Bridge Variants v4
 
-状态：`CP0.2 PASS — TECH / CP0.3 IN REVIEW — AUTHOR`
+状态：`HISTORICAL BASELINE — CP0.2 PASS (TECH) / CP0.3–CP0.4 B v9 PASS`
 
 版本：`cp02-v4-real-yaw`
 
-定位：`历史 real-yaw motion baseline；当前作者评审集合为 cp02-v9`。当前状态与 A/B/C 入口见 [v9 parity comparison](cp0.2-v9-parity-comparison.md)。
+定位：`历史 real-yaw motion baseline；最终作者选择为 cp02-v9 B`。最终状态、A/B/C 比较与 B freeze 见 [v9 parity comparison](cp0.2-v9-parity-comparison.md) 和 [CP0.4 freeze](evidence/cp0.4-b-ring-first-v9-editorial-freeze.json)。
 
 本轮只替换本地评审桥段的字符运动投影；不实现正式 Canvas / 粒子系统、路由、ScrollTrigger、production media contract 或 CDN。
 
@@ -93,4 +93,4 @@ v8 的完整顺序为：网页 review bridge `[0,109)` / `3.633333s` → ArtBree
 - C 的 persistent ring 是**故意保留的风险测试**：它在等待者和 UI 上可能读作 spinner。见 [C takeover proof](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/contact-sheets/C-dom-ring-takeover-v9.jpg)。它不是正式 DOM / Canvas 设计决定。
 - v9 的稳定 identity、source mapping、SSIM 与完整 checksum 位于 [durable manifest](evidence/cp0.2-v9-parity-qr-deferred-exposure-manifest.json)、[boundary snapshot](evidence/cp0.2-v9-parity-qr-deferred-exposure-boundary-measurements.json) 和 [checksum index](evidence/cp0.2-v9-parity-qr-deferred-exposure-checksums.sha256)。
 
-**`CP0.2 — PASS (TECH)`，`CP0.3 — IN REVIEW (AUTHOR)`。** v9 已恢复同基线的 A/B/C、公平 scrub 与当前统一比较表；详见 [v9 parity comparison](cp0.2-v9-parity-comparison.md)。作者现在评审 A/B/C；任何选择仍须指向确切 v9 文件和 SHA，不能由执行者替代为 Editorial GO。
+**`CP0.2 — PASS (TECH)`，`CP0.3 — PASS (AUTHOR)`，`CP0.4 — PASS (AUTHOR + TECH)`。** v9 已恢复同基线的 A/B/C、公平 scrub 与统一比较表；作者最终冻结 B。详见 [v9 parity comparison](cp0.2-v9-parity-comparison.md) 与 [CP0.4 freeze](evidence/cp0.4-b-ring-first-v9-editorial-freeze.json)。

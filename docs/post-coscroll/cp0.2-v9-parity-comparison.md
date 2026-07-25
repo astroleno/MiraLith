@@ -1,10 +1,10 @@
 # CP0.2 — v9 Parity Comparison
 
-状态：`PASS — TECH evidence complete / CP0.3 — IN REVIEW (AUTHOR)`
+状态：`PASS — TECH evidence complete / CP0.3 — PASS (AUTHOR) / CP0.4 — PASS (AUTHOR + TECH)`
 
 评审集合：`cp02-v9 / A-B-C parity / QR deferred / four-frame exposure`
 
-本表是 [Stage 0 计划](../plans/2026-07-19-001-feat-post-coscroll-cinematic-narrative-plan.md#stage-0--editorial-fit-before-implementation) 对“统一的中心 / 尺寸 / 方向 / 明暗 / 声音比较表”的当前版本。它证明三版可公平比较；**不选择胜出版本，不构成 Editorial GO，也不冻结 production 行为。**
+本表是 [Stage 0 计划](../plans/2026-07-19-001-feat-post-coscroll-cinematic-narrative-plan.md#stage-0--editorial-fit-before-implementation) 对“统一的中心 / 尺寸 / 方向 / 明暗 / 声音比较表”的最终技术版本。它证明三版可公平比较；作者随后选择 B，确切冻结见 [CP0.4 editorial freeze](evidence/cp0.4-b-ring-first-v9-editorial-freeze.json)。本比较表本身不定义 production 行为。
 
 ## 共同受控基线
 
@@ -26,14 +26,8 @@
 | scrub 读法 | 前进先进入等待，回滚能撤出等待；最接近 source time。 | 前进先进入“推石头”的圆环，随后回到等待；回滚同样可撤回，不是普通 video seek。 | 前进时 persistent ring 穿过等待；回滚可验证其是否像同一物体，也暴露 spinner 风险。 | 三条均用相同 trace 和时长，已具备同完成度的 forward / reverse / resume 比较。 |
 | 节奏 / 情绪假设 | “等待 → 白场 → 困境”：因果最顺，但开场没有立即把残留环接到困境。 | “困境 → 等待”：环的物体连续最强，读作周而复始地推石头的潜力最大；声音重启会决定其是有意循环还是突兀断章。 | “环始终在场”：保留连续物体感，却最容易读成 spinner / 品牌 loading。 | 这些是给作者的 editorial judgement，不是 TECH pass 的结论。 |
 
-## 技术通过与下一门禁
+## 技术通过与作者结果
 
 `CP0.2` 的要求已经满足：三版均从同一 CoScroll 末态开始、使用同一格式 / 网页桥 / 声音基线 / scrub 轨迹，并有当前统一比较表与可复核 identity。故本 checkpoint 记为 **`PASS — TECH`**。
 
-`CP0.3` 现为 **`IN REVIEW — AUTHOR`**。当前推荐审阅对象是 `B-ring-first-v9-qr-deferred-exposure.mp4`（SHA-256 `803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e`），但这不是执行者授予的 GO。作者仍需：
-
-1. 针对一个精确样片文件和 SHA 明确给出 GO；
-2. 说明它为何读作“重复、等待与推石头”，而不是 spinner、品牌 loading 或炫技转场；
-3. 戴耳机确认 B 在 `10.433288–10.539274s` 的断章是否读作有意的循环重启。若不接受，只重做 audio-only v10，不改视觉即不视为 GO。
-
-任何混合、修改意见或 NO-GO 都必须先落为新的本地样片并重新评审；`CP0.4` 继续锁定。
+作者已对 [B scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/B-ring-first-v9-qr-deferred-exposure-scrub.mp4) 确认“B 用这个更自然一些”，并以“可以，继续吧”将该选择授权进入 [确切 B linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/B-ring-first-v9-qr-deferred-exposure.mp4)（SHA-256 `803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e`）的 CP0.4 freeze。`105.986ms` 断章作为 deliberate restart 被接受，不制作 audio-only v10。完整源顺序、PTS、frame hash、声音与职责边界见 [freeze manifest](evidence/cp0.4-b-ring-first-v9-editorial-freeze.json)。

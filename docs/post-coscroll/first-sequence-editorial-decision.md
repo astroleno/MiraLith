@@ -1,10 +1,10 @@
 # First-Sequence Editorial Decision
 
-状态：`CP0.2 PASS (TECH) / CP0.3 IN REVIEW (AUTHOR)`
-当前版本：`1.3`
-CP0.4 freeze hash：`未生成`
+状态：`CP0.1 PASS / CP0.2 PASS (TECH) / CP0.3 PASS (AUTHOR) / CP0.4 PASS (AUTHOR + TECH)`
+当前版本：`2.0`
+CP0.4 freeze hash：`d906937cc0b885b12fc942f91ce50e9af919878142cead5c0b36d8bd648140a1`
 
-CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求继续。`cp02-v1` 被否决为“停住后才粒子化 / 过早暖化”；`cp02-v2` 错误反转 source yaw；`cp02-v3` 又把真实 yaw flattened 为平面转字。`cp02-v8` 只升级了 B，因而不能作为 GO 输入。当前 `cp02-v9` 已按作者决定补回同基线 A/B/C 与 scrub，并以 TECH 证据通过 CP0.2；尚未有作者对一个确切版本的 GO，因此本文件仍不包含冻结项。
+CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求继续。`cp02-v1` 被否决为“停住后才粒子化 / 过早暖化”；`cp02-v2` 错误反转 source yaw；`cp02-v3` 又把真实 yaw flattened 为平面转字。`cp02-v8` 只升级了 B，因而不能作为 GO 输入。`cp02-v9` 已按作者决定补回同基线 A/B/C 与 scrub，并以 TECH 证据通过 CP0.2；作者最终选择 B，CP0.3 与 CP0.4 已冻结到本文件链接的确切 B v9 线性样片。
 
 ## 当前可审阅输入
 
@@ -19,6 +19,8 @@ CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求�
 - [CP0.2 v9 A/B/C parity manifest](evidence/cp0.2-v9-parity-qr-deferred-exposure-manifest.json)
 - [CP0.2 v9 exposure and reorder measurements](evidence/cp0.2-v9-parity-qr-deferred-exposure-boundary-measurements.json)
 - [CP0.2 v9 B audio audit reproduction method](evidence/cp0.2-v9-b-audio-audit-method.md)
+- [CP0.4 B v9 editorial freeze](evidence/cp0.4-b-ring-first-v9-editorial-freeze.json)
+- [CP0.4 B v9 checksum index](evidence/cp0.4-b-ring-first-v9-editorial-freeze-checksums.sha256)
 - [historical v3 variants / real-yaw correction](cp0.2-bridge-variants-v3.md)
 - [historical v3 media identity manifest](evidence/cp0.2-v3-source-direction-bridge-manifest.json)
 - [historical v2 variants / source-direction correction](cp0.2-bridge-variants-v2.md)
@@ -29,15 +31,15 @@ CP0.1 Asset Truth 已由作者于 2026-07-20 通过；作者随后明确要求�
 - 本地 v8 B 证据根目录：`/Users/aitoshuu/Documents/GitHub/MiraLith/apps/site/.generated/post-coscroll-editorial/cp02-v8-b-ring-first-complete/`
 - 本地 v9 A/B/C 证据根目录：`/Users/aitoshuu/Documents/GitHub/MiraLith/apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/`
 
-CP0.1 PASS 只代表素材事实可作为下一阶段输入。`CP0.2 PASS (TECH)` 只代表 A/B/C 已在同一完成度下可公平比较；它仍然**不等于 Editorial GO**。
+CP0.1 PASS 只代表素材事实可作为下一阶段输入。`CP0.2 PASS (TECH)` 只代表 A/B/C 已在同一完成度下可公平比较；作者之后对 B 的明确选择与“可以，继续吧”才构成下列 CP0.3 GO 与 CP0.4 freeze。
 
 CP0.1 已确认：桌面保留 letterbox、字符从实时 yaw / speed 解体、`n=354` 为 coherent-ring 候选、`[n=355,n=363)` 为技术交棒窗。详见 checkpoint ledger。
 
-## CP0.2 已通过的技术比较；CP0.3 待作者评审
+## CP0.2 已通过的技术比较；B 已由作者冻结
 
 共同 bridge 已按作者反馈改为：实体“空”保持真实 source 的**负 `rotation.y` yaw**并加速，在真实 capture pose 中从笔画内剥落；它不再被当成平面字旋转。粒子与其形成的缺口环保持相同方向与冷玉蓝，最后才交给真实 ArtBreeze 环。桥段相位只使用常量 offset，不为贴合影片而翻转。它不是生产实现，也不能替代未来的 live yaw / speed 采样。
 
-### 当前 v9 同基线比较
+### v9 同基线比较（历史技术输入）
 
 作者已明确：`n=0…2` 的 QR / title slate 与 `n=3` 黑帧后移至真正体验片尾，本轮首段从 `n=4` 开始；B 的暗场→白场接力用四帧曝光退场，而不是单帧硬切。三版都使用同一 `109` 帧 browser-captured review bridge、`960×540 / 30fps` 格式、静默网页前缀和 `12ms` source-audio fade 基线；每版都配有 `900` 帧 / `30s` 的同一 scrub trace。
 
@@ -71,28 +73,33 @@ v9 的 B 全帧亮度为 `30.5777 → 67.6324 → 104.667 → 141.724 → 178.62
 
 ## CP0.3 GO 记录
 
-状态：`IN REVIEW — 等待作者针对确切样片给出 GO`
-
-### 作者评审笔记（2026-07-25）
-
-作者对 [B-ring-first-v9 scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/B-ring-first-v9-qr-deferred-exposure-scrub.mp4)（SHA-256 `3168c035eefcceada6bd8bc099f9192871ab6305e42f39244e03aabcbfb1cabb`）的反馈是：**“B 用这个更自然一些。”** 这记录为 B 的视觉 / scrub 偏好，不是对其静音 scrub 之外的线性声音确认，也不是对任何确切线性样片的 Editorial GO。
-
-作者现在可审阅 v9 的同基线 A/B/C + scrub。当前建议优先审阅 `B-ring-first-v9-qr-deferred-exposure.mp4`（SHA-256 `803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e`）；这只是建议，不是 GO。只有在作者对一个确切版本给出 GO，并完成 B 的主观声音确认（如选择 B）后，才填写以下字段：
+状态：`PASS — AUTHOR，2026-07-25`
 
 | 字段 | 值 |
 | --- | --- |
-| 作者 | `—` |
-| 确切视觉样片文件名 + SHA-256 | `—` |
-| 确切声音样片文件名 + SHA-256 | `—` |
-| GO 时间 | `—` |
-| 作者对“重复、等待与推石头”的说明 | `—` |
-| 对 spinner / brand-loading / 转场炫技风险的确认 | `—` |
-| 是否需要补镜头 / 新场景 | `—` |
+| 作者 | MiraLith 作者（2026-07-25） |
+| 确切视觉样片文件名 + SHA-256 | [B-ring-first-v9 linear](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/linear/B-ring-first-v9-qr-deferred-exposure.mp4)；`803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e` |
+| 确切声音样片文件名 + SHA-256 | 同一 B linear 的 AAC review audio（source-content transcode，不是原 AAC packets）；同一 SHA。 |
+| 视觉评审证据 | [B-ring-first-v9 scrub](../../apps/site/.generated/post-coscroll-editorial/cp02-v9-parity-qr-deferred-exposure/scrub/B-ring-first-v9-qr-deferred-exposure-scrub.mp4)；`3168c035eefcceada6bd8bc099f9192871ab6305e42f39244e03aabcbfb1cabb`。 |
+| 作者 GO | 先确认：**“B 用这个更自然一些。”**；随后确认：**“可以，继续吧”**。后一句授权将已选 B 进入确切线性 B v9 的 Stage 0 freeze。 |
+| “重复、等待与推石头”的读法 | B 先把持续旋转、粒子重组而来的网页环交给影片的真实环和“推石头”文字，再返回 LOADING / 等待者；因此读作环的重复与等待，而不是从等待画面普通 seek 到影片。 |
+| spinner / brand-loading / 转场炫技风险 | 选择 B，未选择 C 的 persistent DOM ring；冻结版中没有 DOM ring，真实影片环从 `n=355` 起单独接管。网页 bridge 仅为粒子交棒代理，不冒充现存 terminal。 |
+| 声音 | 接受 `n=555 → n=4` 的 `105.986ms` deliberate restart pocket；不要求 audio-only v10。技术审计与复现方法见 [audio audit](evidence/cp0.2-v9-b-audio-audit-method.md)。 |
+| 补镜头 / 新场景 | 不需要；QR/title slate `n=0…2` 与 `n=3` 黑帧继续后移到真正体验结尾。 |
 
-修改意见、混合建议或 NO-GO 必须先转化成新的本地样片并重新评审，不能直接写成 GO。
+## CP0.4 Editorial Freeze
 
-## CP0.4 占位
+状态：`PASS — AUTHOR + TECH，2026-07-25`
 
-状态：`LOCKED — CP0.3 required`
+权威冻结记录为 [cp0.4-b-ring-first-v9-editorial-freeze.json](evidence/cp0.4-b-ring-first-v9-editorial-freeze.json)，freeze hash 为 `d906937cc0b885b12fc942f91ce50e9af919878142cead5c0b36d8bd648140a1`；媒体与证据身份见 [checksum index](evidence/cp0.4-b-ring-first-v9-editorial-freeze-checksums.sha256)。该 JSON 是另一个实现者填写 media source spec 时的唯一冻结输入。
 
-作者对一个确切样片版本给出 GO 后，才允许写入最终镜头顺序、各段 `[startPTS, endPTSExclusive)`、首尾 raw-frame hash、声音、文字时机、补充素材、DOM / 影片职责边界、连续性参数、确认记录和 freeze hash。后续若改变任一冻结项，CP0.4 必须标记为 `REOPENED`。
+| 冻结项 | 确切决定 |
+| --- | --- |
+| 镜头顺序 / source PTS / frame hash | `web[0,109)` → 四帧曝光 → ArtBreeze `[n=355,n=556)` / `[1,065,000,1,668,000)`（`9fb23e4d… → 49301f8b…`）→ 四帧暗化 → ArtBreeze `[n=4,n=355)` / `[12,000,1,065,000)`（`575222c1… → 63c8775a…`）。完整半开范围和 MD5 在 freeze JSON。 |
+| 文字 | “我”从 `n=377 / PTS=1,131,000` 起，逐字到完整句；所有输出帧映射与 source 半开 PTS 固定在 freeze JSON 的 `textTiming`。 |
+| 声音 | 网页前缀静默；`n=355` source audio 12ms fade-in、末端 12ms fade-out；`105.986ms` restart pocket；`n=4` source audio 12ms fade-in。 |
+| DOM / 视频职责 | B 不使用 DOM ring。网页仅让不透明“空”的实时负 Y yaw 以低饱和玉粒子 / 开口环交棒；真实影片环自 `n=355` 起唯一接管。fallback “心”不得作为源。 |
+| 连续性 | 保留母版 letterbox；960×540 review fixture 的中心差 `0.06px`、半径差 `0.15px`、gap `155° → 154°`；四帧 YAVG 与颜色测量均冻结为 editorial evidence，而不是 production viewport/color contract。 |
+| 补充素材 | 无；QR/title slate 和黑帧不在首段，仍后移至真实体验结束。 |
+
+任何 selected-media SHA、镜头顺序、半开 PTS、frame hash、文字时机、声音、DOM / 影片职责、连续性参数或补充素材决定的修改，均必须把 CP0.4 标记为 `REOPENED` 并先产出新的 Stage 0 评审样片。此 freeze 结束 Stage 0，**不授权** Stage 1、Stage 2、正式 CoScroll terminal、路由、ScrollTrigger、Canvas 残影、CDN 或 production media contract。
