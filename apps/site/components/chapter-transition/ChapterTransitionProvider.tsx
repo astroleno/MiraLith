@@ -30,6 +30,7 @@ import type {
 const RETURN_SNAPSHOT_PREFIX = "miralith:chapter-return:";
 const DESTINATION_FALLBACK_REQUEST_MS = 2_600;
 const DESTINATION_HARD_DEADLINE_MS = 3_000;
+const DESTINATION_FALLBACK_COMMIT_DEADLINE_MS = 1_000;
 const INPUT_INERTIA_SETTLE_MS = 160;
 
 const idleSnapshot: ChapterTransitionSnapshot = {
@@ -496,6 +497,27 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
     publish(runtime, "waiting-ready");
   }, [beginReveal, publish]);
 
+  const armFallbackCommitDeadline = useCallback((runtime: ActiveChapterTransition) => {
+    if (runtime.deadlineTimer !== null) {
+      window.clearTimeout(runtime.deadlineTimer);
+    }
+    runtime.deadlineTimer = window.setTimeout(() => {
+      if (activeRef.current !== runtime || runtime.state === "revealing") {
+        return;
+      }
+      if (runtimeCanReveal(runtime)) {
+        tryAdvanceRef.current(runtime);
+        return;
+      }
+      if (runtime.recovering) {
+        restoreScrollRestoration();
+        window.location.replace(runtime.sourceHref);
+        return;
+      }
+      recoverSourceRef.current(runtime, "目标章节降级画面未能在提交上限内就绪");
+    }, DESTINATION_FALLBACK_COMMIT_DEADLINE_MS);
+  }, [restoreScrollRestoration]);
+
   const requestFallback = useCallback((runtime: ActiveChapterTransition, reason: string) => {
     if (activeRef.current !== runtime || runtime.fallbackRequested) {
       return;
@@ -508,6 +530,7 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
       return;
     }
     runtime.fallbackRequested = true;
+    armFallbackCommitDeadline(runtime);
     runtime.error = reason;
     const resetNeedsRetry = !runtime.resetComplete;
     cancelDestinationAttempt(runtime);
@@ -553,7 +576,7 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
         recoverSourceRef.current(runtime, "目标章节降级画面不可用");
       }
     });
-  }, [publish, restoreScrollRestoration]);
+  }, [armFallbackCommitDeadline, publish, restoreScrollRestoration]);
 
   const processDestination = useCallback((runtime: ActiveChapterTransition) => {
     if (

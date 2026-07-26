@@ -1121,6 +1121,9 @@ test("a CoScroll readiness timeout commits its visible fallback before releasing
   await expect(page.locator('[data-visual-fallback="coscroll"]')).toBeVisible({ timeout: 5_000 });
   await waitForIdle(page);
   await expect(page.locator("body")).not.toHaveAttribute("aria-busy", "true");
+  const phases = await readTransitionPhases(page);
+  expect(phases).toContain("fallback-ready");
+  expect(phases).not.toContain("recovery-begin");
   releaseAnchor();
 });
 
