@@ -74,7 +74,7 @@ export type MiraLithChapter = MiraLithKnownChapter;
 export type MiraLithChapterIndex = MiraLithKnownChapter["index"];
 export type PublishedMiraLithChapter = MiraLithKnownChapter & { availability: "published" };
 
-export const publishedMiraLithChapters = miraLithChapterRegistry.filter(
+export const publishedMiraLithChapters: readonly PublishedMiraLithChapter[] = miraLithChapterRegistry.filter(
   (chapter): chapter is PublishedMiraLithChapter => chapter.availability === "published"
 );
 
