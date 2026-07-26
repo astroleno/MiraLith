@@ -451,6 +451,7 @@ Run the existing production reject cases through the default `playwright.config.
 - [ ] **Step 5: Verify local playback and commit Unit 2D.**
 
 ```bash
+set -e
 pnpm --filter @miralith/site media:post-coscroll:check
 pnpm --filter @miralith/site typecheck
 pnpm exec playwright test -c playwright.config.ts tests/e2e/post-coscroll-media.spec.ts --project=desktop
@@ -471,7 +472,7 @@ Expected: all four paths mount without a predecessor. ArtBreeze plays the CP1.1 
 
 - [ ] **Step 1: Generate a compact, durable access report.**
 
-Record the baseline commit, Unit 2 commit SHAs, resolver scope algorithm version, access matrix outputs, exact CP1.1 source-spec/editorial-freeze hashes, the local ArtBreeze item identity, commands, Playwright counts, and production-isolation results. Do not copy ignored media or a preview manifest into Git.
+Record the baseline commit, final Unit 2 HEAD and component commit SHAs, resolver scope algorithm version, access matrix outputs, exact CP1.1 source-spec/editorial-freeze hashes, the local ArtBreeze item identity, commands, and separate counts/results for the Node, isolated-production, and local-preview runner groups. For production, record the isolated worktree HEAD and proof that it has no ignored preview-media root. For local-preview, record the exact runner config name and catalog identity, but do not copy ignored media or a preview manifest into Git.
 
 - [ ] **Step 2: Validate evidence paths and checksums.**
 
@@ -489,14 +490,38 @@ Set `CP1.2 — Chapter Access Graph` to `IN REVIEW` with links to the access rep
 - [ ] **Step 4: Run the final verification set and commit evidence.**
 
 ```bash
+set -e
 pnpm --filter @miralith/site media:post-coscroll:check
 pnpm --filter @miralith/site typecheck
-pnpm exec playwright test tests/e2e/chapter-transition.spec.ts tests/e2e/chapter-navigation.spec.ts tests/e2e/post-coscroll-media.spec.ts tests/e2e/post-coscroll-route-shell.spec.ts --project=desktop
+pnpm exec playwright test -c playwright.unit.config.ts tests/unit/miraLithChapters.spec.ts tests/unit/resolveChapterPreviewScope.spec.ts
+
+unit2_production_worktree="$(mktemp -d /tmp/miralith-cp12-production-XXXXXX)"
+rmdir "$unit2_production_worktree"
+cleanup_unit2_production_worktree() {
+  git worktree remove --force "$unit2_production_worktree" 2>/dev/null || true
+}
+trap cleanup_unit2_production_worktree EXIT
+git worktree add --detach "$unit2_production_worktree" HEAD
+test ! -e "$unit2_production_worktree/apps/site/public/media/post-coscroll"
+pnpm --dir "$unit2_production_worktree" install --frozen-lockfile
+CI=1 MIRALITH_PLAYWRIGHT_PORT=3110 pnpm --dir "$unit2_production_worktree" exec playwright test \
+  -c playwright.config.ts \
+  tests/e2e/chapter-transition.spec.ts \
+  tests/e2e/chapter-navigation.spec.ts \
+  tests/e2e/post-coscroll-media.spec.ts \
+  --project=desktop
+cleanup_unit2_production_worktree
+trap - EXIT
+
+pnpm exec playwright test \
+  -c playwright.local-preview.config.ts \
+  tests/e2e/post-coscroll-route-shell.spec.ts \
+  --project=desktop
 git add docs/post-coscroll/CHECKPOINTS.md docs/post-coscroll/evidence/cp1.2-chapter-access-graph-status.json docs/post-coscroll/evidence/cp1.2-chapter-access-graph-checksums.sha256
 git commit -m "docs(post-coscroll): record chapter access graph review"
 ```
 
-Expected: the report proves public isolation, preview session/history handling, forged-state rejection, direct-known fallback, and actual local ArtBreeze playback without advancing into Unit 3.
+Expected: the final-HEAD Node suites prove the registry and scope contracts; the isolated production suite proves public isolation, session/history handling, forged-state rejection, and production media isolation without a preview catalog; the local-preview dev suite proves actual ArtBreeze playback against the generated catalog. The report must keep these results separate and must not claim that the production runner played local media. None of this advances into Unit 3.
 
 ## Plan self-review
 
@@ -507,5 +532,5 @@ Expected: the report proves public isolation, preview session/history handling, 
 | Validated query/sessionStorage/history with robust dirty-build identity | Task 2 |
 | One resolver used by Provider, gate, preloader, navigation | Task 3 |
 | Four direct route shells and real local-manifest ArtBreeze playback | Task 4 |
-| CP1.2 matrix, history, forged state, production rail isolation, evidence | Task 5 |
+| CP1.2 matrix, final-HEAD Node contracts, isolated production rail, local-preview playback, evidence | Task 5 |
 | No Stage 2 visual implementation | Scope boundary and Task 3 Step 4 / Task 4 Step 3 |
