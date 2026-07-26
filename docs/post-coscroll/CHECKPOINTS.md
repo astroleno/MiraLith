@@ -158,3 +158,24 @@ Unit 1 已在隔离分支建立 committed source spec、共享 manifest facade�
 CP1.1 的 source / derivative / resolver / isolation contract 已关闭。Dulwich 与其余母版位于不同目录，因此 prepare 新增显式 `--source-file dulwich=…` 覆盖；该绝对路径只存在于本地命令参数，绝不进入 source spec 或 preview manifest。Li / UGCFlow 按计划保留 `pending`，不会伪造时间码、视频或 URL。
 
 本 checkpoint 不声称 Stage 2 route 已存在或完成页内播放；Unit 2 必须先建立 known / preview route shell，届时再用此已验证 manifest 做实际路由播放复核。production publication、远端 Range/cache 验证与 deploy manifest 仍属于 Unit 9。
+
+## CP1.2 — Chapter Access Graph
+
+状态：`IN PROGRESS — Unit 2.0 foundation committed；Unit 2A–2D 尚未开始`
+
+### Unit 2.0 — Transition Foundation
+
+状态：`PASS — TECH，2026-07-26`
+
+本项只冻结现有 01–03 public rail 的 transition foundation，作为后续 known / preview / published access graph 的可验证基线；它不新增 chapter access resolver、不创建 04–07 route shell、不启用 CoScroll terminal，也不打开 CP1.2 的完成门禁。
+
+| 项目 | 已冻结事实 |
+| --- | --- |
+| 代码候选身份 | 基线 `ec3cb9aaeea5cc60de17e07caefc60789d40f46a`；精确 staged binary patch SHA-256 `b97ece4548698f4fd4869d133b23bf2c2294637dd1c8ac25b9c1fdc4b06464d0`（202,538 bytes / 29 paths）。独立 foundation commit 为 `f64287b02400caf7638d82be3016419cf7596635`。 |
+| 目标分支集成 | 在文档基线 `b228ae0818d2fa6c03880d5a4ac61ad5d710400d` 上以等效 cherry-pick 提交 `7e60b8591baa1af0954c6f55992270718f3b93f6` 集成；其代码 tree 与获批 patch 一致。 |
+| 审查范围补充：CoScroll API closure | 除原候选中的 `types.ts`、`CoScrollStandaloneDemo.tsx`、`CoScrollSceneContent.tsx`、`CoScrollSilkBackground.tsx`、`CoScrollTextBillboard.tsx`、`CoScrollJadeAnchor.tsx` 外，明确审查并纳入 [`preloadCoScrollAssets.ts`](../../packages/coscroll-scene/src/preloadCoScrollAssets.ts) 与 [`index.ts`](../../packages/coscroll-scene/src/index.ts)。前者提供 transition target preload 所需的 package API；后者仅公开该 API。两者不包含 residue、粒子、terminal、材质或 rotation 调参。 |
+| RadioGaga 边界 | 仅纳入 opening asset preload 的 `preloadRadioGagaAssets.ts` 及其单一 `index.ts` export；不纳入 `preloadRadioGagaFinaleAssets`、`loadFinale` 或 finale-ready 语义。 |
+| 禁止项复核 | 候选 patch 不含 `CoScrollAnchorResidue`、`particleization`、`reviewAutoParticleization`、`preloadRadioGagaFinaleAssets`、`loadFinale`、`resolveLandingVisualPolicy`、`ReliefLiteValidationHarness`、`MIRALITH_POST_COSCROLL_MEDIA_MODE` 或 `/artbreeze` 路由实现。 |
+| 已验证 | clean sparse candidate 上 site、CoScroll 与 RadioGaga typecheck、site lint、`git diff --check` 均通过；desktop transition/navigation suite 为 `33 passed / 3 expected skipped`。该测试结果只证明 foundation，不替代后续 local-preview route-shell 实播验证。 |
+
+后续 Unit 2A 必须仍按已通过的计划先实现纯 access resolver contract；CP1.2 仅会在 access matrix、history、production isolation 与独立 local-preview 实播验证均完成后才可标记 `PASS`。
