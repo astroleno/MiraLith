@@ -23,7 +23,9 @@ export type CoScrollFallbackReason =
   | "context-lost"
   | "asset-failed"
   | "quality-tier"
-  | "reduced-motion";
+  | "reduced-motion"
+  | "forced"
+  | "timeout";
 
 export interface CoScrollLyricSegment {
   id: string;
@@ -96,8 +98,10 @@ export interface CoScrollSceneContentProps {
   scrollVelocity?: number;
   paused?: boolean;
   viewport?: "desktop" | "mobile";
-  onReady?: () => void;
-  onFallback?: (reason: CoScrollFallbackReason) => void;
+  readinessGeneration?: string;
+  onReadinessGenerationChange?: (readinessGeneration: string) => void;
+  onReady?: (readinessGeneration?: string) => void;
+  onFallback?: (reason: CoScrollFallbackReason, readinessGeneration?: string) => void;
 }
 
 export type { QualityProfile, ResolvedQualityTier };

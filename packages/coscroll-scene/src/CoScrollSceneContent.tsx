@@ -1,13 +1,22 @@
 "use client";
 
-import { useFrame, useThree } from "@react-three/fiber";
-import { Component, useEffect, useMemo, type ErrorInfo, type ReactNode } from "react";
+import { addAfterEffect, useFrame, useThree } from "@react-three/fiber";
+import {
+  Component,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  type ErrorInfo,
+  type ReactNode
+} from "react";
 import * as THREE from "three";
 import type { CoScrollFallbackReason, CoScrollSceneContentProps } from "./types";
 import { CoScrollCausticLightField } from "./CoScrollCausticLightField";
 import { CoScrollJadeAnchor, preloadCoScrollAnchorGeometry } from "./CoScrollJadeAnchor";
 import { CoScrollSilkBackground } from "./CoScrollSilkBackground";
-import { CoScrollTextBillboard } from "./CoScrollTextBillboard";
+import { CoScrollTextBillboard, preloadCoScrollSourceFont } from "./CoScrollTextBillboard";
 import { createCoScrollLayeredLyrics, type CoScrollLayeredLyricItem } from "./createCoScrollLayeredLyrics";
 import { createCoScrollVisualState } from "./createCoScrollVisualState";
 
@@ -51,6 +60,8 @@ export function CoScrollSceneContent({
   scrollVelocity = 0,
   paused = false,
   viewport = "desktop",
+  readinessGeneration = "default",
+  onReadinessGenerationChange,
   onReady,
   onFallback
 }: CoScrollSceneContentProps) {
@@ -148,22 +159,141 @@ export function CoScrollSceneContent({
     () => assets.anchors.find((asset) => asset.id === state.currentAnchor),
     [assets.anchors, state.currentAnchor]
   );
+  const anchorReadinessGeneration = [
+    readinessGeneration,
+    state.currentAnchor,
+    currentAnchorAsset?.modelSrc ?? "missing",
+    state.shouldLoadModel ? "model" : "static"
+  ].join("|");
+  const readinessRef = useRef({
+    generation: anchorReadinessGeneration,
+    silk: false,
+    anchor: !state.shouldLoadModel,
+    font: !sourceMatchMode,
+    frame: false,
+    reported: false
+  });
+  const pendingFrameGenerationRef = useRef<string | null>(null);
+  if (readinessRef.current.generation !== anchorReadinessGeneration) {
+    readinessRef.current = {
+      generation: anchorReadinessGeneration,
+      silk: readinessRef.current.silk,
+      anchor: !state.shouldLoadModel,
+      font: !sourceMatchMode,
+      frame: false,
+      reported: false
+    };
+  }
+  useLayoutEffect(() => {
+    onReadinessGenerationChange?.(anchorReadinessGeneration);
+  }, [anchorReadinessGeneration, onReadinessGenerationChange]);
+  const markReadyPart = useCallback((
+    part: "silk" | "anchor" | "font" | "frame",
+    reportedGeneration = anchorReadinessGeneration
+  ) => {
+    if (readinessRef.current.generation !== reportedGeneration) {
+      return;
+    }
+    const wasReady = readinessRef.current[part];
+    readinessRef.current[part] = true;
+    if (!wasReady && typeof performance !== "undefined") {
+      performance.mark(`miralith:coscroll-readiness:${reportedGeneration}:${part}`);
+    }
+    if (part !== "frame" && !wasReady) {
+      readinessRef.current.frame = false;
+    }
+    const readiness = readinessRef.current;
+    if (
+      !readiness.reported &&
+      readiness.silk &&
+      readiness.anchor &&
+      readiness.font &&
+      readiness.frame
+    ) {
+      readiness.reported = true;
+      onReady?.(reportedGeneration);
+    }
+  }, [anchorReadinessGeneration, onReady]);
+  const reportFallback = useCallback((
+    reason: CoScrollFallbackReason,
+    reportedGeneration = anchorReadinessGeneration
+  ) => {
+    if (readinessRef.current.generation === reportedGeneration) {
+      onFallback?.(reason, reportedGeneration);
+    }
+  }, [anchorReadinessGeneration, onFallback]);
+
+  useEffect(() => addAfterEffect(() => {
+    const pendingGeneration = pendingFrameGenerationRef.current;
+    if (!pendingGeneration) {
+      return;
+    }
+    pendingFrameGenerationRef.current = null;
+    markReadyPart("frame", pendingGeneration);
+  }), [markReadyPart]);
+
+  useFrame(() => {
+    const readiness = readinessRef.current;
+    if (
+      active &&
+      readiness.generation === anchorReadinessGeneration &&
+      readiness.silk &&
+      readiness.anchor &&
+      readiness.font &&
+      !readiness.frame
+    ) {
+      pendingFrameGenerationRef.current = anchorReadinessGeneration;
+    }
+  });
+
+  useEffect(() => {
+    if (!sourceMatchMode) {
+      markReadyPart("font");
+      return;
+    }
+    let cancelled = false;
+    void preloadCoScrollSourceFont().then((loaded) => {
+      if (cancelled) {
+        return;
+      }
+      if (!loaded) {
+        reportFallback("asset-failed", anchorReadinessGeneration);
+        return;
+      }
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          if (!cancelled) {
+            markReadyPart("font", anchorReadinessGeneration);
+          }
+        });
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [anchorReadinessGeneration, markReadyPart, reportFallback, sourceMatchMode]);
+
+  useEffect(() => {
+    if (!state.shouldLoadModel) {
+      markReadyPart("anchor", anchorReadinessGeneration);
+    }
+  }, [anchorReadinessGeneration, markReadyPart, state.shouldLoadModel]);
 
   useEffect(() => {
     if (quality.tier === "fallback") {
-      onFallback?.("quality-tier");
+      reportFallback("quality-tier", anchorReadinessGeneration);
     }
-  }, [onFallback, quality.tier]);
+  }, [anchorReadinessGeneration, quality.tier, reportFallback]);
 
   useEffect(() => {
     if (!sourceMatchMode || !active) {
       return;
     }
 
-    assets.anchors.forEach((anchor) => {
-      preloadCoScrollAnchorGeometry(anchor.modelSrc, true);
-    });
-  }, [active, assets.anchors, sourceMatchMode]);
+    if (currentAnchorAsset) {
+      void preloadCoScrollAnchorGeometry(currentAnchorAsset.modelSrc, true);
+    }
+  }, [active, currentAnchorAsset, sourceMatchMode]);
 
   useEffect(() => {
     if (!state.shouldLoadModel) {
@@ -171,9 +301,9 @@ export function CoScrollSceneContent({
     }
 
     if (!currentAnchorAsset) {
-      onFallback?.("asset-failed");
+      reportFallback("asset-failed", anchorReadinessGeneration);
     }
-  }, [currentAnchorAsset, onFallback, state.shouldLoadModel]);
+  }, [anchorReadinessGeneration, currentAnchorAsset, reportFallback, state.shouldLoadModel]);
 
   const renderStaticReducedScene = state.fallbackMode === "dom-static";
 
@@ -241,6 +371,7 @@ export function CoScrollSceneContent({
         rotation={2.42}
         opacity={sourceMatchMode ? 1 : state.backgroundIntensity}
         isolateFromTransmission={sourceMatchMode}
+        onReady={() => markReadyPart("silk", anchorReadinessGeneration)}
       />
       {sourceMatchMode ? null : (
         <CoScrollCausticLightField
@@ -258,8 +389,12 @@ export function CoScrollSceneContent({
       <group renderOrder={2000}>{layeredLyrics.back.map(renderLyric)}</group>
 
       {state.shouldLoadModel && currentAnchorAsset ? (
-        <CoScrollAssetBoundary onFallback={onFallback}>
+        <CoScrollAssetBoundary
+          key={anchorReadinessGeneration}
+          onFallback={(reason) => reportFallback(reason, anchorReadinessGeneration)}
+        >
           <CoScrollJadeAnchor
+            key={anchorReadinessGeneration}
             modelSrc={currentAnchorAsset.modelSrc}
             materialPreset={currentAnchorAsset.materialPreset}
             position={sourceMatchMode ? sourceAnchorPosition : [0, 0, 0]}
@@ -279,8 +414,8 @@ export function CoScrollSceneContent({
             sourceMaterial={sourceMatchMode}
             renderOrder={sourceMatchMode ? 2600 : undefined}
             listenToScrollInput={!sourceMatchMode}
-            onReady={onReady}
-            onFallback={onFallback}
+            onReady={() => markReadyPart("anchor", anchorReadinessGeneration)}
+            onFallback={(reason) => reportFallback(reason, anchorReadinessGeneration)}
           />
         </CoScrollAssetBoundary>
       ) : null}

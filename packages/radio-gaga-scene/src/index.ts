@@ -9,6 +9,10 @@ export {
 } from "./radioGagaFinalOutput";
 export { RadioGagaParticleTransition } from "./RadioGagaParticleTransition";
 export {
+  preloadRadioGagaOpeningAssets,
+  RADIO_GAGA_OPENING_MODEL_SRC
+} from "./preloadRadioGagaAssets";
+export {
   mapRadioGagaChoreography,
   mapRadioGagaProgress,
   RADIO_GAGA_TIMELINE

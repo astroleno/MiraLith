@@ -41,6 +41,34 @@ test("homepage and radioGAGA use one shared chapter navigation component", ({}, 
   expect(radioSource).toContain("MiraLithChapterNavigation");
 });
 
+test("the non-published LuBirth study route keeps native chapter-link navigation", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The native-link fallback contract only needs one browser profile.");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+
+  for (const target of [
+    { href: "/radio-gaga", label: "02 Radio Gaga" },
+    { href: "/coscroll", label: "03 CoScroll" }
+  ]) {
+    await page.goto("/lubirth-revised?copy=visible");
+    await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-copy-interactive", "true");
+    const link = page.locator(`.lubirth-revised__title-rail a[aria-label^='${target.label}']`);
+    await expect(link).toBeVisible();
+    const observationKey = `miralith:test:native-link:${target.href}`;
+    await page.evaluate(({ key, targetHref }) => {
+      document.addEventListener("click", (event) => {
+        const anchor = (event.target as Element | null)?.closest<HTMLAnchorElement>("a");
+        if (anchor?.pathname === targetHref) {
+          window.sessionStorage.setItem(key, String(event.defaultPrevented));
+        }
+      }, { once: true });
+    }, { key: observationKey, targetHref: target.href });
+
+    await link.click();
+    await expect(page).toHaveURL(new RegExp(`${target.href}$`));
+    expect(await page.evaluate((key) => window.sessionStorage.getItem(key), observationKey)).toBe("false");
+  }
+});
+
 test("chapter navigation expands only the current chapter", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "The full chapter rail is a desktop pattern.");
 

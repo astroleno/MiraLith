@@ -5,6 +5,7 @@ export { CoScrollStandaloneDemo } from "./CoScrollStandaloneDemo";
 export { CoScrollSilkBackground } from "./CoScrollSilkBackground";
 export { CoScrollMineralField } from "./CoScrollMineralField";
 export { CoScrollTextBillboard } from "./CoScrollTextBillboard";
+export { preloadCoScrollOpeningAssets } from "./preloadCoScrollAssets";
 export {
   DEFAULT_COSCROLL_ASSETS,
   SOURCE_COSCROLL_EXCERPT_ASSETS,

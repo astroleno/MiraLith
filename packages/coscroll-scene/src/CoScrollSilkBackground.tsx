@@ -93,6 +93,7 @@ export interface CoScrollSilkBackgroundProps {
   rotation?: number;
   opacity?: number;
   isolateFromTransmission?: boolean;
+  onReady?: () => void;
 }
 
 export function CoScrollSilkBackground({
@@ -105,9 +106,11 @@ export function CoScrollSilkBackground({
   noiseIntensity = 1.3,
   rotation = 2.42,
   opacity = 1,
-  isolateFromTransmission = false
+  isolateFromTransmission = false,
+  onReady
 }: CoScrollSilkBackgroundProps) {
   const meshRef = useRef<THREE.Mesh>(null);
+  const readyRef = useRef(false);
   const uniforms = useMemo<SilkUniforms>(
     () => ({
       uColor: { value: new THREE.Color().setRGB(...hexToNormalizedRgb(color)) },
@@ -131,12 +134,20 @@ export function CoScrollSilkBackground({
   }, [color, noiseIntensity, opacity, rotation, scale, speed, uniforms]);
 
   useFrame((_state, delta) => {
-    if (!active || paused || reducedMotion) {
+    if (!active) {
       return;
     }
 
     const material = meshRef.current?.material as THREE.ShaderMaterial | undefined;
     if (!material) {
+      return;
+    }
+
+    if (!readyRef.current) {
+      readyRef.current = true;
+      onReady?.();
+    }
+    if (paused || reducedMotion) {
       return;
     }
 

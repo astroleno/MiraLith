@@ -91,6 +91,7 @@ const jadeMaterialPresets = {
 
 const preparedAnchorGeometryCache = new Map<string, Promise<PreparedAnchorGeometry>>();
 const environmentTextureCache = new WeakMap<THREE.WebGLRenderer, Promise<THREE.Texture | null>>();
+let rawEnvironmentTexturePromise: Promise<THREE.DataTexture | null> | null = null;
 let normalTexturePromise: Promise<THREE.Texture | null> | null = null;
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -233,20 +234,33 @@ function normalizeObject(scene: THREE.Object3D, fallback = false): PreparedAncho
   };
 }
 
+function loadRawEnvironmentTexture() {
+  if (!rawEnvironmentTexturePromise) {
+    rawEnvironmentTexturePromise = new HDRLoader()
+      .loadAsync("/assets/coscroll/textures/qwantani_moon_noon_puresky_1k.hdr")
+      .then((texture) => {
+        texture.mapping = THREE.EquirectangularReflectionMapping;
+        return texture;
+      })
+      .catch(() => null);
+  }
+  return rawEnvironmentTexturePromise;
+}
+
 function loadEnvironmentTexture(gl: THREE.WebGLRenderer) {
   const cached = environmentTextureCache.get(gl);
   if (cached) {
     return cached;
   }
 
-  const promise = new HDRLoader()
-    .loadAsync("/assets/coscroll/textures/qwantani_moon_noon_puresky_1k.hdr")
+  const promise = loadRawEnvironmentTexture()
     .then((texture) => {
+      if (!texture) {
+        return null;
+      }
       const pmremGenerator = new THREE.PMREMGenerator(gl);
       pmremGenerator.compileEquirectangularShader();
-      texture.mapping = THREE.EquirectangularReflectionMapping;
       const envTexture = pmremGenerator.fromEquirectangular(texture).texture;
-      texture.dispose();
       pmremGenerator.dispose();
       return envTexture;
     })
@@ -325,7 +339,14 @@ function clonePreparedAnchorGeometry(prepared: PreparedAnchorGeometry) {
 }
 
 export function preloadCoScrollAnchorGeometry(modelSrc: string, sourceMode = false) {
-  loadPreparedAnchorGeometry(modelSrc, sourceMode).catch(() => undefined);
+  return loadPreparedAnchorGeometry(modelSrc, sourceMode).then(() => undefined).catch(() => undefined);
+}
+
+export function preloadCoScrollMaterialTextures() {
+  return Promise.all([loadRawEnvironmentTexture(), loadNormalTexture()]).then(([environment, normal]) => ({
+    environment: environment !== null,
+    normal: normal !== null
+  }));
 }
 
 export function CoScrollJadeAnchor({
@@ -358,10 +379,15 @@ export function CoScrollJadeAnchor({
   const [prepared, setPrepared] = useState<PreparedAnchorGeometry | null>(null);
   const [environmentMap, setEnvironmentMap] = useState<THREE.Texture | null>(null);
   const [normalMap, setNormalMap] = useState<THREE.Texture | null>(null);
+  const [materialAssetsState, setMaterialAssetsState] = useState<"pending" | "ready" | "failed">(
+    sourceMaterial ? "pending" : "ready"
+  );
+  const readyReportedRef = useRef(false);
   const preset = sourceMaterial ? SOURCE_JADE_MATERIAL : jadeMaterialPresets[materialPreset];
 
   useEffect(() => {
     let cancelled = false;
+    readyReportedRef.current = false;
 
     loadPreparedAnchorGeometry(modelSrc, sourceMaterial).then((nextPrepared) => {
       if (cancelled) {
@@ -372,7 +398,6 @@ export function CoScrollJadeAnchor({
       if (nextPrepared.fallback) {
         onFallback?.("asset-failed");
       }
-      onReady?.();
     });
 
     return () => {
@@ -388,16 +413,21 @@ export function CoScrollJadeAnchor({
     let cancelled = false;
     const previousEnvironment = scene.environment;
     const previousEnvironmentIntensity = scene.environmentIntensity;
-    loadEnvironmentTexture(gl).then((texture) => {
-      if (!cancelled) {
-        setEnvironmentMap(texture);
-        scene.environment = texture;
+    Promise.all([loadEnvironmentTexture(gl), loadNormalTexture()]).then(([environment, normal]) => {
+      if (cancelled) {
+        return;
+      }
+      setEnvironmentMap(environment);
+      setNormalMap(normal);
+      if (environment) {
+        scene.environment = environment;
         scene.environmentIntensity = 1;
       }
-    });
-    loadNormalTexture().then((texture) => {
-      if (!cancelled) {
-        setNormalMap(texture);
+      if (environment && normal) {
+        setMaterialAssetsState("ready");
+      } else {
+        setMaterialAssetsState("failed");
+        onFallback?.("asset-failed");
       }
     });
 
@@ -407,6 +437,17 @@ export function CoScrollJadeAnchor({
       scene.environmentIntensity = previousEnvironmentIntensity;
     };
   }, [gl, scene, sourceMaterial]);
+
+  useEffect(() => {
+    if (!prepared || materialAssetsState === "pending" || readyReportedRef.current) {
+      return;
+    }
+    if (prepared.fallback || materialAssetsState === "failed") {
+      return;
+    }
+    readyReportedRef.current = true;
+    onReady?.();
+  }, [materialAssetsState, onReady, prepared]);
 
   useEffect(() => {
     const manualInputDisabled = reducedMotion || paused || !listenToScrollInput;

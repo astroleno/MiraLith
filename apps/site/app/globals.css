@@ -1364,12 +1364,60 @@ body::before {
   list-style: none;
 }
 
+.miralith-chapter-nav__terminal {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 18px -1px;
+  padding: 0 0 16px 24px;
+  border-bottom: 1px solid var(--miralith-chapter-line);
+  animation: miralith-chapter-terminal-in 260ms ease-out both;
+}
+
+.miralith-chapter-nav__terminal > span,
+.miralith-chapter-bar__terminal > span {
+  color: var(--miralith-chapter-inactive, rgba(246, 241, 232, 0.5));
+  font: 9px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.miralith-chapter-nav__terminal a {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: baseline;
+  color: var(--miralith-chapter-active);
+  outline: none;
+}
+
+.miralith-chapter-nav__terminal a:focus-visible,
+.miralith-chapter-bar__terminal:focus-visible {
+  outline: 1px solid var(--miralith-chapter-active, rgba(246, 241, 232, 0.72));
+  outline-offset: 5px;
+}
+
+.miralith-chapter-nav__terminal b {
+  color: var(--miralith-chapter-gold);
+  font: 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 500;
+}
+
+.miralith-chapter-nav__terminal strong {
+  color: inherit;
+  font-size: 0.88rem;
+  line-height: 1.2;
+  font-weight: 520;
+}
+
 .miralith-chapter-nav li {
   color: var(--miralith-chapter-inactive);
 }
 
 .miralith-chapter-nav li[data-active="true"] {
   color: var(--miralith-chapter-active);
+}
+
+.miralith-chapter-nav[data-chapter-terminal="armed"] li[data-published="false"] {
+  display: none;
 }
 
 .miralith-chapter-nav__link {
@@ -1513,6 +1561,39 @@ body::before {
   min-width: 0;
   color: inherit;
   outline: none;
+}
+
+.miralith-chapter-bar__current {
+  width: 100%;
+  min-width: 0;
+}
+
+.miralith-chapter-bar[data-chapter-terminal="armed"] {
+  align-items: stretch;
+  flex-direction: column;
+}
+
+.miralith-chapter-bar__terminal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid var(--miralith-chapter-line, rgba(246, 241, 232, 0.12));
+  animation: miralith-chapter-terminal-in 240ms ease-out both;
+}
+
+.miralith-chapter-bar__terminal strong {
+  color: var(--miralith-chapter-active, rgba(246, 241, 232, 0.9));
+  font-size: 0.72rem;
+  line-height: 1.2;
+  font-weight: 520;
+}
+
+@keyframes miralith-chapter-terminal-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .miralith-chapter-bar a:focus-visible {
@@ -3863,5 +3944,303 @@ body::before {
   .radio-gaga-copy__voice,
   .radio-gaga-copy__memory {
     transition: none;
+  }
+}
+
+/* Persistent chapter handoff */
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html[data-chapter-transition-state] {
+  overscroll-behavior: none;
+}
+
+.chapter-transition-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  overflow: hidden;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  background: #020305;
+  transition:
+    opacity 460ms cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 0s linear 460ms;
+  contain: strict;
+  isolation: isolate;
+}
+
+.chapter-transition-layer[data-state="covering"],
+.chapter-transition-layer[data-state="navigating"],
+.chapter-transition-layer[data-state="waiting-mount"],
+.chapter-transition-layer[data-state="resetting-entry"],
+.chapter-transition-layer[data-state="waiting-ready"] {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  transition:
+    opacity 580ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s;
+}
+
+.chapter-transition-layer[data-state="revealing"] {
+  visibility: visible;
+  opacity: 0;
+  pointer-events: auto;
+  transition:
+    opacity 440ms cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 0s linear 440ms;
+}
+
+.chapter-transition-visual {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(50, 66, 82, 0.16), transparent 36%),
+    #020305;
+  color: rgba(244, 242, 234, 0.9);
+}
+
+.chapter-transition-visual[data-variant="arrival-to-signal"] {
+  background:
+    radial-gradient(circle at 50% 48%, rgba(91, 125, 154, 0.2), transparent 30%),
+    radial-gradient(circle at 50% 50%, #09090a, #050404 72%);
+  --chapter-transition-accent: rgba(217, 183, 117, 0.82);
+}
+
+.chapter-transition-visual[data-variant="signal-to-sutra"] {
+  background:
+    linear-gradient(90deg, rgba(82, 38, 32, 0.08), transparent 42%),
+    radial-gradient(circle at 58% 46%, rgba(34, 76, 96, 0.18), transparent 34%),
+    #010205;
+  --chapter-transition-accent: rgba(165, 208, 226, 0.82);
+}
+
+.chapter-transition-visual[data-variant="direct"] {
+  background:
+    linear-gradient(118deg, rgba(199, 176, 107, 0.055), transparent 36%),
+    #020305;
+  --chapter-transition-accent: rgba(199, 176, 107, 0.7);
+}
+
+.chapter-transition-visual__grain,
+.chapter-transition-visual__vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.chapter-transition-visual__grain {
+  opacity: 0.24;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(90deg, transparent 0 47px, rgba(255, 255, 255, 0.012) 47px 48px);
+}
+
+.chapter-transition-visual__vignette {
+  background: radial-gradient(ellipse at center, transparent 18%, rgba(0, 0, 0, 0.78) 100%);
+}
+
+.chapter-transition-visual__signal {
+  position: absolute;
+  left: 14vw;
+  right: 14vw;
+  top: 50%;
+  height: 36px;
+  transform: translateY(-50%);
+}
+
+.chapter-transition-visual__signal-line,
+.chapter-transition-visual__signal-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--chapter-transition-accent);
+  transform-origin: 50% 50%;
+}
+
+.chapter-transition-visual__signal-line {
+  opacity: 0.52;
+  transform: scaleX(0.04);
+  animation: chapter-transition-line-open 720ms 120ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.chapter-transition-visual__signal-scan {
+  right: auto;
+  width: 18%;
+  opacity: 0.7;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.86), transparent);
+  animation: chapter-transition-scan 1.25s 360ms ease-in-out infinite;
+}
+
+.chapter-transition-visual__signal-node {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(246, 241, 232, 0.92);
+  box-shadow: 0 0 22px var(--chapter-transition-accent);
+  transform: translate(-50%, -50%);
+}
+
+.chapter-transition-visual__particles span {
+  position: absolute;
+  left: calc(50% + var(--particle-offset));
+  top: var(--particle-top);
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  opacity: 0;
+  background: rgba(218, 232, 244, 0.86);
+  box-shadow: 0 0 10px rgba(159, 200, 255, 0.5);
+}
+
+.chapter-transition-visual[data-variant="arrival-to-signal"] .chapter-transition-visual__particles span {
+  animation: chapter-transition-particle-gather 760ms var(--particle-delay) ease-in forwards;
+}
+
+.chapter-transition-visual__threads {
+  position: absolute;
+  inset: 12vh 18vw;
+  opacity: 0;
+}
+
+.chapter-transition-visual__threads span {
+  position: absolute;
+  left: var(--thread-left);
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(165, 208, 226, 0.38), transparent);
+  transform: scaleY(0.04);
+  transform-origin: 50% 50%;
+}
+
+.chapter-transition-visual[data-variant="signal-to-sutra"] .chapter-transition-visual__threads {
+  opacity: 1;
+}
+
+.chapter-transition-visual[data-variant="signal-to-sutra"] .chapter-transition-visual__threads span {
+  animation: chapter-transition-thread-open 760ms var(--thread-delay) cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.chapter-transition-visual__marker {
+  position: absolute;
+  left: max(28px, calc(6vw + env(safe-area-inset-left)));
+  bottom: max(28px, calc(7vh + env(safe-area-inset-bottom)));
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  grid-template-areas:
+    "index eyebrow"
+    "index title";
+  column-gap: 16px;
+  width: min(440px, calc(100vw - 56px));
+  opacity: 0;
+  transform: translateY(10px);
+  animation: chapter-transition-marker-in 420ms 420ms ease-out forwards;
+}
+
+.chapter-transition-layer[data-state="revealing"] .chapter-transition-visual__marker {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.chapter-transition-visual__index {
+  grid-area: index;
+  align-self: center;
+  color: var(--chapter-transition-accent);
+  font: 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.14em;
+}
+
+.chapter-transition-visual__eyebrow {
+  grid-area: eyebrow;
+  color: rgba(244, 242, 234, 0.46);
+  font-size: 10px;
+  line-height: 1.4;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.chapter-transition-visual__marker strong {
+  grid-area: title;
+  margin-top: 5px;
+  color: rgba(244, 242, 234, 0.92);
+  font-size: clamp(24px, 3vw, 42px);
+  line-height: 1;
+  font-weight: 520;
+}
+
+@keyframes chapter-transition-line-open {
+  to { transform: scaleX(1); }
+}
+
+@keyframes chapter-transition-scan {
+  from { transform: translateX(-40%); }
+  to { transform: translateX(510%); }
+}
+
+@keyframes chapter-transition-particle-gather {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.7); }
+  28% { opacity: 0.9; }
+  100% { opacity: 0.12; transform: translate3d(var(--particle-x), var(--particle-y), 0) scale(0.4); }
+}
+
+@keyframes chapter-transition-thread-open {
+  to { transform: scaleY(1); }
+}
+
+@keyframes chapter-transition-marker-in {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 767px), (max-height: 520px) and (orientation: landscape) {
+  .chapter-transition-visual__signal {
+    left: 9vw;
+    right: 9vw;
+  }
+
+  .chapter-transition-visual__threads {
+    inset: 10vh 10vw;
+  }
+
+  .chapter-transition-visual__marker {
+    left: max(20px, calc(5vw + env(safe-area-inset-left)));
+    bottom: max(20px, calc(5vh + env(safe-area-inset-bottom)));
+    width: calc(100vw - 40px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter-transition-layer,
+  .chapter-transition-layer[data-state="covering"],
+  .chapter-transition-layer[data-state="navigating"],
+  .chapter-transition-layer[data-state="waiting-mount"],
+  .chapter-transition-layer[data-state="resetting-entry"],
+  .chapter-transition-layer[data-state="waiting-ready"],
+  .chapter-transition-layer[data-state="revealing"] {
+    transition-duration: 160ms;
+  }
+
+  .chapter-transition-visual__particles,
+  .chapter-transition-visual__threads,
+  .chapter-transition-visual__signal-scan,
+  .chapter-transition-visual__signal-node {
+    display: none;
+  }
+
+  .chapter-transition-visual__signal-line,
+  .chapter-transition-visual__marker {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }

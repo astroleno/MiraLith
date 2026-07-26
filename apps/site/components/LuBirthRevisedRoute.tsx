@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import type {
   LandingAtmospherePolicy,
@@ -11,6 +11,17 @@ import type {
 import { VisualCanvas } from "../visual/VisualCanvas";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
 import { LuBirthSceneSlot } from "../visual/scenes/LuBirthSceneSlot";
+import {
+  useChapterTransition,
+  useChapterTransitionDestination
+} from "./chapter-transition/ChapterTransitionProvider";
+import {
+  throwIfChapterTransitionAborted,
+  waitForChapterTransitionFrame,
+  waitForChapterTransitionFrames
+} from "./chapter-transition/chapterTransitionAbort";
+import type { ChapterDestinationResetContext } from "./chapter-transition/chapterTransitionTypes";
+import { useChapterTerminalGate } from "./chapter-transition/useChapterTerminalGate";
 import { MiraLithChapterNavigation } from "./MiraLithChapterNavigation";
 
 declare global {
@@ -427,6 +438,11 @@ export function LuBirthRevisedRoute({
   const rootRef = useRef<HTMLElement>(null);
   const isHome = variant === "home";
   const triggerId = `${SCROLL_TRIGGER_ID_PREFIX}-${variant}`;
+  const transition = useChapterTransition();
+  const enteringHomeTransitionRef = useRef(
+    isHome && transition.snapshot.state !== "idle" && transition.snapshot.targetHref === "/"
+  );
+  const terminalRef = useRef(false);
   const [sceneEnabled, setSceneEnabled] = useState(() => variant === "home");
   const [runtimeReady, setRuntimeReady] = useState(false);
   const [copyInteractive, setCopyInteractive] = useState(false);
@@ -436,6 +452,8 @@ export function LuBirthRevisedRoute({
   const [homeProjectionSource, setHomeProjectionSource] = useState<HomeProjectionSource>("pending");
   const [homeVisualReadySource, setHomeVisualReadySource] = useState<HomeVisualReadySource | "pending">("pending");
   const [homeSkipReady, setHomeSkipReady] = useState(() => variant !== "home");
+  const [terminal, setTerminal] = useState(false);
+  const [transitionForcedFallback, setTransitionForcedFallback] = useState(false);
   const [debugOptions, setDebugOptions] = useState<ScreenshotDebugOptions>(() => ({
     ...DEFAULT_SCREENSHOT_DEBUG_OPTIONS,
     copyHidden: variant !== "home"
@@ -458,6 +476,62 @@ export function LuBirthRevisedRoute({
   const homeLoadingProjectionSource =
     homeProjection ? "scene" : homeProjectionSource;
   const homeVisualReady = homeVisualReadySource !== "pending";
+  const resetEntry = useCallback(async (context: ChapterDestinationResetContext) => {
+    throwIfChapterTransitionAborted(context.signal);
+    const restoredProgress = context.initiator === "history" ? context.returnSnapshot?.routeProgress : null;
+    const nextProgress = typeof restoredProgress === "number" ? clamp01(restoredProgress) : 0;
+    const nextScrollY = context.initiator === "history" && context.returnSnapshot
+      ? context.returnSnapshot.scrollY
+      : Math.round(window.innerHeight * 2.1 * nextProgress);
+    setOpeningProgress(nextProgress);
+    const nextRailAccess = nextProgress >= HOME_RAIL_ACCESS_PROGRESS;
+    const nextProjectAccess = nextProgress >= HOME_PROJECT_ACCESS_PROGRESS;
+    setCopyInteractive(nextRailAccess);
+    setProjectInteractive(nextProjectAccess);
+    const nextTerminal = nextProgress >= 0.997 || context.returnSnapshot?.terminalState === true;
+    terminalRef.current = nextTerminal;
+    setTerminal(nextTerminal);
+    window.scrollTo({ top: nextScrollY, behavior: "instant" });
+
+    const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+      import("gsap"),
+      import("gsap/ScrollTrigger")
+    ]);
+    throwIfChapterTransitionAborted(context.signal);
+    gsap.registerPlugin(ScrollTrigger);
+    for (let frame = 0; frame < 24 && !ScrollTrigger.getById(triggerId); frame += 1) {
+      await waitForChapterTransitionFrame(context.signal);
+    }
+    throwIfChapterTransitionAborted(context.signal);
+    ScrollTrigger.refresh();
+    throwIfChapterTransitionAborted(context.signal);
+    window.scrollTo({ top: nextScrollY, behavior: "instant" });
+    await waitForChapterTransitionFrames(context.signal, 2);
+    throwIfChapterTransitionAborted(context.signal);
+  }, [triggerId]);
+  const destinationControls = useMemo(() => ({
+    resetEntry,
+    forceFallback: () => {
+      setTransitionForcedFallback(true);
+    }
+  }), [resetEntry]);
+  const destination = useChapterTransitionDestination("/", destinationControls, isHome);
+  useChapterTerminalGate({
+    currentHref: "/",
+    armed: terminal,
+    enabled: isHome && destination.inputEnabled
+  });
+
+  useEffect(() => {
+    if (!isHome) {
+      return;
+    }
+    if (initialForcedVisualFallback || transitionForcedFallback) {
+      destination.reportFallbackReady();
+    } else if (homeVisualReady) {
+      destination.reportVisualReady();
+    }
+  }, [destination, homeVisualReady, initialForcedVisualFallback, isHome, transitionForcedFallback]);
   const markHomeLoadingReady = useCallback((source: ReadyHomeProjectionSource) => {
     if (!isHome || homeProjectionSourceRef.current !== "pending") {
       return;
@@ -598,7 +672,7 @@ export function LuBirthRevisedRoute({
 
       const rootElement = rootRef.current;
       const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const forcedFallback = initialForcedVisualFallback;
+      const forcedFallback = initialForcedVisualFallback || transitionForcedFallback;
       const screenshotDebug = debugOptions;
       setRuntimeReady(true);
       setCopyInteractive(false);
@@ -722,6 +796,9 @@ export function LuBirthRevisedRoute({
           setProjectInteractive(!screenshotDebug.copyHidden && (!isHome || homeProjectVisible));
           setHomeIntroComplete(true);
           setOpeningProgress(screenshotDebug.fixedProgress);
+          const screenshotTerminal = isHome && screenshotDebug.fixedProgress >= 0.997;
+          terminalRef.current = screenshotTerminal;
+          setTerminal(screenshotTerminal);
           setIfPresent(".lubirth-revised__loading", { autoAlpha: 0 });
           setIfPresent(".lubirth-revised__home-loading", { autoAlpha: 0 });
           setIfPresent(".lubirth-revised__atmosphere", { autoAlpha: 1 });
@@ -773,9 +850,11 @@ export function LuBirthRevisedRoute({
 
         if (prefersReduced) {
           setSceneEnabled(true);
-          setCopyInteractive(!isHome);
+          setCopyInteractive(true);
           setProjectInteractive(true);
           setHomeIntroComplete(true);
+          terminalRef.current = isHome;
+          setTerminal(isHome);
           if (typeof window !== "undefined") {
             window.__MiraLithFirstUsableAt = performance.now();
             window.__MiraLithHomeIntroCompleteAt = performance.now();
@@ -798,9 +877,10 @@ export function LuBirthRevisedRoute({
               y: 0,
               scale: 1
             });
-            setIfPresent(".lubirth-revised__title-rail", { autoAlpha: 0, y: 0 });
-            setIfPresent(".lubirth-revised__title-rail li", { autoAlpha: 0, x: 0 });
-            setIfPresent(".lubirth-revised__mobile-title-bar", { autoAlpha: 0, y: 0 });
+            const desktopRail = usesDesktopChapterRail();
+            setIfPresent(".lubirth-revised__title-rail", { autoAlpha: desktopRail ? 1 : 0, y: 0 });
+            setIfPresent(".lubirth-revised__title-rail li", { autoAlpha: desktopRail ? 1 : 0, x: 0 });
+            setIfPresent(".lubirth-revised__mobile-title-bar", { autoAlpha: desktopRail ? 0 : 1, y: 0 });
           } else {
             setIfPresent(".lubirth-revised__title-rail", { autoAlpha: 1, y: 0 });
             setIfPresent(".lubirth-revised__title-rail li", { autoAlpha: 1, x: 0 });
@@ -815,6 +895,13 @@ export function LuBirthRevisedRoute({
         let railAccess = false;
         let projectAccess = false;
         const syncHomeScrollAccess = (progress: number) => {
+          if (isHome) {
+            const nextTerminal = progress >= 0.997;
+            if (terminalRef.current !== nextTerminal) {
+              terminalRef.current = nextTerminal;
+              setTerminal(nextTerminal);
+            }
+          }
           if (!isHome || screenshotDebug.copyHidden) {
             return;
           }
@@ -966,6 +1053,24 @@ export function LuBirthRevisedRoute({
 
           return timeline;
         };
+
+        if (isHome && enteringHomeTransitionRef.current) {
+          const entryProgress = clamp01(window.__MiraLithOpeningProgress ?? 0);
+          setSceneEnabled(true);
+          setCopyInteractive(entryProgress >= HOME_RAIL_ACCESS_PROGRESS);
+          setProjectInteractive(entryProgress >= HOME_PROJECT_ACCESS_PROGRESS);
+          setHomeIntroComplete(true);
+          setHomeSkipReady(true);
+          setIfPresent(".lubirth-revised__loading", { autoAlpha: 0 });
+          setIfPresent(".lubirth-revised__home-loading", { autoAlpha: 0 });
+          setIfPresent(".lubirth-revised__atmosphere", { autoAlpha: 1 });
+          setIfPresent(".lubirth-revised__travelling-title", { autoAlpha: 1 });
+          setIfPresent(".lubirth-revised__home-signature", { autoAlpha: 1, y: 0 });
+          setIfPresent(".lubirth-revised__scroll-hint", { autoAlpha: 0 });
+          scrollTimeline = createScrollTimeline();
+          ScrollTrigger.refresh();
+          return;
+        }
 
         if (screenshotDebug.copyHidden) {
           setSceneEnabled(true);
@@ -1318,6 +1423,7 @@ export function LuBirthRevisedRoute({
     isHome,
     markHomeLoadingReady,
     markHomeVisualReady,
+    transitionForcedFallback,
     triggerId,
     variant
   ]);
@@ -1346,6 +1452,8 @@ export function LuBirthRevisedRoute({
       data-home-projection={isHome ? homeProjectionSource : undefined}
       data-home-projection-visual={isHome ? homeLoadingProjectionSource : undefined}
       data-atmo-policy={debugOptions.atmospherePolicy}
+      data-chapter-focus-root={isHome ? "true" : undefined}
+      tabIndex={isHome ? -1 : undefined}
       aria-label={ariaLabel ?? (isHome ? "MiraLith LuBirth opening" : "LuBirth revised opening route")}
     >
       <section
@@ -1374,19 +1482,21 @@ export function LuBirthRevisedRoute({
             compactClassName="lubirth-revised__mobile-title-bar"
             chapterHrefs={{ "01": `#${LUBIRTH_PROJECT_INTRO_ANCHOR_ID}` }}
             reserveActiveTitle
+            terminal={terminal}
           />
         ) : null}
         {showCopy ? <ScrollHint /> : null}
       </section>
 
       {sceneEnabled ? (
-        initialForcedVisualFallback ? visualFallback : (
+        initialForcedVisualFallback || transitionForcedFallback ? visualFallback : (
           <VisualCanvas
             key={isScreenshotMode ? "lubirth-screenshot-canvas" : isHome ? "lubirth-home-canvas" : "lubirth-runtime-canvas"}
             antialias={!isHome}
             decorative
             dpr={isScreenshotMode && !isHome ? 2 : isHome ? 0.85 : [1.5, 2.1]}
             fallback={visualFallback}
+            onFallback={() => setTransitionForcedFallback(true)}
           >
             <LuBirthSceneSlot
               mode="field"

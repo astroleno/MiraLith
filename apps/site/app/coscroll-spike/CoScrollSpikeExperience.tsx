@@ -1,16 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { gsap } from "gsap";
 import {
   CoScrollStandaloneDemo,
   type CoScrollAssetManifest,
+  type CoScrollFallbackReason,
   type CoScrollLyricSegment,
   type CoScrollTimelineConfig
 } from "@miralith/coscroll-scene";
 import type { QualityProfile } from "@miralith/visual-core";
 import { MiraLithChapterNavigation } from "../../components/MiraLithChapterNavigation";
+import { useChapterTransitionDestination } from "../../components/chapter-transition/ChapterTransitionProvider";
+import {
+  throwIfChapterTransitionAborted,
+  waitForChapterTransitionFrames
+} from "../../components/chapter-transition/chapterTransitionAbort";
+import type {
+  ChapterDestinationFallbackContext,
+  ChapterDestinationResetContext
+} from "../../components/chapter-transition/chapterTransitionTypes";
 import { VisualCanvasFallback } from "../../visual/VisualCanvasFallback";
 
 interface CoScrollSpikeExperienceProps {
@@ -30,6 +40,13 @@ const wrapTime = (time: number, duration: number) => {
   return ((time % safeDuration) + safeDuration) % safeDuration;
 };
 
+function readinessGenerationFor(context: {
+  transitionId: string;
+  destinationAttempt: number;
+}) {
+  return `${context.transitionId}:${context.destinationAttempt}`;
+}
+
 export function CoScrollSpikeExperience({
   sourceMatch,
   staticFrame,
@@ -41,10 +58,21 @@ export function CoScrollSpikeExperience({
 }: CoScrollSpikeExperienceProps) {
   const duration = Math.max(1, timeline.duration);
   const initialTime = initialProgress * duration;
-  const interactive = sourceMatch && !staticFrame;
+  const baseInteractive = sourceMatch && !staticFrame;
   const [progress, setProgress] = useState(initialProgress);
   const [scrollVelocity, setScrollVelocity] = useState(0);
+  const [entryReadinessGeneration, setEntryReadinessGeneration] = useState<string | null>(null);
+  const [expectedVisualGeneration, setExpectedVisualGeneration] = useState<string | null>(null);
+  const [visualReadyGeneration, setVisualReadyGeneration] = useState<string | null>(null);
+  const [visualFallback, setVisualFallback] = useState<{
+    reason: CoScrollFallbackReason;
+    generation: string;
+  } | null>(null);
+  const [transitionForcedFallbackGeneration, setTransitionForcedFallbackGeneration] = useState<string | null>(null);
   const shellRef = useRef<HTMLElement>(null);
+  const entryReadinessGenerationRef = useRef<string | null>(null);
+  const expectedVisualGenerationRef = useRef<string | null>(null);
+  const transitionForcedFallbackGenerationRef = useRef<string | null>(null);
   const timeProxyRef = useRef({ time: initialTime });
   const targetTimeRef = useRef(initialTime);
   const touchYRef = useRef(0);
@@ -63,6 +91,116 @@ export function CoScrollSpikeExperience({
       velocityTimeoutRef.current = null;
     }
   }, []);
+
+  const resetEntry = useCallback(async (context: ChapterDestinationResetContext) => {
+    throwIfChapterTransitionAborted(context.signal);
+    const readinessGeneration = readinessGenerationFor(context);
+    const forcedFallbackActive = transitionForcedFallbackGenerationRef.current === readinessGeneration;
+    entryReadinessGenerationRef.current = readinessGeneration;
+    expectedVisualGenerationRef.current = forcedFallbackActive ? readinessGeneration : null;
+    if (!forcedFallbackActive) {
+      transitionForcedFallbackGenerationRef.current = null;
+    }
+    setEntryReadinessGeneration(readinessGeneration);
+    setExpectedVisualGeneration(forcedFallbackActive ? readinessGeneration : null);
+    setVisualReadyGeneration(null);
+    setVisualFallback(null);
+    setTransitionForcedFallbackGeneration((current) => current === readinessGeneration ? current : null);
+    const restoredProgress = context.initiator === "history" ? context.returnSnapshot?.routeProgress : null;
+    const nextProgress = typeof restoredProgress === "number"
+      ? clamp(restoredProgress, 0, 1)
+      : initialProgress;
+    const nextTime = nextProgress * duration;
+    clearVelocityTimeout();
+    gsap.killTweensOf(timeProxyRef.current);
+    timeProxyRef.current.time = nextTime;
+    targetTimeRef.current = nextTime;
+    setScrollVelocity(0);
+    setProgress(nextProgress);
+    window.scrollTo({ top: 0, behavior: "instant" });
+    await waitForChapterTransitionFrames(context.signal, 2);
+    throwIfChapterTransitionAborted(context.signal);
+  }, [clearVelocityTimeout, duration, initialProgress]);
+  const destinationControls = useMemo(() => ({
+    resetEntry,
+    forceFallback: (context: ChapterDestinationFallbackContext) => {
+      const readinessGeneration = readinessGenerationFor(context);
+      entryReadinessGenerationRef.current = readinessGeneration;
+      expectedVisualGenerationRef.current = readinessGeneration;
+      transitionForcedFallbackGenerationRef.current = readinessGeneration;
+      setEntryReadinessGeneration(readinessGeneration);
+      setExpectedVisualGeneration(readinessGeneration);
+      setVisualReadyGeneration(null);
+      setVisualFallback(null);
+      setTransitionForcedFallbackGeneration(readinessGeneration);
+    }
+  }), [resetEntry]);
+  const destination = useChapterTransitionDestination("/coscroll", destinationControls, chapterNavigation);
+  const reportVisualPending = destination.reportVisualPending;
+  const interactive = baseInteractive && (!chapterNavigation || destination.inputEnabled);
+  const handleVisualGenerationChange = useCallback((readinessGeneration: string) => {
+    const entryGeneration = entryReadinessGenerationRef.current;
+    if (
+      !entryGeneration ||
+      transitionForcedFallbackGenerationRef.current === entryGeneration ||
+      !readinessGeneration.startsWith(`${entryGeneration}|`)
+    ) {
+      return;
+    }
+    reportVisualPending();
+    expectedVisualGenerationRef.current = readinessGeneration;
+    setExpectedVisualGeneration(readinessGeneration);
+    setVisualReadyGeneration((current) => current === readinessGeneration ? current : null);
+    setVisualFallback((current) => current?.generation === readinessGeneration ? current : null);
+  }, [reportVisualPending]);
+  const handleVisualReady = useCallback((readinessGeneration?: string) => {
+    if (readinessGeneration && readinessGeneration === expectedVisualGenerationRef.current) {
+      setVisualReadyGeneration(readinessGeneration);
+    }
+  }, []);
+  const handleVisualFallback = useCallback((
+    reason: CoScrollFallbackReason,
+    readinessGeneration?: string
+  ) => {
+    if (!readinessGeneration) {
+      return;
+    }
+    const entryGeneration = entryReadinessGenerationRef.current;
+    if (
+      readinessGeneration !== expectedVisualGenerationRef.current &&
+      readinessGeneration !== entryGeneration
+    ) {
+      return;
+    }
+    reportVisualPending();
+    if (readinessGeneration === entryGeneration) {
+      expectedVisualGenerationRef.current = readinessGeneration;
+      setExpectedVisualGeneration(readinessGeneration);
+      setVisualReadyGeneration(null);
+    }
+    setVisualFallback({ reason, generation: readinessGeneration });
+  }, [reportVisualPending]);
+
+  useEffect(() => {
+    if (!chapterNavigation) {
+      return;
+    }
+    if (!entryReadinessGeneration || !expectedVisualGeneration || !destination.isTransitionTarget) {
+      return;
+    }
+    if (visualFallback?.generation === expectedVisualGeneration) {
+      destination.reportFallbackReady();
+    } else if (visualReadyGeneration === expectedVisualGeneration) {
+      destination.reportVisualReady();
+    }
+  }, [
+    chapterNavigation,
+    destination,
+    entryReadinessGeneration,
+    expectedVisualGeneration,
+    visualFallback,
+    visualReadyGeneration
+  ]);
 
   const seekByDelta = useCallback(
     (deltaSeconds: number) => {
@@ -212,8 +350,10 @@ export function CoScrollSpikeExperience({
       data-coscroll-source-match={sourceMatch ? "clean" : "copy"}
       data-coscroll-runtime={interactive ? "scroll-driven" : staticFrame ? "static-review" : "static-copy"}
       data-coscroll-progress={progress.toFixed(4)}
+      data-coscroll-input-enabled={interactive ? "true" : "false"}
+      data-chapter-focus-root={chapterNavigation ? "true" : undefined}
       aria-label={sourceMatch ? "CoScroll Heart Sutra source match" : "CoScroll Heart Sutra spike"}
-      tabIndex={interactive ? 0 : undefined}
+      tabIndex={interactive ? 0 : chapterNavigation ? -1 : undefined}
       onKeyDown={handleKeyDown}
       style={sourceMatchViewportStyle}
     >
@@ -227,6 +367,14 @@ export function CoScrollSpikeExperience({
         assets={assets}
         scrollVelocity={scrollVelocity}
         paused={staticFrame}
+        readinessGeneration={entryReadinessGeneration ?? "unscoped"}
+        forceFallback={
+          entryReadinessGeneration !== null &&
+          transitionForcedFallbackGeneration === entryReadinessGeneration
+        }
+        onReadinessGenerationChange={handleVisualGenerationChange}
+        onReady={handleVisualReady}
+        onFallback={handleVisualFallback}
         fallback={
           <VisualCanvasFallback
             scene="coscroll"
@@ -258,7 +406,7 @@ export function CoScrollSpikeExperience({
         <>
           <MiraLithChapterNavigation
             activeIndex="03"
-            interactive
+            interactive={destination.inputEnabled}
             className="coscroll-chapter-nav"
             compactClassName="coscroll-chapter-bar"
           />

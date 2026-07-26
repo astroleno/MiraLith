@@ -1,21 +1,24 @@
 "use client";
 
 import { mapRadioGagaChoreography, mapRadioGagaFinalOutput } from "@miralith/radio-gaga-scene";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { VisualCanvas } from "../visual/VisualCanvas";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
 import { RadioGagaSceneSlot } from "../visual/scenes/RadioGagaSceneSlot";
+import { useChapterTerminalGate } from "./chapter-transition/useChapterTerminalGate";
+import { useChapterTransitionDestination } from "./chapter-transition/ChapterTransitionProvider";
+import {
+  throwIfChapterTransitionAborted,
+  waitForChapterTransitionFrame,
+  waitForChapterTransitionFrames
+} from "./chapter-transition/chapterTransitionAbort";
+import type { ChapterDestinationResetContext } from "./chapter-transition/chapterTransitionTypes";
 import { MiraLithChapterNavigation } from "./MiraLithChapterNavigation";
 import { RadioGagaCopyLayer } from "./RadioGagaCopyLayer";
 
-const radioGagaModelAssets = [
-  "/model/radio_gaga.glb",
-  "/model/xiaozhi_esp32.glb"
-] as const;
 const RADIO_GAGA_SCROLL_DISTANCE_VH = 11.6;
 const RADIO_GAGA_NAV_ACCESS_PROGRESS = 0.14;
-
-type RadioGagaAssetState = "checking" | "ready" | "failed";
+const RADIO_GAGA_TERMINAL_PROGRESS = 0.997;
 
 function subscribeForcedVisualFallback(_onStoreChange: () => void) {
   return () => undefined;
@@ -66,25 +69,113 @@ export function RadioGagaRoute({ initialForcedVisualFallback = false }: RadioGag
   const routeRef = useRef<HTMLElement>(null);
   const progressRef = useRef(0);
   const chapterNavigationInteractiveRef = useRef(false);
-  const [assetState, setAssetState] = useState<RadioGagaAssetState>("checking");
+  const terminalRef = useRef(false);
+  const entryResetInProgressRef = useRef(false);
+  const entryResetAttemptRef = useRef<number | null>(null);
+  const transitionInputEnabledRef = useRef(true);
+  const transitionTargetRef = useRef(false);
   const [chapterNavigationInteractive, setChapterNavigationInteractive] = useState(false);
+  const [terminal, setTerminal] = useState(false);
+  const [sceneReady, setSceneReady] = useState(false);
+  const [copyReady, setCopyReady] = useState(false);
+  const [transitionFallback, setTransitionFallback] = useState(false);
   const [finalOutputState, setFinalOutputState] = useState(() => mapRadioGagaFinalOutput(0));
   const forcedVisualFallback = useSyncExternalStore(
     subscribeForcedVisualFallback,
     getForcedVisualFallbackSnapshot,
     () => initialForcedVisualFallback
   );
+  const resetEntry = useCallback(async (context: ChapterDestinationResetContext) => {
+    throwIfChapterTransitionAborted(context.signal);
+    const restoredProgress = context.initiator === "history" ? context.returnSnapshot?.routeProgress : null;
+    const nextProgress = typeof restoredProgress === "number" ? Math.max(0, Math.min(1, restoredProgress)) : 0;
+    const nextScrollY = context.initiator === "history" && context.returnSnapshot
+      ? context.returnSnapshot.scrollY
+      : Math.round(window.innerHeight * RADIO_GAGA_SCROLL_DISTANCE_VH * nextProgress);
+
+    entryResetInProgressRef.current = true;
+    entryResetAttemptRef.current = context.destinationAttempt;
+    try {
+      progressRef.current = nextProgress;
+      if (routeRef.current) {
+        routeRef.current.dataset.radioGagaProgress = nextProgress.toFixed(4);
+        applyRadioGagaProgressStyles(routeRef.current, nextProgress);
+      }
+      const nextNavigationInteractive = nextProgress >= RADIO_GAGA_NAV_ACCESS_PROGRESS;
+      chapterNavigationInteractiveRef.current = nextNavigationInteractive;
+      setChapterNavigationInteractive(nextNavigationInteractive);
+      const nextTerminal = nextProgress >= RADIO_GAGA_TERMINAL_PROGRESS;
+      terminalRef.current = nextTerminal;
+      setTerminal(nextTerminal);
+      setFinalOutputState(mapRadioGagaFinalOutput(
+        nextProgress,
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ));
+      window.scrollTo({ top: nextScrollY, behavior: "instant" });
+
+      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+        import("gsap"),
+        import("gsap/ScrollTrigger")
+      ]);
+      throwIfChapterTransitionAborted(context.signal);
+      await waitForChapterTransitionFrame(context.signal);
+      throwIfChapterTransitionAborted(context.signal);
+      gsap.registerPlugin(ScrollTrigger);
+      ScrollTrigger.refresh();
+      throwIfChapterTransitionAborted(context.signal);
+      window.scrollTo({ top: nextScrollY, behavior: "instant" });
+      await waitForChapterTransitionFrames(context.signal, 2);
+      throwIfChapterTransitionAborted(context.signal);
+    } finally {
+      if (entryResetAttemptRef.current === context.destinationAttempt) {
+        entryResetAttemptRef.current = null;
+        entryResetInProgressRef.current = false;
+      }
+    }
+  }, []);
+  const destinationControls = useMemo(() => ({
+    resetEntry,
+    forceFallback: () => {
+      setTransitionFallback(true);
+    }
+  }), [resetEntry]);
+  const destination = useChapterTransitionDestination("/radio-gaga", destinationControls);
+  useEffect(() => {
+    transitionInputEnabledRef.current = destination.inputEnabled;
+    transitionTargetRef.current = destination.isTransitionTarget;
+  }, [destination.inputEnabled, destination.isTransitionTarget]);
+  useChapterTerminalGate({
+    currentHref: "/radio-gaga",
+    armed: terminal,
+    enabled: destination.inputEnabled
+  });
 
   useEffect(() => {
     let disposed = false;
     let cleanup: (() => void) | undefined;
     const updateProgress = (nextProgress: number) => {
+      if (
+        transitionTargetRef.current &&
+        !transitionInputEnabledRef.current &&
+        !entryResetInProgressRef.current
+      ) {
+        return;
+      }
       progressRef.current = nextProgress;
+      if (routeRef.current) {
+        routeRef.current.dataset.radioGagaProgress = nextProgress.toFixed(4);
+      }
 
       const nextChapterNavigationInteractive = nextProgress >= RADIO_GAGA_NAV_ACCESS_PROGRESS;
       if (chapterNavigationInteractiveRef.current !== nextChapterNavigationInteractive) {
         chapterNavigationInteractiveRef.current = nextChapterNavigationInteractive;
         setChapterNavigationInteractive(nextChapterNavigationInteractive);
+      }
+
+      const nextTerminal = nextProgress >= RADIO_GAGA_TERMINAL_PROGRESS;
+      if (terminalRef.current !== nextTerminal) {
+        terminalRef.current = nextTerminal;
+        setTerminal(nextTerminal);
       }
 
       if (routeRef.current) {
@@ -105,6 +196,7 @@ export function RadioGagaRoute({ initialForcedVisualFallback = false }: RadioGag
     };
 
     if (routeRef.current) {
+      routeRef.current.dataset.radioGagaProgress = progressRef.current.toFixed(4);
       applyRadioGagaProgressStyles(routeRef.current, progressRef.current);
     }
 
@@ -143,38 +235,18 @@ export function RadioGagaRoute({ initialForcedVisualFallback = false }: RadioGag
   }, []);
 
   useEffect(() => {
-    if (forcedVisualFallback) {
-      return;
-    }
-
-    const controller = new AbortController();
-
-    void (async () => {
-      try {
-        const responses = await Promise.all(
-          radioGagaModelAssets.map((assetPath) =>
-            fetch(assetPath, {
-              cache: "force-cache",
-              method: "HEAD",
-              signal: controller.signal
-            })
-          )
-        );
-
-        if (controller.signal.aborted) {
-          return;
+    let cancelled = false;
+    void document.fonts.ready.then(() => {
+      window.requestAnimationFrame(() => {
+        if (!cancelled) {
+          setCopyReady(true);
         }
-
-        setAssetState(responses.every((response) => response.ok) ? "ready" : "failed");
-      } catch {
-        if (!controller.signal.aborted) {
-          setAssetState("failed");
-        }
-      }
-    })();
-
-    return () => controller.abort();
-  }, [forcedVisualFallback]);
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const fallback = (
     <VisualCanvasFallback scene="radio-gaga" label="radioGAGA care radio fallback">
@@ -195,20 +267,39 @@ export function RadioGagaRoute({ initialForcedVisualFallback = false }: RadioGag
       </div>
     </VisualCanvasFallback>
   );
-  const showFallback = forcedVisualFallback || assetState === "failed";
+  const showFallback = forcedVisualFallback || transitionFallback;
+
+  useEffect(() => {
+    if (showFallback) {
+      destination.reportFallbackReady();
+    } else if (sceneReady && copyReady) {
+      destination.reportVisualReady();
+    }
+  }, [copyReady, destination, sceneReady, showFallback]);
 
   return (
     <main
       ref={routeRef}
       className="radio-gaga-route"
       data-visual-fallback={showFallback ? "true" : "false"}
+      data-chapter-focus-root
+      tabIndex={-1}
       aria-label="radioGAGA care radio scene"
     >
       {showFallback ? (
         fallback
       ) : (
-        <VisualCanvas decorative fallback={fallback}>
-          <RadioGagaSceneSlot progressRef={progressRef} active />
+        <VisualCanvas
+          decorative
+          fallback={fallback}
+          onFallback={() => setTransitionFallback(true)}
+        >
+          <RadioGagaSceneSlot
+            progressRef={progressRef}
+            active
+            onReady={() => setSceneReady(true)}
+            onFallback={() => setTransitionFallback(true)}
+          />
         </VisualCanvas>
       )}
       {showFallback ? null : (
@@ -223,6 +314,7 @@ export function RadioGagaRoute({ initialForcedVisualFallback = false }: RadioGag
         interactive={showFallback || chapterNavigationInteractive}
         className="radio-gaga-title-rail"
         compactClassName="radio-gaga-mobile-title-bar"
+        terminal={terminal}
       />
       <div className="sr-only">
         02 - Care. radioGAGA. A radio of local news, family memory, and my own voice.

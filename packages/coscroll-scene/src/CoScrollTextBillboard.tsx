@@ -36,7 +36,7 @@ const SOURCE_FONT_FAMILY = "RunZhiJiaKangXiZidian";
 const SOURCE_FONT_STACK = `"${SOURCE_FONT_FAMILY}", "Songti SC", "STSong", "Noto Serif CJK SC", serif`;
 const SOURCE_FONT_URL = "/assets/coscroll/fonts/runzhi-kangxi.ttf";
 const billboardTextureCache = new Map<string, BillboardData>();
-let sourceFontPromise: Promise<void> | null = null;
+let sourceFontPromise: Promise<boolean> | null = null;
 
 const emphasisStyles = {
   quiet: {
@@ -171,15 +171,16 @@ function getCachedVerticalTextBillboard(input: {
   return billboard;
 }
 
-function loadSourceFont() {
+export function preloadCoScrollSourceFont() {
   if (typeof document === "undefined" || typeof FontFace === "undefined") {
-    return Promise.resolve();
+    return Promise.resolve(true);
   }
 
   if (!sourceFontPromise) {
     sourceFontPromise = new FontFace(SOURCE_FONT_FAMILY, `url(${SOURCE_FONT_URL})`).load().then((font) => {
       document.fonts.add(font);
-    }).catch(() => undefined);
+      return true;
+    }).catch(() => false);
   }
 
   return sourceFontPromise;
@@ -209,7 +210,7 @@ export function CoScrollTextBillboard({
     }
 
     let cancelled = false;
-    loadSourceFont().then(() => {
+    preloadCoScrollSourceFont().then(() => {
       if (!cancelled) {
         setFontRevision((revision) => revision + 1);
       }

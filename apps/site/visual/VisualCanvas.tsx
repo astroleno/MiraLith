@@ -1,7 +1,15 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { Component, type ErrorInfo, type ReactNode, Suspense, useState, useSyncExternalStore } from "react";
+import {
+  Component,
+  type ErrorInfo,
+  type ReactNode,
+  Suspense,
+  useEffect,
+  useState,
+  useSyncExternalStore
+} from "react";
 
 declare global {
   interface Window {
@@ -65,6 +73,8 @@ interface VisualCanvasProps {
   dpr?: number | [number, number];
   fallback: ReactNode;
   children: ReactNode;
+  onCreated?: () => void;
+  onFallback?: (reason: "forced" | "context-lost" | "render-error") => void;
 }
 
 export function VisualCanvas({
@@ -73,9 +83,12 @@ export function VisualCanvas({
   decorative = true,
   dpr = [1, 1.1],
   fallback,
-  children
+  children,
+  onCreated,
+  onFallback
 }: VisualCanvasProps) {
   const [contextLost, setContextLost] = useState(false);
+  const [renderFailed, setRenderFailed] = useState(false);
   const forcedFallback = useSyncExternalStore(
     subscribeForcedVisualFallback,
     getForcedVisualFallbackSnapshot,
@@ -87,8 +100,21 @@ export function VisualCanvas({
         return params.get("visualTest") === "pixels" && params.get("perfTest") !== "raf";
       })()
     : false;
+  const fallbackReason = forcedFallback
+    ? "forced"
+    : contextLost
+      ? "context-lost"
+      : renderFailed
+        ? "render-error"
+        : null;
 
-  if (forcedFallback || contextLost) {
+  useEffect(() => {
+    if (fallbackReason) {
+      onFallback?.(fallbackReason);
+    }
+  }, [fallbackReason, onFallback]);
+
+  if (fallbackReason) {
     return <>{fallback}</>;
   }
 
@@ -99,13 +125,14 @@ export function VisualCanvas({
       aria-hidden={decorative ? "true" : undefined}
       aria-label={decorative ? undefined : ariaLabel}
     >
-      <VisualCanvasErrorBoundary fallback={fallback}>
+      <VisualCanvasErrorBoundary fallback={fallback} onError={() => setRenderFailed(true)}>
         <Canvas
           dpr={dpr}
           gl={{ antialias, alpha: true, powerPreference: "high-performance", preserveDrawingBuffer }}
           camera={{ fov: 42, position: [0, 2.8, 7.4], near: 0.1, far: 90 }}
           onCreated={({ gl }) => {
             markCanvasCreated();
+            onCreated?.();
             gl.domElement.addEventListener("webglcontextlost", (event) => {
               event.preventDefault();
               setContextLost(true);
