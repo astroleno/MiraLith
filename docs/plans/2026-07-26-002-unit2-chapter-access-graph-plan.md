@@ -251,9 +251,9 @@ export function getNextAccessibleMiraLithChapter(
 
 `directEntryAllowed` is true for every known entry. `coordinatorAllowed`, `visibleInNavigation`, and `preloadAllowed` are true for a published entry or for a preview entry with `previewActive`. The next helper only returns the immediately following canonical accessible chapter; it never skips an inaccessible preview chapter. For an active preview context it returns ArtBreeze for CoScroll, but Unit 2 does not wire that candidate to a real CoScroll terminal.
 
-- [ ] **Step 4: Change transition snapshot typing without adding Unit 3 payloads.**
+- [ ] **Step 4: Declare the future transition endpoint type without changing runtime snapshots.**
 
-Replace `PublishedMiraLithChapter` in `ChapterTransitionSnapshot` and `ActiveChapterTransition` with:
+Export the following type from `chapterTransitionTypes.ts`:
 
 ```ts
 export interface ResolvedChapterTransitionEndpoint {
@@ -262,7 +262,7 @@ export interface ResolvedChapterTransitionEndpoint {
 }
 ```
 
-Do not add handoff, media playback, or semantic recovery fields in this task.
+Keep `ChapterTransitionSnapshot.sourceChapter` and `.targetChapter` as `PublishedMiraLithChapter` in Unit 2A. The complete migration of `ChapterTransitionSnapshot`, private `ActiveChapterTransition`, Provider resolver/narrowing and endpoint construction, plus `ChapterTransitionVisual` and other snapshot consumers, belongs to Unit 2C. Do not add handoff, media playback, or semantic recovery fields in this task.
 
 - [ ] **Step 5: Run the pure/public rail regression and commit Unit 2A.**
 
@@ -350,6 +350,8 @@ Expected: scope identity is deterministic and fail-closed; query activation is t
 **Files:**
 
 - Modify: `apps/site/components/chapter-transition/ChapterTransitionProvider.tsx`
+- Modify: `apps/site/components/chapter-transition/chapterTransitionTypes.ts`
+- Modify: `apps/site/components/chapter-transition/ChapterTransitionVisual.tsx`
 - Modify: `apps/site/components/chapter-transition/useChapterTerminalGate.ts`
 - Modify: `apps/site/components/chapter-transition/preloadChapterTarget.ts`
 - Modify: `apps/site/components/MiraLithChapterNavigation.tsx`
@@ -368,9 +370,9 @@ await page.goto("/coscroll");
 await expect(page.locator("a[aria-label^='04 ArtBreeze']")).toHaveCount(0);
 ```
 
-- [ ] **Step 2: Inject the registry resolver into the Provider transition start and popstate paths.**
+- [ ] **Step 2: Inject the registry resolver and migrate transition endpoints in the Provider.**
 
-`startRuntime` must resolve both endpoints from current `previewActive`; it starts only when both `coordinatorAllowed` values are true. In `popstate`, a known-but-inaccessible target clears any active runtime and returns to idle without veil/recovery manipulation. Registration of destination controls remains legal for every known route, which preserves direct-entry fallback.
+`startRuntime` must resolve both endpoints from current `previewActive`; it starts only when both `coordinatorAllowed` values are true. It constructs `ResolvedChapterTransitionEndpoint` values for both the private active runtime and the public snapshot. In `popstate`, a known-but-inaccessible target clears any active runtime and returns to idle without veil/recovery manipulation. Registration of destination controls remains legal for every known route, which preserves direct-entry fallback.
 
 - [ ] **Step 3: Replace all published-only calls.**
 
@@ -378,16 +380,16 @@ await expect(page.locator("a[aria-label^='04 ArtBreeze']")).toHaveCount(0);
 
 The public no-session bar must still show 01–03 exactly as before. A valid preview context may show the review rail 01–07, but preview metadata remains `noindex` in Task 4.
 
-- [ ] **Step 4: Keep terminal and visual scope unchanged.**
+- [ ] **Step 4: Keep terminal and visual treatment scope unchanged.**
 
-Do not add a `transitionKindForPair` variant, alter `ChapterTransitionVisual`, attach `useChapterTerminalGate` to CoScroll, or expose an ArtBreeze CTA at its terminal in this task. The resolver's next candidate and review rail are sufficient Unit 2 evidence. The real CoScroll terminal, edge kind, and visual handoff remain Stage 2 work.
+Do not add a `transitionKindForPair` variant, attach `useChapterTerminalGate` to CoScroll, or expose an ArtBreeze CTA at its terminal in this task. Update `ChapterTransitionVisual` only as required to consume the endpoint shape; do not alter its visual treatment. The resolver's next candidate and review rail are sufficient Unit 2 evidence. The real CoScroll terminal, edge kind, and visual handoff remain Stage 2 work.
 
 - [ ] **Step 5: Run parity/history tests and commit Unit 2C.**
 
 ```bash
 pnpm --filter @miralith/site typecheck
 pnpm exec playwright test tests/e2e/chapter-transition.spec.ts tests/e2e/chapter-navigation.spec.ts --project=desktop
-git add apps/site/components/chapter-transition/ChapterTransitionProvider.tsx apps/site/components/chapter-transition/useChapterTerminalGate.ts apps/site/components/chapter-transition/preloadChapterTarget.ts apps/site/components/MiraLithChapterNavigation.tsx tests/e2e/chapter-transition.spec.ts tests/e2e/chapter-navigation.spec.ts
+git add apps/site/components/chapter-transition/ChapterTransitionProvider.tsx apps/site/components/chapter-transition/chapterTransitionTypes.ts apps/site/components/chapter-transition/ChapterTransitionVisual.tsx apps/site/components/chapter-transition/useChapterTerminalGate.ts apps/site/components/chapter-transition/preloadChapterTarget.ts apps/site/components/MiraLithChapterNavigation.tsx tests/e2e/chapter-transition.spec.ts tests/e2e/chapter-navigation.spec.ts
 git commit -m "feat(chapters): share access resolution across the rail"
 ```
 

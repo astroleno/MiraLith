@@ -1,4 +1,9 @@
-import type { PublishedMiraLithChapter } from "../../content/miraLithChapters";
+import type { MiraLithKnownChapter, PublishedMiraLithChapter } from "../../content/miraLithChapters";
+
+export interface ResolvedChapterTransitionEndpoint {
+  chapter: MiraLithKnownChapter;
+  level: "published" | "preview";
+}
 
 export type ChapterTransitionState =
   | "idle"
