@@ -56,6 +56,7 @@ The calculation must include untracked non-ignored files inside those paths and 
 | `apps/site/lib/chapter-preview/resolveChapterPreviewScope.ts` | Node-only, deterministic scope generation and override validation for Next config. |
 | `playwright.unit.config.ts` | Node-only Playwright test runner configuration with no browser project and no web server. |
 | `tests/unit/miraLithChapters.spec.ts` | Pure canonical-registry and resolver matrix tests. |
+| `tests/unit/resolveChapterPreviewScope.spec.ts` | Fixture-repository contract tests for preview scope identity and its fail-closed cases. |
 | `apps/site/components/chapter-transition/chapterPreviewSession.ts` | Browser-only bootstrap, storage/history parsing, validation, scope propagation, and query cleanup. |
 | `apps/site/components/chapter-transition/chapterTransitionTypes.ts` | Registry-aware snapshot and transition types. |
 | `apps/site/components/chapter-transition/ChapterTransitionProvider.tsx` | Owns current validated preview context; uses resolver for begin/popstate/registration. |
@@ -65,6 +66,7 @@ The calculation must include untracked non-ignored files inside those paths and 
 | `apps/site/app/{artbreeze,constellation,client-works,now-building}/page.tsx` | Server route entry: resolves CP1.1 media and passes serializable route data. |
 | `apps/site/components/post-coscroll/PostCoScrollRouteShell.tsx` | Deterministic known-route UI, destination reset/ready-fallback reporting, diagnostic fallback, poster, and explicit local video play. |
 | `apps/site/next.config.ts` | Exposes validated chapter preview scope while retaining CP1.1 production media isolation. |
+| `playwright.local-preview.config.ts` | Fixed-port `next dev` runner for local-preview route E2E; it never replaces the default production config. |
 | `tests/e2e/chapter-transition.spec.ts` | Access, terminal, history, and forged-state matrix. |
 | `tests/e2e/chapter-navigation.spec.ts` | Public/review rail and native-link semantics. |
 | `tests/e2e/post-coscroll-route-shell.spec.ts` | Route direct entry, local manifest playback, and production isolation. |
@@ -91,7 +93,7 @@ Expected: the current dirty-worktree observation remains `29 passed / 4 failed /
 
 - [ ] **Step 2: Define a full hunk-level foundation patch, including package contracts.**
 
-Select only transition hunks from every candidate file. Include the exact CoScroll `readinessGeneration`/`forceFallback`/ready-fallback API hunks. Exclude `preloadRadioGagaFinaleAssets`, `loadFinale`, and all associated RadioGaga scene/composite/type hunks; retain the `ec3cb9a` finale-loading semantics. If the existing opening warmup is retained, include only its source/export hunk. Do not select an app hunk whose imported symbol is absent from the patch.
+Select only transition hunks from every candidate file. Include the exact CoScroll `readinessGeneration`/`forceFallback`/ready-fallback API hunks, the `CoScrollSilkBackground.onReady` hunk, and the `CoScrollTextBillboard.preloadCoScrollSourceFont` hunk. Also inspect/select only `CoScrollJadeAnchor`'s material-complete readiness sequencing required by the selected `SceneContent` contract; do not select its residue, rotation, particleization, material-preset, colour, or other visual-tuning hunks. Exclude `preloadRadioGagaFinaleAssets`, `loadFinale`, and all associated RadioGaga scene/composite/type hunks; retain the `ec3cb9a` finale-loading semantics. If the existing opening warmup is retained, include only its source/export hunk. Do not select an app hunk whose imported symbol is absent from the patch.
 
 Use an isolated temporary Git index seeded from `ec3cb9a`. Never invoke `git add`, `git add -p`, or an unscoped `git diff --cached` against the caller's index. The candidate list is intentionally file-exact: do not substitute a directory such as `apps/site` or `apps/site/components/chapter-transition`, because new or unrelated dirty files must not enter the foundation patch. Build the candidate patch with these exact pathspecs, then inspect it:
 
@@ -123,6 +125,9 @@ Use an isolated temporary Git index seeded from `ec3cb9a`. Never invoke `git add
     packages/coscroll-scene/src/types.ts
     packages/coscroll-scene/src/CoScrollStandaloneDemo.tsx
     packages/coscroll-scene/src/CoScrollSceneContent.tsx
+    packages/coscroll-scene/src/CoScrollSilkBackground.tsx
+    packages/coscroll-scene/src/CoScrollTextBillboard.tsx
+    packages/coscroll-scene/src/CoScrollJadeAnchor.tsx
     packages/radio-gaga-scene/src/preloadRadioGagaAssets.ts
     packages/radio-gaga-scene/src/index.ts
     tests/e2e/chapter-transition.spec.ts
@@ -278,9 +283,12 @@ Expected: the pure matrix passes. 04–07 have canonical hrefs, but no session, 
 - Create: `apps/site/components/chapter-transition/chapterPreviewSession.ts`
 - Modify: `apps/site/next.config.ts`
 - Modify: `apps/site/components/chapter-transition/ChapterTransitionProvider.tsx`
+- Create/Test: `tests/unit/resolveChapterPreviewScope.spec.ts`
 - Test: `tests/e2e/chapter-transition.spec.ts`
 
-- [ ] **Step 1: Add failing session, scope, and forged-state tests.**
+- [ ] **Step 1: Add failing session/history, scope, and forged-state tests.**
+
+Add Node-only scope-contract tests first, using disposable fixture repositories. They must prove: stable digest after the same selected files are recreated in a different directory-enumeration order; a selected file-content change changes the digest; an untracked, non-ignored selected file changes the digest; an ignored file beneath a selected input root does not; malformed overrides reject; and missing Git or an unreadable selected input fails closed with a descriptive error. Do not rely on the host repository's dirty state for these assertions.
 
 Cover exact token, scope loss, and untrusted data:
 
@@ -299,7 +307,7 @@ Expected before implementation: no versioned session exists and the query is not
 
 - [ ] **Step 2: Implement deterministic Node scope generation and Next config exposure.**
 
-`resolveChapterPreviewScope.ts` must export `isChapterPreviewScope(value)` and `resolveChapterPreviewScope({ repoRoot, override })`. The resolver must return a 64-hex digest only after hashing the fixed input set in this plan; it must throw a descriptive error when a selected input cannot be read. `next.config.ts` must preserve the existing CP1.1 call to `assertPostCoScrollProductionMediaIsolation`, reject an invalid override, and expose only:
+`resolveChapterPreviewScope.ts` must export `isChapterPreviewScope(value)` and `resolveChapterPreviewScope({ repoRoot, override })`. The resolver must return a 64-hex digest only after hashing the fixed input set in this plan; it must throw a descriptive error when Git is unavailable or a selected input cannot be read. The fixture tests must use a real disposable Git repository for the normal/untracked/ignored cases, and deterministic failure fixtures or injected Node adapters for Git/read failures. `next.config.ts` must preserve the existing CP1.1 call to `assertPostCoScrollProductionMediaIsolation`, reject an invalid override, and expose only:
 
 ```ts
 env: {
@@ -323,18 +331,19 @@ Persist only `{ v: 1, token: "post-coscroll-v1", scope: string }`. Parse unknown
 
 - [ ] **Step 4: Let the Provider own validated session state and propagation only.**
 
-On mount, bootstrap only `?preview=post-coscroll-v1`; on `popstate`, revalidate the current history entry; after a successful coordinator `router.push`, write a marker to the newly committed entry only when the same valid session remains active. Expose `{ previewActive, scope }` in provider context. Do not make the query itself a permanent URL capability.
+On mount, bootstrap only `?preview=post-coscroll-v1`; on `popstate`, revalidate the current history entry. `router.push()` is not a commit signal and must never write a preview marker by itself. When a coordinator transition starts, retain its transition id and expected target pathname; only a `usePathname`-driven effect that observes that exact target while the same runtime/session remains active may merge the marker into the newly committed `history.state`. A cancelled, replaced, or stale transition writes no marker. Expose `{ previewActive, scope }` in provider context. Do not make the query itself a permanent URL capability.
 
 - [ ] **Step 5: Verify lifecycle and commit Unit 2B.**
 
 ```bash
 pnpm --filter @miralith/site typecheck
+pnpm exec playwright test -c playwright.unit.config.ts tests/unit/resolveChapterPreviewScope.spec.ts
 pnpm exec playwright test tests/e2e/chapter-transition.spec.ts --project=desktop
-git add apps/site/lib/chapter-preview/resolveChapterPreviewScope.ts apps/site/components/chapter-transition/chapterPreviewSession.ts apps/site/next.config.ts apps/site/components/chapter-transition/ChapterTransitionProvider.tsx tests/e2e/chapter-transition.spec.ts
+git add apps/site/lib/chapter-preview/resolveChapterPreviewScope.ts apps/site/components/chapter-transition/chapterPreviewSession.ts apps/site/next.config.ts apps/site/components/chapter-transition/ChapterTransitionProvider.tsx tests/unit/resolveChapterPreviewScope.spec.ts tests/e2e/chapter-transition.spec.ts
 git commit -m "feat(chapters): scope preview sessions to a build and tab"
 ```
 
-Expected: query activation is tab-local, query-free after bootstrap, preserved through coordinator navigation/back/forward, and invalidated by bad storage, bad history marker, or scope mismatch.
+Expected: scope identity is deterministic and fail-closed; query activation is tab-local and query-free after bootstrap. A marker appears only after its matching pathname commit, remains valid through coordinator navigation/back/forward, and is absent after a cancelled/replaced navigation. Bad storage, bad history marker, or scope mismatch invalidates preview.
 
 ### Task 3: Unit 2C — one resolver for coordinator, terminal, preloader, and navigation
 
@@ -394,6 +403,7 @@ Expected: no-preview 01 → 02 → 03 passes unchanged. Preview is the sole way 
 - Create: `apps/site/app/now-building/page.tsx`
 - Create: `apps/site/components/post-coscroll/PostCoScrollRouteShell.tsx`
 - Create: `tests/e2e/post-coscroll-route-shell.spec.ts`
+- Create: `playwright.local-preview.config.ts`
 - Modify: `tests/e2e/post-coscroll-media.spec.ts` only if route evidence needs a reusable fixture
 
 - [ ] **Step 1: Add failing direct-entry, coordinator-readiness, and local-playback tests.**
@@ -410,7 +420,7 @@ await expect(page.locator("video")).toHaveJSProperty("readyState", expect.any(Nu
 
 Add a separate controlled coordinator test. Stub/delay the selected ArtBreeze poster response (or the shell's declared fallback-ready fixture) before clicking `a[aria-label^='04 ArtBreeze']` from `/coscroll?preview=post-coscroll-v1`. Assert `[data-chapter-transition-layer][data-state='waiting-ready']` while that ready signal is withheld; release the poster/fallback, then assert the ArtBreeze shell is visible and the transition layer reaches `idle`. The same test must prove that a direct `/artbreeze` mount never creates a transition veil. This is the first permitted end-to-end `beginTransition` assertion for 03 → 04.
 
-Run the second case only under `MIRALITH_POST_COSCROLL_MEDIA_MODE=local-preview` with the CP1.1 generated catalog present. It must fail if the manifest resolver reports `disabled`, `invalid`, or a missing required ArtBreeze item.
+Run the second case only through `playwright.local-preview.config.ts` with the CP1.1 generated catalog present. This config uses a dedicated fixed port and starts `next dev` with `MIRALITH_POST_COSCROLL_MEDIA_MODE=local-preview`; it must not run `pnpm build`, call `next start`, or reuse an existing server. It must fail if the manifest resolver reports `disabled`, `invalid`, or a missing required ArtBreeze item. The default `playwright.config.ts` remains production-only and is reserved for the separate production-isolation cases.
 
 - [ ] **Step 2: Implement server route entry points.**
 
@@ -434,19 +444,22 @@ The readiness test must click the preview review-rail link from CoScroll to ArtB
 
 - [ ] **Step 4: Add production-isolation coverage at the route boundary.**
 
-Run the existing production reject cases and assert that `/artbreeze` never receives a local media source in production. The correct production preview-route outcome before publication is a deterministic unpublished fallback, not a silent attempt to read `public/media/post-coscroll`.
+Add `playwright.local-preview.config.ts` as a deliberately separate runner: it has the same desktop E2E project semantics as the default config, but a fixed port, `workers: 1`, and a `webServer` command equivalent to `pnpm --filter @miralith/site exec next dev -H 127.0.0.1 -p <fixed-port>` with `MIRALITH_POST_COSCROLL_MEDIA_MODE=local-preview` in the server environment. Its `reuseExistingServer` is `false`, so an occupied port fails rather than silently attaching to a server with different media mode. It never becomes the default config.
+
+Run the existing production reject cases through the default `playwright.config.ts` and assert that `/artbreeze` never receives a local media source in production. Run this production command before any local catalog is generated, or from an isolated source tree with no ignored `public/media/post-coscroll` preview root; never delete the caller's local preview files to make production pass. The correct production preview-route outcome before publication is a deterministic unpublished fallback when the production server is valid; a production build with `local-preview` enabled or preview-media residue is an expected hard failure, not a browser route test.
 
 - [ ] **Step 5: Verify local playback and commit Unit 2D.**
 
 ```bash
 pnpm --filter @miralith/site media:post-coscroll:check
 pnpm --filter @miralith/site typecheck
-pnpm exec playwright test tests/e2e/post-coscroll-media.spec.ts tests/e2e/post-coscroll-route-shell.spec.ts --project=desktop
-git add apps/site/app/artbreeze/page.tsx apps/site/app/constellation/page.tsx apps/site/app/client-works/page.tsx apps/site/app/now-building/page.tsx apps/site/components/post-coscroll/PostCoScrollRouteShell.tsx tests/e2e/post-coscroll-route-shell.spec.ts
+pnpm exec playwright test -c playwright.config.ts tests/e2e/post-coscroll-media.spec.ts --project=desktop
+pnpm exec playwright test -c playwright.local-preview.config.ts tests/e2e/post-coscroll-route-shell.spec.ts --project=desktop
+git add apps/site/app/artbreeze/page.tsx apps/site/app/constellation/page.tsx apps/site/app/client-works/page.tsx apps/site/app/now-building/page.tsx apps/site/components/post-coscroll/PostCoScrollRouteShell.tsx playwright.local-preview.config.ts tests/e2e/post-coscroll-route-shell.spec.ts tests/e2e/post-coscroll-media.spec.ts
 git commit -m "feat(post-coscroll): add deterministic preview route shells"
 ```
 
-Expected: all four paths mount without a predecessor. ArtBreeze plays the CP1.1 verified local item only in explicit local-preview mode; production remains isolated.
+Expected: all four paths mount without a predecessor. ArtBreeze plays the CP1.1 verified local item only through the explicit local-preview development runner; the default production runner remains isolated and rejects forbidden preview-media inputs.
 
 ### Task 5: CP1.2 — Chapter Access Graph evidence and gate
 
