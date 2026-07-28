@@ -1,0 +1,75 @@
+{
+  "kind": "miralith.post-coscroll.cp1.2.unit2b.integration",
+  "schemaVersion": 1,
+  "recordedAt": "2026-07-29",
+  "checkpoint": {
+    "id": "CP1.2",
+    "status": "IN PROGRESS"
+  },
+  "unit": {
+    "id": "2B",
+    "name": "Preview session and build scope",
+    "status": "PASS / INTEGRATED",
+    "reviewerVerdict": "PASS — UNIT 2B"
+  },
+  "commit": {
+    "sha": "13557fa1022d245df3761c9da1d7a5c50ffab801",
+    "parent": "5db2041fe65b4f28b707e9f138e4e9fd16479de9",
+    "targetBranch": "codex/coscroll-shader4-miralith",
+    "patchSha256": "fb6f94388b65f62c331c3b41ff5c0578c0c019aabb316e0f9f32075f3d5a4d68",
+    "files": [
+      "apps/site/lib/chapter-preview/resolveChapterPreviewScope.ts",
+      "apps/site/components/chapter-transition/chapterPreviewSession.ts",
+      "apps/site/next.config.ts",
+      "apps/site/components/chapter-transition/ChapterTransitionProvider.tsx",
+      "tests/unit/resolveChapterPreviewScope.spec.ts",
+      "tests/e2e/chapter-transition.spec.ts"
+    ]
+  },
+  "verification": {
+    "typecheck": {
+      "status": "passed"
+    },
+    "lint": {
+      "status": "passed"
+    },
+    "diffCheck": {
+      "status": "passed"
+    },
+    "reversePatchCheck": {
+      "status": "passed"
+    },
+    "nodeContracts": {
+      "command": "pnpm exec playwright test -c playwright.unit.config.ts tests/unit/miraLithChapters.spec.ts tests/unit/resolveChapterPreviewScope.spec.ts",
+      "result": "8 passed"
+    },
+    "previewFocusedE2E": {
+      "command": "CI=1 MIRALITH_PLAYWRIGHT_PORT=3151 pnpm exec playwright test tests/e2e/chapter-transition.spec.ts --project=desktop --grep preview",
+      "minimum": "6 passed",
+      "result": "7 passed",
+      "note": "The approved candidate includes the rejected target-marker write fail-closed regression."
+    },
+    "desktopTransitionNavigation": {
+      "command": "CI=1 MIRALITH_PLAYWRIGHT_PORT=3152 pnpm exec playwright test tests/e2e/chapter-transition.spec.ts tests/e2e/chapter-navigation.spec.ts --project=desktop",
+      "result": "40 passed / 3 expected skipped",
+      "exitCode": 0
+    }
+  },
+  "scope": {
+    "included": [
+      "build-scoped preview session",
+      "committed history marker",
+      "scope validation",
+      "fail-closed marker-write revalidation"
+    ],
+    "notStarted": [
+      "Unit 2C resolver and coordinator integration",
+      "Unit 2D route shell and local-preview playback"
+    ],
+    "explicitlyExcluded": [
+      "CoScroll terminal enablement",
+      "real 03 to 04 transition",
+      "ArtBreeze and 04 to 07 route shells"
+    ]
+  }
+}

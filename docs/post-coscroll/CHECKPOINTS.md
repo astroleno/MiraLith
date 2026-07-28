@@ -161,7 +161,7 @@ CP1.1 的 source / derivative / resolver / isolation contract 已关闭。Dulwic
 
 ## CP1.2 — Chapter Access Graph
 
-状态：`IN PROGRESS — Unit 2.0 foundation committed；Unit 2A–2D 尚未开始`
+状态：`IN PROGRESS — Unit 2.0 foundation、Unit 2A 与 Unit 2B 已集成；Unit 2C–2D 尚未开始`
 
 ### Unit 2.0 — Transition Foundation
 
@@ -178,4 +178,31 @@ CP1.1 的 source / derivative / resolver / isolation contract 已关闭。Dulwic
 | 禁止项复核 | 候选 patch 不含 `CoScrollAnchorResidue`、`particleization`、`reviewAutoParticleization`、`preloadRadioGagaFinaleAssets`、`loadFinale`、`resolveLandingVisualPolicy`、`ReliefLiteValidationHarness`、`MIRALITH_POST_COSCROLL_MEDIA_MODE` 或 `/artbreeze` 路由实现。 |
 | 已验证 | clean sparse candidate 上 site、CoScroll 与 RadioGaga typecheck、site lint、`git diff --check` 均通过；desktop transition/navigation suite 为 `33 passed / 3 expected skipped`。该测试结果只证明 foundation，不替代后续 local-preview route-shell 实播验证。 |
 
-后续 Unit 2A 必须仍按已通过的计划先实现纯 access resolver contract；CP1.2 仅会在 access matrix、history、production isolation 与独立 local-preview 实播验证均完成后才可标记 `PASS`。
+### Unit 2A — Canonical registry and pure access contract
+
+状态：`PASS — INTEGRATED`
+
+Unit 2A 以 `b08ad1f` 建立七章 canonical registry 与纯 access resolver，并由 `26a7067` 恢复 published 派生视图的显式 `readonly` 公共契约。该阶段仅声明 `ResolvedChapterTransitionEndpoint`；不改变 `ChapterTransitionSnapshot` 的运行时结构，也不接入 Provider、preview session、history 或 04–07 route shell。
+
+### Unit 2B — Preview session and build scope
+
+状态：`PASS — INTEGRATED，2026-07-29`
+
+Unit 2B 已以提交 [`13557fa`](../../commit/13557fa1022d245df3761c9da1d7a5c50ffab801) 集成到目标分支。获批的精确 binary patch SHA-256 为 `fb6f94388b65f62c331c3b41ff5c0578c0c019aabb316e0f9f32075f3d5a4d68`；其 parent 为 `5db2041fe65b4f28b707e9f138e4e9fd16479de9`。完整身份、范围和可复现验证记录见 [Unit 2B integration evidence](evidence/cp1.2-unit2b-preview-session-integration.json) 与其 [checksum](evidence/cp1.2-unit2b-preview-session-integration-checksums.sha256)。
+
+| 验证 | 已记录结果 |
+| --- | --- |
+| patch / source integrity | 精确 patch SHA、反向补丁校验与 `git diff --check` 均通过。 |
+| 静态与 Node contracts | site typecheck、lint 通过；`miraLithChapters` 与 preview-scope Node contracts 共 `8 passed`。 |
+| preview lifecycle | focused preview E2E 为 `7 passed`（门槛为至少 6 条），包括 pathname commit 后 marker 写入、back/forward、伪造/失配 scope 与 transition 中 storage 篡改后的 fail-closed。 |
+| desktop transition + navigation | `40 passed / 3 expected skipped`，退出码 `0`。 |
+
+该提交只加入 build-scoped preview session、history marker 与 scope validation；未接入 endpoint/coordinator，未启用 CoScroll terminal，未创建 `/artbreeze` 或其他 04–07 route shell，也未实现真实 `03 → 04` 转场。根工作区中用户未暂存的 `apps/site/next.config.ts` 不构成此阶段或后续 Unit 2C 的基线。
+
+### Unit 2C — Coordinator integration preparation
+
+状态：`READY TO START — NO IMPLEMENTATION`
+
+已从干净的 `13557fa1022d245df3761c9da1d7a5c50ffab801` 建立隔离分支 `codex/unit2c-access-coordinator`。该分支仅用于下一阶段统一 resolver、endpoint 类型、terminal/preloader/navigation 接入；真实 `03 → 04` 转场及 destination route shell 仍保留给 Unit 2D。`stash@{0}` 作为主工作区 merge 的恢复备份被保留，未自动 apply 或 drop。
+
+CP1.2 仅会在 access matrix、history、production isolation 与独立 local-preview 实播验证均完成后才可标记 `PASS`；本次 Unit 2B 集成不打开 Unit 3。
