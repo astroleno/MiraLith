@@ -245,6 +245,301 @@ async function extendReadinessTestBudget(page: Page) {
   });
 }
 
+async function readPreviewEvidence(page: Page) {
+  return page.evaluate(() => {
+    const stored = window.sessionStorage.getItem("miralith:chapter-preview:v1");
+    const marker = (window.history.state as Record<string, unknown> | null)?.__miralithChapterPreview as {
+      v?: unknown;
+      scope?: unknown;
+    } | undefined;
+    let storedScope: string | null = null;
+    try {
+      const parsed = stored ? JSON.parse(stored) as { scope?: unknown } : null;
+      storedScope = typeof parsed?.scope === "string" ? parsed.scope : null;
+    } catch {
+      storedScope = null;
+    }
+    return {
+      storedScope,
+      markerScope: marker?.v === 1 && typeof marker.scope === "string" ? marker.scope : null
+    };
+  });
+}
+
+async function installPreviewMarkerWriteRecorder(page: Page) {
+  await page.evaluate(() => {
+    const state = window as typeof window & {
+      __chapterPreviewMarkerWrites?: Array<{ pathname: string; scope: string }>;
+    };
+    const nativeReplaceState = window.history.replaceState.bind(window.history);
+    state.__chapterPreviewMarkerWrites = [];
+    window.history.replaceState = ((data: unknown, unused: string, url?: string | URL | null) => {
+      const marker = data && typeof data === "object" && !Array.isArray(data)
+        ? (data as Record<string, unknown>).__miralithChapterPreview
+        : null;
+      if (
+        marker &&
+        typeof marker === "object" &&
+        !Array.isArray(marker) &&
+        (marker as Record<string, unknown>).v === 1 &&
+        typeof (marker as Record<string, unknown>).scope === "string"
+      ) {
+        const pathname = url === undefined || url === null
+          ? window.location.pathname
+          : new URL(String(url), window.location.href).pathname;
+        state.__chapterPreviewMarkerWrites?.push({
+          pathname,
+          scope: (marker as Record<string, string>).scope
+        });
+      }
+      nativeReplaceState(data, unused, url);
+    }) as typeof window.history.replaceState;
+  });
+}
+
+async function readPreviewMarkerWrites(page: Page) {
+  return page.evaluate(() => {
+    const state = window as typeof window & {
+      __chapterPreviewMarkerWrites?: Array<{ pathname: string; scope: string }>;
+    };
+    return state.__chapterPreviewMarkerWrites ?? [];
+  });
+}
+
+async function rejectPreviewTargetMarkerWrite(page: Page) {
+  await page.evaluate(() => {
+    const nativeReplaceState = window.history.replaceState.bind(window.history);
+    const state = window as typeof window & {
+      __chapterPreviewMarkerWriteRejected?: boolean;
+    };
+
+    window.history.replaceState = ((nextState: unknown, unused: string, url?: string | URL | null) => {
+      const marker = nextState && typeof nextState === "object"
+        ? (nextState as Record<string, unknown>).__miralithChapterPreview
+        : null;
+      if (window.location.pathname === "/coscroll" && marker) {
+        state.__chapterPreviewMarkerWriteRejected = true;
+        throw new DOMException("Injected preview marker write rejection", "InvalidStateError");
+      }
+      nativeReplaceState(nextState, unused, url);
+    }) as typeof window.history.replaceState;
+  });
+}
+
+async function bootstrapPreviewAtRadioGaga(page: Page) {
+  await page.goto("/radio-gaga?preview=post-coscroll-v1");
+  await expect(page).toHaveURL(/\/radio-gaga$/);
+  await expect.poll(() => readPreviewEvidence(page)).toMatchObject({
+    storedScope: expect.stringMatching(/^[a-f0-9]{64}$/),
+    markerScope: expect.stringMatching(/^[a-f0-9]{64}$/)
+  });
+  return readPreviewEvidence(page);
+}
+
+async function navigateRadioGagaPreviewToCoScroll(page: Page) {
+  await armRadioGagaTerminal(page);
+  await page.locator(".radio-gaga-title-rail .miralith-chapter-nav__terminal a").click();
+  await expect(page).toHaveURL(/\/coscroll$/);
+  await waitForIdle(page);
+}
+
+test("preview query is tab-scoped, query-free, and writes its target marker only after pathname commit", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "This lifecycle contract only needs one browser profile.");
+
+  const preview = await bootstrapPreviewAtRadioGaga(page);
+  expect(preview.storedScope).toBe(preview.markerScope);
+  await armRadioGagaTerminal(page);
+  await installPreviewMarkerWriteRecorder(page);
+
+  await page.locator(".radio-gaga-title-rail .miralith-chapter-nav__terminal a").click();
+  await expect(page.locator("html")).toHaveAttribute("data-chapter-transition-target", "/coscroll");
+  await expect(page).toHaveURL(/\/radio-gaga$/);
+  expect(await readPreviewMarkerWrites(page)).toEqual([]);
+
+  await expect(page).toHaveURL(/\/coscroll$/);
+  await expect.poll(() => readPreviewMarkerWrites(page)).toEqual([
+    { pathname: "/coscroll", scope: preview.storedScope }
+  ]);
+  await waitForIdle(page);
+});
+
+test("a preview session lost after transition begin fails closed at pathname commit", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "This lifecycle contract only needs one browser profile.");
+
+  const preview = await bootstrapPreviewAtRadioGaga(page);
+  await armRadioGagaTerminal(page);
+  await installPreviewMarkerWriteRecorder(page);
+
+  await page.locator(".radio-gaga-title-rail .miralith-chapter-nav__terminal a").click();
+  await expect(page.locator("html")).toHaveAttribute("data-chapter-transition-target", "/coscroll");
+  await expect(page).toHaveURL(/\/radio-gaga$/);
+  await page.evaluate(() => window.sessionStorage.removeItem("miralith:chapter-preview:v1"));
+
+  await expect(page).toHaveURL(/\/coscroll$/);
+  await waitForIdle(page);
+  expect(await readPreviewMarkerWrites(page)).toEqual([]);
+  expect(await readPreviewEvidence(page)).toEqual({
+    storedScope: null,
+    markerScope: null
+  });
+
+  await page.evaluate((scope) => {
+    window.sessionStorage.setItem("miralith:chapter-preview:v1", JSON.stringify({
+      v: 1,
+      token: "post-coscroll-v1",
+      scope
+    }));
+  }, preview.storedScope);
+  await page.locator(".coscroll-chapter-nav a[href='/']").click();
+  await expect(page).toHaveURL(/\/$/);
+  await waitForIdle(page);
+  expect(await readPreviewMarkerWrites(page)).toEqual([]);
+  expect(await readPreviewEvidence(page)).toEqual({
+    storedScope: preview.storedScope,
+    markerScope: null
+  });
+});
+
+test("a rejected preview target-marker write fails closed without an uncaught runtime error", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "This lifecycle contract only needs one browser profile.");
+
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  const preview = await bootstrapPreviewAtRadioGaga(page);
+  await armRadioGagaTerminal(page);
+  await installPreviewMarkerWriteRecorder(page);
+  await rejectPreviewTargetMarkerWrite(page);
+
+  await page.locator(".radio-gaga-title-rail .miralith-chapter-nav__terminal a").click();
+  await expect(page).toHaveURL(/\/coscroll$/);
+  await waitForIdle(page);
+  expect(await page.evaluate(() => Boolean(
+    (window as typeof window & { __chapterPreviewMarkerWriteRejected?: boolean })
+      .__chapterPreviewMarkerWriteRejected
+  ))).toBe(true);
+  expect(pageErrors).toEqual([]);
+  expect(await readPreviewMarkerWrites(page)).toEqual([]);
+  expect(await readPreviewEvidence(page)).toEqual({
+    storedScope: preview.storedScope,
+    markerScope: null
+  });
+});
+
+test("preview markers remain valid through committed back and forward entries", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "This lifecycle contract only needs one browser profile.");
+
+  const preview = await bootstrapPreviewAtRadioGaga(page);
+  await navigateRadioGagaPreviewToCoScroll(page);
+  await expect.poll(() => readPreviewEvidence(page)).toEqual({
+    storedScope: preview.storedScope,
+    markerScope: preview.storedScope
+  });
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/radio-gaga$/);
+  await waitForIdle(page);
+  await expect.poll(() => readPreviewEvidence(page)).toEqual({
+    storedScope: preview.storedScope,
+    markerScope: preview.storedScope
+  });
+
+  await page.goForward();
+  await expect(page).toHaveURL(/\/coscroll$/);
+  await waitForIdle(page);
+  await expect.poll(() => readPreviewEvidence(page)).toEqual({
+    storedScope: preview.storedScope,
+    markerScope: preview.storedScope
+  });
+});
+
+test("a cancelled preview transition cannot write a stale target marker", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "This lifecycle contract only needs one browser profile.");
+
+  await page.goto("/?preview=post-coscroll-v1");
+  await expect(page).toHaveURL(/\/$/);
+  await expect.poll(() => readPreviewEvidence(page)).toMatchObject({
+    storedScope: expect.stringMatching(/^[a-f0-9]{64}$/),
+    markerScope: expect.stringMatching(/^[a-f0-9]{64}$/)
+  });
+  await enterHomepageRuntime(page);
+  await armHomepageTerminal(page);
+  await page.locator(".miralith-chapter-nav__terminal a").click();
+  await expect(page).toHaveURL(/\/radio-gaga$/);
+  await waitForIdle(page);
+
+  await armRadioGagaTerminal(page);
+  await installPreviewMarkerWriteRecorder(page);
+  await crossTerminalThreshold(page);
+  await expect(page.locator("html")).toHaveAttribute("data-chapter-transition-target", "/coscroll");
+  await expect(page).toHaveURL(/\/radio-gaga$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/$/);
+  await waitForIdle(page);
+  await page.waitForTimeout(400);
+  expect((await readPreviewMarkerWrites(page)).some((write) => write.pathname === "/coscroll")).toBe(false);
+});
+
+test("a scope or forged history-marker mismatch cannot re-enable preview marking", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "This lifecycle contract only needs one browser profile.");
+
+  const preview = await bootstrapPreviewAtRadioGaga(page);
+  const forgedScope = "0".repeat(64) === preview.storedScope ? "f".repeat(64) : "0".repeat(64);
+  await page.evaluate((scope) => {
+    window.history.replaceState({
+      ...(window.history.state as Record<string, unknown>),
+      __miralithChapterPreview: { v: 1, scope }
+    }, "");
+  }, forgedScope);
+  await page.reload();
+  await expect(page).toHaveURL(/\/radio-gaga$/);
+  expect(await readPreviewEvidence(page)).toEqual({
+    storedScope: preview.storedScope,
+    markerScope: forgedScope
+  });
+
+  await armRadioGagaTerminal(page);
+  await installPreviewMarkerWriteRecorder(page);
+  await page.locator(".radio-gaga-title-rail .miralith-chapter-nav__terminal a").click();
+  await expect(page).toHaveURL(/\/coscroll$/);
+  await waitForIdle(page);
+  expect(await readPreviewMarkerWrites(page)).toEqual([]);
+  expect(await readPreviewEvidence(page)).toEqual({
+    storedScope: preview.storedScope,
+    markerScope: null
+  });
+});
+
+test("a stored build-scope mismatch cannot re-enable preview marking", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "This lifecycle contract only needs one browser profile.");
+
+  const preview = await bootstrapPreviewAtRadioGaga(page);
+  const mismatchedScope = "f".repeat(64) === preview.storedScope ? "e".repeat(64) : "f".repeat(64);
+  await page.evaluate((scope) => {
+    window.sessionStorage.setItem("miralith:chapter-preview:v1", JSON.stringify({
+      v: 1,
+      token: "post-coscroll-v1",
+      scope
+    }));
+  }, mismatchedScope);
+  await page.reload();
+  await expect(page).toHaveURL(/\/radio-gaga$/);
+  expect(await readPreviewEvidence(page)).toEqual({
+    storedScope: mismatchedScope,
+    markerScope: preview.markerScope
+  });
+
+  await armRadioGagaTerminal(page);
+  await installPreviewMarkerWriteRecorder(page);
+  await page.locator(".radio-gaga-title-rail .miralith-chapter-nav__terminal a").click();
+  await expect(page).toHaveURL(/\/coscroll$/);
+  await waitForIdle(page);
+  expect(await readPreviewMarkerWrites(page)).toEqual([]);
+  expect(await readPreviewEvidence(page)).toEqual({
+    storedScope: mismatchedScope,
+    markerScope: null
+  });
+});
+
 test("terminal scrolling follows the published 01 → 02 → 03 sequence", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "The full ordered sequence only needs one browser profile.");
 

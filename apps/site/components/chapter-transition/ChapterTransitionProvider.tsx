@@ -17,6 +17,12 @@ import {
   type PublishedMiraLithChapter
 } from "../../content/miraLithChapters";
 import { ChapterTransitionLayer } from "./ChapterTransitionLayer";
+import {
+  bootstrapChapterPreviewSession,
+  markChapterPreviewHistoryEntry,
+  revalidateChapterPreviewSession,
+  type ChapterPreviewSessionState
+} from "./chapterPreviewSession";
 import type {
   ChapterDestinationControls,
   ChapterDestinationSignal,
@@ -106,6 +112,8 @@ interface ActiveChapterTransition {
 
 interface ChapterTransitionContextValue {
   snapshot: ChapterTransitionSnapshot;
+  previewActive: boolean;
+  scope: string | null;
   beginTransition: (targetHref: string, initiator: Exclude<ChapterTransitionInitiator, "history">) => string | null;
   registerDestination: (pathname: string, controls: ChapterDestinationControls) => () => void;
   reportDestination: (signal: ChapterDestinationSignal) => void;
@@ -262,7 +270,17 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
   const pathname = normalizeMiraLithChapterHref(usePathname() || "/");
   const [snapshot, setSnapshot] = useState<ChapterTransitionSnapshot>(idleSnapshot);
   const [announcement, setAnnouncement] = useState("");
+  const [previewSession, setPreviewSession] = useState<ChapterPreviewSessionState>({
+    previewActive: false,
+    scope: null
+  });
   const activeRef = useRef<ActiveChapterTransition | null>(null);
+  const previewSessionRef = useRef<ChapterPreviewSessionState>(previewSession);
+  const pendingPreviewMarkerRef = useRef<{
+    transitionId: string;
+    targetHref: string;
+    scope: string;
+  } | null>(null);
   const currentPathRef = useRef(pathname);
   const destinationControlsRef = useRef(new Map<string, ChapterDestinationControls>());
   const transitionSequenceRef = useRef(0);
@@ -275,6 +293,11 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
   const tryAdvanceRef = useRef<(runtime: ActiveChapterTransition) => void>(() => undefined);
   const requestFallbackRef = useRef<(runtime: ActiveChapterTransition, reason: string) => void>(() => undefined);
   const recoverSourceRef = useRef<(runtime: ActiveChapterTransition, reason: string) => void>(() => undefined);
+
+  const updatePreviewSession = useCallback((nextSession: ChapterPreviewSessionState) => {
+    previewSessionRef.current = nextSession;
+    setPreviewSession(nextSession);
+  }, []);
 
   const publish = useCallback((runtime: ActiveChapterTransition, state: ChapterTransitionState, error?: string) => {
     runtime.state = state;
@@ -350,6 +373,9 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
     }
     clearRuntimeTimers(runtime);
     cancelDestinationAttempt(runtime);
+    if (pendingPreviewMarkerRef.current?.transitionId === runtime.id) {
+      pendingPreviewMarkerRef.current = null;
+    }
     activeRef.current = null;
     restoreScrollRestoration();
     setSnapshot(idleSnapshot);
@@ -725,7 +751,18 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
   const beginTransition = useCallback((
     targetHref: string,
     initiator: Exclude<ChapterTransitionInitiator, "history">
-  ) => startRuntime(currentPathRef.current, targetHref, initiator), [startRuntime]);
+  ) => {
+    const transitionId = startRuntime(currentPathRef.current, targetHref, initiator);
+    const activePreview = previewSessionRef.current;
+    if (transitionId && activePreview.previewActive && activePreview.scope) {
+      pendingPreviewMarkerRef.current = {
+        transitionId,
+        targetHref: normalizeMiraLithChapterHref(targetHref),
+        scope: activePreview.scope
+      };
+    }
+    return transitionId;
+  }, [startRuntime]);
 
   const registerDestination = useCallback((pathnameToRegister: string, controls: ChapterDestinationControls) => {
     const normalizedPathname = normalizeMiraLithChapterHref(pathnameToRegister);
@@ -840,6 +877,18 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
   }, [finishTransition]);
 
   useEffect(() => {
+    let disposed = false;
+    window.queueMicrotask(() => {
+      if (!disposed) {
+        updatePreviewSession(bootstrapChapterPreviewSession());
+      }
+    });
+    return () => {
+      disposed = true;
+    };
+  }, [updatePreviewSession]);
+
+  useEffect(() => {
     currentPathRef.current = pathname;
     const runtime = activeRef.current;
     if (!runtime) {
@@ -854,11 +903,23 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
         runtime.navigationCommitted = true;
         recordCommittedPush(pathname);
       }
+      const pendingPreviewMarker = pendingPreviewMarkerRef.current;
+      if (
+        pendingPreviewMarker?.transitionId === runtime.id &&
+        pendingPreviewMarker.targetHref === pathname &&
+        previewSessionRef.current.previewActive &&
+        previewSessionRef.current.scope === pendingPreviewMarker.scope
+      ) {
+        if (!markChapterPreviewHistoryEntry(pendingPreviewMarker.scope)) {
+          updatePreviewSession(revalidateChapterPreviewSession());
+        }
+        pendingPreviewMarkerRef.current = null;
+      }
       runtime.mounted = true;
       performanceMark(runtime, "pathname-confirmed");
       processDestinationRef.current(runtime);
     }
-  }, [pathname, recordCommittedPush]);
+  }, [pathname, recordCommittedPush, updatePreviewSession]);
 
   useEffect(() => {
     navigationEntryIndexRef.current = readNavigationEntryIndex();
@@ -867,6 +928,7 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
 
   useEffect(() => {
     const handlePopState = () => {
+      updatePreviewSession(revalidateChapterPreviewSession());
       const targetHref = normalizeMiraLithChapterHref(window.location.pathname);
       const sourceHref = currentPathRef.current;
       const activeRuntime = activeRef.current;
@@ -888,6 +950,9 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
           sourceHref === activeRuntime.targetHref && !activeRuntime.resetComplete;
         clearRuntimeTimers(activeRuntime);
         cancelDestinationAttempt(activeRuntime);
+        if (pendingPreviewMarkerRef.current?.transitionId === activeRuntime.id) {
+          pendingPreviewMarkerRef.current = null;
+        }
         activeRef.current = null;
         performanceMark(activeRuntime, "history-interrupted");
         const replacementId = getPublishedMiraLithChapter(targetHref)
@@ -914,7 +979,7 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [recordHistoryTraversal, restoreScrollRestoration, startRuntime]);
+  }, [recordHistoryTraversal, restoreScrollRestoration, startRuntime, updatePreviewSession]);
 
   useEffect(() => {
     const locked = snapshot.state !== "idle";
@@ -970,15 +1035,18 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
       cancelDestinationAttempt(runtime);
       activeRef.current = null;
     }
+    pendingPreviewMarkerRef.current = null;
     restoreScrollRestoration();
   }, [restoreScrollRestoration]);
 
   const value = useMemo<ChapterTransitionContextValue>(() => ({
     snapshot,
+    previewActive: previewSession.previewActive,
+    scope: previewSession.scope,
     beginTransition,
     registerDestination,
     reportDestination
-  }), [beginTransition, registerDestination, reportDestination, snapshot]);
+  }), [beginTransition, previewSession.previewActive, previewSession.scope, registerDestination, reportDestination, snapshot]);
 
   return (
     <ChapterTransitionContext.Provider value={value}>
