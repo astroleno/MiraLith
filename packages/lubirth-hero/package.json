@@ -7,6 +7,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "generate:baked-cloud-impostor": "node scripts/prepare-baked-cloud-impostor.mjs",
     "generate:cloud-deck": "node scripts/generate-cloud-deck-texture.mjs",
     "generate:earth-lights-only": "node scripts/generate-earth-lights-only.mjs",
     "generate:home-cloud-field": "node scripts/generate-home-cloud-field.mjs",
