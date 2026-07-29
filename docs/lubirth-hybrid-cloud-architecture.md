@@ -8,6 +8,12 @@ performance result. The production homepage default remains unchanged.
 
 Date: 2026-07-26
 
+## 2026-07-30 offline-bake comparison decision
+
+The query-only baked deep-impostor route is **rejected for production promotion**. It proves Earth-local attachment, IP lifecycle, optical handoff, mobile budgeting, and resource release, but real-opening review still exposes a vertically banded planar read and did not produce a verified <=3 ms GPU draw measurement.
+
+The [source-bound evidence](lubirth-baked-cloud-evidence/2026-07-30/README.md) records the manifest hashes, telemetry, capture command, and decision. The Hybrid route remains an isolated Unit 3 comparison control only; neither experiment changes the production homepage cloud policy.
+
 The [Phase -1 revalidation](lubirth-hybrid-cloud-evidence/phase-1-revalidation-2026-07-26/README.md)
 and [2026-07-25 acceptance evidence](lubirth-hybrid-cloud-evidence/phase-1-accepted-2026-07-25/README.md)
 are historical baselines only. Phase -1.1 must produce a fresh source-bound 1-bin/2-bin A/B

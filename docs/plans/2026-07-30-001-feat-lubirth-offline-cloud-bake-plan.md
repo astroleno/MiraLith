@@ -1,7 +1,7 @@
 ---
 title: "feat: Validate offline-baked LuBirth hero clouds"
 type: feat
-status: active
+status: completed
 date: 2026-07-30
 ---
 
@@ -61,7 +61,7 @@ flowchart LR
 
 ## Implementation Units
 
-- [ ] **Unit 1: Produce one auditable offline bake**
+- [x] **Unit 1: Produce one auditable offline bake**
 
 **Goal:** Create one high-quality hero-cloud asset suitable for the real close shot.
 
@@ -87,7 +87,7 @@ flowchart LR
 **Verification:**
 - The baked reference itself visibly contains a readable cloud top, side, underside, and internal attenuation before browser integration.
 
-- [ ] **Unit 2: Build a query-only real-timeline spike**
+- [x] **Unit 2: Build a query-only real-timeline spike**
 
 **Goal:** Render the baked cloud through the actual LuBirth camera, Earth transform, and IP focus lifecycle.
 
@@ -121,7 +121,7 @@ flowchart LR
 - A full opening capture shows materially stronger volume than the current Hybrid spike at 1× viewing size.
 - The cloud remains spatially attached to Earth and hands off before the baked representation becomes visibly planar.
 
-- [ ] **Unit 3: Decide promotion or rejection**
+- [x] **Unit 3: Decide promotion or rejection**
 
 **Goal:** Make one explicit route decision based on the real shot rather than continue parameter iteration.
 

@@ -1,0 +1,26 @@
+{
+  "anchor": {
+    "latitudeDeg": 31.2,
+    "longitudeDeg": 103.8
+  },
+  "anchorLocalPosition": [-0.2075331861541465, 0.5362665176606232, -0.8449237827643726],
+  "candidateVisible": false,
+  "decodedGpuResidencyBytes": 12042240,
+  "farOpticalWeight": 1,
+  "gpuTimer": {
+    "sampleCount": 0,
+    "supported": false
+  },
+  "locationReady": true,
+  "maxGpuResidencyBytes": 20000000,
+  "maxTransferBytes": 12000000,
+  "nearOpticalWeight": 0,
+  "openingTimeline": "mapOpeningProgress",
+  "progress": 0.82,
+  "resourceGeneration": 1,
+  "resourceState": "ready",
+  "selectedViewIds": ["close-center", "close-east"],
+  "sharedCloudOffset": 0,
+  "tier": "desktop",
+  "transferBytes": 2088158
+}
