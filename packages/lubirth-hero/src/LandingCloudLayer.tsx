@@ -115,6 +115,24 @@ const smoothstep = (edge0: number, edge1: number, value: number) => {
   return t * t * (3 - 2 * t);
 };
 
+function readLiteCloudReliefLightingStrength() {
+  if (typeof window === "undefined") {
+    return 1;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  return params.get("visualTest") === "pixels" && params.get("cloudReliefLighting") === "off" ? 0 : 1;
+}
+
+function readLiteCloudDiagnosticMode() {
+  if (typeof window === "undefined") {
+    return 0;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  return params.get("visualTest") === "pixels" && params.get("cloudDiagnostic") === "mask" ? 1 : 0;
+}
+
 declare global {
   interface Window {
     __MiraLithLuBirthCloudShellCount?: number;
@@ -123,12 +141,16 @@ declare global {
     __MiraLithLuBirthCloudShellTextureUuid?: string;
     __MiraLithLuBirthCloudHeightScale?: number;
     __MiraLithLuBirthCloudReliefSamples?: number;
+    __MiraLithLuBirthCloudReliefLightingStrength?: number;
+    __MiraLithLuBirthCloudDiagnosticMode?: number;
   }
 }
 
 function createLiteCloudMaterial(
   composition: LandingComposition,
-  cloudFieldTexture: Texture
+  cloudFieldTexture: Texture,
+  reliefLightingStrength: number,
+  diagnosticMode: number
 ) {
   return new ShaderMaterial({
     uniforms: {
@@ -137,6 +159,8 @@ function createLiteCloudMaterial(
       heightScale: { value: composition.earth.radius * HOME_LITE_CLOUD_HEIGHT_SCALE },
       opacity: { value: composition.earth.useClouds ? composition.earth.cloudOpacity : 0 },
       debugBoost: { value: 0 },
+      reliefLightingStrength: { value: reliefLightingStrength },
+      diagnosticMode: { value: diagnosticMode },
       lightDir: {
         value: lightDirection.set(...composition.light.fixedSunDir).normalize().clone()
       },
@@ -192,7 +216,11 @@ function createLiteCloudMaterial(
           dot(viewDirection, worldNorth),
           dot(viewDirection, worldNormal)
         );
-        vSunOffset = vTangentLight.xy / max(length(vTangentLight.xy), 0.001);
+        vSunOffset = vTangentLight.xy / max(vTangentLight.z, 0.08);
+        float sunOffsetLength = length(vSunOffset);
+        if (sunOffsetLength > 4.5) {
+          vSunOffset *= 4.5 / sunOffsetLength;
+        }
         vDaylight = smoothstep(-0.12, 0.3, vTangentLight.z);
         vViewFacing = max(vTangentView.z, 0.0);
         gl_Position = projectionMatrix * viewMatrix * worldPosition;
@@ -203,6 +231,8 @@ function createLiteCloudMaterial(
       uniform float cloudOffset;
       uniform float opacity;
       uniform float debugBoost;
+      uniform float reliefLightingStrength;
+      uniform float diagnosticMode;
       uniform vec3 lightDir;
       uniform vec3 lightColor;
 
@@ -218,11 +248,15 @@ function createLiteCloudMaterial(
           fract(vUv.x + ${HOME_CLOUD_FIELD_OFFSET_X.toFixed(3)} + cloudOffset),
           clamp(vUv.y + ${HOME_CLOUD_FIELD_OFFSET_Y.toFixed(3)}, 0.001, 0.999)
         );
-        vec4 cloudField = texture2D(cloudFieldMap, cloudUv);
+        vec4 baseCloudField = texture2D(cloudFieldMap, cloudUv);
         float grazingView = 1.0 - clamp(vViewFacing, 0.0, 1.0);
-        vec2 reliefDirection = vTangentView.xy / max(vTangentView.z, 0.32);
-        float reliefDepth = (0.34 + cloudField.a * 0.66) *
-          smoothstep(0.12, 0.86, grazingView);
+        vec2 reliefDirection = vTangentView.xy / max(vTangentView.z, 0.42);
+        float reliefPerspective = mix(
+          0.42,
+          1.0,
+          smoothstep(0.04, 0.88, grazingView)
+        );
+        float reliefDepth = (0.28 + baseCloudField.a * 0.72) * reliefPerspective;
         vec2 reliefUv = vec2(
           fract(cloudUv.x - reliefDirection.x * ${HOME_LITE_CLOUD_RELIEF_UV_SCALE.toFixed(4)} * reliefDepth),
           clamp(
@@ -232,49 +266,117 @@ function createLiteCloudMaterial(
           )
         );
         vec4 reliefField = texture2D(cloudFieldMap, reliefUv);
-        float reliefWeight = smoothstep(0.16, 0.78, grazingView) *
-          smoothstep(0.12, 0.72, reliefField.a);
-        cloudField.r = max(cloudField.r, reliefField.r * (0.82 + reliefWeight * 0.12));
-        cloudField.a = max(cloudField.a, reliefField.a * (0.78 + reliefWeight * 0.14));
-        cloudField.gb = mix(cloudField.gb, reliefField.gb, reliefWeight * 0.55);
+        float reliefHeight = smoothstep(
+          0.1,
+          0.82,
+          max(baseCloudField.a, reliefField.a)
+        );
+        float parallaxWeight = mix(
+          0.76,
+          0.98,
+          smoothstep(0.08, 0.92, grazingView)
+        ) * mix(0.92, 1.0, reliefHeight);
+        vec4 cloudField = mix(baseCloudField, reliefField, parallaxWeight);
         if (cloudField.r < 0.12) {
           discard;
         }
         float coverage = clamp((cloudField.r - 0.12) * 1.14, 0.0, 1.0);
         float thickness = cloudField.a;
 
+        if (diagnosticMode > 0.5) {
+          float coreMask = smoothstep(0.34, 0.62, coverage) *
+            smoothstep(0.2, 0.54, thickness);
+          gl_FragColor = coreMask > 0.34
+            ? vec4(1.0, 0.0, 1.0, 1.0)
+            : vec4(0.0, 1.0, 1.0, 1.0);
+          return;
+        }
+
         vec2 tangentNormal = cloudField.gb * 2.0 - 1.0;
         float tangentLengthSquared = min(dot(tangentNormal, tangentNormal), 0.96);
         float normalZ = sqrt(max(1.0 - tangentLengthSquared, 0.04));
+        float sunPathLength = length(vSunOffset);
+        vec2 sunUvDirection = vSunOffset / max(sunPathLength, 0.001);
+        float sunPathFactor = smoothstep(0.15, 4.5, sunPathLength);
+        float occlusionDistance = mix(0.0012, 0.0068, sunPathFactor) *
+          (0.48 + thickness * 0.92);
         vec2 occlusionUv = vec2(
-          fract(cloudUv.x - vSunOffset.x * 0.0031),
-          clamp(cloudUv.y - vSunOffset.y * 0.00155, 0.001, 0.999)
+          fract(reliefUv.x - sunUvDirection.x * occlusionDistance),
+          clamp(reliefUv.y - sunUvDirection.y * occlusionDistance * 0.5, 0.001, 0.999)
         );
         vec4 occlusionField = texture2D(cloudFieldMap, occlusionUv);
 
         float geometricLight = clamp(vTangentLight.z, 0.0, 1.0);
         float shapedLight = max(dot(vec3(tangentNormal, normalZ), vTangentLight), 0.0);
-        float selfOcclusion = occlusionField.r * occlusionField.a *
-          (0.18 + thickness * 0.3);
+        float sunVisibility = smoothstep(-0.02, 0.42, vTangentLight.z);
+        float visibleShapedLight = shapedLight * mix(0.16, 1.0, sunVisibility);
+        float currentOpticalHeight = cloudField.r * cloudField.a;
+        float occluderOpticalHeight = occlusionField.r * occlusionField.a;
+        float sunClearance = mix(0.008, 0.1, geometricLight);
+        float castShadow = smoothstep(
+          0.0,
+          0.22,
+          occluderOpticalHeight - currentOpticalHeight - sunClearance
+        ) * sunVisibility;
+        float opticalShadow = occluderOpticalHeight *
+          mix(0.12, 0.34, sunPathFactor) * sunVisibility;
+        float selfOcclusion = clamp(
+          opticalShadow + castShadow * 0.42 * reliefLightingStrength,
+          0.0,
+          0.58
+        );
 
-        vec3 shadowColor = vec3(0.44, 0.51, 0.62);
-        vec3 daylightColor = vec3(0.96, 0.98, 1.0);
-        float lightShape = clamp(vDaylight * 0.7 + shapedLight * 0.3, 0.0, 1.0);
+        vec3 shadowColor = vec3(0.3, 0.36, 0.46);
+        vec3 daylightColor = vec3(0.86, 0.9, 0.96);
+        float lightShape = clamp(sunVisibility * 0.48 + visibleShapedLight * 0.52, 0.0, 1.0);
         vec3 cloudColor = mix(shadowColor, daylightColor, lightShape);
-        cloudColor *= lightColor * (0.56 + geometricLight * 0.26 + shapedLight * 0.18);
+        cloudColor *= lightColor * (0.44 + geometricLight * 0.18 + visibleShapedLight * 0.26);
         cloudColor *= 1.0 - selfOcclusion;
-        cloudColor += vec3(0.025, 0.05, 0.09) * (1.0 - vDaylight) * thickness;
+        cloudColor *= mix(0.18, 1.0, sunVisibility);
+        cloudColor += vec3(0.012, 0.024, 0.045) * (1.0 - sunVisibility) * thickness;
 
-        float limbFade = clamp(vViewFacing * 11.0, 0.0, 1.0);
-        float alpha = coverage * opacity * (0.34 + thickness * 0.36) * limbFade;
-        alpha *= 0.64 + vDaylight * 0.36;
+        float cloudCoreMask = smoothstep(0.26, 0.7, coverage) *
+          smoothstep(0.2, 0.68, thickness);
+        float normalRelief = clamp(visibleShapedLight - geometricLight, -0.46, 0.46);
+        float reliefSunlight = sunVisibility;
+        float reliefTopLight = max(normalRelief, 0.0) *
+          cloudCoreMask * reliefSunlight * reliefLightingStrength;
+        float reliefSideShade = max(-normalRelief, 0.0) *
+          cloudCoreMask * (0.42 + reliefSunlight * 0.58) * reliefLightingStrength;
+        cloudColor *= 1.0 + reliefTopLight * 1.05;
+        cloudColor *= 1.0 - reliefSideShade * 0.85;
+        cloudColor += daylightColor * reliefTopLight * thickness * 0.12;
+        float densityShade = smoothstep(0.42, 0.9, thickness) *
+          (1.0 - visibleShapedLight) * cloudCoreMask;
+        cloudColor *= 1.0 - densityShade * 0.16 * reliefLightingStrength;
+
+        float rim = 1.0 - clamp(vViewFacing, 0.0, 1.0);
+        float thickCloudCore = smoothstep(0.34, 0.78, thickness) *
+          smoothstep(0.26, 0.76, coverage);
+        float limbFadeStart = mix(
+          ${HOME_LITE_CLOUD_SHELL.limbFadeStart.toFixed(2)},
+          0.86,
+          thickCloudCore
+        );
+        float limbFadeEnd = mix(0.96, 0.985, thickCloudCore);
+        float limbFade = 1.0 - smoothstep(limbFadeStart, limbFadeEnd, rim);
+        float cloudInterior = smoothstep(0.18, 0.62, coverage) *
+          smoothstep(0.12, 0.54, thickness);
+        float alpha = coverage * opacity * (0.28 + thickness * 0.48) * limbFade;
+        alpha *= mix(0.62, 1.0, cloudInterior);
+        alpha *= 0.12 + sunVisibility * 0.88;
+        float rimMask = smoothstep(0.7, 0.96, rim);
+        float rimIllumination = smoothstep(0.03, 0.34, max(geometricLight, visibleShapedLight));
+        alpha *= 1.0 - rimMask * (1.0 - rimIllumination) * 0.86;
+        alpha *= 1.0 - rimMask * 0.3;
+        cloudColor *= mix(0.82, 1.0, cloudInterior) * (1.0 - rimMask * 0.12);
         alpha *= 1.0 + debugBoost * 0.28;
 
         if (alpha < 0.002) {
           discard;
         }
 
-        gl_FragColor = vec4(max(cloudColor, vec3(0.22)), clamp(alpha, 0.0, 0.68));
+        gl_FragColor = vec4(clamp(cloudColor, vec3(0.0), vec3(1.0)), clamp(alpha, 0.0, 0.68));
       }
     `,
     transparent: true,
@@ -1006,6 +1108,8 @@ export function LandingCloudLayer({
   const cloud = useRef<Mesh>(null);
   const cloudGroup = useRef<Group>(null);
   const cloudOffset = useRef(0);
+  const reliefLightingStrength = useMemo(readLiteCloudReliefLightingStrength, []);
+  const diagnosticMode = useMemo(readLiteCloudDiagnosticMode, []);
   const { texture: cloudFieldTexture, failed: cloudFieldTextureFailed } = useLandingTexture(
     cloudMode === "shell-lite" ? assets.earthCloudField?.src : undefined,
     {
@@ -1051,14 +1155,25 @@ export function LandingCloudLayer({
   const materials = useMemo(
     () => {
       if (cloudMode === "shell-lite") {
-        return cloudFieldTexture ? [createLiteCloudMaterial(composition, cloudFieldTexture)] : [];
+        return cloudFieldTexture
+          ? [createLiteCloudMaterial(composition, cloudFieldTexture, reliefLightingStrength, diagnosticMode)]
+          : [];
       }
 
       return cloudTexture
         ? activeCloudShells.map((layer) => createCloudMaterial(composition, layer, cloudTexture, cloudDeckTexture ?? undefined))
         : [];
     },
-    [activeCloudShells, cloudDeckTexture, cloudFieldTexture, cloudMode, cloudTexture, composition]
+    [
+      activeCloudShells,
+      cloudDeckTexture,
+      cloudFieldTexture,
+      cloudMode,
+      cloudTexture,
+      composition,
+      diagnosticMode,
+      reliefLightingStrength
+    ]
   );
   const activeTexture = cloudMode === "shell-lite" ? cloudFieldTexture : cloudTexture;
   const activeTextureFailed = cloudMode === "shell-lite" ? cloudFieldTextureFailed : cloudTextureFailed;
@@ -1090,6 +1205,10 @@ export function LandingCloudLayer({
       enabled && cloudMode === "shell-lite" ? HOME_LITE_CLOUD_HEIGHT_SCALE : undefined;
     window.__MiraLithLuBirthCloudReliefSamples =
       enabled && cloudMode === "shell-lite" ? 1 : undefined;
+    window.__MiraLithLuBirthCloudReliefLightingStrength =
+      enabled && cloudMode === "shell-lite" ? reliefLightingStrength : undefined;
+    window.__MiraLithLuBirthCloudDiagnosticMode =
+      enabled && cloudMode === "shell-lite" ? diagnosticMode : undefined;
 
     return () => {
       window.__MiraLithLuBirthCloudShellCount = 0;
@@ -1098,8 +1217,18 @@ export function LandingCloudLayer({
       window.__MiraLithLuBirthCloudShellTextureUuid = undefined;
       window.__MiraLithLuBirthCloudHeightScale = undefined;
       window.__MiraLithLuBirthCloudReliefSamples = undefined;
+      window.__MiraLithLuBirthCloudReliefLightingStrength = undefined;
+      window.__MiraLithLuBirthCloudDiagnosticMode = undefined;
     };
-  }, [activeCloudShells.length, assets.earthCloudField?.src, cloudFieldTexture?.uuid, cloudMode, enabled]);
+  }, [
+    activeCloudShells.length,
+    assets.earthCloudField?.src,
+    cloudFieldTexture?.uuid,
+    cloudMode,
+    diagnosticMode,
+    enabled,
+    reliefLightingStrength
+  ]);
 
   useFrame((_state, delta) => {
     if (!cloudGroup.current || !enabled || !activeTexture) {
@@ -1135,6 +1264,8 @@ export function LandingCloudLayer({
       cloudMaterial.uniforms.lightDir.value.copy(lightDirection);
       if (cloudMode === "shell-lite") {
         cloudMaterial.uniforms.cloudFieldMap.value = activeTexture;
+        cloudMaterial.uniforms.reliefLightingStrength.value = reliefLightingStrength;
+        cloudMaterial.uniforms.diagnosticMode.value = diagnosticMode;
         return;
       }
 

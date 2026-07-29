@@ -8,7 +8,10 @@
   },
   "scripts": {
     "generate:cloud-deck": "node scripts/generate-cloud-deck-texture.mjs",
+    "generate:earth-lights-only": "node scripts/generate-earth-lights-only.mjs",
     "generate:home-cloud-field": "node scripts/generate-home-cloud-field.mjs",
+    "generate:nasa-lite-cloud-field": "LUBIRTH_HOME_CLOUD_PROFILE=nasa-lite node scripts/generate-home-cloud-field.mjs",
+    "generate:nasa-lite-color-assets": "node scripts/generate-nasa-lite-color-assets.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
@@ -22,6 +25,7 @@
     "react-dom": ">=19"
   },
   "devDependencies": {
+    "ktx2-encoder": "0.5.3",
     "sharp": "0.34.5"
   }
 }

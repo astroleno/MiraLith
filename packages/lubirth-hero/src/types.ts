@@ -7,9 +7,9 @@ export type LandingVisualDebugLayer = "all" | "stars" | "clouds" | "atmosphere" 
 export type LandingAtmosphereVariant = "stack" | "volumetric";
 export type LandingAtmosphereLook = "lubirth" | "reference";
 export type LandingRuntimeProfile = "full" | "home-lite";
-export type LandingCloudMode = "surface" | "shell-lite" | "lookdev";
+export type LandingCloudMode = "surface" | "shell-lite" | "nasa-lite" | "relief-lite" | "lookdev";
 export type LandingPostEffectMode = "off" | "analytic-halo" | "full-bloom";
-export type LandingAtmosphereMode = "surface-glow" | "lookdev";
+export type LandingAtmosphereMode = "surface-glow" | "directional-lite" | "limb-lite" | "lookdev";
 
 export interface LandingVisualPolicy {
   cloudMode: LandingCloudMode;
@@ -66,6 +66,7 @@ export interface LandingAsset {
 export interface LandingAssetManifest {
   earthDay: TextureRef;
   earthNight?: TextureRef;
+  earthLightsOnly?: TextureRef;
   earthClouds?: TextureRef;
   earthCloudField?: TextureRef;
   earthSpecular?: TextureRef;

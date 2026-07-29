@@ -18,6 +18,8 @@ import {
 import { type QualityProfile } from "@miralith/visual-core";
 import { DEFAULT_LUBIRTH_ASSETS } from "./assetManifest";
 import { LandingEarthLite } from "./LandingEarthLite";
+import { LandingEarthSurfaceLiteV2 } from "./LandingEarthSurfaceLiteV2";
+import type { LandingPlanetLightingFrame } from "./landingPlanetLighting";
 import type {
   LandingComposition,
   LandingCloseAtmosphereTuning,
@@ -43,6 +45,7 @@ interface LandingEarthProps {
   runtimeProfile?: LandingRuntimeProfile;
   visualPolicy?: LandingVisualPolicy;
   closeAtmosphereTuning?: LandingCloseAtmosphereTuning;
+  lightingFrame?: LandingPlanetLightingFrame;
 }
 
 const lightDirection = new Vector3();
@@ -1459,6 +1462,25 @@ function LandingEarthLookdev({
 }
 
 export function LandingEarth(props: LandingEarthProps) {
+  if (
+    props.visualPolicy &&
+    props.lightingFrame &&
+    (
+      props.visualPolicy.cloudMode === "relief-lite" ||
+      props.visualPolicy.atmosphereMode === "limb-lite"
+    )
+  ) {
+    return (
+      <LandingEarthSurfaceLiteV2
+        composition={props.composition}
+        assets={props.assets}
+        quality={props.quality}
+        lightingFrame={props.lightingFrame}
+        onDayTextureReady={props.onDayTextureReady}
+      />
+    );
+  }
+
   if (props.visualPolicy && props.visualPolicy.cloudMode !== "lookdev") {
     return (
       <LandingEarthLite

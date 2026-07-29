@@ -1,5 +1,6 @@
 import type { LandingAsset, LandingAssetManifest, TextureRef } from "./types";
 import { LUBIRTH_CLOUD_DECK_TEXTURE } from "./cloudDeckTexture";
+import cloudAssetBudgets from "./landingCloudAssetBudgets.json";
 
 export const LUBIRTH_EXPANDED_SPACE_BACKGROUND: TextureRef = {
   id: "8k-stars-milky-way",
@@ -8,6 +9,90 @@ export const LUBIRTH_EXPANDED_SPACE_BACKGROUND: TextureRef = {
   height: 4096,
   format: "webp",
   colorSpace: "srgb"
+};
+
+export const LUBIRTH_NASA_LITE_DESKTOP_ASSETS: Partial<LandingAssetManifest> = {
+  earthDay: {
+    id: "earth-day-nasa-lite-4k",
+    src: "/assets/lubirth/textures/earth-day-nasa-lite-4k.webp",
+    width: 4096,
+    height: 2048,
+    format: "webp",
+    colorSpace: "srgb"
+  },
+  earthCloudField: {
+    id: "earth-cloud-field-nasa-lite-2k",
+    src: "/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.png",
+    width: 2048,
+    height: 1024,
+    format: "png",
+    colorSpace: "linear"
+  },
+  moonColor: {
+    id: "moon-nasa-lite-1k",
+    src: "/assets/lubirth/textures/moon-nasa-lite-1k.webp",
+    width: 1024,
+    height: 512,
+    format: "webp",
+    colorSpace: "srgb"
+  }
+};
+
+export const LUBIRTH_NASA_LITE_MOBILE_ASSETS: Partial<LandingAssetManifest> = {
+  moonColor: {
+    id: "moon-nasa-lite-512",
+    src: "/assets/lubirth/textures/moon-nasa-lite-512.webp",
+    width: 512,
+    height: 256,
+    format: "webp",
+    colorSpace: "srgb"
+  }
+};
+
+export const LUBIRTH_RELIEF_LITE_DESKTOP_ASSETS: Partial<LandingAssetManifest> = {
+  earthDay: {
+    id: "earth-day-relief-lite-4k",
+    src: "/assets/lubirth/textures/earth-day-nasa-lite-4k.webp",
+    width: 4096,
+    height: 2048,
+    format: "webp",
+    colorSpace: "srgb"
+  },
+  earthCloudField: {
+    id: "earth-cloud-field-relief-lite-2k",
+    src: "/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.ktx2",
+    width: 2048,
+    height: 1024,
+    format: "ktx2",
+    colorSpace: "linear"
+  },
+  moonColor: {
+    id: "moon-relief-lite-1k",
+    src: "/assets/lubirth/textures/moon-nasa-lite-1k.webp",
+    width: 1024,
+    height: 512,
+    format: "webp",
+    colorSpace: "srgb"
+  }
+};
+
+export const LUBIRTH_RELIEF_LITE_MOBILE_ASSETS: Partial<LandingAssetManifest> = {
+  earthCloudField: {
+    id: "earth-cloud-field-relief-lite-mobile-2k",
+    src: "/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.ktx2",
+    width: 2048,
+    height: 1024,
+    format: "ktx2",
+    colorSpace: "linear"
+  },
+  moonColor: {
+    id: "moon-relief-lite-512",
+    src: "/assets/lubirth/textures/moon-nasa-lite-512.webp",
+    width: 512,
+    height: 256,
+    format: "webp",
+    colorSpace: "srgb"
+  }
 };
 
 export const DEFAULT_LUBIRTH_ASSETS: LandingAssetManifest = {
@@ -27,6 +112,14 @@ export const DEFAULT_LUBIRTH_ASSETS: LandingAssetManifest = {
     format: "jpg",
     colorSpace: "srgb"
   },
+  earthLightsOnly: {
+    id: "earth-lights-only-2k",
+    src: "/assets/lubirth/textures/earth-lights-only-2k.webp",
+    width: 2048,
+    height: 1024,
+    format: "webp",
+    colorSpace: "srgb"
+  },
   earthClouds: {
     id: "earth-clouds-2k-light",
     src: "/assets/lubirth/textures/earth-clouds-2k-light.jpg",
@@ -37,10 +130,10 @@ export const DEFAULT_LUBIRTH_ASSETS: LandingAssetManifest = {
   },
   earthCloudField: {
     id: "earth-cloud-field-home",
-    src: "/assets/lubirth/textures/earth-cloud-field-home.webp",
-    width: 1536,
-    height: 768,
-    format: "webp",
+    src: "/assets/lubirth/textures/earth-cloud-field-home.png",
+    width: 1024,
+    height: 512,
+    format: "png",
     colorSpace: "linear"
   },
   earthSpecular: {
@@ -113,8 +206,22 @@ function textureBudget(
 
 export function getLandingAssetBudget(assets: Partial<LandingAssetManifest> = {}): LandingAsset[] {
   const resolvedAssets = resolveLandingAssets(assets);
+  const earthDayBudget =
+    resolvedAssets.earthDay.id === "earth-day-nasa-lite-4k" ||
+    resolvedAssets.earthDay.id === "earth-day-relief-lite-4k"
+    ? 800_000
+    : 520_000;
+  const cloudFieldBudget =
+    resolvedAssets.earthCloudField?.id === "earth-cloud-field-nasa-lite-2k"
+    ? cloudAssetBudgets.cloudFieldNasaLitePng
+    : resolvedAssets.earthCloudField?.id === "earth-cloud-field-relief-lite-2k" ||
+    resolvedAssets.earthCloudField?.id === "earth-cloud-field-relief-lite-mobile-2k"
+    ? cloudAssetBudgets.cloudFieldReliefLiteKtx2
+    : resolvedAssets.earthCloudField?.id === "earth-cloud-field-home"
+    ? cloudAssetBudgets.cloudFieldHomePng
+    : 1_100_000;
   const budget = [
-    textureBudget(resolvedAssets.earthDay, 520_000, "critical", true),
+    textureBudget(resolvedAssets.earthDay, earthDayBudget, "critical", true),
     textureBudget(
       resolvedAssets.earthNight ?? DEFAULT_LUBIRTH_ASSETS.earthNight ?? {
         id: "earth-night-2k",
@@ -128,16 +235,19 @@ export function getLandingAssetBudget(assets: Partial<LandingAssetManifest> = {}
       "critical",
       true
     ),
+    ...(resolvedAssets.earthLightsOnly
+      ? [textureBudget(resolvedAssets.earthLightsOnly, 360_000, "critical", true)]
+      : []),
     textureBudget(
       resolvedAssets.earthCloudField ?? DEFAULT_LUBIRTH_ASSETS.earthCloudField ?? {
         id: "earth-cloud-field-home",
-        src: "/assets/lubirth/textures/earth-cloud-field-home.webp",
-        width: 1536,
-        height: 768,
-        format: "webp",
+        src: "/assets/lubirth/textures/earth-cloud-field-home.png",
+        width: 1024,
+        height: 512,
+        format: "png",
         colorSpace: "linear"
       },
-      650_000,
+      cloudFieldBudget,
       "critical",
       true
     ),

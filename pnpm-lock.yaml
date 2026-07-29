@@ -135,6 +135,9 @@ importers:
         specifier: 0.184.0
         version: 0.184.0
     devDependencies:
+      ktx2-encoder:
+        specifier: 0.5.3
+        version: 0.5.3
       sharp:
         specifier: 0.34.5
         version: 0.34.5
@@ -3016,6 +3019,16 @@ packages:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
     dependencies:
       json-buffer: 3.0.1
+    dev: true
+
+  /ktx-parse@0.7.1:
+    resolution: {integrity: sha512-FeA3g56ksdFNwjXJJsc1CCc7co+AJYDp6ipIp878zZ2bU8kWROatLYf39TQEd4/XRSUvBXovQ8gaVKWPXsCLEQ==}
+    dev: true
+
+  /ktx2-encoder@0.5.3:
+    resolution: {integrity: sha512-VkoccU/EHSf1690w6znOhp2Hz4UJuKMnfuZhtaymVYge3okU64myyZ/v1Wui926rDuAoi1LfVNqilKm/k4nlqQ==}
+    dependencies:
+      ktx-parse: 0.7.1
     dev: true
 
   /language-subtag-registry@0.3.23:

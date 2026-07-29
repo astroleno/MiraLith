@@ -2,12 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import type {
-  LandingAtmospherePolicy,
-  LandingRenderProfile,
-  LandingVisualDebugLayer,
-  LuBirthProjectionFrame
+import {
+  resolveLandingVisualPolicy,
+  type LandingAtmosphereMode,
+  type LandingAtmospherePolicy,
+  type LandingCloudMode,
+  type LandingPostEffectMode,
+  type LandingRenderProfile,
+  type LandingVisualDebugLayer,
+  type LuBirthProjectionFrame
 } from "@miralith/lubirth-hero";
+import type { ResolvedQualityTier } from "@miralith/visual-core";
 import { VisualCanvas } from "../visual/VisualCanvas";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
 import { LuBirthSceneSlot } from "../visual/scenes/LuBirthSceneSlot";
@@ -23,6 +28,7 @@ import {
 import type { ChapterDestinationResetContext } from "./chapter-transition/chapterTransitionTypes";
 import { useChapterTerminalGate } from "./chapter-transition/useChapterTerminalGate";
 import { MiraLithChapterNavigation } from "./MiraLithChapterNavigation";
+import { ReliefLiteValidationHarness } from "./ReliefLiteValidationHarness";
 
 declare global {
   interface Window {
@@ -57,9 +63,13 @@ type HomeVisualReadySource = "day-texture" | "grace";
 type LuBirthRevisedRouteVariant = "home" | "study";
 
 interface ScreenshotDebugOptions {
+  atmosphereModeOverride?: LandingAtmosphereMode;
   atmospherePolicy: LandingAtmospherePolicy;
+  cloudModeOverride?: LandingCloudMode;
   fixedProgress: number | null;
   copyHidden: boolean;
+  postEffectModeOverride?: LandingPostEffectMode;
+  qualityTierOverride?: ResolvedQualityTier;
   visualPixelMode: boolean;
   rafPerfMode: boolean;
   visualDebugLayer: LandingVisualDebugLayer;
@@ -133,6 +143,40 @@ function readScreenshotDebugOptions(defaultCopyHidden = false): ScreenshotDebugO
   const copyMode = params.get("copy");
   const visualPixelMode = params.get("visualTest") === "pixels";
   const rafPerfMode = params.get("perfTest") === "raf";
+  const cloudModeParam = params.get("cloud");
+  const cloudModeOverride: LandingCloudMode | undefined =
+    cloudModeParam === "surface" ||
+    cloudModeParam === "shell-lite" ||
+    cloudModeParam === "nasa-lite" ||
+    cloudModeParam === "relief-lite" ||
+    cloudModeParam === "lookdev"
+      ? cloudModeParam
+      : undefined;
+  const atmosphereModeParam = params.get("atmosphereMode");
+  const atmosphereModeOverride: LandingAtmosphereMode | undefined =
+    atmosphereModeParam === "surface-glow" ||
+    atmosphereModeParam === "directional-lite" ||
+    atmosphereModeParam === "limb-lite" ||
+    atmosphereModeParam === "lookdev"
+      ? atmosphereModeParam
+      : undefined;
+  const qualityTierParam = params.get("quality");
+  const qualityTierOverride: ResolvedQualityTier | undefined =
+    qualityTierParam === "high" ||
+    qualityTierParam === "medium" ||
+    qualityTierParam === "low" ||
+    qualityTierParam === "fallback"
+      ? qualityTierParam
+      : undefined;
+  const postEffectModeParam = params.get("postEffect") ?? params.get("bloom");
+  const postEffectModeOverride: LandingPostEffectMode | undefined =
+    postEffectModeParam === "off"
+      ? "off"
+      : postEffectModeParam === "analytic-halo" || postEffectModeParam === "lite"
+        ? "analytic-halo"
+        : postEffectModeParam === "full-bloom" || postEffectModeParam === "full"
+          ? "full-bloom"
+          : undefined;
   const progressParam = params.get("progress");
   const parsedProgress = progressParam === null ? Number.NaN : Number.parseFloat(progressParam);
   const policyParam = visualPixelMode || rafPerfMode ? params.get("atmoPolicy") : null;
@@ -171,11 +215,15 @@ function readScreenshotDebugOptions(defaultCopyHidden = false): ScreenshotDebugO
             : "nasa";
 
   return {
+    atmosphereModeOverride,
     atmospherePolicy,
+    cloudModeOverride,
     fixedProgress: Number.isFinite(parsedProgress) ? clamp01(parsedProgress) : null,
     copyHidden: copyMode === "visible"
       ? false
       : defaultCopyHidden || copyMode === "hidden" || ((visualPixelMode || rafPerfMode) && copyMode !== "visible"),
+    postEffectModeOverride,
+    qualityTierOverride,
     visualPixelMode,
     rafPerfMode,
     visualDebugLayer,
@@ -470,6 +518,42 @@ export function LuBirthRevisedRoute({
   const homeVisualReadinessDispatchedRef = useRef(false);
   const showCopy = !debugOptions.copyHidden;
   const isScreenshotMode = debugOptions.fixedProgress !== null;
+  const canvasVisualPolicy = useMemo(
+    () => resolveLandingVisualPolicy({
+      runtimeProfile: isHome ? "home-lite" : "full",
+      qualityTier: debugOptions.qualityTierOverride ?? (isHome ? "medium" : "high"),
+      renderProfile: debugOptions.renderProfile,
+      overrides: {
+        ...(debugOptions.cloudModeOverride
+          ? { cloudMode: debugOptions.cloudModeOverride }
+          : {}),
+        ...(debugOptions.atmosphereModeOverride
+          ? { atmosphereMode: debugOptions.atmosphereModeOverride }
+          : {}),
+        ...(debugOptions.postEffectModeOverride
+          ? { postEffectMode: debugOptions.postEffectModeOverride }
+          : {})
+      }
+    }),
+    [
+      debugOptions.atmosphereModeOverride,
+      debugOptions.cloudModeOverride,
+      debugOptions.postEffectModeOverride,
+      debugOptions.qualityTierOverride,
+      debugOptions.renderProfile,
+      isHome
+    ]
+  );
+  const usesHighQualityLiteCanvas =
+    canvasVisualPolicy.cloudMode === "nasa-lite" ||
+    canvasVisualPolicy.cloudMode === "relief-lite" ||
+    canvasVisualPolicy.atmosphereMode === "directional-lite" ||
+    canvasVisualPolicy.atmosphereMode === "limb-lite";
+  const canvasDpr = isScreenshotMode && !isHome
+    ? 2
+    : isHome
+      ? usesHighQualityLiteCanvas ? 1 : 0.85
+      : [1.5, 2.1] as [number, number];
   const homeIntroRendering = isHome && !homeIntroComplete && !isScreenshotMode;
   const homeLoadingReady = homeProjectionSource !== "pending";
   const homeLoadingProjection = homeProjection;
@@ -532,6 +616,7 @@ export function LuBirthRevisedRoute({
       destination.reportVisualReady();
     }
   }, [destination, homeVisualReady, initialForcedVisualFallback, isHome, transitionForcedFallback]);
+
   const markHomeLoadingReady = useCallback((source: ReadyHomeProjectionSource) => {
     if (!isHome || homeProjectionSourceRef.current !== "pending") {
       return;
@@ -1452,6 +1537,10 @@ export function LuBirthRevisedRoute({
       data-home-projection={isHome ? homeProjectionSource : undefined}
       data-home-projection-visual={isHome ? homeLoadingProjectionSource : undefined}
       data-atmo-policy={debugOptions.atmospherePolicy}
+      data-canvas-atmosphere-mode={canvasVisualPolicy.atmosphereMode}
+      data-canvas-cloud-mode={canvasVisualPolicy.cloudMode}
+      data-canvas-dpr={typeof canvasDpr === "number" ? canvasDpr : canvasDpr.join("-")}
+      data-canvas-post-effect-mode={canvasVisualPolicy.postEffectMode}
       data-chapter-focus-root={isHome ? "true" : undefined}
       tabIndex={isHome ? -1 : undefined}
       aria-label={ariaLabel ?? (isHome ? "MiraLith LuBirth opening" : "LuBirth revised opening route")}
@@ -1491,10 +1580,10 @@ export function LuBirthRevisedRoute({
       {sceneEnabled ? (
         initialForcedVisualFallback || transitionForcedFallback ? visualFallback : (
           <VisualCanvas
-            key={isScreenshotMode ? "lubirth-screenshot-canvas" : isHome ? "lubirth-home-canvas" : "lubirth-runtime-canvas"}
-            antialias={!isHome}
+            key={`${isScreenshotMode ? "lubirth-screenshot-canvas" : isHome ? "lubirth-home-canvas" : "lubirth-runtime-canvas"}-${usesHighQualityLiteCanvas ? "high-quality-lite" : "standard"}`}
+            antialias={!isHome || usesHighQualityLiteCanvas}
             decorative
-            dpr={isScreenshotMode && !isHome ? 2 : isHome ? 0.85 : [1.5, 2.1]}
+            dpr={canvasDpr}
             fallback={visualFallback}
             onFallback={() => setTransitionForcedFallback(true)}
           >
@@ -1516,6 +1605,7 @@ export function LuBirthRevisedRoute({
           </VisualCanvas>
         )
       ) : null}
+      {isHome ? <ReliefLiteValidationHarness /> : null}
     </main>
   );
 }

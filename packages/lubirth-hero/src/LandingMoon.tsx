@@ -18,6 +18,7 @@ interface LandingMoonProps {
   sceneLightDirection: Vector3;
   position: Vector3;
   targetScale: Vector3;
+  nasaLiteOptics?: boolean;
   onTextureReady?: () => void;
 }
 
@@ -50,6 +51,7 @@ export function LandingMoon({
   sceneLightDirection,
   position,
   targetScale,
+  nasaLiteOptics = false,
   onTextureReady
 }: LandingMoonProps) {
   const moon = useRef<Mesh>(null);
@@ -99,7 +101,8 @@ export function LandingMoon({
               composition.moon.fixedPhase?.phaseAngleRad ?? 0.24
             ).clone()
           },
-          birthPhaseWeight: { value: getBirthPhaseWeight(composition.moon.lightingMode) }
+          birthPhaseWeight: { value: getBirthPhaseWeight(composition.moon.lightingMode) },
+          nasaLiteOptics: { value: nasaLiteOptics ? 1 : 0 }
         },
         vertexShader: `
           varying vec2 vUv;
@@ -124,6 +127,7 @@ export function LandingMoon({
           uniform float phaseAngle;
           uniform vec3 birthLightDir;
           uniform float birthPhaseWeight;
+          uniform float nasaLiteOptics;
 
           varying vec2 vUv;
           varying vec3 vNormal;
@@ -164,11 +168,16 @@ export function LandingMoon({
 
             float coolMoonMix = clamp(0.5 - gibbousWarmth * 0.18 + crescent * 0.08, 0.26, 0.58);
             vec3 moonLight = mix(lightColor * vec3(1.04, 1.0, 0.9), vec3(0.78, 0.84, 0.98), coolMoonMix) * phaseTint;
-            float exposure = sunIntensity * mix(0.25, 0.40, fullness);
+            float exposure = sunIntensity * mix(0.31, 0.48, fullness);
             vec3 lit = base * moonLight * exposure * (0.26 + directLight * 0.78 + grazingLight * 0.16)
               * limbLight * terrainContrast;
-            vec3 night = base * vec3(0.18, 0.22, 0.32) * (0.24 + nightLift * 1.05 + lowPhase * 0.08);
-            float earthshine = pow(viewerFacing, 1.8) * (1.0 - daySide) * (0.058 + nightLift * 0.2 + lowPhase * 0.07);
+            float nasaLiteLowPhase = nasaLiteOptics * lowPhase;
+            float crescentDirectBoost = 1.0 + nasaLiteLowPhase * 3.2;
+            lit *= crescentDirectBoost;
+            vec3 night = base * vec3(0.28, 0.34, 0.48)
+              * (0.32 + nightLift * 1.2 + lowPhase * 0.12 + nasaLiteLowPhase * 0.16);
+            float earthshine = pow(viewerFacing, 1.8) * (1.0 - daySide)
+              * (0.085 + nightLift * 0.24 + lowPhase * 0.09 + nasaLiteLowPhase * 0.11);
             vec3 color = mix(night, lit, daySide);
             color += base * vec3(0.32, 0.42, 0.62) * earthshine;
             color += vec3(0.08, 0.12, 0.18) * pow(1.0 - viewerFacing, 2.4) * visibleDisk * (0.1 + daySide * 0.14);
@@ -177,8 +186,8 @@ export function LandingMoon({
             color = mix(color, color * vec3(0.97, 1.0, 1.04), crescent * 0.18);
             color *= 0.92 + fullness * 0.08;
             color = color / (1.0 + max(color - vec3(0.72), vec3(0.0)) * 0.56);
-            color = min(color, vec3(0.78));
-            float diskAlpha = visibleDisk * mix(0.82, 0.96, fullness);
+            color = min(color, vec3(0.86));
+            float diskAlpha = visibleDisk * mix(0.82 + nasaLiteLowPhase * 0.05, 0.96, fullness);
             diskAlpha *= mix(0.9, 1.0, daySide);
             gl_FragColor = vec4(color, diskAlpha);
           }
@@ -195,7 +204,8 @@ export function LandingMoon({
       composition.moon.fixedPhase,
       composition.moon.lightingMode,
       composition.moon.nightLift,
-      moonTexture
+      moonTexture,
+      nasaLiteOptics
     ]
   );
 
