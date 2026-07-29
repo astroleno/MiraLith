@@ -92,6 +92,7 @@ export type {
   EarthMoonHeroInteraction,
   EarthMoonHeroMode,
   EarthMoonHeroProps,
+  LandingBakedCloudSpikeConfig,
   EarthMoonSceneProps,
   LandingAtmosphereLook,
   LandingAtmosphereMode,

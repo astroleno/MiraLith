@@ -23,6 +23,7 @@ import {
 import { useQualityTier, useReducedMotionPreference } from "@miralith/visual-core";
 import type {
   LandingAssetManifest,
+  LandingBakedCloudSpikeConfig,
   LandingAtmosphereLook,
   LandingAtmosphereMode,
   LandingAtmospherePolicy,
@@ -183,6 +184,7 @@ interface LuBirthSceneSlotProps {
   atmospherePolicy?: LandingAtmospherePolicy;
   atmosphereVariant?: LandingAtmosphereVariant;
   atmosphereLook?: LandingAtmosphereLook;
+  bakedCloudSpike?: Pick<LandingBakedCloudSpikeConfig, "enabled">;
   routeVariant?: LuBirthAtmosphereRouteVariant;
   homeIntroRendering?: boolean;
   productionSurface?: boolean;
@@ -564,6 +566,7 @@ export function LuBirthSceneSlot({
   atmospherePolicy,
   atmosphereVariant = "stack",
   atmosphereLook = "lubirth",
+  bakedCloudSpike,
   routeVariant,
   homeIntroRendering = false,
   productionSurface,
@@ -606,12 +609,20 @@ export function LuBirthSceneSlot({
         ...(cloudModeOverride ? { cloudMode: cloudModeOverride } : {}),
         ...(atmosphereVisualModeOverride
           ? { atmosphereMode: atmosphereVisualModeOverride }
+          : {}),
+        ...(bakedCloudSpike?.enabled
+          ? {
+              atmosphereMode: "limb-lite",
+              cloudMode: "relief-lite",
+              postEffectMode: "off"
+            }
           : {})
       }
     }),
     [
       activeRenderProfile,
       atmosphereVisualModeOverride,
+      bakedCloudSpike?.enabled,
       cloudModeOverride,
       postEffectModeOverride,
       qualityProfile.tier,
@@ -679,6 +690,13 @@ export function LuBirthSceneSlot({
   const activeVisitorLocation =
     manualGeoLocation ??
     (geoEndpoint && visitorLocationState?.endpoint === geoEndpoint ? visitorLocationState.location : null);
+
+  const resolvedBakedCloudSpike = bakedCloudSpike?.enabled
+    ? {
+        enabled: true,
+        locationReady: locationOverride !== "ip" || Boolean(activeVisitorLocation)
+      }
+    : undefined;
 
   useEffect(() => {
     if (!cachedVisitorLocationState || visitorLocationState?.endpoint === cachedVisitorLocationState.endpoint) {
@@ -939,6 +957,7 @@ export function LuBirthSceneSlot({
       mode={mode}
       composition={composition}
       assets={assets}
+      bakedCloudSpike={resolvedBakedCloudSpike}
       quality={qualityProfile}
       debugMianyang={debugMianyang}
       visualDebugLayer={visualDebugLayer}

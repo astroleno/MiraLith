@@ -216,7 +216,13 @@ export interface LandingCompositionOverrides {
   motion?: Partial<LandingMotionConfig>;
 }
 
+export interface LandingBakedCloudSpikeConfig {
+  enabled: boolean;
+  locationReady: boolean;
+}
+
 export interface EarthMoonSceneProps {
+  bakedCloudSpike?: LandingBakedCloudSpikeConfig;
   mode: EarthMoonHeroMode;
   composition: LandingComposition;
   assets: LandingResolvedAssets;

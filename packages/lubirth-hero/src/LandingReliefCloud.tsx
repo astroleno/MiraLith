@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
 import {
   ClampToEdgeWrapping,
   Color,
@@ -41,6 +41,7 @@ interface LandingReliefCloudProps {
   assets: LandingResolvedAssets;
   composition: LandingComposition;
   emphasis?: boolean;
+  farOpticalWeightRef?: MutableRefObject<number>;
   lightingFrame: LandingPlanetLightingFrame;
   quality: QualityProfile;
 }
@@ -51,6 +52,7 @@ interface LandingReliefCloudTelemetry {
   cloudBottomScale: number;
   cloudOffset: number;
   cloudTopScale: number;
+  handoffOpticalWeight: number;
   compressedTextureActive: boolean;
   channelLayout: "v3-r-depth-g-height-b-morphology-a-concavity";
   densityIntegration: "front-to-back";
@@ -542,6 +544,7 @@ export function LandingReliefCloud({
   assets,
   composition,
   emphasis = false,
+  farOpticalWeightRef,
   lightingFrame,
   quality
 }: LandingReliefCloudProps) {
@@ -663,7 +666,8 @@ export function LandingReliefCloud({
     );
     cloudMaterial.uniforms.lightDir.value.copy(lightingFrame.sunDirection).normalize();
     cloudMaterial.uniforms.opacity.value = composition.earth.cloudOpacity * MathUtils.clamp(
-      visualTestOverride?.cloudOpacityScale ?? visualTestCloudOpacityScale ?? 1,
+      (visualTestOverride?.cloudOpacityScale ?? visualTestCloudOpacityScale ?? 1) *
+        (farOpticalWeightRef?.current ?? 1),
       0,
       1
     );
@@ -686,6 +690,7 @@ export function LandingReliefCloud({
       cloudBottomScale: LANDING_RELIEF_LITE_CLOUD_BOTTOM_SCALE,
       cloudOffset: activeCloudOffset,
       cloudTopScale: LANDING_RELIEF_LITE_CLOUD_TOP_SCALE,
+      handoffOpticalWeight: farOpticalWeightRef?.current ?? 1,
       compressedTextureActive,
       channelLayout: "v3-r-depth-g-height-b-morphology-a-concavity",
       densityIntegration: "front-to-back",

@@ -15,6 +15,7 @@ import {
   geodeticToTextureVector
 } from "./constants";
 import { LandingAirglow } from "./LandingAirglow";
+import { LandingBakedCloudImpostor } from "./LandingBakedCloudImpostor";
 import { LandingAtmosphere } from "./LandingAtmosphere";
 import { LandingAtmosphereStack } from "./LandingAtmosphereStack";
 import { LandingAurora } from "./LandingAurora";
@@ -192,6 +193,7 @@ export function EarthMoonScene({
   mode,
   composition,
   assets,
+  bakedCloudSpike,
   quality,
   debugMianyang,
   visualDebugLayer = "all",
@@ -227,6 +229,7 @@ export function EarthMoonScene({
   const directionalLightRef = useRef<DirectionalLight>(null);
   const autoEarthYawDeg = useRef(0);
   const homeCloudOffset = useRef(0);
+  const bakedCloudFarOpticalWeight = useRef(1);
   const skyCounterRotation = useRef({ yawRad: 0 });
   const smoothedLocationYawOffsetDeg = useRef(0);
   const smoothedLocationPitchOffsetDeg = useRef(0);
@@ -411,6 +414,9 @@ export function EarthMoonScene({
         (homeCloudOffset.current + delta * HOME_CLOUD_FIELD_SCROLL_SPEED) % 1;
     }
     const progress = getRuntimeOpeningProgress(mode === "window" || mode === "expanded" ? 1 : 0);
+    bakedCloudFarOpticalWeight.current = bakedCloudSpike?.enabled
+      ? easeInOut(MathUtils.clamp((progress - 0.22) / 0.46, 0, 1))
+      : 1;
     const frame = mapOpeningProgress(mode === "expanded" ? 1 : progress);
     const finalFrame = mapOpeningProgress(1);
     if (isNasaProfile && mode === "field") {
@@ -822,6 +828,7 @@ export function EarthMoonScene({
                 quality={quality}
                 lightingFrame={planetLightingFrame}
                 emphasis={debugClouds}
+                farOpticalWeightRef={bakedCloudSpike?.enabled ? bakedCloudFarOpticalWeight : undefined}
               />
             ) : (
               <LandingCloudLayer
@@ -876,6 +883,15 @@ export function EarthMoonScene({
               )
             ) : null}
           </>
+        ) : null}
+        {showEarth && bakedCloudSpike?.enabled ? (
+          <LandingBakedCloudImpostor
+            composition={composition}
+            farOpticalWeightRef={bakedCloudFarOpticalWeight}
+            lightingFrame={planetLightingFrame}
+            quality={quality}
+            spike={bakedCloudSpike}
+          />
         ) : null}
         {showLegacyAurora ? (
           useHorizonAuroraRibbon ? (
