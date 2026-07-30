@@ -540,6 +540,25 @@ test("a stored build-scope mismatch cannot re-enable preview marking", async ({ 
   });
 });
 
+test("a known preview history target stays native when its session proof is invalidated before popstate", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The inaccessible-history fallback only needs one browser profile.");
+
+  await page.goto("/coscroll?preview=post-coscroll-v1");
+  await expect(page).toHaveURL(/\/coscroll$/);
+  await expect.poll(() => readPreviewEvidence(page)).toMatchObject({
+    storedScope: expect.stringMatching(/^[a-f0-9]{64}$/),
+    markerScope: expect.stringMatching(/^[a-f0-9]{64}$/)
+  });
+
+  await page.evaluate(() => {
+    window.sessionStorage.removeItem("miralith:chapter-preview:v1");
+    History.prototype.pushState.call(window.history, window.history.state, "", "/artbreeze");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  });
+  await expect(page).toHaveURL(/\/artbreeze$/);
+  await expect(page.locator("html")).not.toHaveAttribute("data-chapter-transition-state", /.+/, { timeout: 700 });
+});
+
 test("terminal scrolling follows the published 01 → 02 → 03 sequence", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "The full ordered sequence only needs one browser profile.");
 
@@ -632,6 +651,42 @@ test("automatic warmup requests only the next published chapter", async ({ page 
   expect(requestedAssets.some((url) => url.includes("/assets/coscroll/"))).toBe(false);
   await page.evaluate(() => window.scrollTo({ top: window.innerHeight * 2.4, behavior: "instant" }));
   await expect.poll(() => requestedAssets.some((url) => url.includes("/assets/coscroll/source-models/101_"))).toBe(true);
+});
+
+test("preview access admits the ArtBreeze review link and warmup without enabling a CoScroll terminal", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The preview access parity contract only needs one browser profile.");
+  const artBreezeRequests: string[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/artbreeze") {
+      artBreezeRequests.push(request.url());
+    }
+  });
+
+  await page.goto("/coscroll?preview=post-coscroll-v1");
+  await expect(page).toHaveURL(/\/coscroll$/);
+  const navigation = page.locator(".coscroll-chapter-nav");
+  await expect(navigation.locator("a[aria-label^='04 ArtBreeze']")).toBeVisible();
+  await expect.poll(() => artBreezeRequests.length).toBeGreaterThan(0);
+  await expect(navigation).toHaveAttribute("data-chapter-terminal", "idle");
+  await expect(navigation.locator("[data-chapter-terminal] a")).toHaveCount(0);
+});
+
+test("public access rejects ArtBreeze warmup while a direct known entry remains veil-free", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The public access parity contract only needs one browser profile.");
+  const artBreezeRequests: string[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/artbreeze") {
+      artBreezeRequests.push(request.url());
+    }
+  });
+
+  await page.goto("/coscroll");
+  await expect(page.locator(".coscroll-chapter-nav a[aria-label^='04 ArtBreeze']")).toHaveCount(0);
+  await page.waitForTimeout(250);
+  expect(artBreezeRequests).toEqual([]);
+
+  await page.goto("/artbreeze");
+  await expect(page.locator("html")).not.toHaveAttribute("data-chapter-transition-state", /.+/);
 });
 
 test("browser back restores the source and forward always uses the direct veil", async ({ page }, testInfo) => {

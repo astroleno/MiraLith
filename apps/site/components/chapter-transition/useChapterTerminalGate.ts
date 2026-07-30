@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { getNextPublishedChapter } from "../../content/miraLithChapters";
 import { useChapterTransition } from "./ChapterTransitionProvider";
 
 interface UseChapterTerminalGateOptions {
@@ -18,12 +17,15 @@ export function useChapterTerminalGate({
   armed,
   enabled = true
 }: UseChapterTerminalGateOptions) {
-  const transition = useChapterTransition();
-  const nextChapter = useMemo(() => getNextPublishedChapter(currentHref), [currentHref]);
+  const { beginTransition, getNextAccessibleChapter, snapshot } = useChapterTransition();
+  const nextChapter = useMemo(
+    () => getNextAccessibleChapter(currentHref),
+    [currentHref, getNextAccessibleChapter]
+  );
   const committingRef = useRef(false);
 
   useEffect(() => {
-    if (!armed || !enabled || !transition.snapshot.inputEnabled || !nextChapter) {
+    if (!armed || !enabled || !snapshot.inputEnabled || !nextChapter) {
       committingRef.current = false;
       return;
     }
@@ -44,7 +46,7 @@ export function useChapterTerminalGate({
       if (event.cancelable) {
         event.preventDefault();
       }
-      transition.beginTransition(nextChapter.href, "scroll");
+      beginTransition(nextChapter.href, "scroll");
     };
     const addForwardDelta = (pixels: number, event: Event) => {
       if (pixels <= 0 || committingRef.current) {
@@ -120,7 +122,7 @@ export function useChapterTerminalGate({
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [armed, enabled, nextChapter, transition]);
+  }, [armed, beginTransition, enabled, nextChapter, snapshot.inputEnabled]);
 
   return nextChapter;
 }

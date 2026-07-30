@@ -4,17 +4,15 @@ import { useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
+  useMemo,
   type FocusEvent,
   type MouseEvent,
   type PointerEvent,
   type TouchEvent
 } from "react";
 import {
-  getNextPublishedChapter,
-  getPublishedMiraLithChapter,
   miraLithChapters,
   normalizeMiraLithChapterHref,
-  publishedMiraLithChapterHrefs,
   type MiraLithChapterIndex
 } from "../content/miraLithChapters";
 import { preloadChapterTarget } from "./chapter-transition/preloadChapterTarget";
@@ -44,19 +42,34 @@ export function MiraLithChapterNavigation({
   terminal = false
 }: MiraLithChapterNavigationProps) {
   const router = useRouter();
-  const transition = useChapterTransition();
-  const resolvedChapterHrefs = {
-    ...publishedMiraLithChapterHrefs,
-    ...chapterHrefs
-  };
+  const {
+    beginTransition,
+    getNextAccessibleChapter,
+    resolveChapterAccess,
+    snapshot
+  } = useChapterTransition();
   const activeChapter = miraLithChapters.find((chapter) => chapter.index === activeIndex) ?? miraLithChapters[0];
+  const visibleChapters = useMemo(
+    () => miraLithChapters.filter((chapter) => resolveChapterAccess(chapter.href).visibleInNavigation),
+    [resolveChapterAccess]
+  );
+  const visibleChapterIndexes = useMemo(
+    () => new Set(visibleChapters.map((chapter) => chapter.index)),
+    [visibleChapters]
+  );
+  const resolvedChapterHrefs = useMemo(() => ({
+    ...Object.fromEntries(visibleChapters.map((chapter) => [chapter.index, chapter.href])),
+    ...chapterHrefs
+  }) as Partial<Record<MiraLithChapterIndex, string>>, [chapterHrefs, visibleChapters]);
   const activeHref = resolvedChapterHrefs[activeChapter.index];
-  const publishedActiveHref = publishedMiraLithChapterHrefs[activeChapter.index as keyof typeof publishedMiraLithChapterHrefs];
-  const nextChapter = publishedActiveHref ? getNextPublishedChapter(publishedActiveHref) : undefined;
-  const showTerminal = Boolean(terminal && nextChapter && transition.snapshot.state === "idle");
+  const nextChapter = useMemo(
+    () => getNextAccessibleChapter(activeChapter.href),
+    [activeChapter.href, getNextAccessibleChapter]
+  );
+  const showTerminal = Boolean(terminal && nextChapter && snapshot.state === "idle");
   const preloadTarget = useCallback((href: string) => {
-    void preloadChapterTarget(router, href);
-  }, [router]);
+    void preloadChapterTarget(router, resolveChapterAccess(href));
+  }, [resolveChapterAccess, router]);
   const handleLinkClick = useCallback((event: MouseEvent<HTMLAnchorElement>) => {
     const anchor = event.currentTarget;
     if (
@@ -73,24 +86,24 @@ export function MiraLithChapterNavigation({
       return;
     }
 
-    const targetChapter = getPublishedMiraLithChapter(anchor.href);
-    if (!targetChapter) {
+    const targetAccess = resolveChapterAccess(anchor.href);
+    if (!targetAccess.chapter || !targetAccess.coordinatorAllowed) {
       return;
     }
-    if (!transition.snapshot.inputEnabled) {
+    if (!snapshot.inputEnabled) {
       event.preventDefault();
       return;
     }
     const currentPathname = normalizeMiraLithChapterHref(window.location.pathname);
-    if (currentPathname === targetChapter.href) {
+    if (currentPathname === targetAccess.chapter.href) {
       return;
     }
 
-    const transitionId = transition.beginTransition(targetChapter.href, "link");
+    const transitionId = beginTransition(targetAccess.chapter.href, "link");
     if (transitionId) {
       event.preventDefault();
     }
-  }, [transition]);
+  }, [beginTransition, resolveChapterAccess, snapshot.inputEnabled]);
   const handlePointerIntent = useCallback((event: PointerEvent<HTMLAnchorElement>) => {
     if (event.pointerType !== "touch") {
       preloadTarget(event.currentTarget.href);
@@ -153,7 +166,8 @@ export function MiraLithChapterNavigation({
         <ol>
           {miraLithChapters.map((chapter) => {
             const isActive = chapter.index === activeChapter.index;
-            const href = resolvedChapterHrefs[chapter.index];
+            const isVisibleInNavigation = visibleChapterIndexes.has(chapter.index);
+            const href = isVisibleInNavigation ? resolvedChapterHrefs[chapter.index] : undefined;
             const title = isActive ? (
               <span
                 className="miralith-chapter-nav__title-anchor"
@@ -184,7 +198,9 @@ export function MiraLithChapterNavigation({
               <li
                 key={chapter.index}
                 data-active={isActive ? "true" : "false"}
-                data-published={href ? "true" : "false"}
+                data-published={chapter.availability === "published" ? "true" : "false"}
+                data-visible-in-navigation={isVisibleInNavigation ? "true" : "false"}
+                aria-hidden={isVisibleInNavigation ? undefined : true}
               >
                 {href ? (
                   <a

@@ -1,4 +1,4 @@
-import { getPublishedMiraLithChapter } from "../../content/miraLithChapters";
+import type { MiraLithAccessResolution } from "../../content/miraLithChapters";
 
 interface ChapterRouterPrefetch {
   prefetch: (href: string) => void;
@@ -6,9 +6,9 @@ interface ChapterRouterPrefetch {
 
 const targetPreloads = new Map<string, Promise<void>>();
 
-export function preloadChapterTarget(router: ChapterRouterPrefetch, targetHref: string) {
-  const chapter = getPublishedMiraLithChapter(targetHref);
-  if (!chapter) {
+export function preloadChapterTarget(router: ChapterRouterPrefetch, access: MiraLithAccessResolution) {
+  const chapter = access.chapter;
+  if (!chapter || !access.preloadAllowed) {
     return Promise.resolve();
   }
   const cached = targetPreloads.get(chapter.href);

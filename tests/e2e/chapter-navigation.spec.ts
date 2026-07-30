@@ -78,11 +78,39 @@ test("chapter navigation expands only the current chapter", async ({ page }, tes
   const navigation = page.locator(".radio-gaga-title-rail");
   await expect(navigation).toBeVisible();
   await expect(navigation.locator("li")).toHaveCount(7);
+  await expect(navigation.locator("a")).toHaveCount(3);
   await expect(navigation.locator("li[data-active='true'] .miralith-chapter-nav__title-anchor")).toHaveText(
     "Radio Gaga"
   );
   await expect(navigation.locator(".miralith-chapter-nav__meta")).toHaveCount(1);
   await expect(navigation.locator("li:not([data-active='true']) .miralith-chapter-nav__meta")).toHaveCount(0);
+});
+
+test("a valid preview session expands the CoScroll review rail without arming its terminal", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The review rail is a desktop access contract.");
+
+  await page.goto("/coscroll?preview=post-coscroll-v1");
+  await expect(page).toHaveURL(/\/coscroll$/);
+
+  const navigation = page.locator(".coscroll-chapter-nav");
+  await expect(navigation.locator("li")).toHaveCount(7);
+  const artBreezeLink = navigation.locator("a[aria-label^='04 ArtBreeze']");
+  await expect(artBreezeLink).toBeVisible();
+  await expect(artBreezeLink).toHaveAttribute("href", "/artbreeze");
+  await expect(navigation).toHaveAttribute("data-chapter-terminal", "idle");
+  await expect(navigation.locator("[data-chapter-terminal] a")).toHaveCount(0);
+});
+
+test("a valid preview session keeps ArtBreeze visible after the RadioGaga terminal arms", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The preview terminal access contract only needs one browser profile.");
+
+  await page.goto("/radio-gaga?preview=post-coscroll-v1");
+  await expect(page).toHaveURL(/\/radio-gaga$/);
+  await scrollRadioGagaTo(page, 1);
+
+  const navigation = page.locator(".radio-gaga-title-rail");
+  await expect(navigation).toHaveAttribute("data-chapter-terminal", "armed");
+  await expect(navigation.locator("a[aria-label^='04 ArtBreeze']")).toBeVisible();
 });
 
 test("radioGAGA introduces the chapter frame late in act one and keeps it", async ({ page }, testInfo) => {

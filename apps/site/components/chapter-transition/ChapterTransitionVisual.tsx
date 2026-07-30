@@ -9,7 +9,7 @@ const transitionParticles = Array.from({ length: 14 }, (_, index) => index);
 const sutraThreads = Array.from({ length: 7 }, (_, index) => index);
 
 export function ChapterTransitionVisual({ snapshot }: ChapterTransitionVisualProps) {
-  const target = snapshot.targetChapter;
+  const target = snapshot.targetEndpoint?.chapter;
 
   return (
     <div className="chapter-transition-visual" data-variant={snapshot.kind ?? "direct"}>

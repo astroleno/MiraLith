@@ -1416,7 +1416,7 @@ body::before {
   color: var(--miralith-chapter-active);
 }
 
-.miralith-chapter-nav[data-chapter-terminal="armed"] li[data-published="false"] {
+.miralith-chapter-nav[data-chapter-terminal="armed"] li[data-visible-in-navigation="false"] {
   display: none;
 }
 

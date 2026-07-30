@@ -12,9 +12,11 @@ import {
   type ReactNode
 } from "react";
 import {
-  getPublishedMiraLithChapter,
+  getNextAccessibleMiraLithChapter,
   normalizeMiraLithChapterHref,
-  type PublishedMiraLithChapter
+  resolveMiraLithChapterAccess,
+  type MiraLithAccessResolution,
+  type MiraLithKnownChapter
 } from "../../content/miraLithChapters";
 import { ChapterTransitionLayer } from "./ChapterTransitionLayer";
 import {
@@ -30,7 +32,8 @@ import type {
   ChapterTransitionInitiator,
   ChapterTransitionKind,
   ChapterTransitionSnapshot,
-  ChapterTransitionState
+  ChapterTransitionState,
+  ResolvedChapterTransitionEndpoint
 } from "./chapterTransitionTypes";
 
 const RETURN_SNAPSHOT_PREFIX = "miralith:chapter-return:";
@@ -44,8 +47,8 @@ const idleSnapshot: ChapterTransitionSnapshot = {
   state: "idle",
   sourceHref: null,
   targetHref: null,
-  sourceChapter: null,
-  targetChapter: null,
+  sourceEndpoint: null,
+  targetEndpoint: null,
   kind: null,
   initiator: null,
   destinationAttempt: null,
@@ -84,8 +87,8 @@ interface ActiveChapterTransition {
   state: ChapterTransitionState;
   sourceHref: string;
   targetHref: string;
-  sourceChapter: PublishedMiraLithChapter;
-  targetChapter: PublishedMiraLithChapter;
+  sourceEndpoint: ResolvedChapterTransitionEndpoint;
+  targetEndpoint: ResolvedChapterTransitionEndpoint;
   kind: ChapterTransitionKind;
   initiator: ChapterTransitionInitiator;
   destinationAttempt: number;
@@ -114,6 +117,8 @@ interface ChapterTransitionContextValue {
   snapshot: ChapterTransitionSnapshot;
   previewActive: boolean;
   scope: string | null;
+  resolveChapterAccess: (href: string) => MiraLithAccessResolution;
+  getNextAccessibleChapter: (href: string) => MiraLithKnownChapter | undefined;
   beginTransition: (targetHref: string, initiator: Exclude<ChapterTransitionInitiator, "history">) => string | null;
   registerDestination: (pathname: string, controls: ChapterDestinationControls) => () => void;
   reportDestination: (signal: ChapterDestinationSignal) => void;
@@ -129,6 +134,20 @@ function transitionKindForPair(sourceHref: string, targetHref: string): ChapterT
     return "signal-to-sutra";
   }
   return "direct";
+}
+
+function endpointFromAccess(access: MiraLithAccessResolution): ResolvedChapterTransitionEndpoint | null {
+  if (
+    !access.chapter ||
+    !access.coordinatorAllowed ||
+    (access.level !== "published" && access.level !== "preview")
+  ) {
+    return null;
+  }
+  return {
+    chapter: access.chapter,
+    level: access.level
+  };
 }
 
 function runtimeCanReveal(runtime: ActiveChapterTransition) {
@@ -148,8 +167,8 @@ function transitionSnapshot(runtime: ActiveChapterTransition): ChapterTransition
     state: runtime.state,
     sourceHref: runtime.sourceHref,
     targetHref: runtime.targetHref,
-    sourceChapter: runtime.sourceChapter,
-    targetChapter: runtime.targetChapter,
+    sourceEndpoint: runtime.sourceEndpoint,
+    targetEndpoint: runtime.targetEndpoint,
     kind: runtime.kind,
     initiator: runtime.initiator,
     destinationAttempt: runtime.destinationAttempt,
@@ -299,6 +318,17 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
     setPreviewSession(nextSession);
   }, []);
 
+  const resolveChapterAccess = useCallback((href: string) =>
+    resolveMiraLithChapterAccess(href, { previewActive: previewSession.previewActive }), [previewSession.previewActive]);
+  const getNextAccessibleChapter = useCallback((href: string) =>
+    getNextAccessibleMiraLithChapter(href, { previewActive: previewSession.previewActive }), [previewSession.previewActive]);
+  // A history event can invalidate preview storage before React has committed the
+  // corresponding state update. Coordinator decisions must therefore use the
+  // synchronous session ref, while the public resolver remains state-derived so
+  // navigation consumers rerender when preview access changes.
+  const resolveRuntimeChapterAccess = useCallback((href: string) =>
+    resolveMiraLithChapterAccess(href, { previewActive: previewSessionRef.current.previewActive }), []);
+
   const publish = useCallback((runtime: ActiveChapterTransition, state: ChapterTransitionState, error?: string) => {
     runtime.state = state;
     if (error !== undefined) {
@@ -439,7 +469,7 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
       runtime.fallbackTimer = null;
     }
     runtime.targetHref = runtime.sourceHref;
-    runtime.targetChapter = runtime.sourceChapter;
+    runtime.targetEndpoint = runtime.sourceEndpoint;
     runtime.kind = "direct";
     runtime.destinationAttempt += 1;
     runtime.mounted = false;
@@ -694,11 +724,11 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
     }
     const normalizedSource = normalizeMiraLithChapterHref(sourceHref);
     const normalizedTarget = normalizeMiraLithChapterHref(targetHref);
-    const sourceChapter = getPublishedMiraLithChapter(normalizedSource);
-    const targetChapter = getPublishedMiraLithChapter(normalizedTarget);
+    const sourceEndpoint = endpointFromAccess(resolveRuntimeChapterAccess(normalizedSource));
+    const targetEndpoint = endpointFromAccess(resolveRuntimeChapterAccess(normalizedTarget));
     if (
-      !sourceChapter ||
-      !targetChapter ||
+      !sourceEndpoint ||
+      !targetEndpoint ||
       (normalizedSource === normalizedTarget && !allowSamePathHistoryTraversal)
     ) {
       return null;
@@ -716,8 +746,8 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
       state: "covering",
       sourceHref: normalizedSource,
       targetHref: normalizedTarget,
-      sourceChapter,
-      targetChapter,
+      sourceEndpoint,
+      targetEndpoint,
       kind: initiator === "history" ? "direct" : transitionKindForPair(normalizedSource, normalizedTarget),
       initiator,
       destinationAttempt: 1,
@@ -743,10 +773,10 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
     };
     activeRef.current = runtime;
     setSnapshot(transitionSnapshot(runtime));
-    setAnnouncement(`正在进入 ${targetChapter.index} ${targetChapter.title}`);
+    setAnnouncement(`正在进入 ${targetEndpoint.chapter.index} ${targetEndpoint.chapter.title}`);
     performanceMark(runtime, "begin");
     return runtime.id;
-  }, []);
+  }, [resolveRuntimeChapterAccess]);
 
   const beginTransition = useCallback((
     targetHref: string,
@@ -932,7 +962,23 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
       const targetHref = normalizeMiraLithChapterHref(window.location.pathname);
       const sourceHref = currentPathRef.current;
       const activeRuntime = activeRef.current;
+      const targetAccess = resolveRuntimeChapterAccess(targetHref);
       const traversal = recordHistoryTraversal(targetHref);
+      if (targetAccess.chapter && !targetAccess.coordinatorAllowed) {
+        if (activeRuntime) {
+          clearRuntimeTimers(activeRuntime);
+          cancelDestinationAttempt(activeRuntime);
+          if (pendingPreviewMarkerRef.current?.transitionId === activeRuntime.id) {
+            pendingPreviewMarkerRef.current = null;
+          }
+          activeRef.current = null;
+        }
+        restoreScrollRestoration();
+        setSnapshot(idleSnapshot);
+        setAnnouncement("");
+        return;
+      }
+      const targetEndpoint = endpointFromAccess(targetAccess);
       const coordinatorRecoveryMatched =
         activeRuntime?.recovering &&
         activeRuntime.recoveryHistoryDelta !== null &&
@@ -955,7 +1001,7 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
         }
         activeRef.current = null;
         performanceMark(activeRuntime, "history-interrupted");
-        const replacementId = getPublishedMiraLithChapter(targetHref)
+        const replacementId = targetEndpoint
           ? startRuntime(sourceHref, targetHref, "history", {
               historyTraversalDelta: traversal.navigationDelta,
               sourceEntryKey: traversal.sourceEntryKey,
@@ -970,7 +1016,7 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
         }
         return;
       }
-      if (sourceHref !== targetHref && getPublishedMiraLithChapter(targetHref)) {
+      if (sourceHref !== targetHref && targetEndpoint) {
         startRuntime(sourceHref, targetHref, "history", {
           historyTraversalDelta: traversal.navigationDelta,
           sourceEntryKey: traversal.sourceEntryKey
@@ -979,7 +1025,7 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [recordHistoryTraversal, restoreScrollRestoration, startRuntime, updatePreviewSession]);
+  }, [recordHistoryTraversal, resolveRuntimeChapterAccess, restoreScrollRestoration, startRuntime, updatePreviewSession]);
 
   useEffect(() => {
     const locked = snapshot.state !== "idle";
@@ -1043,10 +1089,21 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
     snapshot,
     previewActive: previewSession.previewActive,
     scope: previewSession.scope,
+    resolveChapterAccess,
+    getNextAccessibleChapter,
     beginTransition,
     registerDestination,
     reportDestination
-  }), [beginTransition, previewSession.previewActive, previewSession.scope, registerDestination, reportDestination, snapshot]);
+  }), [
+    beginTransition,
+    getNextAccessibleChapter,
+    previewSession.previewActive,
+    previewSession.scope,
+    registerDestination,
+    reportDestination,
+    resolveChapterAccess,
+    snapshot
+  ]);
 
   return (
     <ChapterTransitionContext.Provider value={value}>

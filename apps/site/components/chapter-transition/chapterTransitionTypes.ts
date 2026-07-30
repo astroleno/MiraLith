@@ -1,4 +1,4 @@
-import type { MiraLithKnownChapter, PublishedMiraLithChapter } from "../../content/miraLithChapters";
+import type { MiraLithKnownChapter } from "../../content/miraLithChapters";
 
 export interface ResolvedChapterTransitionEndpoint {
   chapter: MiraLithKnownChapter;
@@ -58,8 +58,8 @@ export interface ChapterTransitionSnapshot {
   state: ChapterTransitionState;
   sourceHref: string | null;
   targetHref: string | null;
-  sourceChapter: PublishedMiraLithChapter | null;
-  targetChapter: PublishedMiraLithChapter | null;
+  sourceEndpoint: ResolvedChapterTransitionEndpoint | null;
+  targetEndpoint: ResolvedChapterTransitionEndpoint | null;
   kind: ChapterTransitionKind | null;
   initiator: ChapterTransitionInitiator | null;
   destinationAttempt: number | null;
