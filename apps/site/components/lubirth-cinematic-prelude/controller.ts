@@ -199,7 +199,7 @@ export class CinematicPreludeController {
       return this.getSnapshot();
     }
 
-    if (progress > PRELUDE_TIMING.veilPeak) {
+    if (progress > PRELUDE_TIMING.plateEnd) {
       const close = clamp01(
         (PRELUDE_TIMING.liveStart - progress) /
           (PRELUDE_TIMING.liveStart - PRELUDE_TIMING.veilPeak)

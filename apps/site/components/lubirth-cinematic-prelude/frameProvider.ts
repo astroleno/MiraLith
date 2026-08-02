@@ -46,10 +46,6 @@ export class HTMLVideoFrameProvider implements FrameProvider {
     if (typeof this.#video.requestVideoFrameCallback !== "function") {
       return { state: "failed", reason: "unsupported" } as const;
     }
-    if (this.#video.currentSrc !== this.metadata.src && this.#video.src !== this.metadata.src) {
-      this.#video.src = this.metadata.src;
-      this.#video.load();
-    }
     return this.requestFrame(0, this.#firstFrameDeadlineMs);
   }
 
@@ -61,15 +57,24 @@ export class HTMLVideoFrameProvider implements FrameProvider {
     const boundedFrame = Math.min(this.frameCount - 1, Math.max(0, Math.round(frame)));
     const targetTime = frameToMediaTime(boundedFrame, this.frameRate);
     const token = ++this.#requestToken;
+    const sourceDetached = this.#video.getAttribute("src") !== this.metadata.src;
+    if (sourceDetached) {
+      this.#video.src = this.metadata.src;
+      this.#video.load();
+    }
 
     return new Promise<FrameAvailability>((resolve) => {
       let settled = false;
       let callbackId: number | null = null;
+      let metadataListenerAttached = false;
       const settle = (result: FrameAvailability) => {
         if (settled) return;
         settled = true;
         clearTimeout(timeoutId);
         this.#video.removeEventListener("error", onError);
+        if (metadataListenerAttached) {
+          this.#video.removeEventListener("loadedmetadata", seekTarget);
+        }
         if (callbackId !== null && typeof this.#video.cancelVideoFrameCallback === "function") {
           this.#video.cancelVideoFrameCallback(callbackId);
         }
@@ -81,26 +86,36 @@ export class HTMLVideoFrameProvider implements FrameProvider {
         deadlineMs
       );
       this.#video.addEventListener("error", onError, { once: true });
-      callbackId = this.#video.requestVideoFrameCallback((_now, metadata) => {
-        if (token !== this.#requestToken) {
-          settle({ state: "pending", requestedFrame: boundedFrame });
-          return;
+      const seekTarget = () => {
+        metadataListenerAttached = false;
+        try {
+          this.#video.currentTime = targetTime;
+          callbackId = this.#video.requestVideoFrameCallback((_now, metadata) => {
+            if (token !== this.#requestToken) {
+              settle({ state: "pending", requestedFrame: boundedFrame });
+              return;
+            }
+            const renderedFrame = Math.min(
+              this.frameCount - 1,
+              Math.max(0, Math.round(metadata.mediaTime * this.frameRate))
+            );
+            const withinOneFrame =
+              Math.abs(metadata.mediaTime - targetTime) <= 1 / this.frameRate;
+            settle(
+              withinOneFrame
+                ? { state: "ready", renderedFrame }
+                : { state: "pending", requestedFrame: boundedFrame }
+            );
+          });
+        } catch {
+          settle({ state: "failed", reason: "decode" });
         }
-        const renderedFrame = Math.min(
-          this.frameCount - 1,
-          Math.max(0, Math.round(metadata.mediaTime * this.frameRate))
-        );
-        const withinOneFrame = Math.abs(metadata.mediaTime - targetTime) <= 1 / this.frameRate;
-        settle(
-          withinOneFrame
-            ? { state: "ready", renderedFrame }
-            : { state: "pending", requestedFrame: boundedFrame }
-        );
-      });
-      try {
-        this.#video.currentTime = targetTime;
-      } catch {
-        settle({ state: "failed", reason: "decode" });
+      };
+      if (this.#video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+        seekTarget();
+      } else {
+        metadataListenerAttached = true;
+        this.#video.addEventListener("loadedmetadata", seekTarget, { once: true });
       }
     });
   }

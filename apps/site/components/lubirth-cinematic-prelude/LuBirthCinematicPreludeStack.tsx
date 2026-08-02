@@ -20,6 +20,7 @@ import { TransitionVeil } from "./TransitionVeil";
 import type {
   FrameProvider,
   PreludeDirection,
+  PreludeFallbackReason,
   PreludeSnapshot
 } from "./types";
 import styles from "../LuBirthCinematicPreludeRoute.module.css";
@@ -50,6 +51,7 @@ export function LuBirthCinematicPreludeStack({
   children,
   composition,
   direction,
+  forcedFallbackReason = null,
   manifest,
   onSnapshot,
   progress,
@@ -60,6 +62,7 @@ export function LuBirthCinematicPreludeStack({
   children: ReactNode;
   composition: PreludeCompositionOffset;
   direction: PreludeDirection;
+  forcedFallbackReason?: PreludeFallbackReason | null;
   manifest: CinematicPreludeManifest;
   onSnapshot?: (snapshot: PreludeSnapshot) => void;
   progress: number;
@@ -70,6 +73,7 @@ export function LuBirthCinematicPreludeStack({
   const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
   const [snapshot, setSnapshot] = useState<PreludeSnapshot>(INITIAL_SNAPSHOT);
   const controllerRef = useRef<CinematicPreludeController | null>(null);
+  const pendingFallbackReasonRef = useRef<PreludeFallbackReason | null>(null);
   const updateSequenceRef = useRef(0);
   const latestInputRef = useRef({ direction, progress });
   const onSnapshotRef = useRef(onSnapshot);
@@ -85,6 +89,25 @@ export function LuBirthCinematicPreludeStack({
     onSnapshotRef.current?.(nextSnapshot);
   }, []);
 
+  const forceFallback = useCallback(
+    (reason: PreludeFallbackReason) => {
+      const controller = controllerRef.current;
+      if (!controller) {
+        pendingFallbackReasonRef.current = reason;
+        return;
+      }
+      pendingFallbackReasonRef.current = null;
+      controller.forceFallback(reason);
+      void controller
+        .updateProgress(
+          latestInputRef.current.progress,
+          latestInputRef.current.direction
+        )
+        .then(publish);
+    },
+    [publish]
+  );
+
   useEffect(() => {
     if (!videoElement) return;
 
@@ -96,31 +119,28 @@ export function LuBirthCinematicPreludeStack({
     });
     const controller = new CinematicPreludeController({ provider, tier });
     const initialProgress = latestInputRef.current.progress;
+    const pendingFallbackReason = pendingFallbackReasonRef.current;
 
-    if (reducedMotion) {
+    if (pendingFallbackReason) {
       controllerRef.current = controller;
-      controller.forceFallback("reduced-motion");
-      void controller
-        .updateProgress(initialProgress, latestInputRef.current.direction)
-        .then(publish);
+      forceFallback(pendingFallbackReason);
+    } else if (reducedMotion) {
+      controllerRef.current = controller;
+      forceFallback("reduced-motion");
     } else if (initialProgress > 0) {
       controllerRef.current = controller;
-      controller.forceFallback("late-first-frame");
-      void controller
-        .updateProgress(initialProgress, latestInputRef.current.direction)
-        .then(publish);
+      forceFallback("late-first-frame");
     } else {
       void controller.armForwardCycle().then((armedSnapshot) => {
         if (cancelled) return;
         controllerRef.current = controller;
+        const fallbackAfterArm = pendingFallbackReasonRef.current;
+        if (fallbackAfterArm) {
+          forceFallback(fallbackAfterArm);
+          return;
+        }
         if (latestInputRef.current.progress > 0) {
-          controller.forceFallback("late-first-frame");
-          void controller
-            .updateProgress(
-              latestInputRef.current.progress,
-              latestInputRef.current.direction
-            )
-            .then(publish);
+          forceFallback("late-first-frame");
           return;
         }
         publish(armedSnapshot);
@@ -133,7 +153,47 @@ export function LuBirthCinematicPreludeStack({
       controllerRef.current = null;
       provider.dispose();
     };
-  }, [manifest.id, providerFactory, publish, reducedMotion, tier, variant, videoElement]);
+  }, [
+    forceFallback,
+    manifest.id,
+    providerFactory,
+    publish,
+    reducedMotion,
+    tier,
+    variant,
+    videoElement
+  ]);
+
+  useEffect(() => {
+    if (forcedFallbackReason) forceFallback(forcedFallbackReason);
+  }, [forceFallback, forcedFallbackReason]);
+
+  useEffect(() => {
+    if (!videoElement) return;
+    const onMediaError = () => forceFallback("decode-error");
+    videoElement.addEventListener("error", onMediaError);
+    return () => videoElement.removeEventListener("error", onMediaError);
+  }, [forceFallback, videoElement]);
+
+  useEffect(() => {
+    let wasHidden = document.visibilityState === "hidden";
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        wasHidden = true;
+      } else if (wasHidden) {
+        forceFallback("background-unverified");
+      }
+    };
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) forceFallback("background-unverified");
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pageshow", onPageShow);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pageshow", onPageShow);
+    };
+  }, [forceFallback]);
 
   useEffect(() => {
     const controller = controllerRef.current;

@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useMemo, useReducer, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useState
+} from "react";
 import {
   DEFAULT_LUBIRTH_LOCATION,
   type LandingVisualPolicy
@@ -15,8 +22,14 @@ import { VisualCanvas } from "../visual/VisualCanvas";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
 import { LuBirthSceneSlot } from "../visual/scenes/LuBirthSceneSlot";
 import { LuBirthCinematicPreludeStack } from "./lubirth-cinematic-prelude/LuBirthCinematicPreludeStack";
+import {
+  DeterministicTestFrameProvider,
+  isCinematicPreludeTestMode,
+  type CinematicPreludeTestMode
+} from "./lubirth-cinematic-prelude/testFrameProvider";
 import type {
   PreludeDirection,
+  PreludeFallbackReason,
   PreludeSnapshot,
   PreludeState
 } from "./lubirth-cinematic-prelude/types";
@@ -37,6 +50,16 @@ interface RouteConfig {
   longitudeDeg: number;
   progress: number;
   quality: LandingQuality;
+  testMode: CinematicPreludeTestMode | null;
+}
+
+export interface CinematicPreludeRouteSearchParams {
+  copy?: string | string[];
+  geoLat?: string | string[];
+  geoLon?: string | string[];
+  preludeTest?: string | string[];
+  progress?: string | string[];
+  quality?: string | string[];
 }
 
 interface MotionState {
@@ -55,6 +78,8 @@ export interface LuBirthCinematicPreludeTelemetry {
   renderedFrame: number | null;
   veilOpacity: number;
   fallbackReason: string | null;
+  sourceCutCount: number;
+  presentationResourcesReleased: boolean;
   locationMode: "normalized-ip-composition";
   manifestId: string;
   manifestSha256: string;
@@ -64,6 +89,7 @@ declare global {
   interface Window {
     __MiraLithOpeningProgress?: number;
     __MiraLithSetCinematicPreludeProgress?: (progress: number) => void;
+    __MiraLithTriggerCinematicPreludeLowMemory?: () => void;
     __MiraLithLuBirthCinematicPrelude?: LuBirthCinematicPreludeTelemetry;
   }
 }
@@ -72,43 +98,38 @@ function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
-function finiteQueryNumber(params: URLSearchParams, name: string, fallback: number) {
-  const parameter = params.get(name);
-  if (parameter === null || parameter.trim() === "") return fallback;
-  const value = Number(parameter);
+function firstParameter(parameter: string | string[] | undefined) {
+  return Array.isArray(parameter) ? parameter[0] : parameter;
+}
+
+function finiteQueryNumber(parameter: string | string[] | undefined, fallback: number) {
+  const valueString = firstParameter(parameter);
+  if (valueString === undefined || valueString.trim() === "") return fallback;
+  const value = Number(valueString);
   return Number.isFinite(value) ? value : fallback;
 }
 
-function readConfig(): RouteConfig {
-  if (typeof window === "undefined") {
-    return {
-      copyHidden: true,
-      latitudeDeg: DEFAULT_LUBIRTH_LOCATION.latitudeDeg,
-      longitudeDeg: DEFAULT_LUBIRTH_LOCATION.longitudeDeg,
-      progress: 0,
-      quality: "auto"
-    };
-  }
-
-  const params = new URLSearchParams(window.location.search);
-  const quality = params.get("quality");
+function readConfig(params: CinematicPreludeRouteSearchParams): RouteConfig {
+  const quality = firstParameter(params.quality);
+  const testMode = firstParameter(params.preludeTest) ?? null;
   return {
-    copyHidden: params.get("copy") !== "visible",
+    copyHidden: firstParameter(params.copy) !== "visible",
     latitudeDeg: clamp(
-      finiteQueryNumber(params, "geoLat", DEFAULT_LUBIRTH_LOCATION.latitudeDeg),
+      finiteQueryNumber(params.geoLat, DEFAULT_LUBIRTH_LOCATION.latitudeDeg),
       -90,
       90
     ),
     longitudeDeg: clamp(
-      finiteQueryNumber(params, "geoLon", DEFAULT_LUBIRTH_LOCATION.longitudeDeg),
+      finiteQueryNumber(params.geoLon, DEFAULT_LUBIRTH_LOCATION.longitudeDeg),
       -180,
       180
     ),
-    progress: clamp(finiteQueryNumber(params, "progress", 0), 0, 1),
+    progress: clamp(finiteQueryNumber(params.progress, 0), 0, 1),
     quality:
       quality === "high" || quality === "medium" || quality === "low"
         ? quality
-        : "auto"
+        : "auto",
+    testMode: isCinematicPreludeTestMode(testMode) ? testMode : null
   };
 }
 
@@ -132,11 +153,6 @@ function selectTier(): CinematicPreludeTier {
   return Math.min(window.innerWidth, window.innerHeight) < 760 ? "mobile" : "desktop";
 }
 
-function readReducedMotion() {
-  return typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
 function armStatus(snapshot: PreludeSnapshot): LuBirthCinematicPreludeTelemetry["armStatus"] {
   if (!snapshot.fallbackReason && snapshot.renderedFrame !== null) return "ready";
   if (snapshot.fallbackReason === "late-first-frame") return "late";
@@ -152,10 +168,16 @@ function motionReducer(_state: MotionState, nextProgress: number): MotionState {
   };
 }
 
-export function LuBirthCinematicPreludeRoute() {
-  const [config] = useState<RouteConfig>(() => readConfig());
-  const [tier] = useState<CinematicPreludeTier>(() => selectTier());
-  const [reducedMotion] = useState(() => readReducedMotion());
+export function LuBirthCinematicPreludeRoute({
+  initialSearchParams = {}
+}: {
+  initialSearchParams?: CinematicPreludeRouteSearchParams;
+}) {
+  const config = useMemo(() => readConfig(initialSearchParams), [initialSearchParams]);
+  const [tier, setTier] = useState<CinematicPreludeTier>("desktop");
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [forcedFallbackReason, setForcedFallbackReason] =
+    useState<PreludeFallbackReason | null>(null);
   const [motion, setProgress] = useReducer(motionReducer, {
     direction: "forward",
     progress: config.progress
@@ -164,12 +186,46 @@ export function LuBirthCinematicPreludeRoute() {
     () => normalizePreludeComposition(config.latitudeDeg, config.longitudeDeg),
     [config.latitudeDeg, config.longitudeDeg]
   );
+  const providerFactory = useMemo(() => {
+    if (!config.testMode) return undefined;
+    return ({
+      manifestId,
+      variant
+    }: {
+      video: HTMLVideoElement;
+      variant: (typeof manifest.variants)[CinematicPreludeTier];
+      manifestId: string;
+    }) =>
+      new DeterministicTestFrameProvider({
+        manifestId,
+        mode: config.testMode as CinematicPreludeTestMode,
+        variant
+      });
+  }, [config.testMode]);
+
+  useEffect(() => {
+    const updateTier = () => setTier(selectTier());
+    updateTier();
+    window.addEventListener("resize", updateTier);
+    return () => window.removeEventListener("resize", updateTier);
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updateReducedMotion = () => setReducedMotion(mediaQuery.matches);
+    updateReducedMotion();
+    mediaQuery.addEventListener("change", updateReducedMotion);
+    return () => mediaQuery.removeEventListener("change", updateReducedMotion);
+  }, []);
 
   useLayoutEffect(() => {
     window.__MiraLithOpeningProgress = motion.progress;
     window.__MiraLithSetCinematicPreludeProgress = setProgress;
+    window.__MiraLithTriggerCinematicPreludeLowMemory = () =>
+      setForcedFallbackReason("low-memory");
     return () => {
       delete window.__MiraLithSetCinematicPreludeProgress;
+      delete window.__MiraLithTriggerCinematicPreludeLowMemory;
     };
   }, [motion.progress]);
 
@@ -187,6 +243,8 @@ export function LuBirthCinematicPreludeRoute() {
         renderedFrame: snapshot.renderedFrame,
         veilOpacity: snapshot.veilOpacity,
         fallbackReason: snapshot.fallbackReason,
+        sourceCutCount: snapshot.sourceCutCount,
+        presentationResourcesReleased: snapshot.presentationResourcesReleased,
         locationMode: "normalized-ip-composition",
         manifestId: manifest.id,
         manifestSha256: variant.sha256
@@ -207,15 +265,18 @@ export function LuBirthCinematicPreludeRoute() {
         <LuBirthCinematicPreludeStack
           composition={normalizedComposition}
           direction={motion.direction}
+          forcedFallbackReason={forcedFallbackReason}
           manifest={manifest}
           onSnapshot={publishSnapshot}
           progress={motion.progress}
-          reducedMotion={reducedMotion}
+          providerFactory={providerFactory}
+          reducedMotion={reducedMotion || config.testMode === "reduced-motion"}
           tier={tier}
         >
           <VisualCanvas
             decorative
             dpr={config.quality === "high" ? [1.4, 1.8] : [1, 1.35]}
+            onFallback={() => setForcedFallbackReason("rendering-fallback")}
             fallback={
               <VisualCanvasFallback
                 scene="lubirth"

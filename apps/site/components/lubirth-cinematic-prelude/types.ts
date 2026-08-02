@@ -19,6 +19,7 @@ export type PreludeFallbackReason =
   | "unsupported"
   | "background-unverified"
   | "low-memory"
+  | "rendering-fallback"
   | "reverse-timeout";
 
 export type FrameFailureReason =

@@ -110,7 +110,7 @@ test("reverse waits for the requested frame and exposes it only at the veil peak
   const controller = new CinematicPreludeController({ provider, tier: "desktop" });
   await controller.armForwardCycle();
   await controller.updateProgress(0.22, "forward");
-  provider.requestResult = { state: "ready", renderedFrame: 41 };
+  provider.requestResult = { state: "ready", renderedFrame: 39 };
 
   const closing = await controller.updateProgress(0.205, "reverse");
   expect(closing).toMatchObject({
@@ -118,14 +118,40 @@ test("reverse waits for the requested frame and exposes it only at the veil peak
     state: "reverse-veil-close"
   });
 
-  const ready = await controller.updateProgress(0.19, "reverse");
-  expect(provider.requested).toEqual([{ frame: 41, deadlineMs: 450 }]);
+  const deadBand = await controller.updateProgress(0.19, "reverse");
+  expect(deadBand).toMatchObject({
+    source: "live",
+    state: "reverse-veil-close",
+    sourceCutCount: 1
+  });
+  expect(provider.requested).toEqual([]);
+
+  const ready = await controller.updateProgress(0.18, "reverse");
+  expect(provider.requested).toEqual([{ frame: 39, deadlineMs: 450 }]);
   expect(ready).toMatchObject({
     source: "plate",
     state: "plate",
-    requestedFrame: 41,
-    renderedFrame: 41,
+    requestedFrame: 39,
+    renderedFrame: 39,
     sourceCutCount: 2
+  });
+});
+
+test("reverse pending retains live content behind the closed veil", async () => {
+  const provider = new FakeFrameProvider();
+  const controller = new CinematicPreludeController({ provider, tier: "desktop" });
+  await controller.armForwardCycle();
+  await controller.updateProgress(0.22, "forward");
+  provider.requestResult = { state: "pending", requestedFrame: 39 };
+
+  const pending = await controller.updateProgress(0.18, "reverse");
+
+  expect(pending).toMatchObject({
+    source: "live",
+    state: "reverse-wait-frame",
+    veilOpacity: 1,
+    requestedFrame: 39,
+    sourceCutCount: 1
   });
 });
 
@@ -136,9 +162,9 @@ test("reverse timeout reopens live instead of holding an opaque veil", async () 
   await controller.updateProgress(0.22, "forward");
   provider.requestResult = { state: "failed", reason: "timeout" };
 
-  const timedOut = await controller.updateProgress(0.19, "reverse");
+  const timedOut = await controller.updateProgress(0.18, "reverse");
 
-  expect(provider.requested).toEqual([{ frame: 41, deadlineMs: 700 }]);
+  expect(provider.requested).toEqual([{ frame: 39, deadlineMs: 700 }]);
   expect(timedOut).toMatchObject({
     source: "live",
     state: "fallback-live",
