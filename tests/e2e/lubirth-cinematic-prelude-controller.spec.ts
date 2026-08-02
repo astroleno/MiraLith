@@ -91,6 +91,23 @@ test("performs one veil-protected forward source cut and releases at live lock",
   expect(provider.releaseCount).toBe(1);
 });
 
+test("maps forward progress to a presented plate frame", async () => {
+  const provider = new FakeFrameProvider();
+  provider.requestResult = { state: "ready", renderedFrame: 21 };
+  const controller = new CinematicPreludeController({ provider, tier: "desktop" });
+  await controller.armForwardCycle();
+
+  const snapshot = await controller.updateProgress(0.1, "forward");
+
+  expect(provider.requested).toEqual([{ frame: 21, deadlineMs: 250 }]);
+  expect(snapshot).toMatchObject({
+    source: "plate",
+    state: "plate",
+    requestedFrame: 21,
+    renderedFrame: 21
+  });
+});
+
 test("does not perform a second cut while progress jitters inside the dead band", async () => {
   const provider = new FakeFrameProvider();
   const controller = new CinematicPreludeController({ provider, tier: "desktop" });

@@ -21,6 +21,7 @@ import type {
   FrameProvider,
   PreludeDirection,
   PreludeFallbackReason,
+  PreludeProviderMetrics,
   PreludeSnapshot
 } from "./types";
 import styles from "../LuBirthCinematicPreludeRoute.module.css";
@@ -53,6 +54,7 @@ export function LuBirthCinematicPreludeStack({
   direction,
   forcedFallbackReason = null,
   manifest,
+  onProviderMetrics,
   onSnapshot,
   progress,
   providerFactory = defaultProviderFactory,
@@ -64,6 +66,7 @@ export function LuBirthCinematicPreludeStack({
   direction: PreludeDirection;
   forcedFallbackReason?: PreludeFallbackReason | null;
   manifest: CinematicPreludeManifest;
+  onProviderMetrics?: (metrics: PreludeProviderMetrics) => void;
   onSnapshot?: (snapshot: PreludeSnapshot) => void;
   progress: number;
   providerFactory?: ProviderFactory;
@@ -76,13 +79,15 @@ export function LuBirthCinematicPreludeStack({
   const pendingFallbackReasonRef = useRef<PreludeFallbackReason | null>(null);
   const updateSequenceRef = useRef(0);
   const latestInputRef = useRef({ direction, progress });
+  const onProviderMetricsRef = useRef(onProviderMetrics);
   const onSnapshotRef = useRef(onSnapshot);
   const variant = manifest.variants[tier];
 
   useLayoutEffect(() => {
     latestInputRef.current = { direction, progress };
+    onProviderMetricsRef.current = onProviderMetrics;
     onSnapshotRef.current = onSnapshot;
-  }, [direction, onSnapshot, progress]);
+  }, [direction, onProviderMetrics, onSnapshot, progress]);
 
   const publish = useCallback((nextSnapshot: PreludeSnapshot) => {
     setSnapshot(nextSnapshot);
@@ -120,6 +125,8 @@ export function LuBirthCinematicPreludeStack({
     const controller = new CinematicPreludeController({ provider, tier });
     const initialProgress = latestInputRef.current.progress;
     const pendingFallbackReason = pendingFallbackReasonRef.current;
+    const armStartedAtMs = performance.now();
+    onProviderMetricsRef.current?.({ armStartedAtMs });
 
     if (pendingFallbackReason) {
       controllerRef.current = controller;
@@ -133,6 +140,14 @@ export function LuBirthCinematicPreludeStack({
     } else {
       void controller.armForwardCycle().then((armedSnapshot) => {
         if (cancelled) return;
+        const armEndedAtMs = performance.now();
+        onProviderMetricsRef.current?.({
+          armEndedAtMs,
+          armStartedAtMs,
+          ...(armedSnapshot.renderedFrame === 0 && !armedSnapshot.fallbackReason
+            ? { firstFrameMs: armEndedAtMs - armStartedAtMs }
+            : {})
+        });
         controllerRef.current = controller;
         const fallbackAfterArm = pendingFallbackReasonRef.current;
         if (fallbackAfterArm) {
@@ -199,8 +214,14 @@ export function LuBirthCinematicPreludeStack({
     const controller = controllerRef.current;
     if (!controller) return;
     const updateSequence = ++updateSequenceRef.current;
+    const targetStartedAtMs = performance.now();
     void controller.updateProgress(progress, direction).then((nextSnapshot) => {
       if (updateSequence !== updateSequenceRef.current) return;
+      if (nextSnapshot.requestedFrame !== null) {
+        onProviderMetricsRef.current?.({
+          lastTargetFrameLatencyMs: performance.now() - targetStartedAtMs
+        });
+      }
       publish(nextSnapshot);
     });
   }, [direction, progress, publish]);

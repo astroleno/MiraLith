@@ -6,6 +6,7 @@ import {
   useLayoutEffect,
   useMemo,
   useReducer,
+  useRef,
   useState
 } from "react";
 import {
@@ -30,6 +31,7 @@ import {
 import type {
   PreludeDirection,
   PreludeFallbackReason,
+  PreludeProviderMetrics,
   PreludeSnapshot,
   PreludeState
 } from "./lubirth-cinematic-prelude/types";
@@ -83,11 +85,28 @@ export interface LuBirthCinematicPreludeTelemetry {
   locationMode: "normalized-ip-composition";
   manifestId: string;
   manifestSha256: string;
+  metrics: CinematicPreludeEvidenceMetrics;
+}
+
+export interface CinematicPreludeEvidenceMetrics {
+  armEndedAtMs: number | null;
+  armStartedAtMs: number | null;
+  droppedFrameRate: number | null;
+  firstFrameMs: number | null;
+  lastTargetFrameLatencyMs: number | null;
+  presentationResidencyBytes: number;
+  rafP95Ms: number | null;
+  rafSampleCount: number;
+  reliefCloudGpuP95Ms: number | null;
+  reliefCloudGpuSampleCount: number;
+  reliefCloudGpuSupported: boolean | null;
+  transferBytes: number;
 }
 
 declare global {
   interface Window {
     __MiraLithOpeningProgress?: number;
+    __MiraLithResetCinematicPreludeFrameMetrics?: () => void;
     __MiraLithSetCinematicPreludeProgress?: (progress: number) => void;
     __MiraLithTriggerCinematicPreludeLowMemory?: () => void;
     __MiraLithLuBirthCinematicPrelude?: LuBirthCinematicPreludeTelemetry;
@@ -168,6 +187,30 @@ function motionReducer(_state: MotionState, nextProgress: number): MotionState {
   };
 }
 
+function percentile(values: number[], quantile: number) {
+  if (values.length === 0) return null;
+  const ordered = [...values].sort((left, right) => left - right);
+  return ordered[Math.min(ordered.length - 1, Math.floor(ordered.length * quantile))];
+}
+
+function createEvidenceMetrics(tier: CinematicPreludeTier): CinematicPreludeEvidenceMetrics {
+  const variant = manifest.variants[tier];
+  return {
+    armEndedAtMs: null,
+    armStartedAtMs: null,
+    droppedFrameRate: null,
+    firstFrameMs: null,
+    lastTargetFrameLatencyMs: null,
+    presentationResidencyBytes: variant.estimatedPresentationResidencyBytes,
+    rafP95Ms: null,
+    rafSampleCount: 0,
+    reliefCloudGpuP95Ms: null,
+    reliefCloudGpuSampleCount: 0,
+    reliefCloudGpuSupported: null,
+    transferBytes: variant.transferBytes
+  };
+}
+
 export function LuBirthCinematicPreludeRoute({
   initialSearchParams = {}
 }: {
@@ -182,6 +225,10 @@ export function LuBirthCinematicPreludeRoute({
     direction: "forward",
     progress: config.progress
   });
+  const latestSnapshotRef = useRef<PreludeSnapshot | null>(null);
+  const metricsRef = useRef<CinematicPreludeEvidenceMetrics>(
+    createEvidenceMetrics("desktop")
+  );
   const normalizedComposition = useMemo(
     () => normalizePreludeComposition(config.latitudeDeg, config.longitudeDeg),
     [config.latitudeDeg, config.longitudeDeg]
@@ -210,6 +257,10 @@ export function LuBirthCinematicPreludeRoute({
     return () => window.removeEventListener("resize", updateTier);
   }, []);
 
+  useLayoutEffect(() => {
+    metricsRef.current = createEvidenceMetrics(tier);
+  }, [tier]);
+
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     const updateReducedMotion = () => setReducedMotion(mediaQuery.matches);
@@ -229,8 +280,9 @@ export function LuBirthCinematicPreludeRoute({
     };
   }, [motion.progress]);
 
-  const publishSnapshot = useCallback(
-    (snapshot: PreludeSnapshot) => {
+  const publishTelemetry = useCallback(
+    (snapshot: PreludeSnapshot | null = latestSnapshotRef.current) => {
+      if (!snapshot) return;
       const variant = manifest.variants[tier];
       window.__MiraLithLuBirthCinematicPrelude = {
         source: snapshot.source,
@@ -247,11 +299,100 @@ export function LuBirthCinematicPreludeRoute({
         presentationResourcesReleased: snapshot.presentationResourcesReleased,
         locationMode: "normalized-ip-composition",
         manifestId: manifest.id,
-        manifestSha256: variant.sha256
+        manifestSha256: variant.sha256,
+        metrics: { ...metricsRef.current }
       };
     },
     [normalizedComposition, tier]
   );
+
+  const publishSnapshot = useCallback(
+    (snapshot: PreludeSnapshot) => {
+      latestSnapshotRef.current = snapshot;
+      publishTelemetry(snapshot);
+    },
+    [publishTelemetry]
+  );
+
+  const publishProviderMetrics = useCallback(
+    (metrics: PreludeProviderMetrics) => {
+      metricsRef.current = {
+        ...metricsRef.current,
+        ...(metrics.armEndedAtMs === undefined
+          ? {}
+          : { armEndedAtMs: metrics.armEndedAtMs }),
+        ...(metrics.armStartedAtMs === undefined
+          ? {}
+          : { armStartedAtMs: metrics.armStartedAtMs }),
+        ...(metrics.firstFrameMs === undefined
+          ? {}
+          : { firstFrameMs: metrics.firstFrameMs }),
+        ...(metrics.lastTargetFrameLatencyMs === undefined
+          ? {}
+          : { lastTargetFrameLatencyMs: metrics.lastTargetFrameLatencyMs })
+      };
+      publishTelemetry();
+    },
+    [publishTelemetry]
+  );
+
+  useEffect(() => {
+    const frameDeltas: number[] = [];
+    let animationFrame = 0;
+    let lastFrameAt: number | null = null;
+    let warmupFrames = 10;
+    window.__MiraLithResetCinematicPreludeFrameMetrics = () => {
+      frameDeltas.splice(0);
+      lastFrameAt = null;
+      warmupFrames = 5;
+      metricsRef.current = {
+        ...metricsRef.current,
+        droppedFrameRate: null,
+        rafP95Ms: null,
+        rafSampleCount: 0
+      };
+      publishTelemetry();
+    };
+    const tick = (now: number) => {
+      if (lastFrameAt !== null && document.visibilityState === "visible") {
+        const delta = now - lastFrameAt;
+        if (warmupFrames > 0) {
+          warmupFrames -= 1;
+        } else if (Number.isFinite(delta) && delta > 0 && delta < 250) {
+          frameDeltas.push(delta);
+          if (frameDeltas.length > 240) frameDeltas.shift();
+        }
+      }
+      lastFrameAt = now;
+
+      if (frameDeltas.length > 0) {
+        const droppedFrames = frameDeltas.reduce(
+          (total, delta) =>
+            total + Math.max(0, Math.round(delta / (1_000 / 60)) - 1),
+          0
+        );
+        const gpuTimer = window.__MiraLithLuBirthReliefCloud?.gpuTimer;
+        metricsRef.current = {
+          ...metricsRef.current,
+          droppedFrameRate:
+            droppedFrames / Math.max(frameDeltas.length + droppedFrames, 1),
+          rafP95Ms: percentile(frameDeltas, 0.95),
+          rafSampleCount: frameDeltas.length,
+          reliefCloudGpuP95Ms:
+            gpuTimer?.supported === true ? gpuTimer.p95Ms ?? null : null,
+          reliefCloudGpuSampleCount: gpuTimer?.sampleCount ?? 0,
+          reliefCloudGpuSupported: gpuTimer?.supported ?? null
+        };
+        if (frameDeltas.length % 15 === 0) publishTelemetry();
+      }
+      animationFrame = requestAnimationFrame(tick);
+    };
+    animationFrame = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      delete window.__MiraLithResetCinematicPreludeFrameMetrics;
+    };
+  }, [publishTelemetry, tier]);
 
   return (
     <main
@@ -267,6 +408,7 @@ export function LuBirthCinematicPreludeRoute({
           direction={motion.direction}
           forcedFallbackReason={forcedFallbackReason}
           manifest={manifest}
+          onProviderMetrics={publishProviderMetrics}
           onSnapshot={publishSnapshot}
           progress={motion.progress}
           providerFactory={providerFactory}
@@ -275,7 +417,7 @@ export function LuBirthCinematicPreludeRoute({
         >
           <VisualCanvas
             decorative
-            dpr={config.quality === "high" ? [1.4, 1.8] : [1, 1.35]}
+            dpr={1}
             onFallback={() => setForcedFallbackReason("rendering-fallback")}
             fallback={
               <VisualCanvasFallback

@@ -61,3 +61,10 @@ export interface PreludeSnapshot {
   sourceCutCount: number;
   presentationResourcesReleased: boolean;
 }
+
+export interface PreludeProviderMetrics {
+  armEndedAtMs?: number;
+  armStartedAtMs?: number;
+  firstFrameMs?: number;
+  lastTargetFrameLatencyMs?: number;
+}

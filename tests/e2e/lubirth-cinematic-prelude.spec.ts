@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 function source(relativePath: string) {
@@ -367,4 +367,171 @@ test("selects the mobile plate tier in mobile landscape", async ({ page }) => {
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthCinematicPrelude))
     .toMatchObject({ source: "plate", selectedTier: "mobile" });
+});
+
+test("records prelude evidence within the selected tier budgets", async ({
+  page
+}, testInfo) => {
+  test.skip(
+    process.env.MIRALITH_CINEMATIC_PRELUDE_STRICT_EVIDENCE !== "1",
+    "Strict cadence evidence requires the target System Chrome run."
+  );
+  const evidenceRoot = process.env.MIRALITH_CINEMATIC_PRELUDE_EVIDENCE_DIR;
+  const tier = testInfo.project.name.includes("mobile") ? "mobile" : "desktop";
+  const captures = [0, 0.18, 0.194, 0.195, 0.22, 0.3] as const;
+  const capturedFrames: Array<{
+    progress: number;
+    telemetry: unknown;
+  }> = [];
+  await page.goto(
+    "/lubirth-cinematic-prelude?copy=hidden&location=ip&geoLat=31.2&geoLon=103.8" +
+      `&progress=0&quality=${tier === "desktop" ? "high" : "medium"}` +
+      "&reliefLiteGpuTimer=on"
+  );
+
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCinematicPrelude?.source), {
+      timeout: 25_000
+    })
+    .toBe("plate");
+
+  for (const progress of captures) {
+    await setPreludeProgress(page, progress);
+    if (progress === 0.18) {
+      await expect
+        .poll(() => page.evaluate(() => window.__MiraLithLuBirthCinematicPrelude))
+        .toMatchObject({ source: "plate", renderedFrame: 39 });
+    } else if (progress === 0.194) {
+      await expect
+        .poll(() => page.evaluate(() => window.__MiraLithLuBirthCinematicPrelude))
+        .toMatchObject({ source: "plate", renderedFrame: 42 });
+    } else if (progress === 0.195) {
+      await expect
+        .poll(() => page.evaluate(() => window.__MiraLithLuBirthCinematicPrelude))
+        .toMatchObject({ source: "live", veilOpacity: 1 });
+    } else if (progress >= 0.22) {
+      await expect
+        .poll(() => page.evaluate(() => window.__MiraLithLuBirthCinematicPrelude?.source))
+        .toBe("live");
+    }
+    if (evidenceRoot) {
+      mkdirSync(evidenceRoot, { recursive: true });
+      await page.screenshot({
+        path: path.join(evidenceRoot, `${tier}-progress-${progress.toFixed(3)}.png`)
+      });
+    }
+    capturedFrames.push({
+      progress,
+      telemetry: await page.evaluate(() => window.__MiraLithLuBirthCinematicPrelude)
+    });
+  }
+
+  await page.evaluate(() => window.__MiraLithResetCinematicPreludeFrameMetrics?.());
+
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const telemetry = window.__MiraLithLuBirthCinematicPrelude as
+            | (typeof window.__MiraLithLuBirthCinematicPrelude & {
+                metrics?: { rafSampleCount?: number };
+              })
+            | undefined;
+          return telemetry?.metrics?.rafSampleCount ?? 0;
+        }),
+      { timeout: 20_000 }
+    )
+    .toBeGreaterThanOrEqual(120);
+
+  const evidence = await page.evaluate(() => {
+    const canvas = document.querySelector("canvas");
+    const context = canvas?.getContext("webgl2") ?? null;
+    const debugRenderer = context?.getExtension("WEBGL_debug_renderer_info") ?? null;
+    return {
+      cinematic: window.__MiraLithLuBirthCinematicPrelude,
+      reliefCloud: window.__MiraLithLuBirthReliefCloud,
+      gpuTimer: window.__MiraLithLuBirthReliefCloud?.gpuTimer,
+      userAgent: navigator.userAgent,
+      viewport: {
+        canvasHeight: canvas?.height ?? null,
+        canvasWidth: canvas?.width ?? null,
+        devicePixelRatio: window.devicePixelRatio,
+        height: window.innerHeight,
+        width: window.innerWidth
+      },
+      webgl: {
+        renderer:
+          context && debugRenderer
+            ? context.getParameter(debugRenderer.UNMASKED_RENDERER_WEBGL) as string
+            : null,
+        vendor:
+          context && debugRenderer
+            ? context.getParameter(debugRenderer.UNMASKED_VENDOR_WEBGL) as string
+            : null,
+        version: context?.getParameter(context.VERSION) as string | undefined
+      }
+    };
+  });
+  const metrics = (evidence.cinematic as typeof evidence.cinematic & {
+    metrics: {
+      droppedFrameRate: number;
+      firstFrameMs: number;
+      presentationResidencyBytes: number;
+      rafP95Ms: number;
+      reliefCloudGpuP95Ms: number | null;
+      reliefCloudGpuSampleCount: number;
+      reliefCloudGpuSupported: boolean;
+      transferBytes: number;
+    };
+  }).metrics;
+
+  const gate = {
+    droppedFrameRate: metrics.droppedFrameRate <= 0.02,
+    firstFrame:
+      metrics.firstFrameMs <= (tier === "desktop" ? 1200 : 1800),
+    presentationResidency:
+      metrics.presentationResidencyBytes <=
+      (tier === "desktop" ? 16 * 1024 * 1024 : 8 * 1024 * 1024),
+    rafP95: metrics.rafP95Ms <= 33.4,
+    reliefCloudGpuP95:
+      metrics.reliefCloudGpuSupported === false
+        ? null
+        : metrics.reliefCloudGpuP95Ms !== null && metrics.reliefCloudGpuP95Ms <= 3,
+    transfer:
+      metrics.transferBytes <=
+      (tier === "desktop" ? 6 * 1024 * 1024 : 2 * 1024 * 1024)
+  };
+  const sourceBoundEvidence = {
+    capturedAt: new Date().toISOString(),
+    project: testInfo.project.name,
+    tier,
+    gate,
+    ...evidence,
+    capturedFrames
+  };
+
+  if (evidenceRoot) {
+    writeFileSync(
+      path.join(evidenceRoot, `${tier}-telemetry.json`),
+      `${JSON.stringify(sourceBoundEvidence, null, 2)}\n`
+    );
+  }
+
+  expect(metrics.firstFrameMs).toBeLessThanOrEqual(tier === "desktop" ? 1200 : 1800);
+  expect(metrics.transferBytes).toBeLessThanOrEqual(
+    tier === "desktop" ? 6 * 1024 * 1024 : 2 * 1024 * 1024
+  );
+  expect(metrics.presentationResidencyBytes).toBeLessThanOrEqual(
+    tier === "desktop" ? 16 * 1024 * 1024 : 8 * 1024 * 1024
+  );
+  expect(metrics.rafP95Ms).toBeLessThanOrEqual(33.4);
+  expect(metrics.droppedFrameRate).toBeLessThanOrEqual(0.02);
+  if (metrics.reliefCloudGpuSupported) {
+    expect(metrics.reliefCloudGpuSampleCount).toBeGreaterThanOrEqual(30);
+    expect(metrics.reliefCloudGpuP95Ms).not.toBeNull();
+    expect(metrics.reliefCloudGpuP95Ms ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(3);
+  } else {
+    expect(metrics.reliefCloudGpuP95Ms).toBeNull();
+  }
+
 });

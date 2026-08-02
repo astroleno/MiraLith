@@ -11,7 +11,9 @@ export const PRELUDE_TIMING = {
   veilPeak: 0.195,
   liveStart: 0.22,
   reverseDesktopDeadlineMs: 450,
-  reverseMobileDeadlineMs: 700
+  reverseMobileDeadlineMs: 700,
+  forwardDesktopDeadlineMs: 250,
+  forwardMobileDeadlineMs: 400
 } as const;
 
 function clamp01(value: number) {
@@ -121,7 +123,7 @@ export class CinematicPreludeController {
     this.#released = true;
   }
 
-  #updateForward(progress: number) {
+  async #updateForward(progress: number) {
     if (progress >= PRELUDE_TIMING.liveStart) {
       if (!this.#forwardCut) {
         this.#forwardCut = true;
@@ -161,6 +163,25 @@ export class CinematicPreludeController {
       return this.getSnapshot();
     }
 
+    const requestedFrame = frameForProgress(progress, this.provider.frameCount);
+    if (requestedFrame !== this.#snapshot.renderedFrame) {
+      const deadlineMs =
+        this.tier === "desktop"
+          ? PRELUDE_TIMING.forwardDesktopDeadlineMs
+          : PRELUDE_TIMING.forwardMobileDeadlineMs;
+      this.#snapshot.requestedFrame = requestedFrame;
+      const result = await this.provider.requestFrame(requestedFrame, deadlineMs);
+      if (
+        result.state === "failed" &&
+        result.reason !== "timeout"
+      ) {
+        return this.forceFallback(failureReason(result));
+      }
+      if (result.state === "ready") {
+        this.#snapshot.renderedFrame = result.renderedFrame;
+      }
+    }
+
     if (progress >= PRELUDE_TIMING.plateEnd) {
       const close = clamp01(
         (progress - PRELUDE_TIMING.plateEnd) /
@@ -171,7 +192,7 @@ export class CinematicPreludeController {
         source: "plate",
         state: "forward-veil-close",
         veilOpacity: close,
-        requestedFrame: null,
+        requestedFrame,
         fallbackReason: null
       };
       return this.getSnapshot();
@@ -182,7 +203,7 @@ export class CinematicPreludeController {
       source: "plate",
       state: "plate",
       veilOpacity: 0,
-      requestedFrame: null,
+      requestedFrame,
       fallbackReason: null
     };
     return this.getSnapshot();

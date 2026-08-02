@@ -1,0 +1,335 @@
+{
+  "capturedAt": "2026-08-02T17:13:22.702Z",
+  "project": "system-chrome-desktop",
+  "tier": "desktop",
+  "gate": {
+    "droppedFrameRate": true,
+    "firstFrame": true,
+    "presentationResidency": true,
+    "rafP95": true,
+    "reliefCloudGpuP95": false,
+    "transfer": true
+  },
+  "cinematic": {
+    "source": "live",
+    "state": "live",
+    "progress": 0.3,
+    "normalizedComposition": {
+      "x": -0.00488333333333336,
+      "y": -0.002966666666666661,
+      "scale": 1
+    },
+    "selectedTier": "desktop",
+    "armStatus": "ready",
+    "requestedFrame": null,
+    "renderedFrame": 42,
+    "veilOpacity": 0,
+    "fallbackReason": null,
+    "sourceCutCount": 1,
+    "presentationResourcesReleased": true,
+    "locationMode": "normalized-ip-composition",
+    "manifestId": "lubirth-normalized-cinematic-prelude-v1",
+    "manifestSha256": "ed6a4d15e108cf2e06504798764dc1e69d8858296e24d8e72ab7aa06cbf43e7f",
+    "metrics": {
+      "armEndedAtMs": 173.59999999403954,
+      "armStartedAtMs": 94.90000000596046,
+      "droppedFrameRate": 0,
+      "firstFrameMs": 78.69999998807907,
+      "lastTargetFrameLatencyMs": 7.5999999940395355,
+      "presentationResidencyBytes": 12830400,
+      "rafP95Ms": 18,
+      "rafSampleCount": 165,
+      "reliefCloudGpuP95Ms": 4.233916,
+      "reliefCloudGpuSampleCount": 120,
+      "reliefCloudGpuSupported": true,
+      "transferBytes": 4378646
+    }
+  },
+  "reliefCloud": {
+    "active": true,
+    "analyticNoise": false,
+    "cloudBottomScale": 1.0003,
+    "cloudOffset": 0,
+    "cloudTopScale": 1.0035,
+    "compressedTextureActive": true,
+    "channelLayout": "v3-r-depth-g-height-b-morphology-a-concavity",
+    "densityIntegration": "front-to-back",
+    "estimatedActiveTextureBytes": 2796203,
+    "fragmentTextureReads": 4,
+    "gpuTimer": {
+      "lastMs": 3.043583,
+      "p50Ms": 3.057541,
+      "p95Ms": 4.233916,
+      "sampleCount": 120,
+      "supported": true
+    },
+    "integrationPath": "ray-sphere-thin-shell",
+    "lodTransitions": false,
+    "mobile": false,
+    "premultipliedAlpha": true,
+    "rendererTextureCount": 6,
+    "shellCount": 1,
+    "sunDirection": [
+      -0.7406034591150715,
+      0.6706899049640395,
+      0.04100692290477803
+    ],
+    "textureCompression": "uastc",
+    "textureSource": "/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.ktx2",
+    "textureUuid": "c74136c0-04e0-49fc-a2ef-fb5f831bfd60",
+    "sunSteps": 1,
+    "thinShellIntegration": true,
+    "vertexTextureReads": 1,
+    "viewSteps": 3
+  },
+  "gpuTimer": {
+    "lastMs": 3.043583,
+    "p50Ms": 3.057541,
+    "p95Ms": 4.233916,
+    "sampleCount": 120,
+    "supported": true
+  },
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+  "viewport": {
+    "canvasHeight": 960,
+    "canvasWidth": 1440,
+    "devicePixelRatio": 1,
+    "height": 960,
+    "width": 1440
+  },
+  "webgl": {
+    "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+    "vendor": "Google Inc. (Apple)",
+    "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+  },
+  "capturedFrames": [
+    {
+      "progress": 0,
+      "telemetry": {
+        "source": "plate",
+        "state": "plate",
+        "progress": 0,
+        "normalizedComposition": {
+          "x": -0.00488333333333336,
+          "y": -0.002966666666666661,
+          "scale": 1
+        },
+        "selectedTier": "desktop",
+        "armStatus": "ready",
+        "requestedFrame": null,
+        "renderedFrame": 0,
+        "veilOpacity": 0,
+        "fallbackReason": null,
+        "sourceCutCount": 0,
+        "presentationResourcesReleased": false,
+        "locationMode": "normalized-ip-composition",
+        "manifestId": "lubirth-normalized-cinematic-prelude-v1",
+        "manifestSha256": "ed6a4d15e108cf2e06504798764dc1e69d8858296e24d8e72ab7aa06cbf43e7f",
+        "metrics": {
+          "armEndedAtMs": 173.59999999403954,
+          "armStartedAtMs": 94.90000000596046,
+          "droppedFrameRate": null,
+          "firstFrameMs": 78.69999998807907,
+          "lastTargetFrameLatencyMs": null,
+          "presentationResidencyBytes": 12830400,
+          "rafP95Ms": null,
+          "rafSampleCount": 0,
+          "reliefCloudGpuP95Ms": null,
+          "reliefCloudGpuSampleCount": 0,
+          "reliefCloudGpuSupported": null,
+          "transferBytes": 4378646
+        }
+      }
+    },
+    {
+      "progress": 0.18,
+      "telemetry": {
+        "source": "plate",
+        "state": "forward-veil-close",
+        "progress": 0.18,
+        "normalizedComposition": {
+          "x": -0.00488333333333336,
+          "y": -0.002966666666666661,
+          "scale": 1
+        },
+        "selectedTier": "desktop",
+        "armStatus": "ready",
+        "requestedFrame": 39,
+        "renderedFrame": 39,
+        "veilOpacity": 0,
+        "fallbackReason": null,
+        "sourceCutCount": 0,
+        "presentationResourcesReleased": false,
+        "locationMode": "normalized-ip-composition",
+        "manifestId": "lubirth-normalized-cinematic-prelude-v1",
+        "manifestSha256": "ed6a4d15e108cf2e06504798764dc1e69d8858296e24d8e72ab7aa06cbf43e7f",
+        "metrics": {
+          "armEndedAtMs": 173.59999999403954,
+          "armStartedAtMs": 94.90000000596046,
+          "droppedFrameRate": 0.25,
+          "firstFrameMs": 78.69999998807907,
+          "lastTargetFrameLatencyMs": 15.699999988079071,
+          "presentationResidencyBytes": 12830400,
+          "rafP95Ms": 101.30000000000001,
+          "rafSampleCount": 15,
+          "reliefCloudGpuP95Ms": 7.26075,
+          "reliefCloudGpuSampleCount": 9,
+          "reliefCloudGpuSupported": true,
+          "transferBytes": 4378646
+        }
+      }
+    },
+    {
+      "progress": 0.194,
+      "telemetry": {
+        "source": "plate",
+        "state": "forward-veil-close",
+        "progress": 0.194,
+        "normalizedComposition": {
+          "x": -0.00488333333333336,
+          "y": -0.002966666666666661,
+          "scale": 1
+        },
+        "selectedTier": "desktop",
+        "armStatus": "ready",
+        "requestedFrame": 42,
+        "renderedFrame": 42,
+        "veilOpacity": 0.9333333333333333,
+        "fallbackReason": null,
+        "sourceCutCount": 0,
+        "presentationResourcesReleased": false,
+        "locationMode": "normalized-ip-composition",
+        "manifestId": "lubirth-normalized-cinematic-prelude-v1",
+        "manifestSha256": "ed6a4d15e108cf2e06504798764dc1e69d8858296e24d8e72ab7aa06cbf43e7f",
+        "metrics": {
+          "armEndedAtMs": 173.59999999403954,
+          "armStartedAtMs": 94.90000000596046,
+          "droppedFrameRate": 0.14285714285714285,
+          "firstFrameMs": 78.69999998807907,
+          "lastTargetFrameLatencyMs": 7.5999999940395355,
+          "presentationResidencyBytes": 12830400,
+          "rafP95Ms": 18.700000000000045,
+          "rafSampleCount": 30,
+          "reliefCloudGpuP95Ms": 7.196749,
+          "reliefCloudGpuSampleCount": 25,
+          "reliefCloudGpuSupported": true,
+          "transferBytes": 4378646
+        }
+      }
+    },
+    {
+      "progress": 0.195,
+      "telemetry": {
+        "source": "live",
+        "state": "forward-veil-open",
+        "progress": 0.195,
+        "normalizedComposition": {
+          "x": -0.00488333333333336,
+          "y": -0.002966666666666661,
+          "scale": 1
+        },
+        "selectedTier": "desktop",
+        "armStatus": "ready",
+        "requestedFrame": null,
+        "renderedFrame": 42,
+        "veilOpacity": 1,
+        "fallbackReason": null,
+        "sourceCutCount": 1,
+        "presentationResourcesReleased": false,
+        "locationMode": "normalized-ip-composition",
+        "manifestId": "lubirth-normalized-cinematic-prelude-v1",
+        "manifestSha256": "ed6a4d15e108cf2e06504798764dc1e69d8858296e24d8e72ab7aa06cbf43e7f",
+        "metrics": {
+          "armEndedAtMs": 173.59999999403954,
+          "armStartedAtMs": 94.90000000596046,
+          "droppedFrameRate": 0.13513513513513514,
+          "firstFrameMs": 78.69999998807907,
+          "lastTargetFrameLatencyMs": 7.5999999940395355,
+          "presentationResidencyBytes": 12830400,
+          "rafP95Ms": 18.700000000000045,
+          "rafSampleCount": 32,
+          "reliefCloudGpuP95Ms": 7.196749,
+          "reliefCloudGpuSampleCount": 27,
+          "reliefCloudGpuSupported": true,
+          "transferBytes": 4378646
+        }
+      }
+    },
+    {
+      "progress": 0.22,
+      "telemetry": {
+        "source": "live",
+        "state": "live",
+        "progress": 0.22,
+        "normalizedComposition": {
+          "x": -0.00488333333333336,
+          "y": -0.002966666666666661,
+          "scale": 1
+        },
+        "selectedTier": "desktop",
+        "armStatus": "ready",
+        "requestedFrame": null,
+        "renderedFrame": 42,
+        "veilOpacity": 0,
+        "fallbackReason": null,
+        "sourceCutCount": 1,
+        "presentationResourcesReleased": true,
+        "locationMode": "normalized-ip-composition",
+        "manifestId": "lubirth-normalized-cinematic-prelude-v1",
+        "manifestSha256": "ed6a4d15e108cf2e06504798764dc1e69d8858296e24d8e72ab7aa06cbf43e7f",
+        "metrics": {
+          "armEndedAtMs": 173.59999999403954,
+          "armStartedAtMs": 94.90000000596046,
+          "droppedFrameRate": 0.1282051282051282,
+          "firstFrameMs": 78.69999998807907,
+          "lastTargetFrameLatencyMs": 7.5999999940395355,
+          "presentationResidencyBytes": 12830400,
+          "rafP95Ms": 18.700000000000045,
+          "rafSampleCount": 34,
+          "reliefCloudGpuP95Ms": 7.196749,
+          "reliefCloudGpuSampleCount": 29,
+          "reliefCloudGpuSupported": true,
+          "transferBytes": 4378646
+        }
+      }
+    },
+    {
+      "progress": 0.3,
+      "telemetry": {
+        "source": "live",
+        "state": "live",
+        "progress": 0.3,
+        "normalizedComposition": {
+          "x": -0.00488333333333336,
+          "y": -0.002966666666666661,
+          "scale": 1
+        },
+        "selectedTier": "desktop",
+        "armStatus": "ready",
+        "requestedFrame": null,
+        "renderedFrame": 42,
+        "veilOpacity": 0,
+        "fallbackReason": null,
+        "sourceCutCount": 1,
+        "presentationResourcesReleased": true,
+        "locationMode": "normalized-ip-composition",
+        "manifestId": "lubirth-normalized-cinematic-prelude-v1",
+        "manifestSha256": "ed6a4d15e108cf2e06504798764dc1e69d8858296e24d8e72ab7aa06cbf43e7f",
+        "metrics": {
+          "armEndedAtMs": 173.59999999403954,
+          "armStartedAtMs": 94.90000000596046,
+          "droppedFrameRate": 0.1,
+          "firstFrameMs": 78.69999998807907,
+          "lastTargetFrameLatencyMs": 7.5999999940395355,
+          "presentationResidencyBytes": 12830400,
+          "rafP95Ms": 18.700000000000045,
+          "rafSampleCount": 45,
+          "reliefCloudGpuP95Ms": 7.196749,
+          "reliefCloudGpuSampleCount": 39,
+          "reliefCloudGpuSupported": true,
+          "transferBytes": 4378646
+        }
+      }
+    }
+  ]
+}

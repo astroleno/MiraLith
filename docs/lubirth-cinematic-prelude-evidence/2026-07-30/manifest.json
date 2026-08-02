@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "decision": "REJECT",
+  "route": "/lubirth-cinematic-prelude",
+  "defaultHomepageAuthorized": false,
+  "baselineCommit": "b680891b3b7293ebfddb1b1135f908f06fa7c559",
+  "evidenceSourceParentCommit": "e48dc84",
+  "branch": "codex/lubirth-cinematic-prelude-implementation",
+  "capturedAt": {
+    "desktop": "2026-08-02T17:13:22.702Z",
+    "mobile": "2026-08-02T17:13:27.486Z"
+  },
+  "runtime": {
+    "browser": "System Chrome 147.0.7727.15",
+    "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+    "desktop": {
+      "project": "system-chrome-desktop",
+      "passed": false,
+      "failedGate": "reliefCloudGpuP95Ms",
+      "reliefCloudGpuP95Ms": 4.233916,
+      "reliefCloudGpuSampleCount": 120
+    },
+    "mobile": {
+      "project": "system-chrome-mobile-landscape",
+      "passed": true,
+      "physicalDevice": false,
+      "reliefCloudGpuP95Ms": 0.917375,
+      "reliefCloudGpuSampleCount": 120
+    }
+  },
+  "media": {
+    "desktop.mp4": "ed6a4d15e108cf2e06504798764dc1e69d8858296e24d8e72ab7aa06cbf43e7f",
+    "mobile.mp4": "363bb292d83307cfe1144ef568a68a8f7451eac08a57f32f05eaf7341233b1d3",
+    "mediaManifest": "fbf212c82879ff4241ef9e92a82e1fe0b5d004f6d70927a9579634423b001ce3"
+  },
+  "sourceFiles": {
+    "apps/site/app/lubirth-cinematic-prelude/page.tsx": "62ea80808b14354a378726abe0a9e9ab36b0cb5f88e07d7c9aafe0f665314ebf",
+    "apps/site/components/LuBirthCinematicPreludeRoute.module.css": "622eaed2d733a243bd6c18ddd7fc0dfda10188e3f3c6e6be8ffc9b750a190db6",
+    "apps/site/components/LuBirthCinematicPreludeRoute.tsx": "28ab667bbf3ccf314ef6b536f71b59946da225a9fcd3d0f625676c9f3e7af0c0",
+    "apps/site/components/lubirth-cinematic-prelude/CinematicPlate.tsx": "04932c3e59bb88a2969655a847f0ff4785186f466a990475f20a16f9fed9c137",
+    "apps/site/components/lubirth-cinematic-prelude/LuBirthCinematicPreludeStack.tsx": "772efa08da0db30ad6a5f42381a7942f2c905f84e092da5c122b9519f0ae8b1e",
+    "apps/site/components/lubirth-cinematic-prelude/TransitionVeil.tsx": "332346bf025b875c74e5f2a22203f05638314eeeb7005ebb9d51f13162498031",
+    "apps/site/components/lubirth-cinematic-prelude/controller.ts": "a343305772f927a180048f4b124eb9d1a76894f556ab49837e806f7b953040ef",
+    "apps/site/components/lubirth-cinematic-prelude/frameProvider.ts": "1640aac315e18194cb0699595b74b92cea336b001e2dcc8fbbd98d30fb68e9c4",
+    "apps/site/components/lubirth-cinematic-prelude/testFrameProvider.ts": "8810060fe0878384913f9b01517314cc5cb5c89329dff7674313a84abe583ab9",
+    "apps/site/components/lubirth-cinematic-prelude/types.ts": "12cdb49e21a9c21fca45249b87ceecae7b42715022e793c46166296a5dae4224",
+    "apps/site/content/lubirthCinematicPreludeManifest.ts": "08617c72c2d66ed93f24961c8fd61c0ff9c9c59a677180370d1f72d407512f11",
+    "apps/site/scripts/prepare-lubirth-cinematic-prelude.mjs": "ca59eeb6ee12364ba9b1b4cf176ede32bd33a253e54b8e8304b64b3220205ba2",
+    "apps/site/visual/scenes/LuBirthSceneSlot.tsx": "f5da7bcdee778d0cf363f38401e3500fc29ee18d694975a04a6932f3fb14ec53",
+    "playwright.cinematic-system-chrome.config.ts": "11220b6a0292d5b9311a846548cb44d36d760481a259d4106b8f494099a779bc",
+    "tests/e2e/lubirth-cinematic-prelude-contract.spec.ts": "9e891f799a9468603b0e511429a9150126af483a978b318667ba94c4df22d032",
+    "tests/e2e/lubirth-cinematic-prelude-controller.spec.ts": "bd7c8ac9d094f7c02a43f417d9a7631c1b2e200086946e61f14038db76dd71f7",
+    "tests/e2e/lubirth-cinematic-prelude.spec.ts": "cbcc946b7201440e3c69cba2a42f21b7fa9bb358d0de675b35db389dbd866382"
+  },
+  "evidenceFiles": {
+    "desktop-contact-sheet.png": "61e036065c6ce310e314d033adf9c718a9aa889ab23b9e00fc2215316b1275ac",
+    "desktop-progress-0.000.png": "89705dcbff31361c0e03790ea9e513401d1f57aed3efb4a78c83d3ecff49733c",
+    "desktop-progress-0.180.png": "6d8bc9dabfca5bb1417e2c60eb87944287529e1e001d5827e450d89b0ebfe2a4",
+    "desktop-progress-0.194.png": "ca25da2d187b8d3cabb2a916d60a97472b7215d2f334590b2fd9ebd3623a7f1c",
+    "desktop-progress-0.195.png": "1a5d150446cf8f5a3f6e2ac31fe94ef3b376ceb801012dc3a70e38d9ee9bc384",
+    "desktop-progress-0.220.png": "834a2aaef8c6438d617c40cd1ceabb9aa4a7952ce098d777dba4d3f1bfb86120",
+    "desktop-progress-0.300.png": "0274cac845d20c78f36f2ddec5eb64fcad7ea1d9f7fa6bd988ea13ec2c40ec9c",
+    "desktop-telemetry.json": "1d50a7f409c2068654728209e7ce08017c2dc791f796737f5b098ba5e1117071",
+    "mobile-contact-sheet.png": "339dd02cf923c56532e231485fa3e9b9f796ad490854534af55a4e686dcffe8b",
+    "mobile-progress-0.000.png": "b9af3fa2853b00f10014699e2eb680696c66e223672804c44bcec2d2e988c61f",
+    "mobile-progress-0.180.png": "89601ec86cef2017da579a1898a8afc666cc14156ce2718872884b2581d727f8",
+    "mobile-progress-0.194.png": "6f67200fc981db4759fd2dd908fa790bc846305a52fb03d732f31aeebd481870",
+    "mobile-progress-0.195.png": "7a6ef7336fab9ec431f006209d3c01b84ac746e5a6dec1d163da40ca779d13f1",
+    "mobile-progress-0.220.png": "87ab1174c8e430444b890ba8543e89931316834449ebdd1ea027a599ddb5291b",
+    "mobile-progress-0.300.png": "5d04f93e9313fff44192e272087bb227eecc956bccb6f125ac76aab0f9f2ea52",
+    "mobile-telemetry.json": "56460b820cdefb78250416258514fd41b8b3d355d4e1f8fd5d5d6af3e91c7974"
+  }
+}
