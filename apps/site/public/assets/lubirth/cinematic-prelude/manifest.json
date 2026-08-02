@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "id": "lubirth-normalized-cinematic-prelude-v1",
+  "authoredDurationSeconds": 1.584,
+  "encodedDurationSeconds": 1.6,
+  "source": {
+    "license": "internally-generated",
+    "renderer": "HyperFrames",
+    "rendererVersion": "0.7.88",
+    "scenePath": "lubirth-cinematic-prelude-master-2026-07-31/hyperframes/{desktop,mobile}/index.html",
+    "seed": null,
+    "parameterSummary": {
+      "cameraRetreatScale": "3.8-4.2%",
+      "cloudEntrySeconds": 1.296,
+      "occlusionPeakSeconds": 1.404,
+      "sourceStillGenerator": "OpenAI ImageGen",
+      "sourceStillSeedAvailable": false
+    },
+    "referenceCanvasSha256": "72d4b2e45ca8c17cf584dc33acb632c4f651951462838ca29d09faa926fdcaf8",
+    "toolVersions": {
+      "ffmpeg": "ffmpeg version 8.1 Copyright (c) 2000-2026 the FFmpeg developers",
+      "ffprobe": "ffprobe version 8.1 Copyright (c) 2007-2026 the FFmpeg developers",
+      "encoder": "libx264 crf18 all-I"
+    }
+  },
+  "handoff": {
+    "plateEndProgress": 0.18,
+    "cutProgress": 0.195,
+    "veilPeakProgress": 0.195,
+    "liveProgress": 0.22,
+    "cloudEntryFrame": 39,
+    "cutFrame": 42,
+    "liveFrame": 47,
+    "veilProfile": {
+      "colorSrgb": "#142536",
+      "luminanceY": 0.018,
+      "peakOpacity": 1,
+      "edgeSoftness": 0.18
+    }
+  },
+  "variants": {
+    "desktop": {
+      "tier": "desktop",
+      "src": "/assets/lubirth/cinematic-prelude/desktop.mp4",
+      "sourceSha256": "48e7bbbc55afee6784c82a48757ac00d4869909f5b44f93f9da743858badfcec",
+      "sha256": "ed6a4d15e108cf2e06504798764dc1e69d8858296e24d8e72ab7aa06cbf43e7f",
+      "transferBytes": 4378646,
+      "width": 1440,
+      "height": 810,
+      "frameRate": 30,
+      "frameCount": 48,
+      "durationSeconds": 1.6,
+      "keyframePolicy": "all-i",
+      "colorSpace": "rec709-srgb-sdr",
+      "opaque": true,
+      "audio": false,
+      "firstFrameDeadlineMs": 1200,
+      "maxPresentationResidencyBytes": 16777216,
+      "estimatedPresentationResidencyBytes": 12830400,
+      "safeCrop": {
+        "left": 0.06,
+        "right": 0.06,
+        "top": 0.08,
+        "bottom": 0.08
+      },
+      "runtimeOverscanScale": 1.04,
+      "maxNormalizedTranslation": {
+        "x": 0.018,
+        "y": 0.012
+      },
+      "sourceBytes": 2132985
+    },
+    "mobile": {
+      "tier": "mobile",
+      "src": "/assets/lubirth/cinematic-prelude/mobile.mp4",
+      "sourceSha256": "25074f3bb7def94e35f2ad227a13df7468062ffcd192fd57097416d37de3dbef",
+      "sha256": "363bb292d83307cfe1144ef568a68a8f7451eac08a57f32f05eaf7341233b1d3",
+      "transferBytes": 1708660,
+      "width": 960,
+      "height": 444,
+      "frameRate": 30,
+      "frameCount": 48,
+      "durationSeconds": 1.6,
+      "keyframePolicy": "all-i",
+      "colorSpace": "rec709-srgb-sdr",
+      "opaque": true,
+      "audio": false,
+      "firstFrameDeadlineMs": 1800,
+      "maxPresentationResidencyBytes": 8388608,
+      "estimatedPresentationResidencyBytes": 4688640,
+      "safeCrop": {
+        "left": 0.06,
+        "right": 0.06,
+        "top": 0.08,
+        "bottom": 0.08
+      },
+      "runtimeOverscanScale": 1.05,
+      "maxNormalizedTranslation": {
+        "x": 0.015,
+        "y": 0.012
+      },
+      "sourceBytes": 898916
+    }
+  }
+}
