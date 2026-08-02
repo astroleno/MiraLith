@@ -192,6 +192,9 @@ interface LuBirthSceneSlotProps {
   onProjectionFrame?: (frame: LuBirthProjectionFrame) => void;
   onVisualReadyEnough?: () => void;
   onMoonTextureReady?: () => void;
+  visualPolicyOverrides?: Partial<
+    Pick<LandingVisualPolicy, "atmosphereMode" | "cloudMode" | "postEffectMode">
+  >;
 }
 
 function readMoonLightingMode(): LandingMoonLightingMode | undefined {
@@ -572,7 +575,8 @@ export function LuBirthSceneSlot({
   closeAtmosphereTuning,
   onProjectionFrame,
   onVisualReadyEnough,
-  onMoonTextureReady
+  onMoonTextureReady,
+  visualPolicyOverrides
 }: LuBirthSceneSlotProps) {
   const reducedMotion = useReducedMotionPreference();
   const qualityOverride = readQualityOverride();
@@ -606,7 +610,8 @@ export function LuBirthSceneSlot({
         ...(cloudModeOverride ? { cloudMode: cloudModeOverride } : {}),
         ...(atmosphereVisualModeOverride
           ? { atmosphereMode: atmosphereVisualModeOverride }
-          : {})
+          : {}),
+        ...visualPolicyOverrides
       }
     }),
     [
@@ -615,7 +620,8 @@ export function LuBirthSceneSlot({
       cloudModeOverride,
       postEffectModeOverride,
       qualityProfile.tier,
-      runtimeProfile
+      runtimeProfile,
+      visualPolicyOverrides
     ]
   );
   const requestedCloseAtmosphereTuning = useMemo<LandingCloseAtmosphereTuning>(

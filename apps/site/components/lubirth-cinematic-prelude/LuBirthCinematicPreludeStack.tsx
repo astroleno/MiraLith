@@ -4,6 +4,7 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState
 } from "react";
@@ -74,8 +75,10 @@ export function LuBirthCinematicPreludeStack({
   const onSnapshotRef = useRef(onSnapshot);
   const variant = manifest.variants[tier];
 
-  latestInputRef.current = { direction, progress };
-  onSnapshotRef.current = onSnapshot;
+  useLayoutEffect(() => {
+    latestInputRef.current = { direction, progress };
+    onSnapshotRef.current = onSnapshot;
+  }, [direction, onSnapshot, progress]);
 
   const publish = useCallback((nextSnapshot: PreludeSnapshot) => {
     setSnapshot(nextSnapshot);
@@ -92,18 +95,32 @@ export function LuBirthCinematicPreludeStack({
       manifestId: manifest.id
     });
     const controller = new CinematicPreludeController({ provider, tier });
-    controllerRef.current = controller;
     const initialProgress = latestInputRef.current.progress;
 
     if (reducedMotion) {
-      publish(controller.forceFallback("reduced-motion"));
+      controllerRef.current = controller;
+      controller.forceFallback("reduced-motion");
+      void controller
+        .updateProgress(initialProgress, latestInputRef.current.direction)
+        .then(publish);
     } else if (initialProgress > 0) {
-      publish(controller.forceFallback("late-first-frame"));
+      controllerRef.current = controller;
+      controller.forceFallback("late-first-frame");
+      void controller
+        .updateProgress(initialProgress, latestInputRef.current.direction)
+        .then(publish);
     } else {
       void controller.armForwardCycle().then((armedSnapshot) => {
         if (cancelled) return;
+        controllerRef.current = controller;
         if (latestInputRef.current.progress > 0) {
-          publish(controller.forceFallback("late-first-frame"));
+          controller.forceFallback("late-first-frame");
+          void controller
+            .updateProgress(
+              latestInputRef.current.progress,
+              latestInputRef.current.direction
+            )
+            .then(publish);
           return;
         }
         publish(armedSnapshot);
