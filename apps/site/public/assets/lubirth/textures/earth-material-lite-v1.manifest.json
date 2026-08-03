@@ -1,0 +1,49 @@
+{
+  "channelLayout": "rg-normalxy-b-specular-a-roughness",
+  "colorSpace": "linear",
+  "generator": {
+    "path": "packages/lubirth-hero/scripts/generate-earth-material-lite.mjs",
+    "sha256": "2d3bcf4570c06f63371122b60b6a7a3e9fe5e9c73a6e6a6a865b94c6a84a492b"
+  },
+  "inputs": [
+    {
+      "path": "apps/site/public/assets/lubirth/textures/earth-displacement-8k.jpg",
+      "sha256": "9fa5e70edfa4d1c0b05cd21551c21e9d9baf171ba869c5be587b97e9213c87eb"
+    },
+    {
+      "path": "apps/site/public/assets/lubirth/textures/earth-specular-4k.png",
+      "sha256": "2b463cddf786b9e74fb69fee80d74b81d60202b1e0735dfd3ee7d43d95e2fc4e"
+    }
+  ],
+  "outputs": {
+    "earth-material-lite-v1-2k.png": {
+      "bytes": 1609373,
+      "format": "png",
+      "height": 1024,
+      "sha256": "2fd24299adc5fea352437433a5ded2cad444fb60f0c67ff83ad3bcbbe040c758",
+      "width": 2048
+    },
+    "earth-material-lite-v1-2k.ktx2": {
+      "bytes": 911033,
+      "format": "ktx2",
+      "height": 1024,
+      "sha256": "35c2b53c3f939e32705fb71f20f88318d0ee65465535ba86590473e678f4bc7a",
+      "width": 2048
+    },
+    "earth-material-lite-v1-1k.png": {
+      "bytes": 421015,
+      "format": "png",
+      "height": 512,
+      "sha256": "53e3d5032b1c834adb1784ef750fd6cebc00f22b394e802ecb90f5169aae5ab0",
+      "width": 1024
+    },
+    "earth-material-lite-v1-1k.ktx2": {
+      "bytes": 254536,
+      "format": "ktx2",
+      "height": 512,
+      "sha256": "e151a240d5e7c6ccc7f391fecd25b5889ac34c7e6a7b94fb6c8f2cef90d212b0",
+      "width": 1024
+    }
+  },
+  "version": 1
+}

@@ -95,6 +95,28 @@ export const LUBIRTH_RELIEF_LITE_MOBILE_ASSETS: Partial<LandingAssetManifest> = 
   }
 };
 
+export const LUBIRTH_REFERENCE_ABSORPTION_DESKTOP_ASSETS: Partial<LandingAssetManifest> = {
+  earthMaterialLite: {
+    id: "earth-material-lite-v1-2k",
+    src: "/assets/lubirth/textures/earth-material-lite-v1-2k.ktx2",
+    width: 2048,
+    height: 1024,
+    format: "ktx2",
+    colorSpace: "linear"
+  }
+};
+
+export const LUBIRTH_REFERENCE_ABSORPTION_MOBILE_ASSETS: Partial<LandingAssetManifest> = {
+  earthMaterialLite: {
+    id: "earth-material-lite-v1-1k",
+    src: "/assets/lubirth/textures/earth-material-lite-v1-1k.ktx2",
+    width: 1024,
+    height: 512,
+    format: "ktx2",
+    colorSpace: "linear"
+  }
+};
+
 export const DEFAULT_LUBIRTH_ASSETS: LandingAssetManifest = {
   earthDay: {
     id: "earth-day-2k",
@@ -220,6 +242,10 @@ export function getLandingAssetBudget(assets: Partial<LandingAssetManifest> = {}
     : resolvedAssets.earthCloudField?.id === "earth-cloud-field-home"
     ? cloudAssetBudgets.cloudFieldHomePng
     : 1_100_000;
+  const earthMaterialBudget =
+    resolvedAssets.earthMaterialLite?.id === "earth-material-lite-v1-1k"
+      ? Math.floor(0.8 * 1024 * 1024)
+      : Math.floor(2.8 * 1024 * 1024);
   const budget = [
     textureBudget(resolvedAssets.earthDay, earthDayBudget, "critical", true),
     textureBudget(
@@ -278,6 +304,9 @@ export function getLandingAssetBudget(assets: Partial<LandingAssetManifest> = {}
       : []),
     ...(resolvedAssets.earthDisplacement
       ? [textureBudget(resolvedAssets.earthDisplacement, 1_600_000, "idle", false)]
+      : []),
+    ...(resolvedAssets.earthMaterialLite
+      ? [textureBudget(resolvedAssets.earthMaterialLite, earthMaterialBudget, "critical", true)]
       : []),
     textureBudget(
       resolvedAssets.earthHorizonCloudStrip ?? DEFAULT_LUBIRTH_ASSETS.earthHorizonCloudStrip ?? {

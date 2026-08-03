@@ -8,6 +8,7 @@
   },
   "scripts": {
     "generate:cloud-deck": "node scripts/generate-cloud-deck-texture.mjs",
+    "generate:earth-material-lite": "node scripts/generate-earth-material-lite.mjs",
     "generate:earth-lights-only": "node scripts/generate-earth-lights-only.mjs",
     "generate:home-cloud-field": "node scripts/generate-home-cloud-field.mjs",
     "generate:nasa-lite-cloud-field": "LUBIRTH_HOME_CLOUD_PROFILE=nasa-lite node scripts/generate-home-cloud-field.mjs",

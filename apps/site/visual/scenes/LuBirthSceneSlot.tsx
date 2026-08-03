@@ -6,6 +6,8 @@ import {
   EMPTY_CLOSE_ATMOSPHERE_TUNING,
   LUBIRTH_NASA_LITE_DESKTOP_ASSETS,
   LUBIRTH_NASA_LITE_MOBILE_ASSETS,
+  LUBIRTH_REFERENCE_ABSORPTION_DESKTOP_ASSETS,
+  LUBIRTH_REFERENCE_ABSORPTION_MOBILE_ASSETS,
   LUBIRTH_RELIEF_LITE_DESKTOP_ASSETS,
   LUBIRTH_RELIEF_LITE_MOBILE_ASSETS,
   DEFAULT_LUBIRTH_DATE,
@@ -16,6 +18,7 @@ import {
   isLandingNasaLiteMobileViewport,
   resolveLandingAssets,
   resolveLandingCloseAtmosphereTuning,
+  referenceVariantUsesEarthMaterial,
   resolveLandingPreset,
   resolveLandingVisualPolicy,
   resolveLuBirthAtmospherePolicy
@@ -825,7 +828,7 @@ export function LuBirthSceneSlot(props: LuBirthSceneSlotProps) {
             navigator.maxTouchPoints
           )
     );
-  const assets = resolveLandingAssets(
+  const baseAssetOverrides =
     useReliefLiteAssets
       ? useMobileLiteAssets
         ? LUBIRTH_RELIEF_LITE_MOBILE_ASSETS
@@ -838,8 +841,18 @@ export function LuBirthSceneSlot(props: LuBirthSceneSlotProps) {
       ? forceReferenceSpikeHighDetailAssets
         ? HIGH_DETAIL_REFERENCE_EARTH_ASSETS
         : HIGH_DETAIL_EARTH_ASSETS
-      : undefined
-  );
+      : undefined;
+  const referenceAbsorptionAssetOverrides = referenceVariantUsesEarthMaterial(
+    referenceAbsorptionVariant
+  )
+    ? useMobileLiteAssets
+      ? LUBIRTH_REFERENCE_ABSORPTION_MOBILE_ASSETS
+      : LUBIRTH_REFERENCE_ABSORPTION_DESKTOP_ASSETS
+    : undefined;
+  const assets = resolveLandingAssets({
+    ...baseAssetOverrides,
+    ...referenceAbsorptionAssetOverrides
+  });
 
   useEffect(() => {
     let cancelled = false;

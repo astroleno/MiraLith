@@ -1,5 +1,11 @@
 import { expect, test } from "@playwright/test";
+import { createHash } from "node:crypto";
+import { readFileSync, statSync } from "node:fs";
+import path from "node:path";
 import {
+  DEFAULT_LUBIRTH_ASSETS,
+  LUBIRTH_REFERENCE_ABSORPTION_DESKTOP_ASSETS,
+  LUBIRTH_REFERENCE_ABSORPTION_MOBILE_ASSETS,
   referenceVariantUsesCloudScattering,
   referenceVariantUsesEarthMaterial,
   resolveLandingReferenceAbsorptionVariant
@@ -35,6 +41,32 @@ function createSpikeUrl(overrides: Record<string, string> = {}) {
     visualTest: "pixels",
     ...overrides
   }).toString()}`;
+}
+
+function sha256(filePath: string) {
+  return createHash("sha256").update(readFileSync(filePath)).digest("hex");
+}
+
+function readPngDimensions(filePath: string) {
+  const bytes = readFileSync(filePath);
+  expect(bytes.subarray(0, 8)).toEqual(
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+  );
+  return {
+    height: bytes.readUInt32BE(20),
+    width: bytes.readUInt32BE(16)
+  };
+}
+
+function readKtx2Dimensions(filePath: string) {
+  const bytes = readFileSync(filePath);
+  expect(bytes.subarray(0, 12)).toEqual(
+    Buffer.from([0xab, 0x4b, 0x54, 0x58, 0x20, 0x32, 0x30, 0xbb, 0x0d, 0x0a, 0x1a, 0x0a])
+  );
+  return {
+    height: bytes.readUInt32LE(24),
+    width: bytes.readUInt32LE(20)
+  };
 }
 
 async function waitForReferenceAbsorptionRoute(
@@ -93,6 +125,70 @@ test("resolves the query-only reference absorption variant contract", () => {
     .toBe("baseline");
   expect(referenceVariantUsesEarthMaterial("combined-v1")).toBe(true);
   expect(referenceVariantUsesCloudScattering("combined-v1")).toBe(true);
+});
+
+test("keeps packed Earth material assets linear, bounded, and spike-only", () => {
+  const textureDir = path.resolve(
+    process.cwd(),
+    "apps/site/public/assets/lubirth/textures"
+  );
+  const manifestPath = path.join(textureDir, "earth-material-lite-v1.manifest.json");
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+    channelLayout: string;
+    colorSpace: string;
+    generator: { path: string; sha256: string };
+    inputs: Array<{ path: string; sha256: string }>;
+    outputs: Record<string, { height: number; sha256: string; width: number }>;
+  };
+  const expectedOutputs = {
+    "earth-material-lite-v1-1k.ktx2": { height: 512, width: 1024 },
+    "earth-material-lite-v1-1k.png": { height: 512, width: 1024 },
+    "earth-material-lite-v1-2k.ktx2": { height: 1024, width: 2048 },
+    "earth-material-lite-v1-2k.png": { height: 1024, width: 2048 }
+  };
+
+  expect(manifest.channelLayout).toBe("rg-normalxy-b-specular-a-roughness");
+  expect(manifest.colorSpace).toBe("linear");
+  expect(manifest.generator.path).toBe(
+    "packages/lubirth-hero/scripts/generate-earth-material-lite.mjs"
+  );
+  expect(manifest.generator.sha256).toMatch(/^[a-f0-9]{64}$/);
+  expect(manifest.inputs.map((input) => input.path).sort()).toEqual([
+    "apps/site/public/assets/lubirth/textures/earth-displacement-8k.jpg",
+    "apps/site/public/assets/lubirth/textures/earth-specular-4k.png"
+  ]);
+  expect(manifest.inputs.every((input) => /^[a-f0-9]{64}$/.test(input.sha256))).toBe(true);
+
+  for (const [fileName, dimensions] of Object.entries(expectedOutputs)) {
+    const filePath = path.join(textureDir, fileName);
+    const output = manifest.outputs[fileName];
+    expect(output).toMatchObject(dimensions);
+    expect(output.sha256).toBe(sha256(filePath));
+    expect(fileName.endsWith(".png")
+      ? readPngDimensions(filePath)
+      : readKtx2Dimensions(filePath)
+    ).toEqual(dimensions);
+  }
+
+  expect(statSync(path.join(textureDir, "earth-material-lite-v1-2k.ktx2")).size)
+    .toBeLessThanOrEqual(2.8 * 1024 * 1024);
+  expect(statSync(path.join(textureDir, "earth-material-lite-v1-1k.ktx2")).size)
+    .toBeLessThanOrEqual(0.8 * 1024 * 1024);
+  expect(DEFAULT_LUBIRTH_ASSETS.earthMaterialLite).toBeUndefined();
+  expect(LUBIRTH_REFERENCE_ABSORPTION_DESKTOP_ASSETS.earthMaterialLite).toMatchObject({
+    colorSpace: "linear",
+    format: "ktx2",
+    height: 1024,
+    src: "/assets/lubirth/textures/earth-material-lite-v1-2k.ktx2",
+    width: 2048
+  });
+  expect(LUBIRTH_REFERENCE_ABSORPTION_MOBILE_ASSETS.earthMaterialLite).toMatchObject({
+    colorSpace: "linear",
+    format: "ktx2",
+    height: 512,
+    src: "/assets/lubirth/textures/earth-material-lite-v1-1k.ktx2",
+    width: 1024
+  });
 });
 
 test("routes only the dedicated spike through the reference absorption control plane", async ({
