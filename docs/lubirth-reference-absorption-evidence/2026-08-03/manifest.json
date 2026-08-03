@@ -14,8 +14,38 @@
     "worktreeCleanBeforeEvidence": true
   },
   "tracks": {
-    "earthMaterial": "pending",
+    "earthMaterial": "reject",
     "cloudScattering": "pending",
     "combined": "not-eligible"
+  },
+  "earthMaterial": {
+    "verdict": "reject",
+    "telemetry": "earth-material-telemetry.json",
+    "environment": {
+      "os": "macOS 15.6.1",
+      "gpu": "Apple M4, 8-core, Metal 3",
+      "display": "2560x1664 Liquid Retina",
+      "playwrightCli": "1.59.1"
+    },
+    "gates": {
+      "visual": "fail",
+      "motion": "pass",
+      "gpuTiming": "fail",
+      "assetAndFallback": "pass"
+    },
+    "metrics": {
+      "desktopCityMeanChangePercent": 29.081372694552254,
+      "mobileLandscapeCityMeanChangePercent": 14.197014138736405,
+      "maximumSilhouetteDriftPx": 0,
+      "maximumReversePixelDelta": 0.0008106518220186137,
+      "minimumRequiredGpuSamples": 60,
+      "desktopGpuSamples": 0,
+      "mobileLandscapeGpuSamples": 0
+    },
+    "failureReasons": [
+      "Desktop visual metrics miss the required daylight and ocean/land gains, and deep-night city mean changes by more than 3%.",
+      "Mobile-landscape visual metrics miss the required daylight and ocean/land gains, and deep-night city mean changes by more than 3%.",
+      "GPU timer support was unavailable, so the p95 and minimum-valid-sample gates cannot be evaluated."
+    ]
   }
 }
