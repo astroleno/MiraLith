@@ -15,10 +15,12 @@
     "scenePath": "packages/lubirth-hero/scripts/opening-cloud-volume.html",
     "seed": "lubirth-opening-cloud-v1",
     "parameterSummary": {
-      "densityModel": "worley-fbm-front-to-back",
-      "windDistance": "0.28"
+      "densityModel": "68-step front-to-back Worley/fBm procedural volume",
+      "windDistance": "1.6 seconds, diagonal wind plus erosion",
+      "cloudOnly": "RGBA cloud layer; no Earth, Moon, stars, sky, text, or UI",
+      "packing": "left RGB | right replicated alpha"
     },
-    "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "sourceSha256": "e4525939f8388704617aff171461a6e7f7270f7ef0fd77af65828d0548fb1c60",
     "license": "internally-generated"
   },
   "handoff": {
@@ -42,11 +44,11 @@
       "frameCount": 48,
       "keyframePolicy": "all-i",
       "packing": "left-rgb-right-alpha",
-      "transferBytes": 1,
+      "transferBytes": 3023054,
       "maxTransferBytes": 6291456,
-      "estimatedPresentationResidencyBytes": 12830400,
+      "estimatedPresentationResidencyBytes": 4665600,
       "maxPresentationResidencyBytes": 16777216,
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      "sha256": "0a578116a37898ef818f6d0695645f20b855c6aa8ecfa3d5b3538094b39d9c82"
     },
     "mobile": {
       "tier": "mobile",
@@ -59,11 +61,11 @@
       "frameCount": 48,
       "keyframePolicy": "all-i",
       "packing": "left-rgb-right-alpha",
-      "transferBytes": 1,
+      "transferBytes": 1194458,
       "maxTransferBytes": 2097152,
-      "estimatedPresentationResidencyBytes": 4688640,
+      "estimatedPresentationResidencyBytes": 1704960,
       "maxPresentationResidencyBytes": 8388608,
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      "sha256": "8e60a3a81beb9bae0b244b5434ff4fb9f3370602dead1dac9af2de8a2817c911"
     }
   }
 }

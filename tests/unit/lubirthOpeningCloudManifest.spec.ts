@@ -1,4 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import path from "node:path";
 import {
   mapOpeningCloudProgressToFrame,
   validateOpeningCloudManifest
@@ -113,4 +116,98 @@ test("opening cloud manifest maps progress to the authored frame boundaries", ()
   expect(mapOpeningCloudProgressToFrame(manifest, 0.18)).toBe(39);
   expect(mapOpeningCloudProgressToFrame(manifest, 0.195)).toBe(42);
   expect(mapOpeningCloudProgressToFrame(manifest, 0.22)).toBe(42);
+});
+
+function publicAssetPath(src: string) {
+  return path.join(
+    process.cwd(),
+    "apps/site/public",
+    src.replace(/^\/assets\//, "assets/")
+  );
+}
+
+function ffprobeJson(assetPath: string, entries: string) {
+  return JSON.parse(
+    execFileSync(
+      "/opt/homebrew/bin/ffprobe",
+      [
+        "-v",
+        "error",
+        "-select_streams",
+        "v:0",
+        "-show_entries",
+        entries,
+        "-of",
+        "json",
+        assetPath
+      ],
+      { encoding: "utf8" }
+    )
+  ) as Record<string, unknown>;
+}
+
+function decodeAlphaFrame(assetPath: string, width: number, height: number, frame: number) {
+  return execFileSync(
+    "/opt/homebrew/bin/ffmpeg",
+    [
+      "-v",
+      "error",
+      "-i",
+      assetPath,
+      "-vf",
+      "select=eq(n\\," + frame + "),crop=" + width + ":" + height + ":" + width + ":0,format=gray",
+      "-frames:v",
+      "1",
+      "-f",
+      "rawvideo",
+      "pipe:1"
+    ],
+    { encoding: "buffer", maxBuffer: width * height * 2 }
+  );
+}
+
+function normalizedMeanAbsoluteDifference(left: Buffer, right: Buffer) {
+  expect(left.byteLength).toBe(right.byteLength);
+  let sum = 0;
+  for (let index = 0; index < left.byteLength; index += 1) {
+    sum += Math.abs(left[index] - right[index]);
+  }
+  return sum / Math.max(1, left.byteLength * 255);
+}
+
+test("published variants are all-I packed cloud media with changing alpha", () => {
+  test.setTimeout(60_000);
+  const manifest = validateOpeningCloudManifest(
+    JSON.parse(readFileSync(
+      path.join(process.cwd(), "apps/site/public/assets/lubirth/opening-clouds/manifest.json"),
+      "utf8"
+    ))
+  );
+
+  for (const tier of ["desktop", "mobile"] as const) {
+    const variant = manifest.variants[tier];
+    const assetPath = publicAssetPath(variant.src);
+    expect(existsSync(assetPath)).toBe(true);
+    expect(statSync(assetPath).size).toBe(variant.transferBytes);
+
+    const stream = ffprobeJson(
+      assetPath,
+      "stream=width,height,avg_frame_rate,nb_frames"
+    ).streams as Array<Record<string, string>>;
+    expect(stream[0]).toMatchObject({
+      width: variant.packedWidth,
+      height: variant.packedHeight,
+      avg_frame_rate: "30/1",
+      nb_frames: "48"
+    });
+
+    const frames = ffprobeJson(assetPath, "frame=key_frame").frames as Array<{ key_frame: number }>;
+    expect(frames).toHaveLength(48);
+    expect(frames.every((frame) => frame.key_frame === 1)).toBe(true);
+  }
+
+  const desktop = manifest.variants.desktop;
+  const firstAlpha = decodeAlphaFrame(publicAssetPath(desktop.src), desktop.width, desktop.height, 0);
+  const middleAlpha = decodeAlphaFrame(publicAssetPath(desktop.src), desktop.width, desktop.height, 24);
+  expect(normalizedMeanAbsoluteDifference(firstAlpha, middleAlpha)).toBeGreaterThan(0.015);
 });
