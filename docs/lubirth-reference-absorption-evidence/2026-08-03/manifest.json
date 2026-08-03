@@ -25,6 +25,7 @@
       "os": "macOS 15.6.1",
       "gpu": "Apple M4, 8-core, Metal 3",
       "display": "2560x1664 Liquid Retina",
+      "browser": "Google Chrome 150.0.7871.187 headed System Chrome",
       "playwrightCli": "1.59.1"
     },
     "gates": {
@@ -34,18 +35,22 @@
       "assetAndFallback": "pass"
     },
     "metrics": {
-      "desktopCityMeanChangePercent": 29.081372694552254,
-      "mobileLandscapeCityMeanChangePercent": 14.197014138736405,
+      "desktopCityMeanChangePercent": 8.212293345670604,
+      "mobileLandscapeCityMeanChangePercent": 6.545505664729025,
       "maximumSilhouetteDriftPx": 0,
-      "maximumReversePixelDelta": 0.0008106518220186137,
+      "maximumReversePixelDelta": 1.134713144517066e-8,
       "minimumRequiredGpuSamples": 60,
-      "desktopGpuSamples": 0,
-      "mobileLandscapeGpuSamples": 0
+      "desktopBaselineGpuP95Ms": 3.17,
+      "desktopVariantGpuP95Ms": 3.074499,
+      "desktopGpuSamples": 120,
+      "mobileLandscapeBaselineGpuP95Ms": 1.518875,
+      "mobileLandscapeVariantGpuP95Ms": 1.821458,
+      "mobileLandscapeGpuSamples": 120
     },
     "failureReasons": [
       "Desktop visual metrics miss the required daylight and ocean/land gains, and deep-night city mean changes by more than 3%.",
       "Mobile-landscape visual metrics miss the required daylight and ocean/land gains, and deep-night city mean changes by more than 3%.",
-      "GPU timer support was unavailable, so the p95 and minimum-valid-sample gates cannot be evaluated."
+      "System Chrome GPU timing has enough valid samples, but both tiers exceed their absolute p95 budgets and mobile-landscape exceeds its permitted same-run delta."
     ]
   },
   "cloudScattering": {
@@ -80,30 +85,150 @@
     "metrics": {
       "minimumRequiredGpuSamples": 120,
       "desktopGpuDisjointResetCount": 0,
-      "desktopBestObliqueTopSideRatio": 0.9223282261708189,
-      "mobileLandscapeBestObliqueTopSideRatio": 1.0100542210598178,
+      "desktopBestObliqueTopSideRatio": 0.8784572792299531,
+      "mobileLandscapeBestObliqueTopSideRatio": 0.9762088719381993,
       "requiredObliqueTopSideRatio": 1.25,
-      "desktopAlphaDeltaRange": [
-        0.021961244673410936,
-        0.03499756225023128
-      ],
-      "mobileLandscapeAlphaDeltaRange": [
-        0.029004740578877718,
-        0.06259289246071295
-      ],
+      "desktopMaximumAlphaDelta": 0,
+      "desktopMaximumAlphaEdgeDriftPx": 0,
+      "mobileLandscapeMaximumAlphaDelta": 0.0008449838000205006,
+      "mobileLandscapeMaximumAlphaEdgeDriftPx": 0.11130490347443356,
       "alphaDeltaLimit": 0.00196078431372549,
       "desktopGpuP95RangeMs": [
-        8.1145,
-        11.625916
+        8.675583,
+        11.302416
       ],
       "gpuAbsoluteLimitMs": 3,
       "gpuDeltaLimitMs": 0.2
     },
     "failureReasons": [
-      "Every fixed candidate fails alpha and/or reverse-motion stability in both desktop and mobile-landscape evidence.",
       "No candidate reaches the required oblique top/side lighting ratio, and one or more side/underside or internal contrast gates fail.",
       "Desktop System Chrome baseline p95 values exceed the absolute 3ms ceiling, and multiple candidate scenarios exceed the 0.20ms same-run delta limit.",
       "Representative diagnostic frames remain soft, flat relief patches rather than stable volumetric cloud lighting."
+    ]
+  },
+  "integrity": {
+    "algorithm": "sha256",
+    "evidenceChecksumsFile": "checksums.sha256",
+    "evidenceChecksumsScope": "Every file under this evidence directory except checksums.sha256 itself.",
+    "screenshotPngCount": 298,
+    "screenshots": {
+      "patterns": [
+        "earth-material-*.png",
+        "cloud-scattering-*.png"
+      ],
+      "sha256Index": "checksums.sha256"
+    },
+    "implementationSources": [
+      {
+        "path": "apps/site/app/lubirth-reference-absorption-spike/page.tsx",
+        "sha256": "037d02732e96d2bece1292f752fa5e00559a40baa9d3035599dea433c6d18989"
+      },
+      {
+        "path": "apps/site/components/LuBirthReferenceAbsorptionSpikeRoute.tsx",
+        "sha256": "5dd07a31f900d2219adf6214dabc96bcd450136fb090f3f0829640a4a9354e32"
+      },
+      {
+        "path": "apps/site/components/LuBirthRevisedRoute.tsx",
+        "sha256": "7d334c62580f004054649cb0b02c3265b6d4f4b3552eff5f2d3a265e5b83544b"
+      },
+      {
+        "path": "apps/site/visual/scenes/LuBirthSceneSlot.tsx",
+        "sha256": "b3444599dd7a04e0079c121587e4c465ccbd4ec05d33497a054cda5d26650d68"
+      },
+      {
+        "path": "packages/lubirth-hero/package.json",
+        "sha256": "1ac0c5c10c1ef8e10c65cf00d4b14d2709c32ff7767c8ad2abd0feac0798c5fd"
+      },
+      {
+        "path": "packages/lubirth-hero/src/EarthMoonScene.tsx",
+        "sha256": "a5b7cd1e506376fdd1245a28c5ee88b497bfce325a98f3b882b0e3238634a2d9"
+      },
+      {
+        "path": "packages/lubirth-hero/src/LandingEarthSurfaceLiteV2.tsx",
+        "sha256": "9ce16433b4f034a034eac9b4be38c59e249c41805eec2c7277dad00634d1f783"
+      },
+      {
+        "path": "packages/lubirth-hero/src/LandingReliefCloud.tsx",
+        "sha256": "91e1a0293bac584e2a3e61b8e7021ef5992b234cff931fc761b9feb367fcab94"
+      },
+      {
+        "path": "packages/lubirth-hero/src/assetManifest.ts",
+        "sha256": "e733ecf704086732ae4393645fd17b7afc4719dbdac9b696985c067287aa7765"
+      },
+      {
+        "path": "packages/lubirth-hero/src/index.ts",
+        "sha256": "123f3504e9392728b5e961e27a8db7e6f0e94a1e0ef866b2490f0d01c3d37b81"
+      },
+      {
+        "path": "packages/lubirth-hero/src/landingReferenceAbsorptionPolicy.ts",
+        "sha256": "2cc1e2aee4842ff3ab32df6b7195d5c24f9bcc84e9358f9d4c10b3f19d711e37"
+      },
+      {
+        "path": "packages/lubirth-hero/src/landingReliefCloudScattering.ts",
+        "sha256": "11ee069dad34bafb24bd520dbbbeb77120c72ddc437103f75d3928917fa13b78"
+      },
+      {
+        "path": "packages/lubirth-hero/src/types.ts",
+        "sha256": "e458c594b73f89ada9aab6549d5938967b7cdeda61b2eb6ddd19323605d830ed"
+      },
+      {
+        "path": "tests/e2e/lubirth-reference-absorption-contract.spec.ts",
+        "sha256": "50a8a1119f986a36494026b7e07e597ae233b49936153b050cf315a07e4e1b34"
+      },
+      {
+        "path": "tests/e2e/lubirth-reference-absorption-spike.spec.ts",
+        "sha256": "0008c44539db194bfb810a0f6ba101dceff370389d0e068584b84e7bcbaeee30"
+      },
+      {
+        "path": "playwright.reference-absorption-system-chrome.config.ts",
+        "sha256": "17c92208d95ca3e79930159dc2f0416657798feb01c2bb01346bf6bdef5fedda"
+      }
+    ],
+    "generatorScripts": [
+      {
+        "path": "packages/lubirth-hero/scripts/generate-earth-material-lite.mjs",
+        "sha256": "2d3bcf4570c06f63371122b60b6a7a3e9fe5e9c73a6e6a6a865b94c6a84a492b"
+      }
+    ],
+    "packedAssets": [
+      {
+        "path": "apps/site/public/assets/lubirth/textures/earth-material-lite-v1-2k.png",
+        "sha256": "2fd24299adc5fea352437433a5ded2cad444fb60f0c67ff83ad3bcbbe040c758"
+      },
+      {
+        "path": "apps/site/public/assets/lubirth/textures/earth-material-lite-v1-2k.ktx2",
+        "sha256": "35c2b53c3f939e32705fb71f20f88318d0ee65465535ba86590473e678f4bc7a"
+      },
+      {
+        "path": "apps/site/public/assets/lubirth/textures/earth-material-lite-v1-1k.png",
+        "sha256": "53e3d5032b1c834adb1784ef750fd6cebc00f22b394e802ecb90f5169aae5ab0"
+      },
+      {
+        "path": "apps/site/public/assets/lubirth/textures/earth-material-lite-v1-1k.ktx2",
+        "sha256": "e151a240d5e7c6ccc7f391fecd25b5889ac34c7e6a7b94fb6c8f2cef90d212b0"
+      },
+      {
+        "path": "apps/site/public/assets/lubirth/textures/earth-material-lite-v1.manifest.json",
+        "sha256": "f8d39716ef4e1d7a98d90ea56b60d618bde7756cd5227e67dbafa7a43824fe76"
+      }
+    ],
+    "testReports": [
+      {
+        "path": "system-chrome-desktop-report/report.json",
+        "sha256": "03a047bc56bf9172ebe4235d7cb5a7fb41dcb06738de84bd55440e91eb829f6c"
+      },
+      {
+        "path": "system-chrome-desktop-report/report.junit.xml",
+        "sha256": "47b4b9fc9723a2fd1d7a4ade2693816c21c9e043e8af7e025caaba28c5079686"
+      },
+      {
+        "path": "system-chrome-mobile-landscape-report/report.json",
+        "sha256": "dc28942b2fa2b9f0f69357bfddfbf5fd5898aaf8106f4f7151d71e21151c0570"
+      },
+      {
+        "path": "system-chrome-mobile-landscape-report/report.junit.xml",
+        "sha256": "3d7dcd34e2e23c241aef7f9fa8cfce297dea31c47d5bc0391b67b997587afaae"
+      }
     ]
   }
 }

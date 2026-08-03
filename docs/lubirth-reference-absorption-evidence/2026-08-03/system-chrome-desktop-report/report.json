@@ -1,0 +1,253 @@
+{
+  "config": {
+    "configFile": "/Users/aitoshuu/Documents/GitHub/MiraLith-lubirth-reference-absorption-spike/playwright.reference-absorption-system-chrome.config.ts",
+    "rootDir": "/Users/aitoshuu/Documents/GitHub/MiraLith-lubirth-reference-absorption-spike/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/aitoshuu/Documents/GitHub/MiraLith-lubirth-reference-absorption-spike/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "desktop",
+        "name": "desktop",
+        "testDir": "/Users/aitoshuu/Documents/GitHub/MiraLith-lubirth-reference-absorption-spike/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "lubirth-reference-absorption-spike.spec.ts"
+        ],
+        "timeout": 1500000
+      },
+      {
+        "outputDir": "/Users/aitoshuu/Documents/GitHub/MiraLith-lubirth-reference-absorption-spike/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "mobile-landscape",
+        "name": "mobile-landscape",
+        "testDir": "/Users/aitoshuu/Documents/GitHub/MiraLith-lubirth-reference-absorption-spike/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "lubirth-reference-absorption-spike.spec.ts"
+        ],
+        "timeout": 1500000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/Users/aitoshuu/Documents/GitHub/MiraLith-lubirth-reference-absorption-spike/docs/lubirth-reference-absorption-evidence/2026-08-03/system-chrome-desktop-report/report.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "/Users/aitoshuu/Documents/GitHub/MiraLith-lubirth-reference-absorption-spike/docs/lubirth-reference-absorption-evidence/2026-08-03/system-chrome-desktop-report/report.junit.xml"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 1,
+    "webServer": {
+      "command": "pnpm build && pnpm --filter @miralith/site exec next start -H 127.0.0.1 -p 3115",
+      "cwd": "/Users/aitoshuu/Documents/GitHub/MiraLith-lubirth-reference-absorption-spike",
+      "url": "http://127.0.0.1:3115",
+      "reuseExistingServer": true,
+      "timeout": 180000
+    }
+  },
+  "suites": [
+    {
+      "title": "lubirth-reference-absorption-spike.spec.ts",
+      "file": "lubirth-reference-absorption-spike.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "keeps combined evidence ineligible when an independent track rejects",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop",
+              "projectName": "desktop",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-03T15:17:46.325Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2eabca2a55b8223369c9-d195697d4980ffb8a478",
+          "file": "lubirth-reference-absorption-spike.spec.ts",
+          "line": 360,
+          "column": 5
+        },
+        {
+          "title": "earth material preserves Earth-local geography and records the A-track matrix",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop",
+              "projectName": "desktop",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 40655,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-03T15:17:46.335Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2eabca2a55b8223369c9-6040c1fc8068aee58053",
+          "file": "lubirth-reference-absorption-spike.spec.ts",
+          "line": 381,
+          "column": 5
+        },
+        {
+          "title": "cloud scattering contract keeps the Relief-lite integration bounded",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop",
+              "projectName": "desktop",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1978,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-03T15:18:27.493Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2eabca2a55b8223369c9-8bf4ccfa1acc01f42853",
+          "file": "lubirth-reference-absorption-spike.spec.ts",
+          "line": 549,
+          "column": 5
+        }
+      ],
+      "suites": [
+        {
+          "title": "System Chrome cloud scattering evidence",
+          "file": "lubirth-reference-absorption-spike.spec.ts",
+          "line": 1038,
+          "column": 6,
+          "specs": [
+            {
+              "title": "cloud scattering evidence scores the fixed candidate matrix",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 1450000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 332275,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-03T15:18:29.478Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2eabca2a55b8223369c9-0ea432c2297121ea3648",
+              "file": "lubirth-reference-absorption-spike.spec.ts",
+              "line": 1044,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-08-03T15:17:36.750Z",
+    "duration": 385597.91099999996,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

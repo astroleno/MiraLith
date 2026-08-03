@@ -1,0 +1,12 @@
+<testsuites id="" name="" tests="4" failures="0" skipped="0" errors="0" time="385.59791099999995">
+<testsuite name="lubirth-reference-absorption-spike.spec.ts" timestamp="2026-08-03T15:17:45.917Z" hostname="desktop" tests="4" failures="0" skipped="0" time="374.911" errors="0">
+<testcase name="keeps combined evidence ineligible when an independent track rejects" classname="lubirth-reference-absorption-spike.spec.ts" time="0.003">
+</testcase>
+<testcase name="earth material preserves Earth-local geography and records the A-track matrix" classname="lubirth-reference-absorption-spike.spec.ts" time="40.655">
+</testcase>
+<testcase name="cloud scattering contract keeps the Relief-lite integration bounded" classname="lubirth-reference-absorption-spike.spec.ts" time="1.978">
+</testcase>
+<testcase name="System Chrome cloud scattering evidence › cloud scattering evidence scores the fixed candidate matrix" classname="lubirth-reference-absorption-spike.spec.ts" time="332.275">
+</testcase>
+</testsuite>
+</testsuites>

@@ -41,17 +41,18 @@ implementation was not retuned after this result.
 - macOS 15.6.1
 - Apple M4 GPU, 8 cores, Metal 3
 - Built-in Liquid Retina display, 2560 x 1664
+- Google Chrome 150.0.7871.187, headed System Chrome
 - Playwright CLI 1.59.1
 
 ### Commands
 
 ```bash
 pnpm exec playwright test tests/e2e/lubirth-reference-absorption-contract.spec.ts --project=desktop
-pnpm exec playwright test tests/e2e/lubirth-reference-absorption-spike.spec.ts --project=desktop --grep "earth material"
-pnpm exec playwright test tests/e2e/lubirth-reference-absorption-spike.spec.ts --project=mobile-landscape --grep "earth material"
+pnpm exec playwright test -c playwright.reference-absorption-system-chrome.config.ts tests/e2e/lubirth-reference-absorption-spike.spec.ts --project=desktop
+pnpm exec playwright test -c playwright.reference-absorption-system-chrome.config.ts tests/e2e/lubirth-reference-absorption-spike.spec.ts --project=mobile-landscape
 ```
 
-All three commands passed their technical contracts. The fixed evidence matrix
+All final commands passed their technical contracts. The fixed evidence matrix
 is stored as `earth-material-*.png`, and the complete measurements are in
 `earth-material-telemetry.json`.
 
@@ -59,20 +60,23 @@ is stored as `earth-material-*.png`, and the complete measurements are in
 
 - Earth silhouette projection drift was `0 px` for every fixed location and
   opening-progress frame.
-- The maximum forward/reverse pixel delta was `0.000811`, below `1 / 255`.
+- The maximum forward/reverse pixel delta was `1.14e-8`, below `1 / 255`.
 - Every recorded RGB P99 remained below the `250 / 255` clipping threshold.
 - The packed map fallback and asset contracts passed.
+- System Chrome GPU timers recorded `120` valid samples and zero disjoint
+  resets for both baseline and variant on desktop and mobile-landscape.
 
 ### Failed Gates
 
 - Desktop daylight contrast and ocean/land separation miss their required
   `+10%` and `+12%` gains in multiple fixed frames; deep-night city mean changed
-  by `29.08%`, above the `<=3%` limit.
+  by `8.21%`, above the `<=3%` limit.
 - Mobile-landscape has the same visual failures; deep-night city mean changed
-  by `14.20%`, above the `<=3%` limit.
-- GPU timer support was unavailable in both runs. Baseline and variant each
-  recorded `0` valid samples and `0` disjoint resets, so neither platform can
-  satisfy the required p95 or minimum `60`-sample gates.
+  by `6.55%`, above the `<=3%` limit.
+- System Chrome timing is valid but misses the absolute performance budgets:
+  desktop baseline/variant p95 are `3.170ms` / `3.074ms` against `<=1.5ms`;
+  mobile-landscape is `1.519ms` / `1.821ms` against `<=1.0ms`, with a
+  `+0.303ms` variant delta above the `+0.25ms` cap.
 
 The A-track rejection does not block the independent B-track experiment. It
 does keep `combined-v1` at `not-eligible`.
@@ -126,6 +130,9 @@ matrix is in `cloud-scattering-candidates.json`; all measurements are in
 - The bounded Relief-lite budget remained unchanged: desktop uses four fragment
   texture reads and three view steps; mobile-landscape uses three reads and two
   view steps; all candidates use one sun step and no temporal jitter.
+- The fixed alpha/motion contract now passes for every candidate: desktop
+  maximum alpha delta and edge drift are `0`; mobile-landscape remains within
+  `0.000845` delta and `0.112px` edge drift, below `0.5/255` and `1px`.
 - System Chrome GPU timer data was available for desktop near, oblique, and
   fixed-progress sweep scenarios, with `120` valid samples and zero disjoint
   resets for every recorded query.
@@ -134,18 +141,15 @@ matrix is in `cloud-scattering-candidates.json`; all measurements are in
 
 ### Failed Gates
 
-- Every candidate exceeded the alpha/motion limits in at least one fixed
-  location or reverse-sweep frame. Desktop maximum alpha deltas range from
-  `0.02196` to `0.03500`, versus the `<=0.00196` gate; mobile-landscape ranges
-  from `0.02900` to `0.06259`.
 - No candidate meets the required oblique top/side ratio of `>=1.25`. The best
-  desktop result is `0.92233`, and the best mobile-landscape result is
-  `1.01005`; side/underside and internal-contrast gates also fail in one or
-  more fixed frames.
+  desktop result is `0.87846`, and the best mobile-landscape result is
+  `0.97621`. Desktop side/underside tops out at `1.09935` versus `>=1.12`;
+  internal contrast is `-7.09%` desktop and only `+1.91%` mobile-landscape,
+  versus the required `+12%`.
 - Desktop System Chrome GPU p95 baseline values are already above the
-  `<=3.0ms` absolute limit (approximately `8.11ms` to `11.63ms`). Several
+  `<=3.0ms` absolute limit (approximately `8.68ms` to `11.30ms`). Several
   candidate scenarios also exceed the `+0.20ms` same-run delta cap, including
-  the `g065-ms018` oblique frame at `+1.1225ms`.
+  the `g065-ms028` oblique frame at `+1.8957ms`.
 - The subjective kill applies independently: representative near, oblique, and
   mid frames remain soft/flat relief patches, with lighting changes that do not
   establish a stable top/side/underside volume relationship.
@@ -153,6 +157,13 @@ matrix is in `cloud-scattering-candidates.json`; all measurements are in
 Because this is a mechanism and visual rejection, not a case where all variant
 gates pass against an over-budget baseline, the B-track status is `REJECT`
 rather than `BLOCKED_BY_BASELINE`.
+
+## Integrity
+
+`checksums.sha256` contains a SHA-256 entry for every evidence file in this
+directory except itself, including the `298` fixed PNG frames and both System
+Chrome JSON/JUnit reports. `manifest.json` records the implementation-source,
+generator, packed-asset, and report hashes used for this final evidence set.
 
 ## References
 

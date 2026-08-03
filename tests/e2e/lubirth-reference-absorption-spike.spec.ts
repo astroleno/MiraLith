@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createRequire } from "node:module";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { RELIEF_SCATTERING_CANDIDATES } from "../../packages/lubirth-hero/src";
 
@@ -357,6 +357,27 @@ async function readEvidence() {
   }
 }
 
+test("keeps combined evidence ineligible when an independent track rejects", async () => {
+  const manifest = JSON.parse(
+    await readFile(path.join(evidenceDir, "manifest.json"), "utf8")
+  ) as {
+    tracks: {
+      cloudScattering: string;
+      combined: string;
+      earthMaterial: string;
+    };
+  };
+  const combinedEligible =
+    manifest.tracks.earthMaterial === "pass" &&
+    manifest.tracks.cloudScattering === "pass";
+
+  expect(combinedEligible).toBe(false);
+  expect(manifest.tracks.combined).toBe("not-eligible");
+  expect((await readdir(evidenceDir)).some((fileName) =>
+    fileName.startsWith("combined-")
+  )).toBe(false);
+});
+
 test("earth material preserves Earth-local geography and records the A-track matrix", async ({
   page
 }, testInfo) => {
@@ -492,11 +513,13 @@ test("earth material preserves Earth-local geography and records the A-track mat
     metric.edgeDriftPx <= 1 &&
     metric.reversePixelDelta <= 1 / 255
   ) && cityMeanChangePercent <= 3;
-  const verdict = performancePass && visualPass
-    ? "pass"
-    : baselineBlocked
-      ? "blocked-by-baseline"
-      : "reject";
+  const verdict = visualPass
+    ? performancePass
+      ? "pass"
+      : baselineBlocked
+        ? "blocked-by-baseline"
+        : "reject"
+    : "reject";
 
   const evidence = await readEvidence();
   const tiers = (evidence.tiers as Record<string, unknown>) ?? {};

@@ -460,14 +460,20 @@ export function EarthMoonScene({
       }
 
       if (composition.location.source !== "birthplace" && mode !== "expanded") {
-        const locationSmoothing = 1 - Math.exp(-delta * 1.65);
-        const yawDelta = normalizeLongitudeDelta(locationYawOffsetDeg - smoothedLocationYawOffsetDeg.current);
-        smoothedLocationYawOffsetDeg.current += yawDelta * locationSmoothing;
-        smoothedLocationPitchOffsetDeg.current = MathUtils.lerp(
-          smoothedLocationPitchOffsetDeg.current,
-          locationPitchOffsetDeg,
-          locationSmoothing
-        );
+        if (paused) {
+          // Screenshot frames must not depend on how long the route needed to load.
+          smoothedLocationYawOffsetDeg.current = locationYawOffsetDeg;
+          smoothedLocationPitchOffsetDeg.current = locationPitchOffsetDeg;
+        } else {
+          const locationSmoothing = 1 - Math.exp(-delta * 1.65);
+          const yawDelta = normalizeLongitudeDelta(locationYawOffsetDeg - smoothedLocationYawOffsetDeg.current);
+          smoothedLocationYawOffsetDeg.current += yawDelta * locationSmoothing;
+          smoothedLocationPitchOffsetDeg.current = MathUtils.lerp(
+            smoothedLocationPitchOffsetDeg.current,
+            locationPitchOffsetDeg,
+            locationSmoothing
+          );
+        }
         const locationFocusWeight = 1 - easeInOut(MathUtils.clamp(progress / 0.72, 0, 1));
         earthYawDeg += smoothedLocationYawOffsetDeg.current * locationFocusWeight;
         earthPitchDeg += smoothedLocationPitchOffsetDeg.current * locationFocusWeight * 0.82;

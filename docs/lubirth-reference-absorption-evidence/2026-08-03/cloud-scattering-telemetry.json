@@ -10,7 +10,7 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": false,
@@ -20,18 +20,18 @@
             {
               "baseline": {
                 "disjointResetCount": 0,
-                "p95Ms": 10.889541,
+                "p95Ms": 11.263166,
                 "sampleCount": 120,
                 "sufficient": true,
                 "supported": true
               },
               "baselineBlocked": true,
-              "deltaMs": -1.0386670000000002,
+              "deltaMs": -1.9379170000000006,
               "id": "near",
               "pass": false,
               "variant": {
                 "disjointResetCount": 0,
-                "p95Ms": 9.850874,
+                "p95Ms": 9.325249,
                 "sampleCount": 120,
                 "sufficient": true,
                 "supported": true
@@ -40,18 +40,18 @@
             {
               "baseline": {
                 "disjointResetCount": 0,
-                "p95Ms": 8.532458,
+                "p95Ms": 9.081541,
                 "sampleCount": 120,
                 "sufficient": true,
                 "supported": true
               },
               "baselineBlocked": false,
-              "deltaMs": 1.1225000000000005,
+              "deltaMs": 1.8420830000000006,
               "id": "oblique",
               "pass": false,
               "variant": {
                 "disjointResetCount": 0,
-                "p95Ms": 9.654958,
+                "p95Ms": 10.923624,
                 "sampleCount": 120,
                 "sufficient": true,
                 "supported": true
@@ -60,18 +60,18 @@
             {
               "baseline": {
                 "disjointResetCount": 0,
-                "p95Ms": 11.115208,
+                "p95Ms": 11.302416,
                 "sampleCount": 120,
                 "sufficient": true,
                 "supported": true
               },
               "baselineBlocked": true,
-              "deltaMs": -0.6445830000000008,
+              "deltaMs": -0.08366599999999913,
               "id": "fixed-progress-sweep",
               "pass": false,
               "variant": {
                 "disjointResetCount": 0,
-                "p95Ms": 10.470625,
+                "p95Ms": 11.21875,
                 "sampleCount": 120,
                 "sufficient": true,
                 "supported": true
@@ -82,92 +82,92 @@
             {
               "baseline": {
                 "bodyContrast": 0.054083921568627444,
-                "bodyPixelCount": 10495,
+                "bodyPixelCount": 10493,
                 "p99": 29,
                 "sideCount": 3499,
-                "sideMean": 0.031028220499975438,
-                "topCount": 3498,
-                "topMean": 0.050905520017041545,
-                "undersideCount": 3498,
-                "undersideMean": 0.028951474792318452
+                "sideMean": 0.031012942857623852,
+                "topCount": 3497,
+                "topMean": 0.05094979270747577,
+                "undersideCount": 3497,
+                "undersideMean": 0.02895092959231176
               },
               "contrastGainPercent": 2.220446049250313e-14,
               "id": "near",
-              "sideUndersideRatio": 1.0378945288827102,
-              "topSideRatio": 1.6462660044854738,
+              "sideUndersideRatio": 1.038116212361046,
+              "topSideRatio": 1.6469366143839768,
               "variant": {
                 "bodyContrast": 0.05408392156862745,
-                "bodyPixelCount": 10495,
+                "bodyPixelCount": 10493,
                 "p99": 28,
                 "sideCount": 3499,
-                "sideMean": 0.029246160863888756,
-                "topCount": 3498,
-                "topMean": 0.04814696039193357,
-                "undersideCount": 3498,
-                "undersideMean": 0.028178355362728565
+                "sideMean": 0.02924655380528939,
+                "topCount": 3497,
+                "topMean": 0.04816722030648212,
+                "undersideCount": 3497,
+                "undersideMean": 0.028172716558170604
               }
             },
             {
               "baseline": {
-                "bodyContrast": 0.018223529411764708,
-                "bodyPixelCount": 14909,
-                "p99": 11,
-                "sideCount": 4971,
-                "sideMean": 0.027767981823991036,
-                "topCount": 4969,
-                "topMean": 0.023659369660523726,
-                "undersideCount": 4969,
-                "undersideMean": 0.024751917733083082
+                "bodyContrast": 0.011764705882352938,
+                "bodyPixelCount": 1991,
+                "p99": 8,
+                "sideCount": 665,
+                "sideMean": 0.023548506560518972,
+                "topCount": 663,
+                "topMean": 0.020849473279507886,
+                "undersideCount": 663,
+                "undersideMean": 0.02152115576849139
               },
-              "contrastGainPercent": 19.96556918442003,
+              "contrastGainPercent": -7.086666666666675,
               "id": "oblique",
-              "sideUndersideRatio": 1.1606368801162341,
-              "topSideRatio": 0.9141839317955078,
+              "sideUndersideRatio": 1.0993259485689912,
+              "topSideRatio": 0.8782723466039022,
               "variant": {
-                "bodyContrast": 0.021861960784313725,
-                "bodyPixelCount": 14616,
-                "p99": 12,
-                "sideCount": 4872,
-                "sideMean": 0.0254245178531182,
-                "topCount": 4872,
-                "topMean": 0.023242685694968682,
-                "undersideCount": 4872,
-                "undersideMean": 0.021905660839049004
+                "bodyContrast": 0.010930980392156859,
+                "bodyPixelCount": 1991,
+                "p99": 8,
+                "sideCount": 665,
+                "sideMean": 0.02287495562435502,
+                "topCount": 663,
+                "topMean": 0.020090440954662416,
+                "undersideCount": 663,
+                "undersideMean": 0.0208081649069884
               }
             },
             {
               "baseline": {
-                "bodyContrast": 0.0890949019607843,
-                "bodyPixelCount": 7000,
-                "p99": 46,
-                "sideCount": 2334,
-                "sideMean": 0.061861814271552455,
-                "topCount": 2333,
-                "topMean": 0.08604051872956696,
-                "undersideCount": 2333,
-                "undersideMean": 0.02866685896304489
+                "bodyContrast": 0.08854431372549018,
+                "bodyPixelCount": 6594,
+                "p99": 48,
+                "sideCount": 2198,
+                "sideMean": 0.06774710556834204,
+                "topCount": 2198,
+                "topMean": 0.07820743099787732,
+                "undersideCount": 2198,
+                "undersideMean": 0.024425653981337662
               },
-              "contrastGainPercent": -1.5537518926722726,
+              "contrastGainPercent": 1.2613602140060465,
               "id": "mid",
-              "sideUndersideRatio": 2.209180112882007,
-              "topSideRatio": 1.3175280886643654,
+              "sideUndersideRatio": 2.7792603752846503,
+              "topSideRatio": 1.1321340883117965,
               "variant": {
-                "bodyContrast": 0.08771058823529411,
-                "bodyPixelCount": 7014,
-                "p99": 42,
-                "sideCount": 2338,
-                "sideMean": 0.05965324342910803,
-                "topCount": 2338,
-                "topMean": 0.07859482379778282,
-                "undersideCount": 2338,
-                "undersideMean": 0.02700243546520379
+                "bodyContrast": 0.08966117647058822,
+                "bodyPixelCount": 6594,
+                "p99": 43,
+                "sideCount": 2198,
+                "sideMean": 0.06429940587700031,
+                "topCount": 2198,
+                "topMean": 0.07279554925154792,
+                "undersideCount": 2198,
+                "undersideMean": 0.023135437920390887
               }
             }
           ],
           "motionMetrics": [
             {
-              "alphaDeltaFromBaseline": 0.000009140081697175833,
-              "alphaEdgeDriftFromBaseline": 0.01936726060773708,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -175,8 +175,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.0000021947380352651577,
-              "alphaEdgeDriftFromBaseline": 0.007134729557265018,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -193,26 +193,26 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.00000610244234195678,
-              "alphaEdgeDriftFromBaseline": 0.006411501964407762,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.000006370093321867165,
-              "forwardReverseEdgeDrift": 0.012961266995830556,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "mianyang",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.000010134598358526572,
-              "alphaEdgeDriftFromBaseline": 0.012418951049426141,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0000021311071314658676,
-              "forwardReverseEdgeDrift": 0.007401536301813394,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "mianyang",
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.014208754256590508,
-              "alphaEdgeDriftFromBaseline": 29,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -220,8 +220,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.01907719830448457,
-              "alphaEdgeDriftFromBaseline": 16.33383759907167,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -229,8 +229,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.004964511293354242,
-              "alphaEdgeDriftFromBaseline": 1,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -238,26 +238,26 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.019828815786268918,
-              "alphaEdgeDriftFromBaseline": 18.297281826616654,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.004393169654053079,
-              "forwardReverseEdgeDrift": 4,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "equator",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.014491765283649176,
-              "alphaEdgeDriftFromBaseline": 30,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0009159972030402848,
-              "forwardReverseEdgeDrift": 1,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "equator",
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.03499756225023128,
-              "alphaEdgeDriftFromBaseline": 133,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -265,8 +265,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.023388466758685073,
-              "alphaEdgeDriftFromBaseline": 12,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -274,8 +274,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.0036983236237047457,
-              "alphaEdgeDriftFromBaseline": 0.1226310267251165,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -283,25 +283,25 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.0007113092442098394,
-              "alphaEdgeDriftFromBaseline": 1,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.02311257212859345,
-              "forwardReverseEdgeDrift": 11,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "dateline-north",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.004700038383607334,
-              "alphaEdgeDriftFromBaseline": 3.685436439947523,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.03300848156959355,
-              "forwardReverseEdgeDrift": 135,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "dateline-north",
               "progress": 0
             }
           ],
-          "score": 0.55
+          "score": 0.24831487142247785
         },
         {
           "candidate": {
@@ -311,7 +311,7 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": false,
@@ -321,38 +321,18 @@
             {
               "baseline": {
                 "disjointResetCount": 0,
-                "p95Ms": 10.453,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              },
-              "baselineBlocked": true,
-              "deltaMs": -0.7530000000000001,
-              "id": "near",
-              "pass": false,
-              "variant": {
-                "disjointResetCount": 0,
-                "p95Ms": 9.7,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              }
-            },
-            {
-              "baseline": {
-                "disjointResetCount": 0,
-                "p95Ms": 8.1145,
+                "p95Ms": 10.852124,
                 "sampleCount": 120,
                 "sufficient": true,
                 "supported": true
               },
               "baselineBlocked": false,
-              "deltaMs": 0.38299899999999987,
-              "id": "oblique",
+              "deltaMs": 0.49862500000000054,
+              "id": "near",
               "pass": false,
               "variant": {
                 "disjointResetCount": 0,
-                "p95Ms": 8.497499,
+                "p95Ms": 11.350749,
                 "sampleCount": 120,
                 "sufficient": true,
                 "supported": true
@@ -361,18 +341,38 @@
             {
               "baseline": {
                 "disjointResetCount": 0,
-                "p95Ms": 10.265749,
+                "p95Ms": 9.357958,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              },
+              "baselineBlocked": false,
+              "deltaMs": 1.8956669999999995,
+              "id": "oblique",
+              "pass": false,
+              "variant": {
+                "disjointResetCount": 0,
+                "p95Ms": 11.253625,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              }
+            },
+            {
+              "baseline": {
+                "disjointResetCount": 0,
+                "p95Ms": 11.01375,
                 "sampleCount": 120,
                 "sufficient": true,
                 "supported": true
               },
               "baselineBlocked": true,
-              "deltaMs": -0.030374999999999375,
+              "deltaMs": 0.005665999999999727,
               "id": "fixed-progress-sweep",
               "pass": false,
               "variant": {
                 "disjointResetCount": 0,
-                "p95Ms": 10.235374,
+                "p95Ms": 11.019416,
                 "sampleCount": 120,
                 "sufficient": true,
                 "supported": true
@@ -383,1004 +383,101 @@
             {
               "baseline": {
                 "bodyContrast": 0.054083921568627444,
-                "bodyPixelCount": 10495,
+                "bodyPixelCount": 10493,
                 "p99": 29,
                 "sideCount": 3499,
-                "sideMean": 0.031028220499975438,
-                "topCount": 3498,
-                "topMean": 0.050905520017041545,
-                "undersideCount": 3498,
-                "undersideMean": 0.028951474792318452
+                "sideMean": 0.031012942857623852,
+                "topCount": 3497,
+                "topMean": 0.05094979270747577,
+                "undersideCount": 3497,
+                "undersideMean": 0.02895092959231176
               },
               "contrastGainPercent": 2.220446049250313e-14,
               "id": "near",
-              "sideUndersideRatio": 1.0376772723551244,
-              "topSideRatio": 1.6466345992592362,
+              "sideUndersideRatio": 1.0379090458429923,
+              "topSideRatio": 1.6474608712185994,
               "variant": {
                 "bodyContrast": 0.05408392156862745,
-                "bodyPixelCount": 10495,
+                "bodyPixelCount": 10493,
                 "p99": 28,
                 "sideCount": 3499,
-                "sideMean": 0.0292560935617464,
-                "topCount": 3498,
-                "topMean": 0.048174095897937,
-                "undersideCount": 3498,
-                "undersideMean": 0.028193827060841784
+                "sideMean": 0.029255286160191907,
+                "topCount": 3497,
+                "topMean": 0.04819693922521919,
+                "undersideCount": 3497,
+                "undersideMean": 0.028186753239471667
               }
             },
             {
               "baseline": {
-                "bodyContrast": 0.018223529411764708,
-                "bodyPixelCount": 14909,
-                "p99": 11,
-                "sideCount": 4971,
-                "sideMean": 0.027767981823991036,
-                "topCount": 4969,
-                "topMean": 0.023659369660523726,
-                "undersideCount": 4969,
-                "undersideMean": 0.024751917733083082
+                "bodyContrast": 0.011764705882352938,
+                "bodyPixelCount": 1991,
+                "p99": 8,
+                "sideCount": 665,
+                "sideMean": 0.023548506560518972,
+                "topCount": 663,
+                "topMean": 0.020849473279507886,
+                "undersideCount": 663,
+                "undersideMean": 0.02152115576849139
               },
-              "contrastGainPercent": -1.553690553044984,
+              "contrastGainPercent": -7.086666666666675,
               "id": "oblique",
-              "sideUndersideRatio": 1.178549247022339,
-              "topSideRatio": 0.7905039074031284,
+              "sideUndersideRatio": 1.0993259485689912,
+              "topSideRatio": 0.8784572792299531,
               "variant": {
-                "bodyContrast": 0.017940392156862744,
-                "bodyPixelCount": 14572,
-                "p99": 12,
-                "sideCount": 4858,
-                "sideMean": 0.0280385779672101,
-                "topCount": 4857,
-                "topMean": 0.022164605441106846,
-                "undersideCount": 4857,
-                "undersideMean": 0.023790756337124568
+                "bodyContrast": 0.010930980392156859,
+                "bodyPixelCount": 1991,
+                "p99": 8,
+                "sideCount": 665,
+                "sideMean": 0.02287495562435502,
+                "topCount": 663,
+                "topMean": 0.020094671280276824,
+                "undersideCount": 663,
+                "undersideMean": 0.0208081649069884
               }
             },
             {
               "baseline": {
-                "bodyContrast": 0.0890949019607843,
-                "bodyPixelCount": 7000,
-                "p99": 46,
-                "sideCount": 2334,
-                "sideMean": 0.061861814271552455,
-                "topCount": 2333,
-                "topMean": 0.08604051872956696,
-                "undersideCount": 2333,
-                "undersideMean": 0.02866685896304489
+                "bodyContrast": 0.08854431372549018,
+                "bodyPixelCount": 6594,
+                "p99": 48,
+                "sideCount": 2198,
+                "sideMean": 0.06774710556834204,
+                "topCount": 2198,
+                "topMean": 0.07820743099787732,
+                "undersideCount": 2198,
+                "undersideMean": 0.024425653981337662
               },
-              "contrastGainPercent": -1.5537518926722726,
+              "contrastGainPercent": 1.2613602140060465,
               "id": "mid",
-              "sideUndersideRatio": 2.2069025943411056,
-              "topSideRatio": 1.3170520078161214,
+              "sideUndersideRatio": 2.779602010989881,
+              "topSideRatio": 1.1324957940124385,
               "variant": {
-                "bodyContrast": 0.08771058823529411,
-                "bodyPixelCount": 7024,
-                "p99": 42,
-                "sideCount": 2342,
-                "sideMean": 0.059408709499171056,
-                "topCount": 2341,
-                "topMean": 0.07824436012764792,
-                "undersideCount": 2341,
-                "undersideMean": 0.026919497784589883
+                "bodyContrast": 0.08966117647058822,
+                "bodyPixelCount": 6594,
+                "p99": 43,
+                "sideCount": 2198,
+                "sideMean": 0.06433278238683995,
+                "topCount": 2198,
+                "topMean": 0.07285660547021373,
+                "undersideCount": 2198,
+                "undersideMean": 0.023144602044639313
               }
             }
           ],
           "motionMetrics": [
             {
-              "alphaDeltaFromBaseline": 0.000005588236478066053,
-              "alphaEdgeDriftFromBaseline": 0.004371025555201413,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "mianyang",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.000004282415678566162,
-              "alphaEdgeDriftFromBaseline": 0.007291206610943846,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "mianyang",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.00002797641599458141,
-              "alphaEdgeDriftFromBaseline": 0.019383845553079482,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "mianyang",
-              "progress": 0.55
-            },
-            {
-              "alphaDeltaFromBaseline": 0.000006958925477670013,
-              "alphaEdgeDriftFromBaseline": 0.02121383426947432,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.000008136589789275708,
-              "forwardReverseEdgeDrift": 0.028505040880418164,
-              "location": "mianyang",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.000006014457904359227,
-              "alphaEdgeDriftFromBaseline": 0.005302874066615004,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0000029835499840522153,
-              "forwardReverseEdgeDrift": 0.005343924383510057,
-              "location": "mianyang",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.0025078868723090336,
-              "alphaEdgeDriftFromBaseline": 2.181308284411216,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "equator",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.019270870553547727,
-              "alphaEdgeDriftFromBaseline": 17.557447736913446,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "equator",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.0005748190735728771,
-              "alphaEdgeDriftFromBaseline": 0.1170788418222628,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "equator",
-              "progress": 0.55
-            },
-            {
-              "alphaDeltaFromBaseline": 0.00569625521484478,
-              "alphaEdgeDriftFromBaseline": 6,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.021535947266333334,
-              "forwardReverseEdgeDrift": 20.58443072327725,
-              "location": "equator",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.0014099404781778182,
-              "alphaEdgeDriftFromBaseline": 1.1091482973424718,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0012443771330310476,
-              "forwardReverseEdgeDrift": 1.0721599870687442,
-              "location": "equator",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.020342601518248078,
-              "alphaEdgeDriftFromBaseline": 133,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "dateline-north",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.021961244673410936,
-              "alphaEdgeDriftFromBaseline": 10,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "dateline-north",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.0038871361154576493,
-              "alphaEdgeDriftFromBaseline": 1,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "dateline-north",
-              "progress": 0.55
-            },
-            {
-              "alphaDeltaFromBaseline": 0.002085215254285828,
-              "alphaEdgeDriftFromBaseline": 2,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.021090094263998615,
-              "forwardReverseEdgeDrift": 9,
-              "location": "dateline-north",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.004041242132366852,
-              "alphaEdgeDriftFromBaseline": 3.069427588634767,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.018712257204740432,
-              "forwardReverseEdgeDrift": 135,
-              "location": "dateline-north",
-              "progress": 0
-            }
-          ],
-          "score": 0.3
-        },
-        {
-          "candidate": {
-            "id": "g072-ms018",
-            "g": 0.72,
-            "multiScatter": 0.18
-          },
-          "eligible": false,
-          "gates": {
-            "alphaPass": false,
-            "baselineBlocked": false,
-            "budgetPass": true,
-            "gpuPass": false,
-            "visualPass": false
-          },
-          "gpuScenarios": [
-            {
-              "baseline": {
-                "disjointResetCount": 0,
-                "p95Ms": 9.591958,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              },
-              "baselineBlocked": false,
-              "deltaMs": 0.297542,
-              "id": "near",
-              "pass": false,
-              "variant": {
-                "disjointResetCount": 0,
-                "p95Ms": 9.8895,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              }
-            },
-            {
-              "baseline": {
-                "disjointResetCount": 0,
-                "p95Ms": 10.032749,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              },
-              "baselineBlocked": true,
-              "deltaMs": -1.8057490000000005,
-              "id": "oblique",
-              "pass": false,
-              "variant": {
-                "disjointResetCount": 0,
-                "p95Ms": 8.227,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              }
-            },
-            {
-              "baseline": {
-                "disjointResetCount": 0,
-                "p95Ms": 10.330916,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              },
-              "baselineBlocked": true,
-              "deltaMs": -0.1160420000000002,
-              "id": "fixed-progress-sweep",
-              "pass": false,
-              "variant": {
-                "disjointResetCount": 0,
-                "p95Ms": 10.214874,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              }
-            }
-          ],
-          "lightingFrames": [
-            {
-              "baseline": {
-                "bodyContrast": 0.054083921568627444,
-                "bodyPixelCount": 10495,
-                "p99": 29,
-                "sideCount": 3499,
-                "sideMean": 0.031028220499975438,
-                "topCount": 3498,
-                "topMean": 0.050905520017041545,
-                "undersideCount": 3498,
-                "undersideMean": 0.028951474792318452
-              },
-              "contrastGainPercent": 2.220446049250313e-14,
-              "id": "near",
-              "sideUndersideRatio": 1.0377441493214954,
-              "topSideRatio": 1.6450321771380934,
-              "variant": {
-                "bodyContrast": 0.05408392156862745,
-                "bodyPixelCount": 10496,
-                "p99": 28,
-                "sideCount": 3500,
-                "sideMean": 0.029225565266106913,
-                "topCount": 3498,
-                "topMean": 0.048076995257795296,
-                "undersideCount": 3498,
-                "undersideMean": 0.02816259218152698
-              }
-            },
-            {
-              "baseline": {
-                "bodyContrast": 0.018223529411764708,
-                "bodyPixelCount": 14909,
-                "p99": 11,
-                "sideCount": 4971,
-                "sideMean": 0.027767981823991036,
-                "topCount": 4969,
-                "topMean": 0.023659369660523726,
-                "undersideCount": 4969,
-                "undersideMean": 0.024751917733083082
-              },
-              "contrastGainPercent": 9.149989240370138,
-              "id": "oblique",
-              "sideUndersideRatio": 1.1750263580310818,
-              "topSideRatio": 0.6504036774843037,
-              "variant": {
-                "bodyContrast": 0.019890980392156865,
-                "bodyPixelCount": 14899,
-                "p99": 12,
-                "sideCount": 4967,
-                "sideMean": 0.027610005013481542,
-                "topCount": 4966,
-                "topMean": 0.017957648796128458,
-                "undersideCount": 4966,
-                "undersideMean": 0.02349734950605355
-              }
-            },
-            {
-              "baseline": {
-                "bodyContrast": 0.0890949019607843,
-                "bodyPixelCount": 7000,
-                "p99": 46,
-                "sideCount": 2334,
-                "sideMean": 0.061861814271552455,
-                "topCount": 2333,
-                "topMean": 0.08604051872956696,
-                "undersideCount": 2333,
-                "undersideMean": 0.02866685896304489
-              },
-              "contrastGainPercent": -1.8715447727032597,
-              "id": "mid",
-              "sideUndersideRatio": 2.2075205904844446,
-              "topSideRatio": 1.313214969321403,
-              "variant": {
-                "bodyContrast": 0.08742745098039215,
-                "bodyPixelCount": 7024,
-                "p99": 41,
-                "sideCount": 2342,
-                "sideMean": 0.059587256743858744,
-                "topCount": 2341,
-                "topMean": 0.07825087753683302,
-                "undersideCount": 2341,
-                "undersideMean": 0.02699284301161703
-              }
-            }
-          ],
-          "motionMetrics": [
-            {
-              "alphaDeltaFromBaseline": 0.00000871386027088266,
-              "alphaEdgeDriftFromBaseline": 0.012888641852782712,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "mianyang",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.000005781261166064318,
-              "alphaEdgeDriftFromBaseline": 0.007828462420093274,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "mianyang",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.000027863151152498084,
-              "alphaEdgeDriftFromBaseline": 0.019383845553079482,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "mianyang",
-              "progress": 0.55
-            },
-            {
-              "alphaDeltaFromBaseline": 0.000004443006266512392,
-              "alphaEdgeDriftFromBaseline": 0.007291206610943846,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.000005192429010261471,
-              "forwardReverseEdgeDrift": 0.01129311574879921,
-              "location": "mianyang",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.000008950649952156644,
-              "alphaEdgeDriftFromBaseline": 0.012888641852782712,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 4.262214262931736e-7,
-              "forwardReverseEdgeDrift": 0,
-              "location": "mianyang",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.013817009407890827,
-              "alphaEdgeDriftFromBaseline": 27,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "equator",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.0009805661299996868,
-              "alphaEdgeDriftFromBaseline": 0.38093889425317684,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "equator",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.008299028244287346,
-              "alphaEdgeDriftFromBaseline": 2,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "equator",
-              "progress": 0.55
-            },
-            {
-              "alphaDeltaFromBaseline": 0.002157320428273686,
-              "alphaEdgeDriftFromBaseline": 2,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.003035001521595821,
-              "forwardReverseEdgeDrift": 2,
-              "location": "equator",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.014491765283649176,
-              "alphaEdgeDriftFromBaseline": 30,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0020340233621435337,
-              "forwardReverseEdgeDrift": 3,
-              "location": "equator",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.018786088227361664,
-              "alphaEdgeDriftFromBaseline": 24.321652274581027,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "dateline-north",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.02096108649168181,
-              "alphaEdgeDriftFromBaseline": 10,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "dateline-north",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.0038280118678901535,
-              "alphaEdgeDriftFromBaseline": 0.1503988195149759,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "dateline-north",
-              "progress": 0.55
-            },
-            {
-              "alphaDeltaFromBaseline": 0.022954765110838285,
-              "alphaEdgeDriftFromBaseline": 11,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.003879761544388978,
-              "forwardReverseEdgeDrift": 1,
-              "location": "dateline-north",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.02009027843388252,
-              "alphaEdgeDriftFromBaseline": 133,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.03338294077156023,
-              "forwardReverseEdgeDrift": 109,
-              "location": "dateline-north",
-              "progress": 0
-            }
-          ],
-          "score": 0.4906247758410445
-        },
-        {
-          "candidate": {
-            "id": "g072-ms028",
-            "g": 0.72,
-            "multiScatter": 0.28
-          },
-          "eligible": false,
-          "gates": {
-            "alphaPass": false,
-            "baselineBlocked": false,
-            "budgetPass": true,
-            "gpuPass": false,
-            "visualPass": false
-          },
-          "gpuScenarios": [
-            {
-              "baseline": {
-                "disjointResetCount": 0,
-                "p95Ms": 10.100458,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              },
-              "baselineBlocked": false,
-              "deltaMs": 0.4483750000000004,
-              "id": "near",
-              "pass": false,
-              "variant": {
-                "disjointResetCount": 0,
-                "p95Ms": 10.548833,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              }
-            },
-            {
-              "baseline": {
-                "disjointResetCount": 0,
-                "p95Ms": 8.238958,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              },
-              "baselineBlocked": false,
-              "deltaMs": 0.44779199999999975,
-              "id": "oblique",
-              "pass": false,
-              "variant": {
-                "disjointResetCount": 0,
-                "p95Ms": 8.68675,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              }
-            },
-            {
-              "baseline": {
-                "disjointResetCount": 0,
-                "p95Ms": 10.292249,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              },
-              "baselineBlocked": true,
-              "deltaMs": -0.005333000000000254,
-              "id": "fixed-progress-sweep",
-              "pass": false,
-              "variant": {
-                "disjointResetCount": 0,
-                "p95Ms": 10.286916,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              }
-            }
-          ],
-          "lightingFrames": [
-            {
-              "baseline": {
-                "bodyContrast": 0.054083921568627444,
-                "bodyPixelCount": 10495,
-                "p99": 29,
-                "sideCount": 3499,
-                "sideMean": 0.031028220499975438,
-                "topCount": 3498,
-                "topMean": 0.050905520017041545,
-                "undersideCount": 3498,
-                "undersideMean": 0.028951474792318452
-              },
-              "contrastGainPercent": 2.220446049250313e-14,
-              "id": "near",
-              "sideUndersideRatio": 1.0378258591098932,
-              "topSideRatio": 1.6454333487381174,
-              "variant": {
-                "bodyContrast": 0.05408392156862745,
-                "bodyPixelCount": 10495,
-                "p99": 28,
-                "sideCount": 3499,
-                "sideMean": 0.029233919158975864,
-                "topCount": 3498,
-                "topMean": 0.04810246549849306,
-                "undersideCount": 3498,
-                "undersideMean": 0.028168424309689848
-              }
-            },
-            {
-              "baseline": {
-                "bodyContrast": 0.018223529411764708,
-                "bodyPixelCount": 14909,
-                "p99": 11,
-                "sideCount": 4971,
-                "sideMean": 0.027767981823991036,
-                "topCount": 4969,
-                "topMean": 0.023659369660523726,
-                "undersideCount": 4969,
-                "undersideMean": 0.024751917733083082
-              },
-              "contrastGainPercent": 19.96556918442003,
-              "id": "oblique",
-              "sideUndersideRatio": 1.1544218690533157,
-              "topSideRatio": 0.9223282261708189,
-              "variant": {
-                "bodyContrast": 0.021861960784313725,
-                "bodyPixelCount": 14606,
-                "p99": 12,
-                "sideCount": 4870,
-                "sideMean": 0.02527209534162737,
-                "topCount": 4868,
-                "topMean": 0.02330916686806299,
-                "undersideCount": 4868,
-                "undersideMean": 0.021891559766060015
-              }
-            },
-            {
-              "baseline": {
-                "bodyContrast": 0.0890949019607843,
-                "bodyPixelCount": 7000,
-                "p99": 46,
-                "sideCount": 2334,
-                "sideMean": 0.061861814271552455,
-                "topCount": 2333,
-                "topMean": 0.08604051872956696,
-                "undersideCount": 2333,
-                "undersideMean": 0.02866685896304489
-              },
-              "contrastGainPercent": -1.5537518926722726,
-              "id": "mid",
-              "sideUndersideRatio": 2.166169436537923,
-              "topSideRatio": 1.3335564779151203,
-              "variant": {
-                "bodyContrast": 0.08771058823529411,
-                "bodyPixelCount": 7008,
-                "p99": 42,
-                "sideCount": 2336,
-                "sideMean": 0.05891491471931228,
-                "topCount": 2336,
-                "topMean": 0.07856636616975576,
-                "undersideCount": 2336,
-                "undersideMean": 0.027197740733279366
-              }
-            }
-          ],
-          "motionMetrics": [
-            {
-              "alphaDeltaFromBaseline": 0.000009092723760921037,
-              "alphaEdgeDriftFromBaseline": 0.014671301436919748,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "mianyang",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.000006209502733920934,
-              "alphaEdgeDriftFromBaseline": 0.016735514739480095,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "mianyang",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 1.1326484208332555e-7,
+              "alphaDeltaFromBaseline": 0,
               "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
               "location": "mianyang",
-              "progress": 0.55
-            },
-            {
-              "alphaDeltaFromBaseline": 0.00000594185175401055,
-              "alphaEdgeDriftFromBaseline": 0.007253905825109541,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.000004014764698655777,
-              "forwardReverseEdgeDrift": 0.01908467462999397,
-              "location": "mianyang",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.000008571786462118269,
-              "alphaEdgeDriftFromBaseline": 0.013414721982144329,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0000032676976015809974,
-              "forwardReverseEdgeDrift": 0.0023993339506205302,
-              "location": "mianyang",
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.013307390655852954,
-              "alphaEdgeDriftFromBaseline": 26,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "equator",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.01829951161725696,
-              "alphaEdgeDriftFromBaseline": 16.27932321627918,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "equator",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.008010202896974865,
-              "alphaEdgeDriftFromBaseline": 2,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "equator",
-              "progress": 0.55
-            },
-            {
-              "alphaDeltaFromBaseline": 0.01829951161725696,
-              "alphaEdgeDriftFromBaseline": 16.27932321627918,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0,
-              "forwardReverseEdgeDrift": 0,
-              "location": "equator",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.014536897396899997,
-              "alphaEdgeDriftFromBaseline": 30,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0033101303124652955,
-              "forwardReverseEdgeDrift": 4,
-              "location": "equator",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.0008272484304987952,
-              "alphaEdgeDriftFromBaseline": 0.5889775421794639,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "dateline-north",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.00047561579130075434,
-              "alphaEdgeDriftFromBaseline": 0.011930836085639385,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "dateline-north",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.0002111256656433188,
-              "alphaEdgeDriftFromBaseline": 0.05792326167522788,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "dateline-north",
-              "progress": 0.55
-            },
-            {
-              "alphaDeltaFromBaseline": 0.023388466758685073,
-              "alphaEdgeDriftFromBaseline": 12,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.023577481880697786,
-              "forwardReverseEdgeDrift": 12,
-              "location": "dateline-north",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.0036981812421371025,
-              "alphaEdgeDriftFromBaseline": 3,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.004370190357592673,
-              "forwardReverseEdgeDrift": 3.3401621250706626,
-              "location": "dateline-north",
-              "progress": 0
-            }
-          ],
-          "score": 0.55
-        },
-        {
-          "candidate": {
-            "id": "g078-ms018",
-            "g": 0.78,
-            "multiScatter": 0.18
-          },
-          "eligible": false,
-          "gates": {
-            "alphaPass": false,
-            "baselineBlocked": false,
-            "budgetPass": true,
-            "gpuPass": false,
-            "visualPass": false
-          },
-          "gpuScenarios": [
-            {
-              "baseline": {
-                "disjointResetCount": 0,
-                "p95Ms": 9.537666,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              },
-              "baselineBlocked": false,
-              "deltaMs": 0.424334,
-              "id": "near",
-              "pass": false,
-              "variant": {
-                "disjointResetCount": 0,
-                "p95Ms": 9.962,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              }
-            },
-            {
-              "baseline": {
-                "disjointResetCount": 0,
-                "p95Ms": 11.625916,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              },
-              "baselineBlocked": true,
-              "deltaMs": -3.6395,
-              "id": "oblique",
-              "pass": false,
-              "variant": {
-                "disjointResetCount": 0,
-                "p95Ms": 7.986416,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              }
-            },
-            {
-              "baseline": {
-                "disjointResetCount": 0,
-                "p95Ms": 9.660833,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              },
-              "baselineBlocked": false,
-              "deltaMs": 1.1924159999999997,
-              "id": "fixed-progress-sweep",
-              "pass": false,
-              "variant": {
-                "disjointResetCount": 0,
-                "p95Ms": 10.853249,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              }
-            }
-          ],
-          "lightingFrames": [
-            {
-              "baseline": {
-                "bodyContrast": 0.054083921568627444,
-                "bodyPixelCount": 10495,
-                "p99": 29,
-                "sideCount": 3499,
-                "sideMean": 0.031028220499975438,
-                "topCount": 3498,
-                "topMean": 0.050905520017041545,
-                "undersideCount": 3498,
-                "undersideMean": 0.028951474792318452
-              },
-              "contrastGainPercent": -0.5235146540597646,
-              "id": "near",
-              "sideUndersideRatio": 1.0376826634701768,
-              "topSideRatio": 1.6442002784302217,
-              "variant": {
-                "bodyContrast": 0.05380078431372549,
-                "bodyPixelCount": 10496,
-                "p99": 28,
-                "sideCount": 3500,
-                "sideMean": 0.029214285714286185,
-                "topCount": 3498,
-                "topMean": 0.04803413670556939,
-                "undersideCount": 3498,
-                "undersideMean": 0.02815339095729801
-              }
-            },
-            {
-              "baseline": {
-                "bodyContrast": 0.018223529411764708,
-                "bodyPixelCount": 14909,
-                "p99": 11,
-                "sideCount": 4971,
-                "sideMean": 0.027767981823991036,
-                "topCount": 4969,
-                "topMean": 0.023659369660523726,
-                "undersideCount": 4969,
-                "undersideMean": 0.024751917733083082
-              },
-              "contrastGainPercent": -10.815579944049947,
-              "id": "oblique",
-              "sideUndersideRatio": 1.176345917036375,
-              "topSideRatio": 0.7959342063849839,
-              "variant": {
-                "bodyContrast": 0.01625254901960784,
-                "bodyPixelCount": 14598,
-                "p99": 12,
-                "sideCount": 4866,
-                "sideMean": 0.027950286340594765,
-                "topCount": 4866,
-                "topMean": 0.02224658897673435,
-                "undersideCount": 4866,
-                "undersideMean": 0.02376026127672655
-              }
-            },
-            {
-              "baseline": {
-                "bodyContrast": 0.0890949019607843,
-                "bodyPixelCount": 7000,
-                "p99": 46,
-                "sideCount": 2334,
-                "sideMean": 0.061861814271552455,
-                "topCount": 2333,
-                "topMean": 0.08604051872956696,
-                "undersideCount": 2333,
-                "undersideMean": 0.02866685896304489
-              },
-              "contrastGainPercent": -1.8715447727032597,
-              "id": "mid",
-              "sideUndersideRatio": 2.1952058550302476,
-              "topSideRatio": 1.3174178321943182,
-              "variant": {
-                "bodyContrast": 0.08742745098039215,
-                "bodyPixelCount": 6998,
-                "p99": 42,
-                "sideCount": 2334,
-                "sideMean": 0.059497841961120235,
-                "topCount": 2332,
-                "topMean": 0.07838351797665916,
-                "undersideCount": 2332,
-                "undersideMean": 0.027103536474623886
-              }
-            }
-          ],
-          "motionMetrics": [
-            {
-              "alphaDeltaFromBaseline": 0.000007245764246983951,
-              "alphaEdgeDriftFromBaseline": 0.009235447344281056,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "mianyang",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.00000610244234195678,
-              "alphaEdgeDriftFromBaseline": 0.006361402210814049,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -1388,309 +485,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.00002797641599458141,
-              "alphaEdgeDriftFromBaseline": 0.019383845553079482,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "mianyang",
-              "progress": 0.55
-            },
-            {
-              "alphaDeltaFromBaseline": 0.00000701245567365209,
-              "alphaEdgeDriftFromBaseline": 0.008285334940978828,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.000004764187442404855,
-              "forwardReverseEdgeDrift": 0.014646737151792877,
-              "location": "mianyang",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.000007766701545786717,
-              "alphaEdgeDriftFromBaseline": 0.0017854238807331058,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.000003835992836638562,
-              "forwardReverseEdgeDrift": 0.011020871225014162,
-              "location": "mianyang",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.014582692521258385,
-              "alphaEdgeDriftFromBaseline": 30,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "equator",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.018381198696325606,
-              "alphaEdgeDriftFromBaseline": 16.343944136231926,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "equator",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.008437890940681503,
-              "alphaEdgeDriftFromBaseline": 2,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "equator",
-              "progress": 0.55
-            },
-            {
-              "alphaDeltaFromBaseline": 0.0181357092175518,
-              "alphaEdgeDriftFromBaseline": 29,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0007045644395160978,
-              "forwardReverseEdgeDrift": 23,
-              "location": "equator",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.015039317742627139,
-              "alphaEdgeDriftFromBaseline": 32,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0014747261349743806,
-              "forwardReverseEdgeDrift": 2,
-              "location": "equator",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.0004145713739744935,
-              "alphaEdgeDriftFromBaseline": 0.3068979663862592,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "dateline-north",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.02312911295915191,
-              "alphaEdgeDriftFromBaseline": 12,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "dateline-north",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.0005216978626357974,
-              "alphaEdgeDriftFromBaseline": 0.0350353344525729,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "dateline-north",
-              "progress": 0.55
-            },
-            {
-              "alphaDeltaFromBaseline": 0.003618801838976353,
-              "alphaEdgeDriftFromBaseline": 4,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0216247538614676,
-              "forwardReverseEdgeDrift": 8,
-              "location": "dateline-north",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.018350537287626298,
-              "alphaEdgeDriftFromBaseline": 24,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.018191888201172724,
-              "forwardReverseEdgeDrift": 24,
-              "location": "dateline-north",
-              "progress": 0
-            }
-          ],
-          "score": 0.3
-        },
-        {
-          "candidate": {
-            "id": "g078-ms028",
-            "g": 0.78,
-            "multiScatter": 0.28
-          },
-          "eligible": false,
-          "gates": {
-            "alphaPass": false,
-            "baselineBlocked": true,
-            "budgetPass": true,
-            "gpuPass": false,
-            "visualPass": false
-          },
-          "gpuScenarios": [
-            {
-              "baseline": {
-                "disjointResetCount": 0,
-                "p95Ms": 8.916624,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              },
-              "baselineBlocked": true,
-              "deltaMs": 0.05400099999999952,
-              "id": "near",
-              "pass": false,
-              "variant": {
-                "disjointResetCount": 0,
-                "p95Ms": 8.970625,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              }
-            },
-            {
-              "baseline": {
-                "disjointResetCount": 0,
-                "p95Ms": 9.334874,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              },
-              "baselineBlocked": true,
-              "deltaMs": -1.175165999999999,
-              "id": "oblique",
-              "pass": false,
-              "variant": {
-                "disjointResetCount": 0,
-                "p95Ms": 8.159708,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              }
-            },
-            {
-              "baseline": {
-                "disjointResetCount": 0,
-                "p95Ms": 10.079208,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              },
-              "baselineBlocked": true,
-              "deltaMs": -0.377084,
-              "id": "fixed-progress-sweep",
-              "pass": false,
-              "variant": {
-                "disjointResetCount": 0,
-                "p95Ms": 9.702124,
-                "sampleCount": 120,
-                "sufficient": true,
-                "supported": true
-              }
-            }
-          ],
-          "lightingFrames": [
-            {
-              "baseline": {
-                "bodyContrast": 0.054083921568627444,
-                "bodyPixelCount": 10495,
-                "p99": 29,
-                "sideCount": 3499,
-                "sideMean": 0.031028220499975438,
-                "topCount": 3498,
-                "topMean": 0.050905520017041545,
-                "undersideCount": 3498,
-                "undersideMean": 0.028951474792318452
-              },
-              "contrastGainPercent": -0.5235146540597646,
-              "id": "near",
-              "sideUndersideRatio": 1.037658687013461,
-              "topSideRatio": 1.644674119399941,
-              "variant": {
-                "bodyContrast": 0.05380078431372549,
-                "bodyPixelCount": 10496,
-                "p99": 28,
-                "sideCount": 3500,
-                "sideMean": 0.029216683921569103,
-                "topCount": 3498,
-                "topMean": 0.04805192390049308,
-                "undersideCount": 3498,
-                "undersideMean": 0.02815635264969366
-              }
-            },
-            {
-              "baseline": {
-                "bodyContrast": 0.018223529411764708,
-                "bodyPixelCount": 14909,
-                "p99": 11,
-                "sideCount": 4971,
-                "sideMean": 0.027767981823991036,
-                "topCount": 4969,
-                "topMean": 0.023659369660523726,
-                "undersideCount": 4969,
-                "undersideMean": 0.024751917733083082
-              },
-              "contrastGainPercent": 9.149989240370138,
-              "id": "oblique",
-              "sideUndersideRatio": 1.174558556665494,
-              "topSideRatio": 0.6528600224624067,
-              "variant": {
-                "bodyContrast": 0.019890980392156865,
-                "bodyPixelCount": 14899,
-                "p99": 12,
-                "sideCount": 4967,
-                "sideMean": 0.027645275129581173,
-                "topCount": 4966,
-                "topMean": 0.01804849494207778,
-                "undersideCount": 4966,
-                "undersideMean": 0.023536736395726888
-              }
-            },
-            {
-              "baseline": {
-                "bodyContrast": 0.0890949019607843,
-                "bodyPixelCount": 7000,
-                "p99": 46,
-                "sideCount": 2334,
-                "sideMean": 0.061861814271552455,
-                "topCount": 2333,
-                "topMean": 0.08604051872956696,
-                "undersideCount": 2333,
-                "undersideMean": 0.02866685896304489
-              },
-              "contrastGainPercent": -1.571358146413615,
-              "id": "mid",
-              "sideUndersideRatio": 2.1754774493071687,
-              "topSideRatio": 1.3225659982487632,
-              "variant": {
-                "bodyContrast": 0.08769490196078429,
-                "bodyPixelCount": 7001,
-                "p99": 42,
-                "sideCount": 2335,
-                "sideMean": 0.05931759499517142,
-                "topCount": 2333,
-                "topMean": 0.07845143423850473,
-                "undersideCount": 2333,
-                "undersideMean": 0.027266472017010556
-              }
-            }
-          ],
-          "motionMetrics": [
-            {
-              "alphaDeltaFromBaseline": 0.000008761218207137458,
-              "alphaEdgeDriftFromBaseline": 0.013414721982144329,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "mianyang",
-              "progress": 0
-            },
-            {
-              "alphaDeltaFromBaseline": 0.000006155972537938858,
-              "alphaEdgeDriftFromBaseline": 0.009687357439361222,
-              "direction": "forward",
-              "forwardReverseAlphaDelta": null,
-              "forwardReverseEdgeDrift": null,
-              "location": "mianyang",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.000027863151152498084,
-              "alphaEdgeDriftFromBaseline": 0.019383845553079482,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -1701,23 +497,23 @@
               "alphaDeltaFromBaseline": 0,
               "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.000006155972537938858,
-              "forwardReverseEdgeDrift": 0.009687357439361222,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "mianyang",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.000010134598358526572,
-              "alphaEdgeDriftFromBaseline": 0.012418951049426141,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0000049725833067536914,
-              "forwardReverseEdgeDrift": 0.012218297599360994,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "mianyang",
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.013892924179707266,
-              "alphaEdgeDriftFromBaseline": 55,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -1725,8 +521,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.0007359331343615949,
-              "alphaEdgeDriftFromBaseline": 0.22234956960994623,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -1734,8 +530,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.008504490667826499,
-              "alphaEdgeDriftFromBaseline": 2,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -1743,26 +539,26 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.03113744439885456,
-              "alphaEdgeDriftFromBaseline": 35.38274052234863,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.030936063801569987,
-              "forwardReverseEdgeDrift": 35.16039095273868,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "equator",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.013615974968489214,
-              "alphaEdgeDriftFromBaseline": 27,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.02147852897725564,
-              "forwardReverseEdgeDrift": 82,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "equator",
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.004041242132366852,
-              "alphaEdgeDriftFromBaseline": 3.069427588634767,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -1770,8 +566,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.022770300055484048,
-              "alphaEdgeDriftFromBaseline": 11,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -1779,8 +575,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.00014169431744624026,
-              "alphaEdgeDriftFromBaseline": 0.08419529530908676,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -1788,25 +584,1229 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.0222376210752664,
-              "alphaEdgeDriftFromBaseline": 11,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.001340663758371119,
-              "forwardReverseEdgeDrift": 0.3077519523112642,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "dateline-north",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.018273627999148504,
-              "alphaEdgeDriftFromBaseline": 24,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.019935323266456823,
-              "forwardReverseEdgeDrift": 26.38723819550563,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "dateline-north",
               "progress": 0
             }
           ],
-          "score": 0.4906247758410445
+          "score": 0.24831487142247785
+        },
+        {
+          "candidate": {
+            "id": "g072-ms018",
+            "g": 0.72,
+            "multiScatter": 0.18
+          },
+          "eligible": false,
+          "gates": {
+            "alphaPass": true,
+            "baselineBlocked": false,
+            "budgetPass": true,
+            "gpuPass": false,
+            "visualPass": false
+          },
+          "gpuScenarios": [
+            {
+              "baseline": {
+                "disjointResetCount": 0,
+                "p95Ms": 8.869249,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              },
+              "baselineBlocked": true,
+              "deltaMs": -0.17116599999999949,
+              "id": "near",
+              "pass": false,
+              "variant": {
+                "disjointResetCount": 0,
+                "p95Ms": 8.698083,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              }
+            },
+            {
+              "baseline": {
+                "disjointResetCount": 0,
+                "p95Ms": 9.329749,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              },
+              "baselineBlocked": false,
+              "deltaMs": 1.1474170000000008,
+              "id": "oblique",
+              "pass": false,
+              "variant": {
+                "disjointResetCount": 0,
+                "p95Ms": 10.477166,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              }
+            },
+            {
+              "baseline": {
+                "disjointResetCount": 0,
+                "p95Ms": 10.1645,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              },
+              "baselineBlocked": true,
+              "deltaMs": -0.8131260000000005,
+              "id": "fixed-progress-sweep",
+              "pass": false,
+              "variant": {
+                "disjointResetCount": 0,
+                "p95Ms": 9.351374,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              }
+            }
+          ],
+          "lightingFrames": [
+            {
+              "baseline": {
+                "bodyContrast": 0.054083921568627444,
+                "bodyPixelCount": 10493,
+                "p99": 29,
+                "sideCount": 3499,
+                "sideMean": 0.031012942857623852,
+                "topCount": 3497,
+                "topMean": 0.05094979270747577,
+                "undersideCount": 3497,
+                "undersideMean": 0.02895092959231176
+              },
+              "contrastGainPercent": -0.5235146540597646,
+              "id": "near",
+              "sideUndersideRatio": 1.037991126603423,
+              "topSideRatio": 1.645915478569881,
+              "variant": {
+                "bodyContrast": 0.05380078431372549,
+                "bodyPixelCount": 10493,
+                "p99": 28,
+                "sideCount": 3499,
+                "sideMean": 0.029227984466150474,
+                "topCount": 3497,
+                "topMean": 0.04810679204023711,
+                "undersideCount": 3497,
+                "undersideMean": 0.02815822189327576
+              }
+            },
+            {
+              "baseline": {
+                "bodyContrast": 0.011764705882352938,
+                "bodyPixelCount": 1991,
+                "p99": 8,
+                "sideCount": 665,
+                "sideMean": 0.023548506560518972,
+                "topCount": 663,
+                "topMean": 0.020849473279507886,
+                "undersideCount": 663,
+                "undersideMean": 0.02152115576849139
+              },
+              "contrastGainPercent": -7.086666666666675,
+              "id": "oblique",
+              "sideUndersideRatio": 1.0993259485689912,
+              "topSideRatio": 0.87803244099645,
+              "variant": {
+                "bodyContrast": 0.010930980392156859,
+                "bodyPixelCount": 1991,
+                "p99": 8,
+                "sideCount": 665,
+                "sideMean": 0.02287495562435502,
+                "topCount": 663,
+                "topMean": 0.02008495312453791,
+                "undersideCount": 663,
+                "undersideMean": 0.0208081649069884
+              }
+            },
+            {
+              "baseline": {
+                "bodyContrast": 0.08854431372549018,
+                "bodyPixelCount": 6594,
+                "p99": 48,
+                "sideCount": 2198,
+                "sideMean": 0.06774710556834204,
+                "topCount": 2198,
+                "topMean": 0.07820743099787732,
+                "undersideCount": 2198,
+                "undersideMean": 0.024425653981337662
+              },
+              "contrastGainPercent": 1.2613602140060465,
+              "id": "mid",
+              "sideUndersideRatio": 2.7774571886321993,
+              "topSideRatio": 1.1309106652841827,
+              "variant": {
+                "bodyContrast": 0.08966117647058822,
+                "bodyPixelCount": 6594,
+                "p99": 43,
+                "sideCount": 2198,
+                "sideMean": 0.06424388160359669,
+                "topCount": 2198,
+                "topMean": 0.0726540908847618,
+                "undersideCount": 2198,
+                "undersideMean": 0.023130466912879604
+              }
+            }
+          ],
+          "motionMetrics": [
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "mianyang",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "mianyang",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "mianyang",
+              "progress": 0.55
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "mianyang",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "mianyang",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "equator",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "equator",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "equator",
+              "progress": 0.55
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "equator",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "equator",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "dateline-north",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "dateline-north",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "dateline-north",
+              "progress": 0.55
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "dateline-north",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "dateline-north",
+              "progress": 0
+            }
+          ],
+          "score": 0.24831487142247785
+        },
+        {
+          "candidate": {
+            "id": "g072-ms028",
+            "g": 0.72,
+            "multiScatter": 0.28
+          },
+          "eligible": false,
+          "gates": {
+            "alphaPass": true,
+            "baselineBlocked": false,
+            "budgetPass": true,
+            "gpuPass": false,
+            "visualPass": false
+          },
+          "gpuScenarios": [
+            {
+              "baseline": {
+                "disjointResetCount": 0,
+                "p95Ms": 10.331541,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              },
+              "baselineBlocked": true,
+              "deltaMs": -1.0881249999999998,
+              "id": "near",
+              "pass": false,
+              "variant": {
+                "disjointResetCount": 0,
+                "p95Ms": 9.243416,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              }
+            },
+            {
+              "baseline": {
+                "disjointResetCount": 0,
+                "p95Ms": 9.598166,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              },
+              "baselineBlocked": false,
+              "deltaMs": 1.3754589999999993,
+              "id": "oblique",
+              "pass": false,
+              "variant": {
+                "disjointResetCount": 0,
+                "p95Ms": 10.973625,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              }
+            },
+            {
+              "baseline": {
+                "disjointResetCount": 0,
+                "p95Ms": 10.895374,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              },
+              "baselineBlocked": true,
+              "deltaMs": -1.4887080000000008,
+              "id": "fixed-progress-sweep",
+              "pass": false,
+              "variant": {
+                "disjointResetCount": 0,
+                "p95Ms": 9.406666,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              }
+            }
+          ],
+          "lightingFrames": [
+            {
+              "baseline": {
+                "bodyContrast": 0.054083921568627444,
+                "bodyPixelCount": 10493,
+                "p99": 29,
+                "sideCount": 3499,
+                "sideMean": 0.031012942857623852,
+                "topCount": 3497,
+                "topMean": 0.05094979270747577,
+                "undersideCount": 3497,
+                "undersideMean": 0.02895092959231176
+              },
+              "contrastGainPercent": 2.220446049250313e-14,
+              "id": "near",
+              "sideUndersideRatio": 1.0380483188489318,
+              "topSideRatio": 1.6460342471094433,
+              "variant": {
+                "bodyContrast": 0.05408392156862745,
+                "bodyPixelCount": 10493,
+                "p99": 28,
+                "sideCount": 3499,
+                "sideMean": 0.02923366474454935,
+                "topCount": 3497,
+                "topMean": 0.04811961333804417,
+                "undersideCount": 3497,
+                "undersideMean": 0.028162142564775693
+              }
+            },
+            {
+              "baseline": {
+                "bodyContrast": 0.011764705882352938,
+                "bodyPixelCount": 1991,
+                "p99": 8,
+                "sideCount": 665,
+                "sideMean": 0.023548506560518972,
+                "topCount": 663,
+                "topMean": 0.020849473279507886,
+                "undersideCount": 663,
+                "undersideMean": 0.02152115576849139
+              },
+              "contrastGainPercent": -7.086666666666675,
+              "id": "oblique",
+              "sideUndersideRatio": 1.0993259485689912,
+              "topSideRatio": 0.8782173736225007,
+              "variant": {
+                "bodyContrast": 0.010930980392156859,
+                "bodyPixelCount": 1991,
+                "p99": 8,
+                "sideCount": 665,
+                "sideMean": 0.02287495562435502,
+                "topCount": 663,
+                "topMean": 0.020089183450152318,
+                "undersideCount": 663,
+                "undersideMean": 0.0208081649069884
+              }
+            },
+            {
+              "baseline": {
+                "bodyContrast": 0.08854431372549018,
+                "bodyPixelCount": 6594,
+                "p99": 48,
+                "sideCount": 2198,
+                "sideMean": 0.06774710556834204,
+                "topCount": 2198,
+                "topMean": 0.07820743099787732,
+                "undersideCount": 2198,
+                "undersideMean": 0.024425653981337662
+              },
+              "contrastGainPercent": 1.2613602140060465,
+              "id": "mid",
+              "sideUndersideRatio": 2.7777117455480513,
+              "topSideRatio": 1.1310727976744144,
+              "variant": {
+                "bodyContrast": 0.08966117647058822,
+                "bodyPixelCount": 6594,
+                "p99": 43,
+                "sideCount": 2198,
+                "sideMean": 0.06425968135024694,
+                "topCount": 2198,
+                "topMean": 0.0726823775624902,
+                "undersideCount": 2198,
+                "undersideMean": 0.023134035219183013
+              }
+            }
+          ],
+          "motionMetrics": [
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "mianyang",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "mianyang",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "mianyang",
+              "progress": 0.55
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "mianyang",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "mianyang",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "equator",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "equator",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "equator",
+              "progress": 0.55
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "equator",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "equator",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "dateline-north",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "dateline-north",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "dateline-north",
+              "progress": 0.55
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "dateline-north",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "dateline-north",
+              "progress": 0
+            }
+          ],
+          "score": 0.24831487142247785
+        },
+        {
+          "candidate": {
+            "id": "g078-ms018",
+            "g": 0.78,
+            "multiScatter": 0.18
+          },
+          "eligible": false,
+          "gates": {
+            "alphaPass": true,
+            "baselineBlocked": false,
+            "budgetPass": true,
+            "gpuPass": false,
+            "visualPass": false
+          },
+          "gpuScenarios": [
+            {
+              "baseline": {
+                "disjointResetCount": 0,
+                "p95Ms": 9.320708,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              },
+              "baselineBlocked": true,
+              "deltaMs": -0.0897079999999999,
+              "id": "near",
+              "pass": false,
+              "variant": {
+                "disjointResetCount": 0,
+                "p95Ms": 9.231,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              }
+            },
+            {
+              "baseline": {
+                "disjointResetCount": 0,
+                "p95Ms": 8.862916,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              },
+              "baselineBlocked": false,
+              "deltaMs": 0.35383299999999984,
+              "id": "oblique",
+              "pass": false,
+              "variant": {
+                "disjointResetCount": 0,
+                "p95Ms": 9.216749,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              }
+            },
+            {
+              "baseline": {
+                "disjointResetCount": 0,
+                "p95Ms": 9.451791,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              },
+              "baselineBlocked": false,
+              "deltaMs": 0.6954580000000004,
+              "id": "fixed-progress-sweep",
+              "pass": false,
+              "variant": {
+                "disjointResetCount": 0,
+                "p95Ms": 10.147249,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              }
+            }
+          ],
+          "lightingFrames": [
+            {
+              "baseline": {
+                "bodyContrast": 0.054083921568627444,
+                "bodyPixelCount": 10493,
+                "p99": 29,
+                "sideCount": 3499,
+                "sideMean": 0.031012942857623852,
+                "topCount": 3497,
+                "topMean": 0.05094979270747577,
+                "undersideCount": 3497,
+                "undersideMean": 0.02895092959231176
+              },
+              "contrastGainPercent": -0.5235146540597646,
+              "id": "near",
+              "sideUndersideRatio": 1.038109205001519,
+              "topSideRatio": 1.6451756922240657,
+              "variant": {
+                "bodyContrast": 0.05380078431372549,
+                "bodyPixelCount": 10493,
+                "p99": 28,
+                "sideCount": 3499,
+                "sideMean": 0.029217593149864024,
+                "topCount": 3497,
+                "topMean": 0.04806807403544867,
+                "undersideCount": 3497,
+                "undersideMean": 0.028145009223592494
+              }
+            },
+            {
+              "baseline": {
+                "bodyContrast": 0.011764705882352938,
+                "bodyPixelCount": 1991,
+                "p99": 8,
+                "sideCount": 665,
+                "sideMean": 0.023548506560518972,
+                "topCount": 663,
+                "topMean": 0.020849473279507886,
+                "undersideCount": 663,
+                "undersideMean": 0.02152115576849139
+              },
+              "contrastGainPercent": -7.086666666666675,
+              "id": "oblique",
+              "sideUndersideRatio": 1.0992882582514463,
+              "topSideRatio": 0.8780805665280451,
+              "variant": {
+                "bodyContrast": 0.010930980392156859,
+                "bodyPixelCount": 1991,
+                "p99": 8,
+                "sideCount": 665,
+                "sideMean": 0.022873701901813374,
+                "topCount": 663,
+                "topMean": 0.02008495312453791,
+                "undersideCount": 663,
+                "undersideMean": 0.020807737852305292
+              }
+            },
+            {
+              "baseline": {
+                "bodyContrast": 0.08854431372549018,
+                "bodyPixelCount": 6594,
+                "p99": 48,
+                "sideCount": 2198,
+                "sideMean": 0.06774710556834204,
+                "topCount": 2198,
+                "topMean": 0.07820743099787732,
+                "undersideCount": 2198,
+                "undersideMean": 0.024425653981337662
+              },
+              "contrastGainPercent": 1.2436444806632974,
+              "id": "mid",
+              "sideUndersideRatio": 2.7760070637049474,
+              "topSideRatio": 1.1301661280699145,
+              "variant": {
+                "bodyContrast": 0.08964549019607843,
+                "bodyPixelCount": 6594,
+                "p99": 43,
+                "sideCount": 2198,
+                "sideMean": 0.06420538671519548,
+                "topCount": 2198,
+                "topMean": 0.07256275330514399,
+                "undersideCount": 2198,
+                "undersideMean": 0.023128682759727896
+              }
+            }
+          ],
+          "motionMetrics": [
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "mianyang",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "mianyang",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "mianyang",
+              "progress": 0.55
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "mianyang",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "mianyang",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "equator",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "equator",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "equator",
+              "progress": 0.55
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "equator",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "equator",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "dateline-north",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "dateline-north",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "dateline-north",
+              "progress": 0.55
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "dateline-north",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "dateline-north",
+              "progress": 0
+            }
+          ],
+          "score": 0.24822064562861543
+        },
+        {
+          "candidate": {
+            "id": "g078-ms028",
+            "g": 0.78,
+            "multiScatter": 0.28
+          },
+          "eligible": false,
+          "gates": {
+            "alphaPass": true,
+            "baselineBlocked": false,
+            "budgetPass": true,
+            "gpuPass": false,
+            "visualPass": false
+          },
+          "gpuScenarios": [
+            {
+              "baseline": {
+                "disjointResetCount": 0,
+                "p95Ms": 9.15475,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              },
+              "baselineBlocked": false,
+              "deltaMs": 0.6367910000000006,
+              "id": "near",
+              "pass": false,
+              "variant": {
+                "disjointResetCount": 0,
+                "p95Ms": 9.791541,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              }
+            },
+            {
+              "baseline": {
+                "disjointResetCount": 0,
+                "p95Ms": 8.675583,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              },
+              "baselineBlocked": false,
+              "deltaMs": 1.194458000000001,
+              "id": "oblique",
+              "pass": false,
+              "variant": {
+                "disjointResetCount": 0,
+                "p95Ms": 9.870041,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              }
+            },
+            {
+              "baseline": {
+                "disjointResetCount": 0,
+                "p95Ms": 9.1365,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              },
+              "baselineBlocked": false,
+              "deltaMs": 0.261375000000001,
+              "id": "fixed-progress-sweep",
+              "pass": false,
+              "variant": {
+                "disjointResetCount": 0,
+                "p95Ms": 9.397875,
+                "sampleCount": 120,
+                "sufficient": true,
+                "supported": true
+              }
+            }
+          ],
+          "lightingFrames": [
+            {
+              "baseline": {
+                "bodyContrast": 0.054083921568627444,
+                "bodyPixelCount": 10493,
+                "p99": 29,
+                "sideCount": 3499,
+                "sideMean": 0.031012942857623852,
+                "topCount": 3497,
+                "topMean": 0.05094979270747577,
+                "undersideCount": 3497,
+                "undersideMean": 0.02895092959231176
+              },
+              "contrastGainPercent": -0.5235146540597646,
+              "id": "near",
+              "sideUndersideRatio": 1.0381324602798698,
+              "topSideRatio": 1.645359580947858,
+              "variant": {
+                "bodyContrast": 0.05380078431372549,
+                "bodyPixelCount": 10493,
+                "p99": 28,
+                "sideCount": 3499,
+                "sideMean": 0.029222071740385692,
+                "topCount": 3497,
+                "topMean": 0.04808081571318925,
+                "undersideCount": 3497,
+                "undersideMean": 0.02814869282914795
+              }
+            },
+            {
+              "baseline": {
+                "bodyContrast": 0.011764705882352938,
+                "bodyPixelCount": 1991,
+                "p99": 8,
+                "sideCount": 665,
+                "sideMean": 0.023548506560518972,
+                "topCount": 663,
+                "topMean": 0.020849473279507886,
+                "undersideCount": 663,
+                "undersideMean": 0.02152115576849139
+              },
+              "contrastGainPercent": -7.086666666666675,
+              "id": "oblique",
+              "sideUndersideRatio": 1.0993485109589027,
+              "topSideRatio": 0.87803244099645,
+              "variant": {
+                "bodyContrast": 0.010930980392156859,
+                "bodyPixelCount": 1991,
+                "p99": 8,
+                "sideCount": 665,
+                "sideMean": 0.02287495562435502,
+                "topCount": 663,
+                "topMean": 0.02008495312453791,
+                "undersideCount": 663,
+                "undersideMean": 0.020807737852305292
+              }
+            },
+            {
+              "baseline": {
+                "bodyContrast": 0.08854431372549018,
+                "bodyPixelCount": 6594,
+                "p99": 48,
+                "sideCount": 2198,
+                "sideMean": 0.06774710556834204,
+                "topCount": 2198,
+                "topMean": 0.07820743099787732,
+                "undersideCount": 2198,
+                "undersideMean": 0.024425653981337662
+              },
+              "contrastGainPercent": 1.2436444806632974,
+              "id": "mid",
+              "sideUndersideRatio": 2.776528741072719,
+              "topSideRatio": 1.1302884014827692,
+              "variant": {
+                "bodyContrast": 0.08964549019607843,
+                "bodyPixelCount": 6594,
+                "p99": 43,
+                "sideCount": 2198,
+                "sideMean": 0.06421850559331999,
+                "topCount": 2198,
+                "topMean": 0.07258543203268591,
+                "undersideCount": 2198,
+                "undersideMean": 0.023129062070687947
+              }
+            }
+          ],
+          "motionMetrics": [
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "mianyang",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "mianyang",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "mianyang",
+              "progress": 0.55
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "mianyang",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "mianyang",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "equator",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "equator",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "equator",
+              "progress": 0.55
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "equator",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "equator",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "dateline-north",
+              "progress": 0
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "dateline-north",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "forward",
+              "forwardReverseAlphaDelta": null,
+              "forwardReverseEdgeDrift": null,
+              "location": "dateline-north",
+              "progress": 0.55
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "dateline-north",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
+              "location": "dateline-north",
+              "progress": 0
+            }
+          ],
+          "score": 0.24837127739725662
         }
       ],
       "gateLimits": {
@@ -1840,7 +1840,7 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": true,
@@ -1851,92 +1851,92 @@
             {
               "baseline": {
                 "bodyContrast": 0.0809843137254902,
-                "bodyPixelCount": 8624,
+                "bodyPixelCount": 8623,
                 "p99": 42,
-                "sideCount": 2876,
-                "sideMean": 0.03835968447462406,
+                "sideCount": 2875,
+                "sideMean": 0.038307335583972424,
                 "topCount": 2874,
-                "topMean": 0.07428110769986546,
+                "topMean": 0.07436954766875487,
                 "undersideCount": 2874,
-                "undersideMean": 0.0406828176893583
+                "undersideMean": 0.04068136176948166
               },
               "contrastGainPercent": 4.842380514260802,
               "id": "near",
-              "sideUndersideRatio": 0.9065835141373515,
-              "topSideRatio": 1.9321642673475647,
+              "sideUndersideRatio": 0.9058685523109427,
+              "topSideRatio": 1.9360596711499776,
               "variant": {
                 "bodyContrast": 0.08490588235294118,
-                "bodyPixelCount": 8625,
+                "bodyPixelCount": 8623,
                 "p99": 42,
                 "sideCount": 2875,
-                "sideMean": 0.03762374547314537,
-                "topCount": 2875,
-                "topMean": 0.07269525660699118,
-                "undersideCount": 2875,
-                "undersideMean": 0.04150058421142346
+                "sideMean": 0.03759741872122722,
+                "topCount": 2874,
+                "topMean": 0.07279084612550718,
+                "undersideCount": 2874,
+                "undersideMean": 0.04150427633823165
               }
             },
             {
               "baseline": {
-                "bodyContrast": 0.030271372549019605,
-                "bodyPixelCount": 12810,
-                "p99": 17,
-                "sideCount": 4270,
-                "sideMean": 0.04442633732837337,
-                "topCount": 4270,
-                "topMean": 0.03535065674794639,
-                "undersideCount": 4270,
-                "undersideMean": 0.035138942186711666
+                "bodyContrast": 0.014852549019607843,
+                "bodyPixelCount": 1367,
+                "p99": 11,
+                "sideCount": 457,
+                "sideMean": 0.03305715879349552,
+                "topCount": 455,
+                "topMean": 0.032357593622064224,
+                "undersideCount": 455,
+                "undersideMean": 0.028714452919629364
               },
-              "contrastGainPercent": 28.663592082081045,
+              "contrastGainPercent": 1.906320958969232,
               "id": "oblique",
-              "sideUndersideRatio": 1.241285682078005,
-              "topSideRatio": 0.9567180884383748,
+              "sideUndersideRatio": 1.1716032367400089,
+              "topSideRatio": 0.9757890456039339,
               "variant": {
-                "bodyContrast": 0.038948235294117645,
-                "bodyPixelCount": 13076,
-                "p99": 18,
-                "sideCount": 4360,
-                "sideMean": 0.03800823907177516,
-                "topCount": 4358,
-                "topMean": 0.03636316982965748,
-                "undersideCount": 4358,
-                "undersideMean": 0.030620057590728455
+                "bodyContrast": 0.015135686274509806,
+                "bodyPixelCount": 1367,
+                "p99": 11,
+                "sideCount": 457,
+                "sideMean": 0.0327418234865062,
+                "topCount": 455,
+                "topMean": 0.03194911269123035,
+                "undersideCount": 455,
+                "undersideMean": 0.027946170221934914
               }
             },
             {
               "baseline": {
-                "bodyContrast": 0.14710039215686274,
-                "bodyPixelCount": 6294,
-                "p99": 72,
-                "sideCount": 2098,
-                "sideMean": 0.09912247967251706,
-                "topCount": 2098,
-                "topMean": 0.1274741972747159,
-                "undersideCount": 2098,
-                "undersideMean": 0.04541801267313381
+                "bodyContrast": 0.14571607843137255,
+                "bodyPixelCount": 5769,
+                "p99": 71,
+                "sideCount": 1923,
+                "sideMean": 0.108218046149297,
+                "topCount": 1923,
+                "topMean": 0.12255742355184414,
+                "undersideCount": 1923,
+                "undersideMean": 0.03583637780020994
               },
-              "contrastGainPercent": -7.067335633127703,
+              "contrastGainPercent": 1.5221650483346671,
               "id": "mid",
-              "sideUndersideRatio": 2.2269864774746586,
-              "topSideRatio": 1.1495273957260124,
+              "sideUndersideRatio": 3.116527274184058,
+              "topSideRatio": 1.0267130492343568,
               "variant": {
-                "bodyContrast": 0.1367043137254902,
-                "bodyPixelCount": 6290,
-                "p99": 65,
-                "sideCount": 2098,
-                "sideMean": 0.1020423570534027,
-                "topCount": 2096,
-                "topMean": 0.1173004849573419,
-                "undersideCount": 2096,
-                "undersideMean": 0.04582082472683711
+                "bodyContrast": 0.14793411764705883,
+                "bodyPixelCount": 5772,
+                "p99": 62,
+                "sideCount": 1924,
+                "sideMean": 0.11140563694916612,
+                "topCount": 1924,
+                "topMean": 0.11438162121397408,
+                "undersideCount": 1924,
+                "undersideMean": 0.0357467229220169
               }
             }
           ],
           "motionMetrics": [
             {
-              "alphaDeltaFromBaseline": 0.000011260636575004671,
-              "alphaEdgeDriftFromBaseline": 0.00653178795664644,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -1944,8 +1944,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.000003276789981635933,
-              "alphaEdgeDriftFromBaseline": 0.013202841929341957,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -1953,8 +1953,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.000041397471684079846,
-              "alphaEdgeDriftFromBaseline": 0.02222937401757008,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -1962,26 +1962,26 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.000003136356125280107,
-              "alphaEdgeDriftFromBaseline": 0.007580836470538088,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0000025746206998568044,
-              "forwardReverseEdgeDrift": 0.010237548752002112,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "mianyang",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.000011468397397421728,
-              "alphaEdgeDriftFromBaseline": 0.008986111152808007,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.00000444608159972509,
-              "forwardReverseEdgeDrift": 0.005394391362187889,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "mianyang",
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.019497148171071094,
-              "alphaEdgeDriftFromBaseline": 29,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -1989,8 +1989,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.02679833745038589,
-              "alphaEdgeDriftFromBaseline": 34,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -1998,8 +1998,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.005982726954458325,
-              "alphaEdgeDriftFromBaseline": 2,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2007,26 +2007,26 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.001716008102097286,
-              "alphaEdgeDriftFromBaseline": 1,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.02608942734350168,
-              "forwardReverseEdgeDrift": 33,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "equator",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.019429584351621065,
-              "alphaEdgeDriftFromBaseline": 29,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.00020668046614049162,
-              "forwardReverseEdgeDrift": 0.21491690082825698,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "equator",
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.024211407440372125,
-              "alphaEdgeDriftFromBaseline": 218,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2034,8 +2034,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.029004740578877718,
-              "alphaEdgeDriftFromBaseline": 15,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2043,8 +2043,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.0001876751407687352,
-              "alphaEdgeDriftFromBaseline": 0.01561062486780429,
+              "alphaDeltaFromBaseline": 0.0008449838000205006,
+              "alphaEdgeDriftFromBaseline": 0.016946038844935174,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2052,25 +2052,25 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.0002903704036583956,
-              "alphaEdgeDriftFromBaseline": 0.1355081181126252,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.028875400997174006,
-              "forwardReverseEdgeDrift": 15,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "dateline-north",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.026430002158634943,
-              "alphaEdgeDriftFromBaseline": 229,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.004841865966429591,
-              "forwardReverseEdgeDrift": 11,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "dateline-north",
               "progress": 0
             }
           ],
-          "score": 0.55
+          "score": 0.33971501997852566
         },
         {
           "candidate": {
@@ -2080,7 +2080,7 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": true,
@@ -2091,92 +2091,92 @@
             {
               "baseline": {
                 "bodyContrast": 0.0809843137254902,
-                "bodyPixelCount": 8624,
+                "bodyPixelCount": 8623,
                 "p99": 42,
-                "sideCount": 2876,
-                "sideMean": 0.03835968447462406,
+                "sideCount": 2875,
+                "sideMean": 0.038307335583972424,
                 "topCount": 2874,
-                "topMean": 0.07428110769986546,
+                "topMean": 0.07436954766875487,
                 "undersideCount": 2874,
-                "undersideMean": 0.0406828176893583
+                "undersideMean": 0.04068136176948166
               },
               "contrastGainPercent": 4.842380514260802,
               "id": "near",
-              "sideUndersideRatio": 0.9065658132579038,
-              "topSideRatio": 1.9325867760716597,
+              "sideUndersideRatio": 0.9057746970372883,
+              "topSideRatio": 1.9366161382109346,
               "variant": {
                 "bodyContrast": 0.08490588235294118,
-                "bodyPixelCount": 8625,
+                "bodyPixelCount": 8623,
                 "p99": 42,
                 "sideCount": 2875,
-                "sideMean": 0.03764129664109082,
-                "topCount": 2875,
-                "topMean": 0.0727450721227627,
-                "undersideCount": 2875,
-                "undersideMean": 0.04152075457800487
+                "sideMean": 0.037612245660698665,
+                "topCount": 2874,
+                "topMean": 0.07284048194086323,
+                "undersideCount": 2874,
+                "undersideMean": 0.041524946306984625
               }
             },
             {
               "baseline": {
-                "bodyContrast": 0.030271372549019605,
-                "bodyPixelCount": 12810,
-                "p99": 17,
-                "sideCount": 4270,
-                "sideMean": 0.04442633732837337,
-                "topCount": 4270,
-                "topMean": 0.03535065674794639,
-                "undersideCount": 4270,
-                "undersideMean": 0.035138942186711666
+                "bodyContrast": 0.014852549019607843,
+                "bodyPixelCount": 1367,
+                "p99": 11,
+                "sideCount": 457,
+                "sideMean": 0.03305715879349552,
+                "topCount": 455,
+                "topMean": 0.032357593622064224,
+                "undersideCount": 455,
+                "undersideMean": 0.028714452919629364
               },
-              "contrastGainPercent": 14.773551663384833,
+              "contrastGainPercent": 1.906320958969232,
               "id": "oblique",
-              "sideUndersideRatio": 0.4842838281366338,
-              "topSideRatio": 1.0100542210598178,
+              "sideUndersideRatio": 1.1718492550158006,
+              "topSideRatio": 0.9753690475388734,
               "variant": {
-                "bodyContrast": 0.03474352941176471,
-                "bodyPixelCount": 13084,
-                "p99": 13,
-                "sideCount": 4362,
-                "sideMean": 0.016840690095388258,
-                "topCount": 4361,
-                "topMean": 0.017010010116407175,
-                "undersideCount": 4361,
-                "undersideMean": 0.034774421768708944
+                "bodyContrast": 0.015135686274509806,
+                "bodyPixelCount": 1367,
+                "p99": 11,
+                "sideCount": 457,
+                "sideMean": 0.03275592225511648,
+                "topCount": 455,
+                "topMean": 0.03194911269123035,
+                "undersideCount": 455,
+                "undersideMean": 0.027952334410687337
               }
             },
             {
               "baseline": {
-                "bodyContrast": 0.14710039215686274,
-                "bodyPixelCount": 6294,
-                "p99": 72,
-                "sideCount": 2098,
-                "sideMean": 0.09912247967251706,
-                "topCount": 2098,
-                "topMean": 0.1274741972747159,
-                "undersideCount": 2098,
-                "undersideMean": 0.04541801267313381
+                "bodyContrast": 0.14571607843137255,
+                "bodyPixelCount": 5769,
+                "p99": 71,
+                "sideCount": 1923,
+                "sideMean": 0.108218046149297,
+                "topCount": 1923,
+                "topMean": 0.12255742355184414,
+                "undersideCount": 1923,
+                "undersideMean": 0.03583637780020994
               },
-              "contrastGainPercent": -7.238487254269477,
+              "contrastGainPercent": 1.6949426227743425,
               "id": "mid",
-              "sideUndersideRatio": 2.2277200679286127,
-              "topSideRatio": 1.1525823743133476,
+              "sideUndersideRatio": 3.1175939218600206,
+              "topSideRatio": 1.026904056148919,
               "variant": {
-                "bodyContrast": 0.13645254901960782,
-                "bodyPixelCount": 6293,
-                "p99": 66,
-                "sideCount": 2099,
-                "sideMean": 0.1019374174443479,
-                "topCount": 2097,
-                "topMean": 0.11749127062937736,
-                "undersideCount": 2097,
-                "undersideMean": 0.045758629601578144
+                "bodyContrast": 0.14818588235294117,
+                "bodyPixelCount": 5772,
+                "p99": 63,
+                "sideCount": 1924,
+                "sideMean": 0.11146328808446436,
+                "topCount": 1924,
+                "topMean": 0.11446210264563193,
+                "undersideCount": 1924,
+                "undersideMean": 0.035752984794749365
               }
             }
           ],
           "motionMetrics": [
             {
-              "alphaDeltaFromBaseline": 0.000009556997831184775,
-              "alphaEdgeDriftFromBaseline": 0.0035208928813972307,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2184,8 +2184,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.000003510846408895642,
-              "alphaEdgeDriftFromBaseline": 0.017758193218924134,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2193,8 +2193,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.00003060243720186764,
-              "alphaEdgeDriftFromBaseline": 0.00689936190951812,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2202,17 +2202,17 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.000024809981289529207,
-              "alphaEdgeDriftFromBaseline": 0.05006904153083269,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.000025605773142212218,
-              "forwardReverseEdgeDrift": 0.06782723474975683,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "mianyang",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.000009556997831184775,
-              "alphaEdgeDriftFromBaseline": 0.0035208928813972307,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
               "forwardReverseAlphaDelta": 0,
               "forwardReverseEdgeDrift": 0,
@@ -2220,8 +2220,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.020343316448611294,
-              "alphaEdgeDriftFromBaseline": 31,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2229,8 +2229,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.027288545231638626,
-              "alphaEdgeDriftFromBaseline": 34,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2247,26 +2247,26 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.024911000043534495,
-              "alphaEdgeDriftFromBaseline": 32,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.042982871282540275,
-              "forwardReverseEdgeDrift": 66,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "equator",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.019292628417483738,
-              "alphaEdgeDriftFromBaseline": 29,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0029940827640167395,
-              "forwardReverseEdgeDrift": 2.47978954777318,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "equator",
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.0010833480324115193,
-              "alphaEdgeDriftFromBaseline": 0.6127739550564684,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2274,8 +2274,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.005629150698166917,
-              "alphaEdgeDriftFromBaseline": 2,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2283,8 +2283,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.00010319656816940479,
-              "alphaEdgeDriftFromBaseline": 0.028213654444698477,
+              "alphaDeltaFromBaseline": 0.0008449838000205006,
+              "alphaEdgeDriftFromBaseline": 0.016946038844935174,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2292,25 +2292,25 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.0005723615872208936,
-              "alphaEdgeDriftFromBaseline": 0.13550367113077755,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.005132717015949073,
-              "forwardReverseEdgeDrift": 2,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "dateline-north",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.003628085689704641,
-              "alphaEdgeDriftFromBaseline": 2.35954147162181,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0026322465156951875,
-              "forwardReverseEdgeDrift": 2,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "dateline-north",
               "progress": 0
             }
           ],
-          "score": 0.268097597907672
+          "score": 0.33971501997852566
         },
         {
           "candidate": {
@@ -2320,7 +2320,7 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": true,
@@ -2331,92 +2331,92 @@
             {
               "baseline": {
                 "bodyContrast": 0.0809843137254902,
-                "bodyPixelCount": 8624,
+                "bodyPixelCount": 8623,
                 "p99": 42,
-                "sideCount": 2876,
-                "sideMean": 0.03835968447462406,
+                "sideCount": 2875,
+                "sideMean": 0.038307335583972424,
                 "topCount": 2874,
-                "topMean": 0.07428110769986546,
+                "topMean": 0.07436954766875487,
                 "undersideCount": 2874,
-                "undersideMean": 0.0406828176893583
+                "undersideMean": 0.04068136176948166
               },
               "contrastGainPercent": 4.162510290058563,
               "id": "near",
-              "sideUndersideRatio": 0.9066454723736028,
-              "topSideRatio": 1.9316116391554607,
+              "sideUndersideRatio": 0.9055170646562606,
+              "topSideRatio": 1.9358582545869396,
               "variant": {
                 "bodyContrast": 0.08435529411764704,
-                "bodyPixelCount": 8624,
+                "bodyPixelCount": 8623,
                 "p99": 42,
-                "sideCount": 2876,
-                "sideMean": 0.03758998718263342,
+                "sideCount": 2875,
+                "sideMean": 0.037555984859334625,
                 "topCount": 2874,
-                "topMean": 0.0726092567576793,
+                "topMean": 0.07270306329908506,
                 "undersideCount": 2874,
-                "undersideMean": 0.041460513870126794
+                "undersideMean": 0.04147462960688774
               }
             },
             {
               "baseline": {
-                "bodyContrast": 0.030271372549019605,
-                "bodyPixelCount": 12810,
-                "p99": 17,
-                "sideCount": 4270,
-                "sideMean": 0.04442633732837337,
-                "topCount": 4270,
-                "topMean": 0.03535065674794639,
-                "undersideCount": 4270,
-                "undersideMean": 0.035138942186711666
+                "bodyContrast": 0.014852549019607843,
+                "bodyPixelCount": 1367,
+                "p99": 11,
+                "sideCount": 457,
+                "sideMean": 0.03305715879349552,
+                "topCount": 455,
+                "topMean": 0.032357593622064224,
+                "undersideCount": 455,
+                "undersideMean": 0.028714452919629364
               },
-              "contrastGainPercent": 2.7541714167271136,
+              "contrastGainPercent": 1.906320958969232,
               "id": "oblique",
-              "sideUndersideRatio": 1.2842804981404956,
-              "topSideRatio": 0.7769936495505196,
+              "sideUndersideRatio": 1.1712447263560373,
+              "topSideRatio": 0.9761544570389664,
               "variant": {
-                "bodyContrast": 0.031105098039215684,
-                "bodyPixelCount": 13092,
-                "p99": 18,
-                "sideCount": 4364,
-                "sideMean": 0.04477140975180067,
-                "topCount": 4364,
-                "topMean": 0.03478710105857333,
-                "undersideCount": 4364,
-                "undersideMean": 0.03486108355349552
+                "bodyContrast": 0.015135686274509806,
+                "bodyPixelCount": 1367,
+                "p99": 11,
+                "sideCount": 457,
+                "sideMean": 0.032728929506156954,
+                "topCount": 455,
+                "topMean": 0.03194849041154925,
+                "undersideCount": 455,
+                "undersideMean": 0.027943715578539093
               }
             },
             {
               "baseline": {
-                "bodyContrast": 0.14710039215686274,
-                "bodyPixelCount": 6294,
-                "p99": 72,
-                "sideCount": 2098,
-                "sideMean": 0.09912247967251706,
-                "topCount": 2098,
-                "topMean": 0.1274741972747159,
-                "undersideCount": 2098,
-                "undersideMean": 0.04541801267313381
+                "bodyContrast": 0.14571607843137255,
+                "bodyPixelCount": 5769,
+                "p99": 71,
+                "sideCount": 1923,
+                "sideMean": 0.108218046149297,
+                "topCount": 1923,
+                "topMean": 0.12255742355184414,
+                "undersideCount": 1923,
+                "undersideMean": 0.03583637780020994
               },
-              "contrastGainPercent": -5.331826203793066,
+              "contrastGainPercent": 1.5221650483346671,
               "id": "mid",
-              "sideUndersideRatio": 2.2159198345629583,
-              "topSideRatio": 1.1425983251127354,
+              "sideUndersideRatio": 3.1143526511167323,
+              "topSideRatio": 1.0252300319019108,
               "variant": {
-                "bodyContrast": 0.13925725490196078,
-                "bodyPixelCount": 6286,
-                "p99": 65,
-                "sideCount": 2096,
-                "sideMean": 0.1016149521029785,
-                "topCount": 2095,
-                "topMean": 0.11610507407927405,
-                "undersideCount": 2095,
-                "undersideMean": 0.04585678169310661
+                "bodyContrast": 0.14793411764705883,
+                "bodyPixelCount": 5772,
+                "p99": 62,
+                "sideCount": 1924,
+                "sideMean": 0.11129438750968133,
+                "topCount": 1924,
+                "topMean": 0.1141023484570542,
+                "undersideCount": 1924,
+                "undersideMean": 0.03573596184419701
               }
             }
           ],
           "motionMetrics": [
             {
-              "alphaDeltaFromBaseline": 0.000007520941771497584,
-              "alphaEdgeDriftFromBaseline": 0.004565901934370231,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2433,8 +2433,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.00004694354444558337,
-              "alphaEdgeDriftFromBaseline": 0.05306769341677864,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2442,26 +2442,26 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.0000054301091124252604,
-              "alphaEdgeDriftFromBaseline": 0.005527382173568185,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0000054301091124252604,
-              "forwardReverseEdgeDrift": 0.005527382173568185,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "mianyang",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.000010055623804985719,
-              "alphaEdgeDriftFromBaseline": 0.0026881196267822816,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.000006357481165962046,
-              "forwardReverseEdgeDrift": 0.006736702622674784,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "mianyang",
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.0009290648456846104,
-              "alphaEdgeDriftFromBaseline": 1,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2469,8 +2469,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.026175466486162348,
-              "alphaEdgeDriftFromBaseline": 33,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2478,8 +2478,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.005926275856707307,
-              "alphaEdgeDriftFromBaseline": 2,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2487,26 +2487,26 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.02766069495098156,
-              "alphaEdgeDriftFromBaseline": 35,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0034761124350903014,
-              "forwardReverseEdgeDrift": 2,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "equator",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.003444175809701059,
-              "alphaEdgeDriftFromBaseline": 3,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0026514851678510073,
-              "forwardReverseEdgeDrift": 2.0401398308242733,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "equator",
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.024831905912602915,
-              "alphaEdgeDriftFromBaseline": 218,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2514,8 +2514,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.029539372270024348,
-              "alphaEdgeDriftFromBaseline": 15,
+              "alphaDeltaFromBaseline": 0.0008345047857517681,
+              "alphaEdgeDriftFromBaseline": 0.018130233028955445,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2523,8 +2523,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.00016578796076351595,
-              "alphaEdgeDriftFromBaseline": 0.059735515380680226,
+              "alphaDeltaFromBaseline": 0.0008449838000205006,
+              "alphaEdgeDriftFromBaseline": 0.016946038844935174,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2532,25 +2532,25 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.030348598961632067,
-              "alphaEdgeDriftFromBaseline": 15,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.001750601642046271,
-              "forwardReverseEdgeDrift": 0.31484761563524444,
+              "forwardReverseAlphaDelta": 0.0008345047857517681,
+              "forwardReverseEdgeDrift": 0.018130233028955445,
               "location": "dateline-north",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.025322761631645464,
-              "alphaEdgeDriftFromBaseline": 218,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0011446374750245522,
-              "forwardReverseEdgeDrift": 0.6597088143281553,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "dateline-north",
               "progress": 0
             }
           ],
-          "score": 0.3573785711818149
+          "score": 0.33971501997852566
         },
         {
           "candidate": {
@@ -2560,7 +2560,7 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": true,
@@ -2571,92 +2571,92 @@
             {
               "baseline": {
                 "bodyContrast": 0.0809843137254902,
-                "bodyPixelCount": 8624,
+                "bodyPixelCount": 8623,
                 "p99": 42,
-                "sideCount": 2876,
-                "sideMean": 0.03835968447462406,
+                "sideCount": 2875,
+                "sideMean": 0.038307335583972424,
                 "topCount": 2874,
-                "topMean": 0.07428110769986546,
+                "topMean": 0.07436954766875487,
                 "undersideCount": 2874,
-                "undersideMean": 0.0406828176893583
+                "undersideMean": 0.04068136176948166
               },
-              "contrastGainPercent": 4.162510290058563,
+              "contrastGainPercent": 4.492760641131177,
               "id": "near",
-              "sideUndersideRatio": 0.9067038695062866,
-              "topSideRatio": 1.9316360169468179,
+              "sideUndersideRatio": 0.9056041407535833,
+              "topSideRatio": 1.9359457116811793,
               "variant": {
-                "bodyContrast": 0.08435529411764704,
-                "bodyPixelCount": 8624,
+                "bodyContrast": 0.08462274509803921,
+                "bodyPixelCount": 8623,
                 "p99": 42,
-                "sideCount": 2876,
-                "sideMean": 0.03760460661594222,
+                "sideCount": 2875,
+                "sideMean": 0.03756807120204563,
                 "topCount": 2874,
-                "topMean": 0.07263841254247058,
+                "topMean": 0.07272974633973345,
                 "undersideCount": 2874,
-                "undersideMean": 0.04147396727932624
+                "undersideMean": 0.04148398788325326
               }
             },
             {
               "baseline": {
-                "bodyContrast": 0.030271372549019605,
-                "bodyPixelCount": 12810,
-                "p99": 17,
-                "sideCount": 4270,
-                "sideMean": 0.04442633732837337,
-                "topCount": 4270,
-                "topMean": 0.03535065674794639,
-                "undersideCount": 4270,
-                "undersideMean": 0.035138942186711666
+                "bodyContrast": 0.014852549019607843,
+                "bodyPixelCount": 1367,
+                "p99": 11,
+                "sideCount": 457,
+                "sideMean": 0.03305715879349552,
+                "topCount": 455,
+                "topMean": 0.032357593622064224,
+                "undersideCount": 455,
+                "undersideMean": 0.028714452919629364
               },
-              "contrastGainPercent": 28.663592082081045,
+              "contrastGainPercent": 1.906320958969232,
               "id": "oblique",
-              "sideUndersideRatio": 1.2498187430210153,
-              "topSideRatio": 0.9111860961188477,
+              "sideUndersideRatio": 1.1711900990506672,
+              "topSideRatio": 0.9761549916317996,
               "variant": {
-                "bodyContrast": 0.038948235294117645,
-                "bodyPixelCount": 12779,
-                "p99": 18,
-                "sideCount": 4261,
-                "sideMean": 0.038651517134428943,
-                "topCount": 4259,
-                "topMean": 0.03521872500679106,
-                "undersideCount": 4259,
-                "undersideMean": 0.03092569810643257
+                "bodyContrast": 0.015135686274509806,
+                "bodyPixelCount": 1367,
+                "p99": 11,
+                "sideCount": 457,
+                "sideMean": 0.03272954906251341,
+                "topCount": 455,
+                "topMean": 0.03194911269123035,
+                "undersideCount": 455,
+                "undersideMean": 0.02794554794225381
               }
             },
             {
               "baseline": {
-                "bodyContrast": 0.14710039215686274,
-                "bodyPixelCount": 6294,
-                "p99": 72,
-                "sideCount": 2098,
-                "sideMean": 0.09912247967251706,
-                "topCount": 2098,
-                "topMean": 0.1274741972747159,
-                "undersideCount": 2098,
-                "undersideMean": 0.04541801267313381
+                "bodyContrast": 0.14571607843137255,
+                "bodyPixelCount": 5769,
+                "p99": 71,
+                "sideCount": 1923,
+                "sideMean": 0.108218046149297,
+                "topCount": 1923,
+                "topMean": 0.12255742355184414,
+                "undersideCount": 1923,
+                "undersideMean": 0.03583637780020994
               },
-              "contrastGainPercent": -4.765053078329851,
+              "contrastGainPercent": 1.5221650483346671,
               "id": "mid",
-              "sideUndersideRatio": 2.173216869337732,
-              "topSideRatio": 1.145517233798966,
+              "sideUndersideRatio": 3.11490189644607,
+              "topSideRatio": 1.025476624372804,
               "variant": {
-                "bodyContrast": 0.14009098039215687,
-                "bodyPixelCount": 6298,
-                "p99": 66,
-                "sideCount": 2100,
-                "sideMean": 0.10041792642390296,
-                "topCount": 2099,
-                "topMean": 0.11503046530093743,
-                "undersideCount": 2099,
-                "undersideMean": 0.04620704350344216
+                "bodyContrast": 0.14793411764705883,
+                "bodyPixelCount": 5772,
+                "p99": 62,
+                "sideCount": 1924,
+                "sideMean": 0.11132671313847756,
+                "topCount": 1924,
+                "topMean": 0.11416294199176544,
+                "undersideCount": 1924,
+                "undersideMean": 0.03574003831886171
               }
             }
           ],
           "motionMetrics": [
             {
-              "alphaDeltaFromBaseline": 0.000007811806922881468,
-              "alphaEdgeDriftFromBaseline": 0.0022202039911007887,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2673,8 +2673,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.000041397471684079846,
-              "alphaEdgeDriftFromBaseline": 0.02222937401757008,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2691,17 +2691,17 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.000009972519476018896,
-              "alphaEdgeDriftFromBaseline": 0.006875865004985826,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.000006565241988379106,
-              "forwardReverseEdgeDrift": 0.004655661013885037,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "mianyang",
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.0038139900736034265,
-              "alphaEdgeDriftFromBaseline": 3,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2709,8 +2709,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.0027954763446190662,
-              "alphaEdgeDriftFromBaseline": 2,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2718,8 +2718,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.006014220724782577,
-              "alphaEdgeDriftFromBaseline": 2,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2727,26 +2727,26 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.00029336632592731984,
-              "alphaEdgeDriftFromBaseline": 1,
-              "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.002527107245123083,
-              "forwardReverseEdgeDrift": 1.0020086541433102,
-              "location": "equator",
-              "progress": 0.22
-            },
-            {
-              "alphaDeltaFromBaseline": 0.0038139900736034265,
-              "alphaEdgeDriftFromBaseline": 3,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
               "forwardReverseAlphaDelta": 0,
               "forwardReverseEdgeDrift": 0,
               "location": "equator",
+              "progress": 0.22
+            },
+            {
+              "alphaDeltaFromBaseline": 0.0004430707298866229,
+              "alphaEdgeDriftFromBaseline": 0.11130490347443356,
+              "direction": "reverse",
+              "forwardReverseAlphaDelta": 0.0004430707298866229,
+              "forwardReverseEdgeDrift": 0.11130490347443356,
+              "location": "equator",
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.024211407440372125,
-              "alphaEdgeDriftFromBaseline": 218,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2754,8 +2754,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.0002949110983472339,
-              "alphaEdgeDriftFromBaseline": 2,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2763,8 +2763,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.00466315778527488,
-              "alphaEdgeDriftFromBaseline": 1,
+              "alphaDeltaFromBaseline": 0.0008449838000205006,
+              "alphaEdgeDriftFromBaseline": 0.016946038844935174,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2772,25 +2772,25 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.05104040422481213,
-              "alphaEdgeDriftFromBaseline": 31,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.05116164545413267,
-              "forwardReverseEdgeDrift": 33,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "dateline-north",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.045814169994475636,
-              "alphaEdgeDriftFromBaseline": 229,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.028264488668413103,
-              "forwardReverseEdgeDrift": 22.35681072512591,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "dateline-north",
               "progress": 0
             }
           ],
-          "score": 0.55
+          "score": 0.33971501997852566
         },
         {
           "candidate": {
@@ -2800,7 +2800,7 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": true,
@@ -2811,92 +2811,92 @@
             {
               "baseline": {
                 "bodyContrast": 0.0809843137254902,
-                "bodyPixelCount": 8624,
+                "bodyPixelCount": 8623,
                 "p99": 42,
-                "sideCount": 2876,
-                "sideMean": 0.03835968447462406,
+                "sideCount": 2875,
+                "sideMean": 0.038307335583972424,
                 "topCount": 2874,
-                "topMean": 0.07428110769986546,
+                "topMean": 0.07436954766875487,
                 "undersideCount": 2874,
-                "undersideMean": 0.0406828176893583
+                "undersideMean": 0.04068136176948166
               },
               "contrastGainPercent": 4.162510290058563,
               "id": "near",
-              "sideUndersideRatio": 0.9067395687669609,
-              "topSideRatio": 1.9310019174591695,
+              "sideUndersideRatio": 0.9055416700295882,
+              "topSideRatio": 1.9355614136514647,
               "variant": {
                 "bodyContrast": 0.08435529411764704,
-                "bodyPixelCount": 8624,
+                "bodyPixelCount": 8623,
                 "p99": 42,
-                "sideCount": 2876,
-                "sideMean": 0.03757878344105335,
+                "sideCount": 2875,
+                "sideMean": 0.037538732412616814,
                 "topCount": 2874,
-                "topMean": 0.07256470288045691,
+                "topMean": 0.07265852197524866,
                 "undersideCount": 2874,
-                "undersideMean": 0.04144385525400115
+                "undersideMean": 0.041454450584687344
               }
             },
             {
               "baseline": {
-                "bodyContrast": 0.030271372549019605,
-                "bodyPixelCount": 12810,
-                "p99": 17,
-                "sideCount": 4270,
-                "sideMean": 0.04442633732837337,
-                "topCount": 4270,
-                "topMean": 0.03535065674794639,
-                "undersideCount": 4270,
-                "undersideMean": 0.035138942186711666
+                "bodyContrast": 0.014852549019607843,
+                "bodyPixelCount": 1367,
+                "p99": 11,
+                "sideCount": 457,
+                "sideMean": 0.03305715879349552,
+                "topCount": 455,
+                "topMean": 0.032357593622064224,
+                "undersideCount": 455,
+                "undersideMean": 0.028714452919629364
               },
-              "contrastGainPercent": 2.7541714167271136,
+              "contrastGainPercent": 1.906320958969232,
               "id": "oblique",
-              "sideUndersideRatio": 1.2888681715440238,
-              "topSideRatio": 0.8006283456832527,
+              "sideUndersideRatio": 1.1711794399551514,
+              "topSideRatio": 0.9762088719381993,
               "variant": {
-                "bodyContrast": 0.031105098039215684,
-                "bodyPixelCount": 13079,
-                "p99": 18,
-                "sideCount": 4361,
-                "sideMean": 0.044419378178236754,
-                "topCount": 4359,
-                "topMean": 0.03556341326712047,
-                "undersideCount": 4359,
-                "undersideMean": 0.03446386462086633
+                "bodyContrast": 0.015135686274509806,
+                "bodyPixelCount": 1367,
+                "p99": 11,
+                "sideCount": 457,
+                "sideMean": 0.032727105161539455,
+                "topCount": 455,
+                "topMean": 0.03194849041154925,
+                "undersideCount": 455,
+                "undersideMean": 0.027943715578539093
               }
             },
             {
               "baseline": {
-                "bodyContrast": 0.14710039215686274,
-                "bodyPixelCount": 6294,
-                "p99": 72,
-                "sideCount": 2098,
-                "sideMean": 0.09912247967251706,
-                "topCount": 2098,
-                "topMean": 0.1274741972747159,
-                "undersideCount": 2098,
-                "undersideMean": 0.04541801267313381
+                "bodyContrast": 0.14571607843137255,
+                "bodyPixelCount": 5769,
+                "p99": 71,
+                "sideCount": 1923,
+                "sideMean": 0.108218046149297,
+                "topCount": 1923,
+                "topMean": 0.12255742355184414,
+                "undersideCount": 1923,
+                "undersideMean": 0.03583637780020994
               },
-              "contrastGainPercent": -7.441629832633989,
+              "contrastGainPercent": 1.3278575580769614,
               "id": "mid",
-              "sideUndersideRatio": 2.244598157847517,
-              "topSideRatio": 1.1341360128119389,
+              "sideUndersideRatio": 3.113669993264948,
+              "topSideRatio": 1.0244617929688344,
               "variant": {
-                "bodyContrast": 0.13615372549019605,
-                "bodyPixelCount": 6276,
-                "p99": 65,
-                "sideCount": 2092,
-                "sideMean": 0.10249668466239273,
-                "topCount": 2092,
-                "topMean": 0.1162451812694487,
-                "undersideCount": 2092,
-                "undersideMean": 0.04566371236831232
+                "bodyContrast": 0.14765098039215688,
+                "bodyPixelCount": 5772,
+                "p99": 62,
+                "sideCount": 1924,
+                "sideMean": 0.11122832416126502,
+                "topCount": 1924,
+                "topMean": 0.11394916839916829,
+                "undersideCount": 1924,
+                "undersideMean": 0.03572257959316769
               }
             }
           ],
           "motionMetrics": [
             {
-              "alphaDeltaFromBaseline": 0.00001026338462740278,
-              "alphaEdgeDriftFromBaseline": 0.019736915208795835,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2904,8 +2904,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.000003136356125280107,
-              "alphaEdgeDriftFromBaseline": 0.007580836470538088,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2913,8 +2913,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.00003060243720186764,
-              "alphaEdgeDriftFromBaseline": 0.00689936190951812,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2922,26 +2922,26 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.0000037917141216072937,
-              "alphaEdgeDriftFromBaseline": 0.006635830339973836,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0000027150545562126302,
-              "forwardReverseEdgeDrift": 0.0045394038429549255,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "mianyang",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.000010512697614303252,
-              "alphaEdgeDriftFromBaseline": 0.012078470906772054,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0000028255471848720204,
-              "forwardReverseEdgeDrift": 0.007658444302023781,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "mianyang",
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.019017553088603548,
-              "alphaEdgeDriftFromBaseline": 28,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2949,8 +2949,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.02592231105443825,
-              "alphaEdgeDriftFromBaseline": 32,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2958,8 +2958,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.006136729510603646,
-              "alphaEdgeDriftFromBaseline": 2,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2967,26 +2967,26 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.025429013728345683,
-              "alphaEdgeDriftFromBaseline": 32,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.0011931260435990951,
-              "forwardReverseEdgeDrift": 0.45615434377464226,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "equator",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.06259289246071295,
-              "alphaEdgeDriftFromBaseline": 661,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.05992653161797688,
-              "forwardReverseEdgeDrift": 689,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "equator",
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.024951825459302045,
-              "alphaEdgeDriftFromBaseline": 218,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -2994,8 +2994,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.0011339565787878406,
-              "alphaEdgeDriftFromBaseline": 2,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -3003,8 +3003,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.004223037296844136,
-              "alphaEdgeDriftFromBaseline": 1,
+              "alphaDeltaFromBaseline": 0.0008449838000205006,
+              "alphaEdgeDriftFromBaseline": 0.016946038844935174,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -3012,25 +3012,25 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.02994269830547828,
-              "alphaEdgeDriftFromBaseline": 15,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.03045574999403156,
-              "forwardReverseEdgeDrift": 16,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "dateline-north",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.04634067747064496,
-              "alphaEdgeDriftFromBaseline": 229,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.028072102146854908,
-              "forwardReverseEdgeDrift": 22.021819584836294,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "dateline-north",
               "progress": 0
             }
           ],
-          "score": 0.3573785711818149
+          "score": 0.33971501997852566
         },
         {
           "candidate": {
@@ -3040,7 +3040,7 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": true,
@@ -3051,92 +3051,92 @@
             {
               "baseline": {
                 "bodyContrast": 0.0809843137254902,
-                "bodyPixelCount": 8624,
+                "bodyPixelCount": 8623,
                 "p99": 42,
-                "sideCount": 2876,
-                "sideMean": 0.03835968447462406,
+                "sideCount": 2875,
+                "sideMean": 0.038307335583972424,
                 "topCount": 2874,
-                "topMean": 0.07428110769986546,
+                "topMean": 0.07436954766875487,
                 "undersideCount": 2874,
-                "undersideMean": 0.0406828176893583
+                "undersideMean": 0.04068136176948166
               },
               "contrastGainPercent": 4.162510290058563,
               "id": "near",
-              "sideUndersideRatio": 0.9065508006624337,
-              "topSideRatio": 1.9316751388224536,
+              "sideUndersideRatio": 0.9055036860933097,
+              "topSideRatio": 1.9357095507691864,
               "variant": {
                 "bodyContrast": 0.08435529411764704,
-                "bodyPixelCount": 8624,
+                "bodyPixelCount": 8623,
                 "p99": 42,
-                "sideCount": 2876,
-                "sideMean": 0.03757255092857686,
+                "sideCount": 2875,
+                "sideMean": 0.03754351549872082,
                 "topCount": 2874,
-                "topMean": 0.07257796253087241,
+                "topMean": 0.07267334152032487,
                 "undersideCount": 2874,
-                "undersideMean": 0.04144560999904461
+                "undersideMean": 0.041461471748058754
               }
             },
             {
               "baseline": {
-                "bodyContrast": 0.030271372549019605,
-                "bodyPixelCount": 12810,
-                "p99": 17,
-                "sideCount": 4270,
-                "sideMean": 0.04442633732837337,
-                "topCount": 4270,
-                "topMean": 0.03535065674794639,
-                "undersideCount": 4270,
-                "undersideMean": 0.035138942186711666
+                "bodyContrast": 0.014852549019607843,
+                "bodyPixelCount": 1367,
+                "p99": 11,
+                "sideCount": 457,
+                "sideMean": 0.03305715879349552,
+                "topCount": 455,
+                "topMean": 0.032357593622064224,
+                "undersideCount": 455,
+                "undersideMean": 0.028714452919629364
               },
-              "contrastGainPercent": 2.7541714167271136,
+              "contrastGainPercent": 1.906320958969232,
               "id": "oblique",
-              "sideUndersideRatio": 1.3001493014207326,
-              "topSideRatio": 0.751643075505389,
+              "sideUndersideRatio": 1.1711794399551514,
+              "topSideRatio": 0.9762088719381993,
               "variant": {
-                "bodyContrast": 0.031105098039215684,
-                "bodyPixelCount": 12780,
-                "p99": 18,
-                "sideCount": 4260,
-                "sideMean": 0.045195514498756355,
-                "topCount": 4260,
-                "topMean": 0.033970895516893626,
-                "undersideCount": 4260,
-                "undersideMean": 0.034761788088005854
+                "bodyContrast": 0.015135686274509806,
+                "bodyPixelCount": 1367,
+                "p99": 11,
+                "sideCount": 457,
+                "sideMean": 0.032727105161539455,
+                "topCount": 455,
+                "topMean": 0.03194849041154925,
+                "undersideCount": 455,
+                "undersideMean": 0.027943715578539093
               }
             },
             {
               "baseline": {
-                "bodyContrast": 0.14710039215686274,
-                "bodyPixelCount": 6294,
-                "p99": 72,
-                "sideCount": 2098,
-                "sideMean": 0.09912247967251706,
-                "topCount": 2098,
-                "topMean": 0.1274741972747159,
-                "undersideCount": 2098,
-                "undersideMean": 0.04541801267313381
+                "bodyContrast": 0.14571607843137255,
+                "bodyPixelCount": 5769,
+                "p99": 71,
+                "sideCount": 1923,
+                "sideMean": 0.108218046149297,
+                "topCount": 1923,
+                "topMean": 0.12255742355184414,
+                "undersideCount": 1923,
+                "undersideMean": 0.03583637780020994
               },
-              "contrastGainPercent": -7.441629832633967,
+              "contrastGainPercent": 1.3278575580769614,
               "id": "mid",
-              "sideUndersideRatio": 2.2606933372087337,
-              "topSideRatio": 1.2242861503102387,
+              "sideUndersideRatio": 3.113878671557754,
+              "topSideRatio": 1.0245585221498192,
               "variant": {
-                "bodyContrast": 0.13615372549019608,
-                "bodyPixelCount": 6300,
+                "bodyContrast": 0.14765098039215688,
+                "bodyPixelCount": 5772,
                 "p99": 62,
-                "sideCount": 2100,
-                "sideMean": 0.07673586181139115,
-                "topCount": 2100,
-                "topMean": 0.09394665284780654,
-                "undersideCount": 2100,
-                "undersideMean": 0.03394350774976695
+                "sideCount": 1924,
+                "sideMean": 0.11125890016713513,
+                "topCount": 1924,
+                "topMean": 0.11399125433125426,
+                "undersideCount": 1924,
+                "undersideMean": 0.03573000489176946
               }
             }
           ],
           "motionMetrics": [
             {
-              "alphaDeltaFromBaseline": 0.000009930967311535484,
-              "alphaEdgeDriftFromBaseline": 0.012235526261747509,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -3153,8 +3153,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.00003080051122906419,
-              "alphaEdgeDriftFromBaseline": 0.028212825928676466,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -3171,8 +3171,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.000009930967311535484,
-              "alphaEdgeDriftFromBaseline": 0.012235526261747509,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
               "forwardReverseAlphaDelta": 0,
               "forwardReverseEdgeDrift": 0,
@@ -3180,8 +3180,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.0038139900736034265,
-              "alphaEdgeDriftFromBaseline": 3,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -3189,8 +3189,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.0025276221692630547,
-              "alphaEdgeDriftFromBaseline": 2,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -3207,26 +3207,26 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.025252207503193697,
-              "alphaEdgeDriftFromBaseline": 32,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.024163096135868818,
-              "forwardReverseEdgeDrift": 30,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "equator",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.020218701507325545,
-              "alphaEdgeDriftFromBaseline": 31,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.01879504124779488,
-              "forwardReverseEdgeDrift": 28,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "equator",
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.004783692936152814,
-              "alphaEdgeDriftFromBaseline": 3.168830660139065,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -3234,8 +3234,8 @@
               "progress": 0
             },
             {
-              "alphaDeltaFromBaseline": 0.030075923223874503,
-              "alphaEdgeDriftFromBaseline": 15,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -3243,8 +3243,8 @@
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.0002948331894820711,
-              "alphaEdgeDriftFromBaseline": 0.03840784622013871,
+              "alphaDeltaFromBaseline": 0.0008449838000205006,
+              "alphaEdgeDriftFromBaseline": 0.016946038844935174,
               "direction": "forward",
               "forwardReverseAlphaDelta": null,
               "forwardReverseEdgeDrift": null,
@@ -3252,25 +3252,25 @@
               "progress": 0.55
             },
             {
-              "alphaDeltaFromBaseline": 0.028736418290667188,
-              "alphaEdgeDriftFromBaseline": 14,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.002888396746241171,
-              "forwardReverseEdgeDrift": 1,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "dateline-north",
               "progress": 0.22
             },
             {
-              "alphaDeltaFromBaseline": 0.024707083210494748,
-              "alphaEdgeDriftFromBaseline": 218,
+              "alphaDeltaFromBaseline": 0,
+              "alphaEdgeDriftFromBaseline": 0,
               "direction": "reverse",
-              "forwardReverseAlphaDelta": 0.026862186221426915,
-              "forwardReverseEdgeDrift": 216,
+              "forwardReverseAlphaDelta": 0,
+              "forwardReverseEdgeDrift": 0,
               "location": "dateline-north",
               "progress": 0
             }
           ],
-          "score": 0.3573785711818149
+          "score": 0.33971501997852566
         }
       ],
       "gateLimits": {

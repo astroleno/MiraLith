@@ -3,205 +3,217 @@
     "desktop": {
       "baselineTimer": {
         "disjointResetCount": 0,
-        "sampleCount": 0,
-        "supported": false
+        "lastMs": 2.579916,
+        "p50Ms": 2.454208,
+        "p95Ms": 3.17,
+        "sampleCount": 120,
+        "supported": true
       },
-      "cityMeanChangePercent": 29.081372694552254,
+      "cityMeanChangePercent": 8.212293345670604,
       "frameMetrics": [
         {
-          "daylightContrastGainPercent": -5.6050831278471875,
+          "daylightContrastGainPercent": -2.1099074037632115,
           "edgeDriftPx": 0,
           "location": "mianyang",
-          "oceanLandSeparationGainPercent": -30.161057359564115,
+          "oceanLandSeparationGainPercent": 320.54479748168615,
           "progress": 0,
-          "reversePixelDelta": 3.593258290970709e-8,
-          "variantP99": 66.87819999999999
+          "reversePixelDelta": 7.56475429678044e-9,
+          "variantP99": 63.376799999999996
         },
         {
-          "daylightContrastGainPercent": -6.284516248624028,
+          "daylightContrastGainPercent": -15.419145341911856,
           "edgeDriftPx": 0,
           "location": "mianyang",
-          "oceanLandSeparationGainPercent": -17.526871463267245,
+          "oceanLandSeparationGainPercent": -41.12744273252096,
           "progress": 0.22,
-          "reversePixelDelta": 3.404139433551198e-8,
-          "variantP99": 63.740199999999994
+          "reversePixelDelta": 2.836782861292665e-9,
+          "variantP99": 60.533199999999994
         },
         {
-          "daylightContrastGainPercent": 6.143082286276713,
+          "daylightContrastGainPercent": -15.90583085462638,
           "edgeDriftPx": 0,
           "location": "mianyang",
-          "oceanLandSeparationGainPercent": -73.17509604478201,
+          "oceanLandSeparationGainPercent": -52.89208389264194,
           "progress": 0.55,
-          "reversePixelDelta": 1.3238320019365772e-8,
-          "variantP99": 60.519999999999996
+          "reversePixelDelta": 5.67356572258533e-9,
+          "variantP99": 58.0894
         },
         {
-          "daylightContrastGainPercent": 0.9661724883444744,
+          "daylightContrastGainPercent": 2.5584781177680593,
           "edgeDriftPx": 0,
           "location": "equator",
-          "oceanLandSeparationGainPercent": -26.623422946052187,
+          "oceanLandSeparationGainPercent": 59.308827343996384,
           "progress": 0,
-          "reversePixelDelta": 0.00004481927801984992,
-          "variantP99": 45.7342
+          "reversePixelDelta": 7.56475429678044e-9,
+          "variantP99": 22.046999999999997
         },
         {
-          "daylightContrastGainPercent": -14.300300982916703,
+          "daylightContrastGainPercent": 0.007775902166518023,
           "edgeDriftPx": 0,
           "location": "equator",
-          "oceanLandSeparationGainPercent": -54.9763668238179,
+          "oceanLandSeparationGainPercent": 260.1228654824568,
           "progress": 0.22,
-          "reversePixelDelta": 0.00004453843651658194,
-          "variantP99": 63.5344
+          "reversePixelDelta": 1.134713144517066e-8,
+          "variantP99": 31.615
         },
         {
-          "daylightContrastGainPercent": -1.5375918232369057,
+          "daylightContrastGainPercent": -19.40122701024386,
           "edgeDriftPx": 0,
           "location": "equator",
-          "oceanLandSeparationGainPercent": -71.4808751311415,
+          "oceanLandSeparationGainPercent": -74.17110474727309,
           "progress": 0.55,
-          "reversePixelDelta": 0.000008496164669571532,
-          "variantP99": 58.745799999999996
+          "reversePixelDelta": 2.836782861292665e-9,
+          "variantP99": 53.6562
         },
         {
-          "daylightContrastGainPercent": 0.9415741849718051,
+          "daylightContrastGainPercent": 1.8061805505562134,
           "edgeDriftPx": 0,
           "location": "dateline-north",
-          "oceanLandSeparationGainPercent": 30.449062400821415,
+          "oceanLandSeparationGainPercent": -9.896627548003334,
           "progress": 0,
-          "reversePixelDelta": 0.0000074191327765674165,
-          "variantP99": 38.650999999999996
+          "reversePixelDelta": 2.836782861292665e-9,
+          "variantP99": 40.3662
         },
         {
-          "daylightContrastGainPercent": 2.2102583866883796,
+          "daylightContrastGainPercent": -0.03320969949027752,
           "edgeDriftPx": 0,
           "location": "dateline-north",
-          "oceanLandSeparationGainPercent": 2104.600202978552,
+          "oceanLandSeparationGainPercent": -0.016969826976365177,
           "progress": 0.22,
-          "reversePixelDelta": 0.000009604401174049867,
-          "variantP99": 43.647
+          "reversePixelDelta": 4.727971435487776e-9,
+          "variantP99": 44.85959999999999
         },
         {
-          "daylightContrastGainPercent": 15.375914287527914,
+          "daylightContrastGainPercent": -3.0005786359514675,
           "edgeDriftPx": 0,
           "location": "dateline-north",
-          "oceanLandSeparationGainPercent": 243.55376607979778,
+          "oceanLandSeparationGainPercent": -56.884596718101854,
           "progress": 0.55,
-          "reversePixelDelta": 0.000007802098462841927,
-          "variantP99": 59.153600000000004
+          "reversePixelDelta": 2.836782861292665e-9,
+          "variantP99": 58.464999999999996
         }
       ],
       "gates": {
         "performancePass": false,
-        "timerSamplesSufficient": false,
+        "timerSamplesSufficient": true,
         "visualPass": false
       },
       "verdict": "reject",
       "variantTimer": {
         "disjointResetCount": 0,
-        "sampleCount": 0,
-        "supported": false
+        "lastMs": 2.11825,
+        "p50Ms": 2.414916,
+        "p95Ms": 3.074499,
+        "sampleCount": 120,
+        "supported": true
       }
     },
     "mobile-landscape": {
       "baselineTimer": {
         "disjointResetCount": 0,
-        "sampleCount": 0,
-        "supported": false
+        "lastMs": 0.883374,
+        "p50Ms": 0.897833,
+        "p95Ms": 1.518875,
+        "sampleCount": 120,
+        "supported": true
       },
-      "cityMeanChangePercent": 14.197014138736405,
+      "cityMeanChangePercent": 6.545505664729025,
       "frameMetrics": [
         {
-          "daylightContrastGainPercent": -4.828846641513063,
+          "daylightContrastGainPercent": -11.553636461586736,
           "edgeDriftPx": 0,
           "location": "mianyang",
-          "oceanLandSeparationGainPercent": 110.51301320536213,
+          "oceanLandSeparationGainPercent": -4.6582360813753105,
           "progress": 0,
-          "reversePixelDelta": 8.902491493518488e-7,
-          "variantP99": 70.4502
+          "reversePixelDelta": 2.8803075080814516e-9,
+          "variantP99": 65.5264
         },
         {
-          "daylightContrastGainPercent": -5.691582354523705,
+          "daylightContrastGainPercent": -9.662907606029636,
           "edgeDriftPx": 0,
           "location": "mianyang",
-          "oceanLandSeparationGainPercent": 99.812490502588,
+          "oceanLandSeparationGainPercent": 59.54086689171096,
           "progress": 0.22,
-          "reversePixelDelta": 3.5408779725632855e-7,
-          "variantP99": 66.8846
+          "reversePixelDelta": 1.728184504848871e-9,
+          "variantP99": 62.705
         },
         {
-          "daylightContrastGainPercent": 1.6410443553874998,
+          "daylightContrastGainPercent": -12.378487822565742,
           "edgeDriftPx": 0,
           "location": "mianyang",
-          "oceanLandSeparationGainPercent": 36.88483803759397,
+          "oceanLandSeparationGainPercent": 91.13487856259361,
           "progress": 0.55,
-          "reversePixelDelta": 5.708659799516092e-7,
-          "variantP99": 68.6642
+          "reversePixelDelta": 1.1521230032325808e-9,
+          "variantP99": 67.28999999999999
         },
         {
-          "daylightContrastGainPercent": 10.779997048985358,
+          "daylightContrastGainPercent": 0.1396455863348134,
           "edgeDriftPx": 0,
           "location": "equator",
-          "oceanLandSeparationGainPercent": 28609.574288795055,
+          "oceanLandSeparationGainPercent": 246.5736867723412,
           "progress": 0,
-          "reversePixelDelta": 0.0008106518220186137,
-          "variantP99": 51.0254
+          "reversePixelDelta": 4.608492012930323e-9,
+          "variantP99": 23.4332
         },
         {
-          "daylightContrastGainPercent": -27.825332872622134,
+          "daylightContrastGainPercent": -3.8228388546336256,
           "edgeDriftPx": 0,
           "location": "equator",
-          "oceanLandSeparationGainPercent": -49.903757595881096,
+          "oceanLandSeparationGainPercent": 1067.685272714074,
           "progress": 0.22,
-          "reversePixelDelta": 0.00025410326143731504,
-          "variantP99": 85.5196
+          "reversePixelDelta": 1.1521230032325808e-9,
+          "variantP99": 33.407599999999995
         },
         {
-          "daylightContrastGainPercent": -22.222311213156832,
+          "daylightContrastGainPercent": -15.386051385586196,
           "edgeDriftPx": 0,
           "location": "equator",
-          "oceanLandSeparationGainPercent": -79.88056889226414,
+          "oceanLandSeparationGainPercent": -13.947971012652738,
           "progress": 0.55,
-          "reversePixelDelta": 0.0004933157226962622,
-          "variantP99": 60.72839999999999
+          "reversePixelDelta": 1.728184504848871e-9,
+          "variantP99": 57.0814
         },
         {
-          "daylightContrastGainPercent": 2.0409926166641945,
+          "daylightContrastGainPercent": 0.6759330911068062,
           "edgeDriftPx": 0,
           "location": "dateline-north",
-          "oceanLandSeparationGainPercent": 479.1472846988184,
+          "oceanLandSeparationGainPercent": 331.33469092799254,
           "progress": 0,
-          "reversePixelDelta": 0.0006386737931261962,
-          "variantP99": 53.50659999999999
+          "reversePixelDelta": 3.456369009697742e-9,
+          "variantP99": 55.7192
         },
         {
-          "daylightContrastGainPercent": 2.129387827899931,
+          "daylightContrastGainPercent": 0.49222084100555286,
           "edgeDriftPx": 0,
           "location": "dateline-north",
-          "oceanLandSeparationGainPercent": 1746.946813784324,
+          "oceanLandSeparationGainPercent": 3.0013132087034045,
           "progress": 0.22,
-          "reversePixelDelta": 0.0001514147824392531,
-          "variantP99": 66.2218
+          "reversePixelDelta": 5.760615016162904e-10,
+          "variantP99": 64.29
         },
         {
-          "daylightContrastGainPercent": -4.717377994843519,
+          "daylightContrastGainPercent": -4.376537937264812,
           "edgeDriftPx": 0,
           "location": "dateline-north",
-          "oceanLandSeparationGainPercent": 27.27413526731457,
+          "oceanLandSeparationGainPercent": 78.67254951645164,
           "progress": 0.55,
-          "reversePixelDelta": 0.00018561946246796598,
-          "variantP99": 73.59599999999999
+          "reversePixelDelta": 1.728184504848871e-9,
+          "variantP99": 71.5026
         }
       ],
       "gates": {
         "performancePass": false,
-        "timerSamplesSufficient": false,
+        "timerSamplesSufficient": true,
         "visualPass": false
       },
       "verdict": "reject",
       "variantTimer": {
         "disjointResetCount": 0,
-        "sampleCount": 0,
-        "supported": false
+        "lastMs": 1.079999,
+        "p50Ms": 1.399874,
+        "p95Ms": 1.821458,
+        "sampleCount": 120,
+        "supported": true
       }
     }
   }

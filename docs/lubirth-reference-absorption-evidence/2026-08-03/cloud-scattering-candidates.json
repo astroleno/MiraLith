@@ -10,13 +10,13 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": false,
             "visualPass": false
           },
-          "score": 0.55
+          "score": 0.24831487142247785
         },
         {
           "candidate": {
@@ -26,13 +26,13 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": false,
             "visualPass": false
           },
-          "score": 0.3
+          "score": 0.24831487142247785
         },
         {
           "candidate": {
@@ -42,13 +42,13 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": false,
             "visualPass": false
           },
-          "score": 0.4906247758410445
+          "score": 0.24831487142247785
         },
         {
           "candidate": {
@@ -58,13 +58,13 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": false,
             "visualPass": false
           },
-          "score": 0.55
+          "score": 0.24831487142247785
         },
         {
           "candidate": {
@@ -74,13 +74,13 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": false,
             "visualPass": false
           },
-          "score": 0.3
+          "score": 0.24822064562861543
         },
         {
           "candidate": {
@@ -90,13 +90,13 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
-            "baselineBlocked": true,
+            "alphaPass": true,
+            "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": false,
             "visualPass": false
           },
-          "score": 0.4906247758410445
+          "score": 0.24837127739725662
         }
       ],
       "winner": null
@@ -111,13 +111,13 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": true,
             "visualPass": false
           },
-          "score": 0.55
+          "score": 0.33971501997852566
         },
         {
           "candidate": {
@@ -127,13 +127,13 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": true,
             "visualPass": false
           },
-          "score": 0.268097597907672
+          "score": 0.33971501997852566
         },
         {
           "candidate": {
@@ -143,13 +143,13 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": true,
             "visualPass": false
           },
-          "score": 0.3573785711818149
+          "score": 0.33971501997852566
         },
         {
           "candidate": {
@@ -159,13 +159,13 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": true,
             "visualPass": false
           },
-          "score": 0.55
+          "score": 0.33971501997852566
         },
         {
           "candidate": {
@@ -175,13 +175,13 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": true,
             "visualPass": false
           },
-          "score": 0.3573785711818149
+          "score": 0.33971501997852566
         },
         {
           "candidate": {
@@ -191,13 +191,13 @@
           },
           "eligible": false,
           "gates": {
-            "alphaPass": false,
+            "alphaPass": true,
             "baselineBlocked": false,
             "budgetPass": true,
             "gpuPass": true,
             "visualPass": false
           },
-          "score": 0.3573785711818149
+          "score": 0.33971501997852566
         }
       ],
       "winner": null
