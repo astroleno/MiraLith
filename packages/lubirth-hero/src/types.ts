@@ -10,6 +10,10 @@ export type LandingRuntimeProfile = "full" | "home-lite";
 export type LandingCloudMode = "surface" | "shell-lite" | "nasa-lite" | "relief-lite" | "lookdev";
 export type LandingPostEffectMode = "off" | "analytic-halo" | "full-bloom";
 export type LandingAtmosphereMode = "surface-glow" | "directional-lite" | "limb-lite" | "lookdev";
+export type LandingReferenceAbsorptionCloudDebugMode =
+  | "none"
+  | "cloud-alpha"
+  | "cloud-lighting";
 
 export interface LandingVisualPolicy {
   cloudMode: LandingCloudMode;
@@ -226,8 +230,10 @@ export interface EarthMoonSceneProps {
   sectionProgress?: number;
   debugMianyang?: boolean;
   visualDebugLayer?: LandingVisualDebugLayer;
+  referenceAbsorptionCloudDebugMode?: LandingReferenceAbsorptionCloudDebugMode;
   referenceAbsorptionForceEarthMaterialFailure?: boolean;
   referenceAbsorptionGpuTimerEnabled?: boolean;
+  referenceAbsorptionScatteringCandidateId?: string;
   referenceAbsorptionVariant?: LandingReferenceAbsorptionVariant;
   renderProfile?: LandingRenderProfile;
   runtimeProfile?: LandingRuntimeProfile;

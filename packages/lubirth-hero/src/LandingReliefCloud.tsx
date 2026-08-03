@@ -23,6 +23,7 @@ import {
   LANDING_RELIEF_LITE_CLOUD_BOTTOM_SCALE,
   LANDING_RELIEF_LITE_CLOUD_TOP_SCALE,
   LANDING_RELIEF_LITE_SUN_STEPS,
+  LANDING_RELIEF_LITE_TEMPORAL_JITTER,
   isLandingReliefLiteMobileViewport,
   resolveLandingReliefLiteBudget
 } from "./landingEarthLiteV2Policy";
@@ -34,8 +35,14 @@ import {
   createLandingGpuTimer,
   type LandingGpuTimerSnapshot
 } from "./landingGpuTimer";
+import { referenceVariantUsesCloudScattering } from "./landingReferenceAbsorptionPolicy";
+import {
+  RELIEF_SCATTERING_GLSL,
+  resolveReliefScatteringCandidate
+} from "./landingReliefCloudScattering";
 import type {
   LandingComposition,
+  LandingReferenceAbsorptionCloudDebugMode,
   LandingReferenceAbsorptionVariant,
   LandingResolvedAssets
 } from "./types";
@@ -47,6 +54,9 @@ interface LandingReliefCloudProps {
   emphasis?: boolean;
   lightingFrame: LandingPlanetLightingFrame;
   quality: QualityProfile;
+  referenceAbsorptionCloudDebugMode?: LandingReferenceAbsorptionCloudDebugMode;
+  referenceAbsorptionGpuTimerEnabled?: boolean;
+  referenceAbsorptionScatteringCandidateId?: string;
   referenceAbsorptionVariant?: LandingReferenceAbsorptionVariant;
 }
 
@@ -64,12 +74,17 @@ interface LandingReliefCloudTelemetry {
   integrationPath: "ray-sphere-thin-shell";
   lodTransitions: false;
   mobile: boolean;
+  multiScatterStrength: number | null;
+  phaseG: number | null;
   premultipliedAlpha: true;
   referenceAbsorptionVariant: LandingReferenceAbsorptionVariant;
   rendererTextureCount: number;
+  scatteringCandidateId: string | null;
+  scatteringModel: "hg-ms-v1" | "relief-baseline";
   shellCount: 1;
   estimatedActiveTextureBytes: number;
   sunDirection: [number, number, number];
+  temporalJitter: false;
   textureCompression: "uastc" | "rgba8";
   textureSource: string;
   textureUuid: string;
@@ -123,12 +138,16 @@ function createReliefCloudMaterial({
   composition,
   cloudBottom,
   cloudTop,
+  referenceDebugEnabled,
+  referenceScatteringEnabled,
   viewSteps,
   texture
 }: {
   composition: LandingComposition;
   cloudBottom: number;
   cloudTop: number;
+  referenceDebugEnabled: boolean;
+  referenceScatteringEnabled: boolean;
   viewSteps: 2 | 3;
   texture: NonNullable<ReturnType<typeof useLandingTexture>["texture"]>;
 }) {
@@ -152,7 +171,16 @@ function createReliefCloudMaterial({
       reverseSun: { value: 0 },
       reverseSunField: { value: 0 },
       sunSampleScale: { value: 1 },
-      terminatorSoftness: { value: composition.earth.terminatorSoftness }
+      terminatorSoftness: { value: composition.earth.terminatorSoftness },
+      ...(referenceScatteringEnabled
+        ? {
+            referenceMultiScatterStrength: { value: 0 },
+            referencePhaseG: { value: 0 }
+          }
+        : {}),
+      ...(referenceDebugEnabled
+        ? { referenceCloudDebugMode: { value: 0 } }
+        : {})
     },
     vertexShader: `
       uniform sampler2D cloudFieldMap;
@@ -216,6 +244,13 @@ function createReliefCloudMaterial({
       uniform float reverseSunField;
       uniform float sunSampleScale;
       uniform float terminatorSoftness;
+      ${referenceScatteringEnabled ? `
+        uniform float referenceMultiScatterStrength;
+        uniform float referencePhaseG;
+      ` : ""}
+      ${referenceDebugEnabled ? `
+        uniform float referenceCloudDebugMode;
+      ` : ""}
 
       varying float vDisplacedHeight;
       varying vec3 vLocalPosition;
@@ -226,6 +261,7 @@ function createReliefCloudMaterial({
       varying vec3 vWorldNorth;
 
       ${PLANET_LIGHTING_GLSL}
+      ${referenceScatteringEnabled ? RELIEF_SCATTERING_GLSL : ""}
 
       vec2 wrapCloudUv(vec2 uv) {
         return vec2(uv.x, clamp(uv.y, 0.001, 0.999));
@@ -469,6 +505,48 @@ function createReliefCloudMaterial({
           -lightOcclusion * mix(0.95, 4.25, lowSun) *
             mix(0.66, 1.08, cloudCore)
         );
+        ${referenceScatteringEnabled ? `
+          float scatteringTau = max(
+            lightOcclusion * mix(0.76, 1.08, cloudCore),
+            0.0
+          );
+          float scatteringNormalization = max(
+            cheapMultiScatter(
+              0.0,
+              1.0,
+              referencePhaseG,
+              referenceMultiScatterStrength
+            ),
+            0.001
+          );
+          float referenceForwardScatter = clamp(
+            cheapMultiScatter(
+              scatteringTau,
+              dot(-viewDirection, sunDirection),
+              referencePhaseG,
+              referenceMultiScatterStrength
+            ) / scatteringNormalization,
+            0.0,
+            1.0
+          );
+          float referenceDirectScatter = clamp(
+            cheapMultiScatter(
+              scatteringTau,
+              normalSunDot,
+              referencePhaseG,
+              referenceMultiScatterStrength
+            ) / scatteringNormalization,
+            0.0,
+            1.0
+          );
+          float referenceBeer = exp(-scatteringTau);
+          lightTransmittance = clamp(
+            referenceBeer * mix(0.36, 0.92, max(shapedSun, 0.0)) +
+              referenceDirectScatter * mix(0.06, 0.22, grazingView),
+            0.0,
+            1.0
+          );
+        ` : ""}
 
         float sunFieldFacing = dot(sphereNormal, sunFieldDirection);
         float sunFieldTopLight = smoothstep(0.04, 0.58, sunFieldFacing) *
@@ -509,7 +587,11 @@ function createReliefCloudMaterial({
         cloudColor *= 1.0 - sunOcclusion * mix(0.1, 0.26, lowSun);
         cloudColor *= mix(0.84, 1.12, topHeight) * mix(1.0, 0.9, concavity);
 
-        float forwardScatter = pow(max(dot(-viewDirection, sunDirection), 0.0), 7.0);
+        float forwardScatter = ${
+          referenceScatteringEnabled
+            ? "referenceForwardScatter"
+            : "pow(max(dot(-viewDirection, sunDirection), 0.0), 7.0)"
+        };
         float controlledSilver = forwardScatter * pow(grazingView, 2.35) *
           max(lightMasks.dayMask, lightMasks.twilightMask * 0.72) *
           mix(lightTransmittance, 1.0, 0.28) *
@@ -532,6 +614,14 @@ function createReliefCloudMaterial({
         alpha *= mix(0.9, 1.08, cloudCore);
         alpha *= mix(0.84, 1.0, lightMasks.dayMask + lightMasks.twilightMask * 0.35);
         alpha = clamp(alpha, 0.0, 0.92);
+        ${referenceDebugEnabled ? `
+          if (referenceCloudDebugMode < 1.5) {
+            gl_FragColor = vec4(vec3(alpha), 1.0);
+          } else {
+            gl_FragColor = vec4(max(cloudColor, vec3(0.0)) * alpha, 1.0);
+          }
+          return;
+        ` : ""}
         gl_FragColor = vec4(max(cloudColor, vec3(0.0)) * alpha, alpha);
       }
     `,
@@ -550,10 +640,20 @@ export function LandingReliefCloud({
   emphasis = false,
   lightingFrame,
   quality,
+  referenceAbsorptionCloudDebugMode = "none",
+  referenceAbsorptionGpuTimerEnabled = false,
+  referenceAbsorptionScatteringCandidateId,
   referenceAbsorptionVariant = "baseline"
 }: LandingReliefCloudProps) {
   const cloud = useRef<Mesh>(null);
   const { camera, gl } = useThree();
+  const referenceScatteringEnabled = referenceVariantUsesCloudScattering(
+    referenceAbsorptionVariant
+  );
+  const referenceDebugEnabled = referenceAbsorptionCloudDebugMode !== "none";
+  const scatteringCandidate = resolveReliefScatteringCandidate(
+    referenceAbsorptionScatteringCandidateId
+  );
   const visualTestOverridesEnabled = useMemo(() => {
     if (typeof window === "undefined") {
       return false;
@@ -597,10 +697,11 @@ export function LandingReliefCloud({
       return false;
     }
     const params = new URLSearchParams(window.location.search);
-    return params.get("visualTest") === "performance" ||
+    return referenceAbsorptionGpuTimerEnabled ||
+      params.get("visualTest") === "performance" ||
       params.get("reliefLiteGpuTimer") === "on" ||
       params.get("reliefLiteValidation") === "on";
-  }, []);
+  }, [referenceAbsorptionGpuTimerEnabled]);
   const gpuTimer = useMemo(
     () => createLandingGpuTimer(gl.getContext(), gpuTimerEnabled),
     [gl, gpuTimerEnabled]
@@ -619,17 +720,27 @@ export function LandingReliefCloud({
   const cloudTop = composition.earth.radius * LANDING_RELIEF_LITE_CLOUD_TOP_SCALE;
   const geometrySegments = resolveGeometrySegments(quality, mobile);
   const material = useMemo(
-	    () => texture
-	      ? createReliefCloudMaterial({
-	        cloudBottom,
-	        cloudTop,
-	        composition,
-	        viewSteps: budget.viewSteps,
-	        texture
-	      })
-	      : null,
-	    [budget.viewSteps, cloudBottom, cloudTop, composition, texture]
-	  );
+    () => texture
+      ? createReliefCloudMaterial({
+          cloudBottom,
+          cloudTop,
+          composition,
+          referenceDebugEnabled,
+          referenceScatteringEnabled,
+          viewSteps: budget.viewSteps,
+          texture
+        })
+      : null,
+    [
+      budget.viewSteps,
+      cloudBottom,
+      cloudTop,
+      composition,
+      referenceDebugEnabled,
+      referenceScatteringEnabled,
+      texture
+    ]
+  );
   const enabled = Boolean(
     material && texture && !failed && composition.earth.useClouds && quality.tier !== "fallback"
   );
@@ -686,6 +797,15 @@ export function LandingReliefCloud({
       0,
       1
     );
+    if (referenceScatteringEnabled) {
+      cloudMaterial.uniforms.referenceMultiScatterStrength.value =
+        scatteringCandidate.multiScatter;
+      cloudMaterial.uniforms.referencePhaseG.value = scatteringCandidate.g;
+    }
+    if (referenceDebugEnabled) {
+      cloudMaterial.uniforms.referenceCloudDebugMode.value =
+        referenceAbsorptionCloudDebugMode === "cloud-alpha" ? 1 : 2;
+    }
 
     window.__MiraLithLuBirthReliefCloud = {
       active: true,
@@ -706,9 +826,19 @@ export function LandingReliefCloud({
       integrationPath: "ray-sphere-thin-shell",
       lodTransitions: false,
       mobile,
+      multiScatterStrength: referenceScatteringEnabled
+        ? scatteringCandidate.multiScatter
+        : null,
+      phaseG: referenceScatteringEnabled ? scatteringCandidate.g : null,
       premultipliedAlpha: true,
       referenceAbsorptionVariant,
       rendererTextureCount: gl.info.memory.textures,
+      scatteringCandidateId: referenceScatteringEnabled
+        ? scatteringCandidate.id
+        : null,
+      scatteringModel: referenceScatteringEnabled
+        ? "hg-ms-v1"
+        : "relief-baseline",
       shellCount: 1,
       sunDirection: [
         lightingFrame.sunDirection.x,
@@ -716,14 +846,15 @@ export function LandingReliefCloud({
         lightingFrame.sunDirection.z
       ],
       textureCompression: compressedTextureActive ? "uastc" : "rgba8",
-	      textureSource: cloudField.src,
-	      textureUuid: texture.uuid,
-	      sunSteps: LANDING_RELIEF_LITE_SUN_STEPS,
-	      thinShellIntegration: true,
-	      vertexTextureReads: 1,
-	      viewSteps: budget.viewSteps
-	    };
-	  });
+      textureSource: cloudField.src,
+      textureUuid: texture.uuid,
+      sunSteps: LANDING_RELIEF_LITE_SUN_STEPS,
+      temporalJitter: LANDING_RELIEF_LITE_TEMPORAL_JITTER,
+      thinShellIntegration: true,
+      vertexTextureReads: 1,
+      viewSteps: budget.viewSteps
+    };
+  });
 
   if (!enabled || !material) {
     return null;

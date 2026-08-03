@@ -17,6 +17,17 @@ export const RELIEF_SCATTERING_CANDIDATES = [
 ] as const;
 
 export type ReliefScatteringCandidate = (typeof RELIEF_SCATTERING_CANDIDATES)[number];
+export type ReliefScatteringCandidateId = ReliefScatteringCandidate["id"];
+
+export const DEFAULT_RELIEF_SCATTERING_CANDIDATE_ID =
+  RELIEF_SCATTERING_CANDIDATES[0].id;
+
+export function resolveReliefScatteringCandidate(
+  id: string | null | undefined
+): ReliefScatteringCandidate {
+  return RELIEF_SCATTERING_CANDIDATES.find((candidate) => candidate.id === id) ??
+    RELIEF_SCATTERING_CANDIDATES[0];
+}
 
 function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(Math.max(value, minimum), maximum);

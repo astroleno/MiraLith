@@ -37,8 +37,15 @@ interface ReferenceCloudTelemetry {
   active: true;
   densityIntegration: "front-to-back";
   fragmentTextureReads: 3 | 4;
+  multiScatterStrength: number | null;
   premultipliedAlpha: true;
+  phaseG: number | null;
   referenceAbsorptionVariant: string;
+  scatteringCandidateId: string | null;
+  scatteringModel: "hg-ms-v1" | "relief-baseline";
+  sunSteps: 1;
+  temporalJitter: false;
+  viewSteps: 2 | 3;
 }
 
 declare global {
@@ -325,6 +332,60 @@ test("uses one packed material read only when the spike asset is ready", async (
       materialMapActive: false,
       materialMapSource: null,
       materialModel: "baseline"
+    });
+});
+
+test("keeps Relief-lite budgets bounded for the cloud scattering spike", async ({ page }) => {
+  await page.goto(createSpikeUrl({
+    referenceAbsorptionGpuTimer: "on",
+    variant: "baseline"
+  }));
+  await waitForReferenceAbsorptionRoute(page, "baseline");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthReliefCloud), {
+      timeout: 25_000
+    })
+    .toMatchObject({
+      active: true,
+      densityIntegration: "front-to-back",
+      fragmentTextureReads: 4,
+      multiScatterStrength: null,
+      phaseG: null,
+      premultipliedAlpha: true,
+      scatteringCandidateId: null,
+      scatteringModel: "relief-baseline",
+      sunSteps: 1,
+      temporalJitter: false,
+      viewSteps: 3
+    });
+
+  await page.goto(createSpikeUrl({
+    debug: "cloud-alpha",
+    referenceAbsorptionGpuTimer: "on",
+    scatteringCandidate: "g072-ms028",
+    variant: "cloud-scattering-v1"
+  }));
+  await waitForReferenceAbsorptionRoute(page, "cloud-scattering-v1");
+  await expect(page.locator(".lubirth-reference-absorption-spike")).toHaveAttribute(
+    "data-reference-absorption-cloud-debug",
+    "cloud-alpha"
+  );
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthReliefCloud), {
+      timeout: 25_000
+    })
+    .toMatchObject({
+      active: true,
+      densityIntegration: "front-to-back",
+      fragmentTextureReads: 4,
+      multiScatterStrength: 0.28,
+      phaseG: 0.72,
+      premultipliedAlpha: true,
+      scatteringCandidateId: "g072-ms028",
+      scatteringModel: "hg-ms-v1",
+      sunSteps: 1,
+      temporalJitter: false,
+      viewSteps: 3
     });
 });
 

@@ -213,8 +213,10 @@ export function EarthMoonScene({
   showAuroraInAll = false,
   atmosphereVariant = "stack",
   atmosphereLook = "lubirth",
+  referenceAbsorptionCloudDebugMode = "none",
   referenceAbsorptionForceEarthMaterialFailure = false,
   referenceAbsorptionGpuTimerEnabled = false,
+  referenceAbsorptionScatteringCandidateId,
   referenceAbsorptionVariant = "baseline",
   closeAtmosphereTuning
 }: EarthMoonSceneProps) {
@@ -830,6 +832,11 @@ export function EarthMoonScene({
                 quality={quality}
                 lightingFrame={planetLightingFrame}
                 emphasis={debugClouds}
+                referenceAbsorptionCloudDebugMode={referenceAbsorptionCloudDebugMode}
+                referenceAbsorptionGpuTimerEnabled={referenceAbsorptionGpuTimerEnabled}
+                referenceAbsorptionScatteringCandidateId={
+                  referenceAbsorptionScatteringCandidateId
+                }
                 referenceAbsorptionVariant={referenceAbsorptionVariant}
               />
             ) : (

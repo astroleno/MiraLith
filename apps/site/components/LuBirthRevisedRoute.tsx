@@ -8,6 +8,7 @@ import {
   type LandingAtmospherePolicy,
   type LandingCloudMode,
   type LandingPostEffectMode,
+  type LandingReferenceAbsorptionCloudDebugMode,
   type LandingReferenceAbsorptionVariant,
   type LandingRenderProfile,
   type LandingVisualDebugLayer,
@@ -82,8 +83,10 @@ interface LuBirthRevisedRouteProps {
   ariaLabel?: string;
   stageLabel?: string;
   initialForcedVisualFallback?: boolean;
+  referenceAbsorptionCloudDebugMode?: LandingReferenceAbsorptionCloudDebugMode;
   referenceAbsorptionForceEarthMaterialFailure?: boolean;
   referenceAbsorptionGpuTimerEnabled?: boolean;
+  referenceAbsorptionScatteringCandidateId?: string;
   referenceAbsorptionVariant?: LandingReferenceAbsorptionVariant;
 }
 
@@ -487,8 +490,10 @@ export function LuBirthRevisedRoute(props: LuBirthRevisedRouteProps) {
     ariaLabel,
     stageLabel,
     initialForcedVisualFallback = false,
+    referenceAbsorptionCloudDebugMode = "none",
     referenceAbsorptionForceEarthMaterialFailure = false,
     referenceAbsorptionGpuTimerEnabled = false,
+    referenceAbsorptionScatteringCandidateId,
     referenceAbsorptionVariant = "baseline"
   } = props;
   const referenceAbsorptionRoute = Object.prototype.hasOwnProperty.call(
@@ -1621,8 +1626,10 @@ export function LuBirthRevisedRoute(props: LuBirthRevisedRouteProps) {
               productionSurface
               {...(referenceAbsorptionRoute
                 ? {
+                    referenceAbsorptionCloudDebugMode,
                     referenceAbsorptionForceEarthMaterialFailure,
                     referenceAbsorptionGpuTimerEnabled,
+                    referenceAbsorptionScatteringCandidateId,
                     referenceAbsorptionVariant
                   }
                 : {})}

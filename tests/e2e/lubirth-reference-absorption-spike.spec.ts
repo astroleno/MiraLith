@@ -29,6 +29,21 @@ interface EarthSurfaceTelemetry {
   referenceAbsorptionVariant: string;
 }
 
+interface ReliefCloudTelemetry {
+  active: true;
+  densityIntegration: "front-to-back";
+  fragmentTextureReads: 3 | 4;
+  multiScatterStrength: number | null;
+  phaseG: number | null;
+  premultipliedAlpha: true;
+  referenceAbsorptionVariant: string;
+  scatteringCandidateId: string | null;
+  scatteringModel: "hg-ms-v1" | "relief-baseline";
+  sunSteps: 1;
+  temporalJitter: false;
+  viewSteps: 2 | 3;
+}
+
 interface ProjectedEarthLighting {
   center: [number, number];
   radius: number;
@@ -65,6 +80,7 @@ declare global {
       latitudeDeg: number;
       longitudeDeg: number;
     };
+    __MiraLithLuBirthReliefCloud?: ReliefCloudTelemetry;
   }
 }
 
@@ -76,12 +92,14 @@ const LOCATIONS: LocationCase[] = [
 const PROGRESS_POINTS = [0, 0.22, 0.55];
 
 function createUrl(input: {
+  debug?: "cloud-alpha" | "cloud-lighting";
   location: LocationCase;
   progress: number;
   quality: "high" | "medium";
-  variant: "baseline" | "earth-material-v1";
+  scatteringCandidate?: string;
+  variant: "baseline" | "cloud-scattering-v1" | "earth-material-v1";
 }) {
-  return `/lubirth-reference-absorption-spike?${new URLSearchParams({
+  const params = new URLSearchParams({
     copy: "hidden",
     geoLabel: input.location.id,
     geoLat: String(input.location.latitude),
@@ -92,7 +110,14 @@ function createUrl(input: {
     sunDate: "1993-08-01T03:03:00Z",
     variant: input.variant,
     visualTest: "pixels"
-  }).toString()}`;
+  });
+  if (input.debug) {
+    params.set("debug", input.debug);
+  }
+  if (input.scatteringCandidate) {
+    params.set("scatteringCandidate", input.scatteringCandidate);
+  }
+  return `/lubirth-reference-absorption-spike?${params.toString()}`;
 }
 
 function fileStem(
@@ -490,4 +515,59 @@ test("earth material preserves Earth-local geography and records the A-track mat
     expect(metric.reversePixelDelta).toBeLessThanOrEqual(1 / 255);
     expect(metric.edgeDriftPx).toBeLessThanOrEqual(1);
   }
+});
+
+test("cloud scattering contract keeps the Relief-lite integration bounded", async ({ page }) => {
+  const input = {
+    location: LOCATIONS[0],
+    progress: 0.22,
+    quality: "high" as const
+  };
+
+  await page.goto(createUrl({ ...input, variant: "baseline" }));
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthReliefCloud), {
+      timeout: 25_000
+    })
+    .toMatchObject({
+      active: true,
+      densityIntegration: "front-to-back",
+      fragmentTextureReads: 4,
+      multiScatterStrength: null,
+      phaseG: null,
+      premultipliedAlpha: true,
+      scatteringCandidateId: null,
+      scatteringModel: "relief-baseline",
+      sunSteps: 1,
+      temporalJitter: false,
+      viewSteps: 3
+    });
+
+  await page.goto(createUrl({
+    ...input,
+    debug: "cloud-lighting",
+    scatteringCandidate: "g072-ms028",
+    variant: "cloud-scattering-v1"
+  }));
+  await expect(page.locator(".lubirth-reference-absorption-spike")).toHaveAttribute(
+    "data-reference-absorption-cloud-debug",
+    "cloud-lighting"
+  );
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthReliefCloud), {
+      timeout: 25_000
+    })
+    .toMatchObject({
+      active: true,
+      densityIntegration: "front-to-back",
+      fragmentTextureReads: 4,
+      multiScatterStrength: 0.28,
+      phaseG: 0.72,
+      premultipliedAlpha: true,
+      scatteringCandidateId: "g072-ms028",
+      scatteringModel: "hg-ms-v1",
+      sunSteps: 1,
+      temporalJitter: false,
+      viewSteps: 3
+    });
 });

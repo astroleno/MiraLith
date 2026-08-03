@@ -32,6 +32,7 @@ import type {
   LandingAtmosphereVariant,
   LandingAuroraProfile,
   LandingPostEffectMode,
+  LandingReferenceAbsorptionCloudDebugMode,
   LandingReferenceAbsorptionVariant,
   LandingCloseAtmosphereTuning,
   LandingCloudMode,
@@ -193,8 +194,10 @@ interface LuBirthSceneSlotProps {
   paused?: boolean;
   cloudDeckEnabled?: boolean;
   closeAtmosphereTuning?: Partial<LandingCloseAtmosphereTuning>;
+  referenceAbsorptionCloudDebugMode?: LandingReferenceAbsorptionCloudDebugMode;
   referenceAbsorptionForceEarthMaterialFailure?: boolean;
   referenceAbsorptionGpuTimerEnabled?: boolean;
+  referenceAbsorptionScatteringCandidateId?: string;
   referenceAbsorptionVariant?: LandingReferenceAbsorptionVariant;
   onProjectionFrame?: (frame: LuBirthProjectionFrame) => void;
   onVisualReadyEnough?: () => void;
@@ -578,8 +581,10 @@ export function LuBirthSceneSlot(props: LuBirthSceneSlotProps) {
     paused = false,
     cloudDeckEnabled = true,
     closeAtmosphereTuning,
+    referenceAbsorptionCloudDebugMode = "none",
     referenceAbsorptionForceEarthMaterialFailure = false,
     referenceAbsorptionGpuTimerEnabled = false,
+    referenceAbsorptionScatteringCandidateId,
     referenceAbsorptionVariant = "baseline",
     onProjectionFrame,
     onVisualReadyEnough,
@@ -973,10 +978,12 @@ export function LuBirthSceneSlot(props: LuBirthSceneSlotProps) {
       quality={qualityProfile}
       debugMianyang={debugMianyang}
       visualDebugLayer={visualDebugLayer}
+      referenceAbsorptionCloudDebugMode={referenceAbsorptionCloudDebugMode}
       referenceAbsorptionForceEarthMaterialFailure={
         referenceAbsorptionForceEarthMaterialFailure
       }
       referenceAbsorptionGpuTimerEnabled={referenceAbsorptionGpuTimerEnabled}
+      referenceAbsorptionScatteringCandidateId={referenceAbsorptionScatteringCandidateId}
       referenceAbsorptionVariant={referenceAbsorptionVariant}
       renderProfile={activeRenderProfile}
       runtimeProfile={runtimeProfile}

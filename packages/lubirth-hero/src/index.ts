@@ -3,20 +3,27 @@ export { EarthMoonScene } from "./EarthMoonScene";
 export { resolveLuBirthAtmospherePolicy } from "./atmospherePolicy";
 export { resolveLandingVisualPolicy } from "./landingVisualPolicy";
 export {
+  LANDING_REFERENCE_ABSORPTION_CLOUD_DEBUG_MODES,
   LANDING_REFERENCE_ABSORPTION_VARIANTS,
   referenceVariantUsesCloudScattering,
   referenceVariantUsesEarthMaterial,
+  resolveLandingReferenceAbsorptionCloudDebugMode,
   resolveLandingReferenceAbsorptionVariant
 } from "./landingReferenceAbsorptionPolicy";
 export {
+  DEFAULT_RELIEF_SCATTERING_CANDIDATE_ID,
   RELIEF_SCATTERING_CANDIDATES,
   RELIEF_SCATTERING_CONFIG,
   RELIEF_SCATTERING_GLSL,
   resolveBeerTransmittance,
   resolveCheapMultiScatter,
-  resolveHenyeyGreenstein
+  resolveHenyeyGreenstein,
+  resolveReliefScatteringCandidate
 } from "./landingReliefCloudScattering";
-export type { ReliefScatteringCandidate } from "./landingReliefCloudScattering";
+export type {
+  ReliefScatteringCandidate,
+  ReliefScatteringCandidateId
+} from "./landingReliefCloudScattering";
 export {
   createLandingPlanetLightingFrame,
   PLANET_LIGHTING_GLSL,
@@ -34,6 +41,7 @@ export {
   LANDING_RELIEF_LITE_MOBILE_TEXTURE_READS,
   LANDING_RELIEF_LITE_MOBILE_VIEW_STEPS,
   LANDING_RELIEF_LITE_SUN_STEPS,
+  LANDING_RELIEF_LITE_TEMPORAL_JITTER,
   hasValidReliefLiteLayerOrdering,
   isLandingReliefLiteMobileViewport,
   resolveLandingReliefLiteBudget
@@ -123,6 +131,7 @@ export type {
   LandingMoonLightingMode,
   LandingMoonPhase,
   LandingPostEffectMode,
+  LandingReferenceAbsorptionCloudDebugMode,
   LandingReferenceAbsorptionVariant,
   LandingRenderProfile,
   LandingRuntimeProfile,

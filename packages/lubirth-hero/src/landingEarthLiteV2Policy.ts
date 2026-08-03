@@ -10,6 +10,7 @@ export const LANDING_RELIEF_LITE_DESKTOP_TEXTURE_READS = 4;
 export const LANDING_RELIEF_LITE_MOBILE_VIEW_STEPS = 2;
 export const LANDING_RELIEF_LITE_DESKTOP_VIEW_STEPS = 3;
 export const LANDING_RELIEF_LITE_SUN_STEPS = 1;
+export const LANDING_RELIEF_LITE_TEMPORAL_JITTER = false;
 
 export interface LandingReliefLiteBudget {
   mobile: boolean;
