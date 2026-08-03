@@ -15,6 +15,15 @@ test.setTimeout(120_000);
 
 interface ReferenceEarthTelemetry {
   active: true;
+  gpuTimer: {
+    disjointResetCount: number;
+    sampleCount: number;
+    supported: boolean;
+  };
+  materialFragmentTextureReads: 0 | 1;
+  materialMapActive: boolean;
+  materialMapSource: string | null;
+  materialModel: "baseline" | "packed-v1";
   referenceAbsorptionVariant: string;
 }
 
@@ -199,6 +208,68 @@ test("routes only the dedicated spike through the reference absorption control p
 
   await page.goto(createSpikeUrl({ variant: "anything-else" }));
   await waitForReferenceAbsorptionRoute(page, "baseline");
+});
+
+test("uses one packed material read only when the spike asset is ready", async ({ page }) => {
+  await page.goto(createSpikeUrl({
+    referenceAbsorptionGpuTimer: "on",
+    variant: "baseline"
+  }));
+  await waitForReferenceAbsorptionRoute(page, "baseline");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthEarthSurfaceLiteV2))
+    .toMatchObject({
+      active: true,
+      gpuTimer: {
+        disjointResetCount: expect.any(Number),
+        sampleCount: expect.any(Number),
+        supported: expect.any(Boolean)
+      },
+      materialFragmentTextureReads: 0,
+      materialMapActive: false,
+      materialMapSource: null,
+      materialModel: "baseline"
+    });
+
+  await page.goto(createSpikeUrl({
+    referenceAbsorptionGpuTimer: "on",
+    variant: "earth-material-v1"
+  }));
+  await waitForReferenceAbsorptionRoute(page, "earth-material-v1");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthEarthSurfaceLiteV2), {
+      timeout: 25_000
+    })
+    .toMatchObject({
+      active: true,
+      gpuTimer: {
+        disjointResetCount: expect.any(Number),
+        sampleCount: expect.any(Number),
+        supported: expect.any(Boolean)
+      },
+      materialFragmentTextureReads: 1,
+      materialMapActive: true,
+      materialMapSource: expect.stringContaining("earth-material-lite-v1"),
+      materialModel: "packed-v1"
+    });
+
+  await page.goto(createSpikeUrl({
+    referenceAbsorptionForceEarthMaterialFailure: "on",
+    variant: "earth-material-v1"
+  }));
+  await waitForReferenceAbsorptionRoute(page, "earth-material-v1");
+  await expect(page.locator("canvas")).toHaveCount(1);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthEarthSurfaceLiteV2), {
+      timeout: 25_000
+    })
+    .toMatchObject({
+      active: true,
+      materialFragmentTextureReads: 0,
+      materialMapActive: false,
+      materialMapSource: null,
+      materialModel: "baseline"
+    });
 });
 
 test("keeps the homepage and revised route on the non-experimental baseline", async ({ page }) => {

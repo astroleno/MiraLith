@@ -8,10 +8,14 @@ import {
 import { LuBirthRevisedRoute } from "./LuBirthRevisedRoute";
 
 interface ReferenceAbsorptionConfig {
+  forceEarthMaterialFailure: boolean;
+  gpuTimerEnabled: boolean;
   variant: LandingReferenceAbsorptionVariant;
 }
 
 const DEFAULT_CONFIG: ReferenceAbsorptionConfig = {
+  forceEarthMaterialFailure: false,
+  gpuTimerEnabled: false,
   variant: "baseline"
 };
 
@@ -25,6 +29,9 @@ function readConfig(): ReferenceAbsorptionConfig {
 
   const params = new URLSearchParams(window.location.search);
   return {
+    forceEarthMaterialFailure:
+      params.get("referenceAbsorptionForceEarthMaterialFailure") === "on",
+    gpuTimerEnabled: params.get("referenceAbsorptionGpuTimer") === "on",
     variant: resolveLandingReferenceAbsorptionVariant(params.get("variant"))
   };
 }
@@ -58,7 +65,11 @@ export function LuBirthReferenceAbsorptionSpikeRoute() {
       className="lubirth-reference-absorption-spike"
       data-reference-absorption-variant={config.variant}
     >
-      <LuBirthRevisedRoute referenceAbsorptionVariant={config.variant} />
+      <LuBirthRevisedRoute
+        referenceAbsorptionForceEarthMaterialFailure={config.forceEarthMaterialFailure}
+        referenceAbsorptionGpuTimerEnabled={config.gpuTimerEnabled}
+        referenceAbsorptionVariant={config.variant}
+      />
     </div>
   );
 }

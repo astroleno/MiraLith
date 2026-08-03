@@ -1,4 +1,5 @@
 export interface LandingGpuTimerSnapshot {
+  disjointResetCount: number;
   lastMs?: number;
   p50Ms?: number;
   p95Ms?: number;
@@ -37,8 +38,11 @@ export function createLandingGpuTimer(
   const pending: WebGLQuery[] = [];
   const samples: number[] = [];
   let active: WebGLQuery | null = null;
+  let disjointActive = false;
+  let disjointResetCount = 0;
 
   const snapshot = (): LandingGpuTimerSnapshot => ({
+    disjointResetCount,
     lastMs: samples.at(-1),
     p50Ms: percentile(samples, 0.5),
     p95Ms: percentile(samples, 0.95),
@@ -56,6 +60,13 @@ export function createLandingGpuTimer(
   }
 
   const poll = () => {
+    const disjoint = Boolean(webgl2.getParameter(extension.GPU_DISJOINT_EXT));
+    if (disjoint && !disjointActive) {
+      samples.length = 0;
+      disjointResetCount += 1;
+    }
+    disjointActive = disjoint;
+
     while (pending.length > 0) {
       const query = pending[0];
       if (!webgl2.getQueryParameter(query, webgl2.QUERY_RESULT_AVAILABLE)) {
@@ -63,7 +74,6 @@ export function createLandingGpuTimer(
       }
 
       pending.shift();
-      const disjoint = webgl2.getParameter(extension.GPU_DISJOINT_EXT) as boolean;
       if (!disjoint) {
         const elapsedNanoseconds = webgl2.getQueryParameter(query, webgl2.QUERY_RESULT) as number;
         samples.push(elapsedNanoseconds / 1_000_000);

@@ -43,6 +43,8 @@ interface LandingEarthProps {
   onDayTextureReady?: () => void;
   cloudDeckEnabled?: boolean;
   referenceVolumetricSurfaceClouds?: boolean;
+  referenceAbsorptionForceEarthMaterialFailure?: boolean;
+  referenceAbsorptionGpuTimerEnabled?: boolean;
   referenceAbsorptionVariant?: LandingReferenceAbsorptionVariant;
   runtimeProfile?: LandingRuntimeProfile;
   visualPolicy?: LandingVisualPolicy;
@@ -1479,6 +1481,10 @@ export function LandingEarth(props: LandingEarthProps) {
         quality={props.quality}
         lightingFrame={props.lightingFrame}
         onDayTextureReady={props.onDayTextureReady}
+        referenceAbsorptionForceEarthMaterialFailure={
+          props.referenceAbsorptionForceEarthMaterialFailure
+        }
+        referenceAbsorptionGpuTimerEnabled={props.referenceAbsorptionGpuTimerEnabled}
         referenceAbsorptionVariant={props.referenceAbsorptionVariant}
       />
     );

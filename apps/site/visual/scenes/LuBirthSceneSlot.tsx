@@ -193,6 +193,8 @@ interface LuBirthSceneSlotProps {
   paused?: boolean;
   cloudDeckEnabled?: boolean;
   closeAtmosphereTuning?: Partial<LandingCloseAtmosphereTuning>;
+  referenceAbsorptionForceEarthMaterialFailure?: boolean;
+  referenceAbsorptionGpuTimerEnabled?: boolean;
   referenceAbsorptionVariant?: LandingReferenceAbsorptionVariant;
   onProjectionFrame?: (frame: LuBirthProjectionFrame) => void;
   onVisualReadyEnough?: () => void;
@@ -576,6 +578,8 @@ export function LuBirthSceneSlot(props: LuBirthSceneSlotProps) {
     paused = false,
     cloudDeckEnabled = true,
     closeAtmosphereTuning,
+    referenceAbsorptionForceEarthMaterialFailure = false,
+    referenceAbsorptionGpuTimerEnabled = false,
     referenceAbsorptionVariant = "baseline",
     onProjectionFrame,
     onVisualReadyEnough,
@@ -969,6 +973,10 @@ export function LuBirthSceneSlot(props: LuBirthSceneSlotProps) {
       quality={qualityProfile}
       debugMianyang={debugMianyang}
       visualDebugLayer={visualDebugLayer}
+      referenceAbsorptionForceEarthMaterialFailure={
+        referenceAbsorptionForceEarthMaterialFailure
+      }
+      referenceAbsorptionGpuTimerEnabled={referenceAbsorptionGpuTimerEnabled}
       referenceAbsorptionVariant={referenceAbsorptionVariant}
       renderProfile={activeRenderProfile}
       runtimeProfile={runtimeProfile}

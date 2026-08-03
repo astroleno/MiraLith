@@ -23,6 +23,11 @@ import {
   PLANET_LIGHTING_GLSL,
   type LandingPlanetLightingFrame
 } from "./landingPlanetLighting";
+import {
+  createLandingGpuTimer,
+  type LandingGpuTimerSnapshot
+} from "./landingGpuTimer";
+import { referenceVariantUsesEarthMaterial } from "./landingReferenceAbsorptionPolicy";
 import type {
   LandingComposition,
   LandingReferenceAbsorptionVariant,
@@ -37,6 +42,8 @@ interface LandingEarthSurfaceLiteV2Props {
   lightingFrame: LandingPlanetLightingFrame;
   onDayTextureReady?: () => void;
   quality: QualityProfile;
+  referenceAbsorptionForceEarthMaterialFailure?: boolean;
+  referenceAbsorptionGpuTimerEnabled?: boolean;
   referenceAbsorptionVariant?: LandingReferenceAbsorptionVariant;
 }
 
@@ -47,6 +54,11 @@ interface EarthSurfaceLiteV2Telemetry {
   dayTextureSource: string;
   internalLimbActive: false;
   lightsOnlyTextureSource: string;
+  gpuTimer: LandingGpuTimerSnapshot;
+  materialFragmentTextureReads: 0 | 1;
+  materialMapActive: boolean;
+  materialMapSource: string | null;
+  materialModel: "baseline" | "packed-v1";
   referenceAbsorptionVariant: LandingReferenceAbsorptionVariant;
   sunDirection: [number, number, number];
 }
@@ -91,14 +103,18 @@ function createEarthSurfaceLiteV2Material({
   cloudFieldTexture,
   composition,
   dayTexture,
+  earthMaterialTexture,
   hasCloudField,
+  hasEarthMaterialMap,
   hasLightsOnly,
   lightsOnlyTexture
 }: {
   cloudFieldTexture: Texture;
   composition: LandingComposition;
   dayTexture: Texture;
+  earthMaterialTexture: Texture;
   hasCloudField: boolean;
+  hasEarthMaterialMap: boolean;
   hasLightsOnly: boolean;
   lightsOnlyTexture: Texture;
 }) {
@@ -115,7 +131,9 @@ function createEarthSurfaceLiteV2Material({
       },
       cityLightScale: { value: 1 },
       dayMap: { value: dayTexture },
+      earthMaterialMap: { value: earthMaterialTexture },
       hasCloudField: { value: hasCloudField ? 1 : 0 },
+      hasEarthMaterialMap: { value: hasEarthMaterialMap ? 1 : 0 },
       hasLightsOnlyMap: { value: hasLightsOnly ? 1 : 0 },
       lightColor: { value: new Color(...composition.light.color) },
       lightDir: {
@@ -158,12 +176,14 @@ function createEarthSurfaceLiteV2Material({
     fragmentShader: `
       uniform sampler2D cloudFieldMap;
       uniform sampler2D dayMap;
+      uniform sampler2D earthMaterialMap;
       uniform sampler2D lightsOnlyMap;
       uniform float ambientIntensity;
       uniform float cloudOffset;
       uniform float cloudShadowStrength;
       uniform float cityLightScale;
       uniform float hasCloudField;
+      uniform float hasEarthMaterialMap;
       uniform float hasLightsOnlyMap;
       uniform vec3 lightColor;
       uniform vec3 lightDir;
@@ -202,6 +222,23 @@ function createEarthSurfaceLiteV2Material({
         );
 
         float diffuse = 0.055 + ambientIntensity * 0.82 + directLight * sunIntensity * 0.39;
+        vec3 surfaceNormal = normalDirection;
+        float materialSpecular = oceanMask;
+        float materialRoughness = 0.0;
+        if (hasEarthMaterialMap > 0.5) {
+          vec4 packedMaterial = texture2D(earthMaterialMap, vUv);
+          vec2 tangentXY = packedMaterial.rg * 2.0 - 1.0;
+          float tangentZ = sqrt(max(1.0 - dot(tangentXY, tangentXY), 0.02));
+          surfaceNormal = normalize(
+            vWorldEast * tangentXY.x +
+            vWorldNorth * tangentXY.y +
+            vWorldNormal * tangentZ
+          );
+          materialSpecular = packedMaterial.b;
+          materialRoughness = packedMaterial.a;
+          diffuse = 0.055 + ambientIntensity * 0.82 +
+            max(dot(surfaceNormal, sunDirection), 0.0) * sunIntensity * 0.39;
+        }
         vec3 daySurface = dayColor * lightColor * diffuse * lightMasks.dayMask;
 
         float earthshineStrength = 0.105 + (1.0 - lightMasks.deepNightMask) * 0.02;
@@ -215,8 +252,14 @@ function createEarthSurfaceLiteV2Material({
         vec3 color = daySurface + earthshine + cityLights;
 
         vec3 halfVector = normalize(sunDirection + viewDirection);
-        float oceanSpecular = pow(max(dot(normalDirection, halfVector), 0.0), 82.0) *
-          oceanMask * directLight * specularStrength * lightMasks.dayMask * 0.66;
+        float specularExponent = hasEarthMaterialMap > 0.5
+          ? mix(108.0, 18.0, materialRoughness)
+          : 82.0;
+        float surfaceDirectLight = hasEarthMaterialMap > 0.5
+          ? max(dot(surfaceNormal, sunDirection), 0.0)
+          : directLight;
+        float oceanSpecular = pow(max(dot(surfaceNormal, halfVector), 0.0), specularExponent) *
+          materialSpecular * surfaceDirectLight * specularStrength * lightMasks.dayMask * 0.66;
         color += lightColor * oceanSpecular;
 
         vec2 sunTangent = vec2(
@@ -286,10 +329,16 @@ export function LandingEarthSurfaceLiteV2({
   lightingFrame,
   onDayTextureReady,
   quality,
+  referenceAbsorptionForceEarthMaterialFailure = false,
+  referenceAbsorptionGpuTimerEnabled = false,
   referenceAbsorptionVariant = "baseline"
 }: LandingEarthSurfaceLiteV2Props) {
   const earth = useRef<Mesh>(null);
   const { gl } = useThree();
+  const gpuTimer = useMemo(
+    () => createLandingGpuTimer(gl.getContext(), referenceAbsorptionGpuTimerEnabled),
+    [gl, referenceAbsorptionGpuTimerEnabled]
+  );
   const visualTestOverridesEnabled = useMemo(() => {
     if (typeof window === "undefined") {
       return false;
@@ -326,28 +375,60 @@ export function LandingEarthSurfaceLiteV2({
       wrapT: ClampToEdgeWrapping
     }
   );
+  const useEarthMaterial = referenceVariantUsesEarthMaterial(referenceAbsorptionVariant);
+  const earthMaterialAsset = useEarthMaterial ? assets.earthMaterialLite : undefined;
+  const forcedEarthMaterialSource = referenceAbsorptionForceEarthMaterialFailure
+    ? "/assets/lubirth/textures/earth-material-lite-v1-forced-failure.ktx2"
+    : earthMaterialAsset?.src;
+  const { failed: earthMaterialFailed, texture: earthMaterialTexture } = useLandingTexture(
+    forcedEarthMaterialSource,
+    {
+      anisotropy: 4,
+      colorSpace: earthMaterialAsset?.colorSpace ?? "linear",
+      fallbackSrc:
+        !referenceAbsorptionForceEarthMaterialFailure &&
+        earthMaterialAsset?.format === "ktx2"
+          ? earthMaterialAsset.src.replace(/\.ktx2$/, ".png")
+          : undefined,
+      renderer: gl,
+      wrapS: RepeatWrapping,
+      wrapT: ClampToEdgeWrapping
+    }
+  );
   const activeDayTexture = dayTexture ?? proceduralDayTexture;
   const activeLightsTexture = lightsOnlyTexture ?? activeDayTexture;
   const activeCloudFieldTexture = cloudFieldTexture ?? activeDayTexture;
+  const activeEarthMaterialTexture = earthMaterialTexture ?? activeDayTexture;
+  const hasEarthMaterialMap = Boolean(
+    earthMaterialAsset &&
+    earthMaterialTexture &&
+    !earthMaterialFailed &&
+    !referenceAbsorptionForceEarthMaterialFailure
+  );
   const geometrySegments = resolveGeometrySegments(quality);
 
   const material = useMemo(() => {
     configureColorTexture(activeDayTexture);
+    configureColorTexture(activeEarthMaterialTexture);
     configureColorTexture(activeLightsTexture);
     return createEarthSurfaceLiteV2Material({
       cloudFieldTexture: activeCloudFieldTexture,
       composition,
       dayTexture: activeDayTexture,
+      earthMaterialTexture: activeEarthMaterialTexture,
       hasCloudField: Boolean(cloudFieldTexture),
+      hasEarthMaterialMap,
       hasLightsOnly: Boolean(lightsOnlyTexture),
       lightsOnlyTexture: activeLightsTexture
     });
   }, [
     activeCloudFieldTexture,
     activeDayTexture,
+    activeEarthMaterialTexture,
     activeLightsTexture,
     cloudFieldTexture,
     composition,
+    hasEarthMaterialMap,
     lightsOnlyTexture
   ]);
 
@@ -357,6 +438,7 @@ export function LandingEarthSurfaceLiteV2({
     }
   }, [dayTexture, onDayTextureReady]);
   useEffect(() => () => material.dispose(), [material]);
+  useEffect(() => () => gpuTimer.dispose(), [gpuTimer]);
   useEffect(() => () => proceduralDayTexture.dispose(), [proceduralDayTexture]);
   useEffect(() => () => {
     window.__MiraLithLuBirthEarthSurfaceLiteV2 = undefined;
@@ -382,6 +464,8 @@ export function LandingEarthSurfaceLiteV2({
     );
     earthMaterial.uniforms.cloudOffset.value = lightingFrame.cloudOffsetRef.current;
     earthMaterial.uniforms.hasCloudField.value = cloudFieldTexture ? 1 : 0;
+    earthMaterial.uniforms.earthMaterialMap.value = activeEarthMaterialTexture;
+    earthMaterial.uniforms.hasEarthMaterialMap.value = hasEarthMaterialMap ? 1 : 0;
     const cloudShadowScale = MathUtils.clamp(
       visualTestOverride?.cloudShadowScale ?? 1,
       0,
@@ -402,15 +486,25 @@ export function LandingEarthSurfaceLiteV2({
       cloudOffset: lightingFrame.cloudOffsetRef.current,
       cloudShadowActive: Boolean(cloudFieldTexture),
       dayTextureSource: assets.earthDay.src,
+      gpuTimer: gpuTimer.poll(),
       internalLimbActive: false,
       lightsOnlyTextureSource: lightsAsset?.src ?? "fallback",
+      materialFragmentTextureReads: hasEarthMaterialMap ? 1 : 0,
+      materialMapActive: hasEarthMaterialMap,
+      materialMapSource: hasEarthMaterialMap ? earthMaterialAsset?.src ?? null : null,
+      materialModel: hasEarthMaterialMap ? "packed-v1" : "baseline",
       referenceAbsorptionVariant,
       sunDirection: [activeLight.x, activeLight.y, activeLight.z]
     };
   });
 
   return (
-    <mesh ref={earth} material={material}>
+    <mesh
+      ref={earth}
+      material={material}
+      onBeforeRender={referenceAbsorptionGpuTimerEnabled ? gpuTimer.begin : undefined}
+      onAfterRender={referenceAbsorptionGpuTimerEnabled ? gpuTimer.end : undefined}
+    >
       <sphereGeometry
         args={[
           composition.earth.radius,

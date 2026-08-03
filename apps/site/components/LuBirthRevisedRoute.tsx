@@ -82,6 +82,8 @@ interface LuBirthRevisedRouteProps {
   ariaLabel?: string;
   stageLabel?: string;
   initialForcedVisualFallback?: boolean;
+  referenceAbsorptionForceEarthMaterialFailure?: boolean;
+  referenceAbsorptionGpuTimerEnabled?: boolean;
   referenceAbsorptionVariant?: LandingReferenceAbsorptionVariant;
 }
 
@@ -485,6 +487,8 @@ export function LuBirthRevisedRoute(props: LuBirthRevisedRouteProps) {
     ariaLabel,
     stageLabel,
     initialForcedVisualFallback = false,
+    referenceAbsorptionForceEarthMaterialFailure = false,
+    referenceAbsorptionGpuTimerEnabled = false,
     referenceAbsorptionVariant = "baseline"
   } = props;
   const referenceAbsorptionRoute = Object.prototype.hasOwnProperty.call(
@@ -1616,7 +1620,11 @@ export function LuBirthRevisedRoute(props: LuBirthRevisedRouteProps) {
               homeIntroRendering={homeIntroRendering}
               productionSurface
               {...(referenceAbsorptionRoute
-                ? { referenceAbsorptionVariant }
+                ? {
+                    referenceAbsorptionForceEarthMaterialFailure,
+                    referenceAbsorptionGpuTimerEnabled,
+                    referenceAbsorptionVariant
+                  }
                 : {})}
               onProjectionFrame={isHome ? handleProjectionFrame : undefined}
               onVisualReadyEnough={isHome ? () => markHomeVisualAssetReady("day-texture") : undefined}

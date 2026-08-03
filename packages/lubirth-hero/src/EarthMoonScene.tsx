@@ -213,6 +213,8 @@ export function EarthMoonScene({
   showAuroraInAll = false,
   atmosphereVariant = "stack",
   atmosphereLook = "lubirth",
+  referenceAbsorptionForceEarthMaterialFailure = false,
+  referenceAbsorptionGpuTimerEnabled = false,
   referenceAbsorptionVariant = "baseline",
   closeAtmosphereTuning
 }: EarthMoonSceneProps) {
@@ -798,6 +800,10 @@ export function EarthMoonScene({
             onDayTextureReady={onVisualReadyEnough}
             cloudDeckEnabled={cloudDeckEnabled}
             referenceVolumetricSurfaceClouds={useReferenceVolumetricSurfaceClouds}
+            referenceAbsorptionForceEarthMaterialFailure={
+              referenceAbsorptionForceEarthMaterialFailure
+            }
+            referenceAbsorptionGpuTimerEnabled={referenceAbsorptionGpuTimerEnabled}
             referenceAbsorptionVariant={referenceAbsorptionVariant}
             runtimeProfile={runtimeProfile}
             visualPolicy={activeVisualPolicy}

@@ -226,6 +226,8 @@ export interface EarthMoonSceneProps {
   sectionProgress?: number;
   debugMianyang?: boolean;
   visualDebugLayer?: LandingVisualDebugLayer;
+  referenceAbsorptionForceEarthMaterialFailure?: boolean;
+  referenceAbsorptionGpuTimerEnabled?: boolean;
   referenceAbsorptionVariant?: LandingReferenceAbsorptionVariant;
   renderProfile?: LandingRenderProfile;
   runtimeProfile?: LandingRuntimeProfile;
