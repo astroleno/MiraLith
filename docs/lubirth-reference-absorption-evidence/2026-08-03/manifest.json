@@ -1,0 +1,21 @@
+{
+  "baselineCommit": "b680891b3b7293ebfddb1b1135f908f06fa7c559",
+  "branch": "codex/lubirth-reference-absorption-spike",
+  "references": [
+    "https://threejs.org/examples/#webgpu_volume_fire",
+    "https://github.com/achrefelouafi/EarthThreeJS",
+    "https://github.com/achrefelouafi/SnowSystemThreeJS",
+    "https://threejs.org/examples/#webgpu_custom_fog_scattering"
+  ],
+  "defaultHomepageTouched": false,
+  "baselineChecks": {
+    "lubirthHeroTypecheck": "pass",
+    "siteTypecheck": "pass",
+    "worktreeCleanBeforeEvidence": true
+  },
+  "tracks": {
+    "earthMaterial": "pending",
+    "cloudScattering": "pending",
+    "combined": "not-eligible"
+  }
+}
