@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "id": "lubirth-opening-cloud-pack-v1",
+  "cloudOnly": true,
+  "colorSpace": "rec709-srgb-sdr",
+  "packing": "left-rgb-right-alpha",
+  "authoredDurationSeconds": 1.584,
+  "encodedDurationSeconds": 1.6,
+  "frameRate": 30,
+  "frameCount": 48,
+  "source": {
+    "provenance": "internal-procedural",
+    "generator": "packages/lubirth-hero/scripts/bake-opening-cloud-assets.mjs",
+    "generatorVersion": "1.0.0",
+    "scenePath": "packages/lubirth-hero/scripts/opening-cloud-volume.html",
+    "seed": "lubirth-opening-cloud-v1",
+    "parameterSummary": {
+      "densityModel": "worley-fbm-front-to-back",
+      "windDistance": "0.28"
+    },
+    "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "license": "internally-generated"
+  },
+  "handoff": {
+    "plateEndProgress": 0.18,
+    "plateEndFrame": 39,
+    "cutProgress": 0.195,
+    "cutFrame": 42,
+    "liveProgress": 0.22,
+    "liveFrame": 47,
+    "veilColorSrgb": "#142536"
+  },
+  "variants": {
+    "desktop": {
+      "tier": "desktop",
+      "src": "/assets/lubirth/opening-clouds/desktop.mp4",
+      "width": 1440,
+      "height": 810,
+      "packedWidth": 2880,
+      "packedHeight": 810,
+      "frameRate": 30,
+      "frameCount": 48,
+      "keyframePolicy": "all-i",
+      "packing": "left-rgb-right-alpha",
+      "transferBytes": 1,
+      "maxTransferBytes": 6291456,
+      "estimatedPresentationResidencyBytes": 12830400,
+      "maxPresentationResidencyBytes": 16777216,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "mobile": {
+      "tier": "mobile",
+      "src": "/assets/lubirth/opening-clouds/mobile.mp4",
+      "width": 960,
+      "height": 444,
+      "packedWidth": 1920,
+      "packedHeight": 444,
+      "frameRate": 30,
+      "frameCount": 48,
+      "keyframePolicy": "all-i",
+      "packing": "left-rgb-right-alpha",
+      "transferBytes": 1,
+      "maxTransferBytes": 2097152,
+      "estimatedPresentationResidencyBytes": 4688640,
+      "maxPresentationResidencyBytes": 8388608,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  }
+}
