@@ -9,6 +9,15 @@ export {
   resolveLandingReferenceAbsorptionVariant
 } from "./landingReferenceAbsorptionPolicy";
 export {
+  RELIEF_SCATTERING_CANDIDATES,
+  RELIEF_SCATTERING_CONFIG,
+  RELIEF_SCATTERING_GLSL,
+  resolveBeerTransmittance,
+  resolveCheapMultiScatter,
+  resolveHenyeyGreenstein
+} from "./landingReliefCloudScattering";
+export type { ReliefScatteringCandidate } from "./landingReliefCloudScattering";
+export {
   createLandingPlanetLightingFrame,
   PLANET_LIGHTING_GLSL,
   resolvePlanetLightMasks
