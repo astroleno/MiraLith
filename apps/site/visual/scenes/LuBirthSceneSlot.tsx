@@ -29,6 +29,7 @@ import type {
   LandingAtmosphereVariant,
   LandingAuroraProfile,
   LandingPostEffectMode,
+  LandingReferenceAbsorptionVariant,
   LandingCloseAtmosphereTuning,
   LandingCloudMode,
   LandingCompositionOverrides,
@@ -189,6 +190,7 @@ interface LuBirthSceneSlotProps {
   paused?: boolean;
   cloudDeckEnabled?: boolean;
   closeAtmosphereTuning?: Partial<LandingCloseAtmosphereTuning>;
+  referenceAbsorptionVariant?: LandingReferenceAbsorptionVariant;
   onProjectionFrame?: (frame: LuBirthProjectionFrame) => void;
   onVisualReadyEnough?: () => void;
   onMoonTextureReady?: () => void;
@@ -555,30 +557,42 @@ function formatLocationLocalTime(date: Date, location: LandingLocationConfig | n
   }
 }
 
-export function LuBirthSceneSlot({
-  mode,
-  quality = "auto",
-  debugMianyang = false,
-  visualDebugLayer = "all",
-  renderProfile,
-  atmospherePolicy,
-  atmosphereVariant = "stack",
-  atmosphereLook = "lubirth",
-  routeVariant,
-  homeIntroRendering = false,
-  productionSurface,
-  paused = false,
-  cloudDeckEnabled = true,
-  closeAtmosphereTuning,
-  onProjectionFrame,
-  onVisualReadyEnough,
-  onMoonTextureReady
-}: LuBirthSceneSlotProps) {
+export function LuBirthSceneSlot(props: LuBirthSceneSlotProps) {
+  const {
+    mode,
+    quality = "auto",
+    debugMianyang = false,
+    visualDebugLayer = "all",
+    renderProfile,
+    atmospherePolicy,
+    atmosphereVariant = "stack",
+    atmosphereLook = "lubirth",
+    routeVariant,
+    homeIntroRendering = false,
+    productionSurface,
+    paused = false,
+    cloudDeckEnabled = true,
+    closeAtmosphereTuning,
+    referenceAbsorptionVariant = "baseline",
+    onProjectionFrame,
+    onVisualReadyEnough,
+    onMoonTextureReady
+  } = props;
+  const referenceAbsorptionRoute = Object.prototype.hasOwnProperty.call(
+    props,
+    "referenceAbsorptionVariant"
+  );
   const reducedMotion = useReducedMotionPreference();
   const qualityOverride = readQualityOverride();
-  const postEffectModeOverride = readPostEffectModeOverride();
-  const cloudModeOverride = readCloudModeOverride();
-  const atmosphereVisualModeOverride = readAtmosphereVisualModeOverride();
+  const postEffectModeOverride = referenceAbsorptionRoute
+    ? "off"
+    : readPostEffectModeOverride();
+  const cloudModeOverride = referenceAbsorptionRoute
+    ? "relief-lite"
+    : readCloudModeOverride();
+  const atmosphereVisualModeOverride = referenceAbsorptionRoute
+    ? "limb-lite"
+    : readAtmosphereVisualModeOverride();
   const auroraProfile = readAuroraProfile();
   const renderProfileOverride = readRenderProfileOverride();
   const activeRenderProfile = renderProfileOverride ?? renderProfile;
@@ -942,6 +956,7 @@ export function LuBirthSceneSlot({
       quality={qualityProfile}
       debugMianyang={debugMianyang}
       visualDebugLayer={visualDebugLayer}
+      referenceAbsorptionVariant={referenceAbsorptionVariant}
       renderProfile={activeRenderProfile}
       runtimeProfile={runtimeProfile}
       visualPolicy={visualPolicy}

@@ -34,7 +34,11 @@ import {
   createLandingGpuTimer,
   type LandingGpuTimerSnapshot
 } from "./landingGpuTimer";
-import type { LandingComposition, LandingResolvedAssets } from "./types";
+import type {
+  LandingComposition,
+  LandingReferenceAbsorptionVariant,
+  LandingResolvedAssets
+} from "./types";
 import { useLandingTexture } from "./useLandingTexture";
 
 interface LandingReliefCloudProps {
@@ -43,6 +47,7 @@ interface LandingReliefCloudProps {
   emphasis?: boolean;
   lightingFrame: LandingPlanetLightingFrame;
   quality: QualityProfile;
+  referenceAbsorptionVariant?: LandingReferenceAbsorptionVariant;
 }
 
 interface LandingReliefCloudTelemetry {
@@ -60,6 +65,7 @@ interface LandingReliefCloudTelemetry {
   lodTransitions: false;
   mobile: boolean;
   premultipliedAlpha: true;
+  referenceAbsorptionVariant: LandingReferenceAbsorptionVariant;
   rendererTextureCount: number;
   shellCount: 1;
   estimatedActiveTextureBytes: number;
@@ -543,7 +549,8 @@ export function LandingReliefCloud({
   composition,
   emphasis = false,
   lightingFrame,
-  quality
+  quality,
+  referenceAbsorptionVariant = "baseline"
 }: LandingReliefCloudProps) {
   const cloud = useRef<Mesh>(null);
   const { camera, gl } = useThree();
@@ -700,6 +707,7 @@ export function LandingReliefCloud({
       lodTransitions: false,
       mobile,
       premultipliedAlpha: true,
+      referenceAbsorptionVariant,
       rendererTextureCount: gl.info.memory.textures,
       shellCount: 1,
       sunDirection: [

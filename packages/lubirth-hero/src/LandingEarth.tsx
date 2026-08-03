@@ -23,6 +23,7 @@ import type { LandingPlanetLightingFrame } from "./landingPlanetLighting";
 import type {
   LandingComposition,
   LandingCloseAtmosphereTuning,
+  LandingReferenceAbsorptionVariant,
   LandingResolvedAssets,
   LandingRuntimeProfile,
   LandingVisualPolicy
@@ -42,6 +43,7 @@ interface LandingEarthProps {
   onDayTextureReady?: () => void;
   cloudDeckEnabled?: boolean;
   referenceVolumetricSurfaceClouds?: boolean;
+  referenceAbsorptionVariant?: LandingReferenceAbsorptionVariant;
   runtimeProfile?: LandingRuntimeProfile;
   visualPolicy?: LandingVisualPolicy;
   closeAtmosphereTuning?: LandingCloseAtmosphereTuning;
@@ -1477,6 +1479,7 @@ export function LandingEarth(props: LandingEarthProps) {
         quality={props.quality}
         lightingFrame={props.lightingFrame}
         onDayTextureReady={props.onDayTextureReady}
+        referenceAbsorptionVariant={props.referenceAbsorptionVariant}
       />
     );
   }

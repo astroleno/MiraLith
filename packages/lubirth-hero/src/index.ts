@@ -3,6 +3,12 @@ export { EarthMoonScene } from "./EarthMoonScene";
 export { resolveLuBirthAtmospherePolicy } from "./atmospherePolicy";
 export { resolveLandingVisualPolicy } from "./landingVisualPolicy";
 export {
+  LANDING_REFERENCE_ABSORPTION_VARIANTS,
+  referenceVariantUsesCloudScattering,
+  referenceVariantUsesEarthMaterial,
+  resolveLandingReferenceAbsorptionVariant
+} from "./landingReferenceAbsorptionPolicy";
+export {
   createLandingPlanetLightingFrame,
   PLANET_LIGHTING_GLSL,
   resolvePlanetLightMasks
@@ -106,6 +112,7 @@ export type {
   LandingMoonLightingMode,
   LandingMoonPhase,
   LandingPostEffectMode,
+  LandingReferenceAbsorptionVariant,
   LandingRenderProfile,
   LandingRuntimeProfile,
   LandingResolvedAssets,

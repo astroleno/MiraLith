@@ -8,6 +8,7 @@ import {
   type LandingAtmospherePolicy,
   type LandingCloudMode,
   type LandingPostEffectMode,
+  type LandingReferenceAbsorptionVariant,
   type LandingRenderProfile,
   type LandingVisualDebugLayer,
   type LuBirthProjectionFrame
@@ -81,6 +82,7 @@ interface LuBirthRevisedRouteProps {
   ariaLabel?: string;
   stageLabel?: string;
   initialForcedVisualFallback?: boolean;
+  referenceAbsorptionVariant?: LandingReferenceAbsorptionVariant;
 }
 
 const DEFAULT_SCREENSHOT_DEBUG_OPTIONS: ScreenshotDebugOptions = {
@@ -477,12 +479,18 @@ function ScrollHint() {
   );
 }
 
-export function LuBirthRevisedRoute({
-  variant = "study",
-  ariaLabel,
-  stageLabel,
-  initialForcedVisualFallback = false
-}: LuBirthRevisedRouteProps) {
+export function LuBirthRevisedRoute(props: LuBirthRevisedRouteProps) {
+  const {
+    variant = "study",
+    ariaLabel,
+    stageLabel,
+    initialForcedVisualFallback = false,
+    referenceAbsorptionVariant = "baseline"
+  } = props;
+  const referenceAbsorptionRoute = Object.prototype.hasOwnProperty.call(
+    props,
+    "referenceAbsorptionVariant"
+  );
   const rootRef = useRef<HTMLElement>(null);
   const isHome = variant === "home";
   const triggerId = `${SCROLL_TRIGGER_ID_PREFIX}-${variant}`;
@@ -532,16 +540,24 @@ export function LuBirthRevisedRoute({
           : {}),
         ...(debugOptions.postEffectModeOverride
           ? { postEffectMode: debugOptions.postEffectModeOverride }
+          : {}),
+        ...(referenceAbsorptionRoute
+          ? {
+              atmosphereMode: "limb-lite" as const,
+              cloudMode: "relief-lite" as const,
+              postEffectMode: "off" as const
+            }
           : {})
       }
     }),
     [
       debugOptions.atmosphereModeOverride,
       debugOptions.cloudModeOverride,
-      debugOptions.postEffectModeOverride,
-      debugOptions.qualityTierOverride,
-      debugOptions.renderProfile,
-      isHome
+    debugOptions.postEffectModeOverride,
+    debugOptions.qualityTierOverride,
+    debugOptions.renderProfile,
+    isHome,
+    referenceAbsorptionRoute
     ]
   );
   const usesHighQualityLiteCanvas =
@@ -1526,6 +1542,7 @@ export function LuBirthRevisedRoute({
       ref={rootRef}
       className="lubirth-revised"
       data-copy={showCopy ? "visible" : "hidden"}
+      data-reference-absorption-variant={referenceAbsorptionVariant}
       data-runtime={runtimeReady ? "ready" : "fallback"}
       data-copy-interactive={copyInteractive ? "true" : "false"}
       data-project-interactive={projectInteractive ? "true" : "false"}
@@ -1598,6 +1615,9 @@ export function LuBirthRevisedRoute({
               routeVariant={variant}
               homeIntroRendering={homeIntroRendering}
               productionSurface
+              {...(referenceAbsorptionRoute
+                ? { referenceAbsorptionVariant }
+                : {})}
               onProjectionFrame={isHome ? handleProjectionFrame : undefined}
               onVisualReadyEnough={isHome ? () => markHomeVisualAssetReady("day-texture") : undefined}
               onMoonTextureReady={isHome ? () => markHomeVisualAssetReady("moon-texture") : undefined}

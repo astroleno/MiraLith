@@ -225,6 +225,7 @@ export interface EarthMoonSceneProps {
   sectionProgress?: number;
   debugMianyang?: boolean;
   visualDebugLayer?: LandingVisualDebugLayer;
+  referenceAbsorptionVariant?: LandingReferenceAbsorptionVariant;
   renderProfile?: LandingRenderProfile;
   runtimeProfile?: LandingRuntimeProfile;
   visualPolicy?: LandingVisualPolicy;
@@ -266,6 +267,12 @@ export interface LandingProjectedEarthFrame {
   horizonPoints: Vector2[];
   horizonPointCount: number;
 }
+
+export type LandingReferenceAbsorptionVariant =
+  | "baseline"
+  | "earth-material-v1"
+  | "cloud-scattering-v1"
+  | "combined-v1";
 
 export type EarthMoonHeroInteraction =
   | "none"

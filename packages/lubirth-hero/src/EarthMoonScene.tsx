@@ -213,6 +213,7 @@ export function EarthMoonScene({
   showAuroraInAll = false,
   atmosphereVariant = "stack",
   atmosphereLook = "lubirth",
+  referenceAbsorptionVariant = "baseline",
   closeAtmosphereTuning
 }: EarthMoonSceneProps) {
   const earthGroup = useRef<Group>(null);
@@ -797,6 +798,7 @@ export function EarthMoonScene({
             onDayTextureReady={onVisualReadyEnough}
             cloudDeckEnabled={cloudDeckEnabled}
             referenceVolumetricSurfaceClouds={useReferenceVolumetricSurfaceClouds}
+            referenceAbsorptionVariant={referenceAbsorptionVariant}
             runtimeProfile={runtimeProfile}
             visualPolicy={activeVisualPolicy}
             lightingFrame={planetLightingFrame}
@@ -822,6 +824,7 @@ export function EarthMoonScene({
                 quality={quality}
                 lightingFrame={planetLightingFrame}
                 emphasis={debugClouds}
+                referenceAbsorptionVariant={referenceAbsorptionVariant}
               />
             ) : (
               <LandingCloudLayer

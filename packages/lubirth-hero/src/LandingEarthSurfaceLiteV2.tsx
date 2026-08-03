@@ -25,6 +25,7 @@ import {
 } from "./landingPlanetLighting";
 import type {
   LandingComposition,
+  LandingReferenceAbsorptionVariant,
   LandingResolvedAssets
 } from "./types";
 import { createEarthTexture } from "./textures";
@@ -36,6 +37,7 @@ interface LandingEarthSurfaceLiteV2Props {
   lightingFrame: LandingPlanetLightingFrame;
   onDayTextureReady?: () => void;
   quality: QualityProfile;
+  referenceAbsorptionVariant?: LandingReferenceAbsorptionVariant;
 }
 
 interface EarthSurfaceLiteV2Telemetry {
@@ -45,6 +47,7 @@ interface EarthSurfaceLiteV2Telemetry {
   dayTextureSource: string;
   internalLimbActive: false;
   lightsOnlyTextureSource: string;
+  referenceAbsorptionVariant: LandingReferenceAbsorptionVariant;
   sunDirection: [number, number, number];
 }
 
@@ -282,7 +285,8 @@ export function LandingEarthSurfaceLiteV2({
   composition,
   lightingFrame,
   onDayTextureReady,
-  quality
+  quality,
+  referenceAbsorptionVariant = "baseline"
 }: LandingEarthSurfaceLiteV2Props) {
   const earth = useRef<Mesh>(null);
   const { gl } = useThree();
@@ -400,6 +404,7 @@ export function LandingEarthSurfaceLiteV2({
       dayTextureSource: assets.earthDay.src,
       internalLimbActive: false,
       lightsOnlyTextureSource: lightsAsset?.src ?? "fallback",
+      referenceAbsorptionVariant,
       sunDirection: [activeLight.x, activeLight.y, activeLight.z]
     };
   });
