@@ -93,7 +93,8 @@ function readKtx2Dimensions(filePath: string) {
 
 async function waitForReferenceAbsorptionRoute(
   page: import("@playwright/test").Page,
-  variant: string
+  variant: string,
+  expectEarthSurface = true
 ) {
   await expect(page.locator(".lubirth-reference-absorption-spike")).toHaveAttribute(
     "data-reference-absorption-variant",
@@ -117,23 +118,37 @@ async function waitForReferenceAbsorptionRoute(
     "data-canvas-post-effect-mode",
     "off"
   );
-  await expect
-    .poll(() => page.evaluate(() => ({
-      cloud: window.__MiraLithLuBirthReliefCloud,
-      earth: window.__MiraLithLuBirthEarthSurfaceLiteV2
-    })), { timeout: 25_000 })
-    .toMatchObject({
-      cloud: {
-        active: true,
-        densityIntegration: "front-to-back",
-        premultipliedAlpha: true,
-        referenceAbsorptionVariant: variant
-      },
+  const expectedTelemetry = {
+    cloud: {
+      active: true,
+      densityIntegration: "front-to-back",
+      premultipliedAlpha: true,
+      referenceAbsorptionVariant: variant
+    }
+  };
+  if (expectEarthSurface) {
+    Object.assign(expectedTelemetry, {
       earth: {
         active: true,
         referenceAbsorptionVariant: variant
       }
     });
+  }
+
+  await expect
+    .poll(() => page.evaluate(() => ({
+      cloud: window.__MiraLithLuBirthReliefCloud,
+      earth: window.__MiraLithLuBirthEarthSurfaceLiteV2
+    })), { timeout: 25_000 })
+    .toMatchObject(expectedTelemetry);
+
+  if (!expectEarthSurface) {
+    await expect
+      .poll(() => page.evaluate(() => window.__MiraLithLuBirthEarthSurfaceLiteV2), {
+        timeout: 25_000
+      })
+      .toBeUndefined();
+  }
 }
 
 test("resolves the query-only reference absorption variant contract", () => {
@@ -365,7 +380,7 @@ test("keeps Relief-lite budgets bounded for the cloud scattering spike", async (
     scatteringCandidate: "g072-ms028",
     variant: "cloud-scattering-v1"
   }));
-  await waitForReferenceAbsorptionRoute(page, "cloud-scattering-v1");
+  await waitForReferenceAbsorptionRoute(page, "cloud-scattering-v1", false);
   await expect(page.locator(".lubirth-reference-absorption-spike")).toHaveAttribute(
     "data-reference-absorption-cloud-debug",
     "cloud-alpha"

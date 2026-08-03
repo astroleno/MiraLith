@@ -267,6 +267,7 @@ export function EarthMoonScene({
   const debugClouds = activeRenderProfile === "debug-clouds";
   const debugAtmosphere = activeRenderProfile === "debug-atmosphere";
   const debugAurora = activeRenderProfile === "debug-aurora";
+  const referenceCloudDiagnostic = referenceAbsorptionCloudDebugMode !== "none";
   const activeVisualPolicy = visualPolicy ?? resolveLandingVisualPolicy({
     runtimeProfile,
     qualityTier: quality.tier,
@@ -280,19 +281,22 @@ export function EarthMoonScene({
     [closeAtmosphereTuning]
   );
 
-  const showEarth = !debugStars;
-  const showMoon = isNasaProfile || isCleanProfile;
+  const showEarth = !debugStars && !referenceCloudDiagnostic;
+  const showMoon = !referenceCloudDiagnostic && (isNasaProfile || isCleanProfile);
   const showClouds =
+    referenceCloudDiagnostic ||
     isNasaProfile ||
     debugClouds ||
     activeVisualPolicy.cloudMode === "nasa-lite" ||
     activeVisualPolicy.cloudMode === "relief-lite";
   const showAtmosphere =
+    !referenceCloudDiagnostic && (
     isNasaProfile ||
     debugAtmosphere ||
     activeVisualPolicy.atmosphereMode === "directional-lite" ||
-    activeVisualPolicy.atmosphereMode === "limb-lite";
-  const showAurora = debugAurora && quality.aurora;
+    activeVisualPolicy.atmosphereMode === "limb-lite"
+    );
+  const showAurora = !referenceCloudDiagnostic && debugAurora && quality.aurora;
   const showProjectedHorizonComposite = false;
   const canUseVolumetricAtmosphere =
     atmosphereVariant === "volumetric" &&
@@ -768,16 +772,18 @@ export function EarthMoonScene({
     <>
       <color attach="background" args={["#000102"]} />
       <fog attach="fog" args={["#000102", 16, 48]} />
-      <LandingSpaceBackground
-        quality={quality}
-        spaceBackground={
-          runtimeProfile === "home-lite"
-            ? assets.spaceBackground
-            : LUBIRTH_EXPANDED_SPACE_BACKGROUND
-        }
-        emphasis={debugStars}
-        counterRotation={skyCounterRotation}
-      />
+      {!referenceCloudDiagnostic ? (
+        <LandingSpaceBackground
+          quality={quality}
+          spaceBackground={
+            runtimeProfile === "home-lite"
+              ? assets.spaceBackground
+              : LUBIRTH_EXPANDED_SPACE_BACKGROUND
+          }
+          emphasis={debugStars}
+          counterRotation={skyCounterRotation}
+        />
+      ) : null}
       {showEarth || showMoon ? <ambientLight intensity={composition.light.ambientIntensity} color="#d9e2e4" /> : null}
       {showEarth || showMoon ? (
         <directionalLight

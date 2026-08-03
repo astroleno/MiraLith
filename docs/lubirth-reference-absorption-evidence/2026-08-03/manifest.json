@@ -15,7 +15,7 @@
   },
   "tracks": {
     "earthMaterial": "reject",
-    "cloudScattering": "pending",
+    "cloudScattering": "reject",
     "combined": "not-eligible"
   },
   "earthMaterial": {
@@ -46,6 +46,64 @@
       "Desktop visual metrics miss the required daylight and ocean/land gains, and deep-night city mean changes by more than 3%.",
       "Mobile-landscape visual metrics miss the required daylight and ocean/land gains, and deep-night city mean changes by more than 3%.",
       "GPU timer support was unavailable, so the p95 and minimum-valid-sample gates cannot be evaluated."
+    ]
+  },
+  "cloudScattering": {
+    "verdict": "reject",
+    "candidates": "cloud-scattering-candidates.json",
+    "telemetry": "cloud-scattering-telemetry.json",
+    "screenshots": "cloud-scattering-*.png",
+    "environment": {
+      "os": "macOS 15.6.1",
+      "gpu": "Apple M4, 8-core, Metal 3",
+      "browser": "Google Chrome 150.0.7871.187 headed System Chrome",
+      "playwrightCli": "1.59.1",
+      "workers": 1,
+      "desktopViewport": "1440x960",
+      "mobileLandscapeViewport": "844x390"
+    },
+    "budget": {
+      "desktopFragmentTextureReads": 4,
+      "desktopViewSteps": 3,
+      "mobileLandscapeFragmentTextureReads": 3,
+      "mobileLandscapeViewSteps": 2,
+      "sunSteps": 1,
+      "temporalJitter": false
+    },
+    "gates": {
+      "alphaAndMotion": "fail",
+      "visual": "fail",
+      "gpuTiming": "fail",
+      "budget": "pass",
+      "subjectiveKill": "fail"
+    },
+    "metrics": {
+      "minimumRequiredGpuSamples": 120,
+      "desktopGpuDisjointResetCount": 0,
+      "desktopBestObliqueTopSideRatio": 0.9223282261708189,
+      "mobileLandscapeBestObliqueTopSideRatio": 1.0100542210598178,
+      "requiredObliqueTopSideRatio": 1.25,
+      "desktopAlphaDeltaRange": [
+        0.021961244673410936,
+        0.03499756225023128
+      ],
+      "mobileLandscapeAlphaDeltaRange": [
+        0.029004740578877718,
+        0.06259289246071295
+      ],
+      "alphaDeltaLimit": 0.00196078431372549,
+      "desktopGpuP95RangeMs": [
+        8.1145,
+        11.625916
+      ],
+      "gpuAbsoluteLimitMs": 3,
+      "gpuDeltaLimitMs": 0.2
+    },
+    "failureReasons": [
+      "Every fixed candidate fails alpha and/or reverse-motion stability in both desktop and mobile-landscape evidence.",
+      "No candidate reaches the required oblique top/side lighting ratio, and one or more side/underside or internal contrast gates fail.",
+      "Desktop System Chrome baseline p95 values exceed the absolute 3ms ceiling, and multiple candidate scenarios exceed the 0.20ms same-run delta limit.",
+      "Representative diagnostic frames remain soft, flat relief patches rather than stable volumetric cloud lighting."
     ]
   }
 }

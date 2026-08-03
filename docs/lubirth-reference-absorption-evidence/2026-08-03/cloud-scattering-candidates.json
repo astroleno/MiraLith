@@ -1,0 +1,206 @@
+{
+  "tiers": {
+    "desktop": {
+      "candidates": [
+        {
+          "candidate": {
+            "id": "g065-ms018",
+            "g": 0.65,
+            "multiScatter": 0.18
+          },
+          "eligible": false,
+          "gates": {
+            "alphaPass": false,
+            "baselineBlocked": false,
+            "budgetPass": true,
+            "gpuPass": false,
+            "visualPass": false
+          },
+          "score": 0.55
+        },
+        {
+          "candidate": {
+            "id": "g065-ms028",
+            "g": 0.65,
+            "multiScatter": 0.28
+          },
+          "eligible": false,
+          "gates": {
+            "alphaPass": false,
+            "baselineBlocked": false,
+            "budgetPass": true,
+            "gpuPass": false,
+            "visualPass": false
+          },
+          "score": 0.3
+        },
+        {
+          "candidate": {
+            "id": "g072-ms018",
+            "g": 0.72,
+            "multiScatter": 0.18
+          },
+          "eligible": false,
+          "gates": {
+            "alphaPass": false,
+            "baselineBlocked": false,
+            "budgetPass": true,
+            "gpuPass": false,
+            "visualPass": false
+          },
+          "score": 0.4906247758410445
+        },
+        {
+          "candidate": {
+            "id": "g072-ms028",
+            "g": 0.72,
+            "multiScatter": 0.28
+          },
+          "eligible": false,
+          "gates": {
+            "alphaPass": false,
+            "baselineBlocked": false,
+            "budgetPass": true,
+            "gpuPass": false,
+            "visualPass": false
+          },
+          "score": 0.55
+        },
+        {
+          "candidate": {
+            "id": "g078-ms018",
+            "g": 0.78,
+            "multiScatter": 0.18
+          },
+          "eligible": false,
+          "gates": {
+            "alphaPass": false,
+            "baselineBlocked": false,
+            "budgetPass": true,
+            "gpuPass": false,
+            "visualPass": false
+          },
+          "score": 0.3
+        },
+        {
+          "candidate": {
+            "id": "g078-ms028",
+            "g": 0.78,
+            "multiScatter": 0.28
+          },
+          "eligible": false,
+          "gates": {
+            "alphaPass": false,
+            "baselineBlocked": true,
+            "budgetPass": true,
+            "gpuPass": false,
+            "visualPass": false
+          },
+          "score": 0.4906247758410445
+        }
+      ],
+      "winner": null
+    },
+    "mobile-landscape": {
+      "candidates": [
+        {
+          "candidate": {
+            "id": "g065-ms018",
+            "g": 0.65,
+            "multiScatter": 0.18
+          },
+          "eligible": false,
+          "gates": {
+            "alphaPass": false,
+            "baselineBlocked": false,
+            "budgetPass": true,
+            "gpuPass": true,
+            "visualPass": false
+          },
+          "score": 0.55
+        },
+        {
+          "candidate": {
+            "id": "g065-ms028",
+            "g": 0.65,
+            "multiScatter": 0.28
+          },
+          "eligible": false,
+          "gates": {
+            "alphaPass": false,
+            "baselineBlocked": false,
+            "budgetPass": true,
+            "gpuPass": true,
+            "visualPass": false
+          },
+          "score": 0.268097597907672
+        },
+        {
+          "candidate": {
+            "id": "g072-ms018",
+            "g": 0.72,
+            "multiScatter": 0.18
+          },
+          "eligible": false,
+          "gates": {
+            "alphaPass": false,
+            "baselineBlocked": false,
+            "budgetPass": true,
+            "gpuPass": true,
+            "visualPass": false
+          },
+          "score": 0.3573785711818149
+        },
+        {
+          "candidate": {
+            "id": "g072-ms028",
+            "g": 0.72,
+            "multiScatter": 0.28
+          },
+          "eligible": false,
+          "gates": {
+            "alphaPass": false,
+            "baselineBlocked": false,
+            "budgetPass": true,
+            "gpuPass": true,
+            "visualPass": false
+          },
+          "score": 0.55
+        },
+        {
+          "candidate": {
+            "id": "g078-ms018",
+            "g": 0.78,
+            "multiScatter": 0.18
+          },
+          "eligible": false,
+          "gates": {
+            "alphaPass": false,
+            "baselineBlocked": false,
+            "budgetPass": true,
+            "gpuPass": true,
+            "visualPass": false
+          },
+          "score": 0.3573785711818149
+        },
+        {
+          "candidate": {
+            "id": "g078-ms028",
+            "g": 0.78,
+            "multiScatter": 0.28
+          },
+          "eligible": false,
+          "gates": {
+            "alphaPass": false,
+            "baselineBlocked": false,
+            "budgetPass": true,
+            "gpuPass": true,
+            "visualPass": false
+          },
+          "score": 0.3573785711818149
+        }
+      ],
+      "winner": null
+    }
+  }
+}

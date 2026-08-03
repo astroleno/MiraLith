@@ -22,7 +22,7 @@ IP positioning, or the existing Relief-lite sampling budget.
 | Track | Status |
 | --- | --- |
 | Earth material | REJECT |
-| Cloud scattering | Pending |
+| Cloud scattering | REJECT |
 | Combined | Not eligible |
 
 The combined route is only eligible if both independent tracks pass their
@@ -76,6 +76,83 @@ is stored as `earth-material-*.png`, and the complete measurements are in
 
 The A-track rejection does not block the independent B-track experiment. It
 does keep `combined-v1` at `not-eligible`.
+
+## Relief Cloud Scattering Verdict
+
+`REJECT`
+
+The six fixed Relief-lite scattering candidates preserved the existing tiered
+sampling budget, but none passed the independent alpha/motion and volumetric
+lighting gates. The diagnostic frames also remain visibly close to soft,
+low-relief cloud patches instead of providing a stable top/side/underside
+lighting hierarchy. Per the timebox, no seventh candidate or parameter retune
+was attempted.
+
+### Environment
+
+- macOS 15.6.1
+- Apple M4 GPU, 8 cores, Metal 3
+- Google Chrome 150.0.7871.187, headed System Chrome
+- Playwright CLI 1.59.1
+- One worker; desktop `1440x960`; mobile-landscape `844x390`
+
+### Commands
+
+```bash
+export MIRALITH_REFERENCE_ABSORPTION_EVIDENCE_DIR="$PWD/docs/lubirth-reference-absorption-evidence/2026-08-03"
+pnpm exec playwright test -c playwright.reference-absorption-system-chrome.config.ts tests/e2e/lubirth-reference-absorption-spike.spec.ts --project=desktop --grep "cloud scattering"
+pnpm exec playwright test -c playwright.reference-absorption-system-chrome.config.ts tests/e2e/lubirth-reference-absorption-spike.spec.ts --project=mobile-landscape --grep "cloud scattering"
+```
+
+Both commands passed their evidence and budget contracts. The fixed candidate
+matrix is in `cloud-scattering-candidates.json`; all measurements are in
+`cloud-scattering-telemetry.json`; and the corresponding black-background
+`cloud-alpha` and `cloud-lighting` frames are stored as
+`cloud-scattering-*.png`.
+
+### Fixed Candidate Matrix
+
+| Candidate | Phase g | Multi-scatter |
+| --- | ---: | ---: |
+| `g065-ms018` | 0.65 | 0.18 |
+| `g065-ms028` | 0.65 | 0.28 |
+| `g072-ms018` | 0.72 | 0.18 |
+| `g072-ms028` | 0.72 | 0.28 |
+| `g078-ms018` | 0.78 | 0.18 |
+| `g078-ms028` | 0.78 | 0.28 |
+
+### Passed Gates
+
+- The bounded Relief-lite budget remained unchanged: desktop uses four fragment
+  texture reads and three view steps; mobile-landscape uses three reads and two
+  view steps; all candidates use one sun step and no temporal jitter.
+- System Chrome GPU timer data was available for desktop near, oblique, and
+  fixed-progress sweep scenarios, with `120` valid samples and zero disjoint
+  resets for every recorded query.
+- All candidates stayed below the RGB P99 clipping cap, and no candidate added
+  a scroll-linked or temporal-jitter mechanism.
+
+### Failed Gates
+
+- Every candidate exceeded the alpha/motion limits in at least one fixed
+  location or reverse-sweep frame. Desktop maximum alpha deltas range from
+  `0.02196` to `0.03500`, versus the `<=0.00196` gate; mobile-landscape ranges
+  from `0.02900` to `0.06259`.
+- No candidate meets the required oblique top/side ratio of `>=1.25`. The best
+  desktop result is `0.92233`, and the best mobile-landscape result is
+  `1.01005`; side/underside and internal-contrast gates also fail in one or
+  more fixed frames.
+- Desktop System Chrome GPU p95 baseline values are already above the
+  `<=3.0ms` absolute limit (approximately `8.11ms` to `11.63ms`). Several
+  candidate scenarios also exceed the `+0.20ms` same-run delta cap, including
+  the `g065-ms018` oblique frame at `+1.1225ms`.
+- The subjective kill applies independently: representative near, oblique, and
+  mid frames remain soft/flat relief patches, with lighting changes that do not
+  establish a stable top/side/underside volume relationship.
+
+Because this is a mechanism and visual rejection, not a case where all variant
+gates pass against an over-budget baseline, the B-track status is `REJECT`
+rather than `BLOCKED_BY_BASELINE`.
 
 ## References
 

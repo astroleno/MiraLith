@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { createRequire } from "node:module";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { RELIEF_SCATTERING_CANDIDATES } from "../../packages/lubirth-hero/src";
 
 test.setTimeout(180_000);
 
@@ -33,6 +34,7 @@ interface ReliefCloudTelemetry {
   active: true;
   densityIntegration: "front-to-back";
   fragmentTextureReads: 3 | 4;
+  gpuTimer: GpuTimerSnapshot;
   multiScatterStrength: number | null;
   phaseG: number | null;
   premultipliedAlpha: true;
@@ -92,6 +94,7 @@ const LOCATIONS: LocationCase[] = [
 const PROGRESS_POINTS = [0, 0.22, 0.55];
 
 function createUrl(input: {
+  cloudOffset?: number;
   debug?: "cloud-alpha" | "cloud-lighting";
   location: LocationCase;
   progress: number;
@@ -113,6 +116,9 @@ function createUrl(input: {
   });
   if (input.debug) {
     params.set("debug", input.debug);
+  }
+  if (input.cloudOffset !== undefined) {
+    params.set("cloudOffset", String(input.cloudOffset));
   }
   if (input.scatteringCandidate) {
     params.set("scatteringCandidate", input.scatteringCandidate);
@@ -517,12 +523,15 @@ test("earth material preserves Earth-local geography and records the A-track mat
   }
 });
 
-test("cloud scattering contract keeps the Relief-lite integration bounded", async ({ page }) => {
+test("cloud scattering contract keeps the Relief-lite integration bounded", async ({ page }, testInfo) => {
   const input = {
     location: LOCATIONS[0],
     progress: 0.22,
     quality: "high" as const
   };
+  const expectedBudget = testInfo.project.name === "mobile-landscape"
+    ? { fragmentTextureReads: 3, viewSteps: 2 }
+    : { fragmentTextureReads: 4, viewSteps: 3 };
 
   await page.goto(createUrl({ ...input, variant: "baseline" }));
   await expect
@@ -532,15 +541,14 @@ test("cloud scattering contract keeps the Relief-lite integration bounded", asyn
     .toMatchObject({
       active: true,
       densityIntegration: "front-to-back",
-      fragmentTextureReads: 4,
+      ...expectedBudget,
       multiScatterStrength: null,
       phaseG: null,
       premultipliedAlpha: true,
       scatteringCandidateId: null,
       scatteringModel: "relief-baseline",
       sunSteps: 1,
-      temporalJitter: false,
-      viewSteps: 3
+      temporalJitter: false
     });
 
   await page.goto(createUrl({
@@ -560,14 +568,826 @@ test("cloud scattering contract keeps the Relief-lite integration bounded", asyn
     .toMatchObject({
       active: true,
       densityIntegration: "front-to-back",
-      fragmentTextureReads: 4,
+      ...expectedBudget,
       multiScatterStrength: 0.28,
       phaseG: 0.72,
       premultipliedAlpha: true,
       scatteringCandidateId: "g072-ms028",
       scatteringModel: "hg-ms-v1",
       sunSteps: 1,
-      temporalJitter: false,
-      viewSteps: 3
+      temporalJitter: false
     });
+});
+
+interface CloudDiagnosticCapture {
+  alphaMetrics?: CloudAlphaMetrics;
+  cloud: ReliefCloudTelemetry;
+  image: RawImage;
+  location: { latitudeDeg: number; longitudeDeg: number } | null;
+  projection: ProjectedEarthLighting;
+  viewport: { height: number; width: number };
+}
+
+interface CloudAlphaMetrics {
+  activePixelCount: number;
+  centerX: number;
+  centerY: number;
+  maxX: number;
+  maxY: number;
+  mean: number;
+  minX: number;
+  minY: number;
+}
+
+interface CloudLightingMetrics {
+  bodyContrast: number;
+  bodyPixelCount: number;
+  p99: number;
+  sideCount: number;
+  sideMean: number;
+  topCount: number;
+  topMean: number;
+  undersideCount: number;
+  undersideMean: number;
+}
+
+interface CloudTimerSummary {
+  disjointResetCount: number;
+  p95Ms: number | null;
+  sampleCount: number;
+  sufficient: boolean;
+  supported: boolean;
+}
+
+const CLOUD_ALPHA_DELTA_LIMIT = 0.5 / 255;
+const CLOUD_ALPHA_THRESHOLD = 0.035;
+const CLOUD_GPU_ABSOLUTE_LIMIT_MS = 3;
+const CLOUD_GPU_DELTA_LIMIT_MS = 0.2;
+const CLOUD_GPU_MINIMUM_SAMPLES = 120;
+const CLOUD_MOTION_SEQUENCE = [0, 0.22, 0.55, 0.22, 0] as const;
+const CLOUD_PROGRESS_POINTS = [0, 0.22, 0.55] as const;
+const CLOUD_SCORING_FRAMES = [
+  { id: "near", location: LOCATIONS[0], progress: 0 },
+  { id: "oblique", location: LOCATIONS[1], progress: 0.22 },
+  { id: "mid", location: LOCATIONS[2], progress: 0.55 }
+] as const;
+const SYSTEM_CHROME_EVIDENCE_ENABLED =
+  process.env.MIRALITH_REFERENCE_ABSORPTION_SYSTEM_CHROME === "1";
+
+function cloudFrameKey(location: LocationCase, progress: number) {
+  return `${location.id}-${Math.round(progress * 100)}`;
+}
+
+function cloudFileStem(
+  tier: string,
+  candidateId: string,
+  location: LocationCase,
+  progress: number,
+  diagnostic: "cloud-alpha" | "cloud-lighting",
+  direction: "baseline" | "forward" | "lighting" | "reverse"
+) {
+  return `cloud-scattering-${tier}-${candidateId}-${location.id}-p${Math.round(progress * 100)
+    .toString()
+    .padStart(2, "0")}-${diagnostic}-${direction}.png`;
+}
+
+function cloudCropBounds(capture: CloudDiagnosticCapture) {
+  const { centerX, centerY, radius } = scaledProjection(capture);
+  return {
+    centerX,
+    centerY,
+    maxX: Math.min(capture.image.width - 1, Math.ceil(centerX + radius * 0.96)),
+    maxY: Math.min(capture.image.height - 1, Math.ceil(centerY + radius * 0.96)),
+    minX: Math.max(0, Math.floor(centerX - radius * 0.96)),
+    minY: Math.max(0, Math.floor(centerY - radius * 0.96)),
+    radius
+  };
+}
+
+function resolveCloudAlphaMetrics(capture: CloudDiagnosticCapture): CloudAlphaMetrics {
+  if (capture.alphaMetrics) {
+    return capture.alphaMetrics;
+  }
+
+  const { data, width } = capture.image;
+  const { centerX, centerY, maxX, maxY, minX, minY, radius } = cloudCropBounds(capture);
+  let activePixelCount = 0;
+  let alphaTotal = 0;
+  let sampleCount = 0;
+  let activeXTotal = 0;
+  let activeYTotal = 0;
+  let activeMinX = maxX;
+  let activeMinY = maxY;
+  let activeMaxX = minX;
+  let activeMaxY = minY;
+
+  for (let y = minY; y <= maxY; y += 1) {
+    for (let x = minX; x <= maxX; x += 1) {
+      if (Math.hypot(x - centerX, y - centerY) > radius * 0.95) {
+        continue;
+      }
+      const alpha = luminance(data, (y * width + x) * 3);
+      alphaTotal += alpha;
+      sampleCount += 1;
+      if (alpha < CLOUD_ALPHA_THRESHOLD) {
+        continue;
+      }
+      activePixelCount += 1;
+      activeXTotal += x;
+      activeYTotal += y;
+      activeMinX = Math.min(activeMinX, x);
+      activeMinY = Math.min(activeMinY, y);
+      activeMaxX = Math.max(activeMaxX, x);
+      activeMaxY = Math.max(activeMaxY, y);
+    }
+  }
+
+  const metrics = {
+    activePixelCount,
+    centerX: activePixelCount > 0 ? activeXTotal / activePixelCount : centerX,
+    centerY: activePixelCount > 0 ? activeYTotal / activePixelCount : centerY,
+    maxX: activePixelCount > 0 ? activeMaxX : centerX,
+    maxY: activePixelCount > 0 ? activeMaxY : centerY,
+    mean: alphaTotal / Math.max(sampleCount, 1),
+    minX: activePixelCount > 0 ? activeMinX : centerX,
+    minY: activePixelCount > 0 ? activeMinY : centerY
+  };
+  capture.alphaMetrics = metrics;
+  return metrics;
+}
+
+function cloudAlphaEdgeDrift(
+  baseline: CloudDiagnosticCapture,
+  variant: CloudDiagnosticCapture
+) {
+  const baselineMetrics = resolveCloudAlphaMetrics(baseline);
+  const variantMetrics = resolveCloudAlphaMetrics(variant);
+  if (baselineMetrics.activePixelCount === 0 || variantMetrics.activePixelCount === 0) {
+    return Number.POSITIVE_INFINITY;
+  }
+  return Math.max(
+    Math.abs(baselineMetrics.centerX - variantMetrics.centerX),
+    Math.abs(baselineMetrics.centerY - variantMetrics.centerY),
+    Math.abs(baselineMetrics.minX - variantMetrics.minX),
+    Math.abs(baselineMetrics.minY - variantMetrics.minY),
+    Math.abs(baselineMetrics.maxX - variantMetrics.maxX),
+    Math.abs(baselineMetrics.maxY - variantMetrics.maxY)
+  );
+}
+
+function croppedPixelDelta(
+  baseline: CloudDiagnosticCapture,
+  variant: CloudDiagnosticCapture
+) {
+  const { data: baselineData, width: baselineWidth } = baseline.image;
+  const { data: variantData, width: variantWidth } = variant.image;
+  const { centerX, centerY, maxX, maxY, minX, minY, radius } = cloudCropBounds(baseline);
+  let total = 0;
+  let count = 0;
+
+  for (let y = minY; y <= maxY && y < variant.image.height; y += 2) {
+    for (let x = minX; x <= maxX && x < variant.image.width; x += 2) {
+      if (Math.hypot(x - centerX, y - centerY) > radius * 0.95) {
+        continue;
+      }
+      const baselineOffset = (y * baselineWidth + x) * 3;
+      const variantOffset = (y * variantWidth + x) * 3;
+      total += Math.abs(baselineData[baselineOffset] - variantData[variantOffset]);
+      total += Math.abs(baselineData[baselineOffset + 1] - variantData[variantOffset + 1]);
+      total += Math.abs(baselineData[baselineOffset + 2] - variantData[variantOffset + 2]);
+      count += 3;
+    }
+  }
+
+  return total / Math.max(count, 1) / 255;
+}
+
+function resolveCloudLightingMetrics(
+  lighting: CloudDiagnosticCapture,
+  alpha: CloudDiagnosticCapture
+): CloudLightingMetrics {
+  const { data: lightingData, width } = lighting.image;
+  const { data: alphaData } = alpha.image;
+  const { centerX, centerY, maxX, maxY, minX, minY, radius } = cloudCropBounds(lighting);
+  let sunX = lighting.projection.sunDirection[0];
+  let sunY = lighting.projection.sunDirection[1];
+  const sunLength = Math.hypot(sunX, sunY);
+  if (sunLength < 0.001) {
+    sunX = 0;
+    sunY = -1;
+  } else {
+    sunX /= sunLength;
+    sunY /= sunLength;
+  }
+
+  const body: Array<{ sunAxis: number; value: number }> = [];
+  const rgb: number[] = [];
+
+  for (let y = minY; y <= maxY; y += 2) {
+    for (let x = minX; x <= maxX; x += 2) {
+      const offset = (y * width + x) * 3;
+      const alphaValue = luminance(alphaData, offset);
+      const radialDistance = Math.hypot(x - centerX, y - centerY) / radius;
+      if (alphaValue < CLOUD_ALPHA_THRESHOLD || radialDistance > 0.9) {
+        continue;
+      }
+
+      const value = luminance(lightingData, offset);
+      const dx = (x - centerX) / radius;
+      const dy = (y - centerY) / radius;
+      const sunAxis = dx * sunX + dy * sunY;
+
+      body.push({ sunAxis, value });
+      rgb.push(
+        lightingData[offset] / 255,
+        lightingData[offset + 1] / 255,
+        lightingData[offset + 2] / 255
+      );
+    }
+  }
+  const orderedBody = body.sort((left, right) => left.sunAxis - right.sunAxis);
+  const lowerEnd = Math.floor(orderedBody.length / 3);
+  const upperStart = Math.ceil(orderedBody.length * (2 / 3));
+  const underside = orderedBody.slice(0, lowerEnd).map((sample) => sample.value);
+  const side = orderedBody.slice(lowerEnd, upperStart).map((sample) => sample.value);
+  const top = orderedBody.slice(upperStart).map((sample) => sample.value);
+  const bodyValues = orderedBody.map((sample) => sample.value);
+
+  return {
+    bodyContrast: percentile(bodyValues, 0.9) - percentile(bodyValues, 0.1),
+    bodyPixelCount: bodyValues.length,
+    p99: percentile(rgb, 0.99) * 255,
+    sideCount: side.length,
+    sideMean: mean(side),
+    topCount: top.length,
+    topMean: mean(top),
+    undersideCount: underside.length,
+    undersideMean: mean(underside)
+  };
+}
+
+function scoreNormalizedRatio(value: number, requiredRatio: number) {
+  return Math.max(0, Math.min(1, (value - 1) / (requiredRatio - 1)));
+}
+
+function scoreNormalizedPercent(value: number, requiredPercent: number) {
+  return Math.max(0, Math.min(1, value / requiredPercent));
+}
+
+function summarizeCloudTimers(
+  timers: Array<GpuTimerSnapshot | null>
+): CloudTimerSummary {
+  const available = timers.filter((timer): timer is GpuTimerSnapshot => Boolean(timer));
+  const p95Values = available
+    .map((timer) => timer.p95Ms)
+    .filter((value): value is number => value !== undefined);
+  const sampleCount = available.length === timers.length && available.length > 0
+    ? Math.min(...available.map((timer) => timer.sampleCount))
+    : 0;
+  const disjointResetCount = available.reduce(
+    (total, timer) => total + timer.disjointResetCount,
+    0
+  );
+  const supported = available.length === timers.length &&
+    available.every((timer) => timer.supported);
+
+  return {
+    disjointResetCount,
+    p95Ms: p95Values.length > 0 ? Math.max(...p95Values) : null,
+    sampleCount,
+    sufficient: supported &&
+      sampleCount >= CLOUD_GPU_MINIMUM_SAMPLES &&
+      disjointResetCount === 0,
+    supported
+  };
+}
+
+async function captureCloudDiagnostic(
+  page: import("@playwright/test").Page,
+  input: {
+    candidateId?: string;
+    diagnostic: "cloud-alpha" | "cloud-lighting";
+    direction: "baseline" | "forward" | "lighting" | "reverse";
+    location: LocationCase;
+    progress: number;
+    quality: "high" | "medium";
+    tier: string;
+    variant: "baseline" | "cloud-scattering-v1";
+  }
+): Promise<CloudDiagnosticCapture> {
+  await page.goto(createUrl({
+    cloudOffset: 0,
+    debug: input.diagnostic,
+    location: input.location,
+    progress: input.progress,
+    quality: input.quality,
+    scatteringCandidate: input.candidateId,
+    variant: input.variant
+  }));
+  await expect(page.locator("canvas")).toHaveCount(1, { timeout: 25_000 });
+  await expect(page.locator(".lubirth-reference-absorption-spike")).toHaveAttribute(
+    "data-reference-absorption-cloud-debug",
+    input.diagnostic
+  );
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthReliefCloud), {
+      timeout: 25_000
+    })
+    .toMatchObject({
+      active: true,
+      densityIntegration: "front-to-back",
+      premultipliedAlpha: true,
+      referenceAbsorptionVariant: input.variant,
+      scatteringModel: input.variant === "cloud-scattering-v1"
+        ? "hg-ms-v1"
+        : "relief-baseline",
+      temporalJitter: false
+    });
+  await expect
+    .poll(() => page.evaluate((progress) => {
+      const projected = window.__MiraLithLuBirthProjectedEarthLighting;
+      return Boolean(projected && Math.abs(projected.progress - progress) <= 0.001);
+    }, input.progress), { timeout: 25_000 })
+    .toBe(true);
+  await page.waitForTimeout(100);
+
+  const snapshot = await page.evaluate(() => ({
+    cloud: window.__MiraLithLuBirthReliefCloud,
+    location: window.__MiraLithLuBirthRuntimeLocation ?? null,
+    projection: window.__MiraLithLuBirthProjectedEarthLighting,
+    viewport: { height: window.innerHeight, width: window.innerWidth }
+  }));
+  expect(snapshot.cloud).toBeTruthy();
+  expect(snapshot.projection).toBeTruthy();
+  expect(snapshot.location).toMatchObject({
+    latitudeDeg: input.location.latitude,
+    longitudeDeg: input.location.longitude
+  });
+  expect(snapshot.projection.progress).toBeCloseTo(input.progress, 3);
+
+  const screenshotPath = path.join(
+    evidenceDir,
+    cloudFileStem(
+      input.tier,
+      input.candidateId ?? "baseline",
+      input.location,
+      input.progress,
+      input.diagnostic,
+      input.direction
+    )
+  );
+  const screenshot = await page.screenshot({ animations: "disabled", path: screenshotPath });
+  return {
+    cloud: snapshot.cloud as ReliefCloudTelemetry,
+    image: await decodePng(screenshot),
+    location: snapshot.location,
+    projection: snapshot.projection as ProjectedEarthLighting,
+    viewport: snapshot.viewport
+  };
+}
+
+async function collectCloudGpuTimer(
+  page: import("@playwright/test").Page,
+  input: {
+    candidateId?: string;
+    location: LocationCase;
+    progress: number;
+    quality: "high" | "medium";
+    variant: "baseline" | "cloud-scattering-v1";
+  }
+) {
+  await page.goto(createUrl({
+    cloudOffset: 0,
+    location: input.location,
+    progress: input.progress,
+    quality: input.quality,
+    scatteringCandidate: input.candidateId,
+    variant: input.variant
+  }));
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthReliefCloud), {
+      timeout: 25_000
+    })
+    .toMatchObject({ active: true });
+  await expect
+    .poll(() => page.evaluate((progress) => {
+      const projected = window.__MiraLithLuBirthProjectedEarthLighting;
+      return Boolean(projected && Math.abs(projected.progress - progress) <= 0.001);
+    }, input.progress), { timeout: 25_000 })
+    .toBe(true);
+
+  let timer = await page.evaluate(
+    () => window.__MiraLithLuBirthReliefCloud?.gpuTimer ?? null
+  );
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    if (!timer?.supported || timer.sampleCount >= CLOUD_GPU_MINIMUM_SAMPLES) {
+      return timer as GpuTimerSnapshot | null;
+    }
+    await page.waitForTimeout(250);
+    timer = await page.evaluate(
+      () => window.__MiraLithLuBirthReliefCloud?.gpuTimer ?? null
+    );
+  }
+  return timer as GpuTimerSnapshot | null;
+}
+
+async function collectCloudSweepTimers(
+  page: import("@playwright/test").Page,
+  input: Omit<Parameters<typeof collectCloudGpuTimer>[1], "progress">
+) {
+  const timers: Array<GpuTimerSnapshot | null> = [];
+  for (const progress of CLOUD_MOTION_SEQUENCE) {
+    timers.push(await collectCloudGpuTimer(page, { ...input, progress }));
+  }
+  return timers;
+}
+
+async function readCloudEvidence(fileName: string) {
+  try {
+    return JSON.parse(await readFile(path.join(evidenceDir, fileName), "utf8")) as {
+      tiers?: Record<string, unknown>;
+    };
+  } catch {
+    return { tiers: {} };
+  }
+}
+
+test.describe("System Chrome cloud scattering evidence", () => {
+  test.skip(
+    !SYSTEM_CHROME_EVIDENCE_ENABLED,
+    "The six-candidate evidence matrix only runs in headed System Chrome."
+  );
+
+  test("cloud scattering evidence scores the fixed candidate matrix", async ({
+    page
+  }, testInfo) => {
+    testInfo.setTimeout(1_450_000);
+    await mkdir(evidenceDir, { recursive: true });
+
+    const tier = testInfo.project.name;
+    const quality = tier === "mobile-landscape" ? "medium" as const : "high" as const;
+    const expectedTextureReads = tier === "mobile-landscape" ? 3 : 4;
+    const expectedViewSteps = tier === "mobile-landscape" ? 2 : 3;
+    const baselineAlpha = new Map<string, CloudDiagnosticCapture>();
+    const baselineLighting = new Map<string, CloudDiagnosticCapture>();
+
+    for (const location of LOCATIONS) {
+      for (const progress of CLOUD_PROGRESS_POINTS) {
+        const captureResult = await captureCloudDiagnostic(page, {
+          diagnostic: "cloud-alpha",
+          direction: "baseline",
+          location,
+          progress,
+          quality,
+          tier,
+          variant: "baseline"
+        });
+        baselineAlpha.set(cloudFrameKey(location, progress), captureResult);
+      }
+    }
+
+    for (const frame of CLOUD_SCORING_FRAMES) {
+      const captureResult = await captureCloudDiagnostic(page, {
+        diagnostic: "cloud-lighting",
+        direction: "lighting",
+        location: frame.location,
+        progress: frame.progress,
+        quality,
+        tier,
+        variant: "baseline"
+      });
+      baselineLighting.set(cloudFrameKey(frame.location, frame.progress), captureResult);
+    }
+
+    const candidateResults = [];
+
+    for (const candidate of RELIEF_SCATTERING_CANDIDATES) {
+      const candidateAlpha = new Map<string, CloudDiagnosticCapture>();
+      const motionMetrics: Array<{
+        alphaDeltaFromBaseline: number;
+        alphaEdgeDriftFromBaseline: number;
+        direction: "forward" | "reverse";
+        forwardReverseAlphaDelta: number | null;
+        forwardReverseEdgeDrift: number | null;
+        location: string;
+        progress: number;
+      }> = [];
+      const telemetrySamples: ReliefCloudTelemetry[] = [];
+
+      for (const location of LOCATIONS) {
+        const forwardFrames = new Map<number, CloudDiagnosticCapture>();
+        for (const [index, progress] of CLOUD_MOTION_SEQUENCE.entries()) {
+          const direction = index <= 2 ? "forward" as const : "reverse" as const;
+          const captureResult = await captureCloudDiagnostic(page, {
+            candidateId: candidate.id,
+            diagnostic: "cloud-alpha",
+            direction,
+            location,
+            progress,
+            quality,
+            tier,
+            variant: "cloud-scattering-v1"
+          });
+          telemetrySamples.push(captureResult.cloud);
+          const baseline = baselineAlpha.get(cloudFrameKey(location, progress));
+          expect(baseline).toBeTruthy();
+          const forward = forwardFrames.get(progress);
+          const forwardReverseAlphaDelta = forward
+            ? croppedPixelDelta(forward, captureResult)
+            : null;
+          const forwardReverseEdgeDrift = forward
+            ? cloudAlphaEdgeDrift(forward, captureResult)
+            : null;
+
+          motionMetrics.push({
+            alphaDeltaFromBaseline: croppedPixelDelta(
+              baseline as CloudDiagnosticCapture,
+              captureResult
+            ),
+            alphaEdgeDriftFromBaseline: cloudAlphaEdgeDrift(
+              baseline as CloudDiagnosticCapture,
+              captureResult
+            ),
+            direction,
+            forwardReverseAlphaDelta,
+            forwardReverseEdgeDrift,
+            location: location.id,
+            progress
+          });
+
+          if (direction === "forward") {
+            forwardFrames.set(progress, captureResult);
+            candidateAlpha.set(cloudFrameKey(location, progress), captureResult);
+          }
+        }
+      }
+
+      const lightingFrames = [];
+      for (const frame of CLOUD_SCORING_FRAMES) {
+        const alpha = candidateAlpha.get(cloudFrameKey(frame.location, frame.progress));
+        const baselineAlphaCapture = baselineAlpha.get(
+          cloudFrameKey(frame.location, frame.progress)
+        );
+        const baselineLightingCapture = baselineLighting.get(
+          cloudFrameKey(frame.location, frame.progress)
+        );
+        expect(alpha).toBeTruthy();
+        expect(baselineAlphaCapture).toBeTruthy();
+        expect(baselineLightingCapture).toBeTruthy();
+
+        const lighting = await captureCloudDiagnostic(page, {
+          candidateId: candidate.id,
+          diagnostic: "cloud-lighting",
+          direction: "lighting",
+          location: frame.location,
+          progress: frame.progress,
+          quality,
+          tier,
+          variant: "cloud-scattering-v1"
+        });
+        telemetrySamples.push(lighting.cloud);
+        const baselineMetrics = resolveCloudLightingMetrics(
+          baselineLightingCapture as CloudDiagnosticCapture,
+          baselineAlphaCapture as CloudDiagnosticCapture
+        );
+        const variantMetrics = resolveCloudLightingMetrics(
+          lighting,
+          alpha as CloudDiagnosticCapture
+        );
+        const topSideRatio = variantMetrics.topMean /
+          Math.max(variantMetrics.sideMean, 1e-5);
+        const sideUndersideRatio = variantMetrics.sideMean /
+          Math.max(variantMetrics.undersideMean, 1e-5);
+        lightingFrames.push({
+          baseline: baselineMetrics,
+          contrastGainPercent: (
+            variantMetrics.bodyContrast / Math.max(baselineMetrics.bodyContrast, 1e-5) - 1
+          ) * 100,
+          id: frame.id,
+          sideUndersideRatio,
+          topSideRatio,
+          variant: variantMetrics
+        });
+      }
+
+      let gpuScenarios: Array<{
+        baseline: CloudTimerSummary;
+        baselineBlocked: boolean;
+        deltaMs: number | null;
+        id: string;
+        pass: boolean;
+        variant: CloudTimerSummary;
+      }> = [];
+      if (tier === "desktop") {
+        const timerInputs = [
+          { id: "near", location: CLOUD_SCORING_FRAMES[0].location, progress: 0 },
+          { id: "oblique", location: CLOUD_SCORING_FRAMES[1].location, progress: 0.22 }
+        ];
+        for (const timerInput of timerInputs) {
+          const baselineTimer = summarizeCloudTimers([
+            await collectCloudGpuTimer(page, {
+              location: timerInput.location,
+              progress: timerInput.progress,
+              quality,
+              variant: "baseline"
+            })
+          ]);
+          const variantTimer = summarizeCloudTimers([
+            await collectCloudGpuTimer(page, {
+              candidateId: candidate.id,
+              location: timerInput.location,
+              progress: timerInput.progress,
+              quality,
+              variant: "cloud-scattering-v1"
+            })
+          ]);
+          const deltaMs = baselineTimer.p95Ms !== null && variantTimer.p95Ms !== null
+            ? variantTimer.p95Ms - baselineTimer.p95Ms
+            : null;
+          const deltaPass = deltaMs !== null && deltaMs <= CLOUD_GPU_DELTA_LIMIT_MS;
+          const absolutePass = variantTimer.p95Ms !== null &&
+            variantTimer.p95Ms <= CLOUD_GPU_ABSOLUTE_LIMIT_MS;
+          gpuScenarios.push({
+            baseline: baselineTimer,
+            baselineBlocked: Boolean(
+              baselineTimer.sufficient &&
+              variantTimer.sufficient &&
+              deltaPass &&
+              baselineTimer.p95Ms !== null &&
+              variantTimer.p95Ms !== null &&
+              baselineTimer.p95Ms > CLOUD_GPU_ABSOLUTE_LIMIT_MS &&
+              variantTimer.p95Ms > CLOUD_GPU_ABSOLUTE_LIMIT_MS
+            ),
+            deltaMs,
+            id: timerInput.id,
+            pass: baselineTimer.sufficient && variantTimer.sufficient && deltaPass && absolutePass,
+            variant: variantTimer
+          });
+        }
+
+        const baselineSweep = summarizeCloudTimers(await collectCloudSweepTimers(page, {
+          location: LOCATIONS[0],
+          quality,
+          variant: "baseline"
+        }));
+        const variantSweep = summarizeCloudTimers(await collectCloudSweepTimers(page, {
+          candidateId: candidate.id,
+          location: LOCATIONS[0],
+          quality,
+          variant: "cloud-scattering-v1"
+        }));
+        const sweepDeltaMs = baselineSweep.p95Ms !== null && variantSweep.p95Ms !== null
+          ? variantSweep.p95Ms - baselineSweep.p95Ms
+          : null;
+        const sweepDeltaPass = sweepDeltaMs !== null &&
+          sweepDeltaMs <= CLOUD_GPU_DELTA_LIMIT_MS;
+        const sweepAbsolutePass = variantSweep.p95Ms !== null &&
+          variantSweep.p95Ms <= CLOUD_GPU_ABSOLUTE_LIMIT_MS;
+        gpuScenarios.push({
+          baseline: baselineSweep,
+          baselineBlocked: Boolean(
+            baselineSweep.sufficient &&
+            variantSweep.sufficient &&
+            sweepDeltaPass &&
+            baselineSweep.p95Ms !== null &&
+            variantSweep.p95Ms !== null &&
+            baselineSweep.p95Ms > CLOUD_GPU_ABSOLUTE_LIMIT_MS &&
+            variantSweep.p95Ms > CLOUD_GPU_ABSOLUTE_LIMIT_MS
+          ),
+          deltaMs: sweepDeltaMs,
+          id: "fixed-progress-sweep",
+          pass: baselineSweep.sufficient &&
+            variantSweep.sufficient &&
+            sweepDeltaPass &&
+            sweepAbsolutePass,
+          variant: variantSweep
+        });
+      }
+
+      const oblique = lightingFrames.find((frame) => frame.id === "oblique");
+      expect(oblique).toBeTruthy();
+      const alphaPass = motionMetrics.every((metric) =>
+        metric.alphaDeltaFromBaseline <= CLOUD_ALPHA_DELTA_LIMIT &&
+        metric.alphaEdgeDriftFromBaseline <= 1 &&
+        (metric.forwardReverseAlphaDelta === null ||
+          metric.forwardReverseAlphaDelta <= CLOUD_ALPHA_DELTA_LIMIT) &&
+        (metric.forwardReverseEdgeDrift === null ||
+          metric.forwardReverseEdgeDrift <= 1)
+      );
+      const budgetPass = telemetrySamples.every((telemetry) =>
+        telemetry.fragmentTextureReads === expectedTextureReads &&
+        telemetry.viewSteps === expectedViewSteps &&
+        telemetry.sunSteps === 1 &&
+        telemetry.densityIntegration === "front-to-back" &&
+        telemetry.premultipliedAlpha &&
+        telemetry.temporalJitter === false &&
+        telemetry.scatteringModel === "hg-ms-v1" &&
+        telemetry.scatteringCandidateId === candidate.id &&
+        telemetry.phaseG === candidate.g &&
+        telemetry.multiScatterStrength === candidate.multiScatter
+      );
+      const visualPass = Boolean(
+        oblique &&
+        oblique.variant.topCount >= 40 &&
+        oblique.variant.sideCount >= 40 &&
+        oblique.variant.undersideCount >= 40 &&
+        oblique.topSideRatio >= 1.25 &&
+        oblique.sideUndersideRatio >= 1.12 &&
+        oblique.contrastGainPercent >= 12 &&
+        lightingFrames.every((frame) => frame.variant.p99 <= 250)
+      );
+      const gpuPass = tier !== "desktop" || gpuScenarios.every((scenario) => scenario.pass);
+      const baselineBlocked = tier === "desktop" &&
+        gpuScenarios.length > 0 &&
+        gpuScenarios.some((scenario) => scenario.baselineBlocked) &&
+        gpuScenarios.every((scenario) =>
+          scenario.pass || scenario.baselineBlocked
+        );
+      const score = oblique
+        ? 0.45 * scoreNormalizedRatio(oblique.topSideRatio, 1.25) +
+          0.30 * scoreNormalizedRatio(oblique.sideUndersideRatio, 1.12) +
+          0.25 * scoreNormalizedPercent(oblique.contrastGainPercent, 12)
+        : 0;
+
+      candidateResults.push({
+        candidate,
+        eligible: alphaPass && budgetPass && visualPass && gpuPass,
+        gates: {
+          alphaPass,
+          baselineBlocked,
+          budgetPass,
+          gpuPass,
+          visualPass
+        },
+        gpuScenarios,
+        lightingFrames,
+        motionMetrics,
+        score
+      });
+    }
+
+    const eligibleCandidates = candidateResults
+      .filter((candidate) => candidate.eligible)
+      .sort((left, right) => right.score - left.score ||
+        left.candidate.id.localeCompare(right.candidate.id));
+    const winner = eligibleCandidates[0] ?? null;
+    const tierVerdict = winner
+      ? "pass"
+      : candidateResults.some((candidate) =>
+          candidate.gates.alphaPass &&
+          candidate.gates.budgetPass &&
+          candidate.gates.visualPass &&
+          candidate.gates.baselineBlocked
+        )
+        ? "blocked-by-baseline"
+        : "reject";
+
+    const telemetryEvidence = await readCloudEvidence("cloud-scattering-telemetry.json");
+    const telemetryTiers = telemetryEvidence.tiers ?? {};
+    telemetryTiers[tier] = {
+      candidateResults,
+      gateLimits: {
+        alphaDelta: CLOUD_ALPHA_DELTA_LIMIT,
+        alphaEdgeDriftPx: 1,
+        desktopGpuAbsoluteMs: CLOUD_GPU_ABSOLUTE_LIMIT_MS,
+        desktopGpuDeltaMs: CLOUD_GPU_DELTA_LIMIT_MS,
+        gpuMinimumSamples: CLOUD_GPU_MINIMUM_SAMPLES,
+        p99: 250,
+        sideUndersideRatio: 1.12,
+        topSideRatio: 1.25
+      },
+      motionSequence: CLOUD_MOTION_SEQUENCE,
+      scoringFormula:
+        "0.45 * normalizedTopSideSeparation + 0.30 * normalizedSideBottomSeparation + 0.25 * normalizedInternalContrastGain",
+      verdict: tierVerdict,
+      winner: winner
+        ? { id: winner.candidate.id, score: winner.score }
+        : null
+    };
+    await writeFile(
+      path.join(evidenceDir, "cloud-scattering-telemetry.json"),
+      `${JSON.stringify({ ...telemetryEvidence, tiers: telemetryTiers }, null, 2)}\n`
+    );
+
+    const candidateEvidence = await readCloudEvidence("cloud-scattering-candidates.json");
+    const candidateTiers = candidateEvidence.tiers ?? {};
+    candidateTiers[tier] = {
+      candidates: candidateResults.map((candidate) => ({
+        candidate: candidate.candidate,
+        eligible: candidate.eligible,
+        gates: candidate.gates,
+        score: candidate.score
+      })),
+      winner: winner
+        ? { id: winner.candidate.id, score: winner.score }
+        : null
+    };
+    await writeFile(
+      path.join(evidenceDir, "cloud-scattering-candidates.json"),
+      `${JSON.stringify({ ...candidateEvidence, tiers: candidateTiers }, null, 2)}\n`
+    );
+
+    expect(candidateResults).toHaveLength(RELIEF_SCATTERING_CANDIDATES.length);
+    expect(candidateResults.every((candidate) => candidate.gates.budgetPass)).toBe(true);
+  });
 });
