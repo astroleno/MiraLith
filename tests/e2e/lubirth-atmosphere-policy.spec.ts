@@ -431,7 +431,8 @@ test("scopes strong cloud shells to the full lookdev renderer", () => {
   };
   type ResolveLandingCloudShells = (
     qualityTier: "high" | "medium" | "low" | "fallback",
-    referenceLook: boolean
+    referenceLook: boolean,
+    cloudVolumeModel?: "legacy" | "v3"
   ) => readonly CloudShellPolicy[];
 
   const resolveLandingCloudShells = (
@@ -442,9 +443,11 @@ test("scopes strong cloud shells to the full lookdev renderer", () => {
 
   const lookdevShells = resolveLandingCloudShells?.("high", false) ?? [];
   const referenceShells = resolveLandingCloudShells?.("high", true) ?? [];
+  const v3ReferenceShells = resolveLandingCloudShells?.("high", true, "v3") ?? [];
 
   expect(lookdevShells).toHaveLength(3);
   expect(referenceShells).toHaveLength(3);
+  expect(v3ReferenceShells).toHaveLength(1);
   expect(lookdevShells[0]?.opacity).toBeLessThanOrEqual(0.56);
   expect(referenceShells[0]?.opacity).toBeGreaterThan(lookdevShells[0]?.opacity ?? 1);
   expect(lookdevShells.every((shell) => shell.limbFadeEnd <= 0.92)).toBe(true);

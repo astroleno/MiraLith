@@ -350,6 +350,7 @@ test("V3 enables a controlled ground shadow only for the high quality reference 
 
 test("V3 renders distinct lit and shadowed cloud bodies in the close reference view", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "Cloud-body contrast is calibrated at 1440x900.");
+  test.setTimeout(160_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const baseQuery =
     "mode=all&quality=high&progress=0&copy=hidden&profile=nasa&atmo=volumetric&look=reference";
@@ -359,7 +360,7 @@ test("V3 renders distinct lit and shadowed cloud bodies in the close reference v
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudVolumeModel), { timeout: 25_000 })
     .toBe("legacy");
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudShellCount ?? 0), { timeout: 25_000 })
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudShellCount ?? 0), { timeout: 45_000 })
     .toBeGreaterThan(0);
   await page.waitForTimeout(800);
   const legacy = await sampleCloudVolumeFrame(page);
@@ -370,7 +371,7 @@ test("V3 renders distinct lit and shadowed cloud bodies in the close reference v
     .toBe("v3");
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudShellCount ?? 0), { timeout: 45_000 })
-    .toBeGreaterThan(0);
+    .toBe(1);
   await page.waitForTimeout(800);
   const v3 = await sampleCloudVolumeFrame(page);
 

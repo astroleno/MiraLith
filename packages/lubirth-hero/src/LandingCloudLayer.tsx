@@ -104,13 +104,18 @@ const HOME_LITE_CLOUD_SHELL: CloudShellLayer = {
 
 export function resolveLandingCloudShells(
   qualityTier: QualityProfile["tier"],
-  referenceLook: boolean
+  referenceLook: boolean,
+  cloudVolumeModel: LandingCloudVolumeModel = "legacy"
 ): readonly CloudShellLayer[] {
   if (qualityTier === "low" || qualityTier === "fallback") {
     return [];
   }
 
   const shells = referenceLook ? REFERENCE_CLOUD_SHELLS : STANDARD_CLOUD_SHELLS;
+  if (referenceLook && qualityTier === "high" && cloudVolumeModel === "v3") {
+    return shells.slice(0, 1);
+  }
+
   if (referenceLook && qualityTier !== "high") {
     return shells.slice(0, 1);
   }
@@ -804,8 +809,8 @@ function createCloudMaterial(
         float v3VolumeMass = v3Enabled * visibleCloudGate * v3BodyCoverage;
         float v3SunTransmittance = exp(-v3SunColumn * (1.14 + thickness * 1.78 + deckThickness * 0.86));
         float v3TopLight = smoothstep(
-          0.28,
-          0.74,
+          0.18,
+          0.68,
           cloudTopLight * (0.22 + v3SunTransmittance * 0.78) + deckHighCap * 0.24
         ) * sunlitCloud;
         float v3SideLight = smoothstep(
@@ -1088,7 +1093,7 @@ function createCloudMaterial(
           finalColor * vec3(0.56, 0.66, 0.82),
           v3Underside * (0.44 + closeStage * 0.2)
         );
-        finalColor += v3TopColor * v3TopLight * v3VolumeMass * (0.13 + closeStage * 0.09);
+        finalColor += v3TopColor * v3TopLight * v3VolumeMass * (0.18 + closeStage * 0.14);
         float alpha = (
           photoWisps * 0.06 +
           weatherMass * 0.32 +
@@ -1223,13 +1228,17 @@ export function LandingCloudLayer({
       return [];
     }
 
-    const shells = resolveLandingCloudShells(quality.tier, referenceLook);
-    if (!emphasis || shells.length === 3) {
+    const shells = resolveLandingCloudShells(
+      quality.tier,
+      referenceLook,
+      cloudVolumeProfile.model
+    );
+    if (!emphasis || shells.length === 3 || cloudVolumeProfile.model === "v3") {
       return shells;
     }
 
     return (referenceLook ? REFERENCE_CLOUD_SHELLS : STANDARD_CLOUD_SHELLS).slice(0, 3);
-  }, [cloudMode, emphasis, quality.tier, referenceLook]);
+  }, [cloudMode, cloudVolumeProfile.model, emphasis, quality.tier, referenceLook]);
   const materials = useMemo(
     () => {
       if (cloudMode === "shell-lite") {
