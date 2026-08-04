@@ -1,4 +1,4 @@
-import type { OpeningCloudVariant } from "../../content/lubirthOpeningCloudManifest";
+import type { OpeningGlobeCloudVariant } from "../../content/lubirthOpeningGlobeCloudManifest";
 import type {
   CloudFrameAvailability,
   CloudFrameProvider,
@@ -29,7 +29,7 @@ export class PackedCloudVideoFrameProvider implements CloudFrameProvider {
     manifestId
   }: {
     video: HTMLVideoElement;
-    variant: OpeningCloudVariant;
+    variant: OpeningGlobeCloudVariant;
     manifestId: string;
   }) {
     this.#video = video;

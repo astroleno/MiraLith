@@ -36,6 +36,7 @@ import type {
   LandingLocationConfig,
   LandingMoonLightingMode,
   LandingMoonPhase,
+  LandingOpeningCloudLayer,
   LandingRenderProfile,
   LandingRuntimeProfile,
   LandingVisualDebugLayer,
@@ -191,6 +192,7 @@ interface LuBirthSceneSlotProps {
   productionSurface?: boolean;
   paused?: boolean;
   cloudDeckEnabled?: boolean;
+  openingCloudLayer?: LandingOpeningCloudLayer;
   closeAtmosphereTuning?: Partial<LandingCloseAtmosphereTuning>;
   onProjectionFrame?: (frame: LuBirthProjectionFrame) => void;
   onVisualReadyEnough?: () => void;
@@ -575,6 +577,7 @@ export function LuBirthSceneSlot({
   productionSurface,
   paused = false,
   cloudDeckEnabled = true,
+  openingCloudLayer,
   closeAtmosphereTuning,
   onProjectionFrame,
   onVisualReadyEnough,
@@ -957,6 +960,7 @@ export function LuBirthSceneSlot({
       reducedMotion={reducedMotion}
       paused={paused}
       cloudDeckEnabled={cloudDeckEnabled}
+      openingCloudLayer={openingCloudLayer}
       closeAtmosphereTuning={effectiveCloseAtmosphereTuning}
       onProjectionFrame={onProjectionFrame}
       onVisualReadyEnough={onVisualReadyEnough}

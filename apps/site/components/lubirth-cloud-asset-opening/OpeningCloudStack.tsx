@@ -8,10 +8,12 @@ import {
   useRef,
   useState
 } from "react";
-import { openingCloudManifest, type OpeningCloudTier } from "../../content/lubirthOpeningCloudManifest";
+import {
+  openingGlobeCloudManifest,
+  type OpeningGlobeCloudTier
+} from "../../content/lubirthOpeningGlobeCloudManifest";
 import { OpeningCloudController } from "./controller";
 import { PackedCloudVideoFrameProvider } from "./frameProvider";
-import { PackedCloudOverlay } from "./PackedCloudOverlay";
 import { TransitionVeil } from "./TransitionVeil";
 import type {
   OpeningCloudDirection,
@@ -44,14 +46,17 @@ export function OpeningCloudStack({
   reducedMotion,
   tier
 }: {
-  children: ReactNode;
+  children: (context: {
+    snapshot: OpeningCloudSnapshot;
+    video: HTMLVideoElement | null;
+  }) => ReactNode;
   direction: OpeningCloudDirection;
   forcedFallbackReason?: OpeningCloudFallbackReason | null;
   onMetric?: (event: OpeningCloudMetricEvent) => void;
   onSnapshot?: (snapshot: OpeningCloudSnapshot) => void;
   progress: number;
   reducedMotion: boolean;
-  tier: OpeningCloudTier;
+  tier: OpeningGlobeCloudTier;
 }) {
   const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
   const [snapshot, setSnapshot] = useState<OpeningCloudSnapshot>(INITIAL_SNAPSHOT);
@@ -62,7 +67,7 @@ export function OpeningCloudStack({
   const lastFallbackReasonRef = useRef<OpeningCloudFallbackReason | null>(null);
   const onMetricRef = useRef(onMetric);
   const onSnapshotRef = useRef(onSnapshot);
-  const variant = openingCloudManifest.variants[tier];
+  const variant = openingGlobeCloudManifest.variants[tier];
 
   useLayoutEffect(() => {
     inputRef.current = { direction, progress };
@@ -102,7 +107,7 @@ export function OpeningCloudStack({
     const provider = new PackedCloudVideoFrameProvider({
       video: videoElement,
       variant,
-      manifestId: openingCloudManifest.id
+      manifestId: openingGlobeCloudManifest.id
     });
     const controller = new OpeningCloudController({ provider, tier });
 
@@ -198,10 +203,6 @@ export function OpeningCloudStack({
 
   const presentationMounted = !snapshot.presentationResourcesReleased &&
     (snapshot.source === "cloud" || snapshot.state === "reverse-veil-close" || snapshot.state === "reverse-wait-frame");
-  const handleRenderingFallback = useCallback(
-    () => forceFallback("rendering-fallback"),
-    [forceFallback]
-  );
 
   return (
     <div
@@ -211,28 +212,21 @@ export function OpeningCloudStack({
       data-opening-cloud-stack
     >
       <div className={styles.liveLayer} data-live-ip-relief-lite>
-        {children}
+        {children({
+          snapshot,
+          video: presentationMounted ? videoElement : null
+        })}
       </div>
       <video
         aria-hidden="true"
         className={styles.cloudMedia}
-        data-opening-cloud-media
+        data-opening-globe-cloud-media
         data-tier={tier}
         muted
         playsInline
         preload="auto"
         ref={setVideoElement}
       />
-      {presentationMounted ? (
-        <PackedCloudOverlay
-          onRenderingFallback={handleRenderingFallback}
-          renderedFrame={snapshot.renderedFrame}
-          variant={variant}
-          video={videoElement}
-        />
-      ) : (
-        <div aria-hidden="true" className={styles.cloudOverlayPlaceholder} data-opening-cloud-overlay />
-      )}
       <TransitionVeil snapshot={snapshot} />
     </div>
   );

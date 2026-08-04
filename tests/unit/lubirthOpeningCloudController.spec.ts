@@ -10,8 +10,8 @@ class FakeCloudProvider implements CloudFrameProvider {
   readonly frameRate = 30;
   readonly frameCount = 48;
   readonly metadata = {
-    manifestId: "lubirth-opening-cloud-pack-v1",
-    src: "/assets/lubirth/opening-clouds/desktop.mp4"
+    manifestId: "lubirth-opening-globe-cloud-field-v1",
+    src: "/assets/lubirth/opening-globe-clouds/desktop.mp4"
   };
   readonly requestedFrames: number[] = [];
   releaseCalls = 0;

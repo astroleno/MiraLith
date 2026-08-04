@@ -1,7 +1,7 @@
 import {
-  mapOpeningCloudProgressToFrame,
-  openingCloudManifest
-} from "../../content/lubirthOpeningCloudManifest";
+  mapOpeningGlobeCloudProgressToFrame,
+  openingGlobeCloudManifest
+} from "../../content/lubirthOpeningGlobeCloudManifest";
 import type {
   CloudFrameAvailability,
   CloudFrameProvider,
@@ -11,9 +11,9 @@ import type {
 } from "./types";
 
 export const OPENING_CLOUD_TIMING = {
-  cloudStableEnd: openingCloudManifest.handoff.plateEndProgress,
-  cutProgress: openingCloudManifest.handoff.cutProgress,
-  liveStart: openingCloudManifest.handoff.liveProgress,
+  cloudStableEnd: openingGlobeCloudManifest.handoff.plateEndProgress,
+  cutProgress: openingGlobeCloudManifest.handoff.cutProgress,
+  liveStart: openingGlobeCloudManifest.handoff.liveProgress,
   reverseArmHysteresis: 0.006,
   forwardDesktopDeadlineMs: 250,
   forwardMobileDeadlineMs: 400,
@@ -206,7 +206,7 @@ export class OpeningCloudController {
       return this.getSnapshot();
     }
 
-    const requestedFrame = mapOpeningCloudProgressToFrame(openingCloudManifest, progress);
+    const requestedFrame = mapOpeningGlobeCloudProgressToFrame(openingGlobeCloudManifest, progress);
     if (requestedFrame !== this.#snapshot.renderedFrame) {
       const result = await this.#requestFrame(requestedFrame, "forward", operation);
       if (result === null) return this.getSnapshot();
@@ -247,7 +247,7 @@ export class OpeningCloudController {
   }
 
   async #updateReverseCloud(progress: number, operation: number) {
-    const requestedFrame = mapOpeningCloudProgressToFrame(openingCloudManifest, progress);
+    const requestedFrame = mapOpeningGlobeCloudProgressToFrame(openingGlobeCloudManifest, progress);
     if (requestedFrame !== this.#snapshot.renderedFrame) {
       const result = await this.#requestFrame(requestedFrame, "reverse", operation);
       if (result === null) return this.getSnapshot();
@@ -294,8 +294,8 @@ export class OpeningCloudController {
     }
 
     const targetFrame = progress >= OPENING_CLOUD_TIMING.cutProgress
-      ? openingCloudManifest.handoff.cutFrame
-      : mapOpeningCloudProgressToFrame(openingCloudManifest, progress);
+      ? openingGlobeCloudManifest.handoff.cutFrame
+      : mapOpeningGlobeCloudProgressToFrame(openingGlobeCloudManifest, progress);
     if (this.#reversePreparedFrame !== targetFrame) {
       const result = await this.#requestFrame(targetFrame, "reverse", operation);
       if (result === null) return this.getSnapshot();

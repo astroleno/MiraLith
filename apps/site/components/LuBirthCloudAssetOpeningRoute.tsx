@@ -5,10 +5,7 @@ import { useReducedMotionPreference } from "@miralith/visual-core";
 import { VisualCanvas } from "../visual/VisualCanvas";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
 import { LuBirthSceneSlot } from "../visual/scenes/LuBirthSceneSlot";
-import {
-  openingCloudManifest,
-  type OpeningCloudTier
-} from "../content/lubirthOpeningCloudManifest";
+import type { OpeningGlobeCloudTier } from "../content/lubirthOpeningGlobeCloudManifest";
 import { OpeningCloudStack } from "./lubirth-cloud-asset-opening/OpeningCloudStack";
 import { resolveOpeningCloudMemoryFallback } from "./lubirth-cloud-asset-opening/fallbackPolicy";
 import type {
@@ -28,7 +25,7 @@ declare global {
   interface Window {
     __MiraLithOpeningProgress?: number;
     __MiraLithLuBirthOpeningCloud?: OpeningCloudSnapshot & {
-      selectedTier: OpeningCloudTier;
+      selectedTier: OpeningGlobeCloudTier;
       cloudOnly: true;
       liveScene: "ip-relief-lite";
       metrics: OpeningCloudRuntimeMetrics;
@@ -40,7 +37,7 @@ function clamp01(value: number) {
   return Math.min(1, Math.max(0, value));
 }
 
-function selectTier(): OpeningCloudTier {
+function selectTier(): OpeningGlobeCloudTier {
   return Math.min(window.innerWidth, window.innerHeight) < 760 ? "mobile" : "desktop";
 }
 
@@ -85,7 +82,7 @@ export function LuBirthCloudAssetOpeningRoute() {
   const reducedMotion = useReducedMotionPreference();
   const [progress, setProgress] = useState(0);
   const [direction, setDirection] = useState<OpeningCloudDirection>("forward");
-  const [tier, setTier] = useState<OpeningCloudTier>("desktop");
+  const [tier, setTier] = useState<OpeningGlobeCloudTier>("desktop");
   const [runtimeFallbackReason, setRuntimeFallbackReason] = useState<OpeningCloudFallbackReason | null>(null);
   const [snapshot, setSnapshot] = useState<OpeningCloudSnapshot | null>(null);
   const deviceMemory = typeof navigator === "undefined" ? undefined : navigator.deviceMemory;
@@ -200,7 +197,7 @@ export function LuBirthCloudAssetOpeningRoute() {
   const label = snapshot?.fallbackReason
     ? "live Relief-lite fallback"
     : snapshot?.source === "cloud"
-      ? "cloud-only asset over live IP Earth"
+      ? "globe cloud field attached to live IP Earth"
       : "live IP Relief-lite";
 
   return (
@@ -222,33 +219,47 @@ export function LuBirthCloudAssetOpeningRoute() {
         reducedMotion={reducedMotion}
         tier={tier}
       >
-        <VisualCanvas
-          antialias={false}
-          decorative
-          dpr={1}
-          fallback={
-            <VisualCanvasFallback
-              label="LuBirth live Relief-lite fallback"
-              posterSrc="/assets/lubirth/poster-field.webp"
-              scene="lubirth"
+        {({ snapshot: stackSnapshot, video }) => (
+          <VisualCanvas
+            antialias={false}
+            decorative
+            dpr={1}
+            fallback={
+              <VisualCanvasFallback
+                label="LuBirth live Relief-lite fallback"
+                posterSrc="/assets/lubirth/poster-field.webp"
+                scene="lubirth"
+              />
+            }
+            onFallback={() => setRuntimeFallbackReason("rendering-fallback")}
+          >
+            <LuBirthSceneSlot
+              atmospherePolicy="stack"
+              cloudDeckEnabled
+              mode="field"
+              openingCloudLayer={
+                stackSnapshot.source === "cloud" &&
+                stackSnapshot.renderedFrame !== null &&
+                video
+                  ? {
+                      active: true,
+                      frame: stackSnapshot.renderedFrame,
+                      mobile: tier === "mobile",
+                      video
+                    }
+                  : undefined
+              }
+              paused={false}
+              productionSurface
+              quality="medium"
+              renderProfile="nasa"
+              routeVariant="study"
+              visualAtmosphereMode="limb-lite"
+              visualCloudMode="relief-lite"
+              visualPostEffectMode="off"
             />
-          }
-          onFallback={() => setRuntimeFallbackReason("rendering-fallback")}
-        >
-          <LuBirthSceneSlot
-            atmospherePolicy="stack"
-            cloudDeckEnabled
-            mode="field"
-            paused={false}
-            productionSurface
-            quality="medium"
-            renderProfile="nasa"
-            routeVariant="study"
-            visualAtmosphereMode="limb-lite"
-            visualCloudMode="relief-lite"
-            visualPostEffectMode="off"
-          />
-        </VisualCanvas>
+          </VisualCanvas>
+        )}
       </OpeningCloudStack>
       <section className={styles.stage} aria-label="Cloud asset scroll review">
         <div className={styles.cue} aria-live="polite">

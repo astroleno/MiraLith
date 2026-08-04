@@ -27,6 +27,7 @@ import { LandingDirectionalAtmosphere } from "./LandingDirectionalAtmosphere";
 import { LandingEarth } from "./LandingEarth";
 import { LandingLimbDiffuseGlow } from "./LandingLimbDiffuseGlow";
 import { LandingLimbAtmosphere } from "./LandingLimbAtmosphere";
+import { LandingOpeningGlobeCloud } from "./LandingOpeningGlobeCloud";
 import { LandingReliefCloud } from "./LandingReliefCloud";
 import { LandingHorizonAuroraRibbon } from "./LandingHorizonAuroraRibbon";
 import { LandingHorizonCloudBelt } from "./LandingHorizonCloudBelt";
@@ -213,7 +214,8 @@ export function EarthMoonScene({
   showAuroraInAll = false,
   atmosphereVariant = "stack",
   atmosphereLook = "lubirth",
-  closeAtmosphereTuning
+  closeAtmosphereTuning,
+  openingCloudLayer
 }: EarthMoonSceneProps) {
   const earthGroup = useRef<Group>(null);
   const projectedEarthFrame = useRef<LandingProjectedEarthFrame>({
@@ -803,7 +805,14 @@ export function EarthMoonScene({
             closeAtmosphereTuning={activeCloseAtmosphereTuning}
           />
         ) : null}
-        {showCloudShells ? (
+        {openingCloudLayer?.active ? (
+          <LandingOpeningGlobeCloud
+            composition={composition}
+            layer={openingCloudLayer}
+            lightingFrame={planetLightingFrame}
+            quality={quality}
+          />
+        ) : showCloudShells ? (
           <>
             {activeVisualPolicy.cloudMode === "nasa-lite" ? (
               <LandingNasaLiteCloud

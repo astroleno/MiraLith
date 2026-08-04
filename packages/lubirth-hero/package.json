@@ -12,7 +12,6 @@
     "generate:home-cloud-field": "node scripts/generate-home-cloud-field.mjs",
     "generate:nasa-lite-cloud-field": "LUBIRTH_HOME_CLOUD_PROFILE=nasa-lite node scripts/generate-home-cloud-field.mjs",
     "generate:nasa-lite-color-assets": "node scripts/generate-nasa-lite-color-assets.mjs",
-    "bake:opening-cloud-assets": "node scripts/bake-opening-cloud-assets.mjs",
     "bake:opening-globe-cloud-assets": "node scripts/bake-opening-globe-cloud-assets.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
