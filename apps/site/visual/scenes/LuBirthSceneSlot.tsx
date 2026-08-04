@@ -179,6 +179,9 @@ interface LuBirthSceneSlotProps {
   quality?: LandingQuality;
   debugMianyang?: boolean;
   visualDebugLayer?: LandingVisualDebugLayer;
+  visualCloudMode?: LandingCloudMode;
+  visualAtmosphereMode?: LandingAtmosphereMode;
+  visualPostEffectMode?: LandingPostEffectMode;
   renderProfile?: LandingRenderProfile;
   atmospherePolicy?: LandingAtmospherePolicy;
   atmosphereVariant?: LandingAtmosphereVariant;
@@ -560,6 +563,9 @@ export function LuBirthSceneSlot({
   quality = "auto",
   debugMianyang = false,
   visualDebugLayer = "all",
+  visualCloudMode,
+  visualAtmosphereMode,
+  visualPostEffectMode,
   renderProfile,
   atmospherePolicy,
   atmosphereVariant = "stack",
@@ -576,9 +582,9 @@ export function LuBirthSceneSlot({
 }: LuBirthSceneSlotProps) {
   const reducedMotion = useReducedMotionPreference();
   const qualityOverride = readQualityOverride();
-  const postEffectModeOverride = readPostEffectModeOverride();
-  const cloudModeOverride = readCloudModeOverride();
-  const atmosphereVisualModeOverride = readAtmosphereVisualModeOverride();
+  const postEffectModeOverride = readPostEffectModeOverride() ?? visualPostEffectMode;
+  const cloudModeOverride = readCloudModeOverride() ?? visualCloudMode;
+  const atmosphereVisualModeOverride = readAtmosphereVisualModeOverride() ?? visualAtmosphereMode;
   const auroraProfile = readAuroraProfile();
   const renderProfileOverride = readRenderProfileOverride();
   const activeRenderProfile = renderProfileOverride ?? renderProfile;

@@ -1,0 +1,112 @@
+.route {
+  min-height: 455svh;
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  background: #010205;
+}
+
+.stage {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  height: 100svh;
+  pointer-events: none;
+}
+
+.cloudStack {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  isolation: isolate;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.liveLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.cloudOverlay,
+.cloudOverlayPlaceholder {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+.cloudOverlayPlaceholder {
+  visibility: hidden;
+}
+
+.cloudMedia {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  left: -2px;
+  top: -2px;
+  pointer-events: none;
+}
+
+.transitionVeil {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.cue {
+  position: absolute;
+  left: clamp(24px, 4vw, 72px);
+  bottom: clamp(24px, 5vh, 64px);
+  max-width: min(320px, 74vw);
+  color: rgba(227, 238, 248, 0.8);
+  font-family: var(--font-geist-sans, Arial, sans-serif);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 10px;
+  line-height: 1.6;
+  mix-blend-mode: screen;
+}
+
+.cue strong,
+.cue span {
+  display: block;
+}
+
+.cue strong {
+  color: rgba(239, 247, 255, 0.94);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.cue span {
+  margin-top: 4px;
+  color: rgba(189, 214, 234, 0.62);
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 760px) {
+  .route {
+    min-height: 500svh;
+  }
+
+  .cue {
+    left: 22px;
+    bottom: 28px;
+    max-width: 62vw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cue {
+    display: none;
+  }
+}

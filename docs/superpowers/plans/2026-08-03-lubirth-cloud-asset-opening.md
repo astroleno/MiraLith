@@ -8,6 +8,8 @@
 
 **Tech Stack:** Next.js 16, React 19, existing Three.js/R3F LuBirth scene, WebGL2 DOM overlay, all-I H.264 via FFmpeg, deterministic local Chromium bake via Playwright, TypeScript and Playwright.
 
+**Execution status:** Tasks 1–5 are implemented in the isolated query-only branch. Task 6 records a semantic/runtime PASS but a default-home promotion REJECT until a physical device supplies the required post-handoff GPU timer evidence.
+
 ---
 
 ## Locked architecture
@@ -31,7 +33,7 @@
 | apps/site/public/assets/lubirth/opening-clouds/mobile.mp4 | 960×444 cloud-only packed video. |
 | apps/site/public/assets/lubirth/opening-clouds/manifest.json | Provenance, timing, packing, budget and checksum contract. |
 | apps/site/content/lubirthOpeningCloudManifest.ts | Typed validator and progress-to-frame mapping. |
-| apps/site/components/lubirth-cloud-asset-opening/{types,controller,frameProvider}.ts | Testable frame addressing, arming, release and reverse state machine. |
+| apps/site/components/lubirth-cloud-asset-opening/{types,controller,frameProvider,fallbackPolicy}.ts | Testable frame addressing, arming, release, reverse state machine and low-memory policy. |
 | apps/site/components/lubirth-cloud-asset-opening/PackedCloudOverlay.tsx | WebGL2 canvas that samples RGB and alpha halves of one video. |
 | apps/site/components/lubirth-cloud-asset-opening/TransitionVeil.tsx | Independent DOM layer above Canvas and cloud overlay. |
 | apps/site/components/lubirth-cloud-asset-opening/OpeningCloudStack.tsx | Wires provider, controller, overlay and veil. |
@@ -40,6 +42,7 @@
 | apps/site/app/lubirth-cloud-asset-opening/page.tsx | Query-only page entry. |
 | tests/unit/lubirthOpeningCloudManifest.spec.ts | Asset contract and non-whole-plate checks. |
 | tests/unit/lubirthOpeningCloudController.spec.ts | Controller state and reverse/fallback checks. |
+| tests/unit/lubirthOpeningCloudFallbackPolicy.spec.ts | Low-memory fallback policy. |
 | tests/e2e/lubirth-cloud-asset-opening.spec.ts | Real live Canvas, native scroll, temporal frame change and release checks. |
 | docs/lubirth-cloud-asset-opening-evidence/2026-08-03 | Asset/contact-sheet/telemetry evidence and checksum ledger. |
 
@@ -50,7 +53,7 @@
 - Create: apps/site/public/assets/lubirth/opening-clouds/manifest.json
 - Create: tests/unit/lubirthOpeningCloudManifest.spec.ts
 
-- [ ] **Step 1: Write the failing manifest test**
+- [x] **Step 1: Write the failing manifest test**
 
 ~~~ts
 import { expect, test } from "@playwright/test";
@@ -88,13 +91,13 @@ test.describe("opening cloud manifest", () => {
 });
 ~~~
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run: pnpm exec playwright test -c playwright.unit.config.ts tests/unit/lubirthOpeningCloudManifest.spec.ts
 
 Expected: failure resolving lubirthOpeningCloudManifest.
 
-- [ ] **Step 3: Implement validator and mapper**
+- [x] **Step 3: Implement validator and mapper**
 
 ~~~ts
 export const OPENING_CLOUD_PACKING = "left-rgb-right-alpha" as const;
@@ -127,7 +130,7 @@ export function validateOpeningCloudManifest(value: unknown): OpeningCloudManife
 
 The JSON contract records source generator path/version, seed, parameters, source SHA-256, output SHA-256, packed dimensions, 48 frames at 30fps, cloudOnly true, alpha packing and desktop/mobile ceilings.
 
-- [ ] **Step 4: Run GREEN**
+- [x] **Step 4: Run GREEN**
 
 Run:
 ~~~sh
@@ -137,7 +140,7 @@ pnpm --filter @miralith/site typecheck
 
 Expected: both exit 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ~~~sh
 git add apps/site/content/lubirthOpeningCloudManifest.ts apps/site/public/assets/lubirth/opening-clouds/manifest.json tests/unit/lubirthOpeningCloudManifest.spec.ts
@@ -154,7 +157,7 @@ git commit -m "test(lubirth): define cloud-only opening asset contract"
 - Create: docs/lubirth-cloud-asset-opening-evidence/2026-08-03/{README.md,checksums.sha256,desktop-cloud-contact-sheet.png,mobile-cloud-contact-sheet.png}
 - Modify: tests/unit/lubirthOpeningCloudManifest.spec.ts
 
-- [ ] **Step 1: Add a failing output assertion**
+- [x] **Step 1: Add a failing output assertion**
 
 ~~~ts
 import { expect, test } from "@playwright/test";
@@ -172,13 +175,13 @@ test("publishes all-I packed cloud-only variants with temporal alpha change", as
 });
 ~~~
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run: pnpm exec playwright test -c playwright.unit.config.ts tests/unit/lubirthOpeningCloudManifest.spec.ts
 
 Expected: media/output metadata assertion fails because no assets exist.
 
-- [ ] **Step 3: Implement deterministic procedural volume bake**
+- [x] **Step 3: Implement deterministic procedural volume bake**
 
 The HTML file exposes window.renderOpeningCloudFrame(frameIndex). It clears alpha to zero and renders a fixed-seed, front-to-back density integration with Worley/fBm shape, detail erosion, wind advection and directional single-scattering. It has no draw code or texture input for an Earth, Moon, star field, background or text.
 
@@ -204,7 +207,7 @@ async function bakeVariant({ width, height, outputPath, maxTransferBytes }) {
 
 packRgbAndAlpha uses FFmpeg alphaextract and hstack, then encodes with -g 1 -keyint_min 1 -sc_threshold 0. Desktop is 1440×810 before packing; mobile is 960×444. The script creates early/middle/late labelled contact sheets, alpha-difference measurements and hashes.
 
-- [ ] **Step 4: Generate assets and run GREEN**
+- [x] **Step 4: Generate assets and run GREEN**
 
 Run:
 ~~~sh
@@ -214,7 +217,7 @@ pnpm exec playwright test -c playwright.unit.config.ts tests/unit/lubirthOpening
 
 Expected: frames 0, 12, 24 and 36 show changing cloud alpha after global alignment; both tiers meet byte ceilings at the prescribed quality floor; no non-cloud pixels occur where alpha is zero.
 
-- [ ] **Step 5: Commit accepted assets**
+- [x] **Step 5: Commit accepted assets**
 
 ~~~sh
 git add packages/lubirth-hero/scripts/opening-cloud-volume.html packages/lubirth-hero/scripts/bake-opening-cloud-assets.mjs apps/site/public/assets/lubirth/opening-clouds docs/lubirth-cloud-asset-opening-evidence/2026-08-03 tests/unit/lubirthOpeningCloudManifest.spec.ts
@@ -229,7 +232,7 @@ git commit -m "feat(lubirth): bake temporal cloud-only opening assets"
 - Create: apps/site/components/lubirth-cloud-asset-opening/frameProvider.ts
 - Create: tests/unit/lubirthOpeningCloudController.spec.ts
 
-- [ ] **Step 1: Write failing controller tests**
+- [x] **Step 1: Write failing controller tests**
 
 ~~~ts
 import { expect, test } from "@playwright/test";
@@ -264,13 +267,13 @@ test("releases at 0.22 and reacquires a target frame on reverse", async () => {
 });
 ~~~
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run: pnpm exec playwright test -c playwright.unit.config.ts tests/unit/lubirthOpeningCloudController.spec.ts
 
 Expected: failure resolving OpeningCloudController.
 
-- [ ] **Step 3: Implement minimal state machine**
+- [x] **Step 3: Implement state machine**
 
 ~~~ts
 export interface OpeningCloudFrameProvider {
@@ -293,7 +296,7 @@ export class OpeningCloudController {
 
 The concrete provider owns one video, seeks frame/frameRate, waits for requestVideoFrameCallback when present and never converts a decode failure into a cloud success.
 
-- [ ] **Step 4: Run GREEN**
+- [x] **Step 4: Run GREEN**
 
 Run:
 ~~~sh
@@ -303,7 +306,7 @@ pnpm --filter @miralith/site typecheck
 
 Expected: both exit 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit in the final query-only implementation commit**
 
 ~~~sh
 git add apps/site/components/lubirth-cloud-asset-opening tests/unit/lubirthOpeningCloudController.spec.ts
@@ -318,7 +321,7 @@ git commit -m "feat(lubirth): add seek-safe cloud opening controller"
 - Create: apps/site/components/lubirth-cloud-asset-opening/OpeningCloudStack.tsx
 - Create: tests/e2e/lubirth-cloud-asset-opening.spec.ts
 
-- [ ] **Step 1: Write a failing overlay contract assertion**
+- [x] **Step 1: Write a failing overlay contract assertion**
 
 ~~~ts
 await expect(page.locator("[data-opening-cloud-overlay]")).toHaveAttribute("data-source", "cloud");
@@ -326,13 +329,13 @@ await expect(page.locator("[data-opening-cloud-overlay]")).toHaveAttribute("data
 await expect(page.locator("[data-transition-veil]")).toHaveAttribute("data-layer", "shared");
 ~~~
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run: pnpm exec playwright test --project=desktop tests/e2e/lubirth-cloud-asset-opening.spec.ts
 
 Expected: route and overlay are absent.
 
-- [ ] **Step 3: Implement packed-video shader**
+- [x] **Step 3: Implement packed-video shader**
 
 ~~~glsl
 vec4 color = texture2D(uPackedVideo, vec2(vUv.x * 0.5, vUv.y));
@@ -342,13 +345,13 @@ gl_FragColor = vec4(color.rgb, alpha);
 
 The overlay canvas is absolutely positioned above the live R3F Canvas, has pointer-events none, clears transparent, and stops drawing/releases its GL context when presentationResourcesReleased is true. TransitionVeil is a separate sibling above both layers and derives solely from progress.
 
-- [ ] **Step 4: Run GREEN**
+- [x] **Step 4: Run GREEN**
 
 Run: pnpm exec playwright test --project=desktop tests/e2e/lubirth-cloud-asset-opening.spec.ts --grep "cloud media"
 
 Expected: one live Canvas, one non-opaque cloud overlay, one shared veil.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit in the final query-only implementation commit**
 
 ~~~sh
 git add apps/site/components/lubirth-cloud-asset-opening tests/e2e/lubirth-cloud-asset-opening.spec.ts
@@ -363,7 +366,7 @@ git commit -m "feat(lubirth): render packed cloud asset overlay"
 - Create: apps/site/app/lubirth-cloud-asset-opening/page.tsx
 - Modify: tests/e2e/lubirth-cloud-asset-opening.spec.ts
 
-- [ ] **Step 1: Write failing live-route test**
+- [x] **Step 1: Write failing live-route test**
 
 ~~~ts
 test("scroll advances cloud frames while the real Relief-lite Canvas remains mounted", async ({ page }) => {
@@ -376,13 +379,13 @@ test("scroll advances cloud frames while the real Relief-lite Canvas remains mou
 });
 ~~~
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run: pnpm exec playwright test --project=desktop tests/e2e/lubirth-cloud-asset-opening.spec.ts --grep "scroll advances"
 
 Expected: missing route failure.
 
-- [ ] **Step 3: Implement route and scroll mapping**
+- [x] **Step 3: Implement route and scroll mapping**
 
 ~~~tsx
 <section ref={rootRef} className={styles.review} data-cloud-asset-opening>
@@ -407,9 +410,9 @@ setMotion((previous) => ({
 }));
 ~~~
 
-The route exposes window.__MiraLithSetLuBirthCloudAssetOpeningProgress only for deterministic tests. It uses a HUD only when copy=visible and never mounts on /.
+The route derives progress only from native page scrolling; tests scroll the real document rather than using a console setter. It uses a pointer-inert review cue and never mounts on /.
 
-- [ ] **Step 4: Run desktop and mobile GREEN**
+- [x] **Step 4: Run desktop and mobile GREEN**
 
 Run:
 ~~~sh
@@ -417,9 +420,9 @@ pnpm exec playwright test --project=desktop tests/e2e/lubirth-cloud-asset-openin
 pnpm exec playwright test --project=mobile-landscape tests/e2e/lubirth-cloud-asset-opening.spec.ts
 ~~~
 
-Expected: forward, reverse, late-frame, reduced-motion, low-memory and background-resume cases pass.
+Expected: forward, reverse, late-frame, reduced-motion and background-resume route cases pass; the low-memory policy passes in its unit contract.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit in the final query-only implementation commit**
 
 ~~~sh
 git add apps/site/app/lubirth-cloud-asset-opening apps/site/components/LuBirthCloudAssetOpeningRoute.tsx apps/site/components/LuBirthCloudAssetOpeningRoute.module.css tests/e2e/lubirth-cloud-asset-opening.spec.ts
@@ -432,16 +435,17 @@ git commit -m "feat(lubirth): add cloud asset opening review route"
 - Modify: docs/lubirth-cloud-asset-opening-evidence/2026-08-03/README.md
 - Modify: docs/lubirth-cloud-asset-opening-evidence/2026-08-03/checksums.sha256
 
-- [ ] **Step 1: Record visual and performance evidence**
+- [x] **Step 1: Record visual and performance evidence**
 
 The evidence README contains values for desktop/mobile transfer bytes, first-frame readiness, decoded residency, target-frame latency, rAF p95, dropped-frame rate, post-0.22 Relief-lite GPU p95, alpha-difference metrics, cloud-only inspection and SHA-256 values. It includes frame 0/12/24/36/39/42/47 contact sheets and an explicit PASS or REJECT result.
 
-- [ ] **Step 2: Run final verification**
+- [x] **Step 2: Run final verification**
 
 ~~~sh
-pnpm exec playwright test -c playwright.unit.config.ts tests/unit/lubirthOpeningCloudManifest.spec.ts tests/unit/lubirthOpeningCloudController.spec.ts
+pnpm exec playwright test -c playwright.unit.config.ts tests/unit/lubirthOpeningCloudManifest.spec.ts tests/unit/lubirthOpeningCloudController.spec.ts tests/unit/lubirthOpeningCloudFrameProvider.spec.ts tests/unit/lubirthOpeningCloudFallbackPolicy.spec.ts
 pnpm exec playwright test --project=desktop tests/e2e/lubirth-cloud-asset-opening.spec.ts
 pnpm exec playwright test --project=mobile-landscape tests/e2e/lubirth-cloud-asset-opening.spec.ts
+pnpm exec playwright test --project=mobile-portrait tests/e2e/lubirth-cloud-asset-opening.spec.ts
 pnpm --filter @miralith/site typecheck
 pnpm --filter @miralith/site lint
 pnpm --filter @miralith/site build
@@ -451,7 +455,7 @@ shasum -a 256 -c docs/lubirth-cloud-asset-opening-evidence/2026-08-03/checksums.
 
 Expected: every command exits 0. If temporal cloud motion, source purity, byte/quality limit, fallback, build, or the 3ms post-handoff desktop GPU gate fails, record REJECT and do not integrate into /.
 
-- [ ] **Step 3: Commit final evidence only after the complete gate is green**
+- [x] **Step 3: Commit query-only implementation and evidence; keep default promotion rejected until physical GPU evidence exists**
 
 ~~~sh
 git add docs/lubirth-cloud-asset-opening-evidence/2026-08-03
@@ -462,4 +466,4 @@ git commit -m "docs(lubirth): record cloud asset opening evidence"
 
 - Spec coverage: Tasks 1–2 gate true cloud-only temporal media before runtime. Tasks 3–5 implement frame addressing, fallback, real-IP live Earth, independent veil and native scroll. Task 6 blocks default-home promotion on any visual, asset or GPU failure.
 - Placeholder scan: every task names paths, tests, commands, expected states and concrete interface/algorithm decisions.
-- Type consistency: OpeningCloudManifest, OpeningCloudController, OpeningCloudFrameProvider, PackedCloudOverlay, OpeningCloudStack and __MiraLithLuBirthCloudAssetOpening use the same names throughout.
+- Type consistency: OpeningCloudManifest, OpeningCloudController, CloudFrameProvider, PackedCloudOverlay, OpeningCloudStack and __MiraLithLuBirthOpeningCloud use the same names throughout.
