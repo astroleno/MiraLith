@@ -41,6 +41,15 @@ export interface OpeningGlobeCloudManifest {
   encodedDurationSeconds: number;
   frameRate: number;
   frameCount: number;
+  quality: {
+    codec: "h264-all-i-crf-21";
+    minAveragePsnr: number;
+    minAllSsim: number;
+    variants: Record<OpeningGlobeCloudTier, {
+      averagePsnr: number;
+      allSsim: number;
+    }>;
+  };
   source: {
     provenance: "internal-procedural";
     generator: string;
@@ -160,6 +169,7 @@ export function validateOpeningGlobeCloudManifest(value: unknown): OpeningGlobeC
   const source = objectAt(record.source, "source");
   const handoff = objectAt(record.handoff, "handoff");
   const variants = objectAt(record.variants, "variants");
+  const quality = objectAt(record.quality, "quality");
   if (record.cloudOnly !== true || source.provenance !== "internal-procedural") {
     fail("must be an internal-procedural cloud-only globe field");
   }
@@ -191,6 +201,22 @@ export function validateOpeningGlobeCloudManifest(value: unknown): OpeningGlobeC
   if (!(plateEndFrame < cutFrame && cutFrame < liveFrame)) {
     fail("handoff frames must increase");
   }
+  const minimumAveragePsnr = exactAt(quality, "minAveragePsnr", 38, "quality");
+  const minimumAllSsim = exactAt(quality, "minAllSsim", 0.98, "quality");
+  const qualityVariants = objectAt(quality.variants, "quality.variants");
+  const parseQualityVariant = (tier: OpeningGlobeCloudTier) => {
+    const variant = objectAt(qualityVariants[tier], "quality.variants." + tier);
+    const averagePsnr = numberAt(variant, "averagePsnr", "quality.variants." + tier);
+    const allSsim = numberAt(variant, "allSsim", "quality.variants." + tier);
+    if (averagePsnr < minimumAveragePsnr || allSsim < minimumAllSsim || allSsim > 1) {
+      fail("compression quality gate failed for " + tier);
+    }
+    return { averagePsnr, allSsim };
+  };
+  const parsedQuality = {
+    desktop: parseQualityVariant("desktop"),
+    mobile: parseQualityVariant("mobile")
+  };
   return {
     schemaVersion: exactAt(record, "schemaVersion", 1, "root"),
     id: stringAt(record, "id", "root"),
@@ -202,6 +228,12 @@ export function validateOpeningGlobeCloudManifest(value: unknown): OpeningGlobeC
     encodedDurationSeconds: exactAt(record, "encodedDurationSeconds", 1.6, "root"),
     frameRate: exactAt(record, "frameRate", OPENING_GLOBE_CLOUD_FRAME_RATE, "root"),
     frameCount: exactAt(record, "frameCount", OPENING_GLOBE_CLOUD_FRAME_COUNT, "root"),
+    quality: {
+      codec: exactAt(quality, "codec", "h264-all-i-crf-21", "quality"),
+      minAveragePsnr: minimumAveragePsnr,
+      minAllSsim: minimumAllSsim,
+      variants: parsedQuality
+    },
     source: {
       provenance: exactAt(source, "provenance", "internal-procedural", "source"),
       generator: stringAt(source, "generator", "source"),

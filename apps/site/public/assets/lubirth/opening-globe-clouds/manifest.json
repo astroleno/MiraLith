@@ -9,6 +9,21 @@
   "encodedDurationSeconds": 1.6,
   "frameRate": 30,
   "frameCount": 48,
+  "quality": {
+    "codec": "h264-all-i-crf-21",
+    "minAveragePsnr": 38,
+    "minAllSsim": 0.98,
+    "variants": {
+      "desktop": {
+        "averagePsnr": 42.066327,
+        "allSsim": 0.987662
+      },
+      "mobile": {
+        "averagePsnr": 38.911293,
+        "allSsim": 0.981306
+      }
+    }
+  },
   "source": {
     "provenance": "internal-procedural",
     "generator": "packages/lubirth-hero/scripts/bake-opening-globe-cloud-assets.mjs",
@@ -16,11 +31,13 @@
     "scenePath": "packages/lubirth-hero/scripts/opening-globe-cloud-field.html",
     "seed": "lubirth-opening-globe-cloud-v1",
     "parameterSummary": {
-      "densityModel": "high-resolution-worley-fbm-sphere-field",
-      "windDistance": "0.28",
-      "sourceResolution": "1536x768"
+      "densityModel": "analytic high-resolution globe-UV weather field with latitude shaping",
+      "windDistance": "0.28 radians of deterministic longitudinal advection over 1.6 seconds",
+      "cloudOnly": "scalar field only; no Earth, Moon, stars, sky, text, or UI",
+      "packing": "left RGB optical-depth/top-height/morphology | right red concavity",
+      "colorSpace": "raw scalar data sampled with Three.js NoColorSpace"
     },
-    "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "sourceSha256": "bf6dded6a54a9ef1846edab69cb7a04b692693c4f78e9e0d8739c6584fc3a20b",
     "license": "internally-generated"
   },
   "handoff": {
@@ -44,11 +61,11 @@
       "frameCount": 48,
       "keyframePolicy": "all-i",
       "packing": "left-rgb-right-concavity",
-      "transferBytes": 6291456,
+      "transferBytes": 3524293,
       "maxTransferBytes": 6291456,
       "estimatedPackedTextureBytes": 9437184,
       "maxPackedTextureBytes": 16777216,
-      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      "sha256": "83be08437506eae32b681c04f5c1a211ae74a0ceaca4ea8ba15038a7d7505abd"
     },
     "mobile": {
       "tier": "mobile",
@@ -61,11 +78,11 @@
       "frameCount": 48,
       "keyframePolicy": "all-i",
       "packing": "left-rgb-right-concavity",
-      "transferBytes": 2097152,
+      "transferBytes": 2025128,
       "maxTransferBytes": 2097152,
       "estimatedPackedTextureBytes": 4194304,
       "maxPackedTextureBytes": 8388608,
-      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      "sha256": "3135d9ad3075224af4565a2f5801c9ceb0a99bd2ef8541004504bc65bcd79d7f"
     }
   }
 }

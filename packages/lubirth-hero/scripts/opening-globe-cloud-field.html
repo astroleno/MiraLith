@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html,
+      body,
+      canvas {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #000;
+      }
+
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="opening-globe-cloud-field" aria-label="Procedural globe cloud field bake source"></canvas>
+    <script>
+      (() => {
+        const canvas = document.getElementById("opening-globe-cloud-field");
+        const gl = canvas.getContext("webgl2", {
+          alpha: false,
+          antialias: false,
+          depth: false,
+          preserveDrawingBuffer: true
+        });
+
+        if (!gl) {
+          throw new Error("WebGL2 is required to bake the LuBirth opening globe cloud field");
+        }
+
+        const vertexSource = `#version 300 es
+          in vec2 aPosition;
+          void main() {
+            gl_Position = vec4(aPosition, 0.0, 1.0);
+          }
+        `;
+
+        const fragmentSource = `#version 300 es
+          precision highp float;
+
+          uniform vec2 uResolution;
+          uniform float uFrame;
+          out vec4 outColor;
+
+          const float PI = 3.141592653589793;
+          const float TAU = 6.283185307179586;
+
+          vec3 rotateAroundY(vec3 direction, float angle) {
+            float sine = sin(angle);
+            float cosine = cos(angle);
+            return vec3(
+              direction.x * cosine + direction.z * sine,
+              direction.y,
+              direction.z * cosine - direction.x * sine
+            );
+          }
+
+          vec3 directionFromEarthUv(vec2 earthUv) {
+            float longitude = (earthUv.x - 0.5) * TAU;
+            float latitude = (earthUv.y - 0.5) * PI;
+            float latitudeCosine = cos(latitude);
+            return vec3(
+              latitudeCosine * sin(longitude),
+              sin(latitude),
+              latitudeCosine * cos(longitude)
+            );
+          }
+
+          float hash13(vec3 point) {
+            return fract(sin(dot(point, vec3(127.1, 311.7, 74.7))) * 43758.5453123);
+          }
+
+          float valueNoise(vec3 point) {
+            vec3 cell = floor(point);
+            vec3 local = fract(point);
+            local = local * local * (3.0 - 2.0 * local);
+            float n000 = hash13(cell + vec3(0.0, 0.0, 0.0));
+            float n100 = hash13(cell + vec3(1.0, 0.0, 0.0));
+            float n010 = hash13(cell + vec3(0.0, 1.0, 0.0));
+            float n110 = hash13(cell + vec3(1.0, 1.0, 0.0));
+            float n001 = hash13(cell + vec3(0.0, 0.0, 1.0));
+            float n101 = hash13(cell + vec3(1.0, 0.0, 1.0));
+            float n011 = hash13(cell + vec3(0.0, 1.0, 1.0));
+            float n111 = hash13(cell + vec3(1.0, 1.0, 1.0));
+            float lower = mix(mix(n000, n100, local.x), mix(n010, n110, local.x), local.y);
+            float upper = mix(mix(n001, n101, local.x), mix(n011, n111, local.x), local.y);
+            return mix(lower, upper, local.z);
+          }
+
+          float fbm(vec3 point) {
+            float value = 0.0;
+            float amplitude = 0.56;
+            for (int octave = 0; octave < 4; octave += 1) {
+              value += amplitude * valueNoise(point);
+              point = point * 2.03 + vec3(7.17, 3.31, 5.73);
+              amplitude *= 0.5;
+            }
+            return value / 1.05;
+          }
+
+          vec4 evaluateCloudField(vec2 earthUv, float frameProgress) {
+            vec3 direction = rotateAroundY(directionFromEarthUv(earthUv), frameProgress * 0.28);
+            float latitudeMask = 1.0 - smoothstep(0.77, 0.97, abs(direction.y));
+            vec3 wind = vec3(frameProgress * 0.62, frameProgress * 0.16, -frameProgress * 0.29);
+            float continental = fbm(direction * 2.6 + wind);
+            float weatherCells = 1.0 - abs(fbm(direction * 5.4 + wind * 1.7 + vec3(4.1, 8.7, 2.5)) * 2.0 - 1.0);
+            float erosion = fbm(direction * 12.4 + wind * 3.2 + vec3(6.4, 2.8, 8.1));
+            float cloudMass = continental * 0.73 + weatherCells * 0.39 - erosion * 0.16;
+            float coverage = smoothstep(0.47, 0.66, cloudMass) * latitudeMask;
+            float highTops = fbm(direction * 5.1 + wind * 0.9 + vec3(1.8, 4.7, 9.3));
+            // Keep scalar channels intentionally correlated: H.264 stores this as data,
+            // not colour art. Independent chroma noise spends the mobile all-I budget
+            // without producing more perceived cloud volume in the shell renderer.
+            float morphology = clamp(coverage * (0.88 + weatherCells * 0.12), 0.0, 1.0);
+            float topHeight = clamp(coverage * (0.62 + highTops * 0.38), 0.0, 1.0);
+            float concavity = clamp(coverage * (0.82 + (1.0 - erosion) * 0.18), 0.0, 1.0);
+            return vec4(coverage, topHeight, morphology, concavity);
+          }
+
+          void main() {
+            vec2 packedUv = gl_FragCoord.xy / uResolution;
+            bool isConcavityHalf = packedUv.x >= 0.5;
+            vec2 earthUv = vec2(fract(packedUv.x * 2.0), packedUv.y);
+            vec4 field = evaluateCloudField(earthUv, clamp(uFrame / 47.0, 0.0, 1.0));
+            outColor = isConcavityHalf
+              ? vec4(vec3(field.a), 1.0)
+              : vec4(field.rgb, 1.0);
+          }
+        `;
+
+        function compileShader(type, source) {
+          const shader = gl.createShader(type);
+          gl.shaderSource(shader, source);
+          gl.compileShader(shader);
+          if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            throw new Error(gl.getShaderInfoLog(shader) || "Unable to compile globe cloud field shader");
+          }
+          return shader;
+        }
+
+        const program = gl.createProgram();
+        gl.attachShader(program, compileShader(gl.VERTEX_SHADER, vertexSource));
+        gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, fragmentSource));
+        gl.linkProgram(program);
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+          throw new Error(gl.getProgramInfoLog(program) || "Unable to link globe cloud field shader");
+        }
+
+        const vertices = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertices);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
+          gl.STATIC_DRAW
+        );
+        const position = gl.getAttribLocation(program, "aPosition");
+        const resolution = gl.getUniformLocation(program, "uResolution");
+        const frame = gl.getUniformLocation(program, "uFrame");
+
+        function resize() {
+          canvas.width = Math.max(1, window.innerWidth);
+          canvas.height = Math.max(1, window.innerHeight);
+          gl.viewport(0, 0, canvas.width, canvas.height);
+        }
+
+        function render(frameIndex) {
+          resize();
+          gl.disable(gl.DITHER);
+          gl.useProgram(program);
+          gl.bindBuffer(gl.ARRAY_BUFFER, vertices);
+          gl.enableVertexAttribArray(position);
+          gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+          gl.uniform2f(resolution, canvas.width, canvas.height);
+          gl.uniform1f(frame, Math.max(0, Math.min(47, frameIndex)));
+          gl.drawArrays(gl.TRIANGLES, 0, 6);
+          gl.finish();
+        }
+
+        window.renderOpeningGlobeCloudFieldFrame = render;
+        render(0);
+      })();
+    </script>
+  </body>
+</html>
