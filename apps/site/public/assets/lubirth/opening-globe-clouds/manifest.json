@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "id": "lubirth-opening-globe-cloud-field-v1",
+  "cloudOnly": true,
+  "mapping": "equirectangular-earth-uv",
+  "fieldColorSpace": "none",
+  "packing": "left-rgb-right-concavity",
+  "authoredDurationSeconds": 1.584,
+  "encodedDurationSeconds": 1.6,
+  "frameRate": 30,
+  "frameCount": 48,
+  "source": {
+    "provenance": "internal-procedural",
+    "generator": "packages/lubirth-hero/scripts/bake-opening-globe-cloud-assets.mjs",
+    "generatorVersion": "1.0.0",
+    "scenePath": "packages/lubirth-hero/scripts/opening-globe-cloud-field.html",
+    "seed": "lubirth-opening-globe-cloud-v1",
+    "parameterSummary": {
+      "densityModel": "high-resolution-worley-fbm-sphere-field",
+      "windDistance": "0.28",
+      "sourceResolution": "1536x768"
+    },
+    "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "license": "internally-generated"
+  },
+  "handoff": {
+    "plateEndProgress": 0.18,
+    "plateEndFrame": 39,
+    "cutProgress": 0.195,
+    "cutFrame": 42,
+    "liveProgress": 0.22,
+    "liveFrame": 47,
+    "veilColorSrgb": "#142536"
+  },
+  "variants": {
+    "desktop": {
+      "tier": "desktop",
+      "src": "/assets/lubirth/opening-globe-clouds/desktop.mp4",
+      "rawWidth": 1536,
+      "rawHeight": 768,
+      "packedWidth": 3072,
+      "packedHeight": 768,
+      "frameRate": 30,
+      "frameCount": 48,
+      "keyframePolicy": "all-i",
+      "packing": "left-rgb-right-concavity",
+      "transferBytes": 6291456,
+      "maxTransferBytes": 6291456,
+      "estimatedPackedTextureBytes": 9437184,
+      "maxPackedTextureBytes": 16777216,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "mobile": {
+      "tier": "mobile",
+      "src": "/assets/lubirth/opening-globe-clouds/mobile.mp4",
+      "rawWidth": 1024,
+      "rawHeight": 512,
+      "packedWidth": 2048,
+      "packedHeight": 512,
+      "frameRate": 30,
+      "frameCount": 48,
+      "keyframePolicy": "all-i",
+      "packing": "left-rgb-right-concavity",
+      "transferBytes": 2097152,
+      "maxTransferBytes": 2097152,
+      "estimatedPackedTextureBytes": 4194304,
+      "maxPackedTextureBytes": 8388608,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  }
+}
