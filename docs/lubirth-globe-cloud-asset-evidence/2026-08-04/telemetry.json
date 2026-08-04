@@ -1,0 +1,40 @@
+{
+  "route": "/lubirth-cloud-asset-opening?location=ip&geoLat=31.2&geoLon=103.8&geoLabel=Mianyang",
+  "capturedAt": "2026-08-04",
+  "desktop": {
+    "viewport": [1440, 960],
+    "tier": "desktop",
+    "progressFrames": [
+      { "progress": 0, "frame": 0 },
+      { "progress": 0.1203, "frame": 26 }
+    ],
+    "attachment": "earth-group",
+    "shell": {
+      "bottomScale": 1.0005,
+      "topScale": 1.0115,
+      "viewSteps": 3,
+      "sunSteps": 1,
+      "opacity": 0.84,
+      "reliefLightingScale": 1.24,
+      "cloudIlluminationFloor": 0.46
+    },
+    "firstFrameMsLocalDev": 13.4,
+    "textureVersion": 1,
+    "decodeErrors": 0
+  },
+  "mobilePortrait": {
+    "viewport": [412, 915],
+    "tier": "mobile",
+    "progressFrames": [
+      { "progress": 0, "frame": 0 },
+      { "progress": 0.12, "frame": 26 }
+    ],
+    "viewSteps": 2,
+    "attachment": "earth-group"
+  },
+  "promotion": {
+    "defaultHomepageChanged": false,
+    "physicalGpuP95Measured": false,
+    "status": "hold"
+  }
+}

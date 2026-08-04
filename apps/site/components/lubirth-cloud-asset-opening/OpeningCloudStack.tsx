@@ -207,6 +207,7 @@ export function OpeningCloudStack({
   return (
     <div
       className={styles.cloudStack}
+      data-cloud-fallback-reason={snapshot.fallbackReason ?? ""}
       data-cloud-source={snapshot.source}
       data-cloud-state={snapshot.state}
       data-opening-cloud-stack
@@ -226,6 +227,7 @@ export function OpeningCloudStack({
         playsInline
         preload="auto"
         ref={setVideoElement}
+        src={variant.src}
       />
       <TransitionVeil snapshot={snapshot} />
     </div>

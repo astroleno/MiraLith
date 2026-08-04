@@ -142,6 +142,7 @@ export function createLandingReliefCloudMaterial({
       : { RELIEF_VIEW_STEPS: viewSteps },
     uniforms: {
       cameraLocal: { value: new Vector3(0, 0, 4) },
+      cloudIlluminationFloor: { value: 0.32 },
       cloudBottom: { value: cloudBottom },
       cloudFieldMap: { value: texture },
       cloudOffset: { value: 0 },
@@ -222,6 +223,7 @@ export function createLandingReliefCloudMaterial({
     fragmentShader: `
       uniform sampler2D cloudFieldMap;
       uniform vec3 cameraLocal;
+      uniform float cloudIlluminationFloor;
       uniform float cloudBottom;
       uniform float cloudOffset;
       uniform float cloudTop;
@@ -549,8 +551,9 @@ export function createLandingReliefCloudMaterial({
         cloudColor += vec3(0.36, 0.105, 0.025) *
           lightMasks.twilightMask * lightTransmittance * 0.045;
         float illuminationVisibility = clamp(
-          0.32 + lightMasks.dayMask * 0.68 + lightMasks.twilightMask * 0.18,
-          0.32,
+          cloudIlluminationFloor + lightMasks.dayMask * (1.0 - cloudIlluminationFloor) +
+            lightMasks.twilightMask * 0.18,
+          cloudIlluminationFloor,
           1.0
         );
         cloudColor *= illuminationVisibility * (1.0 + debugBoost * 0.16);

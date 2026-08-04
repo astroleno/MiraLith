@@ -20,7 +20,7 @@ The current `10d44e5` implementation is a valid transparent-media/frame-addressi
 | Attachment | The cinematic cloud mesh is rendered inside `earthGroup`, inheriting Earth translation, scale, IP rotation and late auto-rotation. |
 | Asset domain | Each frame is 2:1 equirectangular Earth UV data, not a camera plate or local 160×120×32 volume output. |
 | Field packing | Packed video left half RGB = optical depth/top height/morphology; right red = concavity. It is sampled in `NoColorSpace`, never displayed as RGB artwork. |
-| Volume | Use a 1.0005–1.0070 thin spherical shell, vertex height displacement, 3 desktop / 2 mobile ordered view samples, one sun-column tap and the existing Relief-lite phase/self-shadow response. |
+| Volume | Use a 1.0005–1.0115 spherical shell (strictly inside the 1.014 limb atmosphere), vertex height displacement, 3 desktop / 2 mobile ordered view samples, one sun-column tap, 0.84 opening opacity, 1.24 relief lighting scale and a 0.46 night-side illumination floor. This keeps the cloud field globe-conforming while making its body readable at the opening's low sun angle. |
 | Handoff | 0–0.18 opening shell; 0.18–0.195 veil closes; exactly 0.195 atomically swaps to Relief-lite below the opaque veil; 0.195–0.22 veil opens; ≥0.22 releases video and `VideoTexture`. Reverse performs the same swap only after frame readiness. |
 | Budget | Desktop raw field 1536×768 / packed 3072×768, transfer ≤6 MiB, decoded packed texture ≤16 MiB. Mobile raw 1024×512 / packed 2048×512, transfer ≤2 MiB, decoded packed texture ≤8 MiB. |
 | Scope | Continue using only `/lubirth-cloud-asset-opening`; do not modify `/`, CoScroll, Radio Gaga, `globals.css` or promotion routing. |
@@ -220,7 +220,7 @@ test("uses a globe-UV shell below the limb atmosphere with ordered shallow volum
   const policy = resolveOpeningGlobeCloudShellPolicy({ mobile: false });
   expect(policy).toMatchObject({
     bottomScale: 1.0005,
-    topScale: 1.007,
+    topScale: 1.0115,
     viewSteps: 3,
     sunSteps: 1,
     fieldPacking: "left-rgb-right-concavity",
@@ -424,7 +424,7 @@ test("moves cloud detail on the Earth without changing the Moon crop", async ({ 
   expect(moonCropDelta(frame0, frame26, await readMoonProjection(page))).toBeLessThan(2);
   await expect.poll(() => page.evaluate(() => window.__MiraLithLuBirthOpeningGlobeCloud)).toMatchObject({
     attachment: "earth-group",
-    topScale: 1.007,
+    topScale: 1.0115,
     viewSteps: 3
   });
 });

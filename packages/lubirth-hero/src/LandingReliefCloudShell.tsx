@@ -27,7 +27,11 @@ const cloudCameraLocal = new Vector3();
 
 export interface LandingOpeningGlobeCloudShellPolicy {
   bottomScale: number;
+  cloudIlluminationFloor: number;
+  debugBoost: number;
   topScale: number;
+  opacity: number;
+  reliefLightingScale: number;
   viewSteps: 2 | 3;
   sunSteps: 1;
   fieldDecoder: "packed-video-field";
@@ -40,7 +44,14 @@ export function resolveOpeningGlobeCloudShellPolicy(
   const budget = resolveLandingReliefLiteBudget(mobile);
   return {
     bottomScale: 1.0005,
-    topScale: 1.007,
+    // Keep the presentation shell inside the limb atmosphere, while using
+    // enough radial depth for the opening field to read as a cloud body
+    // rather than a texture painted on the surface.
+    topScale: 1.0115,
+    opacity: 0.84,
+    debugBoost: 1,
+    cloudIlluminationFloor: 0.46,
+    reliefLightingScale: 1.24,
     viewSteps: budget.viewSteps,
     sunSteps: LANDING_RELIEF_LITE_SUN_STEPS,
     fieldDecoder: "packed-video-field",
@@ -55,6 +66,7 @@ export interface LandingReliefCloudShellPolicy {
 }
 
 export interface LandingReliefCloudShellRuntime {
+  cloudIlluminationFloor?: number;
   cloudOffset?: number;
   debugBoost?: number;
   densityIntegrationScale?: number;
@@ -146,6 +158,11 @@ export function LandingReliefCloudShell({
     cloudCameraLocal.copy(cloudCameraWorld);
     cloud.current.worldToLocal(cloudCameraLocal);
     cloudMaterial.uniforms.cameraLocal.value.copy(cloudCameraLocal);
+    cloudMaterial.uniforms.cloudIlluminationFloor.value = MathUtils.clamp(
+      runtime?.cloudIlluminationFloor ?? 0.32,
+      0.2,
+      0.68
+    );
     cloudMaterial.uniforms.cloudOffset.value = MathUtils.euclideanModulo(runtime?.cloudOffset ?? 0, 1);
     cloudMaterial.uniforms.debugBoost.value = MathUtils.clamp(runtime?.debugBoost ?? 0, 0, 1);
     cloudMaterial.uniforms.densityIntegrationScale.value = MathUtils.clamp(
@@ -162,7 +179,7 @@ export function LandingReliefCloudShell({
     cloudMaterial.uniforms.reliefLightingScale.value = MathUtils.clamp(
       runtime?.reliefLightingScale ?? 1,
       0,
-      1
+      1.5
     );
     cloudMaterial.uniforms.reverseSun.value = runtime?.reverseSun ? 1 : 0;
     cloudMaterial.uniforms.reverseSunField.value = runtime?.reverseSunField ? 1 : 0;

@@ -27,13 +27,18 @@ interface LandingOpeningGlobeCloudTelemetry {
   active: true;
   attachment: "earth-group";
   bottomScale: number;
+  cloudIlluminationFloor: number;
+  debugBoost: number;
   fieldPacking: "left-rgb-right-concavity";
   frame: number;
   mapping: "equirectangular-earth-uv";
   mobile: boolean;
+  opacity: number;
+  reliefLightingScale: number;
   sunSteps: 1;
   textureColorSpace: "none";
   textureUuid: string;
+  textureVersion: number;
   topScale: number;
   viewSteps: 2 | 3;
 }
@@ -68,6 +73,13 @@ export function LandingOpeningGlobeCloud({
   useEffect(() => () => {
     texture.dispose();
   }, [texture]);
+  // The controller arms frame zero before this component mounts. VideoTexture
+  // begins listening only after mount, so mark the already-decoded still frame
+  // dirty explicitly; otherwise the opening can show an empty field until the
+  // first scroll-driven seek happens.
+  useEffect(() => {
+    texture.needsUpdate = true;
+  }, [layer.frame, texture]);
   useEffect(() => () => {
     window.__MiraLithLuBirthOpeningGlobeCloud = undefined;
   }, []);
@@ -87,13 +99,18 @@ export function LandingOpeningGlobeCloud({
           active: true,
           attachment: "earth-group",
           bottomScale: policy.bottomScale,
+          cloudIlluminationFloor: policy.cloudIlluminationFloor,
+          debugBoost: policy.debugBoost,
           fieldPacking: "left-rgb-right-concavity",
           frame: layer.frame,
           mapping: "equirectangular-earth-uv",
           mobile: layer.mobile,
+          opacity: policy.opacity,
+          reliefLightingScale: policy.reliefLightingScale,
           sunSteps: policy.sunSteps,
           textureColorSpace: policy.textureColorSpace,
           textureUuid: activeTexture.uuid,
+          textureVersion: activeTexture.version,
           topScale: policy.topScale,
           viewSteps: policy.viewSteps
         };
@@ -101,7 +118,13 @@ export function LandingOpeningGlobeCloud({
       policy={policy}
       quality={quality}
       renderOrder={4}
-      runtime={{ cloudOffset: 0 }}
+      runtime={{
+        cloudOffset: 0,
+        cloudIlluminationFloor: policy.cloudIlluminationFloor,
+        debugBoost: policy.debugBoost,
+        opacity: policy.opacity,
+        reliefLightingScale: policy.reliefLightingScale
+      }}
     />
   );
 }

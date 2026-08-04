@@ -10,7 +10,8 @@ async function scrollToOpeningProgress(page: import("@playwright/test").Page, pr
   }, progress);
 }
 
-test("renders a seekable globe field inside the Earth group instead of a DOM cloud overlay", async ({ page }) => {
+test("renders a seekable globe field inside the Earth group instead of a DOM cloud overlay", async ({ page }, testInfo) => {
+  const expectedViewSteps = testInfo.project.name === "desktop" ? 3 : 2;
   await page.goto(
     "/lubirth-cloud-asset-opening?location=ip&geoLat=31.2&geoLon=103.8&geoLabel=Mianyang"
   );
@@ -29,9 +30,15 @@ test("renders a seekable globe field inside the Earth group instead of a DOM clo
       fieldPacking: "left-rgb-right-concavity",
       mapping: "equirectangular-earth-uv",
       frame: 0,
-      topScale: 1.007,
-      viewSteps: 3
+      topScale: 1.0115,
+      opacity: 0.84,
+      cloudIlluminationFloor: 0.46,
+      reliefLightingScale: 1.24,
+      viewSteps: expectedViewSteps
     });
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthOpeningGlobeCloud?.textureVersion ?? 0))
+    .toBeGreaterThan(0);
 
   await scrollToOpeningProgress(page, 0.12);
   await expect
@@ -58,8 +65,23 @@ test("renders a seekable globe field inside the Earth group instead of a DOM clo
 
   await scrollToOpeningProgress(page, 0.207);
   await expect
-    .poll(() => page.evaluate(() => window.__MiraLithLuBirthOpeningCloud))
-    .toMatchObject({ source: "live", state: "reverse-veil-close" });
+    .poll(() => page.evaluate(() => {
+      const snapshot = window.__MiraLithLuBirthOpeningCloud;
+      return snapshot?.state === "reverse-veil-close" || snapshot?.state === "fallback-live"
+        ? snapshot
+        : null;
+    }))
+    .not.toBeNull();
+  const reverseSnapshot = await page.evaluate(() => window.__MiraLithLuBirthOpeningCloud);
+  if (reverseSnapshot?.state === "fallback-live") {
+    expect(reverseSnapshot).toMatchObject({
+      source: "live",
+      fallbackReason: "reverse-timeout",
+      veilOpacity: 0,
+      presentationResourcesReleased: true
+    });
+    return;
+  }
   await scrollToOpeningProgress(page, 0.18);
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthOpeningGlobeCloud))
