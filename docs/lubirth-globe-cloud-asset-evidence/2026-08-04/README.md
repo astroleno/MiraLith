@@ -1,5 +1,7 @@
 # LuBirth Globe-Cloud Continuity Evidence — 2026-08-04
 
+> **产品视觉复核更新（2026-08-05）：REJECT。** 本目录记录的是云层资产路线的技术连续性与帧寻址证据，不代表首页视觉目标通过。完整原因和下一轮资产门禁见 [复盘](../../lubirth-cloud-asset-opening-retrospective-2026-08-05.md)。默认首页仍不得接入此路线。
+
 ## Verdict
 
 The scoped `/lubirth-cloud-asset-opening` route now passes the visual-continuity and frame-addressability contracts for the cloud asset study.
