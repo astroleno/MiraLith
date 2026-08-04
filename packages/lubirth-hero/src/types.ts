@@ -216,6 +216,13 @@ export interface LandingCompositionOverrides {
   motion?: Partial<LandingMotionConfig>;
 }
 
+export interface LandingOpeningCloudLayer {
+  active: boolean;
+  frame: number;
+  mobile: boolean;
+  video: HTMLVideoElement;
+}
+
 export interface EarthMoonSceneProps {
   mode: EarthMoonHeroMode;
   composition: LandingComposition;
@@ -245,6 +252,7 @@ export interface EarthMoonSceneProps {
   atmosphereVariant?: LandingAtmosphereVariant;
   atmosphereLook?: LandingAtmosphereLook;
   closeAtmosphereTuning?: Partial<LandingCloseAtmosphereTuning>;
+  openingCloudLayer?: LandingOpeningCloudLayer;
 }
 
 export interface LuBirthProjectionFrame {

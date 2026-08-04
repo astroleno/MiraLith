@@ -51,6 +51,8 @@ export { LandingEarthSurfaceLiteV2 } from "./LandingEarthSurfaceLiteV2";
 export { LandingLimbDiffuseGlow } from "./LandingLimbDiffuseGlow";
 export { LandingLimbAtmosphere } from "./LandingLimbAtmosphere";
 export { LandingReliefCloud } from "./LandingReliefCloud";
+export { LandingReliefCloudShell } from "./LandingReliefCloudShell";
+export { LandingOpeningGlobeCloud } from "./LandingOpeningGlobeCloud";
 export { LandingEarth } from "./LandingEarth";
 export { LandingHorizonAuroraRibbon } from "./LandingHorizonAuroraRibbon";
 export { LandingHorizonCloudBelt } from "./LandingHorizonCloudBelt";
@@ -105,6 +107,7 @@ export type {
   LandingLocationConfig,
   LandingMoonLightingMode,
   LandingMoonPhase,
+  LandingOpeningCloudLayer,
   LandingPostEffectMode,
   LandingRenderProfile,
   LandingRuntimeProfile,

@@ -63,13 +63,15 @@
           }
 
           vec3 directionFromEarthUv(vec2 earthUv) {
-            float longitude = (earthUv.x - 0.5) * TAU;
+            // Matches Three.js SphereGeometry and the shader's inverse mapping:
+            // u=0.5 faces +X, then longitude increases toward +Z at u=0.25.
+            float longitude = (0.5 - earthUv.x) * TAU;
             float latitude = (earthUv.y - 0.5) * PI;
             float latitudeCosine = cos(latitude);
             return vec3(
-              latitudeCosine * sin(longitude),
+              latitudeCosine * cos(longitude),
               sin(latitude),
-              latitudeCosine * cos(longitude)
+              latitudeCosine * sin(longitude)
             );
           }
 

@@ -12,6 +12,7 @@ import {
   RepeatWrapping,
   ShaderMaterial,
   Texture,
+  Vector2,
   Vector3
 } from "three";
 import type { QualityProfile } from "@miralith/visual-core";
@@ -103,7 +104,7 @@ function estimateTextureBytes(
   return Math.round(width * height * (compressed ? 1 : 4) * (4 / 3));
 }
 
-function resolveGeometrySegments(quality: QualityProfile, mobile: boolean) {
+export function resolveLandingReliefCloudGeometrySegments(quality: QualityProfile, mobile: boolean) {
   if (mobile || quality.tier === "low") {
     return { height: 80, width: 144 };
   }
@@ -113,24 +114,32 @@ function resolveGeometrySegments(quality: QualityProfile, mobile: boolean) {
   return { height: 104, width: 176 };
 }
 
-function createReliefCloudMaterial({
-  composition,
-  cloudBottom,
-  cloudTop,
-  viewSteps,
-  texture
-}: {
+export type LandingReliefCloudFieldDecoder = "rgba-field" | "packed-video-field";
+
+export interface LandingReliefCloudMaterialOptions {
   composition: LandingComposition;
   cloudBottom: number;
   cloudTop: number;
   viewSteps: 2 | 3;
-  texture: NonNullable<ReturnType<typeof useLandingTexture>["texture"]>;
-}) {
+  texture: Texture;
+  fieldDecoder?: LandingReliefCloudFieldDecoder;
+  fieldUvOffset?: readonly [number, number];
+}
+
+export function createLandingReliefCloudMaterial({
+  composition,
+  cloudBottom,
+  cloudTop,
+  viewSteps,
+  texture,
+  fieldDecoder = "rgba-field",
+  fieldUvOffset = [HOME_CLOUD_FIELD_OFFSET_X, HOME_CLOUD_FIELD_OFFSET_Y]
+}: LandingReliefCloudMaterialOptions) {
   return new ShaderMaterial({
     name: "MiraLithReliefCloud",
-    defines: {
-      RELIEF_VIEW_STEPS: viewSteps
-    },
+    defines: fieldDecoder === "packed-video-field"
+      ? { RELIEF_VIEW_STEPS: viewSteps, PACKED_VIDEO_FIELD: 1 }
+      : { RELIEF_VIEW_STEPS: viewSteps },
     uniforms: {
       cameraLocal: { value: new Vector3(0, 0, 4) },
       cloudBottom: { value: cloudBottom },
@@ -146,13 +155,15 @@ function createReliefCloudMaterial({
       reverseSun: { value: 0 },
       reverseSunField: { value: 0 },
       sunSampleScale: { value: 1 },
-      terminatorSoftness: { value: composition.earth.terminatorSoftness }
+      terminatorSoftness: { value: composition.earth.terminatorSoftness },
+      fieldUvOffset: { value: new Vector2(...fieldUvOffset) }
     },
     vertexShader: `
       uniform sampler2D cloudFieldMap;
       uniform float cloudBottom;
       uniform float cloudOffset;
       uniform float cloudTop;
+      uniform vec2 fieldUvOffset;
 
       varying float vDisplacedHeight;
       varying vec3 vLocalPosition;
@@ -164,12 +175,26 @@ function createReliefCloudMaterial({
 
       ${PLANET_LIGHTING_GLSL}
 
+      vec4 readCloudField(vec2 uv) {
+        vec2 fieldUv = vec2(fract(uv.x), clamp(uv.y, 0.001, 0.999));
+        #ifdef PACKED_VIDEO_FIELD
+          vec3 primary = texture2D(cloudFieldMap, vec2(fieldUv.x * 0.5, fieldUv.y)).rgb;
+          float concavity = texture2D(
+            cloudFieldMap,
+            vec2(0.5 + fieldUv.x * 0.5, fieldUv.y)
+          ).r;
+          return vec4(primary, concavity);
+        #else
+          return texture2D(cloudFieldMap, fieldUv);
+        #endif
+      }
+
       void main() {
         vec2 cloudUv = vec2(
-          uv.x + ${HOME_CLOUD_FIELD_OFFSET_X.toFixed(3)} + cloudOffset,
-          clamp(uv.y + ${HOME_CLOUD_FIELD_OFFSET_Y.toFixed(3)}, 0.001, 0.999)
+          uv.x + fieldUvOffset.x + cloudOffset,
+          clamp(uv.y + fieldUvOffset.y, 0.001, 0.999)
         );
-        vec4 heightField = texture2D(cloudFieldMap, cloudUv);
+        vec4 heightField = readCloudField(cloudUv);
         float opticalDepth = smoothstep(0.055, 0.82, heightField.r);
         float cloudTopHeight = smoothstep(0.025, 0.95, heightField.g);
         float morphology = heightField.b;
@@ -210,6 +235,7 @@ function createReliefCloudMaterial({
       uniform float reverseSunField;
       uniform float sunSampleScale;
       uniform float terminatorSoftness;
+      uniform vec2 fieldUvOffset;
 
       varying float vDisplacedHeight;
       varying vec3 vLocalPosition;
@@ -222,7 +248,21 @@ function createReliefCloudMaterial({
       ${PLANET_LIGHTING_GLSL}
 
       vec2 wrapCloudUv(vec2 uv) {
-        return vec2(uv.x, clamp(uv.y, 0.001, 0.999));
+        return vec2(fract(uv.x), clamp(uv.y, 0.001, 0.999));
+      }
+
+      vec4 readCloudField(vec2 uv) {
+        vec2 fieldUv = wrapCloudUv(uv);
+        #ifdef PACKED_VIDEO_FIELD
+          vec3 primary = texture2D(cloudFieldMap, vec2(fieldUv.x * 0.5, fieldUv.y)).rgb;
+          float concavity = texture2D(
+            cloudFieldMap,
+            vec2(0.5 + fieldUv.x * 0.5, fieldUv.y)
+          ).r;
+          return vec4(primary, concavity);
+        #else
+          return texture2D(cloudFieldMap, fieldUv);
+        #endif
       }
 
       vec2 directionToCloudUv(vec3 direction) {
@@ -230,8 +270,8 @@ function createReliefCloudMaterial({
         float longitude = atan(normal.z, normal.x);
         float latitude = asin(clamp(normal.y, -1.0, 1.0));
         return wrapCloudUv(vec2(
-          0.5 - longitude / ${(Math.PI * 2).toFixed(8)} + ${HOME_CLOUD_FIELD_OFFSET_X.toFixed(3)} + cloudOffset,
-          latitude / ${Math.PI.toFixed(8)} + 0.5 + ${HOME_CLOUD_FIELD_OFFSET_Y.toFixed(3)}
+          0.5 - longitude / ${(Math.PI * 2).toFixed(8)} + fieldUvOffset.x + cloudOffset,
+          latitude / ${Math.PI.toFixed(8)} + 0.5 + fieldUvOffset.y
         ));
       }
 
@@ -268,12 +308,12 @@ function createReliefCloudMaterial({
         );
 
         vec2 baseUv = vec2(
-          vUv.x + ${HOME_CLOUD_FIELD_OFFSET_X.toFixed(3)} + cloudOffset,
-          clamp(vUv.y + ${HOME_CLOUD_FIELD_OFFSET_Y.toFixed(3)}, 0.001, 0.999)
+          vUv.x + fieldUvOffset.x + cloudOffset,
+          clamp(vUv.y + fieldUvOffset.y, 0.001, 0.999)
         );
         vec2 baseUvRaw = vec2(
-          vUv.x + ${HOME_CLOUD_FIELD_OFFSET_X.toFixed(3)} + cloudOffset,
-          vUv.y + ${HOME_CLOUD_FIELD_OFFSET_Y.toFixed(3)}
+          vUv.x + fieldUvOffset.x + cloudOffset,
+          vUv.y + fieldUvOffset.y
         );
         float shellThickness = max(cloudTop - cloudBottom, 0.0001);
         vec3 localRayOrigin = cameraLocal;
@@ -314,7 +354,7 @@ function createReliefCloudMaterial({
           float sampleRadius = length(samplePoint);
           float layerHeight = clamp((sampleRadius - cloudBottom) / shellThickness, 0.0, 1.0);
           vec2 sampleUv = directionToCloudUv(samplePoint);
-          vec4 sampleField = texture2D(cloudFieldMap, sampleUv);
+          vec4 sampleField = readCloudField(sampleUv);
           float sampleOpticalDepth = pow(clamp(sampleField.r, 0.0, 1.0), 1.18);
           float sampleTopHeight = smoothstep(0.025, 0.95, sampleField.g);
           float sampleMorphology = smoothstep(0.04, 0.86, sampleField.b);
@@ -389,10 +429,7 @@ function createReliefCloudMaterial({
           0.0015,
           0.024
         );
-        vec4 sunField = texture2D(
-          cloudFieldMap,
-          wrapCloudUv(baseUv + sunDirectionUv * sunSpan)
-        );
+        vec4 sunField = readCloudField(baseUv + sunDirectionUv * sunSpan);
         float sunCoverage = pow(clamp(sunField.r, 0.0, 1.0), 1.18);
         float sunTopHeight = smoothstep(0.025, 0.95, sunField.g);
         float sunMorphology = smoothstep(0.04, 0.86, sunField.b);
@@ -610,10 +647,10 @@ export function LandingReliefCloud({
   });
   const cloudBottom = composition.earth.radius * LANDING_RELIEF_LITE_CLOUD_BOTTOM_SCALE;
   const cloudTop = composition.earth.radius * LANDING_RELIEF_LITE_CLOUD_TOP_SCALE;
-  const geometrySegments = resolveGeometrySegments(quality, mobile);
+  const geometrySegments = resolveLandingReliefCloudGeometrySegments(quality, mobile);
   const material = useMemo(
 	    () => texture
-	      ? createReliefCloudMaterial({
+	      ? createLandingReliefCloudMaterial({
 	        cloudBottom,
 	        cloudTop,
 	        composition,
