@@ -17,6 +17,12 @@ export function TransitionVeil({ snapshot }: { snapshot: OpeningCloudSnapshot })
         opacity: snapshot.veilOpacity,
         visibility: snapshot.veilOpacity > 0 ? "visible" : "hidden"
       }}
-    />
+    >
+      <span
+        aria-hidden="true"
+        className={styles.transitionVeilCloudForm}
+        data-transition-veil-cloud-form
+      />
+    </div>
   );
 }

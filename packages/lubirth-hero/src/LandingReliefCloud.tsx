@@ -142,10 +142,13 @@ export function createLandingReliefCloudMaterial({
       : { RELIEF_VIEW_STEPS: viewSteps },
     uniforms: {
       cameraLocal: { value: new Vector3(0, 0, 4) },
+      cloudBodyOpacityFloor: { value: 0 },
       cloudIlluminationFloor: { value: 0.32 },
       cloudBottom: { value: cloudBottom },
       cloudFieldMap: { value: texture },
+      cloudHeightBand: { value: new Vector2(0, 1) },
       cloudOffset: { value: 0 },
+      cloudOpacityCeiling: { value: 0.92 },
       cloudTop: { value: cloudTop },
       debugBoost: { value: 0 },
       densityIntegrationScale: { value: 1 },
@@ -223,9 +226,12 @@ export function createLandingReliefCloudMaterial({
     fragmentShader: `
       uniform sampler2D cloudFieldMap;
       uniform vec3 cameraLocal;
+      uniform float cloudBodyOpacityFloor;
       uniform float cloudIlluminationFloor;
       uniform float cloudBottom;
       uniform float cloudOffset;
+      uniform vec2 cloudHeightBand;
+      uniform float cloudOpacityCeiling;
       uniform float cloudTop;
       uniform float debugBoost;
       uniform float densityIntegrationScale;
@@ -375,6 +381,17 @@ export function createLandingReliefCloudMaterial({
             heightErosion *
             mix(0.86, 1.16, sampleTopHeight) *
             concavityOcclusion;
+          float lowerBand = smoothstep(
+            cloudHeightBand.x - 0.035,
+            cloudHeightBand.x + 0.075,
+            layerHeight
+          );
+          float upperBand = 1.0 - smoothstep(
+            cloudHeightBand.y - 0.075,
+            cloudHeightBand.y + 0.035,
+            layerHeight
+          );
+          layerDensity *= lowerBand * upperBand;
           float layerOpticalDepth = layerDensity * opticalPath *
             opacity * 5.2 / float(RELIEF_VIEW_STEPS);
           float layerAlpha = 1.0 - exp(-layerOpticalDepth);
@@ -563,9 +580,11 @@ export function createLandingReliefCloudMaterial({
         alpha *= smoothstep(0.0003, 0.006, columnDensity);
         alpha += cloudCore * smoothstep(0.025, 0.22, columnDensity) *
           lightMasks.dayMask * opacity * 0.18;
+        float coreOcclusion = cloudCore * smoothstep(0.032, 0.2, columnDensity);
+        alpha = max(alpha, coreOcclusion * cloudBodyOpacityFloor);
         alpha *= mix(0.9, 1.08, cloudCore);
         alpha *= mix(0.84, 1.0, lightMasks.dayMask + lightMasks.twilightMask * 0.35);
-        alpha = clamp(alpha, 0.0, 0.92);
+        alpha = clamp(alpha, 0.0, cloudOpacityCeiling);
         gl_FragColor = vec4(max(cloudColor, vec3(0.0)) * alpha, alpha);
       }
     `,

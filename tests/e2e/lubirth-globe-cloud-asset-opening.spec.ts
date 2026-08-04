@@ -27,15 +27,40 @@ test("renders a seekable globe field inside the Earth group instead of a DOM clo
     .toMatchObject({
       active: true,
       attachment: "earth-group",
+      base: "persistent-relief-lite",
       fieldPacking: "left-rgb-right-concavity",
+      layerCount: 3,
       mapping: "equirectangular-earth-uv",
       frame: 0,
-      topScale: 1.0115,
-      opacity: 0.84,
+      bodyBottomScale: 1.0035,
+      bodyTopScale: 1.0062,
+      bodyOpacity: 0.78,
+      bodyOpacityFloor: 0.3,
       cloudIlluminationFloor: 0.46,
       reliefLightingScale: 1.24,
+      wispBottomScale: 1.0062,
+      wispTopScale: 1.0074,
+      wispOpacity: 0.28,
       viewSteps: expectedViewSteps
     });
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthReliefCloud))
+    .toMatchObject({
+      active: true,
+      cloudBottomScale: 1.0003,
+      cloudTopScale: 1.0035
+    });
+  await expect
+    .poll(() => page.evaluate(() => ({
+      openingOffset: window.__MiraLithLuBirthOpeningGlobeCloud?.cloudOffset,
+      liveOffset: window.__MiraLithLuBirthReliefCloud?.cloudOffset
+    })))
+    .toMatchObject({ openingOffset: expect.any(Number), liveOffset: expect.any(Number) });
+  const openingAndLiveOffsets = await page.evaluate(() => ({
+    openingOffset: window.__MiraLithLuBirthOpeningGlobeCloud?.cloudOffset,
+    liveOffset: window.__MiraLithLuBirthReliefCloud?.cloudOffset
+  }));
+  expect(openingAndLiveOffsets.openingOffset).toBeCloseTo(openingAndLiveOffsets.liveOffset ?? 0, 10);
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthOpeningGlobeCloud?.textureVersion ?? 0))
     .toBeGreaterThan(0);
@@ -56,6 +81,8 @@ test("renders a seekable globe field inside the Earth group instead of a DOM clo
     "data-layer-above",
     "earth canvas and globe cloud shell"
   );
+  await expect(page.locator("[data-transition-veil-cloud-form]")).toHaveCount(1);
+  await expect(page.locator("[data-transition-veil]")).toHaveCSS("pointer-events", "none");
 
   await scrollToOpeningProgress(page, 0.23);
   await expect
@@ -86,6 +113,10 @@ test("renders a seekable globe field inside the Earth group instead of a DOM clo
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthOpeningGlobeCloud))
     .toMatchObject({ active: true, frame: 39, attachment: "earth-group" });
+  await expect(page.locator("[data-opening-globe-cloud-media]")).toHaveAttribute(
+    "src",
+    /opening-globe-clouds\/(desktop|mobile)\.mp4/
+  );
 });
 
 test("falls back to live Relief-lite for reduced motion and a late first frame", async ({ page }, testInfo) => {

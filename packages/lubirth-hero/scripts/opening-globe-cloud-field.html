@@ -47,6 +47,7 @@
 
           uniform vec2 uResolution;
           uniform float uFrame;
+          uniform sampler2D uLiveReliefField;
           out vec4 outColor;
 
           const float PI = 3.141592653589793;
@@ -107,23 +108,68 @@
             return value / 1.05;
           }
 
+          vec4 sampleGeographicAnchor(vec2 earthUv) {
+            // Keep regional weather systems recognizable instead of reducing
+            // them to a few broad lobe blobs. This is still deliberately
+            // lower frequency than the source texture, so all-I delivery
+            // remains practical on mobile.
+            vec2 grid = vec2(128.0, 64.0);
+            vec2 gridPosition = earthUv * grid - 0.5;
+            vec2 gridCell = floor(gridPosition);
+            vec2 local = fract(gridPosition);
+            local = local * local * (3.0 - 2.0 * local);
+            vec2 sample00 = vec2(fract((gridCell.x + 0.5) / grid.x), clamp((gridCell.y + 0.5) / grid.y, 0.001, 0.999));
+            vec2 sample10 = vec2(fract((gridCell.x + 1.5) / grid.x), sample00.y);
+            vec2 sample01 = vec2(sample00.x, clamp((gridCell.y + 1.5) / grid.y, 0.001, 0.999));
+            vec2 sample11 = vec2(sample10.x, sample01.y);
+            return mix(
+              mix(texture(uLiveReliefField, sample00), texture(uLiveReliefField, sample10), local.x),
+              mix(texture(uLiveReliefField, sample01), texture(uLiveReliefField, sample11), local.x),
+              local.y
+            );
+          }
+
           vec4 evaluateCloudField(vec2 earthUv, float frameProgress) {
-            vec3 direction = rotateAroundY(directionFromEarthUv(earthUv), frameProgress * 0.28);
-            float latitudeMask = 1.0 - smoothstep(0.77, 0.97, abs(direction.y));
-            vec3 wind = vec3(frameProgress * 0.62, frameProgress * 0.16, -frameProgress * 0.29);
-            float continental = fbm(direction * 2.6 + wind);
-            float weatherCells = 1.0 - abs(fbm(direction * 5.4 + wind * 1.7 + vec3(4.1, 8.7, 2.5)) * 2.0 - 1.0);
-            float erosion = fbm(direction * 12.4 + wind * 3.2 + vec3(6.4, 2.8, 8.1));
-            float cloudMass = continental * 0.73 + weatherCells * 0.39 - erosion * 0.16;
-            float coverage = smoothstep(0.47, 0.66, cloudMass) * latitudeMask;
-            float highTops = fbm(direction * 5.1 + wind * 0.9 + vec3(1.8, 4.7, 9.3));
-            // Keep scalar channels intentionally correlated: H.264 stores this as data,
-            // not colour art. Independent chroma noise spends the mobile all-I budget
-            // without producing more perceived cloud volume in the shell renderer.
-            float morphology = clamp(coverage * (0.88 + weatherCells * 0.12), 0.0, 1.0);
-            float topHeight = clamp(coverage * (0.62 + highTops * 0.38), 0.0, 1.0);
-            float concavity = clamp(coverage * (0.82 + (1.0 - erosion) * 0.18), 0.0, 1.0);
-            return vec4(coverage, topHeight, morphology, concavity);
+            // This field is anchored to the live Relief-lite coverage map.
+            vec4 baseField = sampleGeographicAnchor(earthUv);
+            vec3 direction = directionFromEarthUv(earthUv);
+            vec3 wind = vec3(frameProgress * 1.86, frameProgress * 0.52, -frameProgress * 0.84);
+            float continental = fbm(direction * 2.8 + vec3(2.1, 5.7, 1.8));
+            float cellular = fbm(direction * 6.2 + wind * 1.8 + vec3(4.1, 8.7, 2.5));
+            float filament = fbm(direction * 10.4 + wind * 2.8 + vec3(6.4, 2.8, 8.1));
+            float weatherDetail = clamp((cellular * 0.66 + filament * 0.34 - 0.5) * 2.0, -1.0, 1.0);
+            // Preserve the source field's distinct optical depth, height,
+            // morphology and concavity semantics. They provide the cloud
+            // clusters and interior relief that the collapsed v2 channels
+            // lost, while modest cross-channel coupling keeps H.264 chroma
+            // stable at the all-I mobile budget.
+            float sourceCoverage = clamp(baseField.r, 0.0, 1.0);
+            float sourceHeight = clamp(baseField.g, 0.0, 1.0);
+            float sourceMorphology = clamp(baseField.b, 0.0, 1.0);
+            float sourceConcavity = clamp(baseField.a, 0.0, 1.0);
+            float stableHeight = mix(sourceCoverage, sourceHeight, 0.46);
+            float stableMorphology = mix(sourceCoverage, sourceMorphology, 0.32);
+            float stableConcavity = mix(sourceCoverage, sourceConcavity, 0.4);
+            vec4 stable = vec4(sourceCoverage, stableHeight, stableMorphology, stableConcavity);
+            // Frames 39–42 occur behind the closing shared veil. By frame 42
+            // the opening detail has converged to its geographic anchor. The
+            // persistent live base remains visible below it, so removing the
+            // temporary shells cannot reveal a different cloud layout.
+            float convergence = smoothstep(35.0 / 47.0, 42.0 / 47.0, frameProgress);
+            float detailWeight = 1.0 - convergence;
+            float anchoredDetail = weatherDetail * smoothstep(0.035, 0.82, stable.r) * detailWeight;
+            float animatedCoverage = clamp(
+              stable.r + anchoredDetail * (0.09 + stable.r * 0.23),
+              0.0,
+              1.0
+            );
+            vec4 animated = vec4(
+              animatedCoverage,
+              clamp(stable.g + anchoredDetail * (0.18 + continental * 0.3), 0.0, 1.0),
+              clamp(stable.b + anchoredDetail * (0.09 + cellular * 0.16), 0.0, 1.0),
+              clamp(stable.a + anchoredDetail * (0.1 + filament * 0.16), 0.0, 1.0)
+            );
+            return mix(animated, stable, convergence);
           }
 
           void main() {
@@ -165,6 +211,48 @@
         const position = gl.getAttribLocation(program, "aPosition");
         const resolution = gl.getUniformLocation(program, "uResolution");
         const frame = gl.getUniformLocation(program, "uFrame");
+        const liveReliefField = gl.getUniformLocation(program, "uLiveReliefField");
+        const liveReliefTexture = gl.createTexture();
+        let liveReliefFieldReady = false;
+
+        if (!liveReliefTexture || !liveReliefField) {
+          throw new Error("Unable to create the live Relief-lite field input");
+        }
+
+        function assertNoGlError(label) {
+          const error = gl.getError();
+          if (error !== gl.NO_ERROR) {
+            throw new Error(label + " failed with WebGL error " + error);
+          }
+        }
+
+        window.prepareOpeningGlobeCloudLiveField = (source) => new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => {
+            gl.bindTexture(gl.TEXTURE_2D, liveReliefTexture);
+            gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+            gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texImage2D(
+              gl.TEXTURE_2D,
+              0,
+              gl.RGBA,
+              gl.RGBA,
+              gl.UNSIGNED_BYTE,
+              image
+            );
+            gl.generateMipmap(gl.TEXTURE_2D);
+            assertNoGlError("Uploading the live Relief-lite field");
+            liveReliefFieldReady = true;
+            resolve();
+          };
+          image.onerror = () => reject(new Error("Unable to load the live Relief-lite field input"));
+          image.src = source;
+        });
 
         function resize() {
           canvas.width = Math.max(1, window.innerWidth);
@@ -175,14 +263,23 @@
         function render(frameIndex) {
           resize();
           gl.disable(gl.DITHER);
+          if (!liveReliefFieldReady) {
+            gl.clearColor(0, 0, 0, 1);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            return;
+          }
           gl.useProgram(program);
           gl.bindBuffer(gl.ARRAY_BUFFER, vertices);
           gl.enableVertexAttribArray(position);
           gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
           gl.uniform2f(resolution, canvas.width, canvas.height);
           gl.uniform1f(frame, Math.max(0, Math.min(47, frameIndex)));
+          gl.activeTexture(gl.TEXTURE0);
+          gl.bindTexture(gl.TEXTURE_2D, liveReliefTexture);
+          gl.uniform1i(liveReliefField, 0);
           gl.drawArrays(gl.TRIANGLES, 0, 6);
           gl.finish();
+          assertNoGlError("Rendering the globe cloud field");
         }
 
         window.renderOpeningGlobeCloudFieldFrame = render;

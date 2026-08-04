@@ -9,6 +9,11 @@ import { chromium } from "@playwright/test";
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(scriptDirectory, "../../..");
 const sourceScenePath = path.join(scriptDirectory, "opening-globe-cloud-field.html");
+const liveReliefFieldPath = path.join(
+  repositoryRoot,
+  "apps/site/public/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.png"
+);
+const liveReliefFieldPublicSrc = "/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.png";
 const publicAssetDirectory = path.join(
   repositoryRoot,
   "apps/site/public/assets/lubirth/opening-globe-clouds"
@@ -21,7 +26,7 @@ const frameRate = 30;
 const frameCount = 48;
 const authoredDurationSeconds = 1.584;
 const encodedDurationSeconds = 1.6;
-const sourceSeed = "lubirth-opening-globe-cloud-v1";
+const sourceSeed = "lubirth-opening-globe-cloud-v3-surface-locked-relief-anchor";
 const compressionQuality = {
   codec: "h264-all-i-crf-21",
   crf: 21,
@@ -101,7 +106,7 @@ function measureCompressionFidelity(framePattern, encodedPath) {
   return { averagePsnr, allSsim };
 }
 
-async function bakeVariant(browser, temporaryDirectory, variant) {
+async function bakeVariant(browser, temporaryDirectory, variant, liveReliefFieldDataUrl) {
   const packedWidth = variant.rawWidth * 2;
   const variantDirectory = path.join(temporaryDirectory, variant.tier);
   await mkdir(variantDirectory, { recursive: true });
@@ -115,7 +120,13 @@ async function bakeVariant(browser, temporaryDirectory, variant) {
     if (message.type() === "error") errors.push(message.text());
   });
   await page.goto(pathToFileURL(sourceScenePath).href, { waitUntil: "load" });
-  await page.waitForFunction(() => typeof window.renderOpeningGlobeCloudFieldFrame === "function");
+  await page.waitForFunction(() => (
+    typeof window.renderOpeningGlobeCloudFieldFrame === "function" &&
+    typeof window.prepareOpeningGlobeCloudLiveField === "function"
+  ));
+  await page.evaluate(async (source) => {
+    await window.prepareOpeningGlobeCloudLiveField(source);
+  }, liveReliefFieldDataUrl);
   if (errors.length > 0) throw new Error(errors.join("\n"));
 
   for (let frame = 0; frame < frameCount; frame += 1) {
@@ -195,7 +206,7 @@ async function bakeVariant(browser, temporaryDirectory, variant) {
   };
 }
 
-function manifestFor(results, sourceSha256) {
+function manifestFor(results, sourceSha256, liveReliefFieldSha256) {
   const byTier = Object.fromEntries(results.map((result) => [result.tier, {
     tier: result.tier,
     src: "/assets/lubirth/opening-globe-clouds/" + result.tier + ".mp4",
@@ -215,7 +226,7 @@ function manifestFor(results, sourceSha256) {
   }]));
   return {
     schemaVersion: 1,
-    id: "lubirth-opening-globe-cloud-field-v1",
+    id: "lubirth-opening-globe-cloud-field-v3-surface-locked-relief-anchor",
     cloudOnly: true,
     mapping: "equirectangular-earth-uv",
     fieldColorSpace: "none",
@@ -231,14 +242,23 @@ function manifestFor(results, sourceSha256) {
       variants: Object.fromEntries(results.map((result) => [result.tier, result.quality]))
     },
     source: {
+      anchor: {
+        src: liveReliefFieldPublicSrc,
+        sha256: liveReliefFieldSha256,
+        channelLayout: "v3-r-depth-g-height-b-morphology-a-concavity",
+        coverageMode: "low-frequency-geographic-anchor",
+        convergenceFrame: 42
+      },
       provenance: "internal-procedural",
       generator: "packages/lubirth-hero/scripts/bake-opening-globe-cloud-assets.mjs",
-      generatorVersion: "1.0.0",
+      generatorVersion: "3.0.0",
       scenePath: "packages/lubirth-hero/scripts/opening-globe-cloud-field.html",
       seed: sourceSeed,
       parameterSummary: {
-        densityModel: "analytic high-resolution globe-UV weather field with latitude shaping",
-        windDistance: "0.28 radians of deterministic longitudinal advection over 1.6 seconds",
+        densityModel: "live Relief-lite anchor with bounded procedural local relief evolution",
+        geographicAnchorSampling: "128x64 smooth live-field grid; runtime applies the shared Relief-lite UV offset",
+        windDistance: "bounded local relief advection; broad geographic coverage remains anchored",
+        continuity: "frames 39-42 converge to the low-frequency geographic anchor; the persistent live Relief-lite base owns the exact post-cut field",
         cloudOnly: "scalar field only; no Earth, Moon, stars, sky, text, or UI",
         packing: "left RGB optical-depth/top-height/morphology | right red concavity",
         colorSpace: "raw scalar data sampled with Three.js NoColorSpace"
@@ -263,19 +283,22 @@ async function main() {
   await mkdir(publicAssetDirectory, { recursive: true });
   const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), "miralith-opening-globe-cloud-"));
   const sourceSha256 = sha256(await readFile(sourceScenePath));
+  const liveReliefField = await readFile(liveReliefFieldPath);
+  const liveReliefFieldDataUrl = "data:image/png;base64," + liveReliefField.toString("base64");
+  const liveReliefFieldSha256 = sha256(liveReliefField);
   const browser = await chromium.launch({ headless: true });
   try {
     const results = [];
     for (const variant of variants) {
       process.stdout.write("Baking " + variant.tier + " globe field…\n");
-      results.push(await bakeVariant(browser, temporaryDirectory, variant));
+      results.push(await bakeVariant(browser, temporaryDirectory, variant, liveReliefFieldDataUrl));
     }
     for (const result of results) {
       await writeFile(path.join(publicAssetDirectory, result.tier + ".mp4"), result.encoded);
     }
     await writeFile(
       manifestPath,
-      JSON.stringify(manifestFor(results, sourceSha256), null, 2) + "\n"
+      JSON.stringify(manifestFor(results, sourceSha256, liveReliefFieldSha256), null, 2) + "\n"
     );
     process.stdout.write(
       results.map((result) => result.tier + ": " + result.transferBytes + " bytes").join("\n") + "\n"

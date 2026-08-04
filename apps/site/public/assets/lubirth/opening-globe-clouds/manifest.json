@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "lubirth-opening-globe-cloud-field-v1",
+  "id": "lubirth-opening-globe-cloud-field-v3-surface-locked-relief-anchor",
   "cloudOnly": true,
   "mapping": "equirectangular-earth-uv",
   "fieldColorSpace": "none",
@@ -15,29 +15,38 @@
     "minAllSsim": 0.98,
     "variants": {
       "desktop": {
-        "averagePsnr": 42.064292,
-        "allSsim": 0.98766
+        "averagePsnr": 48.319518,
+        "allSsim": 0.992166
       },
       "mobile": {
-        "averagePsnr": 38.910789,
-        "allSsim": 0.981301
+        "averagePsnr": 45.592882,
+        "allSsim": 0.988709
       }
     }
   },
   "source": {
+    "anchor": {
+      "src": "/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.png",
+      "sha256": "39c70e34b99ecf550f557327a1b97dcc0d2cae9f3be03242911c067622bb0a1c",
+      "channelLayout": "v3-r-depth-g-height-b-morphology-a-concavity",
+      "coverageMode": "low-frequency-geographic-anchor",
+      "convergenceFrame": 42
+    },
     "provenance": "internal-procedural",
     "generator": "packages/lubirth-hero/scripts/bake-opening-globe-cloud-assets.mjs",
-    "generatorVersion": "1.0.0",
+    "generatorVersion": "3.0.0",
     "scenePath": "packages/lubirth-hero/scripts/opening-globe-cloud-field.html",
-    "seed": "lubirth-opening-globe-cloud-v1",
+    "seed": "lubirth-opening-globe-cloud-v3-surface-locked-relief-anchor",
     "parameterSummary": {
-      "densityModel": "analytic high-resolution globe-UV weather field with latitude shaping",
-      "windDistance": "0.28 radians of deterministic longitudinal advection over 1.6 seconds",
+      "densityModel": "live Relief-lite anchor with bounded procedural local relief evolution",
+      "geographicAnchorSampling": "128x64 smooth live-field grid; runtime applies the shared Relief-lite UV offset",
+      "windDistance": "bounded local relief advection; broad geographic coverage remains anchored",
+      "continuity": "frames 39-42 converge to the low-frequency geographic anchor; the persistent live Relief-lite base owns the exact post-cut field",
       "cloudOnly": "scalar field only; no Earth, Moon, stars, sky, text, or UI",
       "packing": "left RGB optical-depth/top-height/morphology | right red concavity",
       "colorSpace": "raw scalar data sampled with Three.js NoColorSpace"
     },
-    "sourceSha256": "df6fc33ed937fb2618be80b13ca272a535e0703790f3dce32cca414b749a9d80",
+    "sourceSha256": "5e31a3c806a944d694865ff832ed9e1049e27dfff58f30207077608c1880e27e",
     "license": "internally-generated"
   },
   "handoff": {
@@ -61,11 +70,11 @@
       "frameCount": 48,
       "keyframePolicy": "all-i",
       "packing": "left-rgb-right-concavity",
-      "transferBytes": 3524442,
+      "transferBytes": 2926719,
       "maxTransferBytes": 6291456,
       "estimatedPackedTextureBytes": 9437184,
       "maxPackedTextureBytes": 16777216,
-      "sha256": "b1cac5fcba10960e520cbda59cb53ffd34df65d4518d38b65e98aa67be144557"
+      "sha256": "4e7b75ae7daedee8fd8d6d179c1173abbe99529be4fcf10d17ad9e853cb130e2"
     },
     "mobile": {
       "tier": "mobile",
@@ -78,11 +87,11 @@
       "frameCount": 48,
       "keyframePolicy": "all-i",
       "packing": "left-rgb-right-concavity",
-      "transferBytes": 2025944,
+      "transferBytes": 1751853,
       "maxTransferBytes": 2097152,
       "estimatedPackedTextureBytes": 4194304,
       "maxPackedTextureBytes": 8388608,
-      "sha256": "e1338a4c926ea701abed55eeeaae550f2fd3313b651fa82ac726858c1e4cb5be"
+      "sha256": "a88b8d84146a6cb518d479bfeb887eb08965be326d6ab61fbeb4f3e4e6f56690"
     }
   }
 }

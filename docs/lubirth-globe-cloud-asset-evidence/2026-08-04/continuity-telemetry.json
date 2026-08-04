@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "route": "/lubirth-cloud-asset-opening?location=ip&geoLat=31.2&geoLon=103.8&geoLabel=Mianyang",
+  "assetId": "lubirth-opening-globe-cloud-field-v3-surface-locked-relief-anchor",
+  "visualProbe": {
+    "viewport": "1280x720",
+    "points": [
+      { "progress": 0, "state": "cloud", "frame": 0, "mediaReadyState": 4 },
+      { "progress": 0.1201, "state": "cloud", "frame": 26, "mediaReadyState": 4 },
+      { "progress": 0.196, "state": "forward-veil-open", "veilOpacity": 0.959624 },
+      { "progress": 0.2214, "state": "live", "mediaSrc": null, "mediaReadyState": 0 },
+      {
+        "progress": 0.18,
+        "direction": "reverse",
+        "state": "cloud",
+        "frame": 39,
+        "mediaSrc": "/assets/lubirth/opening-globe-clouds/mobile.mp4",
+        "mediaReadyState": 4,
+        "mediaCurrentTime": 1.3
+      }
+    ]
+  },
+  "layerPolicy": {
+    "base": [1.0003, 1.0035],
+    "body": [1.0035, 1.0062],
+    "wisps": [1.0062, 1.0074],
+    "fieldUvOffset": [0.045, 0.018]
+  },
+  "assets": {
+    "desktop": {
+      "transferBytes": 2926719,
+      "averagePsnr": 48.319518,
+      "allSsim": 0.992166
+    },
+    "mobile": {
+      "transferBytes": 1751853,
+      "averagePsnr": 45.592882,
+      "allSsim": 0.988709
+    }
+  },
+  "promotion": "query-only; default homepage untouched; physical GPU p95 not claimed"
+}

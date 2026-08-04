@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
 import {
   MathUtils,
   Mesh,
@@ -14,6 +14,10 @@ import {
   LANDING_RELIEF_LITE_SUN_STEPS,
   resolveLandingReliefLiteBudget
 } from "./landingEarthLiteV2Policy";
+import {
+  HOME_CLOUD_FIELD_OFFSET_X,
+  HOME_CLOUD_FIELD_OFFSET_Y
+} from "./homeCloudField";
 import type { LandingPlanetLightingFrame } from "./landingPlanetLighting";
 import {
   createLandingReliefCloudMaterial,
@@ -26,6 +30,24 @@ const cloudCameraWorld = new Vector3();
 const cloudCameraLocal = new Vector3();
 
 export interface LandingOpeningGlobeCloudShellPolicy {
+  base: {
+    persistent: true;
+    bottomScale: number;
+    topScale: number;
+  };
+  body: {
+    bottomScale: number;
+    topScale: number;
+    opacity: number;
+    baseOpacityFloor: number;
+    viewSteps: 2 | 3;
+  };
+  wisps: {
+    bottomScale: number;
+    topScale: number;
+    opacity: number;
+    viewSteps: 2 | 3;
+  };
   bottomScale: number;
   cloudIlluminationFloor: number;
   debugBoost: number;
@@ -43,6 +65,30 @@ export function resolveOpeningGlobeCloudShellPolicy(
 ): LandingOpeningGlobeCloudShellPolicy {
   const budget = resolveLandingReliefLiteBudget(mobile);
   return {
+    // The ordinary Relief-lite cloud mesh remains mounted throughout the
+    // opening. These are its exact radii, so the eventual live path is
+    // already visible below the temporary opening detail.
+    base: {
+      persistent: true,
+      bottomScale: 1.0003,
+      topScale: 1.0035
+    },
+    // The temporary body and wisps touch but do not overlap. They stay below
+    // the limb atmosphere, stay surface-locked under close camera framing,
+    // and fade to zero before the atomic source cut.
+    body: {
+      bottomScale: 1.0035,
+      topScale: 1.0062,
+      opacity: 0.78,
+      baseOpacityFloor: 0.3,
+      viewSteps: budget.viewSteps
+    },
+    wisps: {
+      bottomScale: 1.0062,
+      topScale: 1.0074,
+      opacity: 0.28,
+      viewSteps: budget.viewSteps
+    },
     bottomScale: 1.0005,
     // Keep the presentation shell inside the limb atmosphere, while using
     // enough radial depth for the opening field to read as a cloud body
@@ -59,6 +105,19 @@ export function resolveOpeningGlobeCloudShellPolicy(
   };
 }
 
+export function resolveOpeningCloudDetailOpacity(frame: number, maximumOpacity: number) {
+  const transition = MathUtils.clamp((frame - 39) / (42 - 39), 0, 1);
+  const smoothTransition = transition * transition * (3 - 2 * transition);
+  return maximumOpacity * (1 - smoothTransition);
+}
+
+// The baked field is authored from the same unshifted source texture as the
+// persistent Relief-lite cloud. Apply its geographic placement at sampling
+// time, rather than baking a second coordinate convention into the video.
+export function resolveOpeningGlobeCloudFieldUvOffset(): readonly [number, number] {
+  return [HOME_CLOUD_FIELD_OFFSET_X, HOME_CLOUD_FIELD_OFFSET_Y];
+}
+
 export interface LandingReliefCloudShellPolicy {
   bottomScale: number;
   topScale: number;
@@ -66,8 +125,12 @@ export interface LandingReliefCloudShellPolicy {
 }
 
 export interface LandingReliefCloudShellRuntime {
+  cloudBodyOpacityFloor?: number;
+  cloudHeightBand?: readonly [number, number];
   cloudIlluminationFloor?: number;
   cloudOffset?: number;
+  cloudOffsetRef?: MutableRefObject<number>;
+  cloudOpacityCeiling?: number;
   debugBoost?: number;
   densityIntegrationScale?: number;
   opacity?: number;
@@ -158,12 +221,30 @@ export function LandingReliefCloudShell({
     cloudCameraLocal.copy(cloudCameraWorld);
     cloud.current.worldToLocal(cloudCameraLocal);
     cloudMaterial.uniforms.cameraLocal.value.copy(cloudCameraLocal);
+    cloudMaterial.uniforms.cloudBodyOpacityFloor.value = MathUtils.clamp(
+      runtime?.cloudBodyOpacityFloor ?? 0,
+      0,
+      0.9
+    );
+    const cloudHeightBand = runtime?.cloudHeightBand ?? [0, 1];
+    cloudMaterial.uniforms.cloudHeightBand.value.set(
+      MathUtils.clamp(Math.min(cloudHeightBand[0], cloudHeightBand[1]), 0, 1),
+      MathUtils.clamp(Math.max(cloudHeightBand[0], cloudHeightBand[1]), 0, 1)
+    );
     cloudMaterial.uniforms.cloudIlluminationFloor.value = MathUtils.clamp(
       runtime?.cloudIlluminationFloor ?? 0.32,
       0.2,
       0.68
     );
-    cloudMaterial.uniforms.cloudOffset.value = MathUtils.euclideanModulo(runtime?.cloudOffset ?? 0, 1);
+    cloudMaterial.uniforms.cloudOffset.value = MathUtils.euclideanModulo(
+      runtime?.cloudOffsetRef?.current ?? runtime?.cloudOffset ?? 0,
+      1
+    );
+    cloudMaterial.uniforms.cloudOpacityCeiling.value = MathUtils.clamp(
+      runtime?.cloudOpacityCeiling ?? 0.92,
+      0.5,
+      0.99
+    );
     cloudMaterial.uniforms.debugBoost.value = MathUtils.clamp(runtime?.debugBoost ?? 0, 0, 1);
     cloudMaterial.uniforms.densityIntegrationScale.value = MathUtils.clamp(
       runtime?.densityIntegrationScale ?? 1,

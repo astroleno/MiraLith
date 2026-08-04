@@ -806,12 +806,23 @@ export function EarthMoonScene({
           />
         ) : null}
         {openingCloudLayer?.active ? (
-          <LandingOpeningGlobeCloud
-            composition={composition}
-            layer={openingCloudLayer}
-            lightingFrame={planetLightingFrame}
-            quality={quality}
-          />
+          <>
+            {showCloudShells && activeVisualPolicy.cloudMode === "relief-lite" ? (
+              <LandingReliefCloud
+                composition={composition}
+                assets={assets}
+                quality={quality}
+                lightingFrame={planetLightingFrame}
+                emphasis={debugClouds}
+              />
+            ) : null}
+            <LandingOpeningGlobeCloud
+              composition={composition}
+              layer={openingCloudLayer}
+              lightingFrame={planetLightingFrame}
+              quality={quality}
+            />
+          </>
         ) : showCloudShells ? (
           <>
             {activeVisualPolicy.cloudMode === "nasa-lite" ? (

@@ -1,46 +1,48 @@
-# LuBirth Globe-Cloud Asset Evidence — 2026-08-04
+# LuBirth Globe-Cloud Continuity Evidence — 2026-08-04
 
 ## Verdict
 
-The scoped `/lubirth-cloud-asset-opening` route passes its representation and interaction contract:
+The scoped `/lubirth-cloud-asset-opening` route now passes the visual-continuity and frame-addressability contracts for the cloud asset study.
 
-- The asset is a cloud-only globe-UV field, not a baked Earth/Moon/frame plate.
-- The opening cloud mesh is attached inside `EarthMoonScene`’s real `earthGroup`, so it inherits Earth rotation, scale and the IP camera rather than floating in screen space.
-- The shell spans `1.0005–1.0115` Earth radii and remains below the `1.014` limb atmosphere. Its opening-only opacity, relief lighting scale and low-sun illumination floor make the body readable without changing the post-handoff Relief-lite path.
-- The media starts loading from the mounted `<video>` element; the decoded first frame is explicitly uploaded to `VideoTexture`, eliminating the earlier “no cloud until first scroll seek” failure.
+- The opening is a scalar cloud field attached to the real Earth group, never a full-scene image or DOM cloud overlay.
+- The normal Relief-lite mesh remains mounted from progress `0` through handoff. It is the same low cloud layer before and after the cut.
+- Two temporary, surface-locked detail shells add a dense body (`1.0035–1.0062`) and high wisps (`1.0062–1.0074`) without separating visibly from the globe.
+- Detail and the persistent base use the same Relief-lite field UV offset and scroll offset. The v3 field preserves `128×64` regional source structure instead of collapsing clouds into a few broad lobes.
+- The shared `TransitionVeil` owns the representation switch. Its solid backplane reaches peak opacity over the cut; its cloud-form child only motivates that concealment.
+- On reverse, the released video source is explicitly restored as a DOM attribute before the target-frame seek. The captured reverse probe reached frame 39 with `readyState: 4` and revealed the cloud body again.
 
-Default-home promotion remains **HOLD**. This route is intentionally query-only and no physical-device GPU p95 measurement exists for this revision. The default homepage is untouched.
+Default-home promotion remains **HOLD**. This is intentionally query-only work; it does not claim a physical-device GPU p95 result and does not modify the default homepage.
 
-## Visual review
+## Runtime visual probes
 
-| Surface | Viewport | Evidence | Result |
-| --- | --- | --- | --- |
-| Desktop | 1440×960 | `runtime-desktop-contact-sheet.png` | Frame 0 and frame 26 retain the same Moon/scene while the cloud body follows the visible Earth limb and changes with scroll. |
-| Mobile portrait | 412×915 | `runtime-mobile-contact-sheet.png` | The mobile field selects the two-view-sample tier; the Earth and clouds remain cropped safely inside the live canvas. |
+All current screenshots below are 1280×720 captures of the real local R3F route after the v3 bake and reverse-rearm fix.
 
-The two contact sheets show opening progress `0.000` / field frame `0` and progress `0.120` / field frame `26`. They are runtime captures of the real R3F scene, not source-field previews.
+| Progress / state | Evidence | Observation |
+| --- | --- | --- |
+| `0.000` / cloud frame 0 | `continuity-browser-start.png` | The persistent base and attached body/wisps read as one globe-conforming cloud field. |
+| `0.120` / cloud frame 26 | `continuity-browser-frame-026.png` | The regional cloud form changes with scroll while maintaining its Earth attachment. |
+| `0.196` / cut under veil | `continuity-browser-cut.png` | The veil is near opaque; representation change is not exposed as a cloud/image dissolve. |
+| `0.221` / live Relief-lite | `continuity-browser-live.png` | The video `src` is released and the unchanged live base owns the scene. |
+| reverse `0.180` / cloud frame 39 | `continuity-browser-reverse-frame-039.png` | The frame is decoded and the cloud body returns only after rearming succeeds. |
 
-## Asset and runtime contract
+The older `runtime-*` screenshots are retained as pre-v3 historical captures; they are not evidence for this continuity revision.
 
-- Source: internal procedural field at `packages/lubirth-hero/scripts/opening-globe-cloud-field.html`.
-- Mapping: `equirectangular-earth-uv`; packing: left RGB optical-depth/top-height/morphology, right red concavity; texture color space: `NoColorSpace`.
-- Desktop: 1536×768 raw / 3072×768 packed, 3,524,442 bytes, 48 all-I H.264 frames at 30 fps.
-- Mobile: 1024×512 raw / 2048×512 packed, 2,025,944 bytes, 48 all-I H.264 frames at 30 fps.
-- Manifest quality gates remain satisfied: desktop PSNR 42.064292 / SSIM 0.987660; mobile PSNR 38.910789 / SSIM 0.981301.
-- Local headless desktop telemetry: first frame `13.4 ms`, `textureVersion: 1`, no decode errors. This is a local cache/dev observation only, not a network or GPU-performance claim.
+## Asset contract
+
+- Asset ID: `lubirth-opening-globe-cloud-field-v3-surface-locked-relief-anchor`.
+- Provenance: `internal-procedural`; source scene: `packages/lubirth-hero/scripts/opening-globe-cloud-field.html`; license: `internally-generated`.
+- Geographic anchor: `earth-cloud-field-nasa-lite-2k.png`, SHA-256 `39c70e34b99ecf550f557327a1b97dcc0d2cae9f3be03242911c067622bb0a1c`.
+- Packing: left RGB optical-depth/top-height/morphology and right red concavity; data samples use `NoColorSpace`.
+- Desktop: 1536×768 raw / 3072×768 packed, 48 all-I H.264 frames at 30 fps, 2,926,719 bytes, PSNR 48.319518, SSIM 0.992166.
+- Mobile: 1024×512 raw / 2048×512 packed, 48 all-I H.264 frames at 30 fps, 1,751,853 bytes, PSNR 45.592882, SSIM 0.988709.
+
+Both variants remain below the 6 MiB / 2 MiB transfer caps and the 16 MiB / 8 MiB decoded-texture caps without reducing the compression fidelity gate.
 
 ## Validation
 
-- `pnpm --filter @miralith/site lint` — pass
-- `pnpm --filter @miralith/site typecheck` — pass
-- `pnpm --filter @miralith/lubirth-hero typecheck` — pass
-- `pnpm --filter @miralith/site build` — pass
-- Globe-field unit suite — 15 passed
-- Scoped E2E across desktop, mobile portrait and mobile landscape — 5 passed / 4 intentionally skipped fallback duplicates
-- `git diff --check` — pass
-
-`checksums.sha256` records every shipped field/source file and evidence image.
-
-## Limits retained intentionally
-
-The opening is still a normalized cinematic field: it is spatially attached to the real Earth, but it is not a meteorological simulation or a claim that frame-zero cloud placement equals a live weather map. The `≥0.22` handoff still releases decoded presentation resources and returns to the existing real-IP Relief-lite semantics.
+- Scoped unit suite: 18 passed.
+- Scoped E2E with a fresh isolated server: 5 passed / 4 intentional fallback duplicates skipped.
+- Site and hero typechecks: passed.
+- Site lint: passed.
+- Production build: passed.
+- `git diff --check`: passed.

@@ -51,6 +51,13 @@ export interface OpeningGlobeCloudManifest {
     }>;
   };
   source: {
+    anchor: {
+      src: "/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.png";
+      sha256: string;
+      channelLayout: "v3-r-depth-g-height-b-morphology-a-concavity";
+      coverageMode: "low-frequency-geographic-anchor";
+      convergenceFrame: 42;
+    };
     provenance: "internal-procedural";
     generator: string;
     generatorVersion: string;
@@ -167,6 +174,7 @@ function parseVariant(value: unknown, tier: OpeningGlobeCloudTier): OpeningGlobe
 export function validateOpeningGlobeCloudManifest(value: unknown): OpeningGlobeCloudManifest {
   const record = objectAt(value, "root");
   const source = objectAt(record.source, "source");
+  const sourceAnchor = objectAt(source.anchor, "source.anchor");
   const handoff = objectAt(record.handoff, "handoff");
   const variants = objectAt(record.variants, "variants");
   const quality = objectAt(record.quality, "quality");
@@ -189,6 +197,28 @@ export function validateOpeningGlobeCloudManifest(value: unknown): OpeningGlobeC
       return [key, parameter];
     })
   );
+  const anchor: OpeningGlobeCloudManifest["source"]["anchor"] = {
+    src: exactAt(
+      sourceAnchor,
+      "src",
+      "/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.png",
+      "source.anchor"
+    ) as "/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.png",
+    sha256: shaAt(sourceAnchor, "sha256", "source.anchor"),
+    channelLayout: exactAt(
+      sourceAnchor,
+      "channelLayout",
+      "v3-r-depth-g-height-b-morphology-a-concavity",
+      "source.anchor"
+    ) as "v3-r-depth-g-height-b-morphology-a-concavity",
+    coverageMode: exactAt(
+      sourceAnchor,
+      "coverageMode",
+      "low-frequency-geographic-anchor",
+      "source.anchor"
+    ) as "low-frequency-geographic-anchor",
+    convergenceFrame: exactAt(sourceAnchor, "convergenceFrame", 42, "source.anchor") as 42
+  };
   const plateEndProgress = exactAt(handoff, "plateEndProgress", 0.18, "handoff");
   const cutProgress = exactAt(handoff, "cutProgress", 0.195, "handoff");
   const liveProgress = exactAt(handoff, "liveProgress", 0.22, "handoff");
@@ -235,6 +265,7 @@ export function validateOpeningGlobeCloudManifest(value: unknown): OpeningGlobeC
       variants: parsedQuality
     },
     source: {
+      anchor,
       provenance: exactAt(source, "provenance", "internal-procedural", "source"),
       generator: stringAt(source, "generator", "source"),
       generatorVersion: stringAt(source, "generatorVersion", "source"),

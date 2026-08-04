@@ -43,8 +43,24 @@
   position: absolute;
   inset: 0;
   z-index: 3;
+  overflow: hidden;
   pointer-events: none;
   will-change: opacity;
+}
+
+.transitionVeilCloudForm {
+  position: absolute;
+  inset: -18%;
+  pointer-events: none;
+  opacity: 0.68;
+  background:
+    radial-gradient(ellipse 36% 18% at 18% 56%, rgba(121, 157, 185, 0.56) 0%, rgba(62, 93, 123, 0.25) 44%, transparent 74%),
+    radial-gradient(ellipse 28% 24% at 47% 28%, rgba(164, 190, 207, 0.42) 0%, rgba(72, 106, 136, 0.2) 48%, transparent 78%),
+    radial-gradient(ellipse 42% 20% at 79% 62%, rgba(93, 135, 167, 0.42) 0%, rgba(38, 67, 96, 0.18) 48%, transparent 76%),
+    radial-gradient(ellipse 24% 14% at 62% 84%, rgba(150, 178, 196, 0.28) 0%, transparent 74%);
+  filter: blur(28px) saturate(0.78);
+  mix-blend-mode: screen;
+  transform: scale(1.08);
 }
 
 .cue {

@@ -36,8 +36,16 @@ const validManifestFixture = {
     generatorVersion: "1.0.0",
     scenePath: "packages/lubirth-hero/scripts/opening-globe-cloud-field.html",
     seed: "lubirth-opening-globe-cloud-v1",
+    anchor: {
+      src: "/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.png",
+      sha256: SHA,
+      channelLayout: "v3-r-depth-g-height-b-morphology-a-concavity",
+      coverageMode: "low-frequency-geographic-anchor",
+      convergenceFrame: 42
+    },
     parameterSummary: {
       densityModel: "high-resolution-worley-fbm-sphere-field",
+      geographicAnchorSampling: "128x64 smooth live-field grid; runtime applies the shared Relief-lite UV offset",
       windDistance: "0.28",
       sourceResolution: "1536x768"
     },
@@ -139,7 +147,27 @@ test("opening globe cloud manifest rejects a mobile encoding without its visual 
 
 test("opening globe cloud manifest maps authored handoff progress to seekable field frames", () => {
   const manifest = validateOpeningGlobeCloudManifest(validManifestFixture);
+  const anchor = (
+    manifest.source as typeof manifest.source & {
+      anchor?: {
+        src: string;
+        sha256: string;
+        channelLayout: string;
+        coverageMode: string;
+        convergenceFrame: number;
+      };
+    }
+  ).anchor;
 
+  expect(anchor).toMatchObject({
+    src: "/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.png",
+    channelLayout: "v3-r-depth-g-height-b-morphology-a-concavity",
+    coverageMode: "low-frequency-geographic-anchor",
+    convergenceFrame: 42
+  });
+  expect(manifest.source.parameterSummary).toMatchObject({
+    geographicAnchorSampling: "128x64 smooth live-field grid; runtime applies the shared Relief-lite UV offset"
+  });
   expect(mapOpeningGlobeCloudProgressToFrame(manifest, 0)).toBe(0);
   expect(mapOpeningGlobeCloudProgressToFrame(manifest, 0.09)).toBe(20);
   expect(mapOpeningGlobeCloudProgressToFrame(manifest, 0.18)).toBe(39);
@@ -218,6 +246,72 @@ function normalizedStandardDeviation(values: Buffer) {
   return Math.sqrt(squaredDifference / Math.max(1, values.byteLength)) / 255;
 }
 
+function decodePackedFieldFrame(
+  assetPath: string,
+  packedWidth: number,
+  packedHeight: number,
+  frame: number
+) {
+  return execFileSync(
+    "/opt/homebrew/bin/ffmpeg",
+    [
+      "-v", "error",
+      "-i", assetPath,
+      "-vf", "select=eq(n\\," + frame + ")",
+      "-frames:v", "1",
+      "-f", "rawvideo",
+      "-pix_fmt", "rgb24",
+      "pipe:1"
+    ],
+    { encoding: "buffer", maxBuffer: packedWidth * packedHeight * 4 }
+  );
+}
+
+function decodeAndScaleRgba(assetPath: string, width: number, height: number) {
+  return execFileSync(
+    "/opt/homebrew/bin/ffmpeg",
+    [
+      "-v", "error",
+      "-i", assetPath,
+      "-vf", "scale=" + width + ":" + height,
+      "-frames:v", "1",
+      "-f", "rawvideo",
+      "-pix_fmt", "rgba",
+      "pipe:1"
+    ],
+    { encoding: "buffer", maxBuffer: width * height * 5 }
+  );
+}
+
+function normalizedLowFrequencyCoverageDifference(
+  packed: Buffer,
+  anchor: Buffer,
+  rawWidth: number,
+  rawHeight: number
+) {
+  let total = 0;
+  let blocks = 0;
+  const blockSize = 32;
+  const packedWidth = rawWidth * 2;
+  for (let top = 0; top < rawHeight; top += blockSize) {
+    for (let left = 0; left < rawWidth; left += blockSize) {
+      let packedSum = 0;
+      let anchorSum = 0;
+      let pixels = 0;
+      for (let y = top; y < Math.min(top + blockSize, rawHeight); y += 1) {
+        for (let x = left; x < Math.min(left + blockSize, rawWidth); x += 1) {
+          packedSum += packed[(y * packedWidth + x) * 3];
+          anchorSum += anchor[(y * rawWidth + x) * 4];
+          pixels += 1;
+        }
+      }
+      total += Math.abs(packedSum / pixels - anchorSum / pixels);
+      blocks += 1;
+    }
+  }
+  return total / Math.max(1, blocks * 255);
+}
+
 test("publishes all-I globe fields with high-frequency height and temporal change", () => {
   test.setTimeout(60_000);
   const manifest = validateOpeningGlobeCloudManifest(
@@ -231,6 +325,29 @@ test("publishes all-I globe fields with high-frequency height and temporal chang
   expect(createHash("sha256").update(readFileSync(sourcePath)).digest("hex")).toBe(
     manifest.source.sourceSha256
   );
+  const anchor = (
+    manifest.source as typeof manifest.source & {
+      anchor?: {
+        src: string;
+        sha256: string;
+        channelLayout: string;
+        coverageMode: string;
+        convergenceFrame: number;
+      };
+    }
+  ).anchor;
+  expect(anchor).toMatchObject({
+    src: "/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.png",
+    channelLayout: "v3-r-depth-g-height-b-morphology-a-concavity",
+    coverageMode: "low-frequency-geographic-anchor",
+    convergenceFrame: 42
+  });
+  expect(manifest.source.parameterSummary).toMatchObject({
+    geographicAnchorSampling: "128x64 smooth live-field grid; runtime applies the shared Relief-lite UV offset"
+  });
+  const anchorPath = publicAssetPath(anchor?.src ?? "");
+  expect(existsSync(anchorPath)).toBe(true);
+  expect(createHash("sha256").update(readFileSync(anchorPath)).digest("hex")).toBe(anchor?.sha256);
 
   for (const tier of ["desktop", "mobile"] as const) {
     const variant = manifest.variants[tier];
@@ -263,4 +380,17 @@ test("publishes all-I globe fields with high-frequency height and temporal chang
   expect(normalizedMeanAbsoluteDifference(heightAtStart, heightAtMiddle)).toBeGreaterThan(0.012);
   expect(normalizedStandardDeviation(heightAtMiddle)).toBeGreaterThan(0.08);
   expect(normalizedStandardDeviation(concavity)).toBeGreaterThan(0.03);
+  const finalFrame = decodePackedFieldFrame(
+    assetPath,
+    desktop.packedWidth,
+    desktop.packedHeight,
+    42
+  );
+  const liveAnchor = decodeAndScaleRgba(anchorPath, desktop.rawWidth, desktop.rawHeight);
+  expect(normalizedLowFrequencyCoverageDifference(
+    finalFrame,
+    liveAnchor,
+    desktop.rawWidth,
+    desktop.rawHeight
+  )).toBeLessThan(0.11);
 });

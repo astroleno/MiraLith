@@ -57,7 +57,11 @@ export class PackedCloudVideoFrameProvider implements CloudFrameProvider {
     const token = ++this.#requestToken;
     if (this.#video.getAttribute("src") !== this.metadata.src) {
       this.#lastRenderedFrame = null;
-      this.#video.src = this.metadata.src;
+      // releasePresentationResources removes the attribute to free decoded
+      // presentation state. Restore the attribute (not only the reflected
+      // property) so every browser restarts resource selection for reverse
+      // frame arming.
+      this.#video.setAttribute("src", this.metadata.src);
       this.#video.load();
     }
 

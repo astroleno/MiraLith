@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { readFileSync } from "node:fs";
 import {
   firstCloudFrameDeadlineMs,
   frameToMediaTime
@@ -13,4 +14,14 @@ test("maps every cloud frame to an exact all-I media seek time", () => {
 test("uses the locked desktop and mobile first-frame deadlines", () => {
   expect(firstCloudFrameDeadlineMs("desktop")).toBe(1_200);
   expect(firstCloudFrameDeadlineMs("mobile")).toBe(1_800);
+});
+
+test("restores the media source as a DOM attribute before a released provider seeks again", () => {
+  const source = readFileSync(
+    "apps/site/components/lubirth-cloud-asset-opening/frameProvider.ts",
+    "utf8"
+  );
+
+  expect(source).toContain('this.#video.setAttribute("src", this.metadata.src);');
+  expect(source).toContain("this.#video.load();");
 });
