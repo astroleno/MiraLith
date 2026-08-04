@@ -248,6 +248,52 @@ test("keeps study and debug routes on full lookdev policies", () => {
   });
 });
 
+test("only enables the V3 cloud lighting model for a high quality reference review", () => {
+  type ResolveCloudVolumeV3Profile = (input: {
+    qualityTier: "high" | "medium" | "low" | "fallback";
+    referenceLook: boolean;
+    requestedModel?: "legacy" | "v3";
+  }) => {
+    groundShadowStrength: number;
+    model: "legacy" | "v3";
+    sunSamples: number;
+  };
+  const resolveCloudVolumeV3Profile = (
+    landingCloudLayer as unknown as {
+      resolveCloudVolumeV3Profile?: ResolveCloudVolumeV3Profile;
+    }
+  ).resolveCloudVolumeV3Profile;
+
+  expect(resolveCloudVolumeV3Profile).toBeDefined();
+  expect(resolveCloudVolumeV3Profile?.({
+    qualityTier: "high",
+    referenceLook: true,
+    requestedModel: "v3"
+  })).toEqual({
+    groundShadowStrength: 0.54,
+    model: "v3",
+    sunSamples: 5
+  });
+  expect(resolveCloudVolumeV3Profile?.({
+    qualityTier: "medium",
+    referenceLook: true,
+    requestedModel: "v3"
+  })).toEqual({
+    groundShadowStrength: 0,
+    model: "legacy",
+    sunSamples: 0
+  });
+  expect(resolveCloudVolumeV3Profile?.({
+    qualityTier: "high",
+    referenceLook: false,
+    requestedModel: "v3"
+  })).toEqual({
+    groundShadowStrength: 0,
+    model: "legacy",
+    sunSamples: 0
+  });
+});
+
 test("gives production home an explicit close atmosphere preset", () => {
   const homeTuning = resolveLandingCloseAtmosphereTuning({ runtimeProfile: "home-lite" });
   const studyTuning = resolveLandingCloseAtmosphereTuning({ runtimeProfile: "full" });

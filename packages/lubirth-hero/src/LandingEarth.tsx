@@ -43,6 +43,7 @@ interface LandingEarthProps {
   onDayTextureReady?: () => void;
   cloudDeckEnabled?: boolean;
   referenceVolumetricSurfaceClouds?: boolean;
+  cloudVolumeGroundShadowStrength?: number;
   referenceAbsorptionForceEarthMaterialFailure?: boolean;
   referenceAbsorptionGpuTimerEnabled?: boolean;
   referenceAbsorptionVariant?: LandingReferenceAbsorptionVariant;
@@ -228,6 +229,7 @@ function LandingEarthLookdev({
   onDayTextureReady,
   cloudDeckEnabled = true,
   referenceVolumetricSurfaceClouds = false,
+  cloudVolumeGroundShadowStrength = 0,
   runtimeProfile = "full"
 }: LandingEarthProps) {
   const earth = useRef<Mesh>(null);
@@ -417,6 +419,9 @@ function LandingEarthLookdev({
               : 0
           },
           referenceVolumetricSurfaceClouds: { value: referenceVolumetricSurfaceClouds ? 1 : 0 },
+          cloudVolumeGroundShadowStrength: {
+            value: MathUtils.clamp(cloudVolumeGroundShadowStrength, 0, 1)
+          },
           homeLiteStrength: { value: isHomeLite ? 1 : 0 },
           cloudOffset: { value: 0 },
           rimStrength: { value: composition.earth.rimStrength },
@@ -482,6 +487,7 @@ function LandingEarthLookdev({
           uniform float cloudOpacity;
           uniform float cloudShadowOpacity;
           uniform float referenceVolumetricSurfaceClouds;
+          uniform float cloudVolumeGroundShadowStrength;
           uniform float homeLiteStrength;
           uniform float cloudOffset;
           uniform float rimStrength;
@@ -658,7 +664,11 @@ function LandingEarthLookdev({
               hasCloudShadowAtlas *
               cloudOpacity *
               smoothstep(-0.08, 0.52, ndl);
-            float truthEarlyReferenceShadowGate = 1.0 - lowCostReferenceCloudLook;
+            float truthEarlyReferenceShadowGate = mix(
+              1.0 - lowCostReferenceCloudLook,
+              cloudVolumeGroundShadowStrength,
+              step(0.001, cloudVolumeGroundShadowStrength)
+            );
             truthLitDay *= 1.0 - truthEarlyProjectedCloudShadow * mix(0.22, 0.26, lowCostReferenceCloudLook) * truthEarlyReferenceShadowGate;
             truthLitDay = mix(
               truthLitDay,
@@ -1036,6 +1046,8 @@ function LandingEarthLookdev({
                 (1.0 - smoothstep(0.62, 0.94, fresnel)) *
                 (1.0 - truthOceanAlbedoMask * 0.45);
               float refGroundShadow = refContactShadow + refCastShadow;
+              float refV3VolumeShadow = refVolumeSelfShadow * cloudVolumeGroundShadowStrength;
+              refGroundShadow *= 1.0 + refV3VolumeShadow * 1.42;
 
               float refSurfaceLuma = dot(truthColor, vec3(0.299, 0.587, 0.114));
               float brightLandShadowReadability =
@@ -1398,7 +1410,8 @@ function LandingEarthLookdev({
       displacementTexture,
       normalTexture,
       specularTexture,
-      referenceVolumetricSurfaceClouds
+      referenceVolumetricSurfaceClouds,
+      cloudVolumeGroundShadowStrength
     ]
   );
 
@@ -1431,6 +1444,11 @@ function LandingEarthLookdev({
           (referenceVolumetricSurfaceClouds ? 1.42 : 1)
         : 0;
     earthMaterial.uniforms.referenceVolumetricSurfaceClouds.value = referenceVolumetricSurfaceClouds ? 1 : 0;
+    earthMaterial.uniforms.cloudVolumeGroundShadowStrength.value = MathUtils.clamp(
+      cloudVolumeGroundShadowStrength,
+      0,
+      1
+    );
     earthMaterial.uniforms.cloudShadowAtlasMap.value = cloudShadowAtlasTexture ?? activeCloudTexture;
     earthMaterial.uniforms.hasCloudShadowAtlas.value = cloudShadowAtlasTexture ? 1 : 0;
     earthMaterial.uniforms.specularMap.value = activeSpecularTexture;

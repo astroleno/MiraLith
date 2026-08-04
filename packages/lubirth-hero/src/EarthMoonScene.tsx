@@ -39,6 +39,7 @@ import { LandingSpaceBackground } from "./LandingSpaceBackground";
 import { LandingVolumetricAtmospherePass } from "./LandingVolumetricAtmospherePass";
 import { LUBIRTH_EXPANDED_SPACE_BACKGROUND } from "./assetManifest";
 import { HOME_CLOUD_FIELD_SCROLL_SPEED } from "./homeCloudField";
+import { resolveCloudVolumeV3Profile } from "./landingCloudVolumeV3Policy";
 import { resolveLandingVisualPolicy } from "./landingVisualPolicy";
 import { createLandingPlanetLightingFrame } from "./landingPlanetLighting";
 import { EMPTY_CLOSE_ATMOSPHERE_TUNING } from "./landingAtmosphereTuning";
@@ -106,6 +107,8 @@ declare global {
     __MiraLithLuBirthVolumetricAtmosphereActive?: boolean;
     __MiraLithLuBirthVolumetricAtmosphereQuality?: string;
     __MiraLithLuBirthCloudShellsActive?: boolean;
+    __MiraLithLuBirthCloudVolumeModel?: "legacy" | "v3";
+    __MiraLithLuBirthCloudVolumeGroundShadowStrength?: number;
     __MiraLithLuBirthPostEffectActive?: boolean;
     __MiraLithLuBirthPostEffectMode?: "off" | "analytic-halo" | "full-bloom";
     __MiraLithLuBirthSceneLightDirection?: [number, number, number];
@@ -213,6 +216,7 @@ export function EarthMoonScene({
   showAuroraInAll = false,
   atmosphereVariant = "stack",
   atmosphereLook = "lubirth",
+  cloudVolumeModel = "v3",
   referenceAbsorptionCloudDebugMode = "none",
   referenceAbsorptionForceEarthMaterialFailure = false,
   referenceAbsorptionGpuTimerEnabled = false,
@@ -329,6 +333,14 @@ export function EarthMoonScene({
     quality.tier !== "low" &&
     quality.tier !== "fallback";
   const useReferenceVolumetricSurfaceClouds = showVolumetricAtmosphere && atmosphereLook === "reference";
+  const cloudVolumeProfile = useMemo(
+    () => resolveCloudVolumeV3Profile({
+      qualityTier: quality.tier,
+      referenceLook: useReferenceVolumetricSurfaceClouds,
+      requestedModel: cloudVolumeModel
+    }),
+    [cloudVolumeModel, quality.tier, useReferenceVolumetricSurfaceClouds]
+  );
   const showLegacyAtmosphere = false;
   const showLegacyAurora = showAurora;
   const showSurfaceTextureClouds =
@@ -393,6 +405,16 @@ export function EarthMoonScene({
       window.__MiraLithLuBirthVolumetricAtmosphereQuality = undefined;
     }
   }, [activeAtmosphereVariant, showVolumetricAtmosphere]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.__MiraLithLuBirthCloudVolumeGroundShadowStrength =
+      cloudVolumeProfile.groundShadowStrength;
+    window.__MiraLithLuBirthCloudVolumeModel = cloudVolumeProfile.model;
+  }, [cloudVolumeProfile.groundShadowStrength, cloudVolumeProfile.model]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -814,6 +836,7 @@ export function EarthMoonScene({
             onDayTextureReady={onVisualReadyEnough}
             cloudDeckEnabled={cloudDeckEnabled}
             referenceVolumetricSurfaceClouds={useReferenceVolumetricSurfaceClouds}
+            cloudVolumeGroundShadowStrength={cloudVolumeProfile.groundShadowStrength}
             referenceAbsorptionForceEarthMaterialFailure={
               referenceAbsorptionForceEarthMaterialFailure
             }
@@ -864,6 +887,7 @@ export function EarthMoonScene({
                 cloudOffsetRef={homeCloudOffset}
                 cloudDeckEnabled={cloudDeckEnabled}
                 cloudMode={activeVisualPolicy.cloudMode}
+                cloudVolumeModel={cloudVolumeModel}
                 closeAtmosphereTuning={activeCloseAtmosphereTuning}
               />
             )}

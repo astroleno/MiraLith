@@ -125,6 +125,7 @@ export type {
   LandingAuroraProfile,
   LandingCloseAtmosphereTuning,
   LandingCloudMode,
+  LandingCloudVolumeModel,
   LandingComposition,
   LandingCompositionOverrides,
   LandingLocationConfig,

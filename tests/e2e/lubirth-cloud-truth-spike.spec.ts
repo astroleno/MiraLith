@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import sharp from "sharp";
 
 test.setTimeout(120_000);
 
@@ -11,6 +12,8 @@ declare global {
     __MiraLithLuBirthCloudFieldTexture?: string;
     __MiraLithLuBirthCloudShellOffset?: number;
     __MiraLithLuBirthCloudShellTextureUuid?: string;
+    __MiraLithLuBirthCloudVolumeModel?: "legacy" | "v3";
+    __MiraLithLuBirthCloudVolumeGroundShadowStrength?: number;
     __MiraLithLuBirthGroundCloudFieldTextureUuid?: string;
     __MiraLithLuBirthGroundCloudOffset?: number;
     __MiraLithLuBirthGroundCloudShadowActive?: boolean;
@@ -92,6 +95,86 @@ async function sampleCanvasVisibility(page: import("@playwright/test").Page) {
       maxLuma
     };
   });
+}
+
+async function sampleCloudVolumeFrame(page: import("@playwright/test").Page) {
+  const client = await page.context().newCDPSession(page);
+  let screenshot: Buffer;
+  try {
+    const capture = await client.send("Page.captureScreenshot", {
+      format: "png",
+      fromSurface: true
+    });
+    screenshot = Buffer.from(capture.data, "base64");
+  } finally {
+    await client.detach();
+  }
+  const decoded = await sharp(screenshot)
+    .resize({ width: 240, height: 150, fit: "fill" })
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const { data, info } = decoded;
+  const crop = {
+    left: Math.floor(info.width * 0.08),
+    right: Math.ceil(info.width * 0.92),
+    top: Math.floor(info.height * 0.3),
+    bottom: Math.ceil(info.height * 0.98)
+  };
+  const values: number[] = [];
+
+  for (let y = crop.top; y < crop.bottom; y += 1) {
+    for (let x = crop.left; x < crop.right; x += 1) {
+      const index = (y * info.width + x) * info.channels;
+      values.push(
+        0.2126 * (data[index] ?? 0) +
+        0.7152 * (data[index + 1] ?? 0) +
+        0.0722 * (data[index + 2] ?? 0)
+      );
+    }
+  }
+
+  return { values };
+}
+
+function compareCloudVolumeFrames(
+  legacy: Awaited<ReturnType<typeof sampleCloudVolumeFrame>>,
+  v3: Awaited<ReturnType<typeof sampleCloudVolumeFrame>>
+) {
+  if (!legacy || !v3 || legacy.values.length !== v3.values.length) {
+    return null;
+  }
+
+  const absoluteDeltas: number[] = [];
+  let brightenedCount = 0;
+  let darkenedCount = 0;
+  let sampleCount = 0;
+
+  for (let index = 0; index < legacy.values.length; index += 1) {
+    const legacyValue = legacy.values[index] ?? 0;
+    const v3Value = v3.values[index] ?? 0;
+    if (Math.max(legacyValue, v3Value) < 20) {
+      continue;
+    }
+
+    const delta = v3Value - legacyValue;
+    absoluteDeltas.push(Math.abs(delta));
+    sampleCount += 1;
+    if (delta >= 8) {
+      brightenedCount += 1;
+    }
+    if (delta <= -8) {
+      darkenedCount += 1;
+    }
+  }
+
+  absoluteDeltas.sort((a, b) => a - b);
+  return {
+    brightenedFraction: brightenedCount / Math.max(sampleCount, 1),
+    darkenedFraction: darkenedCount / Math.max(sampleCount, 1),
+    p90AbsoluteDelta: absoluteDeltas[Math.floor(absoluteDeltas.length * 0.9)] ?? 0,
+    sampleCount
+  };
 }
 
 async function sampleHomeHorizonBand(page: import("@playwright/test").Page) {
@@ -225,6 +308,83 @@ test("cloud truth baseline does not request cloud deck", async ({ page }) => {
   await page.waitForTimeout(900);
 
   expect(Array.from(requests).filter((path) => path.includes("earth-cloud-deck-"))).toEqual([]);
+});
+
+test("cloud truth exposes a high quality V3 cloud volume comparison", async ({ page }) => {
+  const baseQuery =
+    "mode=all&quality=high&progress=0.55&copy=hidden&profile=nasa&atmo=volumetric&look=reference";
+
+  await page.goto(`/lubirth-cloud-truth-spike?${baseQuery}&cloudVolume=v3`);
+  await expect(page.locator(".lubirth-cloud-truth-spike")).toHaveAttribute("data-cloud-volume-model", "v3");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudVolumeModel), { timeout: 25_000 })
+    .toBe("v3");
+
+  await page.goto(`/lubirth-cloud-truth-spike?${baseQuery}&cloudVolume=legacy`);
+  await expect(page.locator(".lubirth-cloud-truth-spike")).toHaveAttribute("data-cloud-volume-model", "legacy");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudVolumeModel), { timeout: 25_000 })
+    .toBe("legacy");
+});
+
+test("V3 enables a controlled ground shadow only for the high quality reference view", async ({ page }) => {
+  const baseQuery =
+    "mode=all&quality=high&progress=0.55&copy=hidden&profile=nasa&atmo=volumetric&look=reference";
+
+  await page.goto(`/lubirth-cloud-truth-spike?${baseQuery}&cloudVolume=v3`);
+  await expect
+    .poll(
+      () => page.evaluate(() => window.__MiraLithLuBirthCloudVolumeGroundShadowStrength),
+      { timeout: 25_000 }
+    )
+    .toBeCloseTo(0.54, 4);
+
+  await page.goto(`/lubirth-cloud-truth-spike?${baseQuery}&cloudVolume=legacy`);
+  await expect
+    .poll(
+      () => page.evaluate(() => window.__MiraLithLuBirthCloudVolumeGroundShadowStrength),
+      { timeout: 25_000 }
+    )
+    .toBe(0);
+});
+
+test("V3 renders distinct lit and shadowed cloud bodies in the close reference view", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "Cloud-body contrast is calibrated at 1440x900.");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const baseQuery =
+    "mode=all&quality=high&progress=0&copy=hidden&profile=nasa&atmo=volumetric&look=reference";
+
+  await page.goto(`/lubirth-cloud-truth-spike?${baseQuery}&cloudVolume=legacy`);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudVolumeModel), { timeout: 25_000 })
+    .toBe("legacy");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudShellCount ?? 0), { timeout: 25_000 })
+    .toBeGreaterThan(0);
+  await page.waitForTimeout(800);
+  const legacy = await sampleCloudVolumeFrame(page);
+
+  await page.goto(`/lubirth-cloud-truth-spike?${baseQuery}&cloudVolume=v3`);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudVolumeModel), { timeout: 25_000 })
+    .toBe("v3");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudShellCount ?? 0), { timeout: 45_000 })
+    .toBeGreaterThan(0);
+  await page.waitForTimeout(800);
+  const v3 = await sampleCloudVolumeFrame(page);
+
+  const metrics = compareCloudVolumeFrames(legacy, v3);
+  await testInfo.attach("cloud-volume-v3-metrics.json", {
+    body: Buffer.from(JSON.stringify(metrics, null, 2)),
+    contentType: "application/json"
+  });
+
+  expect(metrics).not.toBeNull();
+  expect(metrics?.sampleCount).toBeGreaterThan(10_000);
+  expect(metrics?.p90AbsoluteDelta).toBeGreaterThanOrEqual(27);
+  expect(metrics?.brightenedFraction).toBeGreaterThanOrEqual(0.012);
+  expect(metrics?.darkenedFraction).toBeGreaterThanOrEqual(0.3);
 });
 
 test("production home uses one packed-normal cloud shell and one ground shadow source", async ({ page }) => {

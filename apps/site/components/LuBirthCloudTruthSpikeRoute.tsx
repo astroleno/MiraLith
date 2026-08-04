@@ -4,6 +4,7 @@ import { useLayoutEffect, useSyncExternalStore } from "react";
 import type {
   LandingAtmosphereLook,
   LandingAtmosphereVariant,
+  LandingCloudVolumeModel,
   LandingRenderProfile,
   LandingVisualDebugLayer
 } from "@miralith/lubirth-hero";
@@ -26,6 +27,7 @@ type CloudTruthMode =
 interface CloudTruthConfig {
   atmosphereLook: LandingAtmosphereLook;
   atmosphereVariant: LandingAtmosphereVariant;
+  cloudVolumeModel: LandingCloudVolumeModel;
   copyHidden: boolean;
   fixedProgress: number;
   hasFixedProgress: boolean;
@@ -44,6 +46,7 @@ declare global {
 const DEFAULT_CONFIG: CloudTruthConfig = {
   atmosphereLook: "reference",
   atmosphereVariant: "stack",
+  cloudVolumeModel: "v3",
   copyHidden: false,
   fixedProgress: 0,
   hasFixedProgress: false,
@@ -122,6 +125,10 @@ function readAtmosphereLook(params: URLSearchParams): LandingAtmosphereLook {
   return look === "lubirth" || look === "reference" ? look : "reference";
 }
 
+function readCloudVolumeModel(params: URLSearchParams): LandingCloudVolumeModel {
+  return params.get("cloudVolume") === "legacy" ? "legacy" : "v3";
+}
+
 function readConfig(): CloudTruthConfig {
   if (typeof window === "undefined") {
     return DEFAULT_CONFIG;
@@ -138,6 +145,7 @@ function readConfig(): CloudTruthConfig {
   return {
     atmosphereLook: readAtmosphereLook(params),
     atmosphereVariant: readAtmosphereVariant(params),
+    cloudVolumeModel: readCloudVolumeModel(params),
     copyHidden: copyMode === "hidden" || (visualPixelMode && copyMode !== "visible"),
     fixedProgress: Number.isFinite(parsedProgress) ? clamp01(parsedProgress) : 0,
     hasFixedProgress: Number.isFinite(parsedProgress),
@@ -181,6 +189,7 @@ export function LuBirthCloudTruthSpikeRoute() {
     <main
       className="lubirth-cloud-truth-spike"
       data-copy={config.copyHidden ? "hidden" : "visible"}
+      data-cloud-volume-model={config.cloudVolumeModel}
       data-mode={config.mode}
       data-progress={config.fixedProgress}
     >
@@ -249,6 +258,7 @@ export function LuBirthCloudTruthSpikeRoute() {
             atmospherePolicy={config.atmosphereVariant}
             atmosphereVariant={config.atmosphereVariant}
             atmosphereLook={config.atmosphereLook}
+            cloudVolumeModel={config.cloudVolumeModel}
             routeVariant="spike"
             productionSurface={false}
           />

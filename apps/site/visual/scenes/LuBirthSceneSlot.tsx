@@ -31,6 +31,7 @@ import type {
   LandingAtmospherePolicy,
   LandingAtmosphereVariant,
   LandingAuroraProfile,
+  LandingCloudVolumeModel,
   LandingPostEffectMode,
   LandingReferenceAbsorptionCloudDebugMode,
   LandingReferenceAbsorptionVariant,
@@ -188,6 +189,7 @@ interface LuBirthSceneSlotProps {
   atmospherePolicy?: LandingAtmospherePolicy;
   atmosphereVariant?: LandingAtmosphereVariant;
   atmosphereLook?: LandingAtmosphereLook;
+  cloudVolumeModel?: LandingCloudVolumeModel;
   routeVariant?: LuBirthAtmosphereRouteVariant;
   homeIntroRendering?: boolean;
   productionSurface?: boolean;
@@ -575,6 +577,7 @@ export function LuBirthSceneSlot(props: LuBirthSceneSlotProps) {
     atmospherePolicy,
     atmosphereVariant = "stack",
     atmosphereLook = "lubirth",
+    cloudVolumeModel,
     routeVariant,
     homeIntroRendering = false,
     productionSurface,
@@ -990,6 +993,7 @@ export function LuBirthSceneSlot(props: LuBirthSceneSlotProps) {
       visualPolicy={visualPolicy}
       atmosphereVariant={resolvedAtmospherePolicy.atmosphereVariant}
       atmosphereLook={resolvedAtmospherePolicy.atmosphereLook}
+      cloudVolumeModel={cloudVolumeModel}
       auroraProfile={auroraProfile}
       reducedMotion={reducedMotion}
       paused={paused}

@@ -25,13 +25,20 @@ import {
   HOME_CLOUD_FIELD_SCROLL_SPEED,
   HOME_CLOUD_SHELL_RADIUS
 } from "./homeCloudField";
+import {
+  resolveCloudVolumeV3Profile,
+  type CloudVolumeV3Profile
+} from "./landingCloudVolumeV3Policy";
 import type {
   LandingCloseAtmosphereTuning,
   LandingCloudMode,
+  LandingCloudVolumeModel,
   LandingComposition,
   LandingResolvedAssets
 } from "./types";
 import { useLandingTexture } from "./useLandingTexture";
+
+export { resolveCloudVolumeV3Profile, type CloudVolumeV3Profile };
 
 interface LandingCloudLayerProps {
   composition: LandingComposition;
@@ -45,6 +52,7 @@ interface LandingCloudLayerProps {
   cloudOffsetRef?: MutableRefObject<number>;
   cloudDeckEnabled?: boolean;
   cloudMode?: LandingCloudMode;
+  cloudVolumeModel?: LandingCloudVolumeModel;
   closeAtmosphereTuning?: LandingCloseAtmosphereTuning;
 }
 
@@ -417,6 +425,7 @@ function createCloudMaterial(
       debugBoost: { value: 0 },
       referenceLookStrength: { value: 0 },
       cloudVolumeShadowStrength: { value: 0 },
+      cloudVolumeV3Strength: { value: 0 },
       lightDir: { value: lightDirection.set(...composition.light.fixedSunDir).normalize().clone() },
       lightColor: {
         value: color.setRGB(
@@ -470,6 +479,7 @@ function createCloudMaterial(
       uniform float debugBoost;
       uniform float referenceLookStrength;
       uniform float cloudVolumeShadowStrength;
+      uniform float cloudVolumeV3Strength;
       uniform vec3 lightDir;
       uniform vec3 lightColor;
 
@@ -664,6 +674,24 @@ function createCloudMaterial(
             smoothstep(0.18, 0.78, volumeDeck.g) * hasCloudDeckMap * 0.52;
           volumeColumn += volumeDensity * (0.44 + stepIndex * 0.16);
         }
+        float v3Enabled = step(0.5, cloudVolumeV3Strength) * referenceLookStrength;
+        float v3SunColumn = 0.0;
+        if (v3Enabled > 0.0) {
+          float v3Step = mix(0.0038, 0.0019, closeStage) * (0.72 + limb * 0.34);
+          for (int v3StepIndex = 0; v3StepIndex < 5; v3StepIndex += 1) {
+            float v3T = (float(v3StepIndex) + 0.5 + volumeJitter * 0.22) / 5.0;
+            vec2 v3Uv = vec2(
+              fract(midUv.x + sunShear.x * v3Step * v3T * 5.0),
+              clamp(midUv.y + sunShear.y * v3Step * v3T * 3.1, 0.001, 0.999)
+            );
+            vec4 v3Deck = texture2D(cloudDeckMap, v3Uv);
+            float v3Raw = cloudRaw(v3Uv);
+            float v3Density =
+              smoothstep(0.07, 0.62, v3Raw) * 0.46 +
+              smoothstep(0.09, 0.66, v3Deck.g) * hasCloudDeckMap * 0.58;
+            v3SunColumn += v3Density * mix(0.62, 1.18, v3T);
+          }
+        }
         float volumeMass = referenceLookStrength *
           visibleCloudGate *
           smoothstep(0.14, 0.82, max(max(rawSharp, deckThickness), volumeColumn * 0.36));
@@ -768,6 +796,31 @@ function createCloudMaterial(
           0.0,
           1.0
         );
+        float v3BodyCoverage = smoothstep(
+          0.28,
+          0.74,
+          max(max(weatherMass, weatherCore), rawSharp * 0.68 + deckThickness * 0.42)
+        );
+        float v3VolumeMass = v3Enabled * visibleCloudGate * v3BodyCoverage;
+        float v3SunTransmittance = exp(-v3SunColumn * (1.14 + thickness * 1.78 + deckThickness * 0.86));
+        float v3TopLight = smoothstep(
+          0.28,
+          0.74,
+          cloudTopLight * (0.22 + v3SunTransmittance * 0.78) + deckHighCap * 0.24
+        ) * sunlitCloud;
+        float v3SideLight = smoothstep(
+          0.06,
+          0.78,
+          (1.0 - cloudTopLight) * 0.78 + v3SunTransmittance * 0.24 + rim * 0.18
+        ) * (1.0 - v3TopLight * 0.58);
+        float v3Underside = v3VolumeMass * clamp(
+          (1.0 - v3SunTransmittance) * 1.12 +
+          deckAo * 0.58 +
+          cloudSlopeShadow * 0.48 +
+          weatherCore * 0.24,
+          0.0,
+          1.0
+        );
         float selfShadow = clamp(
           shadowMask * shadowStrength * (0.74 + density * 0.42 + limbVolume * 0.28) + baseMass * 0.42,
           0.0,
@@ -792,6 +845,7 @@ function createCloudMaterial(
             cloudSlopeShadow * 0.32 +
             normalReliefMask * (1.0 - cloudTopLight) * 0.12 +
             volumeSelfShadow * 0.78 +
+            v3Underside * 0.5 +
             weatherCore * 0.18 +
             referenceDarkGyre * 0.18 +
             referenceSoftShadow * 0.16
@@ -1020,6 +1074,21 @@ function createCloudMaterial(
           cloudLayerSeparation * (0.055 + closeStage * 0.075) * (1.0 - sunlitCloud * 0.3)
         );
         finalColor += vec3(0.46, 0.52, 0.58) * cloudTopLight * cloudLayerSeparation * sunlitCloud * 0.028;
+        vec3 v3UndersideColor = vec3(0.14, 0.20, 0.30);
+        vec3 v3SideColor = vec3(0.40, 0.50, 0.62);
+        vec3 v3TopColor = vec3(0.98, 0.99, 0.97);
+        vec3 v3VolumeColor = mix(v3UndersideColor, v3SideColor, v3SideLight);
+        v3VolumeColor = mix(v3VolumeColor, v3TopColor, v3TopLight);
+        float v3ColorWeight = v3VolumeMass *
+          smoothstep(0.08, 0.64, density + thickness * 0.42) *
+          (0.54 + closeStage * 0.26);
+        finalColor = mix(finalColor, v3VolumeColor * lightColor, v3ColorWeight);
+        finalColor = mix(
+          finalColor,
+          finalColor * vec3(0.56, 0.66, 0.82),
+          v3Underside * (0.44 + closeStage * 0.2)
+        );
+        finalColor += v3TopColor * v3TopLight * v3VolumeMass * (0.13 + closeStage * 0.09);
         float alpha = (
           photoWisps * 0.06 +
           weatherMass * 0.32 +
@@ -1103,6 +1172,7 @@ export function LandingCloudLayer({
   cloudOffsetRef,
   cloudDeckEnabled = true,
   cloudMode = "lookdev",
+  cloudVolumeModel = "v3",
   closeAtmosphereTuning
 }: LandingCloudLayerProps) {
   const cloud = useRef<Mesh>(null);
@@ -1110,6 +1180,14 @@ export function LandingCloudLayer({
   const cloudOffset = useRef(0);
   const reliefLightingStrength = useMemo(readLiteCloudReliefLightingStrength, []);
   const diagnosticMode = useMemo(readLiteCloudDiagnosticMode, []);
+  const cloudVolumeProfile = useMemo(
+    () => resolveCloudVolumeV3Profile({
+      qualityTier: quality.tier,
+      referenceLook,
+      requestedModel: cloudVolumeModel
+    }),
+    [cloudVolumeModel, quality.tier, referenceLook]
+  );
   const { texture: cloudFieldTexture, failed: cloudFieldTextureFailed } = useLandingTexture(
     cloudMode === "shell-lite" ? assets.earthCloudField?.src : undefined,
     {
@@ -1276,6 +1354,8 @@ export function LandingCloudLayer({
       cloudMaterial.uniforms.referenceLookStrength.value = referenceLook ? 1 : 0;
       cloudMaterial.uniforms.cloudVolumeShadowStrength.value =
         closeAtmosphereTuning?.cloudVolumeShadowStrength ?? 0;
+      cloudMaterial.uniforms.cloudVolumeV3Strength.value =
+        cloudVolumeProfile.model === "v3" ? 1 : 0;
     });
     window.__MiraLithLuBirthCloudShellOffset = activeCloudOffset;
   });
