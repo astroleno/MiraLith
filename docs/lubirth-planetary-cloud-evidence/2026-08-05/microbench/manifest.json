@@ -6,7 +6,9 @@
     "taskMinusOne": "13ae9ce",
     "taskMinusOneRPlan": "6916179",
     "taskMinusOneRLightGeometry": "47fa6c6",
-    "taskMinusOneRRepresentation": "7da4672"
+    "taskMinusOneRRepresentation": "7da4672",
+    "taskMinusOneRMeasurementCorrectness": "79e3a67",
+    "taskMinusOneRDisjointAndResizeCorrectness": "9143588"
   },
   "route": "/lubirth-planetary-cloud-microbench",
   "scope": {
@@ -30,9 +32,9 @@
       "vendor": "Google Inc. (Apple)",
       "warmupFrames": 120,
       "validNonDisjointFrames": 121,
-      "measurementReadyFrame": 3,
-      "warmupStartFrame": 4,
-      "samplingStartFrame": 124
+      "measurementReadyFrame": 5,
+      "warmupStartFrame": 6,
+      "samplingStartFrame": 126
     },
     "viewportCssPx": [1440, 960],
     "devicePixelRatio": 1,
@@ -126,15 +128,15 @@
     }
   },
   "verification": {
-    "unit": "PASS: 11 tests",
-    "e2e": "PASS: 4 desktop route tests; System Chrome formal window PASS",
+    "unit": "PASS: 14 tests",
+    "e2e": "PASS: 4 desktop route tests; System Chrome 6/6 including resize restart and formal window",
     "formalGpuSamples": 121,
-    "gpuP50Ms": 29.599874,
-    "gpuP95Ms": 36.146749,
+    "gpuP50Ms": 29.750249,
+    "gpuP95Ms": 35.377499,
     "gpuStages": {
-      "densityAndLightRaymarch": { "p50Ms": 9.522791, "p95Ms": 10.94875 },
-      "resolve": { "p50Ms": 9.621041, "p95Ms": 11.071 },
-      "cloudComposite": { "p50Ms": 10.206874, "p95Ms": 14.040124 }
+      "densityAndLightRaymarch": { "p50Ms": 9.495708, "p95Ms": 11.1015 },
+      "resolve": { "p50Ms": 9.707333, "p95Ms": 11.528624 },
+      "cloudComposite": { "p50Ms": 10.395291, "p95Ms": 13.473208 }
     },
     "calibrationLimitations": {
       "noOpTimerQuery": "NOT_RUN",
