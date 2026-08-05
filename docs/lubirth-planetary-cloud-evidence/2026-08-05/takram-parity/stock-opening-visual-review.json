@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-08-05T17:14:55Z",
+  "baseCommit": "ec959d4",
+  "upstreamControl": "PASS",
+  "decision": "STOCK_OPENING_LIMITATION",
+  "scope": "Task 0T unmodified Takram stock input in the Task -1R LuBirth opening mirror. This decision does not evaluate the V3 adapter.",
+  "route": {
+    "input": "stock",
+    "view": "opening",
+    "progresses": [0, 0.06, 0.12, 0.18],
+    "viewportCssPixels": [1440, 960],
+    "devicePixelRatio": 1,
+    "playwrightProject": "desktop"
+  },
+  "fixedStockContract": {
+    "globalWeatherMapping": false,
+    "localWeatherRepeat": [100, 100],
+    "cloudLayers": "CloudLayers.DEFAULT",
+    "coverageOverride": null,
+    "qualityPreset": "high",
+    "beerShadowMaps": true,
+    "temporalUpscale": true,
+    "aerialPerspective": true
+  },
+  "captures": {
+    "contactSheet": {
+      "path": "stock-opening-contact-sheet.png",
+      "sha256": "def93046fbb80ebb34548b6778f8b32114f6641f7932d1c8f5db6040c30cd1ad"
+    },
+    "fullByProgress": {
+      "0.00": "captures/opening-0-00-full.png",
+      "0.06": "captures/opening-0-06-full.png",
+      "0.12": "captures/opening-0-12-full.png",
+      "0.18": "captures/opening-0-18-full.png"
+    },
+    "rawCloudByProgress": {
+      "0.00": "captures/opening-0-00-cloud-raw.png",
+      "0.06": "captures/opening-0-06-cloud-raw.png",
+      "0.12": "captures/opening-0-12-cloud-raw.png",
+      "0.18": "captures/opening-0-18-cloud-raw.png"
+    }
+  },
+  "checks": [
+    {
+      "id": "task-1r-opening-mirror",
+      "result": "PASS",
+      "evidence": "The visual E2E independently recomputes Task -1R Earth/camera matrices at all four progress values and matches all camera position, camera matrix, and Earth matrix elements to 1e-6."
+    },
+    {
+      "id": "native-feature-path",
+      "result": "PASS",
+      "evidence": "At every frame telemetry reports the native BSM, temporal-upscale, and AerialPerspective paths enabled, with a valid LuBirth world-to-ECEF bridge and no transform fallback."
+    },
+    {
+      "id": "earth-depth-and-composite",
+      "result": "PASS",
+      "evidence": "Raw captures contain a clean opaque Earth while full captures show one atmosphere-composited Earth limb; there is no missing asset, double composer, or whole-frame black output."
+    },
+    {
+      "id": "stock-cloud-visual-fit",
+      "result": "LIMITED",
+      "evidence": "Across 0.00/0.06/0.12/0.18, neither raw nor full output contains a readable stock cloud volume in the LuBirth space-view framing. The thin violet/blue limb is native atmosphere, not a white cloud shell."
+    },
+    {
+      "id": "continuous-white-shell",
+      "result": "PASS",
+      "evidence": "No full capture contains a continuous bright-white cloud rim."
+    }
+  ],
+  "classificationRationale": "The upstream near-ground stock control passes with the same renderer fingerprint and assets, while this opening uses the known unsupported stock envelope: cube-sphere local weather mapping, local repeat [100,100], default 0.75–8 km layers, and a space-view/global framing. The absence of a readable stock cloud volume is therefore input/mapping/framing-specific, not evidence of an input-independent native depth, BSM, resolve, or AerialPerspective failure.",
+  "reproduction": {
+    "command": "MIRALITH_TAKRAM_PARITY_CAPTURE=1 pnpm exec playwright test tests/e2e/lubirth-takram-parity-visual.spec.ts --project=desktop --grep 'stock opening keeps'",
+    "result": "PASS (4 opening frames x full/raw)"
+  },
+  "nextAuthorizedWork": "Task 0V — V3 adapter parity is authorized. Task 0P remains locked until a visual-pass candidate exists."
+}

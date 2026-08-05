@@ -11,6 +11,11 @@ import { resolveChapterPreviewScope } from "./lib/chapter-preview/resolveChapter
 
 const siteDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(siteDir, "../..");
+// Takram's packages have a peer-only Fiber edge. pnpm therefore gives them a
+// virtual-store instance without react-dom, while the Canvas uses the browser
+// instance with react-dom. Turbopack must resolve both to the Canvas instance
+// or R3F's store context is split and native parity components cannot mount.
+const sharedReactThreeFiber = "./apps/site/node_modules/@react-three/fiber";
 
 assertPostCoScrollProductionMediaIsolation(
   postCoScrollMediaResolverOptionsFromEnvironment(siteDir)
@@ -54,6 +59,9 @@ const nextConfig: NextConfig = {
     "@miralith/radio-gaga-scene"
   ],
   turbopack: {
+    resolveAlias: {
+      "@react-three/fiber": sharedReactThreeFiber
+    },
     root: repoRoot
   },
   allowedDevOrigins: ["127.0.0.1"],

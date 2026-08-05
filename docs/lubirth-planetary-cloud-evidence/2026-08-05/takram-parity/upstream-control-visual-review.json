@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-08-05T17:14:55Z",
+  "baseCommit": "ec959d4",
+  "decision": "PASS",
+  "scope": "Task 0T upstream stock visual control only; this is not a LuBirth opening or production-art approval.",
+  "route": {
+    "input": "stock",
+    "view": "control",
+    "coverage": 0.4,
+    "camera": {
+      "altitudeMeters": 2500,
+      "fovDegrees": 50,
+      "pitchDegrees": -8
+    },
+    "sun": {
+      "azimuthDegrees": 135,
+      "elevationDegrees": 25
+    },
+    "viewportCssPixels": [1440, 960],
+    "devicePixelRatio": 1,
+    "playwrightProject": "desktop"
+  },
+  "nativeRendererFingerprint": {
+    "composerOrder": "Clouds>AerialPerspective",
+    "qualityPreset": "high",
+    "resolutionScale": 1,
+    "beerShadowMaps": true,
+    "temporalUpscale": true,
+    "shapeDetail": true,
+    "turbulence": true,
+    "haze": true,
+    "lightShafts": true,
+    "defaultCloudLayers": true,
+    "stockWeatherRepeat": [100, 100]
+  },
+  "reference": {
+    "path": "reference/upstream-tokyo.jpg",
+    "upstreamCommit": "b012ad06d858fc035d88aacfd73f092f93c994e4",
+    "use": "Feature-floor reference only; no pixel-level comparison is claimed because the control scene and time of day are intentionally different."
+  },
+  "captures": {
+    "contactSheet": {
+      "path": "upstream-control-contact-sheet.png",
+      "sha256": "6ef736e1b613c64eaef5726512fb8140bcbc55611d73004b28d7f55c68b5ac55"
+    },
+    "full": "captures/control-full.png",
+    "bsmOff": "captures/control-bsm-off.png",
+    "historyResetFirstFrame": "captures/control-history-reset-first.png",
+    "cloudRaw": "captures/control-cloud-raw.png",
+    "aerialPerspectiveFinal": "captures/control-aerial-final.png"
+  },
+  "checks": [
+    {
+      "id": "large-billow-and-internal-depth",
+      "result": "PASS",
+      "evidence": "The converged full composite has discrete foreground billows, deep inter-cloud cavities, and a separate far cloud deck rather than a radial white shell."
+    },
+    {
+      "id": "beer-shadow-map-self-shadow",
+      "result": "PASS",
+      "evidence": "The BSM-off diagnostic retains visible cloud geometry while lifting the dark cavities and undercuts seen in full; this isolates native BSM occlusion without a substitute renderer."
+    },
+    {
+      "id": "shape-detail-and-turbulence",
+      "result": "PASS",
+      "evidence": "The cloud boundaries are eroded and non-uniform at several scales, with no smooth spherical edge. Native telemetry and the fixed high preset both report shapeDetail=true and turbulence=true."
+    },
+    {
+      "id": "temporal-convergence",
+      "result": "PASS",
+      "evidence": "The full/Aerial captures are taken only after nativeFrameCount >= 32 and temporalConverged=true; history-reset-first is separately captured before that convergence gate."
+    },
+    {
+      "id": "raw-and-atmosphere-composite",
+      "result": "PASS",
+      "evidence": "The raw cloud diagnostic exposes the native cloud output without AerialPerspective; AerialPerspective-final restores the atmosphere-composited sky and cloud presentation through the same native composer."
+    },
+    {
+      "id": "no-continuous-white-shell",
+      "result": "PASS",
+      "evidence": "No capture has a continuous white spherical cloud rim. The visible cloud mass is volumetric and broken into weather-driven structures."
+    }
+  ],
+  "reproduction": {
+    "command": "MIRALITH_TAKRAM_PARITY_CAPTURE=1 pnpm exec playwright test tests/e2e/lubirth-takram-parity-visual.spec.ts --project=desktop --grep 'stock control exposes'",
+    "result": "PASS (5 diagnostics)"
+  },
+  "nextGate": "Stock opening must be judged independently. A stock opening limitation cannot overturn this upstream control PASS."
+}

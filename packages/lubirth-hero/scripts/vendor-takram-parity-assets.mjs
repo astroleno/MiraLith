@@ -207,11 +207,16 @@ if (verifyOnly) {
     repositoryRoot,
     "apps/site/public/assets/lubirth/takram-parity/stock/manifest.json"
   );
-  await mkdir(path.dirname(manifestPath), { recursive: true });
-  await writeFile(manifestPath, `${JSON.stringify({
-    ...publicManifest(),
-    copiedAt: new Date().toISOString()
-  }, null, 2)}\n`);
+  // A repeatable verification must not dirty the worktree just because its
+  // timestamp changed. Refresh `copiedAt` only when this invocation actually
+  // repaired or copied a pinned artifact.
+  if (copied.length > 0) {
+    await mkdir(path.dirname(manifestPath), { recursive: true });
+    await writeFile(manifestPath, `${JSON.stringify({
+      ...publicManifest(),
+      copiedAt: new Date().toISOString()
+    }, null, 2)}\n`);
+  }
   await verifyManifest();
   console.log(JSON.stringify({
     copied,

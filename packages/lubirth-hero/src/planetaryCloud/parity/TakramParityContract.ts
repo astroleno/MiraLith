@@ -1,3 +1,81 @@
+import { Ellipsoid } from "@takram/three-geospatial";
+
+export const TAKRAM_PARITY_BOTTOM_RADIUS_M = 6_360_000;
+export const TAKRAM_PARITY_ELLIPSOID = new Ellipsoid(
+  TAKRAM_PARITY_BOTTOM_RADIUS_M,
+  TAKRAM_PARITY_BOTTOM_RADIUS_M,
+  TAKRAM_PARITY_BOTTOM_RADIUS_M
+);
+
+export type TakramParityInput = "stock" | "v3";
+export type TakramParityView = "control" | "opening";
+export type TakramParityCoordinateMode = "lubirth-bridge" | "upstream-ecef";
+export type TakramParityDiagnostic =
+  | "full"
+  | "bsm-off"
+  | "history-reset-first"
+  | "cloud-raw"
+  | "aerial-final";
+export type UpstreamControlDecision = "PASS" | "UPSTREAM_CONTROL_FAIL";
+export type StockOpeningDecision =
+  | "PASS"
+  | "STOCK_OPENING_LIMITATION"
+  | "TAKRAM_NATIVE_OPENING_FAIL";
+
+export const TAKRAM_PARITY_CONTROL = Object.freeze({
+  altitudeMeters: 2_500,
+  coverage: 0.4,
+  fovDegrees: 50,
+  pitchDegrees: -8,
+  sunAzimuthDegrees: 135,
+  sunElevationDegrees: 25
+});
+
+export type TakramParityRouteQuery = {
+  diagnostic: TakramParityDiagnostic;
+  input: TakramParityInput;
+  progress: number;
+  view: TakramParityView;
+};
+
+export type TakramParityRouteQueryResult =
+  | { ok: true; value: TakramParityRouteQuery }
+  | { ok: false; reason: "control-requires-stock" };
+
+export function resolveTakramParityRouteQuery(
+  input: Pick<URLSearchParams, "get">
+): TakramParityRouteQueryResult {
+  const requestedInput = input.get("input");
+  const requestedView = input.get("view");
+  const requestedDiagnostic = input.get("diagnostic");
+  const parsedProgress = Number.parseFloat(input.get("progress") ?? "0");
+  const value: TakramParityRouteQuery = {
+    diagnostic: requestedDiagnostic === "bsm-off" ||
+      requestedDiagnostic === "history-reset-first" ||
+      requestedDiagnostic === "cloud-raw" ||
+      requestedDiagnostic === "aerial-final"
+      ? requestedDiagnostic
+      : "full",
+    input: requestedInput === "v3" ? "v3" : "stock",
+    progress: Number.isFinite(parsedProgress) ? Math.max(0, Math.min(0.18, parsedProgress)) : 0,
+    view: requestedView === "control" ? "control" : "opening"
+  };
+
+  if (value.view === "control" && value.input !== "stock") {
+    return { ok: false, reason: "control-requires-stock" };
+  }
+
+  // Opening has one narrow debug readback: stock/V3 review can compare the
+  // native cloud buffer with the complete aerial composite. The control-only
+  // BSM/history/Aerial probes are deliberately not exposed in this path.
+  return {
+    ok: true,
+    value: value.view === "opening" && value.diagnostic !== "cloud-raw"
+      ? { ...value, diagnostic: "full" }
+      : value
+  };
+}
+
 export const TAKRAM_PARITY_NPM_PACKAGES = Object.freeze({
   "@react-three/postprocessing": "3.0.4",
   "@takram/three-atmosphere": "0.19.1",
@@ -22,6 +100,76 @@ export const TAKRAM_PARITY_DEFAULTS = Object.freeze({
   temporalUpscale: true,
   turbulence: true
 });
+
+/**
+ * The stock renderer fingerprint is intentionally independent from its input.
+ * Task 0V may only add adapter-owned fields around this frozen native path.
+ */
+export const TAKRAM_PARITY_RENDERER_FINGERPRINT = Object.freeze({
+  aerialPerspective: true,
+  beerShadowMaps: true,
+  composerOrder: "Clouds>AerialPerspective",
+  defaultCloudLayers: true,
+  ...TAKRAM_PARITY_DEFAULTS
+});
+
+export interface TakramParityNativeFeatures {
+  aerialPerspective: boolean;
+  beerShadowMaps: boolean;
+  defaultCloudLayers: boolean;
+  haze: boolean;
+  lightShafts: boolean;
+  qualityPreset: "high";
+  resolutionScale: number;
+  shapeDetail: boolean;
+  temporalUpscale: boolean;
+  turbulence: boolean;
+}
+
+/**
+ * Capture-only switches used to make the stock pipeline's individual native
+ * contributions reviewable. `beerShadowMaps` in `native` remains a renderer
+ * capability; this state says whether the stock cloud layers contribute
+ * extinction to those maps for the current diagnostic frame.
+ */
+export interface TakramParityDiagnosticState {
+  aerialPerspectiveComposite: boolean;
+  beerShadowOcclusion: boolean;
+  cloudRawOutput: boolean;
+  historyResetFirstFrame: boolean;
+}
+
+export interface TakramParityTelemetry {
+  active: boolean;
+  assetGeneration: number;
+  assetsReady: boolean;
+  atmosphereGeneration: number;
+  atmosphereReady: boolean;
+  cameraMatrixWorld: number[];
+  cameraPosition: [number, number, number];
+  coordinateMode: TakramParityCoordinateMode;
+  control: typeof TAKRAM_PARITY_CONTROL | null;
+  diagnostic: TakramParityDiagnostic;
+  diagnosticApplied: boolean;
+  diagnosticState: TakramParityDiagnosticState;
+  earthMatrixWorld: number[];
+  ecefSunDirection: [number, number, number] | null;
+  input: TakramParityInput;
+  native: TakramParityNativeFeatures;
+  nativeFrameCount: number;
+  progress: number;
+  rendererFingerprint: typeof TAKRAM_PARITY_RENDERER_FINGERPRINT;
+  stockCoverage: number | null;
+  stockWeatherRepeat: [number, number] | null;
+  temporalConverged: boolean;
+  transformFallback:
+    | "invalid-composition-radius"
+    | "negative-determinant"
+    | "non-uniform-scale"
+    | "singular-scale"
+    | null;
+  view: TakramParityView;
+}
 
 export type TakramParityStockAssetId =
   | "localWeather"

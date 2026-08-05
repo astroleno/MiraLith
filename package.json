@@ -2,6 +2,30 @@
   "name": "miralith",
   "private": true,
   "packageManager": "pnpm@8.15.1",
+  "pnpm": {
+    "packageExtensions": {
+      "@react-three/postprocessing@3.0.4": {
+        "peerDependencies": {
+          "react-dom": ">=19.0.0"
+        }
+      },
+      "@takram/three-atmosphere@0.19.1": {
+        "peerDependencies": {
+          "react-dom": ">=19.0.0"
+        }
+      },
+      "@takram/three-clouds@0.7.6": {
+        "peerDependencies": {
+          "react-dom": ">=19.0.0"
+        }
+      },
+      "@takram/three-geospatial@0.9.1": {
+        "peerDependencies": {
+          "react-dom": ">=19.0.0"
+        }
+      }
+    }
+  },
   "scripts": {
     "dev": "pnpm --filter @miralith/site dev",
     "build": "pnpm --filter @miralith/site build",

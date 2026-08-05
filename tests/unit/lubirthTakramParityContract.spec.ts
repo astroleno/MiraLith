@@ -1,8 +1,39 @@
 import { expect, test } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import {
+  Data3DTexture,
+  LinearFilter,
+  LinearMipmapLinearFilter,
+  NearestFilter,
+  NoColorSpace,
+  RedFormat,
+  RepeatWrapping,
+  Texture,
+  UnsignedByteType
+} from "three";
 
 interface TakramParityContractModule {
+  resolveTakramParityRouteQuery(input: { get(name: string): string | null }):
+    | {
+      ok: true;
+      value: {
+        diagnostic: "aerial-final" | "bsm-off" | "cloud-raw" | "full" | "history-reset-first";
+        input: "stock" | "v3";
+        progress: number;
+        view: "control" | "opening";
+      };
+    }
+    | { ok: false; reason: "control-requires-stock" };
+  TAKRAM_PARITY_BOTTOM_RADIUS_M: number;
+  TAKRAM_PARITY_CONTROL: {
+    altitudeMeters: number;
+    coverage: number;
+    fovDegrees: number;
+    pitchDegrees: number;
+    sunAzimuthDegrees: number;
+    sunElevationDegrees: number;
+  };
   TAKRAM_PARITY_DEFAULTS: {
     haze: boolean;
     lightShafts: boolean;
@@ -13,6 +44,9 @@ interface TakramParityContractModule {
     turbulence: boolean;
   };
   TAKRAM_PARITY_LICENSE: "MIT";
+  TAKRAM_PARITY_ELLIPSOID: {
+    radii: { x: number; y: number; z: number };
+  };
   TAKRAM_PARITY_NPM_PACKAGES: Record<string, string>;
   TAKRAM_PARITY_STOCK_ASSETS: ReadonlyArray<{
     byteLength: number;
@@ -32,12 +66,37 @@ interface TakramParityContractModule {
   isTakramParityLocalAssetUrl(value: string): boolean;
 }
 
+interface TakramParityAssetLoaderModule {
+  configureTakramParityTexture<T extends Texture>(
+    assetId: "localWeather" | "shape" | "shapeDetail" | "stbn" | "turbulence",
+    texture: T
+  ): T;
+  getNextTakramParityAssetGeneration(generation: number): number;
+  TAKRAM_PARITY_RUNTIME_ASSET_URLS: {
+    localWeather: string;
+    shape: string;
+    shapeDetail: string;
+    stbn: string;
+    turbulence: string;
+  };
+}
+
 const contractModulePath =
   "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramParityContract";
+const assetLoaderModulePath =
+  "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramParityAssetLoader";
 
 async function loadTakramParityContract(): Promise<TakramParityContractModule | null> {
   try {
     return await import(contractModulePath) as TakramParityContractModule;
+  } catch {
+    return null;
+  }
+}
+
+async function loadTakramParityAssetLoader(): Promise<TakramParityAssetLoaderModule | null> {
+  try {
+    return await import(assetLoaderModulePath) as TakramParityAssetLoaderModule;
   } catch {
     return null;
   }
@@ -94,6 +153,47 @@ test("pins the official stock Takram contract to auditable local assets", async 
     temporalUpscale: true,
     turbulence: true
   });
+  expect(contract?.TAKRAM_PARITY_BOTTOM_RADIUS_M).toBe(6_360_000);
+  expect(contract?.TAKRAM_PARITY_ELLIPSOID.radii).toMatchObject({
+    x: 6_360_000,
+    y: 6_360_000,
+    z: 6_360_000
+  });
+  expect(contract?.TAKRAM_PARITY_CONTROL).toEqual({
+    altitudeMeters: 2_500,
+    coverage: 0.4,
+    fovDegrees: 50,
+    pitchDegrees: -8,
+    sunAzimuthDegrees: 135,
+    sunElevationDegrees: 25
+  });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=stock&view=control&progress=0.24"
+  ))).toEqual({
+    ok: true,
+    value: { diagnostic: "full", input: "stock", progress: 0.18, view: "control" }
+  });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=v3&view=opening&progress=0.06"
+  ))).toEqual({
+    ok: true,
+    value: { diagnostic: "full", input: "v3", progress: 0.06, view: "opening" }
+  });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=stock&view=opening&diagnostic=cloud-raw"
+  ))).toEqual({
+    ok: true,
+    value: { diagnostic: "cloud-raw", input: "stock", progress: 0, view: "opening" }
+  });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=stock&view=opening&diagnostic=bsm-off"
+  ))).toEqual({
+    ok: true,
+    value: { diagnostic: "full", input: "stock", progress: 0, view: "opening" }
+  });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=v3&view=control"
+  ))).toEqual({ ok: false, reason: "control-requires-stock" });
 
   expect(contract?.TAKRAM_PARITY_STOCK_ASSETS).toEqual([
     {
@@ -204,4 +304,62 @@ test("vendors byte-identical local stock assets and an audit manifest", async ()
     expect((await stat(`${process.cwd()}/${asset.localPath}`)).size).toBe(asset.byteLength);
     expect(createHash("sha256").update(contents).digest("hex")).toBe(asset.sha256);
   }
+});
+
+test("configures each native Takram texture from an explicit local asset contract", async () => {
+  const loader = await loadTakramParityAssetLoader();
+
+  expect(loader).not.toBeNull();
+  expect(loader?.TAKRAM_PARITY_RUNTIME_ASSET_URLS).toEqual({
+    localWeather: "/assets/lubirth/takram-parity/stock/local-weather.png",
+    shape: "/assets/lubirth/takram-parity/stock/shape.bin",
+    shapeDetail: "/assets/lubirth/takram-parity/stock/shape-detail.bin",
+    stbn: "/assets/lubirth/takram-parity/stock/stbn.bin",
+    turbulence: "/assets/lubirth/takram-parity/stock/turbulence.png"
+  });
+
+  const weather = loader?.configureTakramParityTexture("localWeather", new Texture());
+  const turbulence = loader?.configureTakramParityTexture("turbulence", new Texture());
+  const shape = loader?.configureTakramParityTexture(
+    "shape",
+    new Data3DTexture(new Uint8Array(128 * 128 * 128), 128, 128, 128)
+  );
+  const shapeDetail = loader?.configureTakramParityTexture(
+    "shapeDetail",
+    new Data3DTexture(new Uint8Array(32 * 32 * 32), 32, 32, 32)
+  );
+  const stbn = loader?.configureTakramParityTexture(
+    "stbn",
+    new Data3DTexture(new Uint8Array(128 * 128 * 64), 128, 128, 64)
+  );
+
+  for (const texture of [weather, turbulence]) {
+    expect(texture?.colorSpace).toBe(NoColorSpace);
+    expect(texture?.flipY).toBe(true);
+    expect(texture?.magFilter).toBe(LinearFilter);
+    expect(texture?.minFilter).toBe(LinearMipmapLinearFilter);
+    expect(texture?.wrapS).toBe(RepeatWrapping);
+    expect(texture?.wrapT).toBe(RepeatWrapping);
+  }
+
+  for (const texture of [shape, shapeDetail]) {
+    expect(texture?.colorSpace).toBe(NoColorSpace);
+    expect(texture?.format).toBe(RedFormat);
+    expect(texture?.magFilter).toBe(LinearFilter);
+    expect(texture?.minFilter).toBe(LinearFilter);
+    expect(texture?.type).toBe(UnsignedByteType);
+    expect(texture?.wrapS).toBe(RepeatWrapping);
+    expect(texture?.wrapT).toBe(RepeatWrapping);
+    expect(texture?.wrapR).toBe(RepeatWrapping);
+  }
+
+  expect(stbn?.colorSpace).toBe(NoColorSpace);
+  expect(stbn?.format).toBe(RedFormat);
+  expect(stbn?.magFilter).toBe(NearestFilter);
+  expect(stbn?.minFilter).toBe(NearestFilter);
+  expect(stbn?.type).toBe(UnsignedByteType);
+  expect(stbn?.wrapS).toBe(RepeatWrapping);
+  expect(stbn?.wrapT).toBe(RepeatWrapping);
+  expect(stbn?.wrapR).toBe(RepeatWrapping);
+  expect(loader?.getNextTakramParityAssetGeneration(4)).toBe(5);
 });
