@@ -1,5 +1,11 @@
 {
-  "decision": "MICROBENCH_OVER_BUDGET",
+  "decision": "DISPOSABLE_RENDERER_REJECTED",
+  "measurementDecision": "MICROBENCH_OVER_BUDGET",
+  "scopeDisposition": {
+    "v3Input": "V3_INPUT_CONTRACT_PASS",
+    "disposableRenderer": "DISPOSABLE_RENDERER_REJECTED",
+    "takram": "TAKRAM_VISUAL_AND_COST_UNTESTED"
+  },
   "taskMinusOneInitialDecision": "EARLY_REPRESENTATION_FAIL",
   "bestCase": "32/2",
   "bestCloudGpuP50Ms": 29.568915,
@@ -25,11 +31,12 @@
     "The original Task -1 visual failure is reclassified as EARLY_REPRESENTATION_FAIL; it does not reject V3 or Takram-first.",
     "Task -1R visual gate passes after true to-sun shell bounds, macro-only V3 coverage, 3D base-shape remap, and a vertical profile.",
     "The visibility-safe lowest fixed primary×light-cost visual-pass case, 32/2, records total GPU p95 36.255915 ms, exceeding the 4 ms budget by about 9.1x.",
-    "All three timed stages exceed the full total-budget threshold independently, so more samples of higher-work cases cannot reverse this checkpoint."
+    "All three disposable timed stages exceed the full total-budget threshold independently, so more samples of higher-work disposable cases cannot reverse this renderer rejection.",
+    "The raw MICROBENCH_OVER_BUDGET measurement is retained, but it cannot infer Takram visual fit or native BSM/temporal/AerialPerspective cost."
   ],
   "calibrationLimitations": [
     "No no-op, copy-only, or combined-total timer-query baseline is part of this constrained amendment.",
     "Per-frame raw timings are not stored; this checkpoint only blocks the current plan and is not a calibrated Takram-first stage-cost claim."
   ],
-  "nextAuthorizedWork": "None under the current plan. Task 0-8 remain blocked; any next implementation requires a new architecture and cost-budget amendment."
+  "nextAuthorizedWork": "Task 0T stock Takram parity only. Task 0-8 remain blocked pending a separate post-parity integration amendment."
 }

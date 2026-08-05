@@ -1,6 +1,6 @@
 # LuBirth 行星体积云 Task -1 / Task -1R 证据
 
-最终 checkpoint：MICROBENCH_OVER_BUDGET。Task -1R 已证明 V3 可以只充当宏观天气输入、通过受限 representation 的视觉门；但最低固定工作量的 visual-pass case 32/2 在 headed System Chrome 的 121 个有效 GPU 样本中 total p95 为 **36.255915 ms**，远高于 4 ms 预算。本轮没有安装 Takram、没有修改默认首页，也没有开始 Task 0–8。
+最终 scope checkpoint：`DISPOSABLE_RENDERER_REJECTED`。原始 measurement decision `MICROBENCH_OVER_BUDGET` 保留不变：最低固定工作量的 visual-pass case 32/2 在 headed System Chrome 的 121 个有效 GPU 样本中 total p95 为 **36.255915 ms**，远高于 4 ms 预算。它只否决当前自制 renderer；V3 输入合同为 `V3_INPUT_CONTRACT_PASS`，而 `TAKRAM_VISUAL_AND_COST_UNTESTED`。主计划现仅授权独立的 Task 0T/0V/0P Takram parity spike，原 Task 0–8、默认首页与 production policy 仍未启动。
 
 原 Task -1 的 EARLY_KILL 已追溯更正为 EARLY_REPRESENTATION_FAIL。它准确描述的是旧的 disposable 表示（固定 52 km to-sun 路径 + 直接径向挤出 V3 R）失败，**不能**解释为 Takram-first 或 V3 被技术否决。
 
@@ -31,7 +31,7 @@ Task -1R 保留 V3 的现有通道布局：R 仅是宏观 weather / coverage，G
 | cloud composite | 10.495125 | 13.586124 |
 | total | 29.568915 | 36.255915 |
 
-invalidFrames=0，但 total p95 比预算高约 9.1 倍。此前的 37.579247 ms lifecycle-safe 窗口已被这次完整 visibility-safe 重跑取代；更早的 35.377499 ms disjoint-epoch / resize-safe 窗口、36.146749 ms readiness-gated 窗口与 32.961416 ms 窗口同样不再作为正式证据。因此结论是这个 disposable representation 在当前 RT / compositor 账本下成本超标；它不是对 Takram-first、V3 数据或未来有不同成本架构的生产实现的否决。Task 0–8 继续被当前计划的 checkpoint 阻断。
+invalidFrames=0，但 total p95 比预算高约 9.1 倍。此前的 37.579247 ms lifecycle-safe 窗口已被这次完整 visibility-safe 重跑取代；更早的 35.377499 ms disjoint-epoch / resize-safe 窗口、36.146749 ms readiness-gated 窗口与 32.961416 ms 窗口同样不再作为正式证据。因此结论是这个 disposable representation 在当前 RT / compositor 账本下成本超标；它不是对 Takram-first、V3 数据或未来有不同成本架构的生产实现的否决。主计划只授权 Task 0T/0V/0P 的真实 Takram parity 证据；原 Task 0–8 继续阻断。
 
 ## Correctness review 后的测量边界
 

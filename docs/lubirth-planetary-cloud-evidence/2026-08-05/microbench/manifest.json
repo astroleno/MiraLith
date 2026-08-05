@@ -150,5 +150,11 @@
       "interpretation": "Current values are disposable-harness observations, not calibrated Takram-first stage costs."
     }
   },
-  "decision": "MICROBENCH_OVER_BUDGET"
+  "measurementDecision": "MICROBENCH_OVER_BUDGET",
+  "scopeDisposition": {
+    "v3Input": "V3_INPUT_CONTRACT_PASS",
+    "disposableRenderer": "DISPOSABLE_RENDERER_REJECTED",
+    "takram": "TAKRAM_VISUAL_AND_COST_UNTESTED"
+  },
+  "decision": "DISPOSABLE_RENDERER_REJECTED"
 }
