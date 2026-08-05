@@ -13,6 +13,7 @@ export interface RadioGagaSceneProps {
   quality: RadioGagaQualityProfile;
   reducedMotion?: boolean;
   paused?: boolean;
+  loadFinale?: boolean;
   onReady?: () => void;
 }
 

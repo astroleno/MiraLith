@@ -17,6 +17,7 @@ import {
 } from "three";
 import { mapRadioGagaFinalOutput } from "./radioGagaFinalOutput";
 import { RADIO_GAGA_TIMELINE } from "./radioGagaTimeline";
+import { RADIO_GAGA_FINALE_MODEL_SRC, RADIO_GAGA_OPENING_MODEL_SRC } from "./preloadRadioGagaAssets";
 import type { RadioGagaFrame, RadioGagaFrameRef, RadioGagaSceneMotionRef } from "./types";
 
 const RADIO_POSITION: [number, number, number] = [0.18, -0.32, 0];
@@ -176,13 +177,84 @@ export function RadioGagaModel({
   frame,
   frameRef,
   motionRef,
-  reducedMotion = false,
   onReady
 }: RadioGagaModelProps) {
-  const radio = useGLTF("/model/radio_gaga.glb");
-  const esp32Gltf = useGLTF("/model/xiaozhi_esp32.glb");
+  const radio = useGLTF(RADIO_GAGA_OPENING_MODEL_SRC);
   const radioGroup = useRef<Group>(null);
   const solidGroup = useRef<Group>(null);
+  const readyRef = useRef(false);
+  const solidRadio = useMemo(
+    () => cloneSceneWithMaterials(radio.scene, { forceOpaque: true, frontSide: true }),
+    [radio.scene]
+  );
+
+  const updateRadio = useCallback((nextFrame: RadioGagaFrame) => {
+    const radioVisible = nextFrame.radioOpacity > 0.01;
+    if (radioGroup.current) {
+      const motion = motionRef?.current;
+      const radioFrontProgress = smooth(range(nextFrame.progress, 0.045, 0.18));
+      const radioParallaxStrength = radioFrontProgress * (1 - smooth(range(nextFrame.progress, 0.17, 0.225)));
+      const radioParallaxY = (motion?.rotationY ?? 0) * radioParallaxStrength;
+      const parallaxX = radioParallaxY * 0.38;
+      const radioPitch = lerp(RADIO_START_PITCH, 0, radioFrontProgress);
+
+      radioGroup.current.position.set(
+        RADIO_POSITION[0] + parallaxX,
+        RADIO_POSITION[1],
+        RADIO_POSITION[2]
+      );
+      radioGroup.current.scale.setScalar(nextFrame.radioScale * RADIO_SCALE);
+      radioGroup.current.rotation.set(
+        radioPitch,
+        nextFrame.radioRotationY + radioParallaxY,
+        0
+      );
+    }
+    if (solidGroup.current) {
+      solidGroup.current.visible = radioVisible;
+    }
+  }, [motionRef]);
+
+  useLayoutEffect(() => {
+    updateRadio(frame);
+  }, [frame, updateRadio]);
+
+  useFrame(() => {
+    updateRadio(frameRef?.current ?? frame);
+    if (!readyRef.current) {
+      readyRef.current = true;
+      onReady?.();
+    }
+  }, -2);
+
+  useEffect(
+    () => () => {
+      solidRadio.materials.forEach(({ material }) => material.dispose());
+    },
+    [solidRadio.materials]
+  );
+
+  return (
+    <group
+      ref={radioGroup}
+      position={RADIO_POSITION}
+      scale={frame.radioScale * RADIO_SCALE}
+      rotation={[RADIO_START_PITCH, frame.radioRotationY, 0]}
+    >
+      <group ref={solidGroup} visible={frame.radioOpacity > 0.01}>
+        <primitive object={solidRadio.scene} />
+      </group>
+    </group>
+  );
+}
+
+export function RadioGagaFinaleModel({
+  frame,
+  frameRef,
+  motionRef,
+  reducedMotion = false
+}: Omit<RadioGagaModelProps, "onReady">) {
+  const esp32Gltf = useGLTF(RADIO_GAGA_FINALE_MODEL_SRC);
   const esp32Group = useRef<Group>(null);
   const finalSubtitleKey = useRef("");
   const finalSubtitleCanvas = useMemo(() => {
@@ -225,16 +297,12 @@ export function RadioGagaModel({
       transparent: true
     });
   }, [finalSubtitleTexture]);
-  const solidRadio = useMemo(
-    () => cloneSceneWithMaterials(radio.scene, { forceOpaque: true, frontSide: true }),
-    [radio.scene]
-  );
   const esp32Model = useMemo(
     () => cloneSceneWithMaterials(esp32Gltf.scene, { forceOpaque: true, frontSide: true }),
     [esp32Gltf.scene]
   );
 
-  const updateModel = useCallback((nextFrame: RadioGagaFrame) => {
+  const updateFinale = useCallback((nextFrame: RadioGagaFrame) => {
     const finalVisualOpacity = smooth(
       range(
         nextFrame.progress,
@@ -250,134 +318,79 @@ export function RadioGagaModel({
       )
     );
     const esp32Presence = Math.max(esp32SolidPresence, finalVisualOpacity);
-    const radioVisible = nextFrame.radioOpacity > 0.01;
 
     if (finalSubtitleCanvas && finalSubtitleTexture && finalSubtitleMaterial) {
       const outputState = mapRadioGagaFinalOutput(nextFrame.progress, reducedMotion);
       const subtitleKey = `${outputState.activeIndex}:${outputState.displayText}:${outputState.isComplete}`;
-
       if (finalSubtitleKey.current !== subtitleKey) {
         drawScreenSubtitle(finalSubtitleCanvas, outputState.displayText, outputState.isComplete);
         finalSubtitleTexture.needsUpdate = true;
         finalSubtitleKey.current = subtitleKey;
       }
-
       finalSubtitleMaterial.opacity = finalVisualOpacity * outputState.subtitleOpacity;
     }
 
-    if (radioGroup.current) {
-      const motion = motionRef?.current;
-      const radioFrontProgress = smooth(range(nextFrame.progress, 0.045, 0.18));
-      const radioParallaxStrength = radioFrontProgress * (1 - smooth(range(nextFrame.progress, 0.17, 0.225)));
-      const radioParallaxY = (motion?.rotationY ?? 0) * radioParallaxStrength;
-      const parallaxX = radioParallaxY * 0.38;
-      const radioPitch = lerp(RADIO_START_PITCH, 0, radioFrontProgress);
+    if (!esp32Group.current) {
+      return;
+    }
+    const esp32SolidMotion = reducedMotion ? 1 : nextFrame.esp32SolidMotionProgress;
+    const esp32Lift = esp32SolidMotion * 0.09;
+    const esp32Scale = ESP32_SCALE * (0.92 + esp32SolidMotion * 0.1);
+    const esp32ParallaxStrength =
+      smooth(range(nextFrame.progress, 0.84, 0.92)) *
+      (1 - esp32SolidMotion) *
+      (1 - nextFrame.finalLineOpacity);
+    const esp32ParallaxX =
+      MathUtils.clamp((motionRef?.current.rotationX ?? 0) * 2.2, -0.16, 0.16) * esp32ParallaxStrength;
+    const esp32RotationY =
+      ESP32_ROTATION_START_Y + (ESP32_ROTATION_FINAL_Y - ESP32_ROTATION_START_Y) * esp32SolidMotion;
 
-      radioGroup.current.position.set(
-        RADIO_POSITION[0] + parallaxX,
-        RADIO_POSITION[1],
-        RADIO_POSITION[2]
-      );
-      radioGroup.current.scale.setScalar(nextFrame.radioScale * RADIO_SCALE);
-      radioGroup.current.rotation.set(
-        radioPitch,
-        nextFrame.radioRotationY + radioParallaxY,
-        0
-      );
-    }
-    if (solidGroup.current) {
-      solidGroup.current.visible = radioVisible;
-    }
-    if (esp32Group.current) {
-      const esp32SolidMotion = reducedMotion ? 1 : nextFrame.esp32SolidMotionProgress;
-      const esp32Lift = esp32SolidMotion * 0.09;
-      const esp32Scale = ESP32_SCALE * (0.92 + esp32SolidMotion * 0.1);
-      const esp32CenterProgress = esp32SolidMotion;
-      const esp32FrontLock = esp32SolidMotion;
-      const esp32ParallaxStrength =
-        smooth(range(nextFrame.progress, 0.84, 0.92)) * (1 - esp32FrontLock) * (1 - nextFrame.finalLineOpacity);
-      const esp32ParallaxX =
-        MathUtils.clamp((motionRef?.current.rotationX ?? 0) * 2.2, -0.16, 0.16) * esp32ParallaxStrength;
-      const esp32RotationY =
-        ESP32_ROTATION_START_Y + (ESP32_ROTATION_FINAL_Y - ESP32_ROTATION_START_Y) * esp32SolidMotion;
-
-      esp32Group.current.visible = esp32Presence > 0.01;
-      esp32Group.current.position.set(
-        lerp(ESP32_START_POSITION[0], ESP32_CORE_POSITION[0], esp32CenterProgress),
-        lerp(ESP32_START_POSITION[1], ESP32_CORE_POSITION[1], esp32CenterProgress) + esp32Lift - esp32ParallaxX * 0.22,
-        lerp(ESP32_START_POSITION[2], ESP32_CORE_POSITION[2], esp32CenterProgress)
-      );
-      esp32Group.current.rotation.set(esp32ParallaxX, esp32RotationY, 0);
-      esp32Group.current.scale.setScalar(esp32Scale);
-    }
-  }, [
-    esp32Model.materials,
-    finalSubtitleCanvas,
-    finalSubtitleMaterial,
-    finalSubtitleTexture,
-    motionRef,
-    reducedMotion,
-    solidRadio.materials
-  ]);
+    esp32Group.current.visible = esp32Presence > 0.01;
+    esp32Group.current.position.set(
+      lerp(ESP32_START_POSITION[0], ESP32_CORE_POSITION[0], esp32SolidMotion),
+      lerp(ESP32_START_POSITION[1], ESP32_CORE_POSITION[1], esp32SolidMotion) + esp32Lift - esp32ParallaxX * 0.22,
+      lerp(ESP32_START_POSITION[2], ESP32_CORE_POSITION[2], esp32SolidMotion)
+    );
+    esp32Group.current.rotation.set(esp32ParallaxX, esp32RotationY, 0);
+    esp32Group.current.scale.setScalar(esp32Scale);
+  }, [finalSubtitleCanvas, finalSubtitleMaterial, finalSubtitleTexture, motionRef, reducedMotion]);
 
   useLayoutEffect(() => {
-    updateModel(frame);
-  }, [frame, updateModel]);
+    updateFinale(frame);
+  }, [frame, updateFinale]);
 
   useFrame(() => {
-    updateModel(frameRef?.current ?? frame);
+    updateFinale(frameRef?.current ?? frame);
   }, -2);
-
-  useEffect(() => {
-    onReady?.();
-  }, [onReady]);
 
   useEffect(
     () => () => {
-      solidRadio.materials.forEach(({ material }) => material.dispose());
       esp32Model.materials.forEach(({ material }) => material.dispose());
       finalSubtitleMaterial?.dispose();
       finalSubtitleTexture?.dispose();
     },
-    [
-      esp32Model.materials,
-      finalSubtitleMaterial,
-      finalSubtitleTexture,
-      solidRadio.materials
-    ]
+    [esp32Model.materials, finalSubtitleMaterial, finalSubtitleTexture]
   );
 
   return (
-    <>
-      <group
-        ref={radioGroup}
-        position={RADIO_POSITION}
-        scale={frame.radioScale * RADIO_SCALE}
-        rotation={[RADIO_START_PITCH, frame.radioRotationY, 0]}
-      >
-        <group ref={solidGroup} visible={frame.radioOpacity > 0.01}>
-          <primitive object={solidRadio.scene} />
-        </group>
-      </group>
-      <group
-        ref={esp32Group}
-        position={ESP32_START_POSITION}
-        rotation={[0, ESP32_ROTATION_START_Y, 0]}
-        scale={ESP32_SCALE}
-        visible={frame.esp32Opacity > 0.01 || frame.esp32SolidMotionProgress > 0.01 || frame.finalLineOpacity > 0.01}
-      >
-        <primitive object={esp32Model.scene} />
-        {finalSubtitleMaterial ? (
-          <mesh
-            material={finalSubtitleMaterial}
-            position={[ESP32_SCREEN_PATCH_POSITION[0] + 0.003, ESP32_SCREEN_PATCH_POSITION[1], ESP32_SCREEN_PATCH_POSITION[2]]}
-            renderOrder={7}
-            rotation={ESP32_SCREEN_PATCH_ROTATION}
-          >
-            <planeGeometry args={[ESP32_SCREEN_PATCH_WIDTH, ESP32_SCREEN_PATCH_HEIGHT]} />
-          </mesh>
-        ) : null}
-      </group>
-    </>
+    <group
+      ref={esp32Group}
+      position={ESP32_START_POSITION}
+      rotation={[0, ESP32_ROTATION_START_Y, 0]}
+      scale={ESP32_SCALE}
+      visible={frame.esp32Opacity > 0.01 || frame.esp32SolidMotionProgress > 0.01 || frame.finalLineOpacity > 0.01}
+    >
+      <primitive object={esp32Model.scene} />
+      {finalSubtitleMaterial ? (
+        <mesh
+          material={finalSubtitleMaterial}
+          position={[ESP32_SCREEN_PATCH_POSITION[0] + 0.003, ESP32_SCREEN_PATCH_POSITION[1], ESP32_SCREEN_PATCH_POSITION[2]]}
+          renderOrder={7}
+          rotation={ESP32_SCREEN_PATCH_ROTATION}
+        >
+          <planeGeometry args={[ESP32_SCREEN_PATCH_WIDTH, ESP32_SCREEN_PATCH_HEIGHT]} />
+        </mesh>
+      ) : null}
+    </group>
   );
 }

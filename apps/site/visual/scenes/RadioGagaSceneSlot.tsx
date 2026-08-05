@@ -8,11 +8,19 @@ interface RadioGagaSceneSlotProps {
   progress?: number;
   progressRef?: { current: number };
   active: boolean;
+  loadFinale?: boolean;
   onReady?: () => void;
   onFallback?: () => void;
 }
 
-export function RadioGagaSceneSlot({ progress = 0, progressRef, active, onReady, onFallback }: RadioGagaSceneSlotProps) {
+export function RadioGagaSceneSlot({
+  progress = 0,
+  progressRef,
+  active,
+  loadFinale = false,
+  onReady,
+  onFallback
+}: RadioGagaSceneSlotProps) {
   const reducedMotion = useReducedMotionPreference();
   const quality = useQualityTier("auto", reducedMotion);
 
@@ -33,6 +41,7 @@ export function RadioGagaSceneSlot({ progress = 0, progressRef, active, onReady,
       active={active}
       quality={quality}
       reducedMotion={reducedMotion}
+      loadFinale={loadFinale}
       onReady={onReady}
     />
   );

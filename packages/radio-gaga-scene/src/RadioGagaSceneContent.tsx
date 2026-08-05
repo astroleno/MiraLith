@@ -18,6 +18,7 @@ export function RadioGagaSceneContent({
   active,
   quality,
   reducedMotion,
+  loadFinale = false,
   onReady
 }: RadioGagaSceneProps) {
   const frame = mapRadioGagaProgress(progressRef?.current ?? progress);
@@ -26,17 +27,15 @@ export function RadioGagaSceneContent({
   const motionRef = useRef({ rotationX: 0, rotationY: 0 });
   const pointerRef = useRef({ x: 0, y: 0 });
   const readyRef = useRef(false);
+  const modelReadyRef = useRef(false);
+  const backgroundReadyRef = useRef(false);
   const previousSceneEnvironment = useRef<SceneEnvironment | null>(null);
   const { camera, scene, size } = useThree();
   const backgroundColor = useMemo(() => new Color("#050404"), []);
 
   const handleModelReady = useCallback(() => {
-    if (readyRef.current) {
-      return;
-    }
-    readyRef.current = true;
-    onReady?.();
-  }, [onReady]);
+    modelReadyRef.current = true;
+  }, []);
 
   useEffect(() => {
     if (!active) {
@@ -48,8 +47,10 @@ export function RadioGagaSceneContent({
     };
     scene.background = backgroundColor;
     scene.fog = null;
+    backgroundReadyRef.current = true;
 
     return () => {
+      backgroundReadyRef.current = false;
       if (!previousSceneEnvironment.current) {
         return;
       }
@@ -102,6 +103,10 @@ export function RadioGagaSceneContent({
       nextFrame.cameraZ + mobilePullback + shortLandscapePullback
     );
     camera.lookAt(cameraTarget);
+    if (!readyRef.current && modelReadyRef.current && backgroundReadyRef.current) {
+      readyRef.current = true;
+      onReady?.();
+    }
   }, -3);
 
   if (!active) {
@@ -115,6 +120,7 @@ export function RadioGagaSceneContent({
         frameRef={frameRef}
         motionRef={motionRef}
         reducedMotion={reducedMotion}
+        loadFinale={loadFinale}
         onReady={handleModelReady}
       />
       <RadioGagaParticleTransition

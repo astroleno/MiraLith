@@ -1,6 +1,10 @@
 "use client";
 
-import { mapRadioGagaChoreography, mapRadioGagaFinalOutput } from "@miralith/radio-gaga-scene";
+import {
+  mapRadioGagaChoreography,
+  mapRadioGagaFinalOutput,
+  preloadRadioGagaFinaleAssets
+} from "@miralith/radio-gaga-scene";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { VisualCanvas } from "../visual/VisualCanvas";
 import { VisualCanvasFallback } from "../visual/VisualCanvasFallback";
@@ -19,6 +23,7 @@ import { RadioGagaCopyLayer } from "./RadioGagaCopyLayer";
 const RADIO_GAGA_SCROLL_DISTANCE_VH = 11.6;
 const RADIO_GAGA_NAV_ACCESS_PROGRESS = 0.14;
 const RADIO_GAGA_TERMINAL_PROGRESS = 0.997;
+const RADIO_GAGA_FINALE_PRELOAD_PROGRESS = 0.58;
 
 function subscribeForcedVisualFallback(_onStoreChange: () => void) {
   return () => undefined;
@@ -79,6 +84,7 @@ export function RadioGagaRoute({ initialForcedVisualFallback = false }: RadioGag
   const [sceneReady, setSceneReady] = useState(false);
   const [copyReady, setCopyReady] = useState(false);
   const [transitionFallback, setTransitionFallback] = useState(false);
+  const [finaleAssetsEnabled, setFinaleAssetsEnabled] = useState(false);
   const [finalOutputState, setFinalOutputState] = useState(() => mapRadioGagaFinalOutput(0));
   const forcedVisualFallback = useSyncExternalStore(
     subscribeForcedVisualFallback,
@@ -176,6 +182,11 @@ export function RadioGagaRoute({ initialForcedVisualFallback = false }: RadioGag
       if (terminalRef.current !== nextTerminal) {
         terminalRef.current = nextTerminal;
         setTerminal(nextTerminal);
+      }
+
+      if (nextProgress >= RADIO_GAGA_FINALE_PRELOAD_PROGRESS) {
+        preloadRadioGagaFinaleAssets();
+        setFinaleAssetsEnabled(true);
       }
 
       if (routeRef.current) {
@@ -297,6 +308,7 @@ export function RadioGagaRoute({ initialForcedVisualFallback = false }: RadioGag
           <RadioGagaSceneSlot
             progressRef={progressRef}
             active
+            loadFinale={finaleAssetsEnabled}
             onReady={() => setSceneReady(true)}
             onFallback={() => setTransitionFallback(true)}
           />

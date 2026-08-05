@@ -81,29 +81,18 @@ test("radioGAGA forced fallback is present in the initial server HTML", async ({
   expect(html).not.toContain('data-visual-canvas="production"');
 });
 
-test("radioGAGA keeps copy visible while asset preflight is pending", async ({ page }) => {
-  let releasePreflight!: () => void;
-  const preflightPending = new Promise<void>((resolve) => {
-    releasePreflight = resolve;
-  });
-
+test("radioGAGA loads models without a duplicate HEAD preflight", async ({ page }) => {
+  const modelMethods: string[] = [];
   await page.route("**/model/*.glb", async (route) => {
-    if (route.request().method() === "HEAD") {
-      await preflightPending;
-      await route.fulfill({ status: 200, body: "" });
-      return;
-    }
+    modelMethods.push(route.request().method());
     await route.continue();
   });
 
-  try {
-    await page.goto("/radio-gaga");
-    await expect(page.locator('[data-visual-fallback="radio-gaga"]')).toHaveCount(0);
-    await expect(page.locator("canvas")).toHaveCount(1);
-    await expect(page.locator(".radio-gaga-copy h1")).toHaveText("radioGAGA");
-  } finally {
-    releasePreflight();
-  }
+  await page.goto("/radio-gaga");
+  await expect(page.locator("canvas")).toHaveCount(1);
+  await expect(page.locator(".radio-gaga-copy h1")).toHaveText("radioGAGA");
+  await expect.poll(() => modelMethods.includes("GET")).toBe(true);
+  expect(modelMethods).not.toContain("HEAD");
 });
 
 test("radioGAGA uses one broadcast tuner instead of detached status panels", async ({ page }) => {

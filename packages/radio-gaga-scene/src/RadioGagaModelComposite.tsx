@@ -2,7 +2,7 @@
 
 import { ScreenQuad, useFBO } from "@react-three/drei";
 import { createPortal, useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import {
   Color,
   DirectionalLight,
@@ -12,7 +12,7 @@ import {
   ShaderMaterial,
   UnsignedByteType
 } from "three";
-import { RadioGagaModel } from "./RadioGagaModel";
+import { RadioGagaFinaleModel, RadioGagaModel } from "./RadioGagaModel";
 import { RADIO_GAGA_TIMELINE } from "./radioGagaTimeline";
 import type { RadioGagaFrame, RadioGagaFrameRef, RadioGagaSceneMotionRef } from "./types";
 
@@ -21,6 +21,7 @@ interface RadioGagaModelCompositeProps {
   frameRef?: RadioGagaFrameRef;
   motionRef?: RadioGagaSceneMotionRef;
   reducedMotion?: boolean;
+  loadFinale?: boolean;
   onReady?: () => void;
 }
 
@@ -47,6 +48,7 @@ export function RadioGagaModelComposite({
   frameRef,
   motionRef,
   reducedMotion = false,
+  loadFinale = false,
   onReady
 }: RadioGagaModelCompositeProps) {
   const modelScene = useMemo(() => new Scene(), []);
@@ -163,6 +165,16 @@ export function RadioGagaModelComposite({
             reducedMotion={reducedMotion}
             onReady={onReady}
           />
+          {loadFinale ? (
+            <Suspense fallback={null}>
+              <RadioGagaFinaleModel
+                frame={frame}
+                frameRef={frameRef}
+                motionRef={motionRef}
+                reducedMotion={reducedMotion}
+              />
+            </Suspense>
+          ) : null}
         </>,
         modelScene
       )}
