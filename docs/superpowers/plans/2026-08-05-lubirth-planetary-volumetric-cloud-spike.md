@@ -1,5 +1,6 @@
 # LuBirth Takram-first 行星体积云 Spike 实施计划
 
+> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan task-by-task. 不得并行越过 0T/0V/0P checkpoint，也不得把 parity route 提升为默认产品路径。
 > 状态：Task -1 / Task -1R 已完成并留下可复核 evidence。当前结论是 `V3_INPUT_CONTRACT_PASS`、`DISPOSABLE_RENDERER_REJECTED`、`TAKRAM_VISUAL_AND_COST_UNTESTED`；本 amendment 只授权 Task 0T/0V/0P 真实 Takram parity spike，原 Task 0–8 仍未授权。
 > 计划日期：2026-08-05。
 > 主实现：[takram-design-engineering/three-geospatial@b012ad0](https://github.com/takram-design-engineering/three-geospatial/tree/b012ad06d858fc035d88aacfd73f092f93c994e4)，MIT。
@@ -14,7 +15,7 @@
 **性能判定：**
 
 - Task 0P 的实际 Takram pipeline `cloud GPU p95 <= 4.0 ms`：只记为 `TAKRAM_SPIKE_VIABLE`，最多允许继续研究；不是 production promotion 依据。
-- Task 0P 的实际 Takram pipeline `cloud GPU p95 <= 3.0 ms`：只有在固定 parity visual quality、`adaptive=false`、完整 stage/RT 计量均通过时，才设置 `promotionEligible=true`；仍不是原 Task 0–8 或 production promotion 的授权。
+- Task 0P 的实际 Takram pipeline `cloud GPU p95 <= 3.0 ms`：只有在固定 parity visual quality、`adaptive=false`、完整 stage/RT 计量均通过时，才为对应 candidate 设置 `promotionEligibleByCandidate.<candidate>=true`；仍不是原 Task 0–8 或 production promotion 的授权。
 - Task -1 的 `cloud GPU p95 > 4.0 ms`：只记为 `DISPOSABLE_RENDERER_REJECTED`；它不能阻断 Task 0T/0V/0P，也不能推断 Takram 的视觉或成本。
 - Task 0P 中实际启用的 Takram pipeline `cloud GPU p95 > 4.0 ms`：记为 `TAKRAM_OVER_BUDGET`；仍不外推为“高质量体积云必然超预算”。
 
@@ -22,8 +23,8 @@
 
 1. 历史首次执行只包含 Task -1：球壳、原始 V3 密度、`24/6`、`32/2`、`48/6` disposable microbenchmark；它不安装 Takram、不建共享 pipeline、不做 temporal、occupancy 或 adaptive。
 2. Task -1 的测量结论只确定 V3 输入合同与 disposable renderer 的去留；它不再是 Takram 安装、视觉或成本验证的授权门。
-3. 本 amendment 只允许顺序执行 Task 0T → Task 0V → Task 0P；每一段都在独立 query route 中运行，且不激活默认首页、`/lubirth-revised`、原 Task 0–8 或 production policy。
-4. 只有 Task 0P 产出 `TAKRAM_SPIKE_VIABLE` 后，才可以发起一份新的完整集成 amendment；它本身仍不解锁原 Task 0–8。
+3. 本 amendment 只允许顺序执行 Task 0T → Task 0V → Task 0P；0T 必须先分开证明 upstream control 与 LuBirth stock-opening fit，已知 stock mapping/framing limitation 不能阻止 0V。每一段都在独立 query route 中运行，且不激活默认首页、`/lubirth-revised`、原 Task 0–8 或 production policy。
+4. Task 0P 的 stock-only `TAKRAM_SPIKE_VIABLE` 只允许 `RENDERER_ARCHITECTURE_REVIEW_ONLY`；只有 V3 candidate 同时通过视觉与成本门，才允许 `V3_ARCHITECTURE_REVIEW_ONLY`。二者都不自动解锁原 Task 0–8。
 5. 即使未来最终 `PROMOTION_ELIGIBLE`，本计划也不修改 production 默认策略；推广需要独立确认。
 
 **本轮 findings review：**
@@ -36,6 +37,11 @@
 | `4 ms` 与正式 `3 ms` 混用 | `BLOCKER / VALID` | `<=4 ms` 只保留 spike，Task 5 `<=3 ms` 仅成为 candidate，最终 fixed-quality clean run 才能 promotion |
 | RT 统计不完整、adaptive 可用 `0.35` 刷门槛 | `HIGH / VALID` | scene/composite/atmosphere 等全部入 registry；冻结 visual floor，promotion run 强制 `adaptive=false`，低于 floor 仅算 degraded evidence |
 | 用无 BSM/temporal/atmosphere 的 disposable shader 阻止 Takram | `BLOCKER / VALID` | Task -1R 成本仅重分类为 `DISPOSABLE_RENDERER_REJECTED`；新增 Task 0T stock、0V V3 adapter、0P actual Takram cost 三段 parity spike |
+| 单张 tileable texture 无法把全球 V3 无损反投影到 cube-sphere local UV | `BLOCKER / VALID` | 0V 改为可切换、source-hash 锁定的 `cube-sphere | equirectangular` 窄补丁；stock 仍走原路径，V3 才走 spherical UV |
+| stock opening 失败会把官方已知 global/space limitation 错当 renderer 失败 | `BLOCKER / VALID` | 0T 拆成 upstream visual control 与 stock opening fit；control 通过但 opening 受限时仍授权 0V |
+| 默认 CloudLayers 无法表达 V3 的 8–60 km tower/structure/wisp | `BLOCKER / VALID` | 0V 明确允许 adapter-owned 四层高度/通道合同；其余 renderer/lighting/resolve 配置保持 fingerprint 相同 |
+| `TIME_ELAPSED` total 与 stage 不能嵌套 | `BLOCKER / VALID` | 0P 优先用 timestamp boundaries；不支持 timestamp 时拆成 total-only、stage-only 与 baseline 独立 populations，gate 只用 raw total |
+| 视觉 gate 没有冻结的 Takram control，candidate promotion 未区分 stock/V3 | `HIGH / VALID` | 0T 固定 upstream reference/control 与诊断 A/B；0P 使用 candidate-scoped cost/promotion/next-work schema |
 
 ---
 
@@ -70,8 +76,8 @@
 - [`CloudsEffect.ts`](https://github.com/takram-design-engineering/three-geospatial/blob/b012ad06d858fc035d88aacfd73f092f93c994e4/packages/clouds/src/CloudsEffect.ts) 已公开 `worldToECEFMatrix`、`ellipsoid`、`resolutionScale`、`temporalUpscale` 和 cloud/shadow budgets。
 - [`clouds.frag`](https://github.com/takram-design-engineering/three-geospatial/blob/b012ad06d858fc035d88aacfd73f092f93c994e4/packages/clouds/src/shaders/clouds.frag) 已有 sphere intersection、camera height 分支、scene depth、BSM 和 temporal velocity 输出。
 - [`CloudsPass.ts`](https://github.com/takram-design-engineering/three-geospatial/blob/b012ad06d858fc035d88aacfd73f092f93c994e4/packages/clouds/src/CloudsPass.ts) 已有 current/resolve/history 与 quarter-resolution temporal upscale。
-- [`qualityPresets.ts`](https://github.com/takram-design-engineering/three-geospatial/blob/b012ad06d858fc035d88aacfd73f092f93c994e4/packages/clouds/src/qualityPresets.ts) 说明上游默认 primary budget 高达 200–500，LuBirth 必须显式覆盖，不能直接套 `high`。
-- [cloud README limitations](https://github.com/takram-design-engineering/three-geospatial/blob/b012ad06d858fc035d88aacfd73f092f93c994e4/packages/clouds/README.md#limitations) 把 global coverage/space view 列为未完成项，所以本计划对实际镜头设 visual kill gate，而不是假定必然可用。
+- [`qualityPresets.ts`](https://github.com/takram-design-engineering/three-geospatial/blob/b012ad06d858fc035d88aacfd73f092f93c994e4/packages/clouds/src/qualityPresets.ts) 说明上游 default/high 的 primary budget 高达 200–500。Task 0T/0V/0P 必须保留官方 `high` 以建立 visual/cost parity；只有得到新的 full-integration amendment 后，Task 4 才能在冻结视觉下限的同时显式覆盖预算，不能把优化值伪装成 stock parity。
+- [cloud README limitations](https://github.com/takram-design-engineering/three-geospatial/blob/b012ad06d858fc035d88aacfd73f092f93c994e4/packages/clouds/README.md#limitations) 明确说明 cube-sphere seams，并把 global coverage/space view 列为 planned feature。因此 visual gate 必须先证明 upstream control，再把 opening 问题分成 stock mapping/framing limitation、native structural failure 与 V3 adapter failure，不能用一个笼统 visual kill 代替。
 
 `ZyFou/ProceduralTerrains` 降为 contingency reference。Task -1 允许一支不导出 production API 的 disposable pre-integration shader，只用于球壳/V3/步数成本与坐标合同；它不能演化为第二套云系统，也不能单凭其成本推断 Takram BSM/temporal 的最终成本。除此之外，Task 5 之前不重写 Takram 已经提供的 raymarch、shadow、resolve 或 temporal；只有固定上游无法满足 LuBirth 必需的一般 ray parameter/scene-depth 合同，或无法暴露 equirectangular mapping、history reset、计时边界时，才允许提交窄范围 `pnpm patch`，并逐项记录差异与上游 hash。
 
@@ -203,13 +209,19 @@ wisp      = sourceCoverage * wispFromConcavity(sourceConcavity);
 
 这样 `G/B/A` 只雕刻已有 V3 云体，不能在 clear-air 制造新云。
 
-Takram 当前 `getGlobeUv()` 固定走 cube-sphere local tiling，而 LuBirth V3 是 equirectangular。允许的第一处上游补丁只做：
+Takram stock 的 `getGlobeUv()` 固定走 cube-sphere local tiling，而 LuBirth V3 是 equirectangular。Task 0V 先证明一个默认关闭、可切换且 source-hash 锁定的窄补丁；后续完整集成只能复用同一 hunk：
 
 ```glsl
 vec2 getGlobeUv(const vec3 position) {
+#ifdef GLOBAL_WEATHER_MAPPING
   return getSphericalUv(position);
+#else
+  return getCubeSphereUv(position);
+#endif
 }
 ```
+
+stock/官方 control 必须保持 `globalWeatherMapping=false`；只有 V3 candidate/production path 显式设置 `globalWeatherMapping=true`。补丁不能改变 stock UV，也不能复制或改写 raymarch、BSM、lighting、temporal resolve 或 composite。
 
 由于坐标 bridge 对 longitude 做了右手系旋转，adapter 构建时显式 `flipU`，并把 `HOME_CLOUD_FIELD_OFFSET_X/Y` 写进 manifest。三个方向基准必须由单元测试锁定，禁止靠截图反复调到“差不多”。
 
@@ -317,38 +329,35 @@ DPR 1
 - `resolutionScale=0.35` 或任何低于 frozen visual floor 的结果只能标为 `DEGRADED_RUNTIME_ONLY`，不能贡献 `SPIKE_VIABLE` 或 `PROMOTION_ELIGIBLE` 样本。
 - 最终 `<=3 ms` 必须在 frozen visual floor 或更高质量上成立；`<=4 ms` 仍只表示 challenger 值得继续研究。
 
-GPU 计时必须覆盖实际启用的全部 challenger stage：
+GPU 计时必须覆盖实际启用的全部 challenger stage，并沿用 Task 0P 的非嵌套 population 合同。正式 gate 使用一条从首个 cloud work 到最终 cloud composite 的 raw total-only query；stage breakdown、no-op 与 copy-only 都是独立 population，只用于诊断，不能相加冒充同帧 total，也不能从 total 中扣除：
 
 ```ts
-takramCoreMs =
-  hasSplitCoreQueries
-    ? beerShadowMs + raymarchResolveMs
-    : combinedTakramUpdateMs; // still includes BSM + raymarch + resolve
-
-cloudGpuMs =
-  occupancyGenerateMs +
-  occupancyDilateMs +
-  takramCoreMs +
-  cloudCompositeMs;
+interface ChallengerTotalSample {
+  frameId: number;
+  occupancyUpdated: boolean;
+  nativePipelineTotalMs: number; // occupancy if dirty + BSM + raymarch + resolve + composite
+}
 ```
 
 最终 gate 使用：
 
 ```ts
 gateGpuP95Ms = Math.max(
-  percentile(allValidFrames, 0.95),
-  occupancyActive ? percentile(occupancyUpdateFrames, 0.95) : 0
+  percentile(validTotalOnlySamples, 0.95),
+  occupancyActive
+    ? percentile(validTotalOnlySamples.filter(sample => sample.occupancyUpdated), 0.95)
+    : 0
 );
 ```
 
 规则：
 
-- 原生 Takram candidate 没有独立 occupancy 时，前两项为 `0` 且 `occupancyActive=false`。
+- 原生 Takram candidate 没有独立 occupancy 时，`occupancyUpdated=false` 且 total 仍覆盖 BSM、raymarch、native temporal resolve/history 与 AerialPerspective composite。
 - 一旦 optimized candidate 启用 occupancy，生成和全部 dilation pass 必须计入发生该更新的帧，不能用更新周期除掉再美化结果。
 - occupancy candidate 的正式窗口必须包含至少 `10` 个 occupancy update frames；门槛取全帧 p95 与 update-frame p95 的较大值，防止低频更新被普通 p95 隐去。
-- `raymarchResolveMs` 可作为一个不可嵌套 query scope，但不能漏掉 resolve。
-- `cloudCompositeMs` 必须包含把 cloud overlay 写入最终 scene color 的实际 pass。
-- `EXT_disjoint_timer_query_webgl2` 不可用或发生 disjoint 时，该轮不能给 GPU PASS。
+- 若 timestamp counter 可用，stage-only 可用 boundary timestamps；否则只允许顺序、非嵌套 `TIME_ELAPSED` stage queries，并与 total-only 分开运行。任何情况下都不能在 total elapsed query 内嵌套 stage query。
+- `nativePipelineTotalMs` 必须包含把 cloud overlay 写入最终 scene color 的实际 pass；公开 API 无法细分某 stage 时只允许该 stage 显示为 unavailable，不能缩短 total scope。
+- 单次 disjoint 必须按同一 polling epoch 使整批 pending sample 作废并继续补采；`EXT_disjoint_timer_query_webgl2` 不可用，或始终无法补足规定的有效窗口时，才不得给 GPU PASS。
 
 内存不是只统计 `cloud/history`。`challengerIncrementalRtBytes` 必须枚举：
 
@@ -677,15 +686,15 @@ TAKRAM_VISUAL_AND_COST_UNTESTED
 
 #### Task 0T/0V/0P 的共同边界
 
-- 唯一入口是新的 query-only route：`/lubirth-takram-parity-spike?input=stock|v3&progress=0.00|0.06|0.12|0.18`。默认 `/`、`/lubirth-revised`、原 `/lubirth-planetary-cloud-spike` 和 capability fallback 不得请求 Takram chunk、Takram asset、atmosphere LUT 或新增 RT。
+- 唯一入口是新的 query-only route：`/lubirth-takram-parity-spike?input=stock|v3&view=control|opening&progress=0.00|0.06|0.12|0.18`。`view=control` 只允许 `input=stock`；`input=v3` 只在 `view=opening` 运行。默认 `/`、`/lubirth-revised`、原 `/lubirth-planetary-cloud-spike` 和 capability fallback 不得请求 Takram chunk、Takram asset、atmosphere LUT 或新增 RT。
 - route 使用与 Task -1R 相同的 LuBirth opening camera / Earth transform mirror，并继续复用已经通过的 `buildLuBirthWorldToEcef` 一般二次式与 scene-depth 合同；不得修改 `EarthMoonScene`、`LandingCloudMode`、默认 composer 或首页 policy。
 - 所有 Takram 纹理都是固定版本官方文件的本地、hash-locked 副本；不得让 `Clouds` 落回默认 GitHub URL。默认 URL、Takram 之外的云 asset、或从 V3 以外生成新宏观 weather 图都应使 e2e 失败。
-- “parity”指完整 native `Clouds → AerialPerspective` 路径，而不是把 Takram 的 texture 用回 disposable shader。不得自制 raymarch、BSM、temporal resolve、history buffer 或 cloud composite 来代替 Takram。
+- “parity”指完整 native `Clouds → AerialPerspective` 路径，而不是所有输入参数必须相同。stock control 保持 upstream cube-sphere/default layers；V3 adapter 只允许改变 `globalWeatherMapping`、weather texture/repeat/offset 和四层 altitude/height/channel 合同。两者的 raymarch、BSM、shape/detail/turbulence/STBN、temporal resolve、lighting、AerialPerspective、quality preset 与 RT formats 必须由同一 renderer fingerprint 锁定。不得自制 raymarch、BSM、temporal resolve、history buffer 或 cloud composite 来代替 Takram。
 - Task 0T/0V/0P 的任何 `PASS` 都只授权记录 parity 结论和提交后续完整集成 amendment；它们不自动解锁原 Task 0–8，也不改变默认产品路由。
 
 ### Task 0T：Stock Takram parity
 
-> **授权：已授权。** 目标是在 LuBirth opening camera 中运行 `@takram/three-clouds@0.7.6` 的完整、未调参 native 观感路径，判断 Takram 本身是否与该 framing 相容。它不读取 V3，也不创建 V3 adapter。
+> **授权：已授权。** 目标先用冻结的 upstream visual control 证明 `@takram/three-clouds@0.7.6` 的官方效果与 native feature path 已正确复现，再单独判断未调参 stock input 是否直接适配 LuBirth opening。它不读取 V3，也不创建 V3 adapter；stock opening limitation 不能反向推翻 upstream control。
 
 **Files**
 
@@ -694,6 +703,7 @@ TAKRAM_VISUAL_AND_COST_UNTESTED
 - Modify: `pnpm-lock.yaml`
 - Create: `packages/lubirth-hero/src/planetaryCloud/parity/TakramParityContract.ts`
 - Create: `packages/lubirth-hero/src/planetaryCloud/parity/TakramParityAssetLoader.ts`
+- Create: `packages/lubirth-hero/src/planetaryCloud/parity/TakramUpstreamControlScene.tsx`
 - Create: `packages/lubirth-hero/src/planetaryCloud/parity/LuBirthTakramParityScene.tsx`
 - Create: `packages/lubirth-hero/src/planetaryCloud/parity/TakramStockParityPipeline.tsx`
 - Create: `packages/lubirth-hero/scripts/vendor-takram-parity-assets.mjs`
@@ -703,7 +713,9 @@ TAKRAM_VISUAL_AND_COST_UNTESTED
 - Create: `tests/unit/lubirthTakramParityContract.spec.ts`
 - Create: `tests/e2e/lubirth-takram-parity.spec.ts`
 - Create: `tests/e2e/lubirth-takram-parity-visual.spec.ts`
-- Create: `docs/lubirth-planetary-cloud-evidence/2026-08-05/takram-parity/stock-visual-review.json`
+- Create: `docs/lubirth-planetary-cloud-evidence/2026-08-05/takram-parity/reference/upstream-tokyo.jpg`
+- Create: `docs/lubirth-planetary-cloud-evidence/2026-08-05/takram-parity/upstream-control-visual-review.json`
+- Create: `docs/lubirth-planetary-cloud-evidence/2026-08-05/takram-parity/stock-opening-visual-review.json`
 
 #### 0T-A：先锁定可复现的 official stock input
 
@@ -719,14 +731,21 @@ TAKRAM_VISUAL_AND_COST_UNTESTED
 }
 ```
 
-- [ ] vendor script 从 `@takram/three-clouds@0.7.6` 的固定 upstream asset ref 复制 **stock local weather、shape、shape detail、turbulence、STBN** 到 `takram-parity/stock/`。stock weather 与其余 asset 必须是 byte-identical local copy；manifest 记录 npm version、upstream commit/ref、license、source URL、hash、dimensions、encoding 和 copy timestamp。
+- [ ] vendor script 从 `@takram/three-clouds@0.7.6` 的固定 upstream asset ref 复制 **stock local weather、shape、shape detail、turbulence、STBN** 到 `takram-parity/stock/`，并把固定提交的 `packages/clouds/docs/tokyo.jpg` 作为 non-runtime visual reference 复制到 evidence/reference。stock weather、其余 runtime asset 与 reference image 必须是 byte-identical local copy；manifest 记录 npm version、upstream commit/ref、license、source URL、hash、dimensions、encoding 和 copy timestamp。
 - [ ] asset loader 只返回显式加载的本地 `Texture`/`Data3DTexture`；e2e 监听请求并断言没有 `githubusercontent`、`media.githubusercontent`、Takram default URL 或 V3 PNG。单元测试对每个 texture 强制 `NoColorSpace` / 既定 wrap/filter / `flipY`，并在 context restore 后重建。
-- [ ] 记录并以 telemetry 断言 native stock defaults：`qualityPreset="high"`、`resolutionScale=1`、`temporalUpscale=true`、`lightShafts=true`、`shapeDetail=true`、`turbulence=true`、`haze=true`、默认 `CloudLayers.DEFAULT`。除本地 asset substitution、LuBirth bridge 和本地 scene wiring 外，禁止传递 coverage、step、layer、shadow、lighting 或 temporal tuning prop。
-- [ ] 若已安装的 `0.7.6` 与上述 pinned stock audit 不符、无法使用本地副本保持完整 feature set，或 telemetry 无法证明 BSM/temporal/AerialPerspective 已在 native path 中启用，则记录 `PARITY_SETUP_BLOCKED` 并停止在 0T-A；不得把 setup 差异伪装成 `TAKRAM_VISUAL_MISMATCH`，也不得静默增加自定义调参。
+- [ ] 记录并以 telemetry 断言 native stock defaults：`qualityPreset="high"`、`resolutionScale=1`、`temporalUpscale=true`、`lightShafts=true`、`shapeDetail=true`、`turbulence=true`、`haze=true`、默认 `CloudLayers.DEFAULT`。stock opening 除本地 asset substitution、LuBirth bridge 和本地 scene wiring 外，禁止传递 coverage、step、layer、shadow、lighting 或 temporal tuning prop；唯一例外是 0T-B upstream control 明确冻结的官方示例 `coverage=0.4`，该值不得泄漏到 opening。
+- [ ] `TakramParityContract.ts` 固定 `TakramParityView = "control" | "opening"`、`UpstreamControlDecision = "PASS" | "UPSTREAM_CONTROL_FAIL"` 与 `StockOpeningDecision = "PASS" | "STOCK_OPENING_LIMITATION" | "TAKRAM_NATIVE_OPENING_FAIL"`。`UPSTREAM_CONTROL_FAIL` 表示官方效果未被正确复现；`STOCK_OPENING_LIMITATION` 只表示官方已知 cube-sphere/default-layer envelope 不适合 LuBirth framing；`TAKRAM_NATIVE_OPENING_FAIL` 只用于 native depth/BSM/resolve/AerialPerspective 在 opening 中出现与 input mapping 无关的结构性失败。
+- [ ] 若已安装的 `0.7.6` 与上述 pinned stock audit 不符、无法使用本地副本保持完整 feature set，或 telemetry 无法证明 BSM/temporal/AerialPerspective 已在 native path 中启用，则记录 `PARITY_SETUP_BLOCKED` 并停止在 0T-A；不得把 setup 差异伪装成 `UPSTREAM_CONTROL_FAIL`、`STOCK_OPENING_LIMITATION` 或 `TAKRAM_NATIVE_OPENING_FAIL`，也不得静默增加自定义调参。
 
-#### 0T-B：只在 isolated query route 运行完整 native path
+#### 0T-B：先建立 upstream visual control
 
-- [ ] 先写 route contract e2e：`input=stock` 只在 `/lubirth-takram-parity-spike` 动态加载 parity subpath；默认路由/原 spike route 的 network trace 必须为零 Takram request。测试必须在 `0.00/0.06/0.12/0.18` 确认 mirror 的 camera/Earth matrix 与 Task -1R opening matrix sample 一致。
+- [ ] `view=control&input=stock` 使用固定 stock assets、`qualityPreset="high"`、`coverage=0.4`、默认 `CloudLayers.DEFAULT` 与官方 `Clouds → AerialPerspective` 顺序；camera 使用近地斜视，固定 altitude `2_500 m`、FOV `50°`、向下 pitch `-8°`、sun elevation `25°` / azimuth `135°`。这些 resolved values 与 upstream source/ref hash 写入 telemetry，运行时不得随窗口变化。
+- [ ] control 先保存 converged full composite，再依次保存只用于诊断的 `BSM off`、`history reset first frame`、`cloud raw` 与 `AerialPerspective final`；每次诊断后恢复冻结的 stock config并重新 warmup。`upstream-control-visual-review.json` 必须逐项确认：大体积 billow、内部深度、自阴影、shape-detail erosion、turbulence、非颗粒噪点、非白壳、temporal convergence 和 atmosphere composite。只验证 props/telemetry、没有最终 control 画面，不能标记 PASS。
+- [ ] 把 control full composite、诊断 A/B 和 `reference/upstream-tokyo.jpg` 排成冻结的 contact sheet。reference 只规定视觉特征下限，不做像素级 diff；control 未达到上述特征时记录 `UPSTREAM_CONTROL_FAIL` 并停止 0T/0V/0P。
+
+#### 0T-C：再在 LuBirth opening 运行未调参 stock path
+
+- [ ] 先写 route contract e2e：`input=stock` 只在 `/lubirth-takram-parity-spike` 动态加载 parity subpath；默认路由/原 spike route 的 network trace 必须为零 Takram request。`view=control` 使用冻结 control camera，`view=opening` 必须在 `0.00/0.06/0.12/0.18` 确认 mirror 的 camera/Earth matrix 与 Task -1R opening matrix sample 一致。
 - [ ] `TakramParityContract.ts` 定义 `TAKRAM_PARITY_BOTTOM_RADIUS_M = 6_360_000`、`TAKRAM_PARITY_ELLIPSOID = new Ellipsoid(6_360_000, 6_360_000, 6_360_000)`、`TakramParityInput = "stock" | "v3"` 与 `TakramParityTelemetry`；`LuBirthTakramParityScene` 只镜像 opening 地球、opaque depth、太阳和 camera。`TakramStockParityPipeline` 在 priority `-1` 写入 `worldToECEFMatrix` 与 ECEF sun direction，并对非统一/负/奇异 Earth transform 显式显示 fallback telemetry，不修改生产场景。
 - [ ] pipeline 必须使用 Takram 官方的 single composer 顺序，且不出现 `disableDefaultLayers`、自定义 `CloudLayer`、自制 cloud resolve 或自制 composite：
 
@@ -745,8 +764,8 @@ TAKRAM_VISUAL_AND_COST_UNTESTED
 </Atmosphere>
 ```
 
-- [ ] visual e2e 先捕获 raw cloud/debug buffer 与 full native composite，再写 `stock-visual-review.json`。每个 opening frame 都必须确认：官方 shape/detail/turbulence 可见、BSM 实际参与、temporal history 已生效、AerialPerspective 完成最终合成、Earth/depth 遮挡和云地附着正确、没有连续白色 shell、黑帧、丢失 asset 或双 composer。不得以 bloom、veil、曝光或自制 shader 修图通过。
-- [ ] 如果 stock native path 在实际 opening camera 下不满足上述 visual gate，固化 `TAKRAM_VISUAL_MISMATCH`，停止 Task 0V；不得为救 stock 观感而先改 V3、造第二条 renderer 或改写 Takram lighting/resolve。
+- [ ] visual e2e 先捕获 raw cloud/debug buffer 与 full native composite，再写 `stock-opening-visual-review.json`。每个 opening frame 都必须确认：BSM 实际参与、temporal history 已生效、AerialPerspective 完成最终合成、Earth/depth 遮挡正确、没有连续白色 shell、黑帧、丢失 asset 或双 composer。不得以 bloom、veil、曝光或自制 shader 修图通过。
+- [ ] upstream control PASS 后，stock opening 若仅出现 cube-sphere seams/repetition、默认 0.75–8 km layers 在放大构图中过薄、缺少 global identity 或官方已知 space-view fit 问题，记录 `STOCK_OPENING_LIMITATION` 并继续 Task 0V；不得写成 renderer rejection。只有 input-independent 的 native depth/BSM/resolve/AerialPerspective 结构性失败才记录 `TAKRAM_NATIVE_OPENING_FAIL` 并停止 0V。
 
 验证：
 
@@ -768,14 +787,19 @@ git commit -m "feat(lubirth): add stock takram parity spike"
 
 ### Task 0V：V3 adapter parity
 
-> **前置条件：** Task 0T 的 stock visual gate 为 PASS。目标是让 V3 只承担宏观 coverage/weather，其他所有 Takram asset、default layers、BSM、shape/detail、turbulence、STBN、temporal 与 AerialPerspective 必须与 Task 0T 完全相同。
+> **前置条件：** Task 0T 的 `upstreamControl=PASS`，且 stock opening 为 `PASS` 或 `STOCK_OPENING_LIMITATION`。目标是在保留完整 Takram renderer 的前提下，让 V3 adapter 明确拥有 global weather mapping 与四层体积语义；stock 仍走原 cube-sphere/default layers，不能被补丁静默改变。
 
 **Files**
 
 - Create: `packages/lubirth-hero/scripts/generate-takram-parity-v3-weather.mjs`
 - Create: `packages/lubirth-hero/src/planetaryCloud/parity/TakramParityV3Adapter.ts`
+- Create: `packages/lubirth-hero/src/planetaryCloud/parity/TakramParityV3Layers.ts`
 - Modify: `packages/lubirth-hero/src/planetaryCloud/parity/TakramParityContract.ts`
 - Modify: `packages/lubirth-hero/src/planetaryCloud/parity/TakramStockParityPipeline.tsx`
+- Modify: `package.json`
+- Modify: `packages/lubirth-hero/package.json`
+- Modify: `pnpm-lock.yaml`
+- Create: `patches/@takram__three-clouds@0.7.6.patch`
 - Create: `apps/site/public/assets/lubirth/takram-parity/v3/manifest.json`
 - Create: `apps/site/public/assets/lubirth/takram-parity/v3/weather.png`
 - Create: `tests/unit/lubirthTakramParityV3Adapter.spec.ts`
@@ -783,17 +807,83 @@ git commit -m "feat(lubirth): add stock takram parity spike"
 - Modify: `tests/e2e/lubirth-takram-parity-visual.spec.ts`
 - Create: `docs/lubirth-planetary-cloud-evidence/2026-08-05/takram-parity/v3-adapter-visual-review.json`
 
-#### 0V-A：把 V3 转成未修改 Takram weather domain
+#### 0V-A：用可切换的窄补丁保留 stock，并为 V3 暴露 global weather mapping
 
-- [ ] 先写 adapter 单测：固定 `+X/+Y/+Z`、longitude seam、北/南极与四个 known V3 texel 的 native `getGlobeUv()` 对照，断言生成 weather 在未修改 Takram cube-sphere domain 中采回同一 V3 source sample。禁止在 Task 0V 打 equirectangular shader patch；这样 stock 与 V3 的 renderer 差异严格只剩 weather input。
-- [ ] generator 读取 `earth-cloud-field-nasa-lite-2k.png`，把它 rasterize 到 Takram 原生 tileable weather domain。输出必须 deterministic：同一 source hash 生成两次得到同一 output hash；manifest 写入 source/output hash、orientation、native UV mapping hash、`flipU/flipY`、tile repeat 和 generator version。
-- [ ] V3 `R` 是强制 source-footprint mask，任何 `R < clearAirThreshold` 输出四个 channel 都为零。`G/B/A` 只能在已有 `R` footprint 内分别塑造 Takram default layer 的 tower/structure/wisp weather signal；不得在 clear-air 添加 coverage，也不得改变 shape/detail/turbulence/BSM/temporal 参数。
+- [ ] 先写 source-audit 与 adapter 单测，固定上游 `CloudsEffect.ts`、R3F `Clouds` binding、`clouds.glsl` 及实际打包 shader 的 source hash。测试必须证明 stock `globalWeatherMapping=false` 仍调用原 `getCubeSphereUv(position)`；V3 `globalWeatherMapping=true` 才调用 `getSphericalUv(position)`。对 stock mode 保存 patch 前/后的 `DEBUG_SHOW_UV` pixel fixture，要求量化误差内一致，禁止把 stock 也切到 spherical mapping。
+- [ ] `pnpm patch @takram/three-clouds@0.7.6` 只增加一个布尔 renderer property/define `globalWeatherMapping`，默认 `false`；shader hunk 固定为：
 
-#### 0V-B：只替换 weather，逐项与 stock 比较
+```glsl
+vec2 getGlobeUv(const vec3 position) {
+#ifdef GLOBAL_WEATHER_MAPPING
+  return getSphericalUv(position);
+#else
+  return getCubeSphereUv(position);
+#endif
+}
+```
 
-- [ ] `input=v3` 与 `input=stock` 共享同一个 `TakramStockParityPipeline`、同一 composer、同一 Earth/camera matrix、同一 asset loader 和同一 native default props；唯一不同字段是 `localWeatherTexture` 与 telemetry 中的 input/hash。e2e 断言两种输入的 renderer config deep-equal（排除 weather identity）。
-- [ ] 复用 0T 的四帧视觉采集与 raw/full composite review。V3 candidate 必须保留 V3 宏观身份、clear-air footprint、云地附着、base/core/top 可读性和 native temporal/atmosphere 观感；不得因 adapter 失败回退到 disposable shader 或关闭 Takram feature。
-- [ ] stock PASS 而 V3 gate FAIL 时固化 `V3_ADAPTER_VISUAL_FAIL`，记录相同 frame 的 stock/V3 side-by-side、adapter manifest 和失败项；0P 只允许继续测 visual-pass 的 stock candidate，不能把失败 V3 adapter 的性能当成有效证据。
+R3F 必须能以 `<Clouds globalWeatherMapping={input === "v3"} />` 切换该 define。补丁不得修改 raymarch、BSM、shape/detail、lighting、temporal、resolve、history 或 composite；package/source/hunk hash 全部写入 manifest。
+- [ ] generator 读取 `earth-cloud-field-nasa-lite-2k.png`，输出保持 deterministic 的 2:1 equirectangular RGBA8 weather，而不是尝试反投影成会丢失 cube-face 身份的单张 tileable local texture。同一 source hash 连续生成两次必须得到同一 output hash；manifest 写入 source/output hash、orientation、spherical mapping hash、`flipU/flipY`、`repeat=[1,1]`、offset 和 generator version。
+- [ ] V3 `R` 是强制 source-footprint mask，任何 `R < clearAirThreshold` 输出四个 channel 都为零。`G/B/A` 只能在已有 `R` footprint 内分别塑造 adapter-owned V3 layers 的 tower/structure/wisp weather signal；不得在 clear-air 添加 coverage，也不得改变 shape/detail/turbulence/BSM/temporal 参数。
+
+#### 0V-B：把 V3 四通道绑定到显式的放大云层
+
+- [ ] `TakramParityV3Layers.ts` 导出冻结的 adapter-owned layer contract；该配置与 V3 weather mapping 一起属于输入适配，不算 renderer fork：
+
+```ts
+export const TAKRAM_PARITY_V3_LAYERS = [
+  {
+    channel: "r",
+    altitude: 8_000,
+    height: 26_000,
+    densityScale: 0.18,
+    shapeAmount: 0.7,
+    shapeDetailAmount: 0.45,
+    coverageFilterWidth: 0.6,
+    shadow: true
+  },
+  {
+    channel: "g",
+    altitude: 10_000,
+    height: 50_000,
+    densityScale: 0.11,
+    shapeAmount: 0.85,
+    shapeDetailAmount: 0.7,
+    weatherExponent: 1.15,
+    coverageFilterWidth: 0.52,
+    shadow: true
+  },
+  {
+    channel: "b",
+    altitude: 8_000,
+    height: 36_000,
+    densityScale: 0.06,
+    shapeAmount: 0.9,
+    shapeDetailAmount: 0.85,
+    weatherExponent: 1.2,
+    coverageFilterWidth: 0.45
+  },
+  {
+    channel: "a",
+    altitude: 18_000,
+    height: 20_000,
+    densityScale: 0.035,
+    shapeAmount: 0.55,
+    shapeDetailAmount: 0.25,
+    weatherExponent: 1.4,
+    coverageFilterWidth: 0.5
+  }
+] as const;
+```
+
+- [ ] 单测确认四层最大 shell extent 为 `60_000 m`，A 层不再是 `height=0`，R/G 两层参与 BSM，所有 layer signal 都受 V3 R source-footprint gate 约束；禁止任何 layer 自带绕过 weather R 的 coverage source。后续 Task 3 必须直接复用这份冻结 contract，不能再维护一套数值副本。
+
+#### 0V-C：只改变 adapter-owned fields，逐项与 stock/control 比较
+
+- [ ] `input=v3` 与 `input=stock` 共享同一个 `TakramStockParityPipeline`、composer、Earth/camera matrix、asset loader 与 renderer fingerprint。e2e 先断言下列 adapter-owned fields 是唯一允许差异，再对剩余 renderer fingerprint deep-equal：`globalWeatherMapping`、`localWeatherTexture/hash`、`localWeatherRepeat/offset`、`disableDefaultLayers/cloudLayers`。quality、resolution、BSM、shape/detail/turbulence/STBN、scattering、lighting、temporal、AerialPerspective 与 RT formats 不在排除表内。
+- [ ] V3 固定 `globalWeatherMapping=true`、`localWeatherRepeat=[1,1]`、manifest offset 与 `TAKRAM_PARITY_V3_LAYERS`；stock 固定 `globalWeatherMapping=false`、原 `localWeatherRepeat=[100,100]` 与 `CloudLayers.DEFAULT`。运行时 telemetry 必须保存 resolved adapter fields 与 renderer fingerprint hash。
+- [ ] 复用 0T 的四帧视觉采集与 raw/full composite review，并输出 upstream control / stock opening / V3 opening 三列 contact sheet。V3 candidate 必须保留 V3 宏观身份、clear-air footprint、云地附着、base/core/top 可读性和 native temporal/atmosphere 观感；不得因 adapter 失败回退到 disposable shader 或关闭 Takram feature。
+- [ ] V3 gate FAIL 时固化 `V3_ADAPTER_VISUAL_FAIL`，记录相同 frame 的 control/stock/V3 side-by-side、adapter manifest 和失败项；0P 仍可测 visual-pass stock candidate，但只能得到 stock-only renderer 结论，不能把失败 V3 adapter 的性能或 promotion 资格当成项目目标证据。
 
 验证：
 
@@ -815,7 +905,7 @@ git commit -m "feat(lubirth): add v3 takram parity adapter"
 
 ### Task 0P：Actual Takram cost
 
-> **前置条件：** Task 0T stock 或 Task 0V V3 candidate 至少一个通过 visual gate。只测 visual-pass candidate；每个 candidate 的完整 native pipeline 单独建立窗口，禁止跨输入、quality 或 history population 合并。
+> **前置条件：** Task 0T 的 `upstreamControl=PASS`。stock candidate 只有在 `stockOpeningVisual=PASS` 时可测；V3 candidate 只有在 `v3AdapterVisual=PASS` 时可测。`STOCK_OPENING_LIMITATION` 允许继续 0V，但本身不算 stock visual PASS。只测 visual-pass candidate；每个 candidate 的完整 native pipeline 单独建立窗口，禁止跨输入、quality 或 history population 合并。
 
 **Files**
 
@@ -832,38 +922,53 @@ git commit -m "feat(lubirth): add v3 takram parity adapter"
 
 #### 0P-A：计量完整 native pipeline，而不是替身 stage
 
-- [ ] 先写 profiler 单测，覆盖 no-op baseline、copy-only baseline、combined native total、分阶段 query、NaN、同一 polling epoch 的全批 disjoint、resize、context restore 和 hidden→visible reset；直到每个窗口补足 120 个有效样本才停止。每帧原始 stage/total sample 必须保存，不得只保存 p50/p95。
-- [ ] GPU scope 必须覆盖实际启用的 native BSM、cloud raymarch、native temporal resolve/history 与 AerialPerspective cloud composite。若公开 API 无法安全拆开 BSM/resolve，允许记录一个 `nativeCloudsUpdateMs`，但必须另记录包住 BSM 到 AerialPerspective 输出的非重叠 `nativeCloudPipelineTotalMs`；gate 永远使用 total，不能靠缺失 stage 降低结果。
+- [ ] 先写 profiler 单测，覆盖 no-op baseline、copy-only baseline、total-only population、stage-only population、timestamp-supported/fallback、NaN、同一 polling epoch 的全批 disjoint、resize、context restore 和 hidden→visible reset；直到每个 population 补足 120 个有效样本才停止。每帧原始 sample 必须保存，不得只保存 p50/p95，也不得把不同 population 伪装成同一 frame。
+- [ ] GPU scope 必须覆盖实际启用的 native BSM、cloud raymarch、native temporal resolve/history 与 AerialPerspective cloud composite。gate 使用从 BSM 开始到 AerialPerspective 输出结束的 raw `nativeCloudPipelineTotalMs`；no-op/copy-only 只做诊断，不得从 total 扣除。若公开 API 无法安全拆开 BSM/resolve，stage-only population 可退化为 `nativeCloudsUpdateMs + aerialPerspectiveCompositeMs`，但 total-only population仍必须完整。
 
 ```ts
-interface TakramParityGpuFrame {
+type TakramParityGpuPopulationKind =
+  | "no-op"
+  | "copy-only"
+  | "total-only"
+  | "stage-only";
+
+interface TakramParityGpuSampleBase {
   frameId: number;
-  noOpMs: number | null;
-  copyOnlyMs: number | null;
-  beerShadowMs: number | null;
-  nativeCloudsUpdateMs: number | null;
-  aerialPerspectiveCompositeMs: number | null;
-  nativeCloudPipelineTotalMs: number;
+  population: TakramParityGpuPopulationKind;
   disjoint: boolean;
   valid: boolean;
 }
+
+interface TakramParityTotalSample extends TakramParityGpuSampleBase {
+  population: "total-only";
+  nativeCloudPipelineTotalMs: number;
+}
+
+interface TakramParityStageSample extends TakramParityGpuSampleBase {
+  population: "stage-only";
+  beerShadowMs: number | null;
+  nativeCloudsUpdateMs: number | null;
+  aerialPerspectiveCompositeMs: number | null;
+}
 ```
 
-- [ ] profiler 使用 `EXT_disjoint_timer_query_webgl2`，采样前清历史 disjoint；hidden 时同步清空 pending queries/sample population，visible 后从完整 ready frame warmup 120 frames；resize、shader compile、context restore、quality mutation 与 non-finite result 使当前 population 作废。此行为必须沿用并独立复验 Task -1R 已修正的协议，而不是假设 timer query 永远稳定。
+- [ ] profiler 使用 `EXT_disjoint_timer_query_webgl2`，先读取 `TIMESTAMP_EXT/QUERY_COUNTER_BITS_EXT`。若 timestamp bits `>0`，stage-only population 用 BSM/clouds/Aerial 边界 timestamps 计算各 stage 与 end-start total，并额外保留独立 total-only population做 gate；若为 `0`，只允许顺序、非嵌套的 `TIME_ELAPSED_EXT` queries，并将 total-only 与 stage-only 分开运行。禁止在 total `TIME_ELAPSED` 内嵌套 stage query。
+- [ ] 每个 population 开始前清历史 disjoint；hidden 时同步清空 pending queries/sample population，visible 后从完整 ready frame warmup 120 frames；resize、shader compile、context restore、quality mutation 与 non-finite result 使当前 population 作废。此行为必须沿用并独立复验 Task -1R 已修正的协议，而不是假设 timer query 永远稳定。
 
 #### 0P-B：以固定官方 parity preset 做正式 System Chrome 窗口
 
-- [ ] stock candidate 保持 Task 0T 的 official default props；V3 candidate 保持 Task 0V 的完全相同 props。两者都不得降低 `resolutionScale`、关闭 temporal、关闭 BSM/shape detail/turbulence/AerialPerspective、启用 adaptive 或从 visual review 后再调低预算。
-- [ ] 在 headed System Chrome / production build / Apple M4 / 1440×960 CSS px / DPR 1 下，对每个 visual-pass candidate 进行 120-frame warmup + 至少 120 有效 non-disjoint samples。artifact 必须记录 browser executable、renderer/vendor、viewport、DPR、native resolved quality/temporal state、asset hashes、V3 adapter hash（若适用）、raw samples、baseline samples、invalid reasons、RT inventory 和全部 stage p50/p95。
+- [ ] stock candidate 保持 Task 0T 的 official default props；V3 candidate 保持 Task 0V visual-pass 时冻结的 adapter-owned fields。两者的 renderer fingerprint 必须完全相同，且都不得降低 `resolutionScale`、关闭 temporal、关闭 BSM/shape detail/turbulence/AerialPerspective、启用 adaptive 或从 visual review 后再调低预算。
+- [ ] 在 headed System Chrome / production build / Apple M4 / 1440×960 CSS px / DPR 1 下，对每个 visual-pass candidate 分别运行 no-op、copy-only、total-only、stage-only populations；每个 population 都执行 120-frame warmup + 至少 120 有效 non-disjoint samples。artifact 必须记录 browser executable、renderer/vendor、viewport、DPR、timestamp bits/measurement mode、native resolved quality/temporal state、renderer fingerprint、adapter-owned fields、asset hashes、V3 adapter/patch hash（若适用）、raw samples、baseline samples、invalid reasons、RT inventory 和全部 available stage p50/p95。
 - [ ] total p95 的 checkpoint 只按完整 native pipeline 判定：
 
 ```text
-TAKRAM_OVER_BUDGET   when nativeCloudPipelineTotalMs p95 > 4.0 ms
-TAKRAM_SPIKE_VIABLE  when nativeCloudPipelineTotalMs p95 <= 4.0 ms
-promotionEligible    only when p95 <= 3.0 ms, fixed parity quality and adaptive=false
+TAKRAM_OVER_BUDGET   when raw total-only nativeCloudPipelineTotalMs p95 > 4.0 ms
+TAKRAM_SPIKE_VIABLE  when raw total-only nativeCloudPipelineTotalMs p95 <= 4.0 ms
+promotionEligibleByCandidate[candidate] only when raw total-only p95 <= 3.0 ms,
+fixed parity quality and adaptive=false
 ```
 
-- [ ] `TAKRAM_SPIKE_VIABLE` 只说明真实 Takram candidate 值得进行下一轮完整集成 architecture review；即使 `promotionEligible=true`，仍不得运行原 Task 0–8、改默认首页或把测试 route 变成产品路径。
+- [ ] stock `TAKRAM_SPIKE_VIABLE` 只证明 renderer/control route 值得 architecture review；只有 V3 candidate 的 visual PASS + `TAKRAM_SPIKE_VIABLE` 才证明当前项目输入值得进入 V3 integration review。即使任一 `promotionEligibleByCandidate` 为 true，仍不得运行原 Task 0–8、改默认首页或把测试 route 变成产品路径。
 
 #### 0P-C：写清楚哪一层失败，而不是把结论折叠成 KILL
 
@@ -874,21 +979,27 @@ promotionEligible    only when p95 <= 3.0 ms, fixed parity quality and adaptive=
   "v3InputContract": "V3_INPUT_CONTRACT_PASS",
   "disposableRenderer": "DISPOSABLE_RENDERER_REJECTED",
   "stockSetup": "PASS | PARITY_SETUP_BLOCKED",
-  "stockVisual": "PASS | TAKRAM_VISUAL_MISMATCH",
+  "upstreamControl": "PASS | UPSTREAM_CONTROL_FAIL | NOT_RUN",
+  "stockOpeningVisual": "PASS | STOCK_OPENING_LIMITATION | TAKRAM_NATIVE_OPENING_FAIL | NOT_RUN",
   "v3AdapterVisual": "PASS | V3_ADAPTER_VISUAL_FAIL | NOT_RUN",
   "candidateCosts": {
     "stock": "TAKRAM_OVER_BUDGET | TAKRAM_SPIKE_VIABLE | NOT_RUN",
     "v3": "TAKRAM_OVER_BUDGET | TAKRAM_SPIKE_VIABLE | NOT_RUN"
   },
-  "promotionEligible": false,
-  "nextAuthorizedWork": "NONE | ARCHITECTURE_REVIEW_ONLY"
+  "promotionEligibleByCandidate": {
+    "stock": false,
+    "v3": false
+  },
+  "nextAuthorizedWork": "NONE | RENDERER_ARCHITECTURE_REVIEW_ONLY | V3_ARCHITECTURE_REVIEW_ONLY"
 }
 ```
 
-- [ ] `TAKRAM_VISUAL_MISMATCH`：不执行 0V/0P；结论只针对 Takram stock path 在 LuBirth framing 的 visual fit。
+- [ ] `UPSTREAM_CONTROL_FAIL`：不执行 0V/0P；只说明当前集成没有复现官方 Takram visual/control，不能据此评价 LuBirth fit。
+- [ ] `STOCK_OPENING_LIMITATION`：允许执行 0V；只说明未调参 cube-sphere/default layers 不适配 LuBirth framing，不能据此否决 renderer。
+- [ ] `TAKRAM_NATIVE_OPENING_FAIL`：不执行 0V/0P；必须有 input-independent 的 depth/BSM/resolve/AerialPerspective 结构性证据，不能用 stock seams、重复或薄层观感触发。
 - [ ] `V3_ADAPTER_VISUAL_FAIL`：stock 数据保留，V3 candidate 不执行 cost window；结论只针对 V3 adapter，不否决 Takram renderer。
 - [ ] `TAKRAM_OVER_BUDGET`：只否决相应 visual-pass Takram parity preset；不得借此声称所有高质量体积云超预算。
-- [ ] `TAKRAM_SPIKE_VIABLE`：停止在 parity evidence review，准备新 amendment；不得把它误写成原 Task 0–8 的自动通行证。
+- [ ] stock-only `TAKRAM_SPIKE_VIABLE` 设置 `RENDERER_ARCHITECTURE_REVIEW_ONLY`；V3 visual/cost 都通过才设置 `V3_ARCHITECTURE_REVIEW_ONLY`。二者都停止在 parity evidence review，准备新 amendment；不得把它误写成原 Task 0–8 的自动通行证。
 
 验证：
 
@@ -913,7 +1024,7 @@ git commit -m "perf(lubirth): record takram parity cost evidence"
 
 ### Task 0：固定依赖、许可证和离线资产
 
-> **原完整集成路径，当前未授权。** Task -1 或 Task 0P 的任何结果都不能自动运行本任务；前置条件改为：Task 0P 至少一个 candidate 为 `TAKRAM_SPIKE_VIABLE`，parity evidence review 已确认，并且用户确认一份明确说明 full-integration scope 的新 amendment。届时必须先协调 Task 0T 已锁定的 package/asset/route，不能把下面的旧依赖与 asset 步骤原样重复执行。
+> **原完整集成路径，当前未授权。** Task -1 或 Task 0P 的任何结果都不能自动运行本任务。由于本计划目标明确要求 Cloud Field V3，前置条件改为：Task 0P 的 **V3 candidate** 同时满足 `v3AdapterVisual=PASS` 与 `candidateCosts.v3=TAKRAM_SPIKE_VIABLE`，parity evidence review 已确认，并且用户确认一份明确说明 full-integration scope 的新 amendment。stock-only viability 只能支持 renderer architecture review，不能解锁本任务。届时必须先协调 Task 0T/0V 已锁定的 package、patch、asset、route 与 layer contract，不能把下面的旧依赖和 asset 步骤原样重复执行。
 
 **Files**
 
@@ -1075,15 +1186,19 @@ git diff --check
 }
 ```
 
-- [ ] 用 `pnpm patch @takram/three-clouds@0.7.6` 在运行时真正使用的 shader build 与对应 source 中只新增 globe-UV hunk；若 Task 1 已因坐标 audit 产生 hunk，必须原样保留并分别测试：
+- [ ] 复用 Task 0V 已锁定的 `@takram/three-clouds@0.7.6` patch，在运行时真正使用的 shader build 与对应 source 中保留下列唯一 globe-UV switch；若 Task 1 已因坐标 audit 产生另一 hunk，必须原样保留并分别测试，禁止另建一份无条件 spherical patch：
 
 ```glsl
 vec2 getGlobeUv(const vec3 position) {
+#ifdef GLOBAL_WEATHER_MAPPING
   return getSphericalUv(position);
+#else
+  return getCubeSphereUv(position);
+#endif
 }
 ```
 
-- [ ] 补丁测试固定上游文件 hash 和 patch hunk。上游升级导致 hunk 不再匹配时必须显式 review，不能静默跳过。
+- [ ] 补丁测试固定上游文件 hash 和 patch hunk，证明默认/stock 为 `globalWeatherMapping=false` 且像素 fixture 与 upstream 一致，V3 path 显式为 `true`。上游升级导致 hunk 不再匹配时必须显式 review，不能静默跳过。
 - [ ] 不在本任务修改 Takram raymarch、lighting、temporal 或质量 presets。
 - [ ] 为四个 Takram `CloudLayer` 定义明确语义；任何 layer coverage 都不能绕过 V3 R。
 - [ ] 把 `generate:takram-cloud-weather` 加到 `packages/lubirth-hero/package.json`，并验证同一输入连续生成两次 hash 相同。
@@ -1143,6 +1258,7 @@ git diff --check
     <Clouds
       ref={cloudsRef}
       disableDefaultLayers
+      globalWeatherMapping
       coverage={0.5}
       localWeatherTexture={weatherTexture}
       shapeTexture={shapeTexture}
@@ -1836,19 +1952,22 @@ git status --short
 
 - [ ] Takram `0.7.6` 是主实现，repo commit、MIT license、npm 版本和 asset ref 全部固定。
 - [ ] Task -1/R 的 `24/6、32/2、48/6` 只作为 V3/坐标/HDR/measurement evidence；其 `MICROBENCH_OVER_BUDGET` 已重表达为 `DISPOSABLE_RENDERER_REJECTED`，不作为 Takram visual/cost gate。
-- [ ] Task 0T/0V/0P 先分别验证 stock native path、唯一 V3 weather adapter 差异和完整 native pipeline 成本；在无新的明确 amendment 前，原 Task 0–8 仍未执行。
+- [ ] Task 0T 先分别验证 upstream visual control 与 stock opening fit；upstream control PASS 后，`STOCK_OPENING_LIMITATION` 不会错误阻断 0V。
+- [ ] Task 0V 只允许可切换的 spherical weather mapping、V3 weather transform 与显式四层 contract 作为 adapter-owned 差异；stock mode 的 cube-sphere/default layers 与 patch 前一致，renderer fingerprint 其余字段完全相同。
+- [ ] Task 0P 以 total-only、stage-only、no-op、copy-only populations 测完整 native pipeline；在无新的明确 amendment 前，原 Task 0–8 仍未执行。
 - [ ] “行星级”通过 Earth-local → ECEF 的统一 scale bridge 实现，不要求真实 GIS 世界尺度。
 - [ ] Y-up → Z-up、longitude flip、V3 offsets 有纯函数测试；non-1 scale + rotation + translation 的 ray interval 采用一般二次式，scene depth 与返回 `t` 都是 world distance。
 - [ ] Cloud Field V3 仍是唯一宏观云源，adapter 不在 clear-air 制造云。
 - [ ] 实际 opening camera 的 `0.00/0.06/0.12/0.18` raw contact sheet 已证明身份连续、结构演化、视差、厚度与核心遮挡；没有用 opacity、bloom 或 veil 代替表示正确性。
-- [ ] Takram patch 只包含被证据证明必要的 globe UV、timer hook、history reset；没有复制整套 raymarch。
+- [ ] Takram patch 只包含被证据证明必要且默认关闭的 `globalWeatherMapping`、timer hook、history reset；stock 仍调用原 `getCubeSphereUv`，V3 才调用 `getSphericalUv`，没有复制整套 raymarch。
 - [ ] challenger 只在 query-only spike route 动态加载。
 - [ ] challenger active 时只有一个 final render owner。
-- [ ] parity checkpoint 区分 `TAKRAM_VISUAL_MISMATCH`、`V3_ADAPTER_VISUAL_FAIL`、`TAKRAM_OVER_BUDGET` 和 `TAKRAM_SPIKE_VIABLE`；任何结论都不自动运行原 Task 0–8。
-- [ ] GPU total 包含 occupancy generation/dilation、BSM、raymarch、resolve、cloud composite。
-- [ ] 内存包含 scene/composite/atmosphere、cloud/history、BSM/LUT、bloom mips 和临时重叠在内的所有 challenger RT；按 allocation timeline 报 steady/peak。
+- [ ] parity checkpoint 区分 `UPSTREAM_CONTROL_FAIL`、`STOCK_OPENING_LIMITATION`、`TAKRAM_NATIVE_OPENING_FAIL`、`V3_ADAPTER_VISUAL_FAIL`、candidate-scoped `TAKRAM_OVER_BUDGET/TAKRAM_SPIKE_VIABLE`；任何结论都不自动运行原 Task 0–8。
+- [ ] Task -1 的 disposable total 保留 occupancy generation/dilation、raymarch、resolve、composite 原始范围；Task 0P 的 native total 必须覆盖实际启用的 BSM、cloud raymarch、temporal resolve/history 与 AerialPerspective composite。任何 candidate 都不得因 stage 名称不同而漏计真实 GPU 工作。
+- [ ] 内存统计覆盖 candidate 实际新增的 scene/composite/atmosphere、cloud/history、BSM/LUT、bloom mips（若启用）和临时重叠 RT；按 allocation timeline 报 steady/peak，不把未分配的可选 RT 计入，也不漏掉已分配但未单独命名的 target。
 - [ ] RGBA16F scene-linear HDR 一直保留到唯一 final OutputPass；HDR ladder、`0.18` gray、single gamma/tone mapping 均通过。
-- [ ] Task 0P 的完整 native total `<=4 ms` 才标记 `TAKRAM_SPIKE_VIABLE`；`<=3 ms` 只设置 `promotionEligible=true`，仍需独立 full-integration amendment 才能讨论 production promotion。
+- [ ] Task 0P 的 raw total-only native p95 `<=4 ms` 才为对应 candidate 标记 `TAKRAM_SPIKE_VIABLE`；no-op/copy-only 不从 total 扣除。`<=3 ms` 只设置对应 `promotionEligibleByCandidate`，仍需独立 full-integration amendment 才能讨论 production promotion。
+- [ ] stock-only viability 只允许 `RENDERER_ARCHITECTURE_REVIEW_ONLY`；只有 V3 visual/cost 同时通过才允许 `V3_ARCHITECTURE_REVIEW_ONLY`，并且仍不自动运行原 Task 0–8。
 - [ ] `resolutionScale=0.35` 或低于 visual floor 的结果只算 runtime degraded evidence，不能进入 promotion samples；RT peak 也不能被降采样改写。
 - [ ] 默认首页、中低档、reduced-motion 和 capability failure 继续使用 Relief-lite，且没有 Takram bundle/RT/LUT 成本。
 - [ ] visual、reverse sweep、GPU、RAF、memory、context recovery 和 dispose 都有可复核证据。
