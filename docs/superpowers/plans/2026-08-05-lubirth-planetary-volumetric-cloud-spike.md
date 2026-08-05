@@ -1,6 +1,6 @@
 # LuBirth Takram-first 行星体积云 Spike 实施计划
 
-> 状态：第二轮文档 review 后已收敛，尚未授权执行代码实现；首次执行只允许完成 Task -1。
+> 状态：Task -1 已完成并留下可复核 evidence；其失败已由 [Task -1R representation amendment](2026-08-05-lubirth-planetary-cloud-task-minus-1r.md) 重新分类。除该受限 amendment 外，Task 0–8 仍未授权。
 > 计划日期：2026-08-05。
 > 主实现：[takram-design-engineering/three-geospatial@b012ad0](https://github.com/takram-design-engineering/three-geospatial/tree/b012ad06d858fc035d88aacfd73f092f93c994e4)，MIT。
 > 正式性能依据：[LuBirth 混合云架构 Phase -1（当前 line 911）](../../lubirth-hybrid-cloud-architecture.md#phase--1---visual-kill-spike)。
