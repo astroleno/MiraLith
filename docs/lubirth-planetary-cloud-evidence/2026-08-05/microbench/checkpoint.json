@@ -1,0 +1,18 @@
+{
+  "decision": "EARLY_KILL",
+  "bestCase": null,
+  "bestCloudGpuP95Ms": null,
+  "validGpuSamples": 0,
+  "microVisualGate": "FAIL",
+  "coordinateGate": "PASS",
+  "hdrColorGate": "PASS",
+  "gammaGate": "PASS",
+  "incrementalRtPeakBytes": 33177632,
+  "timerSupported": "not used for a formal acceptance window",
+  "reason": [
+    "All 24/6, 32/2, and 48/6 visual reviews fail the no-white-ring/double-shell criterion.",
+    "No case has legible cloud base/core/top and side thickness in the actual opening horizon framing.",
+    "Task -1D forbids 120-frame performance sampling when every visual case fails."
+  ],
+  "nextAuthorizedWork": "None. Task 0-8 remain blocked until README.md, visual-review.json, checkpoint.json, and the contact sheets are reviewed and a new plan amendment is approved."
+}

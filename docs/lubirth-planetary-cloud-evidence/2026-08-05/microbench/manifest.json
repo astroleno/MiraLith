@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "task": "Task -1 disposable planetary cloud-shell + V3 pre-integration microbenchmark",
+  "baselineRevision": "96d14224fa4357abd563b81bd7596e511fa1cb0d",
+  "harnessCommit": "13ae9ce",
+  "route": "/lubirth-planetary-cloud-microbench",
+  "scope": {
+    "takramInstalled": false,
+    "defaultRouteChanged": false,
+    "productionRendererExported": false,
+    "remoteCloudAssets": false
+  },
+  "capture": {
+    "browser": "Playwright desktop Chromium production build",
+    "formalHeadedSystemChromePerformanceRun": "not-started: visual gate failed before Task -1D",
+    "hardware": "Apple M4",
+    "macOS": "15.6.1",
+    "systemChrome": "150.0.7871.189",
+    "viewportCssPx": [1440, 960],
+    "devicePixelRatio": 1,
+    "resolutionScale": 0.5,
+    "adaptive": false
+  },
+  "openingFrameSource": {
+    "function": "@miralith/visual-core mapOpeningProgress",
+    "earthAndCamera": "isolated mirror of EarthMoonScene opening frame",
+    "worldLight": "DEFAULT_LUBIRTH_SUN_DIRECTION rotated by Earth quaternion",
+    "matrixSamples": "screenshots/opening-matrix-samples.json"
+  },
+  "cloudShell": {
+    "bottomRadiusMeters": 6360000,
+    "baseAltitudeMeters": 8000,
+    "thicknessMeters": 52000,
+    "weather": {
+      "path": "apps/site/public/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.png",
+      "sha256": "39c70e34b99ecf550f557327a1b97dcc0d2cae9f3be03242911c067622bb0a1c",
+      "layoutId": "v3-r-depth-g-height-b-morphology-a-concavity",
+      "colorSpace": "NoColorSpace",
+      "wrapS": "RepeatWrapping",
+      "wrapT": "ClampToEdgeWrapping"
+    },
+    "cases": {
+      "24/6": { "primarySteps": 24, "lightSteps": 6, "groundSteps": 0 },
+      "32/2": { "primarySteps": 32, "lightSteps": 2, "groundSteps": 0 },
+      "48/6": { "primarySteps": 48, "lightSteps": 6, "groundSteps": 0 }
+    },
+    "shaderContracts": {
+      "rayParameter": "general quadratic with a=dot(directionEcefPerWorldUnit,directionEcefPerWorldUnit)",
+      "sceneDepth": "reconstruct world position then dot with normalized world ray",
+      "density": "R footprint × vertical G cloudTop × B morphology × A concavity",
+      "debug": "showSceneDepthClamp=1"
+    }
+  },
+  "renderTargets": {
+    "opaque": "RGBA16F scene-linear + Depth24/UnsignedInt",
+    "cloudAccumulation": "half-resolution RGBA16F, premultiplied radiance + transmittance",
+    "cloudResolve": "half-resolution RGBA16F",
+    "composite": "full-resolution RGBA16F",
+    "finalOutput": "one sRGB colorspace conversion",
+    "incrementalRtPeakBytes": 33177632,
+    "incrementalRtPeakMiB": 31.64
+  },
+  "hdrProbe": {
+    "target": "RGBA16F",
+    "linearLadder": [0.25, 1, 4, 16],
+    "readback": "Uint16Array half-float decode",
+    "result": "PASS"
+  },
+  "gammaProbe": {
+    "linearInput": 0.18,
+    "expectedSrgb8Bit": 118,
+    "readback": "final-output-color-space render target",
+    "result": "PASS"
+  },
+  "artifacts": {
+    "openingContactSheets": [
+      "screenshots/24-6-opening-contact-sheet.png",
+      "screenshots/32-2-opening-contact-sheet.png",
+      "screenshots/48-6-opening-contact-sheet.png"
+    ],
+    "isolatedBuffers": "screenshots/*-progress-0.12-{cloud,earth,density}.png",
+    "depthProbe": [
+      "screenshots/depth-probe-front.png",
+      "screenshots/depth-probe-middle.png",
+      "screenshots/depth-probe-behind.png"
+    ]
+  },
+  "verification": {
+    "unit": "PASS: 9 tests",
+    "e2e": "PASS: 4 tests",
+    "formalGpuSamples": 0,
+    "gpuP50Ms": null,
+    "gpuP95Ms": null
+  }
+}

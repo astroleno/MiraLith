@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-08-05",
+  "reviewer": "Codex manual visual review",
+  "configuration": {
+    "openingProgress": [0, 0.06, 0.12, 0.18],
+    "viewportCssPx": [1440, 960],
+    "devicePixelRatio": 1,
+    "resolutionScale": 0.5,
+    "bloom": false,
+    "atmosphere": false,
+    "veil": false,
+    "blur": false,
+    "temporal": false,
+    "adaptive": false
+  },
+  "cases": {
+    "24/6": {
+      "result": "FAIL",
+      "evidence": {
+        "openingContactSheet": "screenshots/24-6-opening-contact-sheet.png",
+        "cloudOnly": "screenshots/24-6-progress-0.12-cloud.png",
+        "earthOnly": "screenshots/24-6-progress-0.12-earth.png",
+        "density": "screenshots/24-6-progress-0.12-density.png",
+        "depthProbe": [
+          "screenshots/depth-probe-front.png",
+          "screenshots/depth-probe-middle.png",
+          "screenshots/depth-probe-behind.png"
+        ]
+      },
+      "criteria": {
+        "v3IdentityTracksOpeningMotion": "PASS",
+        "earthAttachmentAndNonzeroMotion": "PASS",
+        "gpuDepthOcclusion": "PASS",
+        "clearAirFootprintIsRMasked": "PASS",
+        "cloudBaseCoreTopAndSideThicknessAreLegible": "FAIL",
+        "noLongitudeSeamWhiteRingOrDoubleShell": "FAIL",
+        "noEarlyHdrClipping": "PASS"
+      },
+      "notes": "真实 opening 近地平线画面出现连续亮白壳边；cloud-only 与 density buffer 都没有形成可分辨的云底/云核/云顶层次。"
+    },
+    "32/2": {
+      "result": "FAIL",
+      "evidence": {
+        "openingContactSheet": "screenshots/32-2-opening-contact-sheet.png",
+        "cloudOnly": "screenshots/32-2-progress-0.12-cloud.png",
+        "earthOnly": "screenshots/32-2-progress-0.12-earth.png",
+        "density": "screenshots/32-2-progress-0.12-density.png"
+      },
+      "criteria": {
+        "v3IdentityTracksOpeningMotion": "PASS",
+        "earthAttachmentAndNonzeroMotion": "PASS",
+        "gpuDepthOcclusion": "PASS (shared 24/6 probe; shader path is identical)",
+        "clearAirFootprintIsRMasked": "PASS",
+        "cloudBaseCoreTopAndSideThicknessAreLegible": "FAIL",
+        "noLongitudeSeamWhiteRingOrDoubleShell": "FAIL",
+        "noEarlyHdrClipping": "PASS"
+      },
+      "notes": "减少 to-sun steps 未消除高亮整圈壳边；裸画面仍无法作为 V3 进入完整体积系统的视觉依据。"
+    },
+    "48/6": {
+      "result": "FAIL",
+      "evidence": {
+        "openingContactSheet": "screenshots/48-6-opening-contact-sheet.png",
+        "cloudOnly": "screenshots/48-6-progress-0.12-cloud.png",
+        "earthOnly": "screenshots/48-6-progress-0.12-earth.png",
+        "density": "screenshots/48-6-progress-0.12-density.png"
+      },
+      "criteria": {
+        "v3IdentityTracksOpeningMotion": "PASS",
+        "earthAttachmentAndNonzeroMotion": "PASS",
+        "gpuDepthOcclusion": "PASS (shared 24/6 probe; shader path is identical)",
+        "clearAirFootprintIsRMasked": "PASS",
+        "cloudBaseCoreTopAndSideThicknessAreLegible": "FAIL",
+        "noLongitudeSeamWhiteRingOrDoubleShell": "FAIL",
+        "noEarlyHdrClipping": "PASS"
+      },
+      "notes": "提高 primary/light steps 后同一壳边问题仍存在；不是采样量不足能掩盖的 visual pass。"
+    }
+  },
+  "microVisualGate": "FAIL",
+  "visualPassingCases": [],
+  "decisionRationale": "没有任何 case 全项通过；按 Task -1D 不启动 GPU 性能窗口。"
+}
