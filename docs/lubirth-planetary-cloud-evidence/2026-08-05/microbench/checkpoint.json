@@ -2,8 +2,8 @@
   "decision": "MICROBENCH_OVER_BUDGET",
   "taskMinusOneInitialDecision": "EARLY_REPRESENTATION_FAIL",
   "bestCase": "32/2",
-  "bestCloudGpuP50Ms": 29.750249,
-  "bestCloudGpuP95Ms": 35.377499,
+  "bestCloudGpuP50Ms": 31.569207,
+  "bestCloudGpuP95Ms": 37.579247,
   "validGpuSamples": 121,
   "invalidGpuSamples": 0,
   "budgetCloudGpuP95Ms": 4,
@@ -12,19 +12,19 @@
   "hdrColorGate": "PASS",
   "gammaGate": "PASS",
   "incrementalRtPeakBytes": 33177632,
-  "timerSupported": "PASS: headed System Chrome GPU timer, 121 valid non-disjoint samples after weather-ready 120-frame warmup",
-  "measurementReadyFrame": 5,
-  "warmupStartFrame": 6,
-  "samplingStartFrame": 126,
+  "timerSupported": "PASS: headed System Chrome GPU timer, 121 valid non-disjoint samples after weather-ready 120-frame warmup and lifecycle-reset checks",
+  "measurementReadyFrame": 3,
+  "warmupStartFrame": 4,
+  "samplingStartFrame": 124,
   "stageGpuP95Ms": {
-    "densityAndLightRaymarch": 11.1015,
-    "resolve": 11.528624,
-    "cloudComposite": 13.473208
+    "densityAndLightRaymarch": 11.459833,
+    "resolve": 12.63275,
+    "cloudComposite": 13.858958
   },
   "reason": [
     "The original Task -1 visual failure is reclassified as EARLY_REPRESENTATION_FAIL; it does not reject V3 or Takram-first.",
     "Task -1R visual gate passes after true to-sun shell bounds, macro-only V3 coverage, 3D base-shape remap, and a vertical profile.",
-    "The readiness-gated, disjoint-epoch-safe lowest fixed primary×light-cost visual-pass case, 32/2, records total GPU p95 35.377499 ms, exceeding the 4 ms budget by about 8.8x.",
+    "The lifecycle-safe lowest fixed primary×light-cost visual-pass case, 32/2, records total GPU p95 37.579247 ms, exceeding the 4 ms budget by about 9.4x.",
     "All three timed stages exceed the full total-budget threshold independently, so more samples of higher-work cases cannot reverse this checkpoint."
   ],
   "calibrationLimitations": [
