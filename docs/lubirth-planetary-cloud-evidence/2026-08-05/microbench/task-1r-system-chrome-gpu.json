@@ -13,29 +13,32 @@
       "caseId": "32/2",
       "gpu": {
         "invalidFrames": 0,
-        "p50Ms": 31.569207,
-        "p95Ms": 37.579247,
+        "p50Ms": 29.568915,
+        "p95Ms": 36.255915,
         "sampleCount": 121,
         "stages": {
           "cloudComposite": {
-            "p50Ms": 11.280291,
-            "p95Ms": 13.858958
+            "p50Ms": 10.495125,
+            "p95Ms": 13.586124
           },
           "densityAndLightRaymarch": {
-            "p50Ms": 10.003041,
-            "p95Ms": 11.459833
+            "p50Ms": 9.448083,
+            "p95Ms": 10.912416
           },
           "resolve": {
-            "p50Ms": 10.289083,
-            "p95Ms": 12.63275
+            "p50Ms": 9.664125,
+            "p95Ms": 11.887083
           }
         },
         "supported": true
       },
       "measurement": {
-        "measurementReadyFrame": 3,
-        "samplingStartFrame": 124,
-        "warmupStartFrame": 4,
+        "lastVisibilityResetFrame": null,
+        "measurementReadyFrame": 5,
+        "pageVisible": true,
+        "samplingStartFrame": 126,
+        "visibilityResetCount": 0,
+        "warmupStartFrame": 6,
         "weatherReady": true
       },
       "renderScale": 0.5,

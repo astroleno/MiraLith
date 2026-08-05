@@ -9,7 +9,8 @@
     "taskMinusOneRRepresentation": "7da4672",
     "taskMinusOneRMeasurementCorrectness": "79e3a67",
     "taskMinusOneRDisjointAndResizeCorrectness": "9143588",
-    "taskMinusOneRContextRestoreCorrectness": "231a394"
+    "taskMinusOneRContextRestoreCorrectness": "231a394",
+    "taskMinusOneRVisibilityCorrectness": "d40f9fe"
   },
   "route": "/lubirth-planetary-cloud-microbench",
   "scope": {
@@ -33,9 +34,11 @@
       "vendor": "Google Inc. (Apple)",
       "warmupFrames": 120,
       "validNonDisjointFrames": 121,
-      "measurementReadyFrame": 3,
-      "warmupStartFrame": 4,
-      "samplingStartFrame": 124
+      "measurementReadyFrame": 5,
+      "warmupStartFrame": 6,
+      "samplingStartFrame": 126,
+      "pageVisibleAtCompletion": true,
+      "visibilityResetCount": 0
     },
     "viewportCssPx": [1440, 960],
     "devicePixelRatio": 1,
@@ -129,15 +132,15 @@
     }
   },
   "verification": {
-    "unit": "PASS: 14 tests",
-    "e2e": "PASS: 4 desktop route tests; System Chrome 7/7 including resize, context-restore restart, and formal window",
+    "unit": "PASS: 15 tests",
+    "e2e": "PASS: headed System Chrome 8/8 including resize, context-restore restart, visibility restart, and formal window",
     "formalGpuSamples": 121,
-    "gpuP50Ms": 31.569207,
-    "gpuP95Ms": 37.579247,
+    "gpuP50Ms": 29.568915,
+    "gpuP95Ms": 36.255915,
     "gpuStages": {
-      "densityAndLightRaymarch": { "p50Ms": 10.003041, "p95Ms": 11.459833 },
-      "resolve": { "p50Ms": 10.289083, "p95Ms": 12.63275 },
-      "cloudComposite": { "p50Ms": 11.280291, "p95Ms": 13.858958 }
+      "densityAndLightRaymarch": { "p50Ms": 9.448083, "p95Ms": 10.912416 },
+      "resolve": { "p50Ms": 9.664125, "p95Ms": 11.887083 },
+      "cloudComposite": { "p50Ms": 10.495125, "p95Ms": 13.586124 }
     },
     "calibrationLimitations": {
       "noOpTimerQuery": "NOT_RUN",

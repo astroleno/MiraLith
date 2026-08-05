@@ -1,6 +1,6 @@
 # LuBirth 行星体积云 Task -1 / Task -1R 证据
 
-最终 checkpoint：MICROBENCH_OVER_BUDGET。Task -1R 已证明 V3 可以只充当宏观天气输入、通过受限 representation 的视觉门；但最低固定工作量的 visual-pass case 32/2 在 headed System Chrome 的 121 个有效 GPU 样本中 total p95 为 **37.579247 ms**，远高于 4 ms 预算。本轮没有安装 Takram、没有修改默认首页，也没有开始 Task 0–8。
+最终 checkpoint：MICROBENCH_OVER_BUDGET。Task -1R 已证明 V3 可以只充当宏观天气输入、通过受限 representation 的视觉门；但最低固定工作量的 visual-pass case 32/2 在 headed System Chrome 的 121 个有效 GPU 样本中 total p95 为 **36.255915 ms**，远高于 4 ms 预算。本轮没有安装 Takram、没有修改默认首页，也没有开始 Task 0–8。
 
 原 Task -1 的 EARLY_KILL 已追溯更正为 EARLY_REPRESENTATION_FAIL。它准确描述的是旧的 disposable 表示（固定 52 km to-sun 路径 + 直接径向挤出 V3 R）失败，**不能**解释为 Takram-first 或 V3 被技术否决。
 
@@ -22,16 +22,16 @@ Task -1R 保留 V3 的现有通道布局：R 仅是宏观 weather / coverage，G
 
 ## 正式 GPU 窗口与结论
 
-32/2 是 visual-pass cases 中固定 primarySteps × lightSteps 最低的组合（64，对比 24/6=144、48/6=288），因此是足够严格的早期成本候选。disjoint epoch / resize / context-restore correctness review 后的正式运行在 weather ready frame 3、warmup start frame 4、sampling start frame 124 才开始收样，并取得 121 个有效、非 disjoint 样本：
+32/2 是 visual-pass cases 中固定 primarySteps × lightSteps 最低的组合（64，对比 24/6=144、48/6=288），因此是足够严格的早期成本候选。disjoint epoch / resize / context-restore / visibility correctness review 后的正式运行在 weather ready frame 5、warmup start frame 6、sampling start frame 126 才开始收样，并取得 121 个有效、非 disjoint 样本：
 
 | 指标 | p50 (ms) | p95 (ms) |
 | --- | ---: | ---: |
-| density + light raymarch | 10.003041 | 11.459833 |
-| resolve | 10.289083 | 12.632750 |
-| cloud composite | 11.280291 | 13.858958 |
-| total | 31.569207 | 37.579247 |
+| density + light raymarch | 9.448083 | 10.912416 |
+| resolve | 9.664125 | 11.887083 |
+| cloud composite | 10.495125 | 13.586124 |
+| total | 29.568915 | 36.255915 |
 
-invalidFrames=0，但 total p95 比预算高约 9.4 倍。此前的 35.377499 ms disjoint-epoch / resize-safe 窗口已被这次完整 lifecycle-safe 重跑取代；更早的 36.146749 ms readiness-gated 窗口与 32.961416 ms 窗口同样不再作为正式证据。因此结论是这个 disposable representation 在当前 RT / compositor 账本下成本超标；它不是对 Takram-first、V3 数据或未来有不同成本架构的生产实现的否决。Task 0–8 继续被当前计划的 checkpoint 阻断。
+invalidFrames=0，但 total p95 比预算高约 9.1 倍。此前的 37.579247 ms lifecycle-safe 窗口已被这次完整 visibility-safe 重跑取代；更早的 35.377499 ms disjoint-epoch / resize-safe 窗口、36.146749 ms readiness-gated 窗口与 32.961416 ms 窗口同样不再作为正式证据。因此结论是这个 disposable representation 在当前 RT / compositor 账本下成本超标；它不是对 Takram-first、V3 数据或未来有不同成本架构的生产实现的否决。Task 0–8 继续被当前计划的 checkpoint 阻断。
 
 ## Correctness review 后的测量边界
 
@@ -39,6 +39,7 @@ invalidFrames=0，但 total p95 比预算高约 9.4 倍。此前的 35.377499 ms
 - 停止条件是至少 120 个**有效** GPU frames。disjoint 或非有限值会计入 invalid 数，但会继续补采，不能消耗有效样本配额。
 - 每个 polling epoch 只读取一次 `GPU_DISJOINT_EXT`；若为 true，则作废该 epoch 的全部 pending frames，不读取其单项 result，随后继续补采。每次新 measurement window 都先清除历史 disjoint 状态。
 - RT 尺寸变更或 readiness 丢失会清空 pending query / 既有统计，并从新 ready frame 重新执行 120-frame warmup。`webglcontextrestored` 会重建 RT、timer profiler 和 HDR/gamma gate 后走同一流程；headed System Chrome 的 resize 与 context-restored 生命周期测试已通过。
+- `document.visibilityState` 变为 hidden 时立即停止正式采样并同步清空 pending query / 当前样本；重新 visible 后必须从新的完整 ready frame 再次 warmup。telemetry 保存 `pageVisible`、`visibilityResetCount` 与 `lastVisibilityResetFrame`；headed System Chrome 的 hidden→visible 生命周期测试已通过。
 - HG 使用 camera-to-sample 与 sample-to-sun 的正向散射余弦。三个 opening contact sheet 已在该修正后重抓并重新人工复核。
 - 本结果仍没有 no-op、copy-only 或 combined-total timer-query 校准，也不保存逐帧 raw timings；因此它是当前 harness 的超预算观测，不可解释为经校准的阶段归因，更不可外推为 Takram-first 成本结论。新增计时校准需要独立 plan amendment。
 
@@ -54,10 +55,16 @@ invalidFrames=0，但 total p95 比预算高约 9.4 倍。此前的 35.377499 ms
     MIRALITH_CLOUD_MICROBENCH_CAPTURE=1 pnpm exec playwright test \
       tests/e2e/lubirth-planetary-cloud-microbench.spec.ts --project=desktop
 
+    # 完整复现 manifest 声明的 headed System Chrome 8/8，并重写正式 GPU artifact。
+    MIRALITH_CLOUD_MICROBENCH_PERF_EVIDENCE=1 pnpm exec playwright test \
+      -c playwright.lubirth-cloud-microbench-system-chrome.config.ts \
+      --project=desktop-system-chrome
+
+    # 可选：只回归四项 lifecycle/formal 测试；这不是 manifest 的完整 8/8 复现命令。
     MIRALITH_CLOUD_MICROBENCH_PERF_EVIDENCE=1 pnpm exec playwright test \
       -c playwright.lubirth-cloud-microbench-system-chrome.config.ts \
       --project=desktop-system-chrome \
-      --grep "GPU timing restarts|WebGL context restoration|Task -1R System Chrome GPU window"
+      --grep "GPU timing restarts|GPU timing discards|Task -1R System Chrome GPU window"
 
     pnpm --filter @miralith/lubirth-hero typecheck
     pnpm --filter @miralith/site typecheck
