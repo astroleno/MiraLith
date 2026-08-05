@@ -16,6 +16,7 @@ export const CLOUD_SHELL_MICROBENCH_CASES = Object.freeze({
 export type CloudShellMicrobenchCaseId = keyof typeof CLOUD_SHELL_MICROBENCH_CASES;
 export type CloudShellMicrobenchDecision =
   | "EARLY_KILL"
+  | "EARLY_REPRESENTATION_FAIL"
   | "MICROBENCH_OVER_BUDGET"
   | "MICROBENCH_VIABLE";
 
@@ -37,8 +38,12 @@ export function resolveCloudShellMicrobenchCheckpoint({
   timerSupported,
   visualPassingCaseP95Ms
 }: CloudShellMicrobenchCheckpointInput): CloudShellMicrobenchDecision {
-  if (!coordinatePass || !hdrColorPass || !microVisualPass || !timerSupported) {
+  if (!coordinatePass || !hdrColorPass || !timerSupported) {
     return "EARLY_KILL";
+  }
+
+  if (!microVisualPass) {
+    return "EARLY_REPRESENTATION_FAIL";
   }
 
   if (visualPassingCaseP95Ms.length === 0 ||

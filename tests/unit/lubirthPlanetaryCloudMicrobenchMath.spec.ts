@@ -15,6 +15,16 @@ interface PlanetaryCloudMathModule {
     directionEcefPerWorldUnit: Vector3,
     radiusEcef: number
   ): { near: number; far: number } | null;
+  resolveCloudShellWorldSegment(
+    outerInterval: { near: number; far: number } | null,
+    innerInterval: { near: number; far: number } | null
+  ): { enter: number; exit: number } | null;
+  resolveForwardCloudShellLightDistance(
+    originEcef: Vector3,
+    directionEcefPerWorldUnit: Vector3,
+    cloudBaseRadiusEcef: number,
+    outerRadiusEcef: number
+  ): number;
   transformWorldRayToEcefParameterization(
     originWorld: Vector3,
     directionWorld: Vector3,
@@ -39,7 +49,7 @@ interface CloudShellMicrobenchContractModule {
     microVisualPass: boolean;
     timerSupported: boolean;
     visualPassingCaseP95Ms: Array<{ caseId: string; p95Ms: number }>;
-  }): "EARLY_KILL" | "MICROBENCH_OVER_BUDGET" | "MICROBENCH_VIABLE";
+  }): "EARLY_KILL" | "EARLY_REPRESENTATION_FAIL" | "MICROBENCH_OVER_BUDGET" | "MICROBENCH_VIABLE";
 }
 
 interface CloudShellMicrobenchShaderModule {
@@ -136,6 +146,45 @@ test("raySphereIntervalGeneral preserves world-distance t for a non-unit ECEF ra
   );
 
   expect(interval).toEqual({ near: 1, far: 5 });
+});
+
+test("forward cloud-shell light distance reaches the real radial, oblique, and tangent exits", async () => {
+  const math = await loadPlanetaryCloudMath();
+
+  expect(typeof math?.resolveForwardCloudShellLightDistance).toBe("function");
+  const origin = new Vector3(11, 0, 0);
+  const radialOut = math!.resolveForwardCloudShellLightDistance(
+    origin,
+    new Vector3(1, 0, 0),
+    10,
+    20
+  );
+  const obliqueIntoCloudBase = math!.resolveForwardCloudShellLightDistance(
+    origin,
+    new Vector3(-1, 1, 0).normalize(),
+    10,
+    20
+  );
+  const tangent = math!.resolveForwardCloudShellLightDistance(
+    origin,
+    new Vector3(0, 1, 0),
+    10,
+    20
+  );
+
+  expect(radialOut).toBeCloseTo(9, 6);
+  expect(obliqueIntoCloudBase).toBeCloseTo(11 / Math.sqrt(2) - Math.sqrt(79 / 2), 6);
+  expect(tangent).toBeCloseTo(Math.sqrt(279), 6);
+});
+
+test("cloud-shell segment advances its entry after exiting the inner sphere", async () => {
+  const math = await loadPlanetaryCloudMath();
+
+  expect(typeof math?.resolveCloudShellWorldSegment).toBe("function");
+  expect(math!.resolveCloudShellWorldSegment(
+    { near: -8, far: 12 },
+    { near: -4, far: 3 }
+  )).toEqual({ enter: 3, exit: 12 });
 });
 
 test("buildLuBirthWorldToEcef holds a translated, rotated, uniformly scaled Earth at the ECEF radius", async () => {
@@ -321,6 +370,13 @@ test("cloud-shell microbenchmark freezes the three approved step cases and early
       { caseId: "32/2", p95Ms: 3.8 }
     ]
   })).toBe("MICROBENCH_VIABLE");
+  expect(contract!.resolveCloudShellMicrobenchCheckpoint({
+    coordinatePass: true,
+    hdrColorPass: true,
+    microVisualPass: false,
+    timerSupported: true,
+    visualPassingCaseP95Ms: []
+  })).toBe("EARLY_REPRESENTATION_FAIL");
 });
 
 test("cloud-shell shader keeps the general ray parameter and world-depth clamp contract", async () => {

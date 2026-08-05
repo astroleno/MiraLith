@@ -7,6 +7,11 @@ export interface RaySphereInterval {
   far: number;
 }
 
+export interface CloudShellWorldSegment {
+  enter: number;
+  exit: number;
+}
+
 const RAY_QUADRATIC_EPSILON = 1e-12;
 const WORLD_SCALE_EPSILON = 1e-4;
 const localYUpToEcefZUp = new Matrix4().makeRotationX(Math.PI / 2);
@@ -128,4 +133,84 @@ export function raySphereIntervalGeneral(
   const near = (-halfB - root) / a;
   const far = (-halfB + root) / a;
   return Number.isFinite(near) && Number.isFinite(far) ? { near, far } : null;
+}
+
+/**
+ * Selects the first positive segment of an outer sphere after the inner sphere
+ * has carved out the opaque/clear interior. The returned parameter is always
+ * in world-space distance units when the input ray came from the scale bridge.
+ */
+export function resolveCloudShellWorldSegment(
+  outerInterval: RaySphereInterval | null,
+  innerInterval: RaySphereInterval | null
+): CloudShellWorldSegment | null {
+  if (!outerInterval || !Number.isFinite(outerInterval.near) ||
+    !Number.isFinite(outerInterval.far) || outerInterval.far <= 0) {
+    return null;
+  }
+
+  let enter = Math.max(outerInterval.near, 0);
+  let exit = outerInterval.far;
+  if (innerInterval) {
+    if (innerInterval.near > enter) {
+      exit = Math.min(exit, innerInterval.near);
+    } else if (innerInterval.far > enter) {
+      enter = Math.max(enter, innerInterval.far);
+    }
+  }
+
+  return Number.isFinite(enter) && Number.isFinite(exit) && exit > enter
+    ? { enter, exit }
+    : null;
+}
+
+/**
+ * Returns how far a cloud sample can see towards the sun while staying in its
+ * first cloud-shell segment. Rays that enter the cloud-base sphere terminate
+ * there: marching through the planet to an opposite shell is not physical.
+ */
+export function resolveForwardCloudShellLightDistance(
+  originEcef: Vector3,
+  directionEcefPerWorldUnit: Vector3,
+  cloudBaseRadiusEcef: number,
+  outerRadiusEcef: number
+) {
+  if (!Number.isFinite(cloudBaseRadiusEcef) || !Number.isFinite(outerRadiusEcef) ||
+    cloudBaseRadiusEcef <= 0 || outerRadiusEcef <= cloudBaseRadiusEcef) {
+    return 0;
+  }
+
+  const outerInterval = raySphereIntervalGeneral(
+    originEcef,
+    directionEcefPerWorldUnit,
+    outerRadiusEcef
+  );
+  if (!outerInterval || outerInterval.far <= 0) {
+    return 0;
+  }
+
+  const enter = Math.max(outerInterval.near, 0);
+  const exit = outerInterval.far;
+  if (exit <= enter) {
+    return 0;
+  }
+
+  const cloudBaseInterval = raySphereIntervalGeneral(
+    originEcef,
+    directionEcefPerWorldUnit,
+    cloudBaseRadiusEcef
+  );
+  if (!cloudBaseInterval) {
+    return exit - enter;
+  }
+
+  if (cloudBaseInterval.near > enter && cloudBaseInterval.near < exit) {
+    return cloudBaseInterval.near - enter;
+  }
+
+  if (cloudBaseInterval.far > enter) {
+    return 0;
+  }
+
+  return exit - enter;
 }
