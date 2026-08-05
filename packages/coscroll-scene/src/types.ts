@@ -88,6 +88,25 @@ export interface CoScrollRotationSignalRef {
   current: CoScrollRotationSignal;
 }
 
+/**
+ * Review-only bridge fixture for the source anchor. The primary GLB stays opaque; these values
+ * configure a separate blue particle residue layer. `particleization` is a source-side cutout
+ * plus particle handoff: it never lowers GLB alpha. This does not implement or imply a terminal.
+ */
+export interface CoScrollAnchorResidueConfig {
+  color?: string;
+  intensity?: number;
+  particleCount?: number;
+  historySeconds?: number;
+  targetSize?: number;
+  /** 0–1 opaque-cutout / blue-particle handoff driven by an explicit caller. */
+  particleization?: number;
+  /** Local review-only playback; never enabled by production scene configuration. */
+  reviewAutoParticleization?: boolean;
+  /** Local review-only signal fired at the exact first target-phase frame before video takes over. */
+  onReviewHandoff?: () => void;
+}
+
 export interface CoScrollSceneContentProps {
   progress: number;
   active: boolean;
@@ -98,6 +117,8 @@ export interface CoScrollSceneContentProps {
   scrollVelocity?: number;
   paused?: boolean;
   viewport?: "desktop" | "mobile";
+  anchorResidue?: CoScrollAnchorResidueConfig;
+  rotationSignalRef?: CoScrollRotationSignalRef;
   readinessGeneration?: string;
   onReadinessGenerationChange?: (readinessGeneration: string) => void;
   onReady?: (readinessGeneration?: string) => void;

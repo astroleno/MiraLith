@@ -650,43 +650,28 @@ test("coscroll spike exposes review DOM and site-owned fallback", async ({ page 
   await expect(page.locator("audio, video")).toHaveCount(0);
 });
 
-test("coscroll fallback uses a real poster layer", async ({ page }) => {
+test("coscroll fallback uses a designed DOM poster layer", async ({ page }) => {
   await page.goto("/coscroll-spike?visual=fallback");
   const fallback = page.locator('[data-visual-fallback="coscroll"]');
+  const fallbackMark = fallback.locator(".coscroll-section__fallback-mark");
   await expect(fallback).toBeVisible();
+  await expect(fallbackMark).toBeVisible();
+  await expect(fallbackMark).toHaveText("心");
 
   const backgroundImage = await fallback.evaluate((element) => getComputedStyle(element).backgroundImage);
-  expect(backgroundImage).toContain("coscroll-poster.webp");
-
-  const poster = await page.evaluate(async () => {
-    const response = await fetch("/assets/coscroll/posters/coscroll-poster.webp");
-    const bytes = await response.arrayBuffer();
-    const image = new Image();
-    image.src = URL.createObjectURL(new Blob([bytes], { type: "image/webp" }));
-    await image.decode();
-    return {
-      bytes: bytes.byteLength,
-      width: image.naturalWidth,
-      height: image.naturalHeight
-    };
-  });
-
-  expect(poster.bytes).toBeGreaterThanOrEqual(30_000);
-  expect(poster.width).toBeGreaterThanOrEqual(1_000);
-  expect(poster.height).toBeGreaterThanOrEqual(560);
+  expect(backgroundImage).toContain("radial-gradient");
+  expect(backgroundImage).toContain("repeating-linear-gradient");
 
   const globals = await readProjectFile("apps/site/app/globals.css");
   const coscrollFallbackRule = globals.match(/\.visual-canvas-fallback\[data-visual-fallback="coscroll"\]\s*\{[\s\S]*?\n\}/)?.[0] ?? "";
-  expect(coscrollFallbackRule).toContain("--visual-fallback-poster");
-  expect(coscrollFallbackRule).not.toMatch(/\bbackground\s*:/);
+  expect(coscrollFallbackRule).toContain("place-items: center");
+  expect(coscrollFallbackRule).toContain("#010205");
 });
 
-test("homepage keeps CoScroll behind a shared scene arbiter and off the first screen", async ({ page }) => {
-  const [{ existsSync }, path] = await Promise.all([import("node:fs"), import("node:path")]);
-
-  expect(existsSync(path.join(repoRoot, "apps/site/visual/scenes/HomeVisualSceneSlot.tsx"))).toBe(true);
-  expect(existsSync(path.join(repoRoot, "apps/site/visual/scenes/CoScrollSceneSlot.tsx"))).toBe(true);
-  expect(await readProjectFile("apps/site/components/MiraLithHome.tsx")).toContain("HomeVisualSceneSlot");
+test("homepage keeps CoScroll route-isolated and off the first screen", async ({ page }) => {
+  const homePage = await readProjectFile("apps/site/app/page.tsx");
+  expect(homePage).toContain("LuBirthRevisedRoute");
+  expect(homePage).not.toContain("CoScrollSpikeExperience");
 
   const coscrollRequests: string[] = [];
   page.on("request", (request) => {
@@ -697,42 +682,41 @@ test("homepage keeps CoScroll behind a shared scene arbiter and off the first sc
   });
 
   await page.goto("/");
-  await expect(page.locator(".visual-canvas")).toHaveCount(1);
   await expect(page.locator("canvas")).toHaveCount(1);
-  const section = page.locator(".coscroll-section");
-  await expect(section).toHaveCount(1);
-  await expect(section).toBeVisible();
-  expect(await readHomepageCoScrollState(page)).toMatchObject({
-    hasCanvasLayer: true,
-    hasSection: true,
-    sectionInViewport: false
-  });
+  await expect(page.locator(".coscroll-section")).toHaveCount(0);
+  await expect(page.locator('a[href="/coscroll"]').first()).toBeAttached();
   expect(coscrollRequests).toEqual([]);
-
-  await scrollHomepageCoScrollIntoView(page);
-  const scrolledState = await readHomepageCoScrollState(page);
-  expect(scrolledState.sectionInViewport).toBe(true);
-  expect(scrolledState.sectionZIndex).toBeGreaterThan(scrolledState.canvasZIndex);
 });
 
-test("coscroll first pass ships only three lightweight anchor models", async () => {
+test("coscroll source match ships the bounded OBJ anchor set", async () => {
   const [{ readdirSync, statSync }, path] = await Promise.all([import("node:fs"), import("node:path")]);
-  const anchorDir = path.join(repoRoot, "apps/site/public/assets/coscroll/anchors");
-  const anchors = readdirSync(anchorDir).filter((file) => file.endsWith(".glb")).sort();
+  const anchorDir = path.join(repoRoot, "apps/site/public/assets/coscroll/source-models");
+  const anchors = readdirSync(anchorDir).filter((file) => file.endsWith(".obj")).sort();
 
-  expect(anchors).toEqual(["dao.glb", "kong.glb", "xin.glb"]);
+  expect(anchors).toEqual([
+    "001_空.obj",
+    "002_心.obj",
+    "003_道.obj",
+    "007_明.obj",
+    "008_悟.obj",
+    "009_真.obj",
+    "012_无.obj",
+    "019_生.obj",
+    "020_死.obj",
+    "022_法.obj",
+    "045_苦.obj",
+    "094_色.obj",
+    "101_观.obj"
+  ]);
 
   for (const anchor of anchors) {
     const stat = statSync(path.join(anchorDir, anchor));
-    expect(stat.size).toBeLessThanOrEqual(350_000);
+    expect(stat.size).toBeLessThanOrEqual(1_800_000);
   }
 
   const manifest = await readProjectFile("packages/coscroll-scene/src/assetManifest.ts");
-  expect(manifest).toContain("dao.glb");
-  expect(manifest).toContain("kong.glb");
-  expect(manifest).toContain("xin.glb");
-  expect(manifest).not.toContain("guan.glb");
-  expect(manifest).not.toContain("wu2.glb");
+  expect(manifest).toContain('"观": "/assets/coscroll/source-models/101_观.obj"');
+  expect(manifest).toContain("SOURCE_COSCROLL_EXCERPT_ASSETS");
 });
 
 test("coscroll scene stays canvasless without blocking source-match palette", async () => {
@@ -920,7 +904,8 @@ test("coscroll jade source material preserves the original blue-jade dual shell"
   expect(jade).not.toContain("rimOpacity");
   expect(jade).toContain("outerOffset: 0.001");
   expect(jade).not.toContain("useGLTF");
-  expect(sceneContent).toContain("preloadCoScrollAnchorGeometry(anchor.modelSrc, true)");
+  expect(sceneContent).toContain("preloadCoScrollAnchorGeometry(currentAnchorAsset.modelSrc, true)");
+  expect(sceneContent).not.toContain("assets.anchors.forEach");
   expect(sceneContent).not.toContain("key={currentAnchorAsset.id}");
   expect(sceneContent).not.toContain("key={currentAnchorAsset.modelSrc}");
   expect(sceneContent).toContain("listenToScrollInput={!sourceMatchMode}");
@@ -1046,7 +1031,7 @@ test("coscroll source-match mode uses the original OBJ anchor model set", async 
   expect(existsSync(path.join(repoRoot, "apps/site/public/assets/coscroll/textures/qwantani_moon_noon_puresky_1k.hdr"))).toBe(true);
   expect(existsSync(path.join(repoRoot, "apps/site/public/assets/coscroll/textures/normal.jpg"))).toBe(true);
   expect(globals).not.toContain("runzhi-kangxi.ttf");
-  expect(billboard).toContain("loadSourceFont");
+  expect(billboard).toContain("preloadCoScrollSourceFont");
   expect(billboard).toContain("sourceFont");
 
   const requestedAssets: string[] = [];
@@ -1377,18 +1362,15 @@ test("coscroll source-match mobile route still renders the source asset stack", 
   expect(requestedAssets.some((url) => url.includes("qwantani_moon_noon_puresky_1k.hdr"))).toBe(true);
 });
 
-test("coscroll homepage placeholder documents source-match reset", async () => {
-  const home = await readProjectFile("apps/site/components/MiraLithHome.tsx");
-  const globals = await readProjectFile("apps/site/app/globals.css");
-  const nextPlan = await readProjectFile("docs/coscroll-implementation-plan/NEXT_STEPS_PLAN.md");
+test("formal CoScroll stays on its source-match chapter route", async () => {
+  const homePage = await readProjectFile("apps/site/app/page.tsx");
+  const coscrollPage = await readProjectFile("apps/site/app/coscroll/page.tsx");
 
-  expect(home).toContain('data-coscroll-stage="placeholder"');
-  expect(nextPlan).toContain("temporary placeholder");
-  expect(nextPlan).toContain("source-match gate");
-
-  const homeSectionRule = globals.match(/\.coscroll-section--home\s*\{[\s\S]*?\n\}/)?.[0] ?? "";
-  expect(homeSectionRule).toContain("#202734");
-  expect(homeSectionRule).not.toContain("199, 176, 107");
+  expect(homePage).not.toContain("CoScrollSpikeExperience");
+  expect(coscrollPage).toContain("CoScrollSpikeExperience");
+  expect(coscrollPage).toContain("sourceMatch");
+  expect(coscrollPage).toContain("chapterNavigation");
+  expect(coscrollPage).toContain("resolveCoScrollSourceExcerptAssets");
 });
 
 test("shared canvas camera changes are guarded by active scene state", async () => {

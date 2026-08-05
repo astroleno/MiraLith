@@ -1,4 +1,5 @@
 export { CoScrollJadeAnchor } from "./CoScrollJadeAnchor";
+export { CoScrollAnchorResidue } from "./CoScrollAnchorResidue";
 export { CoScrollCausticLightField } from "./CoScrollCausticLightField";
 export { CoScrollSceneContent } from "./CoScrollSceneContent";
 export { CoScrollStandaloneDemo } from "./CoScrollStandaloneDemo";
@@ -6,6 +7,7 @@ export { CoScrollSilkBackground } from "./CoScrollSilkBackground";
 export { CoScrollMineralField } from "./CoScrollMineralField";
 export { CoScrollTextBillboard } from "./CoScrollTextBillboard";
 export { preloadCoScrollOpeningAssets } from "./preloadCoScrollAssets";
+export { preloadCoScrollSourceFont } from "./CoScrollTextBillboard";
 export {
   DEFAULT_COSCROLL_ASSETS,
   SOURCE_COSCROLL_EXCERPT_ASSETS,
@@ -24,11 +26,14 @@ export {
 } from "./sourceTimeline";
 export type {
   CoScrollAnchorAsset,
+  CoScrollAnchorResidueConfig,
   CoScrollAnchorCue,
   CoScrollAnchorId,
   CoScrollAssetManifest,
   CoScrollFallbackMode,
   CoScrollFallbackReason,
+  CoScrollRotationSignal,
+  CoScrollRotationSignalRef,
   CoScrollLyricSegment,
   CoScrollSceneContentProps,
   CoScrollTimelineConfig,

@@ -9,7 +9,13 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { TessellateModifier } from "three/examples/jsm/modifiers/TessellateModifier.js";
 import { mergeVertices, toCreasedNormals } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import type { CoScrollAnchorAsset, CoScrollFallbackReason, CoScrollRotationSignalRef } from "./types";
+import { CoScrollAnchorResidue } from "./CoScrollAnchorResidue";
+import type {
+  CoScrollAnchorAsset,
+  CoScrollAnchorResidueConfig,
+  CoScrollFallbackReason,
+  CoScrollRotationSignalRef
+} from "./types";
 
 interface CoScrollJadeAnchorProps {
   modelSrc: string;
@@ -25,6 +31,9 @@ interface CoScrollJadeAnchorProps {
   maxRotationPerFrame?: number;
   deterministicPose?: boolean;
   sourceMaterial?: boolean;
+  active?: boolean;
+  viewport?: "desktop" | "mobile";
+  residue?: CoScrollAnchorResidueConfig;
   rotationSignalRef?: CoScrollRotationSignalRef;
   renderOrder?: number;
   listenToScrollInput?: boolean;
@@ -95,6 +104,91 @@ let rawEnvironmentTexturePromise: Promise<THREE.DataTexture | null> | null = nul
 let normalTexturePromise: Promise<THREE.Texture | null> | null = null;
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+// Local-review timing only. The blue open ring is a distinct, readable beat before it warms
+// into the ArtBreeze target ring; production wiring remains intentionally absent.
+const REVIEW_PARTICLEIZATION_HOLD_SECONDS = 0.45;
+const REVIEW_PARTICLEIZATION_STAGES = [
+  // Opaque rotating glyph → blue particles.
+  { duration: 1.8, from: 0, to: 0.56 },
+  // Blue particles → complete blue open ring.
+  { duration: 0.8, from: 0.56, to: 0.848 },
+  // Complete blue ring remains visibly blue before any warmth is allowed.
+  { duration: 0.9, from: 0.848, to: 0.888 },
+  // A short colour crossover: this is the last web-owned frame before the video cut.
+  { duration: 0.32, from: 0.888, to: 0.954 },
+  // Exact n=355 proxy-start phase alignment; n=359 remains the geometry measurement fixture.
+  // The review sample cuts to ArtBreeze immediately after this.
+  { duration: 0.08, from: 0.954, to: 1 }
+] as const;
+
+function resolveReviewParticleization(elapsedSeconds: number) {
+  let remaining = Math.max(0, elapsedSeconds - REVIEW_PARTICLEIZATION_HOLD_SECONDS);
+  for (const stage of REVIEW_PARTICLEIZATION_STAGES) {
+    if (remaining <= stage.duration) {
+      return stage.from + (stage.to - stage.from) * (remaining / stage.duration);
+    }
+    remaining -= stage.duration;
+  }
+  return 1;
+}
+
+interface ParticleCutoutUniforms {
+  uParticleization: { value: number };
+}
+
+const PARTICLE_CUTOUT_FRAGMENT_PARS = `
+float particleCutoutHash(vec3 value) {
+  value = fract(value * 0.1031);
+  value += dot(value, value.yzx + 33.33);
+  return fract((value.x + value.y) * value.z);
+}
+`;
+
+const PARTICLE_CUTOUT_FRAGMENT = `
+  float particleCutoutEdge = pow(
+    1.0 - abs(dot(normalize(normal), normalize(vViewPosition))),
+    1.25
+  );
+  float particleCutoutNoise = particleCutoutHash(floor(vParticleObjectPosition * 10.0));
+  float particleCutoutThreshold = mix(0.88, 0.14, particleCutoutEdge);
+  particleCutoutThreshold += (particleCutoutNoise - 0.5) * 0.25;
+  particleCutoutThreshold = clamp(particleCutoutThreshold, 0.035, 0.975);
+  if (uParticleization > particleCutoutThreshold || uParticleization > 0.995) discard;
+`;
+
+function applyOpaqueParticleCutout(
+  material: THREE.MeshPhysicalMaterial,
+  uniforms: ParticleCutoutUniforms
+) {
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uParticleization = uniforms.uParticleization;
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        "varying vec3 vViewPosition;",
+        "varying vec3 vViewPosition;\nvarying vec3 vParticleObjectPosition;"
+      )
+      .replace(
+        "#include <begin_vertex>",
+        "#include <begin_vertex>\nvParticleObjectPosition = transformed;"
+      );
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        "varying vec3 vViewPosition;",
+        `varying vec3 vViewPosition;
+uniform float uParticleization;
+varying vec3 vParticleObjectPosition;
+${PARTICLE_CUTOUT_FRAGMENT_PARS}`
+      )
+      .replace(
+        "#include <normal_fragment_maps>",
+        `#include <normal_fragment_maps>
+${PARTICLE_CUTOUT_FRAGMENT}`
+      );
+  };
+  material.customProgramCacheKey = () => "miralith-coscroll-opaque-particle-cutout-v1";
+  material.needsUpdate = true;
+}
 
 function createFallbackAnchorGeometry() {
   const group = new THREE.Group();
@@ -363,6 +457,9 @@ export function CoScrollJadeAnchor({
   maxRotationPerFrame = 0.09,
   deterministicPose = false,
   sourceMaterial = false,
+  active = true,
+  viewport = "desktop",
+  residue,
   rotationSignalRef,
   renderOrder = 2000,
   listenToScrollInput = true,
@@ -376,7 +473,12 @@ export function CoScrollJadeAnchor({
   const smoothedManualVelocityRef = useRef(0);
   const lastTouchYRef = useRef(0);
   const { gl, scene } = useThree();
-  const [prepared, setPrepared] = useState<PreparedAnchorGeometry | null>(null);
+  const preparedKey = `${modelSrc}|${sourceMaterial ? "source" : "default"}`;
+  const [preparedState, setPreparedState] = useState<{
+    key: string;
+    value: PreparedAnchorGeometry;
+  } | null>(null);
+  const prepared = preparedState?.key === preparedKey ? preparedState.value : null;
   const [environmentMap, setEnvironmentMap] = useState<THREE.Texture | null>(null);
   const [normalMap, setNormalMap] = useState<THREE.Texture | null>(null);
   const [materialAssetsState, setMaterialAssetsState] = useState<"pending" | "ready" | "failed">(
@@ -384,6 +486,21 @@ export function CoScrollJadeAnchor({
   );
   const readyReportedRef = useRef(false);
   const preset = sourceMaterial ? SOURCE_JADE_MATERIAL : jadeMaterialPresets[materialPreset];
+  const configuredParticleization = clamp(residue?.particleization ?? 0, 0, 1);
+  const reviewAutoParticleization = Boolean(residue?.reviewAutoParticleization);
+  const particleizationRef = useRef(configuredParticleization);
+  const particleizationElapsedRef = useRef(0);
+  const particleCutoutUniforms = useMemo<ParticleCutoutUniforms>(
+    () => ({ uParticleization: { value: configuredParticleization } }),
+    []
+  );
+  const particleCutoutEnabled = sourceMaterial && residue !== undefined;
+
+  useEffect(() => {
+    particleizationRef.current = reviewAutoParticleization ? 0 : configuredParticleization;
+    particleizationElapsedRef.current = 0;
+    particleCutoutUniforms.uParticleization.value = particleizationRef.current;
+  }, [configuredParticleization, modelSrc, particleCutoutUniforms, reviewAutoParticleization]);
 
   useEffect(() => {
     let cancelled = false;
@@ -394,7 +511,7 @@ export function CoScrollJadeAnchor({
         return;
       }
 
-      setPrepared(nextPrepared);
+      setPreparedState({ key: preparedKey, value: nextPrepared });
       if (nextPrepared.fallback) {
         onFallback?.("asset-failed");
       }
@@ -403,7 +520,7 @@ export function CoScrollJadeAnchor({
     return () => {
       cancelled = true;
     };
-  }, [modelSrc, onFallback, onReady, sourceMaterial]);
+  }, [modelSrc, onFallback, preparedKey, sourceMaterial]);
 
   useEffect(() => {
     if (!sourceMaterial) {
@@ -436,7 +553,7 @@ export function CoScrollJadeAnchor({
       scene.environment = previousEnvironment;
       scene.environmentIntensity = previousEnvironmentIntensity;
     };
-  }, [gl, scene, sourceMaterial]);
+  }, [gl, onFallback, scene, sourceMaterial]);
 
   useEffect(() => {
     if (!prepared || materialAssetsState === "pending" || readyReportedRef.current) {
@@ -501,8 +618,8 @@ export function CoScrollJadeAnchor({
       emissive: new THREE.Color(preset.innerEmissive),
       emissiveIntensity: preset.innerEmissiveIntensity,
       envMapIntensity: preset.innerEnvMapIntensity,
-      transparent: preset.innerOpacity < 1,
-      opacity: preset.innerOpacity,
+      transparent: sourceMaterial ? false : preset.innerOpacity < 1,
+      opacity: sourceMaterial ? 1 : preset.innerOpacity,
       depthWrite: true,
       clearcoat: 0,
       clearcoatRoughness: 1,
@@ -516,9 +633,12 @@ export function CoScrollJadeAnchor({
       material.normalScale = new THREE.Vector2(preset.normalScale, preset.normalScale);
       normalMap.repeat.set(preset.normalRepeat, preset.normalRepeat);
     }
+    if (particleCutoutEnabled) {
+      applyOpaqueParticleCutout(material, particleCutoutUniforms);
+    }
 
     return material;
-  }, [environmentMap, normalMap, preset]);
+  }, [environmentMap, normalMap, particleCutoutEnabled, particleCutoutUniforms, preset, sourceMaterial]);
 
   const outerMaterial = useMemo(() => {
     const opacity = preset.outerOpacity ?? 1;
@@ -533,9 +653,9 @@ export function CoScrollJadeAnchor({
       clearcoat: preset.outerClearcoat,
       clearcoatRoughness: preset.outerClearcoatRoughness,
       envMapIntensity: preset.outerEnvMapIntensity,
-      transparent: opacity < 1,
-      opacity,
-      depthWrite: opacity >= 1,
+      transparent: sourceMaterial ? false : opacity < 1,
+      opacity: sourceMaterial ? 1 : opacity,
+      depthWrite: sourceMaterial || opacity >= 1,
       toneMapped: true
     });
     if (environmentMap) {
@@ -546,9 +666,12 @@ export function CoScrollJadeAnchor({
       material.normalScale = new THREE.Vector2(preset.normalScale, preset.normalScale);
       normalMap.repeat.set(preset.normalRepeat, preset.normalRepeat);
     }
+    if (particleCutoutEnabled) {
+      applyOpaqueParticleCutout(material, particleCutoutUniforms);
+    }
 
     return material;
-  }, [environmentMap, normalMap, preset]);
+  }, [environmentMap, normalMap, particleCutoutEnabled, particleCutoutUniforms, preset, sourceMaterial]);
 
   const fallbackMaterial = useMemo(
     () =>
@@ -580,6 +703,17 @@ export function CoScrollJadeAnchor({
   }, [fallbackMaterial, innerMaterial, outerMaterial]);
 
   useFrame((_state, delta) => {
+    if (reviewAutoParticleization && !paused && !reducedMotion) {
+      particleizationElapsedRef.current += delta;
+      particleizationRef.current = resolveReviewParticleization(particleizationElapsedRef.current);
+    } else if (!reviewAutoParticleization) {
+      particleizationRef.current += (configuredParticleization - particleizationRef.current) * Math.min(1, delta * 12);
+    }
+    // Hold the GLB's true yaw through the whole visible dissolution. The latter part of the
+    // bridge is reserved for its already-blue particles regrouping into the target open ring.
+    const cutoutProgress = clamp(particleizationRef.current / 0.56, 0, 1);
+    particleCutoutUniforms.uParticleization.value = cutoutProgress;
+
     if (!anchorGroup.current) {
       if (rotationSignalRef) {
         rotationSignalRef.current.speed = 0;
@@ -606,7 +740,14 @@ export function CoScrollJadeAnchor({
         : scrollVelocity * velocityMultiplier;
     const manualInputDisabled = reducedMotion || paused || !listenToScrollInput;
     const manualVelocity = manualInputDisabled ? 0 : smoothedManualVelocityRef.current * velocityMultiplier;
-    targetSpeedRef.current = clamp(reducedMotion || paused ? 0 : baseSpeed + propVelocity + manualVelocity, -maxAngularVelocity, maxAngularVelocity);
+    const particleMomentum = sourceMaterial && residue
+      ? baseDirection * particleizationRef.current * 1.36
+      : 0;
+    targetSpeedRef.current = clamp(
+      reducedMotion || paused ? 0 : baseSpeed + propVelocity + manualVelocity + particleMomentum,
+      -maxAngularVelocity,
+      maxAngularVelocity
+    );
     currentSpeedRef.current += (targetSpeedRef.current - currentSpeedRef.current) * Math.min(1, delta * 8);
 
     const rotationDelta = clamp(currentSpeedRef.current * delta, -maxRotationPerFrame, maxRotationPerFrame);
@@ -627,9 +768,25 @@ export function CoScrollJadeAnchor({
   }
 
   return (
-    <group ref={anchorGroup} position={position} scale={scale} renderOrder={renderOrder}>
-      <primitive object={clonedGeometry.geometry.inner} scale={clonedGeometry.scale} renderOrder={renderOrder} />
-      <primitive object={clonedGeometry.geometry.outer} scale={clonedGeometry.scale} renderOrder={renderOrder + 1} />
+    <group position={position} scale={scale} renderOrder={renderOrder}>
+      {sourceMaterial && residue ? (
+        <CoScrollAnchorResidue
+          source={clonedGeometry.geometry.inner}
+          sourceScale={clonedGeometry.scale}
+          anchorGroup={anchorGroup}
+          active={active}
+          paused={paused}
+          reducedMotion={reducedMotion}
+          viewport={viewport}
+          config={residue}
+          particleizationRef={particleizationRef}
+          renderOrder={renderOrder - 2}
+        />
+      ) : null}
+      <group ref={anchorGroup}>
+        <primitive object={clonedGeometry.geometry.inner} scale={clonedGeometry.scale} renderOrder={renderOrder} />
+        <primitive object={clonedGeometry.geometry.outer} scale={clonedGeometry.scale} renderOrder={renderOrder + 1} />
+      </group>
     </group>
   );
 }

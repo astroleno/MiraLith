@@ -3172,6 +3172,45 @@ body::before {
     linear-gradient(90deg, rgba(5, 3, 2, 0.97) 0%, rgba(5, 3, 2, 0.76) 48%, rgba(5, 3, 2, 0.98) 100%);
 }
 
+.visual-canvas-fallback[data-visual-fallback="coscroll"] {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(79, 128, 150, 0.22), transparent 20%),
+    repeating-linear-gradient(90deg, transparent 0 11.8vw, rgba(165, 208, 226, 0.07) 11.8vw calc(11.8vw + 1px)),
+    linear-gradient(180deg, #02040a 0%, #010205 72%);
+}
+
+.visual-canvas-fallback[data-visual-fallback="coscroll"]::before,
+.visual-canvas-fallback[data-visual-fallback="coscroll"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.visual-canvas-fallback[data-visual-fallback="coscroll"]::before {
+  background: linear-gradient(90deg, transparent 8%, rgba(165, 208, 226, 0.18) 50%, transparent 92%);
+  height: 1px;
+  top: 50%;
+}
+
+.visual-canvas-fallback[data-visual-fallback="coscroll"]::after {
+  background: radial-gradient(ellipse at center, transparent 16%, rgba(0, 0, 0, 0.78) 100%);
+}
+
+.coscroll-section__fallback-mark {
+  position: relative;
+  z-index: 1;
+  color: rgba(218, 235, 241, 0.86);
+  font-family: "Songti SC", "STSong", ui-serif, serif;
+  font-size: clamp(76px, 13vw, 176px);
+  font-weight: 400;
+  line-height: 1;
+  text-shadow: 0 0 52px rgba(92, 160, 185, 0.34);
+}
+
 .radio-gaga-fallback-poster {
   position: fixed;
   right: min(10vw, 136px);

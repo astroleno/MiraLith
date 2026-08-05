@@ -378,8 +378,7 @@ export function CoScrollSpikeExperience({
         fallback={
           <VisualCanvasFallback
             scene="coscroll"
-            label="CoScroll Heart Sutra source poster"
-            posterSrc="/assets/coscroll/posters/coscroll-poster.webp"
+            label="CoScroll Heart Sutra fallback field"
           >
             <span className="coscroll-section__fallback-mark" aria-hidden="true">心</span>
           </VisualCanvasFallback>

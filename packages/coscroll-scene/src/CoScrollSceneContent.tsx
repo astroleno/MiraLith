@@ -60,6 +60,8 @@ export function CoScrollSceneContent({
   scrollVelocity = 0,
   paused = false,
   viewport = "desktop",
+  anchorResidue,
+  rotationSignalRef,
   readinessGeneration = "default",
   onReadinessGenerationChange,
   onReady,
@@ -412,6 +414,10 @@ export function CoScrollSceneContent({
             velocityMultiplier={sourceMatchMode ? -7.5 : undefined}
             deterministicPose={sourceMatchMode && paused}
             sourceMaterial={sourceMatchMode}
+            active={active}
+            viewport={viewport}
+            residue={sourceMatchMode && state.currentAnchor === "空" ? anchorResidue : undefined}
+            rotationSignalRef={rotationSignalRef}
             renderOrder={sourceMatchMode ? 2600 : undefined}
             listenToScrollInput={!sourceMatchMode}
             onReady={() => markReadyPart("anchor", anchorReadinessGeneration)}
