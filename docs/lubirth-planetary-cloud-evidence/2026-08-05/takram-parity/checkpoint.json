@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-05T19:01:50Z",
+  "baseCommit": "61caac1",
+  "v3InputContract": "V3_INPUT_CONTRACT_PASS",
+  "disposableRenderer": "DISPOSABLE_RENDERER_REJECTED",
+  "stockSetup": "PASS",
+  "upstreamControl": "PASS",
+  "stockOpeningVisual": "STOCK_OPENING_LIMITATION",
+  "v3AdapterVisual": "V3_ADAPTER_VISUAL_FAIL",
+  "candidateCosts": {
+    "stock": "NOT_RUN",
+    "v3": "NOT_RUN"
+  },
+  "promotionEligibleByCandidate": {
+    "stock": false,
+    "v3": false
+  },
+  "nextAuthorizedWork": "NONE",
+  "stopReason": "V3 opening visual gate failed after the spherical weather mapping and four-layer adapter were exercised on the complete native Takram path. No Task 0P cost or promotion conclusion is authorized."
+}

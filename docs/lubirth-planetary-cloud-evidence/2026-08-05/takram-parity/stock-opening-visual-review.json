@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAt": "2026-08-05T17:14:55Z",
-  "baseCommit": "ec959d4",
+  "reviewedAt": "2026-08-05T19:01:50Z",
+  "baseCommit": "61caac1",
   "upstreamControl": "PASS",
   "decision": "STOCK_OPENING_LIMITATION",
   "scope": "Task 0T unmodified Takram stock input in the Task -1R LuBirth opening mirror. This decision does not evaluate the V3 adapter.",
@@ -26,19 +26,19 @@
   "captures": {
     "contactSheet": {
       "path": "stock-opening-contact-sheet.png",
-      "sha256": "def93046fbb80ebb34548b6778f8b32114f6641f7932d1c8f5db6040c30cd1ad"
+      "sha256": "95fe9bc16778aabea41e9701ec2db15457eb3b4a2370adf19b3cc285d907fc94"
     },
     "fullByProgress": {
-      "0.00": "captures/opening-0-00-full.png",
-      "0.06": "captures/opening-0-06-full.png",
-      "0.12": "captures/opening-0-12-full.png",
-      "0.18": "captures/opening-0-18-full.png"
+      "0.00": "captures/opening-stock-0-00-full.png",
+      "0.06": "captures/opening-stock-0-06-full.png",
+      "0.12": "captures/opening-stock-0-12-full.png",
+      "0.18": "captures/opening-stock-0-18-full.png"
     },
     "rawCloudByProgress": {
-      "0.00": "captures/opening-0-00-cloud-raw.png",
-      "0.06": "captures/opening-0-06-cloud-raw.png",
-      "0.12": "captures/opening-0-12-cloud-raw.png",
-      "0.18": "captures/opening-0-18-cloud-raw.png"
+      "0.00": "captures/opening-stock-0-00-cloud-raw.png",
+      "0.06": "captures/opening-stock-0-06-cloud-raw.png",
+      "0.12": "captures/opening-stock-0-12-cloud-raw.png",
+      "0.18": "captures/opening-stock-0-18-cloud-raw.png"
     }
   },
   "checks": [
@@ -70,8 +70,8 @@
   ],
   "classificationRationale": "The upstream near-ground stock control passes with the same renderer fingerprint and assets, while this opening uses the known unsupported stock envelope: cube-sphere local weather mapping, local repeat [100,100], default 0.75–8 km layers, and a space-view/global framing. The absence of a readable stock cloud volume is therefore input/mapping/framing-specific, not evidence of an input-independent native depth, BSM, resolve, or AerialPerspective failure.",
   "reproduction": {
-    "command": "MIRALITH_TAKRAM_PARITY_CAPTURE=1 pnpm exec playwright test tests/e2e/lubirth-takram-parity-visual.spec.ts --project=desktop --grep 'stock opening keeps'",
-    "result": "PASS (4 opening frames x full/raw)"
+    "command": "MIRALITH_TAKRAM_PARITY_CAPTURE=1 pnpm exec playwright test tests/e2e/lubirth-takram-parity-visual.spec.ts --project=desktop --workers=1",
+    "result": "PASS (5 control diagnostics + 16 opening frame/diagnostic captures)"
   },
-  "nextAuthorizedWork": "Task 0V — V3 adapter parity is authorized. Task 0P remains locked until a visual-pass candidate exists."
+  "nextAuthorizedWork": "Task 0V completed with V3_ADAPTER_VISUAL_FAIL; Task 0P remains locked because no opening visual-pass candidate exists."
 }

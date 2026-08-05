@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAt": "2026-08-05T17:14:55Z",
-  "baseCommit": "ec959d4",
+  "reviewedAt": "2026-08-05T19:01:50Z",
+  "baseCommit": "61caac1",
   "decision": "PASS",
   "scope": "Task 0T upstream stock visual control only; this is not a LuBirth opening or production-art approval.",
   "route": {
@@ -30,7 +30,9 @@
     "shapeDetail": true,
     "turbulence": true,
     "haze": true,
-    "lightShafts": true,
+    "lightShafts": true
+  },
+  "stockAdapter": {
     "defaultCloudLayers": true,
     "stockWeatherRepeat": [100, 100]
   },
@@ -42,7 +44,7 @@
   "captures": {
     "contactSheet": {
       "path": "upstream-control-contact-sheet.png",
-      "sha256": "6ef736e1b613c64eaef5726512fb8140bcbc55611d73004b28d7f55c68b5ac55"
+      "sha256": "8276ea85206820e8e52960964a11d1e271f3d0098f83fa2fabd5d98774ce2a66"
     },
     "full": "captures/control-full.png",
     "bsmOff": "captures/control-bsm-off.png",

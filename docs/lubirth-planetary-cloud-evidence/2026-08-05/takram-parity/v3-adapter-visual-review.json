@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-08-05T19:01:50Z",
+  "baseCommit": "61caac1",
+  "candidate": "v3",
+  "decision": "V3_ADAPTER_VISUAL_FAIL",
+  "scope": "Task 0V spherical-weather adapter over the complete native Takram Clouds -> temporal resolve -> AerialPerspective path. This decision is specific to the V3 adapter and does not reject Takram or measure cost.",
+  "prerequisites": {
+    "upstreamControl": "PASS",
+    "stockOpeningVisual": "STOCK_OPENING_LIMITATION",
+    "stockOpeningLimitationDoesNotBlockV3": true
+  },
+  "route": {
+    "input": "v3",
+    "view": "opening",
+    "progresses": [0, 0.06, 0.12, 0.18],
+    "viewportCssPixels": [1440, 960],
+    "devicePixelRatio": 1,
+    "playwrightProject": "desktop"
+  },
+  "adapter": {
+    "globalWeatherMapping": true,
+    "disableDefaultLayers": true,
+    "localWeatherSource": "v3",
+    "localWeatherSha256": "ff2b7715cc59a4031a7eb6ff7e77ce52a730996c9dfe9d529dfa25aa01481a9b",
+    "localWeatherRepeat": [1, 1],
+    "localWeatherOffset": [-0.045, 0.018],
+    "localWeatherVelocity": [0, 0],
+    "clearAirThreshold": 0.05,
+    "flipU": true,
+    "flipY": true,
+    "orientation": "equirectangular-y-up-source-to-z-up-ecef",
+    "sourceLayoutId": "v3-r-depth-g-height-b-morphology-a-concavity",
+    "outputLayoutId": "takram-v1-r-base-g-tower-b-structure-a-wisp",
+    "weatherManifest": "apps/site/public/assets/lubirth/takram-parity/v3/manifest.json",
+    "layers": [
+      { "channel": "r", "altitude": 8000, "height": 26000, "densityScale": 0.18, "shapeAmount": 0.7, "shapeDetailAmount": 0.45, "coverageFilterWidth": 0.6, "shadow": true },
+      { "channel": "g", "altitude": 10000, "height": 50000, "densityScale": 0.11, "shapeAmount": 0.85, "shapeDetailAmount": 0.7, "weatherExponent": 1.15, "coverageFilterWidth": 0.52, "shadow": true },
+      { "channel": "b", "altitude": 8000, "height": 36000, "densityScale": 0.06, "shapeAmount": 0.9, "shapeDetailAmount": 0.85, "weatherExponent": 1.2, "coverageFilterWidth": 0.45, "shadow": false },
+      { "channel": "a", "altitude": 18000, "height": 20000, "densityScale": 0.035, "shapeAmount": 0.55, "shapeDetailAmount": 0.25, "weatherExponent": 1.4, "coverageFilterWidth": 0.5, "shadow": false }
+    ]
+  },
+  "nativeRenderer": {
+    "rendererFingerprintHash": "sha256:43c23b5207ad4c05ab08d176dfe05c8f4a7ade00b296b2612912b15f85bd2c7a",
+    "sameFingerprintAsStock": true,
+    "features": {
+      "beerShadowMaps": true,
+      "shapeDetail": true,
+      "turbulence": true,
+      "temporalUpscale": true,
+      "aerialPerspective": true,
+      "haze": true,
+      "lightShafts": true,
+      "qualityPreset": "high",
+      "resolutionScale": 1
+    }
+  },
+  "captures": {
+    "contactSheet": {
+      "path": "opening-parity-contact-sheet.png",
+      "sha256": "2fd467cfa21425a0c5e958fd46d62b8f9e7f75e34e5567363106c006a6273477"
+    },
+    "fullByProgress": {
+      "0.00": { "path": "captures/opening-v3-0-00-full.png", "sha256": "1a30bd812b0bfeb373481ac78afe9b5ef23c5aee639997dfe189c98f5a9d881d" },
+      "0.06": { "path": "captures/opening-v3-0-06-full.png", "sha256": "a54518338739a722c9895ed7e8916c19bc618d88c503cbf8536034ed7ca0d748" },
+      "0.12": { "path": "captures/opening-v3-0-12-full.png", "sha256": "bbf0a5b6671c0e9ffa8ea648a28a5ad5dd8ccceb67aac90a6f2849e6ad44ec3b" },
+      "0.18": { "path": "captures/opening-v3-0-18-full.png", "sha256": "627cb12be61fdf8c7ba1a10a7c2498e29e025d6ff0bfe644218fb2cfc9ed6f21" }
+    },
+    "rawCloudByProgress": {
+      "0.00": { "path": "captures/opening-v3-0-00-cloud-raw.png", "sha256": "8620fe3a8eb62821642f31e0f3f670aa35ae9d77539ba529ea428499d49a6a51" },
+      "0.06": { "path": "captures/opening-v3-0-06-cloud-raw.png", "sha256": "c3e3e9e2ec4afadf90d8d25bae0110aab98e06d89966d5b3062f5e8b40b38c27" },
+      "0.12": { "path": "captures/opening-v3-0-12-cloud-raw.png", "sha256": "d3e8791af003371babad2317132a4964653169f4251e5e587a12443b1fed4c74" },
+      "0.18": { "path": "captures/opening-v3-0-18-cloud-raw.png", "sha256": "d80c18b5b6ab80ce5500e6728d3f460b550dbe66a59d75adc861c9c84e08e2a7" }
+    }
+  },
+  "checks": [
+    {
+      "id": "task-1r-opening-mirror",
+      "result": "PASS",
+      "evidence": "The visual E2E independently recomputes the Task -1R camera, Earth matrix and camera position at all four progress values and matches the route telemetry to 1e-6."
+    },
+    {
+      "id": "v3-input-and-native-path",
+      "result": "PASS",
+      "evidence": "Route E2E confirms only the V3 weather asset is requested, the stock shape/detail/STBN/turbulence assets are retained, globalWeatherMapping=true, repeat=[1,1], the frozen four layers are resolved, and native BSM/temporal/AerialPerspective remain enabled."
+    },
+    {
+      "id": "macro-identity",
+      "result": "FAIL",
+      "evidence": "All four V3 full and raw opening frames show only the opaque Earth plus a thin native atmospheric limb; no V3 weather-driven cloud mass or evolving geographic identity is visible. See the V3 column in opening-parity-contact-sheet.png."
+    },
+    {
+      "id": "clear-air-footprint-visible",
+      "result": "FAIL",
+      "evidence": "The adapter's source-R gate is correct and produces no clear-air cloud hallucination, but the opening frames contain no visible V3 cloud footprint from which the required macro coverage can be reviewed."
+    },
+    {
+      "id": "cloud-ground-attachment",
+      "result": "FAIL",
+      "evidence": "No rendered volume reaches the Earth surface/limb, so cloud-to-ground attachment and planet-relative parallax cannot be established."
+    },
+    {
+      "id": "base-core-top-readability",
+      "result": "FAIL",
+      "evidence": "No V3 cloud volume is present in either raw or full output; base, core, top, depth and self-occlusion are therefore not readable."
+    },
+    {
+      "id": "native-temporal-atmosphere",
+      "result": "PASS",
+      "evidence": "Telemetry and the full composite confirm the shared native temporal and AerialPerspective path is active; the failure is the V3 opening representation, not a native feature being disabled or replaced."
+    },
+    {
+      "id": "continuous-white-shell",
+      "result": "PASS",
+      "evidence": "The V3 frames contain no continuous bright-white shell. This is not counted as a visual pass because the required cloud volume is absent."
+    }
+  ],
+  "classificationRationale": "The upstream control remains a visual PASS and stock opening remains the documented Takram stock space-view/mapping limitation. After the spherical mapping, source-footprint-gated V3 weather transform and four explicit layers are applied, the LuBirth opening still renders no visible V3 cloud volume. This is recorded as V3_ADAPTER_VISUAL_FAIL, not TAKRAM_NATIVE_OPENING_FAIL or a cost conclusion.",
+  "reproduction": {
+    "command": "MIRALITH_TAKRAM_PARITY_CAPTURE=1 pnpm exec playwright test tests/e2e/lubirth-takram-parity-visual.spec.ts --project=desktop --workers=1",
+    "result": "PASS (5 control diagnostics + 16 opening frame/diagnostic captures)"
+  },
+  "nextAuthorizedWork": "NONE",
+  "blockedWork": "Task 0P V3 cost/promotion window is locked because no V3 visual-pass candidate exists. Original Task 0-8 remains locked; this evidence does not reject Takram or authorize a disposable renderer fallback."
+}
