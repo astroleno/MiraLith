@@ -95,12 +95,18 @@ export interface CloudShellMicrobenchTelemetry {
     p50Ms: number | null;
     p95Ms: number | null;
     sampleCount: number;
+    stages: {
+      cloudComposite: { p50Ms: number | null; p95Ms: number | null };
+      densityAndLightRaymarch: { p50Ms: number | null; p95Ms: number | null };
+      resolve: { p50Ms: number | null; p95Ms: number | null };
+    };
     supported: boolean;
   };
   incrementalRtPeakBytes: number;
   measurementState: "awaiting-visual-review" | "warming" | "sampling" | "complete" | "timer-unavailable";
   occluderMode: CloudShellMicrobenchOccluderMode;
   progress: number;
+  representationVersion: "task-1r";
   renderScale: number;
   resolvedSize: [number, number];
   sourceTexture: typeof CLOUD_SHELL_MICROBENCH_V3_SRC;
@@ -810,6 +816,20 @@ export function LuBirthCloudShellMicrobench({
           p50Ms: summary.p50Ms ?? null,
           p95Ms: summary.p95Ms ?? null,
           sampleCount: summary.sampleCount,
+          stages: {
+            cloudComposite: {
+              p50Ms: summary.stages.cloudComposite.p50Ms ?? null,
+              p95Ms: summary.stages.cloudComposite.p95Ms ?? null
+            },
+            densityAndLightRaymarch: {
+              p50Ms: summary.stages.densityAndLightRaymarch.p50Ms ?? null,
+              p95Ms: summary.stages.densityAndLightRaymarch.p95Ms ?? null
+            },
+            resolve: {
+              p50Ms: summary.stages.resolve.p50Ms ?? null,
+              p95Ms: summary.stages.resolve.p95Ms ?? null
+            }
+          },
           supported: Boolean(pipeline.profiler?.supported)
         },
         hdrColorGate: pipeline.hdrColorPass && pipeline.gammaColorPass ? "PASS" : "FAIL",
@@ -817,6 +837,7 @@ export function LuBirthCloudShellMicrobench({
         measurementState,
         occluderMode,
         progress: clampProgress(progress),
+        representationVersion: "task-1r",
         renderScale: CLOUD_SHELL_MICROBENCH_RESOLUTION_SCALE,
         resolvedSize: [width, height],
         sourceTexture: CLOUD_SHELL_MICROBENCH_V3_SRC,

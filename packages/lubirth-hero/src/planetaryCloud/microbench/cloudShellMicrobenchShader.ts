@@ -123,8 +123,9 @@ float remapCoverageToBaseShape(float weatherCoverage, float baseShape) {
   if (weatherCoverage <= EPSILON) {
     return 0.0;
   }
-  float coverageThreshold = 1.0 - clamp(weatherCoverage, 0.0, 1.0);
-  return smoothstep(coverageThreshold - 0.12, coverageThreshold + 0.12, baseShape);
+  // Dense V3 coverage means more cloudlets, never a fully occupied shell.
+  float coverageThreshold = mix(0.92, 0.58, clamp(weatherCoverage, 0.0, 1.0));
+  return smoothstep(coverageThreshold - 0.09, coverageThreshold + 0.09, baseShape);
 }
 
 float cloudDensity(vec3 positionEcef) {
@@ -137,15 +138,21 @@ float cloudDensity(vec3 positionEcef) {
   vec4 weather = texture2D(weatherTexture, getEquirectangularUv(positionEcef));
   float sourceCoverage = weather.r;
   float weatherCoverage = clamp(sourceCoverage, 0.0, 1.0);
-  float cloudTop = mix(0.35, 1.0, weather.g);
+  float cloudTop = mix(0.30, 0.82, weather.g);
+  float baseShape = baseShape3d(positionEcef, shellHeight01);
+  float shapedCloudTop = mix(0.24, cloudTop, baseShape);
   float verticalProfile =
     smoothstep(0.02, 0.12, shellHeight01) *
-    (1.0 - smoothstep(max(0.16, cloudTop - 0.22), cloudTop, shellHeight01));
+    (1.0 - smoothstep(
+      max(0.14, shapedCloudTop - 0.18),
+      shapedCloudTop,
+      shellHeight01
+    ));
   float morphologyGain = mix(0.75, 1.25, weather.b);
   float concavityGain = mix(1.0, 0.72, weather.a);
   float occupancy = remapCoverageToBaseShape(
     weatherCoverage,
-    baseShape3d(positionEcef, shellHeight01)
+    baseShape
   );
   return occupancy * verticalProfile * morphologyGain * concavityGain;
 }

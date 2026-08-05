@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-test.setTimeout(120_000);
+test.setTimeout(600_000);
 
 declare global {
   interface Window {
@@ -15,9 +15,23 @@ declare global {
       earthMatrixWorld: number[];
       earthUniformScale: number;
       gammaGate: "PASS" | "FAIL";
+      gpu: {
+        invalidFrames: number;
+        p50Ms: number | null;
+        p95Ms: number | null;
+        sampleCount: number;
+        stages: {
+          cloudComposite: { p50Ms: number | null; p95Ms: number | null };
+          densityAndLightRaymarch: { p50Ms: number | null; p95Ms: number | null };
+          resolve: { p50Ms: number | null; p95Ms: number | null };
+        };
+        supported: boolean;
+      };
       hdrColorGate: "PASS" | "FAIL";
       incrementalRtPeakBytes: number;
+      measurementState: "awaiting-visual-review" | "warming" | "sampling" | "complete" | "timer-unavailable";
       occluderMode: "none" | "front" | "middle" | "behind";
+      representationVersion: "task-1r";
       renderScale: number;
       resolvedSize: [number, number];
       showSceneDepthClamp: boolean;
@@ -58,6 +72,7 @@ test("planetary cloud microbenchmark is query-only, V3-backed, and free of Takra
     coordinateGate: "PASS",
     gammaGate: "PASS",
     hdrColorGate: "PASS",
+    representationVersion: "task-1r",
     renderScale: 0.5,
     sourceTexture: "/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.png"
   });
@@ -162,7 +177,7 @@ test("GPU depth probe fully, partially, and not-at-all clamps the cloud shell", 
     expect(telemetry?.showSceneDepthClamp).toBe(true);
     if (captureEvidence) {
       await page.locator("canvas").screenshot({
-        path: path.join(evidenceDirectory, `depth-probe-${occluderMode}.png`)
+        path: path.join(evidenceDirectory, `task-1r-depth-probe-${occluderMode}.png`)
       });
     }
     const luminance = await sampleCloudProbeLuminance(page);
@@ -195,6 +210,7 @@ test("microbenchmark exposes the fixed opening matrix and isolated debug buffers
     earthMatrixWorld: number[];
     earthUniformScale: number;
     progress: number;
+    representationVersion: "task-1r";
   }> = [];
 
   for (const caseId of ["24/6", "32/2", "48/6"] as const) {
@@ -220,12 +236,16 @@ test("microbenchmark exposes the fixed opening matrix and isolated debug buffers
           caseId,
           earthMatrixWorld: telemetry.earthMatrixWorld,
           earthUniformScale: telemetry.earthUniformScale,
-          progress
+          progress,
+          representationVersion: telemetry.representationVersion
         });
       }
       if (captureEvidence) {
         await page.locator("canvas").screenshot({
-          path: path.join(evidenceDirectory, `${caseId.replace("/", "-")}-progress-${progress.toFixed(2)}-raw.png`)
+          path: path.join(
+            evidenceDirectory,
+            `${caseId.replace("/", "-")}-task-1r-progress-${progress.toFixed(2)}-raw.png`
+          )
         });
       }
     }
@@ -241,7 +261,10 @@ test("microbenchmark exposes the fixed opening matrix and isolated debug buffers
       ).toBe(true);
       if (captureEvidence) {
         await page.locator("canvas").screenshot({
-          path: path.join(evidenceDirectory, `${caseId.replace("/", "-")}-progress-0.12-${debugMode}.png`)
+          path: path.join(
+            evidenceDirectory,
+            `${caseId.replace("/", "-")}-task-1r-progress-0.12-${debugMode}.png`
+          )
         });
       }
     }
@@ -249,8 +272,99 @@ test("microbenchmark exposes the fixed opening matrix and isolated debug buffers
 
   if (captureEvidence) {
     writeFileSync(
-      path.join(evidenceDirectory, "opening-matrix-samples.json"),
+      path.join(evidenceDirectory, "task-1r-opening-matrix-samples.json"),
       `${JSON.stringify({ samples: matrixSamples }, null, 2)}\n`
     );
+  }
+});
+
+test("records a Task -1R System Chrome GPU window after visual confirmation", async ({ page }, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "desktop-system-chrome",
+    "Formal GPU evidence is scoped to headed System Chrome."
+  );
+
+  const results: Array<{
+    caseId: "24/6" | "32/2" | "48/6";
+    gpu: NonNullable<Window["__MiraLithLuBirthCloudMicrobench"]>["gpu"];
+    renderScale: number;
+    resolvedSize: [number, number];
+  }> = [];
+  // 32/2 has the fewest fixed density evaluations (32 * 2) and is the
+  // visual-passing lower-cost candidate. A complete 120-sample window here
+  // is the required early-cost proof before any higher-cost configuration.
+  for (const caseId of ["32/2"] as const) {
+    await page.goto(
+      `/lubirth-planetary-cloud-microbench?case=${encodeURIComponent(caseId)}&progress=0.12&debug=raw&measure=1&visualGate=pass`
+    );
+    await page.bringToFront();
+    await expect.poll(
+      () => page.evaluate(() => window.__MiraLithLuBirthCloudMicrobench?.active ?? false),
+      { timeout: 25_000 }
+    ).toBe(true);
+    await expect.poll(
+      () => page.evaluate(() => window.__MiraLithLuBirthCloudMicrobench?.gpu.supported ?? false),
+      { timeout: 25_000 }
+    ).toBe(true);
+    await expect.poll(
+      () => page.evaluate(() => window.__MiraLithLuBirthCloudMicrobench?.gpu.sampleCount ?? 0),
+      { timeout: 480_000 }
+    ).toBeGreaterThanOrEqual(120);
+
+    const telemetry = await page.evaluate(() => window.__MiraLithLuBirthCloudMicrobench);
+    expect(telemetry).toMatchObject({
+      caseId,
+      measurementState: "complete",
+      representationVersion: "task-1r"
+    });
+    expect(telemetry?.gpu.p50Ms).not.toBeNull();
+    expect(telemetry?.gpu.p95Ms).not.toBeNull();
+    expect(telemetry?.gpu.stages.densityAndLightRaymarch.p95Ms).not.toBeNull();
+    expect(telemetry?.gpu.stages.resolve.p95Ms).not.toBeNull();
+    expect(telemetry?.gpu.stages.cloudComposite.p95Ms).not.toBeNull();
+    results.push({
+      caseId,
+      gpu: telemetry!.gpu,
+      renderScale: telemetry!.renderScale,
+      resolvedSize: telemetry!.resolvedSize
+    });
+  }
+
+  const systemChrome = await page.evaluate(() => {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("webgl2");
+    const rendererInfo = context?.getExtension("WEBGL_debug_renderer_info");
+    return {
+      devicePixelRatio: window.devicePixelRatio,
+      renderer: rendererInfo && context
+        ? context.getParameter(rendererInfo.UNMASKED_RENDERER_WEBGL)
+        : "unavailable",
+      userAgent: navigator.userAgent,
+      vendor: rendererInfo && context
+        ? context.getParameter(rendererInfo.UNMASKED_VENDOR_WEBGL)
+        : "unavailable"
+    };
+  });
+
+  const serialized = `${JSON.stringify({
+    candidateSelection: "32/2 is the lowest fixed primary×light sample cost visual-pass case",
+    environment: {
+      browser: "headed System Chrome",
+      ...systemChrome
+    },
+    representationVersion: "task-1r",
+    results
+  }, null, 2)}\n`;
+  testInfo.attach("task-1r-system-chrome-gpu.json", {
+    body: serialized,
+    contentType: "application/json"
+  });
+  if (process.env.MIRALITH_CLOUD_MICROBENCH_PERF_EVIDENCE === "1") {
+    const evidenceDirectory = path.join(
+      process.cwd(),
+      "docs/lubirth-planetary-cloud-evidence/2026-08-05/microbench"
+    );
+    mkdirSync(evidenceDirectory, { recursive: true });
+    writeFileSync(path.join(evidenceDirectory, "task-1r-system-chrome-gpu.json"), serialized);
   }
 });

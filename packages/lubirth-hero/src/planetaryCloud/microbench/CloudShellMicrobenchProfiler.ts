@@ -16,6 +16,16 @@ export interface CloudShellMicrobenchGpuSummary {
   p50Ms?: number;
   p95Ms?: number;
   sampleCount: number;
+  stages: {
+    cloudComposite: CloudShellMicrobenchGpuStageSummary;
+    densityAndLightRaymarch: CloudShellMicrobenchGpuStageSummary;
+    resolve: CloudShellMicrobenchGpuStageSummary;
+  };
+}
+
+export interface CloudShellMicrobenchGpuStageSummary {
+  p50Ms?: number;
+  p95Ms?: number;
 }
 
 interface DisjointTimerQueryExtension {
@@ -42,19 +52,37 @@ function percentileNearestRank(values: number[], percentile: number) {
   return ordered[rank];
 }
 
+function summarizeStage(values: number[]): CloudShellMicrobenchGpuStageSummary {
+  const validValues = values.filter(Number.isFinite);
+  return {
+    p50Ms: validValues.length > 0 ? percentileNearestRank(validValues, 0.5) : undefined,
+    p95Ms: validValues.length > 0 ? percentileNearestRank(validValues, 0.95) : undefined
+  };
+}
+
 export function summarizeCloudShellGpuFrames(
   frames: CloudShellMicrobenchGpuFrame[]
 ): CloudShellMicrobenchGpuSummary {
-  const validTotals = frames
-    .filter((frame) => !frame.disjoint)
-    .map((frame) => frame.densityAndLightRaymarchMs + frame.resolveMs + frame.cloudCompositeMs)
-    .filter(Number.isFinite);
+  const validFrames = frames.filter((frame) => !frame.disjoint &&
+    Number.isFinite(frame.densityAndLightRaymarchMs) &&
+    Number.isFinite(frame.resolveMs) &&
+    Number.isFinite(frame.cloudCompositeMs));
+  const validTotals = validFrames.map((frame) =>
+    frame.densityAndLightRaymarchMs + frame.resolveMs + frame.cloudCompositeMs
+  );
 
   return {
     invalidFrameCount: frames.length - validTotals.length,
     p50Ms: validTotals.length > 0 ? percentileNearestRank(validTotals, 0.5) : undefined,
     p95Ms: validTotals.length > 0 ? percentileNearestRank(validTotals, 0.95) : undefined,
-    sampleCount: validTotals.length
+    sampleCount: validTotals.length,
+    stages: {
+      cloudComposite: summarizeStage(validFrames.map((frame) => frame.cloudCompositeMs)),
+      densityAndLightRaymarch: summarizeStage(
+        validFrames.map((frame) => frame.densityAndLightRaymarchMs)
+      ),
+      resolve: summarizeStage(validFrames.map((frame) => frame.resolveMs))
+    }
   };
 }
 

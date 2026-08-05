@@ -71,6 +71,11 @@ interface CloudShellMicrobenchProfilerModule {
     p50Ms?: number;
     p95Ms?: number;
     sampleCount: number;
+    stages: {
+      cloudComposite: { p50Ms?: number; p95Ms?: number };
+      densityAndLightRaymarch: { p50Ms?: number; p95Ms?: number };
+      resolve: { p50Ms?: number; p95Ms?: number };
+    };
   };
 }
 
@@ -394,12 +399,14 @@ test("cloud-shell shader keeps the general ray parameter and world-depth clamp c
   expect(source).toContain("uniform bool showSceneDepthClamp");
   expect(source).toContain("float visibleFraction");
   expect(source).toContain("float sourceCoverage = weather.r");
-  expect(source).toContain("float cloudTop = mix(0.35, 1.0, weather.g)");
+  expect(source).toContain("float cloudTop = mix(0.30, 0.82, weather.g)");
+  expect(source).toContain("float shapedCloudTop = mix(0.24, cloudTop, baseShape)");
   expect(source).toContain("float morphologyGain = mix(0.75, 1.25, weather.b)");
   expect(source).toContain("float concavityGain = mix(1.0, 0.72, weather.a)");
   expect(source).toContain("float forwardCloudShellLightDistance");
   expect(source).toContain("float baseShape3d");
   expect(source).toContain("float remapCoverageToBaseShape");
+  expect(source).toContain("float coverageThreshold = mix(0.92, 0.58, clamp(weatherCoverage, 0.0, 1.0))");
   expect(source).toContain("float henyeyGreensteinPhase");
   expect(source).toContain("const float SKY_FILL");
   expect(source).toContain("float cloudBaseRadiusEcef = shellBaseRadiusEcef");
@@ -424,6 +431,11 @@ test("cloud-shell GPU summary counts every non-overlapping stage and rejects dis
     sampleCount: 2,
     invalidFrameCount: 1,
     p50Ms: 2,
-    p95Ms: 3
+    p95Ms: 3,
+    stages: {
+      densityAndLightRaymarch: { p50Ms: 1, p95Ms: 2 },
+      resolve: { p50Ms: 0.5, p95Ms: 0.5 },
+      cloudComposite: { p50Ms: 0.5, p95Ms: 0.5 }
+    }
   });
 });
