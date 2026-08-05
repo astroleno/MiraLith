@@ -54,6 +54,7 @@ import {
   CLOUD_SHELL_MICROBENCH_CASES,
   CLOUD_SHELL_MICROBENCH_RESOLUTION_SCALE,
   CLOUD_SHELL_THICKNESS_M,
+  resetCloudShellMicrobenchMeasurementWindow,
   resolveCloudShellMicrobenchMeasurementState,
   shouldMeasureCloudShellMicrobenchFrame,
   type CloudShellMicrobenchCaseId,
@@ -380,7 +381,7 @@ function createPipeline(renderer: WebGLRenderer, caseId: CloudShellMicrobenchCas
 
 function resizePipeline(pipeline: Pipeline, width: number, height: number) {
   if (pipeline.resolvedWidth === width && pipeline.resolvedHeight === height && pipeline.targets) {
-    return;
+    return false;
   }
 
   disposeTargets(pipeline.targets);
@@ -399,6 +400,16 @@ function resizePipeline(pipeline: Pipeline, width: number, height: number) {
   pipeline.outputMaterial.uniforms.sceneColor.value = opaque.texture;
   pipeline.outputMaterial.uniforms.cloudBuffer.value = cloudResolve.texture;
   pipeline.outputMaterial.uniforms.compositeBuffer.value = composite.texture;
+  return true;
+}
+
+function resetPipelineMeasurementWindow(pipeline: Pipeline) {
+  const window = resetCloudShellMicrobenchMeasurementWindow();
+  pipeline.measurementReadyFrame = window.measurementReadyFrame;
+  pipeline.warmupStartFrame = window.warmupStartFrame;
+  pipeline.samplingStartFrame = window.samplingStartFrame;
+  pipeline.gpuFrames.length = 0;
+  pipeline.profiler?.resetMeasurementWindow();
 }
 
 function estimateRtPeakBytes(width: number, height: number) {
@@ -730,7 +741,12 @@ export function LuBirthCloudShellMicrobench({
     gl.getDrawingBufferSize(scratchDrawSize);
     const width = Math.max(1, Math.round(scratchDrawSize.x));
     const height = Math.max(1, Math.round(scratchDrawSize.y));
-    resizePipeline(pipeline, width, height);
+    const resized = resizePipeline(pipeline, width, height);
+    if (resized) {
+      // A new target resolution starts a new timing population. Drop every
+      // pending query and make the next ready frame own a fresh warmup window.
+      resetPipelineMeasurementWindow(pipeline);
+    }
     const targets = pipeline.targets;
     if (!targets) {
       return;
@@ -834,8 +850,15 @@ export function LuBirthCloudShellMicrobench({
     pipeline.measurementReadyFrame = measurementWindow.measurementReadyFrame;
     pipeline.warmupStartFrame = measurementWindow.warmupStartFrame;
     pipeline.samplingStartFrame = measurementWindow.samplingStartFrame;
-    if (previousMeasurementReadyFrame !== null && measurementWindow.measurementReadyFrame === null) {
-      pipeline.gpuFrames.length = 0;
+    const measurementWindowStarted = previousMeasurementReadyFrame === null &&
+      measurementWindow.measurementReadyFrame !== null;
+    const measurementReadinessLost = previousMeasurementReadyFrame !== null &&
+      measurementWindow.measurementReadyFrame === null;
+    if (measurementWindowStarted || measurementReadinessLost) {
+      resetPipelineMeasurementWindow(pipeline);
+      pipeline.measurementReadyFrame = measurementWindow.measurementReadyFrame;
+      pipeline.warmupStartFrame = measurementWindow.warmupStartFrame;
+      pipeline.samplingStartFrame = measurementWindow.samplingStartFrame;
     }
     for (const frame of pipeline.profiler?.poll() ?? []) {
       if (pipeline.samplingStartFrame !== null && frame.frameId >= pipeline.samplingStartFrame) {

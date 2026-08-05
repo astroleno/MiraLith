@@ -31,6 +31,14 @@ export interface CloudShellMicrobenchMeasurementWindow {
   warmupStartFrame: number | null;
 }
 
+export function resetCloudShellMicrobenchMeasurementWindow(): CloudShellMicrobenchMeasurementWindow {
+  return {
+    measurementReadyFrame: null,
+    warmupStartFrame: null,
+    samplingStartFrame: null
+  };
+}
+
 function isCloudShellMicrobenchMeasurementReady({
   coordinatePass,
   gammaColorPass,
@@ -54,11 +62,7 @@ export function beginCloudShellMicrobenchWarmupAfterReadyFrame({
   window: CloudShellMicrobenchMeasurementWindow;
 }): CloudShellMicrobenchMeasurementWindow {
   if (!isCloudShellMicrobenchMeasurementReady(measurement)) {
-    return {
-      measurementReadyFrame: null,
-      warmupStartFrame: null,
-      samplingStartFrame: null
-    };
+    return resetCloudShellMicrobenchMeasurementWindow();
   }
 
   if (window.measurementReadyFrame !== null && window.warmupStartFrame !== null &&

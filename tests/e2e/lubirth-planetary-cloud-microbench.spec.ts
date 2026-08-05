@@ -14,6 +14,7 @@ declare global {
       coordinateGate: "PASS" | "FAIL";
       earthMatrixWorld: number[];
       earthUniformScale: number;
+      frameId: number;
       gammaGate: "PASS" | "FAIL";
       gpu: {
         invalidFrames: number;
@@ -112,6 +113,55 @@ test("planetary cloud microbenchmark is query-only, V3-backed, and free of Takra
   });
   expect(raster?.litRatio).toBeGreaterThan(0.03);
   expect(raster?.maxLuma).toBeGreaterThan(32);
+});
+
+test("GPU timing restarts from a new ready frame after a render-target resize", async ({ page }, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "desktop" && testInfo.project.name !== "desktop-system-chrome",
+    "Resize timing-state coverage is desktop-only."
+  );
+
+  await page.goto(
+    "/lubirth-planetary-cloud-microbench?case=32%2F2&progress=0.12&debug=raw&measure=1&visualGate=pass"
+  );
+  await expect.poll(
+    () => page.evaluate(() => window.__MiraLithLuBirthCloudMicrobench?.active ?? false),
+    { timeout: 25_000 }
+  ).toBe(true);
+  const timerSupported = await page.evaluate(
+    () => window.__MiraLithLuBirthCloudMicrobench?.gpu.supported ?? false
+  );
+  test.skip(!timerSupported, "EXT_disjoint_timer_query_webgl2 is unavailable in this browser.");
+
+  await expect.poll(
+    () => page.evaluate(() => {
+      const telemetry = window.__MiraLithLuBirthCloudMicrobench;
+      return telemetry?.measurementState === "sampling" && (telemetry.gpu.sampleCount ?? 0) > 0;
+    }),
+    { timeout: 120_000 }
+  ).toBe(true);
+  const beforeResize = await page.evaluate(() => window.__MiraLithLuBirthCloudMicrobench);
+  expect(beforeResize?.measurement.measurementReadyFrame).not.toBeNull();
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expect.poll(
+    () => page.evaluate((previousFrameId) => {
+      const telemetry = window.__MiraLithLuBirthCloudMicrobench;
+      return telemetry?.resolvedSize[0] === 1280 && telemetry.resolvedSize[1] === 900 &&
+        (telemetry.measurement.measurementReadyFrame ?? -1) > previousFrameId;
+    }, beforeResize?.frameId ?? -1),
+    { timeout: 25_000 }
+  ).toBe(true);
+
+  const afterResize = await page.evaluate(() => window.__MiraLithLuBirthCloudMicrobench);
+  expect(afterResize?.gpu.sampleCount).toBe(0);
+  expect(afterResize?.measurementState).toBe("warming");
+  expect(afterResize?.measurement.warmupStartFrame).toBe(
+    (afterResize?.measurement.measurementReadyFrame ?? 0) + 1
+  );
+  expect(afterResize?.measurement.samplingStartFrame).toBe(
+    (afterResize?.measurement.warmupStartFrame ?? 0) + 120
+  );
 });
 
 test("microbenchmark keeps the general ray/depth contract under every required Earth transform", async ({ page }) => {

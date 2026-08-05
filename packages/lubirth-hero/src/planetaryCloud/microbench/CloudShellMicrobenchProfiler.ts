@@ -100,6 +100,22 @@ export class CloudShellMicrobenchProfiler {
     return this.extension !== null;
   }
 
+  /**
+   * Starts a fresh measurement interval. Reading GPU_DISJOINT_EXT here clears
+   * any historical disjoint state so a prior workload cannot invalidate this
+   * window. Pending results are deliberately discarded because their render
+   * target or readiness contract may belong to the previous window.
+   */
+  resetMeasurementWindow() {
+    this.discardPendingQueries();
+    if (!this.extension) {
+      return false;
+    }
+
+    this.gl.getParameter(this.extension.GPU_DISJOINT_EXT);
+    return true;
+  }
+
   begin(frameId: number, stage: CloudShellMicrobenchGpuStage) {
     if (!this.extension || this.active) {
       return false;
@@ -131,21 +147,34 @@ export class CloudShellMicrobenchProfiler {
       return [] as CloudShellMicrobenchGpuFrame[];
     }
 
+    const readyQueries = this.pending.filter((pending) =>
+      Boolean(this.gl.getQueryParameter(pending.query, this.gl.QUERY_RESULT_AVAILABLE))
+    );
+    if (readyQueries.length === 0) {
+      return [] as CloudShellMicrobenchGpuFrame[];
+    }
+
+    // GPU_DISJOINT_EXT covers every time value filled since the preceding
+    // read. Check it once for this completed polling epoch before reading any
+    // individual result; when it is set, every pending frame is unusable.
+    if (Boolean(this.gl.getParameter(this.extension.GPU_DISJOINT_EXT))) {
+      return this.invalidatePendingEpoch();
+    }
+
     const completed: CloudShellMicrobenchGpuFrame[] = [];
-    for (let index = this.pending.length - 1; index >= 0; index -= 1) {
-      const pending = this.pending[index];
-      if (!this.gl.getQueryParameter(pending.query, this.gl.QUERY_RESULT_AVAILABLE)) {
+    for (const pending of readyQueries) {
+      const pendingIndex = this.pending.indexOf(pending);
+      if (pendingIndex === -1) {
         continue;
       }
 
-      this.pending.splice(index, 1);
+      this.pending.splice(pendingIndex, 1);
       const frame = this.frames.get(pending.frameId) ?? { disjoint: false };
-      const disjoint = Boolean(this.gl.getParameter(this.extension.GPU_DISJOINT_EXT));
       const resultNanoseconds = this.gl.getQueryParameter(pending.query, this.gl.QUERY_RESULT) as number;
       const durationMs = resultNanoseconds / 1_000_000;
       this.gl.deleteQuery(pending.query);
 
-      frame.disjoint = frame.disjoint || disjoint || !Number.isFinite(durationMs);
+      frame.disjoint = frame.disjoint || !Number.isFinite(durationMs);
       if (pending.stage === "densityAndLightRaymarch") {
         frame.densityAndLightRaymarchMs = durationMs;
       } else if (pending.stage === "resolve") {
@@ -174,6 +203,27 @@ export class CloudShellMicrobenchProfiler {
   }
 
   dispose() {
+    this.discardPendingQueries();
+  }
+
+  private invalidatePendingEpoch() {
+    const invalidFrameIds = new Set(this.frames.keys());
+    for (const { frameId } of this.pending) {
+      invalidFrameIds.add(frameId);
+    }
+    this.discardPendingQueries();
+    return [...invalidFrameIds]
+      .sort((left, right) => left - right)
+      .map((frameId) => ({
+        frameId,
+        densityAndLightRaymarchMs: Number.NaN,
+        resolveMs: Number.NaN,
+        cloudCompositeMs: Number.NaN,
+        disjoint: true
+      }));
+  }
+
+  private discardPendingQueries() {
     if (this.active) {
       if (this.extension) {
         this.gl.endQuery(this.extension.TIME_ELAPSED_EXT);
