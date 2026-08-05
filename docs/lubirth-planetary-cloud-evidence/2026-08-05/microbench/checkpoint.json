@@ -1,18 +1,28 @@
 {
-  "decision": "EARLY_KILL",
-  "bestCase": null,
-  "bestCloudGpuP95Ms": null,
-  "validGpuSamples": 0,
-  "microVisualGate": "FAIL",
+  "decision": "MICROBENCH_OVER_BUDGET",
+  "taskMinusOneInitialDecision": "EARLY_REPRESENTATION_FAIL",
+  "bestCase": "32/2",
+  "bestCloudGpuP50Ms": 24.594207,
+  "bestCloudGpuP95Ms": 32.961416,
+  "validGpuSamples": 121,
+  "invalidGpuSamples": 0,
+  "budgetCloudGpuP95Ms": 4,
+  "microVisualGate": "PASS",
   "coordinateGate": "PASS",
   "hdrColorGate": "PASS",
   "gammaGate": "PASS",
   "incrementalRtPeakBytes": 33177632,
-  "timerSupported": "not used for a formal acceptance window",
+  "timerSupported": "PASS: headed System Chrome GPU timer, 121 valid non-disjoint samples after 120 warmup frames",
+  "stageGpuP95Ms": {
+    "densityAndLightRaymarch": 10.222624,
+    "resolve": 10.378875,
+    "cloudComposite": 12.415791
+  },
   "reason": [
-    "All 24/6, 32/2, and 48/6 visual reviews fail the no-white-ring/double-shell criterion.",
-    "No case has legible cloud base/core/top and side thickness in the actual opening horizon framing.",
-    "Task -1D forbids 120-frame performance sampling when every visual case fails."
+    "The original Task -1 visual failure is reclassified as EARLY_REPRESENTATION_FAIL; it does not reject V3 or Takram-first.",
+    "Task -1R visual gate passes after true to-sun shell bounds, macro-only V3 coverage, 3D base-shape remap, and a vertical profile.",
+    "The lowest fixed primary×light-cost visual-pass case, 32/2, records total GPU p95 32.961416 ms, exceeding the 4 ms budget by about 8.2x.",
+    "All three timed stages exceed the full total-budget threshold independently, so more samples of higher-work cases cannot reverse this checkpoint."
   ],
-  "nextAuthorizedWork": "None. Task 0-8 remain blocked until README.md, visual-review.json, checkpoint.json, and the contact sheets are reviewed and a new plan amendment is approved."
+  "nextAuthorizedWork": "None under the current plan. Task 0-8 remain blocked; any next implementation requires a new architecture and cost-budget amendment."
 }

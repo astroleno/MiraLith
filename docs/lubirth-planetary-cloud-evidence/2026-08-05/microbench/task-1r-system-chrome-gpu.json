@@ -1,0 +1,42 @@
+{
+  "candidateSelection": "32/2 is the lowest fixed primary×light sample cost visual-pass case",
+  "environment": {
+    "browser": "headed System Chrome",
+    "devicePixelRatio": 1,
+    "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+    "vendor": "Google Inc. (Apple)"
+  },
+  "representationVersion": "task-1r",
+  "results": [
+    {
+      "caseId": "32/2",
+      "gpu": {
+        "invalidFrames": 0,
+        "p50Ms": 24.594206999999997,
+        "p95Ms": 32.961416,
+        "sampleCount": 121,
+        "stages": {
+          "cloudComposite": {
+            "p50Ms": 8.768374,
+            "p95Ms": 12.415791
+          },
+          "densityAndLightRaymarch": {
+            "p50Ms": 7.854125,
+            "p95Ms": 10.222624
+          },
+          "resolve": {
+            "p50Ms": 7.967374,
+            "p95Ms": 10.378875
+          }
+        },
+        "supported": true
+      },
+      "renderScale": 0.5,
+      "resolvedSize": [
+        1440,
+        960
+      ]
+    }
+  ]
+}

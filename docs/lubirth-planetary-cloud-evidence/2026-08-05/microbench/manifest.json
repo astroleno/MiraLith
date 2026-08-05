@@ -1,31 +1,46 @@
 {
-  "schemaVersion": 1,
-  "task": "Task -1 disposable planetary cloud-shell + V3 pre-integration microbenchmark",
+  "schemaVersion": 2,
+  "task": "Task -1 disposable planetary cloud-shell + Task -1R constrained representation amendment",
   "baselineRevision": "96d14224fa4357abd563b81bd7596e511fa1cb0d",
-  "harnessCommit": "13ae9ce",
+  "harnessCommits": {
+    "taskMinusOne": "13ae9ce",
+    "taskMinusOneRPlan": "6916179",
+    "taskMinusOneRLightGeometry": "47fa6c6",
+    "taskMinusOneRRepresentation": "7da4672"
+  },
   "route": "/lubirth-planetary-cloud-microbench",
   "scope": {
     "takramInstalled": false,
     "defaultRouteChanged": false,
     "productionRendererExported": false,
-    "remoteCloudAssets": false
+    "remoteCloudAssets": false,
+    "temporal": false,
+    "adaptive": false,
+    "bsm": false,
+    "detailErosion": false,
+    "turbulence": false
   },
   "capture": {
-    "browser": "Playwright desktop Chromium production build",
-    "formalHeadedSystemChromePerformanceRun": "not-started: visual gate failed before Task -1D",
-    "hardware": "Apple M4",
-    "macOS": "15.6.1",
-    "systemChrome": "150.0.7871.189",
+    "visualEvidenceBrowser": "Playwright desktop Chromium production build",
+    "formalHeadedSystemChromePerformanceRun": {
+      "status": "COMPLETE",
+      "evidence": "task-1r-system-chrome-gpu.json",
+      "browser": "headed System Chrome",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+      "vendor": "Google Inc. (Apple)",
+      "warmupFrames": 120,
+      "validNonDisjointFrames": 121
+    },
     "viewportCssPx": [1440, 960],
     "devicePixelRatio": 1,
-    "resolutionScale": 0.5,
-    "adaptive": false
+    "resolutionScale": 0.5
   },
   "openingFrameSource": {
     "function": "@miralith/visual-core mapOpeningProgress",
     "earthAndCamera": "isolated mirror of EarthMoonScene opening frame",
     "worldLight": "DEFAULT_LUBIRTH_SUN_DIRECTION rotated by Earth quaternion",
-    "matrixSamples": "screenshots/opening-matrix-samples.json"
+    "taskMinusOneMatrixSamples": "screenshots/opening-matrix-samples.json",
+    "taskMinusOneRMatrixSamples": "screenshots/task-1r-opening-matrix-samples.json"
   },
   "cloudShell": {
     "bottomRadiusMeters": 6360000,
@@ -44,10 +59,16 @@
       "32/2": { "primarySteps": 32, "lightSteps": 2, "groundSteps": 0 },
       "48/6": { "primarySteps": 48, "lightSteps": 6, "groundSteps": 0 }
     },
+    "taskMinusOneRRepresentation": {
+      "version": "task-1r",
+      "density": "V3 R macro coverage -> deterministic ECEF 3D base-shape threshold remap -> vertical G profile -> V3 B/A gains",
+      "sunLightInterval": "first positive outer/cloud-base sphere-shell segment along sun direction; no fixed 52 km traversal and no Earth traversal",
+      "lighting": "minimal HG phase + density-gated sky fill + conservative single-scatter accumulation"
+    },
     "shaderContracts": {
       "rayParameter": "general quadratic with a=dot(directionEcefPerWorldUnit,directionEcefPerWorldUnit)",
       "sceneDepth": "reconstruct world position then dot with normalized world ray",
-      "density": "R footprint × vertical G cloudTop × B morphology × A concavity",
+      "cpuGpuShellInterval": "inside-inner branch advances cloudEnter to inner far",
       "debug": "showSceneDepthClamp=1"
     }
   },
@@ -73,23 +94,45 @@
     "result": "PASS"
   },
   "artifacts": {
-    "openingContactSheets": [
-      "screenshots/24-6-opening-contact-sheet.png",
-      "screenshots/32-2-opening-contact-sheet.png",
-      "screenshots/48-6-opening-contact-sheet.png"
-    ],
-    "isolatedBuffers": "screenshots/*-progress-0.12-{cloud,earth,density}.png",
-    "depthProbe": [
-      "screenshots/depth-probe-front.png",
-      "screenshots/depth-probe-middle.png",
-      "screenshots/depth-probe-behind.png"
-    ]
+    "taskMinusOneOriginal": {
+      "openingContactSheets": [
+        "screenshots/24-6-opening-contact-sheet.png",
+        "screenshots/32-2-opening-contact-sheet.png",
+        "screenshots/48-6-opening-contact-sheet.png"
+      ],
+      "isolatedBuffers": "screenshots/*-progress-0.12-{cloud,earth,density}.png",
+      "depthProbe": [
+        "screenshots/depth-probe-front.png",
+        "screenshots/depth-probe-middle.png",
+        "screenshots/depth-probe-behind.png"
+      ]
+    },
+    "taskMinusOneR": {
+      "openingContactSheets": [
+        "screenshots/24-6-task-1r-opening-contact-sheet.png",
+        "screenshots/32-2-task-1r-opening-contact-sheet.png",
+        "screenshots/48-6-task-1r-opening-contact-sheet.png"
+      ],
+      "isolatedBuffers": "screenshots/*-task-1r-progress-0.12-{cloud,earth,density}.png",
+      "depthProbe": [
+        "screenshots/task-1r-depth-probe-front.png",
+        "screenshots/task-1r-depth-probe-middle.png",
+        "screenshots/task-1r-depth-probe-behind.png"
+      ],
+      "gpuWindow": "task-1r-system-chrome-gpu.json"
+    }
   },
   "verification": {
-    "unit": "PASS: 9 tests",
-    "e2e": "PASS: 4 tests",
-    "formalGpuSamples": 0,
-    "gpuP50Ms": null,
-    "gpuP95Ms": null
-  }
+    "unit": "PASS: 11 tests",
+    "e2e": "PASS: 4 desktop route tests; System Chrome formal window PASS",
+    "formalGpuSamples": 121,
+    "gpuP50Ms": 24.594207,
+    "gpuP95Ms": 32.961416,
+    "gpuStages": {
+      "densityAndLightRaymarch": { "p50Ms": 7.854125, "p95Ms": 10.222624 },
+      "resolve": { "p50Ms": 7.967374, "p95Ms": 10.378875 },
+      "cloudComposite": { "p50Ms": 8.768374, "p95Ms": 12.415791 }
+    }
+  },
+  "decision": "MICROBENCH_OVER_BUDGET"
 }

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "reviewedAt": "2026-08-05",
   "reviewer": "Codex manual visual review",
   "configuration": {
@@ -14,71 +14,94 @@
     "temporal": false,
     "adaptive": false
   },
-  "cases": {
-    "24/6": {
-      "result": "FAIL",
-      "evidence": {
-        "openingContactSheet": "screenshots/24-6-opening-contact-sheet.png",
-        "cloudOnly": "screenshots/24-6-progress-0.12-cloud.png",
-        "earthOnly": "screenshots/24-6-progress-0.12-earth.png",
-        "density": "screenshots/24-6-progress-0.12-density.png",
-        "depthProbe": [
-          "screenshots/depth-probe-front.png",
-          "screenshots/depth-probe-middle.png",
-          "screenshots/depth-probe-behind.png"
-        ]
-      },
-      "criteria": {
-        "v3IdentityTracksOpeningMotion": "PASS",
-        "earthAttachmentAndNonzeroMotion": "PASS",
-        "gpuDepthOcclusion": "PASS",
-        "clearAirFootprintIsRMasked": "PASS",
-        "cloudBaseCoreTopAndSideThicknessAreLegible": "FAIL",
-        "noLongitudeSeamWhiteRingOrDoubleShell": "FAIL",
-        "noEarlyHdrClipping": "PASS"
-      },
-      "notes": "真实 opening 近地平线画面出现连续亮白壳边；cloud-only 与 density buffer 都没有形成可分辨的云底/云核/云顶层次。"
+  "reviews": {
+    "taskMinusOneInitial": {
+      "result": "EARLY_REPRESENTATION_FAIL",
+      "reclassifiedFrom": "EARLY_KILL",
+      "evidencePrefix": "screenshots/{24-6,32-2,48-6}-opening-contact-sheet.png",
+      "criteriaFailed": [
+        "cloudBaseCoreTopAndSideThicknessAreLegible",
+        "noLongitudeSeamWhiteRingOrDoubleShell"
+      ],
+      "notes": "旧 shader 将 V3 R 直接径向挤出且每个 sample 固定走 52 km to-sun；该失败只适用于旧 disposable representation，不构成对 V3 或 Takram-first 的否决。"
     },
-    "32/2": {
-      "result": "FAIL",
-      "evidence": {
-        "openingContactSheet": "screenshots/32-2-opening-contact-sheet.png",
-        "cloudOnly": "screenshots/32-2-progress-0.12-cloud.png",
-        "earthOnly": "screenshots/32-2-progress-0.12-earth.png",
-        "density": "screenshots/32-2-progress-0.12-density.png"
+    "taskMinusOneR": {
+      "result": "PASS",
+      "representation": {
+        "version": "task-1r",
+        "weatherRole": "V3 R is macro coverage only",
+        "shape": "deterministic ECEF 3D base-shape coverage remap + vertical profile",
+        "lightBound": "true positive outer/cloud-base shell interval",
+        "lighting": "minimal HG, sky fill, and conservative single scatter"
       },
-      "criteria": {
-        "v3IdentityTracksOpeningMotion": "PASS",
-        "earthAttachmentAndNonzeroMotion": "PASS",
-        "gpuDepthOcclusion": "PASS (shared 24/6 probe; shader path is identical)",
-        "clearAirFootprintIsRMasked": "PASS",
-        "cloudBaseCoreTopAndSideThicknessAreLegible": "FAIL",
-        "noLongitudeSeamWhiteRingOrDoubleShell": "FAIL",
-        "noEarlyHdrClipping": "PASS"
+      "cases": {
+        "24/6": {
+          "result": "PASS",
+          "evidence": {
+            "openingContactSheet": "screenshots/24-6-task-1r-opening-contact-sheet.png",
+            "cloudOnly": "screenshots/24-6-task-1r-progress-0.12-cloud.png",
+            "earthOnly": "screenshots/24-6-task-1r-progress-0.12-earth.png",
+            "density": "screenshots/24-6-task-1r-progress-0.12-density.png",
+            "depthProbe": [
+              "screenshots/task-1r-depth-probe-front.png",
+              "screenshots/task-1r-depth-probe-middle.png",
+              "screenshots/task-1r-depth-probe-behind.png"
+            ]
+          },
+          "criteria": {
+            "v3IdentityTracksOpeningMotion": "PASS",
+            "earthAttachmentAndNonzeroMotion": "PASS",
+            "gpuDepthOcclusion": "PASS",
+            "clearAirFootprintIsRMasked": "PASS",
+            "cloudBaseCoreTopAndSideThicknessAreLegible": "PASS (representation-gate threshold)",
+            "noLongitudeSeamWhiteRingOrDoubleShell": "PASS",
+            "noEarlyHdrClipping": "PASS"
+          },
+          "notes": "间歇的 cloudlet 和 clear-air 区域替代了旧版连续白色球壳；仅作 constrained representation gate，非 production art sign-off。"
+        },
+        "32/2": {
+          "result": "PASS",
+          "evidence": {
+            "openingContactSheet": "screenshots/32-2-task-1r-opening-contact-sheet.png",
+            "cloudOnly": "screenshots/32-2-task-1r-progress-0.12-cloud.png",
+            "earthOnly": "screenshots/32-2-task-1r-progress-0.12-earth.png",
+            "density": "screenshots/32-2-task-1r-progress-0.12-density.png",
+            "gpuWindow": "task-1r-system-chrome-gpu.json"
+          },
+          "criteria": {
+            "v3IdentityTracksOpeningMotion": "PASS",
+            "earthAttachmentAndNonzeroMotion": "PASS",
+            "gpuDepthOcclusion": "PASS (shared Task -1R probe; shader path is identical)",
+            "clearAirFootprintIsRMasked": "PASS",
+            "cloudBaseCoreTopAndSideThicknessAreLegible": "PASS (representation-gate threshold)",
+            "noLongitudeSeamWhiteRingOrDoubleShell": "PASS",
+            "noEarlyHdrClipping": "PASS"
+          },
+          "notes": "visual-pass cases 中固定 primary×light 工作量最低（64），因此是唯一启动正式 120+ 样本 GPU 窗口的候选；其成本结果不通过预算。"
+        },
+        "48/6": {
+          "result": "PASS",
+          "evidence": {
+            "openingContactSheet": "screenshots/48-6-task-1r-opening-contact-sheet.png",
+            "cloudOnly": "screenshots/48-6-task-1r-progress-0.12-cloud.png",
+            "earthOnly": "screenshots/48-6-task-1r-progress-0.12-earth.png",
+            "density": "screenshots/48-6-task-1r-progress-0.12-density.png"
+          },
+          "criteria": {
+            "v3IdentityTracksOpeningMotion": "PASS",
+            "earthAttachmentAndNonzeroMotion": "PASS",
+            "gpuDepthOcclusion": "PASS (shared Task -1R probe; shader path is identical)",
+            "clearAirFootprintIsRMasked": "PASS",
+            "cloudBaseCoreTopAndSideThicknessAreLegible": "PASS (representation-gate threshold)",
+            "noLongitudeSeamWhiteRingOrDoubleShell": "PASS",
+            "noEarlyHdrClipping": "PASS"
+          },
+          "notes": "更高固定采样量没有恢复旧版连续亮白球壳；由于 32/2 已经超预算，未授权启动这个更高成本 case 的正式 GPU 窗口。"
+        }
       },
-      "notes": "减少 to-sun steps 未消除高亮整圈壳边；裸画面仍无法作为 V3 进入完整体积系统的视觉依据。"
-    },
-    "48/6": {
-      "result": "FAIL",
-      "evidence": {
-        "openingContactSheet": "screenshots/48-6-opening-contact-sheet.png",
-        "cloudOnly": "screenshots/48-6-progress-0.12-cloud.png",
-        "earthOnly": "screenshots/48-6-progress-0.12-earth.png",
-        "density": "screenshots/48-6-progress-0.12-density.png"
-      },
-      "criteria": {
-        "v3IdentityTracksOpeningMotion": "PASS",
-        "earthAttachmentAndNonzeroMotion": "PASS",
-        "gpuDepthOcclusion": "PASS (shared 24/6 probe; shader path is identical)",
-        "clearAirFootprintIsRMasked": "PASS",
-        "cloudBaseCoreTopAndSideThicknessAreLegible": "FAIL",
-        "noLongitudeSeamWhiteRingOrDoubleShell": "FAIL",
-        "noEarlyHdrClipping": "PASS"
-      },
-      "notes": "提高 primary/light steps 后同一壳边问题仍存在；不是采样量不足能掩盖的 visual pass。"
+      "microVisualGate": "PASS",
+      "visualPassingCases": ["24/6", "32/2", "48/6"],
+      "decisionRationale": "这项 PASS 只表明修正过的 disposable representation 足以授权一次 GPU 成本窗口；它不等于生产视觉验收，也不授权 Task 0–8。"
     }
-  },
-  "microVisualGate": "FAIL",
-  "visualPassingCases": [],
-  "decisionRationale": "没有任何 case 全项通过；按 Task -1D 不启动 GPU 性能窗口。"
+  }
 }
