@@ -107,8 +107,11 @@ export interface CloudShellMicrobenchTelemetry {
   };
   incrementalRtPeakBytes: number;
   measurement: {
+    lastVisibilityResetFrame: number | null;
     measurementReadyFrame: number | null;
+    pageVisible: boolean;
     samplingStartFrame: number | null;
+    visibilityResetCount: number;
     warmupStartFrame: number | null;
     weatherReady: boolean;
   };
@@ -171,6 +174,7 @@ interface Pipeline {
   measurementReadyFrame: number | null;
   outputScene: Scene;
   outputMaterial: ShaderMaterial;
+  pageVisible: boolean;
   profiler: CloudShellMicrobenchProfiler | null;
   probeOccluder: Mesh<PlaneGeometry, MeshBasicMaterial>;
   probeOccluderMaterial: MeshBasicMaterial;
@@ -180,6 +184,8 @@ interface Pipeline {
   targets: PipelineTargets | null;
   weatherReady: boolean;
   weatherTexture: Texture;
+  visibilityResetCount: number;
+  lastVisibilityResetFrame: number | null;
   warmupStartFrame: number | null;
 }
 
@@ -367,6 +373,7 @@ function createPipeline(renderer: WebGLRenderer, caseId: CloudShellMicrobenchCas
     measurementReadyFrame: null,
     outputScene: createFullscreenScene(fullscreenGeometry, outputMaterial),
     outputMaterial,
+    pageVisible: true,
     profiler: renderer.capabilities.isWebGL2
       ? new CloudShellMicrobenchProfiler(renderer.getContext() as WebGL2RenderingContext)
       : null,
@@ -378,6 +385,8 @@ function createPipeline(renderer: WebGLRenderer, caseId: CloudShellMicrobenchCas
     targets: null,
     weatherReady,
     weatherTexture,
+    visibilityResetCount: 0,
+    lastVisibilityResetFrame: null,
     warmupStartFrame: null
   };
   return pipeline;
@@ -726,16 +735,33 @@ export function LuBirthCloudShellMicrobench({
     gl.toneMappingExposure = 1;
     gl.outputColorSpace = SRGBColorSpace;
     const pipeline = createPipeline(gl, caseId);
+    pipeline.pageVisible = document.visibilityState === "visible";
     pipelineRef.current = pipeline;
     const onContextRestored = () => {
       if (pipelineRef.current === pipeline) {
         pipeline.contextRestorePending = true;
       }
     };
+    const onVisibilityChange = () => {
+      if (pipelineRef.current !== pipeline) {
+        return;
+      }
+      const wasVisible = pipeline.pageVisible;
+      pipeline.pageVisible = document.visibilityState === "visible";
+      if (wasVisible && !pipeline.pageVisible) {
+        pipeline.visibilityResetCount += 1;
+        pipeline.lastVisibilityResetFrame = pipeline.frameId;
+        // Clear pending timer queries synchronously with the lifecycle event so
+        // a hidden population cannot survive until the next rendered frame.
+        resetPipelineMeasurementWindow(pipeline);
+      }
+    };
     gl.domElement.addEventListener("webglcontextrestored", onContextRestored);
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
       gl.domElement.removeEventListener("webglcontextrestored", onContextRestored);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       pipelineRef.current = null;
       disposeTargets(pipeline.targets);
       pipeline.profiler?.dispose();
@@ -813,6 +839,7 @@ export function LuBirthCloudShellMicrobench({
       gammaColorPass: pipeline.gammaColorPass,
       hdrColorPass: pipeline.hdrColorPass,
       measure,
+      pageVisible: pipeline.pageVisible,
       timerSupported: Boolean(pipeline.profiler?.supported),
       visualGateConfirmed,
       weatherReady: pipeline.weatherReady
@@ -868,6 +895,7 @@ export function LuBirthCloudShellMicrobench({
       gammaColorPass: pipeline.gammaColorPass,
       hdrColorPass: pipeline.hdrColorPass,
       measure,
+      pageVisible: pipeline.pageVisible,
       timerSupported: Boolean(pipeline.profiler?.supported),
       visualGateConfirmed,
       weatherReady: pipeline.weatherReady
@@ -944,8 +972,11 @@ export function LuBirthCloudShellMicrobench({
         hdrColorGate: pipeline.hdrColorPass && pipeline.gammaColorPass ? "PASS" : "FAIL",
         incrementalRtPeakBytes: estimateRtPeakBytes(width, height),
         measurement: {
+          lastVisibilityResetFrame: pipeline.lastVisibilityResetFrame,
           measurementReadyFrame: measurementWindow.measurementReadyFrame,
+          pageVisible: pipeline.pageVisible,
           samplingStartFrame: measurementWindow.samplingStartFrame,
+          visibilityResetCount: pipeline.visibilityResetCount,
           warmupStartFrame: measurementWindow.warmupStartFrame,
           weatherReady: pipeline.weatherReady
         },

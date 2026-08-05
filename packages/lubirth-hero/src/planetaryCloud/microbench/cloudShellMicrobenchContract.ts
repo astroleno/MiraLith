@@ -20,6 +20,7 @@ export interface CloudShellMicrobenchMeasurementConditions {
   gammaColorPass: boolean;
   hdrColorPass: boolean;
   measure: boolean;
+  pageVisible: boolean;
   timerSupported: boolean;
   visualGateConfirmed: boolean;
   weatherReady: boolean;
@@ -44,11 +45,12 @@ function isCloudShellMicrobenchMeasurementReady({
   gammaColorPass,
   hdrColorPass,
   measure,
+  pageVisible,
   timerSupported,
   visualGateConfirmed,
   weatherReady
 }: CloudShellMicrobenchMeasurementConditions) {
-  return measure && visualGateConfirmed && timerSupported && weatherReady &&
+  return measure && visualGateConfirmed && timerSupported && pageVisible && weatherReady &&
     coordinatePass && hdrColorPass && gammaColorPass;
 }
 
@@ -112,7 +114,7 @@ export function resolveCloudShellMicrobenchMeasurementState({
   if (!measurement.timerSupported) {
     return "timer-unavailable";
   }
-  if (!measurement.weatherReady || !measurement.coordinatePass ||
+  if (!measurement.pageVisible || !measurement.weatherReady || !measurement.coordinatePass ||
     !measurement.hdrColorPass || !measurement.gammaColorPass ||
     window.measurementReadyFrame === null || window.samplingStartFrame === null) {
     return "awaiting-readiness";

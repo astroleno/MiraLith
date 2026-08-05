@@ -31,8 +31,11 @@ declare global {
       hdrColorGate: "PASS" | "FAIL";
       incrementalRtPeakBytes: number;
       measurement: {
+        lastVisibilityResetFrame: number | null;
         measurementReadyFrame: number | null;
+        pageVisible: boolean;
         samplingStartFrame: number | null;
+        visibilityResetCount: number;
         warmupStartFrame: number | null;
         weatherReady: boolean;
       };
@@ -46,6 +49,19 @@ declare global {
       transformScenario: "identity" | "enlarged" | "reduced";
     };
   }
+}
+
+async function setDocumentVisibilityState(
+  page: import("@playwright/test").Page,
+  visibilityState: "hidden" | "visible"
+) {
+  await page.evaluate((nextVisibilityState) => {
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: nextVisibilityState
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+  }, visibilityState);
 }
 
 test("planetary cloud microbenchmark is query-only, V3-backed, and free of Takram assets", async ({ page }) => {
@@ -207,6 +223,66 @@ test("GPU timing restarts from a new ready frame after WebGL context restoration
   );
   expect(afterRestore?.measurement.samplingStartFrame).toBe(
     (afterRestore?.measurement.warmupStartFrame ?? 0) + 120
+  );
+});
+
+test("GPU timing discards hidden samples and rewarms after the tab becomes visible", async ({ page }, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "desktop" && testInfo.project.name !== "desktop-system-chrome",
+    "Visibility timing-state coverage is desktop-only."
+  );
+
+  await page.goto(
+    "/lubirth-planetary-cloud-microbench?case=32%2F2&progress=0.12&debug=raw&measure=1&visualGate=pass"
+  );
+  await expect.poll(
+    () => page.evaluate(() => window.__MiraLithLuBirthCloudMicrobench?.active ?? false),
+    { timeout: 25_000 }
+  ).toBe(true);
+  const timerSupported = await page.evaluate(
+    () => window.__MiraLithLuBirthCloudMicrobench?.gpu.supported ?? false
+  );
+  test.skip(!timerSupported, "EXT_disjoint_timer_query_webgl2 is unavailable in this browser.");
+
+  await expect.poll(
+    () => page.evaluate(() => {
+      const telemetry = window.__MiraLithLuBirthCloudMicrobench;
+      return telemetry?.measurementState === "sampling" && (telemetry.gpu.sampleCount ?? 0) > 0;
+    }),
+    { timeout: 120_000 }
+  ).toBe(true);
+  const beforeHidden = await page.evaluate(() => window.__MiraLithLuBirthCloudMicrobench);
+
+  await setDocumentVisibilityState(page, "hidden");
+  await expect.poll(
+    () => page.evaluate(() => {
+      const telemetry = window.__MiraLithLuBirthCloudMicrobench;
+      return telemetry?.measurement.pageVisible === false && telemetry.gpu.sampleCount === 0 &&
+        telemetry.measurement.measurementReadyFrame === null &&
+        telemetry.measurementState === "awaiting-readiness";
+    }),
+    { timeout: 25_000 }
+  ).toBe(true);
+
+  await setDocumentVisibilityState(page, "visible");
+  await expect.poll(
+    () => page.evaluate((previousFrameId) => {
+      const telemetry = window.__MiraLithLuBirthCloudMicrobench;
+      return telemetry?.measurement.pageVisible === true &&
+        (telemetry.measurement.measurementReadyFrame ?? -1) > previousFrameId;
+    }, beforeHidden?.frameId ?? -1),
+    { timeout: 25_000 }
+  ).toBe(true);
+
+  const afterVisible = await page.evaluate(() => window.__MiraLithLuBirthCloudMicrobench);
+  expect(afterVisible?.gpu.sampleCount).toBe(0);
+  expect(afterVisible?.measurement.visibilityResetCount).toBeGreaterThanOrEqual(1);
+  expect(afterVisible?.measurementState).toBe("warming");
+  expect(afterVisible?.measurement.warmupStartFrame).toBe(
+    (afterVisible?.measurement.measurementReadyFrame ?? 0) + 1
+  );
+  expect(afterVisible?.measurement.samplingStartFrame).toBe(
+    (afterVisible?.measurement.warmupStartFrame ?? 0) + 120
   );
 });
 

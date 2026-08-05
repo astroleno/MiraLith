@@ -50,6 +50,7 @@ interface CloudShellMicrobenchContractModule {
       gammaColorPass: boolean;
       hdrColorPass: boolean;
       measure: boolean;
+      pageVisible: boolean;
       timerSupported: boolean;
       visualGateConfirmed: boolean;
       weatherReady: boolean;
@@ -76,6 +77,7 @@ interface CloudShellMicrobenchContractModule {
       gammaColorPass: boolean;
       hdrColorPass: boolean;
       measure: boolean;
+      pageVisible: boolean;
       timerSupported: boolean;
       visualGateConfirmed: boolean;
       weatherReady: boolean;
@@ -508,6 +510,7 @@ test("cloud-shell measurement starts only after the ready frame and fills 120 va
     gammaColorPass: true,
     hdrColorPass: true,
     measure: true,
+    pageVisible: true,
     timerSupported: true,
     visualGateConfirmed: true,
     weatherReady: false
@@ -634,6 +637,7 @@ test("cloud-shell measurement window restarts after a resize reset and readiness
     gammaColorPass: true,
     hdrColorPass: true,
     measure: true,
+    pageVisible: true,
     timerSupported: true,
     visualGateConfirmed: true,
     weatherReady: true
@@ -668,6 +672,48 @@ test("cloud-shell measurement window restarts after a resize reset and readiness
     measurement: { ...readyMeasurement, weatherReady: false },
     window: resizedWindow
   })).toEqual(emptyWindow);
+});
+
+test("cloud-shell measurement discards a hidden window and restarts only after visibility returns", async () => {
+  const contract = await loadCloudShellMicrobenchContract();
+
+  const visibleMeasurement = {
+    coordinatePass: true,
+    gammaColorPass: true,
+    hdrColorPass: true,
+    measure: true,
+    pageVisible: true,
+    timerSupported: true,
+    visualGateConfirmed: true,
+    weatherReady: true
+  };
+  const emptyWindow = contract!.resetCloudShellMicrobenchMeasurementWindow();
+  const activeWindow = contract!.beginCloudShellMicrobenchWarmupAfterReadyFrame({
+    frameId: 193,
+    measurement: visibleMeasurement,
+    window: emptyWindow
+  });
+  expect(contract!.shouldMeasureCloudShellMicrobenchFrame({
+    frameId: 314,
+    measurement: { ...visibleMeasurement, pageVisible: false },
+    validGpuSampleCount: 17,
+    window: activeWindow
+  })).toBe(false);
+  expect(contract!.beginCloudShellMicrobenchWarmupAfterReadyFrame({
+    frameId: 314,
+    measurement: { ...visibleMeasurement, pageVisible: false },
+    window: activeWindow
+  })).toEqual(emptyWindow);
+
+  expect(contract!.beginCloudShellMicrobenchWarmupAfterReadyFrame({
+    frameId: 501,
+    measurement: visibleMeasurement,
+    window: emptyWindow
+  })).toEqual({
+    measurementReadyFrame: 501,
+    warmupStartFrame: 502,
+    samplingStartFrame: 622
+  });
 });
 
 test("cloud-shell shader keeps the general ray parameter and world-depth clamp contract", async () => {
