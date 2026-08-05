@@ -279,7 +279,9 @@ void main() {
   float stepLengthWorld = (tCloudExitWorld - tCloudEnterWorld) / float(PRIMARY_STEPS);
   float stepLengthMeters = stepLengthWorld * length(directionEcefPerWorldUnit);
   vec3 rayDirectionEcef = normalize(directionEcefPerWorldUnit);
-  float phase = henyeyGreensteinPhase(dot(-rayDirectionEcef, sunDirectionEcef), PHASE_G);
+  // sunDirectionEcef points from the sample toward the sun, while this ray
+  // points camera-to-sample. Their dot is the forward-scattering cosine.
+  float phase = henyeyGreensteinPhase(dot(rayDirectionEcef, sunDirectionEcef), PHASE_G);
   float transmittance = 1.0;
   vec3 radiance = vec3(0.0);
   for (int index = 0; index < PRIMARY_STEPS; index += 1) {

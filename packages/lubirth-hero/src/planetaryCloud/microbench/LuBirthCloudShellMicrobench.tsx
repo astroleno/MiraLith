@@ -49,13 +49,15 @@ import {
 } from "../planetaryCloudMath";
 import { DEFAULT_LUBIRTH_SUN_DIRECTION } from "../../constants";
 import {
+  beginCloudShellMicrobenchWarmupAfterReadyFrame,
   CLOUD_SHELL_BASE_ALTITUDE_M,
   CLOUD_SHELL_MICROBENCH_CASES,
   CLOUD_SHELL_MICROBENCH_RESOLUTION_SCALE,
-  CLOUD_SHELL_MICROBENCH_VALID_GPU_SAMPLES,
-  CLOUD_SHELL_MICROBENCH_WARMUP_FRAMES,
   CLOUD_SHELL_THICKNESS_M,
-  type CloudShellMicrobenchCaseId
+  resolveCloudShellMicrobenchMeasurementState,
+  shouldMeasureCloudShellMicrobenchFrame,
+  type CloudShellMicrobenchCaseId,
+  type CloudShellMicrobenchMeasurementState
 } from "./cloudShellMicrobenchContract";
 import {
   CLOUD_SHELL_COMPOSITE_FRAGMENT_SHADER,
@@ -103,7 +105,13 @@ export interface CloudShellMicrobenchTelemetry {
     supported: boolean;
   };
   incrementalRtPeakBytes: number;
-  measurementState: "awaiting-visual-review" | "warming" | "sampling" | "complete" | "timer-unavailable";
+  measurement: {
+    measurementReadyFrame: number | null;
+    samplingStartFrame: number | null;
+    warmupStartFrame: number | null;
+    weatherReady: boolean;
+  };
+  measurementState: CloudShellMicrobenchMeasurementState;
   occluderMode: CloudShellMicrobenchOccluderMode;
   progress: number;
   representationVersion: "task-1r";
@@ -157,6 +165,7 @@ interface Pipeline {
   gammaColorPass: boolean;
   gpuFrames: CloudShellMicrobenchGpuFrame[];
   hdrColorPass: boolean;
+  measurementReadyFrame: number | null;
   outputScene: Scene;
   outputMaterial: ShaderMaterial;
   profiler: CloudShellMicrobenchProfiler | null;
@@ -164,9 +173,11 @@ interface Pipeline {
   probeOccluderMaterial: MeshBasicMaterial;
   resolvedHeight: number;
   resolvedWidth: number;
+  samplingStartFrame: number | null;
   targets: PipelineTargets | null;
   weatherReady: boolean;
   weatherTexture: Texture;
+  warmupStartFrame: number | null;
 }
 
 const scratchDrawSize = new Vector2();
@@ -348,6 +359,7 @@ function createPipeline(renderer: WebGLRenderer, caseId: CloudShellMicrobenchCas
     gammaColorPass: false,
     gpuFrames: [],
     hdrColorPass: false,
+    measurementReadyFrame: null,
     outputScene: createFullscreenScene(fullscreenGeometry, outputMaterial),
     outputMaterial,
     profiler: renderer.capabilities.isWebGL2
@@ -357,9 +369,11 @@ function createPipeline(renderer: WebGLRenderer, caseId: CloudShellMicrobenchCas
     probeOccluderMaterial,
     resolvedHeight: 0,
     resolvedWidth: 0,
+    samplingStartFrame: null,
     targets: null,
     weatherReady,
-    weatherTexture
+    weatherTexture,
+    warmupStartFrame: null
   };
   return pipeline;
 }
@@ -744,11 +758,26 @@ export function LuBirthCloudShellMicrobench({
     pipeline.outputMaterial.uniforms.debugMode.value = debugModeValue(debugMode);
     pipeline.cloudRaymarchMaterial.uniforms.showSceneDepthClamp.value = showSceneDepthClamp;
 
-    const shouldMeasure = Boolean(
-      measure && visualGateConfirmed && pipeline.profiler?.supported &&
-      pipeline.frameId > CLOUD_SHELL_MICROBENCH_WARMUP_FRAMES &&
-      pipeline.gpuFrames.length < CLOUD_SHELL_MICROBENCH_VALID_GPU_SAMPLES
-    );
+    const measurementBeforeFrame = {
+      coordinatePass,
+      gammaColorPass: pipeline.gammaColorPass,
+      hdrColorPass: pipeline.hdrColorPass,
+      measure,
+      timerSupported: Boolean(pipeline.profiler?.supported),
+      visualGateConfirmed,
+      weatherReady: pipeline.weatherReady
+    };
+    const summaryBeforeFrame = summarizeCloudShellGpuFrames(pipeline.gpuFrames);
+    const shouldMeasure = shouldMeasureCloudShellMicrobenchFrame({
+      frameId: pipeline.frameId,
+      measurement: measurementBeforeFrame,
+      validGpuSampleCount: summaryBeforeFrame.sampleCount,
+      window: {
+        measurementReadyFrame: pipeline.measurementReadyFrame,
+        samplingStartFrame: pipeline.samplingStartFrame,
+        warmupStartFrame: pipeline.warmupStartFrame
+      }
+    });
 
     gl.setRenderTarget(targets.opaque);
     gl.setClearColor(new Color("#02040a"), 1);
@@ -783,23 +812,45 @@ export function LuBirthCloudShellMicrobench({
       pipeline.hdrColorPass = runHdrProbe(gl, pipeline.fullscreenCamera);
       pipeline.gammaColorPass = runGammaProbe(gl, pipeline.fullscreenCamera);
     }
+    const measurementAfterFrame = {
+      coordinatePass,
+      gammaColorPass: pipeline.gammaColorPass,
+      hdrColorPass: pipeline.hdrColorPass,
+      measure,
+      timerSupported: Boolean(pipeline.profiler?.supported),
+      visualGateConfirmed,
+      weatherReady: pipeline.weatherReady
+    };
+    const previousMeasurementReadyFrame = pipeline.measurementReadyFrame;
+    const measurementWindow = beginCloudShellMicrobenchWarmupAfterReadyFrame({
+      frameId: pipeline.frameId,
+      measurement: measurementAfterFrame,
+      window: {
+        measurementReadyFrame: pipeline.measurementReadyFrame,
+        samplingStartFrame: pipeline.samplingStartFrame,
+        warmupStartFrame: pipeline.warmupStartFrame
+      }
+    });
+    pipeline.measurementReadyFrame = measurementWindow.measurementReadyFrame;
+    pipeline.warmupStartFrame = measurementWindow.warmupStartFrame;
+    pipeline.samplingStartFrame = measurementWindow.samplingStartFrame;
+    if (previousMeasurementReadyFrame !== null && measurementWindow.measurementReadyFrame === null) {
+      pipeline.gpuFrames.length = 0;
+    }
     for (const frame of pipeline.profiler?.poll() ?? []) {
-      if (frame.frameId > CLOUD_SHELL_MICROBENCH_WARMUP_FRAMES) {
+      if (pipeline.samplingStartFrame !== null && frame.frameId >= pipeline.samplingStartFrame) {
         pipeline.gpuFrames.push(frame);
       }
     }
 
     if (pipeline.frameId % 8 === 0 || (pipeline.weatherReady && pipeline.frameId < 8)) {
       const summary = summarizeCloudShellGpuFrames(pipeline.gpuFrames);
-      const measurementState = !visualGateConfirmed
-        ? "awaiting-visual-review"
-        : !pipeline.profiler?.supported
-          ? "timer-unavailable"
-          : pipeline.gpuFrames.length >= CLOUD_SHELL_MICROBENCH_VALID_GPU_SAMPLES
-            ? "complete"
-            : pipeline.frameId <= CLOUD_SHELL_MICROBENCH_WARMUP_FRAMES
-              ? "warming"
-              : "sampling";
+      const measurementState = resolveCloudShellMicrobenchMeasurementState({
+        frameId: pipeline.frameId,
+        measurement: measurementAfterFrame,
+        validGpuSampleCount: summary.sampleCount,
+        window: measurementWindow
+      });
       const telemetry: CloudShellMicrobenchTelemetry = {
         active: pipeline.weatherReady && coordinatePass,
         cameraMatrixWorld: camera.matrixWorld.elements.slice(),
@@ -834,6 +885,12 @@ export function LuBirthCloudShellMicrobench({
         },
         hdrColorGate: pipeline.hdrColorPass && pipeline.gammaColorPass ? "PASS" : "FAIL",
         incrementalRtPeakBytes: estimateRtPeakBytes(width, height),
+        measurement: {
+          measurementReadyFrame: measurementWindow.measurementReadyFrame,
+          samplingStartFrame: measurementWindow.samplingStartFrame,
+          warmupStartFrame: measurementWindow.warmupStartFrame,
+          weatherReady: pipeline.weatherReady
+        },
         measurementState,
         occluderMode,
         progress: clampProgress(progress),

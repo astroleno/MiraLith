@@ -29,7 +29,13 @@ declare global {
       };
       hdrColorGate: "PASS" | "FAIL";
       incrementalRtPeakBytes: number;
-      measurementState: "awaiting-visual-review" | "warming" | "sampling" | "complete" | "timer-unavailable";
+      measurement: {
+        measurementReadyFrame: number | null;
+        samplingStartFrame: number | null;
+        warmupStartFrame: number | null;
+        weatherReady: boolean;
+      };
+      measurementState: "awaiting-visual-review" | "awaiting-readiness" | "warming" | "sampling" | "complete" | "timer-unavailable";
       occluderMode: "none" | "front" | "middle" | "behind";
       representationVersion: "task-1r";
       renderScale: number;
@@ -287,6 +293,7 @@ test("records a Task -1R System Chrome GPU window after visual confirmation", as
   const results: Array<{
     caseId: "24/6" | "32/2" | "48/6";
     gpu: NonNullable<Window["__MiraLithLuBirthCloudMicrobench"]>["gpu"];
+    measurement: NonNullable<Window["__MiraLithLuBirthCloudMicrobench"]>["measurement"];
     renderScale: number;
     resolvedSize: [number, number];
   }> = [];
@@ -322,9 +329,18 @@ test("records a Task -1R System Chrome GPU window after visual confirmation", as
     expect(telemetry?.gpu.stages.densityAndLightRaymarch.p95Ms).not.toBeNull();
     expect(telemetry?.gpu.stages.resolve.p95Ms).not.toBeNull();
     expect(telemetry?.gpu.stages.cloudComposite.p95Ms).not.toBeNull();
+    expect(telemetry?.measurement.weatherReady).toBe(true);
+    expect(telemetry?.measurement.measurementReadyFrame).not.toBeNull();
+    expect(telemetry?.measurement.warmupStartFrame).toBe(
+      (telemetry?.measurement.measurementReadyFrame ?? 0) + 1
+    );
+    expect(telemetry?.measurement.samplingStartFrame).toBe(
+      (telemetry?.measurement.warmupStartFrame ?? 0) + 120
+    );
     results.push({
       caseId,
       gpu: telemetry!.gpu,
+      measurement: telemetry!.measurement,
       renderScale: telemetry!.renderScale,
       resolvedSize: telemetry!.resolvedSize
     });

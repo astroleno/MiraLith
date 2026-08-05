@@ -43,6 +43,45 @@ interface CloudShellMicrobenchContractModule {
     lightSteps: number;
     groundSteps: number;
   }>;
+  beginCloudShellMicrobenchWarmupAfterReadyFrame(input: {
+    frameId: number;
+    measurement: {
+      coordinatePass: boolean;
+      gammaColorPass: boolean;
+      hdrColorPass: boolean;
+      measure: boolean;
+      timerSupported: boolean;
+      visualGateConfirmed: boolean;
+      weatherReady: boolean;
+    };
+    window: {
+      measurementReadyFrame: number | null;
+      samplingStartFrame: number | null;
+      warmupStartFrame: number | null;
+    };
+  }): {
+    measurementReadyFrame: number | null;
+    samplingStartFrame: number | null;
+    warmupStartFrame: number | null;
+  };
+  shouldMeasureCloudShellMicrobenchFrame(input: {
+    frameId: number;
+    measurement: {
+      coordinatePass: boolean;
+      gammaColorPass: boolean;
+      hdrColorPass: boolean;
+      measure: boolean;
+      timerSupported: boolean;
+      visualGateConfirmed: boolean;
+      weatherReady: boolean;
+    };
+    validGpuSampleCount: number;
+    window: {
+      measurementReadyFrame: number | null;
+      samplingStartFrame: number | null;
+      warmupStartFrame: number | null;
+    };
+  }): boolean;
   resolveCloudShellMicrobenchCheckpoint(input: {
     coordinatePass: boolean;
     hdrColorPass: boolean;
@@ -384,6 +423,81 @@ test("cloud-shell microbenchmark freezes the three approved step cases and early
   })).toBe("EARLY_REPRESENTATION_FAIL");
 });
 
+test("cloud-shell measurement starts only after the ready frame and fills 120 valid samples", async () => {
+  const contract = await loadCloudShellMicrobenchContract();
+  const profiler = await loadCloudShellMicrobenchProfiler();
+
+  expect(typeof contract?.beginCloudShellMicrobenchWarmupAfterReadyFrame).toBe("function");
+  expect(typeof contract?.shouldMeasureCloudShellMicrobenchFrame).toBe("function");
+  const measurement = {
+    coordinatePass: true,
+    gammaColorPass: true,
+    hdrColorPass: true,
+    measure: true,
+    timerSupported: true,
+    visualGateConfirmed: true,
+    weatherReady: false
+  };
+  const emptyWindow = {
+    measurementReadyFrame: null,
+    samplingStartFrame: null,
+    warmupStartFrame: null
+  };
+  expect(contract!.beginCloudShellMicrobenchWarmupAfterReadyFrame({
+    frameId: 120,
+    measurement,
+    window: emptyWindow
+  })).toEqual(emptyWindow);
+
+  const readyWindow = contract!.beginCloudShellMicrobenchWarmupAfterReadyFrame({
+    frameId: 193,
+    measurement: { ...measurement, weatherReady: true },
+    window: emptyWindow
+  });
+  expect(readyWindow).toEqual({
+    measurementReadyFrame: 193,
+    warmupStartFrame: 194,
+    samplingStartFrame: 314
+  });
+  expect(contract!.shouldMeasureCloudShellMicrobenchFrame({
+    frameId: 313,
+    measurement: { ...measurement, weatherReady: true },
+    validGpuSampleCount: 0,
+    window: readyWindow
+  })).toBe(false);
+
+  const oneHundredNineteenValidPlusOneDisjoint = [
+    ...Array.from({ length: 119 }, (_, index) => ({
+      frameId: index + 1,
+      densityAndLightRaymarchMs: 1,
+      resolveMs: 1,
+      cloudCompositeMs: 1,
+      disjoint: false
+    })),
+    {
+      frameId: 120,
+      densityAndLightRaymarchMs: Number.NaN,
+      resolveMs: Number.NaN,
+      cloudCompositeMs: Number.NaN,
+      disjoint: true
+    }
+  ];
+  const summary = profiler!.summarizeCloudShellGpuFrames(oneHundredNineteenValidPlusOneDisjoint);
+  expect(summary).toMatchObject({ sampleCount: 119, invalidFrameCount: 1 });
+  expect(contract!.shouldMeasureCloudShellMicrobenchFrame({
+    frameId: 314,
+    measurement: { ...measurement, weatherReady: true },
+    validGpuSampleCount: summary.sampleCount,
+    window: readyWindow
+  })).toBe(true);
+  expect(contract!.shouldMeasureCloudShellMicrobenchFrame({
+    frameId: 314,
+    measurement: { ...measurement, weatherReady: true },
+    validGpuSampleCount: 120,
+    window: readyWindow
+  })).toBe(false);
+});
+
 test("cloud-shell shader keeps the general ray parameter and world-depth clamp contract", async () => {
   const shader = await loadCloudShellMicrobenchShader();
 
@@ -415,6 +529,15 @@ test("cloud-shell shader keeps the general ray parameter and world-depth clamp c
   expect(source).not.toContain("float stepLengthMeters = shellThicknessEcef / float(LIGHT_STEPS)");
   expect(source).toContain("vec3 directionEcefPerWorldUnit = mat3(worldToEcef) * rayDirectionWorld");
   expect(source).toContain("vec3 rayDirectionEcef = normalize(directionEcefPerWorldUnit)");
+  expect(source).toContain(
+    "float phase = henyeyGreensteinPhase(dot(rayDirectionEcef, sunDirectionEcef), PHASE_G)"
+  );
+  expect(source).not.toContain(
+    "float phase = henyeyGreensteinPhase(dot(-rayDirectionEcef, sunDirectionEcef), PHASE_G)"
+  );
+  const cameraToSample = new Vector3(0, 0, 1);
+  expect(cameraToSample.dot(new Vector3(0, 0, 1))).toBe(1);
+  expect(cameraToSample.dot(new Vector3(0, 0, -1))).toBe(-1);
 });
 
 test("cloud-shell GPU summary counts every non-overlapping stage and rejects disjoint frames", async () => {
