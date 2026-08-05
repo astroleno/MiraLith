@@ -4,9 +4,16 @@ import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import {
   EarthMoonScene,
   EMPTY_CLOSE_ATMOSPHERE_TUNING,
+  LUBIRTH_NASA_LITE_DESKTOP_ASSETS,
+  LUBIRTH_NASA_LITE_MOBILE_ASSETS,
+  LUBIRTH_RELIEF_LITE_DESKTOP_ASSETS,
+  LUBIRTH_RELIEF_LITE_MOBILE_ASSETS,
+  DEFAULT_LUBIRTH_DATE,
   computeRuntimeMoonPhase,
   computeRuntimeSolarDirection,
   geodeticToTextureVector,
+  isLandingReliefLiteMobileViewport,
+  isLandingNasaLiteMobileViewport,
   resolveLandingAssets,
   resolveLandingCloseAtmosphereTuning,
   resolveLandingPreset,
@@ -17,6 +24,7 @@ import { useQualityTier, useReducedMotionPreference } from "@miralith/visual-cor
 import type {
   LandingAssetManifest,
   LandingAtmosphereLook,
+  LandingAtmosphereMode,
   LandingAtmospherePolicy,
   LandingAtmosphereVariant,
   LandingAuroraProfile,
@@ -159,7 +167,7 @@ declare global {
       localTime?: string;
       locationLabel?: string;
       locationSunDot?: number;
-      source: "runtime-solar";
+      source: "birth-preset-solar" | "explicit-solar-date" | "runtime-solar";
       sunDirection: [number, number, number];
       timeZone?: string;
     };
@@ -229,7 +237,27 @@ function readCloudModeOverride(): LandingCloudMode | undefined {
   }
 
   const mode = new URLSearchParams(window.location.search).get("cloud");
-  return mode === "surface" || mode === "shell-lite" || mode === "lookdev" ? mode : undefined;
+  return mode === "surface" ||
+    mode === "shell-lite" ||
+    mode === "nasa-lite" ||
+    mode === "relief-lite" ||
+    mode === "lookdev"
+    ? mode
+    : undefined;
+}
+
+function readAtmosphereVisualModeOverride(): LandingAtmosphereMode | undefined {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+
+  const mode = new URLSearchParams(window.location.search).get("atmosphereMode");
+  return mode === "surface-glow" ||
+    mode === "directional-lite" ||
+    mode === "limb-lite" ||
+    mode === "lookdev"
+    ? mode
+    : undefined;
 }
 
 function readAuroraProfile(): LandingAuroraProfile {
@@ -327,6 +355,14 @@ function readSunDateOverride(): string | undefined {
   return Number.isFinite(parsed.getTime()) ? value : undefined;
 }
 
+function resolveDefaultLuBirthSolarDate() {
+  const explicitChinaTime = `${DEFAULT_LUBIRTH_DATE}+08:00`;
+  const parsed = new Date(explicitChinaTime);
+  return Number.isFinite(parsed.getTime())
+    ? parsed
+    : new Date(DEFAULT_LUBIRTH_DATE);
+}
+
 function isAtmosphereSpikeRoute() {
   return typeof window !== "undefined" && (
     window.location.pathname.includes("/lubirth-atmosphere-spike") ||
@@ -357,7 +393,10 @@ function readMobileLandscape() {
   return window.innerWidth > window.innerHeight && Math.min(window.innerWidth, window.innerHeight) < 760;
 }
 
-function readLocationOverride(activeRenderProfile: LandingRenderProfile | undefined): "birth" | "ip" {
+function readLocationOverride(
+  activeRenderProfile: LandingRenderProfile | undefined,
+  routeVariant: LuBirthAtmosphereRouteVariant
+): "birth" | "ip" {
   if (typeof window === "undefined") {
     return "birth";
   }
@@ -374,6 +413,9 @@ function readLocationOverride(activeRenderProfile: LandingRenderProfile | undefi
     return "ip";
   }
   if (params.get("visualTest") === "pixels") {
+    return "birth";
+  }
+  if (routeVariant === "home") {
     return "birth";
   }
   if (isAtmosphereSpikeRoute()) {
@@ -536,6 +578,7 @@ export function LuBirthSceneSlot({
   const qualityOverride = readQualityOverride();
   const postEffectModeOverride = readPostEffectModeOverride();
   const cloudModeOverride = readCloudModeOverride();
+  const atmosphereVisualModeOverride = readAtmosphereVisualModeOverride();
   const auroraProfile = readAuroraProfile();
   const renderProfileOverride = readRenderProfileOverride();
   const activeRenderProfile = renderProfileOverride ?? renderProfile;
@@ -545,7 +588,8 @@ export function LuBirthSceneSlot({
   const moonPhaseOverride = readMoonPhaseOverride(activeRenderProfile, activeRouteVariant);
   const moonDateOverride = readMoonDateOverride();
   const sunDateOverride = readSunDateOverride();
-  const locationOverride = readLocationOverride(activeRenderProfile);
+  const explicitRuntimeSolarInput = hasExplicitRuntimeSolarInput();
+  const locationOverride = readLocationOverride(activeRenderProfile, activeRouteVariant);
   const manualGeoLocation = useMemo(() => readManualGeoLocation(), []);
   const geoEndpoint =
     locationOverride === "ip" && typeof window !== "undefined" && !manualGeoLocation
@@ -553,19 +597,26 @@ export function LuBirthSceneSlot({
       : null;
   const qualityProfile = useQualityTier(qualityOverride ?? quality, reducedMotion);
   const visualPolicy = useMemo(
-    () => {
-      const policy = resolveLandingVisualPolicy({
-        runtimeProfile,
-        qualityTier: qualityProfile.tier,
-        renderProfile: activeRenderProfile ?? "nasa"
-      });
-      return {
-        ...policy,
+    () => resolveLandingVisualPolicy({
+      runtimeProfile,
+      qualityTier: qualityProfile.tier,
+      renderProfile: activeRenderProfile ?? "nasa",
+      overrides: {
         ...(postEffectModeOverride ? { postEffectMode: postEffectModeOverride } : {}),
-        ...(cloudModeOverride ? { cloudMode: cloudModeOverride } : {})
-      };
-    },
-    [activeRenderProfile, cloudModeOverride, postEffectModeOverride, qualityProfile.tier, runtimeProfile]
+        ...(cloudModeOverride ? { cloudMode: cloudModeOverride } : {}),
+        ...(atmosphereVisualModeOverride
+          ? { atmosphereMode: atmosphereVisualModeOverride }
+          : {})
+      }
+    }),
+    [
+      activeRenderProfile,
+      atmosphereVisualModeOverride,
+      cloudModeOverride,
+      postEffectModeOverride,
+      qualityProfile.tier,
+      runtimeProfile
+    ]
   );
   const requestedCloseAtmosphereTuning = useMemo<LandingCloseAtmosphereTuning>(
     () => resolveLandingCloseAtmosphereTuning({
@@ -599,10 +650,20 @@ export function LuBirthSceneSlot({
     () => computeRuntimeMoonPhase(moonDateOverride ? new Date(moonDateOverride) : new Date()),
     [moonDateOverride]
   );
-  const runtimeSolarDate = useMemo(
-    () => sunDateOverride ? new Date(sunDateOverride) : new Date(),
-    [sunDateOverride]
-  );
+  const runtimeSolarDate = useMemo(() => {
+    if (sunDateOverride) {
+      return new Date(sunDateOverride);
+    }
+    if (moonPhaseOverride === "today" || explicitRuntimeSolarInput) {
+      return new Date();
+    }
+    return resolveDefaultLuBirthSolarDate();
+  }, [explicitRuntimeSolarInput, moonPhaseOverride, sunDateOverride]);
+  const solarStateSource = sunDateOverride
+    ? "explicit-solar-date"
+    : moonPhaseOverride === "today" || explicitRuntimeSolarInput
+      ? "runtime-solar"
+      : "birth-preset-solar";
   const runtimeSunDirection = useMemo(
     () => computeRuntimeSolarDirection(runtimeSolarDate),
     [runtimeSolarDate]
@@ -649,7 +710,7 @@ export function LuBirthSceneSlot({
       const useRuntimeSolar =
         !unifyReferenceMoonLighting &&
         !freezeAtmosphereSpikeSolar &&
-        (activeRenderProfile === "nasa" || moonPhaseOverride === "today" || Boolean(activeVisitorLocation));
+        (moonPhaseOverride === "today" || explicitRuntimeSolarInput || solarStateSource === "birth-preset-solar");
       const referenceCloseOrbitLook = unifyReferenceMoonLighting;
       const homeEarthEdgeProfile = resolveHomeEarthEdgeProfile(activeRouteVariant);
       const homeEarthSurfaceProfile = resolveHomeEarthSurfaceProfile(activeRouteVariant);
@@ -708,10 +769,12 @@ export function LuBirthSceneSlot({
       atmosphereLook,
       activeRouteVariant,
       activeVisitorLocation,
+      explicitRuntimeSolarInput,
       freezeAtmosphereSpikeSolar,
       moonLightingMode,
       moonPhaseOverride,
       runtimeSunDirection,
+      solarStateSource,
       todayMoonPhase
     ]
   );
@@ -727,8 +790,37 @@ export function LuBirthSceneSlot({
     typeof window !== "undefined" &&
     Math.min(window.innerWidth, window.innerHeight) >= 760;
   const useHighDetailEarthAssets = qualityProfile.tier === "high" || forceReferenceSpikeHighDetailAssets;
+  const useReliefLiteAssets =
+    visualPolicy.cloudMode === "relief-lite" ||
+    visualPolicy.atmosphereMode === "limb-lite";
+  const useNasaLiteAssets =
+    visualPolicy.cloudMode === "nasa-lite" ||
+    visualPolicy.atmosphereMode === "directional-lite";
+  const useMobileLiteAssets =
+    typeof window !== "undefined" &&
+    (
+      useReliefLiteAssets
+        ? isLandingReliefLiteMobileViewport(
+            window.innerWidth,
+            window.innerHeight,
+            navigator.maxTouchPoints
+          )
+        : isLandingNasaLiteMobileViewport(
+            window.innerWidth,
+            window.innerHeight,
+            navigator.maxTouchPoints
+          )
+    );
   const assets = resolveLandingAssets(
-    useHighDetailEarthAssets
+    useReliefLiteAssets
+      ? useMobileLiteAssets
+        ? LUBIRTH_RELIEF_LITE_MOBILE_ASSETS
+        : LUBIRTH_RELIEF_LITE_DESKTOP_ASSETS
+      : useNasaLiteAssets
+      ? useMobileLiteAssets
+        ? LUBIRTH_NASA_LITE_MOBILE_ASSETS
+        : LUBIRTH_NASA_LITE_DESKTOP_ASSETS
+      : useHighDetailEarthAssets
       ? forceReferenceSpikeHighDetailAssets
         ? HIGH_DETAIL_REFERENCE_EARTH_ASSETS
         : HIGH_DETAIL_EARTH_ASSETS
@@ -810,7 +902,7 @@ export function LuBirthSceneSlot({
       localTime: formatLocationLocalTime(runtimeSolarDate, activeVisitorLocation),
       locationLabel: activeVisitorLocation?.label,
       locationSunDot: Number(dotTextureVectors(locationVector, runtimeSunDirection).toFixed(4)),
-      source: "runtime-solar",
+      source: solarStateSource,
       sunDirection: [runtimeSunDirection[0], runtimeSunDirection[1], runtimeSunDirection[2]],
       timeZone: activeVisitorLocation?.timeZone
     };
@@ -832,6 +924,7 @@ export function LuBirthSceneSlot({
     visualPolicy,
     requestedCloseAtmosphereTuning,
     resolvedAtmospherePolicy.atmosphereLook,
+    solarStateSource,
     resolvedAtmospherePolicy.reason,
     runtimeSolarDate,
     runtimeSunDirection

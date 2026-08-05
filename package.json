@@ -9,6 +9,7 @@
     "lint": "pnpm --filter @miralith/site lint",
     "typecheck": "pnpm -r typecheck",
     "test:e2e": "playwright test",
+    "test:lubirth-hybrid-phase1:system-chrome": "playwright test -c playwright.phase1-system-chrome.config.ts",
     "verify": "pnpm lint && pnpm typecheck && pnpm build"
   },
   "devDependencies": {

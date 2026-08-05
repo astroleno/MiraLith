@@ -293,7 +293,7 @@ test("keeps production home on the lightweight Earth renderer", async ({ page })
     .toBe(1);
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudFieldTexture), { timeout: 25_000 })
-    .toBe("/assets/lubirth/textures/earth-cloud-field-home.webp");
+    .toBe("/assets/lubirth/textures/earth-cloud-field-home.png");
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudHeightScale), { timeout: 25_000 })
     .toBeGreaterThan(0);
@@ -355,9 +355,10 @@ test("keeps production home on the lightweight Earth renderer", async ({ page })
   expect(canvasAntialias).toBe(false);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-day-2k"))).toBe(true);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-night-2k"))).toBe(true);
-  expect(Array.from(assetRequests).some((path) => path.includes("earth-cloud-field-home.webp"))).toBe(true);
+  expect(Array.from(assetRequests).some((path) => path.includes("earth-cloud-field-home.png"))).toBe(true);
   expect(Array.from(assetRequests).some((path) => path.includes("moon-2k"))).toBe(true);
   expect(Array.from(assetRequests).some((path) => path.includes("stars-milky-way-2k.webp"))).toBe(true);
+  expect(Array.from(assetRequests).some((path) => path.includes("earth-lights-only"))).toBe(false);
   expect(Array.from(assetRequests).some((path) => path.includes("8k"))).toBe(false);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-clouds-2k"))).toBe(false);
   expect(Array.from(assetRequests).some((path) => path.includes("earth-cloud-deck"))).toBe(false);
@@ -366,14 +367,14 @@ test("keeps production home on the lightweight Earth renderer", async ({ page })
   const firstViewportTextures = [
     path.join("textures", "earth-day-2k.jpg"),
     path.join("textures", "earth-night-2k.jpg"),
-    path.join("textures", "earth-cloud-field-home.webp"),
+    path.join("textures", "earth-cloud-field-home.png"),
     path.join("textures", "moon-2k.jpg"),
     path.join("backgrounds", "stars-milky-way-2k.webp")
   ].map((relativePath) =>
     statSync(path.join(process.cwd(), "apps/site/public/assets/lubirth", relativePath)).size
   );
   const cloudFieldBytes = firstViewportTextures[2] ?? Number.POSITIVE_INFINITY;
-  expect(cloudFieldBytes).toBeLessThanOrEqual(650_000);
+  expect(cloudFieldBytes).toBeLessThanOrEqual(1_100_000);
   expect(firstViewportTextures.reduce((total, bytes) => total + bytes, 0)).toBeLessThan(3_000_000);
 });
 

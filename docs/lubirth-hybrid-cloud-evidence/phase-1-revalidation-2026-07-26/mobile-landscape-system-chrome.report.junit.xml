@@ -1,0 +1,30 @@
+<testsuites id="" name="" tests="7" failures="0" skipped="2" errors="0" time="104.801034">
+<testsuite name="lubirth-hybrid-cloud-kill-spike.spec.ts" timestamp="2026-07-26T12:17:31.419Z" hostname="mobile-landscape-system-chrome" tests="7" failures="0" skipped="2" time="71.135" errors="0">
+<testcase name="Phase -1 hybrid cloud kill-spike renders near camera with bounded telemetry" classname="lubirth-hybrid-cloud-kill-spike.spec.ts" time="11.6">
+</testcase>
+<testcase name="Phase -1 hybrid cloud kill-spike renders oblique camera with bounded telemetry" classname="lubirth-hybrid-cloud-kill-spike.spec.ts" time="11.193">
+</testcase>
+<testcase name="Phase -1 near and oblique cameras reuse the same tier-specific Earth-local lobe set" classname="lubirth-hybrid-cloud-kill-spike.spec.ts" time="22.158">
+</testcase>
+<testcase name="Phase -1 desktop tau silhouette suppresses lobe-bead contour noise" classname="lubirth-hybrid-cloud-kill-spike.spec.ts">
+<properties>
+<property name="skip" value="The contour gate is calibrated on the desktop reference viewport.">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase -1 desktop oblique radiance preserves physical top, side, and underside ordering" classname="lubirth-hybrid-cloud-kill-spike.spec.ts">
+<properties>
+<property name="skip" value="The lighting gate is calibrated on the desktop reference viewport.">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase -1 motion sweep preserves hierarchy identity and bounded temporal overdraw" classname="lubirth-hybrid-cloud-kill-spike.spec.ts" time="3.371">
+</testcase>
+<testcase name="Phase -1 conservative scissor is pixel-equivalent to the unclipped reference" classname="lubirth-hybrid-cloud-kill-spike.spec.ts" time="22.427">
+</testcase>
+</testsuite>
+</testsuites>

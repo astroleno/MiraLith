@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "lubirth-hybrid-phase1-evidence-v1",
+  "capturedAt": "2026-07-25T06:45:29.639Z",
+  "gitHead": "ce63ee196554c2f94256084e4dcfaee47d7cf082",
+  "implementationStagedPatchSha256": "b064401c1f45ad11fec42e321a9a92e09f746a80352d965f173b67e48d588e89",
+  "route": "/lubirth-hybrid-cloud-kill-spike",
+  "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+  "acceptance": {
+    "accumulationProbe": "RGBA16F additive draw + readback verified",
+    "desktopGpuP95MsMaximum": 3,
+    "minimumValidGpuSamples": 30,
+    "timingScope": "rgba16f-1bin-accumulation-composite",
+    "mobileEvidence": "configuration-tier only; physical-device validation is deferred"
+  },
+  "implementationFiles": [
+    "apps/site/app/lubirth-hybrid-cloud-kill-spike/page.tsx",
+    "apps/site/components/LuBirthHybridCloudKillSpikeRoute.tsx",
+    "apps/site/public/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.png",
+    "apps/site/public/assets/lubirth/textures/earth-cloud-field-nasa-lite-v3-cpu-truth.bin",
+    "apps/site/public/assets/lubirth/textures/earth-day-nasa-lite-4k.webp",
+    "docs/lubirth-hybrid-cloud-architecture.md",
+    "packages/lubirth-hero/src/landingCloudAssetBudgets.json",
+    "tests/e2e/lubirth-hybrid-cloud-contract.spec.ts",
+    "tests/e2e/lubirth-hybrid-cloud-kill-spike.spec.ts"
+  ],
+  "captures": [
+    "desktop-near.png",
+    "desktop-oblique.png",
+    "mobile-landscape-near.png",
+    "desktop-sweep.webm",
+    "desktop-near.telemetry.json",
+    "desktop-oblique.telemetry.json",
+    "mobile-landscape-near.telemetry.json",
+    "desktop-sweep.telemetry.json"
+  ]
+}

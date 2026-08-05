@@ -13,13 +13,25 @@ function lightingEvidencePath(name: string) {
 
 declare global {
   interface Window {
+    __MiraLithHomeProjectionFrame?: {
+      width: number;
+      height: number;
+      earthHorizonPath: string;
+    };
     __MiraLithLuBirthProjectedEarthLighting?: {
       center: [number, number];
       progress: number;
       radius: number;
       sunDirection: [number, number];
     };
+    __MiraLithLuBirthCloudShellCount?: number;
+    __MiraLithLuBirthCloudDiagnosticMode?: number;
+    __MiraLithLuBirthCloudReliefLightingStrength?: number;
+    __MiraLithLuBirthCloudShellOffset?: number;
+    __MiraLithLuBirthCloudShellTextureUuid?: string;
     __MiraLithLuBirthRuntimeProfile?: string;
+    __MiraLithLuBirthWorldLightDirection?: [number, number, number];
+    __MiraLithOpeningProgress?: number;
   }
 }
 
@@ -105,6 +117,434 @@ async function sampleEarthLighting(page: import("@playwright/test").Page) {
   });
 }
 
+async function sampleCloudLimb(page: import("@playwright/test").Page) {
+  return page.evaluate(() => {
+    const source = document.querySelector("canvas");
+    const projection = window.__MiraLithHomeProjectionFrame;
+    const lighting = window.__MiraLithLuBirthProjectedEarthLighting;
+    if (!source || !projection || !lighting) {
+      return null;
+    }
+
+    const sample = document.createElement("canvas");
+    sample.width = Math.max(1, source.clientWidth);
+    sample.height = Math.max(1, source.clientHeight);
+    const context = sample.getContext("2d", { willReadFrequently: true });
+    if (!context) {
+      return null;
+    }
+    context.drawImage(source, 0, 0, sample.width, sample.height);
+    const pixels = context.getImageData(0, 0, sample.width, sample.height).data;
+    const coordinates = projection.earthHorizonPath.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+    const horizonPoints: Array<[number, number]> = [];
+    for (let index = 0; index + 1 < coordinates.length; index += 2) {
+      const x = coordinates[index] ?? 0;
+      const y = coordinates[index + 1] ?? 0;
+      if (
+        x >= sample.width * 0.08 &&
+        x <= sample.width * 0.92 &&
+        y >= sample.height * 0.36 &&
+        y <= sample.height * 0.94
+      ) {
+        horizonPoints.push([x, y]);
+      }
+    }
+
+    const [centerX, centerY] = lighting.center;
+    const worldLightDirection = window.__MiraLithLuBirthWorldLightDirection ?? [0, 0, 0];
+    const pixelAt = (x: number, y: number) => {
+      const sampleX = Math.max(0, Math.min(sample.width - 1, Math.round(x)));
+      const sampleY = Math.max(0, Math.min(sample.height - 1, Math.round(y)));
+      const pixelIndex = (sampleY * sample.width + sampleX) * 4;
+      return [
+        pixels[pixelIndex] ?? 0,
+        pixels[pixelIndex + 1] ?? 0,
+        pixels[pixelIndex + 2] ?? 0
+      ] as [number, number, number];
+    };
+
+    return {
+      earthRadius: lighting.radius,
+      worldLightDirection,
+      samples: horizonPoints.map(([x, y]) => {
+        const distanceFromCenter = Math.max(1, Math.hypot(x - centerX, y - centerY));
+        const outwardX = (x - centerX) / distanceFromCenter;
+        const outwardY = (y - centerY) / distanceFromCenter;
+        const sampleRay = (direction: number) => Array.from({ length: 24 }, (_, index) => {
+          const distance = index + 1;
+          return pixelAt(
+            x + outwardX * distance * direction,
+            y + outwardY * distance * direction
+          );
+        });
+        return {
+          inward: sampleRay(-1),
+          outward: sampleRay(1)
+        };
+      })
+    };
+  });
+}
+
+async function sampleCloudBodyRoi(page: import("@playwright/test").Page) {
+  return page.evaluate(() => {
+    const source = document.querySelector("canvas");
+    const lighting = window.__MiraLithLuBirthProjectedEarthLighting;
+    if (!source || !lighting) {
+      return null;
+    }
+
+    const sample = document.createElement("canvas");
+    sample.width = Math.max(1, source.clientWidth);
+    sample.height = Math.max(1, source.clientHeight);
+    const context = sample.getContext("2d", { willReadFrequently: true });
+    if (!context) {
+      return null;
+    }
+    context.drawImage(source, 0, 0, sample.width, sample.height);
+    const pixels = context.getImageData(0, 0, sample.width, sample.height).data;
+    const [centerX, centerY] = lighting.center;
+    const radius = lighting.radius;
+    const left = Math.max(0, Math.floor(centerX - radius * 0.72));
+    const right = Math.min(sample.width, Math.ceil(centerX + radius * 0.72));
+    const top = Math.max(0, Math.floor(centerY - radius * 0.94));
+    const bottom = Math.min(sample.height, Math.ceil(centerY - radius * 0.35));
+    const colors: Array<[number, number, number]> = [];
+    const luminances: number[] = [];
+    for (let y = top; y < bottom; y += 2) {
+      for (let x = left; x < right; x += 2) {
+        const index = (y * sample.width + x) * 4;
+        const color = [
+          pixels[index] ?? 0,
+          pixels[index + 1] ?? 0,
+          pixels[index + 2] ?? 0
+        ] as [number, number, number];
+        colors.push(color);
+        luminances.push(Math.round(
+          0.2126 * color[0] +
+          0.7152 * color[1] +
+          0.0722 * color[2]
+        ));
+      }
+    }
+
+    return {
+      colors,
+      luminances,
+      rect: {
+        height: Math.max(1, bottom - top),
+        width: Math.max(1, right - left),
+        x: left,
+        y: top
+      }
+    };
+  });
+}
+
+const cloudColorDistance = (a: [number, number, number], b: [number, number, number]) =>
+  Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+
+const cloudLuminance = (color: [number, number, number]) =>
+  color[0] * 0.2126 + color[1] * 0.7152 + color[2] * 0.0722;
+
+const mean = (values: number[]) =>
+  values.reduce((total, value) => total + value, 0) / Math.max(values.length, 1);
+
+function percentile(values: number[], fraction: number) {
+  if (values.length === 0) {
+    return 0;
+  }
+
+  const sorted = [...values].sort((a, b) => a - b);
+  return sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * fraction))] ?? 0;
+}
+
+function compareCloudLimbSamples(
+  surface: Awaited<ReturnType<typeof sampleCloudLimb>>,
+  shell: Awaited<ReturnType<typeof sampleCloudLimb>>
+) {
+  if (!surface || !shell) {
+    return null;
+  }
+
+  const sampleCount = Math.min(surface.samples.length, shell.samples.length);
+  const baseShellOffset = Math.max(1, Math.round(surface.earthRadius * 0.008));
+  const protrusions: number[] = [];
+  const displacedProtrusions: number[] = [];
+  const displacedColorDistances: number[] = [];
+  const strongDisplacedColumns: number[] = [];
+
+  for (let sampleIndex = 0; sampleIndex < sampleCount; sampleIndex += 1) {
+    const surfaceSample = surface.samples[sampleIndex];
+    const shellSample = shell.samples[sampleIndex];
+    if (!surfaceSample || !shellSample) {
+      continue;
+    }
+
+    let protrusion = 0;
+    let hasStrongDisplacedPixel = false;
+    const outwardCount = Math.min(surfaceSample.outward.length, shellSample.outward.length);
+    for (let distanceIndex = 0; distanceIndex < outwardCount; distanceIndex += 1) {
+      const surfaceColor = surfaceSample.outward[distanceIndex];
+      const shellColor = shellSample.outward[distanceIndex];
+      if (surfaceColor && shellColor) {
+        const distance = cloudColorDistance(surfaceColor, shellColor);
+        if (distance >= 3) {
+          protrusion = distanceIndex + 1;
+        }
+        if (distanceIndex + 1 > baseShellOffset) {
+          displacedColorDistances.push(distance);
+          hasStrongDisplacedPixel ||= distance >= 8;
+        }
+      }
+    }
+    protrusions.push(protrusion);
+    displacedProtrusions.push(Math.max(0, protrusion - baseShellOffset));
+    strongDisplacedColumns.push(hasStrongDisplacedPixel ? 1 : 0);
+  }
+
+  const activeProtrusions = protrusions.filter((value) => value > 0);
+  const activeDisplacedProtrusions = displacedProtrusions.filter((value) => value > 0);
+  const activeMean = mean(activeProtrusions);
+  const activeVariance = mean(activeProtrusions.map((value) => (value - activeMean) ** 2));
+  return {
+    activeColumnFraction: activeProtrusions.length / Math.max(protrusions.length, 1),
+    displacedColumnFraction: activeDisplacedProtrusions.length / Math.max(displacedProtrusions.length, 1),
+    displacedProtrusionMean: mean(activeDisplacedProtrusions),
+    displacedColorDistanceMean: mean(displacedColorDistances),
+    strongDisplacedColumnFraction: mean(strongDisplacedColumns),
+    activeProtrusionMean: activeMean,
+    activeProtrusionStdDev: Math.sqrt(activeVariance),
+    maxProtrusion: Math.max(0, ...protrusions),
+    baseShellOffset,
+    earthRadius: surface.earthRadius,
+    sampleCount
+  };
+}
+
+function compareCloudBodyReliefLighting(
+  disabled: Awaited<ReturnType<typeof sampleCloudBodyRoi>>,
+  enabled: Awaited<ReturnType<typeof sampleCloudBodyRoi>>,
+  mask: Awaited<ReturnType<typeof sampleCloudBodyRoi>>
+) {
+  if (!disabled || !enabled || !mask) {
+    return null;
+  }
+
+  const sampleCount = Math.min(
+    disabled.luminances.length,
+    enabled.luminances.length,
+    mask.colors.length
+  );
+  const coreDeltas: number[] = [];
+  const edgeDeltas: number[] = [];
+  for (let sampleIndex = 0; sampleIndex < sampleCount; sampleIndex += 1) {
+    const maskColor = mask.colors[sampleIndex];
+    if (!maskColor) {
+      continue;
+    }
+
+    const delta = (enabled.luminances[sampleIndex] ?? 0) - (disabled.luminances[sampleIndex] ?? 0);
+    const isCore = maskColor[0] >= 220 && maskColor[1] <= 35 && maskColor[2] >= 220;
+    const isEdge = maskColor[0] <= 35 && maskColor[1] >= 220 && maskColor[2] >= 220;
+    if (isCore) {
+      coreDeltas.push(delta);
+    } else if (isEdge) {
+      edgeDeltas.push(delta);
+    }
+  }
+
+  const summarize = (deltas: number[]) => {
+    const activeDeltas = deltas.filter((value) => Math.abs(value) >= 1);
+    const positiveDeltas = activeDeltas.filter((value) => value > 0);
+    const negativeDeltas = activeDeltas.filter((value) => value < 0).map((value) => Math.abs(value));
+    const deltaMean = mean(deltas);
+    const deltaVariance = mean(deltas.map((value) => (value - deltaMean) ** 2));
+    const absoluteDeltas = deltas.map((value) => Math.abs(value));
+    return {
+      activePixelFraction: activeDeltas.length / Math.max(deltas.length, 1),
+      maxAbsoluteDelta: Math.max(0, ...absoluteDeltas),
+      meanAbsoluteDelta: mean(absoluteDeltas),
+      negativeP90: percentile(negativeDeltas, 0.9),
+      negativePixelCount: negativeDeltas.length,
+      p90AbsoluteDelta: percentile(absoluteDeltas, 0.9),
+      positiveP90: percentile(positiveDeltas, 0.9),
+      positivePixelCount: positiveDeltas.length,
+      sampleCount: deltas.length,
+      stdDev: Math.sqrt(deltaVariance)
+    };
+  };
+
+  const core = summarize(coreDeltas);
+  const edge = summarize(edgeDeltas);
+  return {
+    core,
+    edge,
+    edgeToCoreMeanRatio: edge.meanAbsoluteDelta / Math.max(core.meanAbsoluteDelta, 0.001),
+    sampleCount,
+  };
+}
+
+function compareCloudBodyContribution(
+  surface: Awaited<ReturnType<typeof sampleCloudBodyRoi>>,
+  shell: Awaited<ReturnType<typeof sampleCloudBodyRoi>>
+) {
+  if (!surface || !shell) {
+    return null;
+  }
+
+  const sampleCount = Math.min(
+    surface.luminances.length,
+    shell.luminances.length
+  );
+  const positiveLifts: number[] = [];
+  for (let sampleIndex = 0; sampleIndex < sampleCount; sampleIndex += 1) {
+    const lift = Math.max(
+      0,
+      (shell.luminances[sampleIndex] ?? 0) - (surface.luminances[sampleIndex] ?? 0)
+    );
+    if (lift >= 1) {
+      positiveLifts.push(lift);
+    }
+  }
+
+  return {
+    activePixelCount: positiveLifts.length,
+    activePixelFraction: positiveLifts.length / Math.max(sampleCount, 1),
+    max: Math.max(0, ...positiveLifts),
+    mean: mean(positiveLifts),
+    p95: percentile(positiveLifts, 0.95),
+    p99: percentile(positiveLifts, 0.99),
+    sampleCount
+  };
+}
+
+function compareMaskedCloudContribution(
+  surface: Awaited<ReturnType<typeof sampleCloudBodyRoi>>,
+  shell: Awaited<ReturnType<typeof sampleCloudBodyRoi>>,
+  mask: Awaited<ReturnType<typeof sampleCloudBodyRoi>>
+) {
+  if (!surface || !shell || !mask) {
+    return null;
+  }
+
+  const sampleCount = Math.min(
+    surface.luminances.length,
+    shell.luminances.length,
+    mask.colors.length
+  );
+  const coreLifts: number[] = [];
+  const edgeLifts: number[] = [];
+  for (let sampleIndex = 0; sampleIndex < sampleCount; sampleIndex += 1) {
+    const maskColor = mask.colors[sampleIndex];
+    if (!maskColor) {
+      continue;
+    }
+
+    const lift = Math.max(
+      0,
+      (shell.luminances[sampleIndex] ?? 0) - (surface.luminances[sampleIndex] ?? 0)
+    );
+    const isCore = maskColor[0] >= 220 && maskColor[1] <= 35 && maskColor[2] >= 220;
+    const isEdge = maskColor[0] <= 35 && maskColor[1] >= 220 && maskColor[2] >= 220;
+    if (isCore) {
+      coreLifts.push(lift);
+    } else if (isEdge) {
+      edgeLifts.push(lift);
+    }
+  }
+
+  const summarize = (values: number[]) => ({
+    activePixelFraction: values.filter((value) => value >= 1).length / Math.max(values.length, 1),
+    max: Math.max(0, ...values),
+    mean: mean(values),
+    p95: percentile(values, 0.95),
+    p99: percentile(values, 0.99),
+    sampleCount: values.length
+  });
+  return {
+    core: summarize(coreLifts),
+    edge: summarize(edgeLifts),
+    sampleCount
+  };
+}
+
+function measureBacklitCloudLimb(
+  surface: Awaited<ReturnType<typeof sampleCloudLimb>>,
+  shell: Awaited<ReturnType<typeof sampleCloudLimb>>
+) {
+  if (!surface || !shell) {
+    return null;
+  }
+
+  const sampleCount = Math.min(surface.samples.length, shell.samples.length);
+  const baseShellOffset = Math.max(1, Math.round(surface.earthRadius * 0.008));
+  const shellLuminances: number[] = [];
+  const surfaceLuminances: number[] = [];
+  const positiveLifts: number[] = [];
+  let activeColumns = 0;
+  let candidatePixels = 0;
+
+  for (let sampleIndex = 0; sampleIndex < sampleCount; sampleIndex += 1) {
+    const surfaceSample = surface.samples[sampleIndex];
+    const shellSample = shell.samples[sampleIndex];
+    if (!surfaceSample || !shellSample) {
+      continue;
+    }
+
+    let activeColumn = false;
+    const outwardCount = Math.min(surfaceSample.outward.length, shellSample.outward.length, 20);
+    for (let distanceIndex = baseShellOffset; distanceIndex < outwardCount; distanceIndex += 1) {
+      const surfaceColor = surfaceSample.outward[distanceIndex];
+      const shellColor = shellSample.outward[distanceIndex];
+      if (!surfaceColor || !shellColor) {
+        continue;
+      }
+
+      candidatePixels += 1;
+      if (cloudColorDistance(surfaceColor, shellColor) < 2) {
+        continue;
+      }
+
+      activeColumn = true;
+      const surfaceValue = cloudLuminance(surfaceColor);
+      const shellValue = cloudLuminance(shellColor);
+      surfaceLuminances.push(surfaceValue);
+      shellLuminances.push(shellValue);
+      positiveLifts.push(Math.max(0, shellValue - surfaceValue));
+    }
+    activeColumns += activeColumn ? 1 : 0;
+  }
+
+  return {
+    activeColumnCount: activeColumns,
+    activePixelCount: shellLuminances.length,
+    activePixelFraction: shellLuminances.length / Math.max(candidatePixels, 1),
+    backlitColumnCount: sampleCount,
+    luminanceMax: Math.max(0, ...shellLuminances),
+    luminanceP95: percentile(shellLuminances, 0.95),
+    positiveLiftP95: percentile(positiveLifts, 0.95),
+    sampleCount,
+    surfaceLuminanceP95: percentile(surfaceLuminances, 0.95),
+    worldLightZ: shell.worldLightDirection[2]
+  };
+}
+
+function trackUnexpectedRuntimeMessages(page: import("@playwright/test").Page) {
+  const runtimeMessages: string[] = [];
+  page.on("console", (message) => {
+    const text = message.text();
+    const knownHarnessWarning =
+      /THREE\.Clock: This module has been deprecated/.test(text) ||
+      /GPU stall due to ReadPixels/.test(text);
+    if (message.type() === "error" || (message.type() === "warning" && !knownHarnessWarning)) {
+      runtimeMessages.push(text);
+    }
+  });
+  page.on("pageerror", (error) => runtimeMessages.push(error.message));
+  return runtimeMessages;
+}
+
 test("far view keeps a readable dark side with bounded day-night contrast", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "Lighting pixels are calibrated once at 1440×960.");
   await page.setViewportSize({ width: 1440, height: 960 });
@@ -184,6 +624,217 @@ test("production home renders the 2K photographic star field above black", async
   expect(sky?.mean).toBeGreaterThanOrEqual(0.4);
   expect(sky?.p95).toBeGreaterThanOrEqual(0.75);
   expect(sky?.brightFraction).toBeGreaterThanOrEqual(0.002);
+});
+
+test("near view cloud shell displaces thick clouds beyond the base shell", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "Cloud-limb pixels are calibrated once at 1440×960.");
+  const runtimeMessages = trackUnexpectedRuntimeMessages(page);
+  await page.setViewportSize({ width: 1440, height: 960 });
+  const fixedQuery =
+    "progress=0&copy=hidden&quality=medium&visualTest=pixels&location=birth&moonPhase=today&sunDate=2026-07-12T09:00:00Z&debug=clouds&postEffect=off";
+
+  await page.goto(`/?${fixedQuery}&cloud=surface`);
+  await waitForLightingFrame(page);
+  await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-render-profile", "debug-clouds");
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudShellCount ?? 0))
+    .toBe(0);
+  const surface = await sampleCloudLimb(page);
+  await testInfo.attach("near-cloud-surface-baseline", {
+    body: await page.screenshot(),
+    contentType: "image/png"
+  });
+
+  await page.goto(`/?${fixedQuery}&cloud=shell-lite&cloudDiagnostic=mask`);
+  await waitForLightingFrame(page);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudShellCount ?? 0))
+    .toBe(1);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudDiagnosticMode))
+    .toBe(1);
+  const shell = await sampleCloudLimb(page);
+  await testInfo.attach("near-cloud-shell-lite", {
+    body: await page.screenshot(),
+    contentType: "image/png"
+  });
+
+  const metrics = compareCloudLimbSamples(surface, shell);
+  console.log(`near cloud limb ${JSON.stringify(metrics)}`);
+  expect(metrics).not.toBeNull();
+  expect(metrics?.sampleCount).toBeGreaterThanOrEqual(80);
+  expect(metrics?.displacedColumnFraction).toBeGreaterThanOrEqual(0.13);
+  expect(metrics?.strongDisplacedColumnFraction).toBeGreaterThanOrEqual(0.07);
+  expect(metrics?.displacedProtrusionMean).toBeGreaterThanOrEqual(1.5);
+  expect(metrics?.maxProtrusion).toBeGreaterThanOrEqual(10);
+  expect(runtimeMessages).toEqual([]);
+});
+
+test("near view cloud cores carry relief instead of concentrating it on edges", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "Cloud-body pixels are calibrated once at 1440×960.");
+  const runtimeMessages = trackUnexpectedRuntimeMessages(page);
+  await page.setViewportSize({ width: 1440, height: 960 });
+  const fixedQuery =
+    "progress=0&copy=hidden&quality=medium&visualTest=pixels&location=birth&moonPhase=today&sunDate=2026-07-12T09:00:00Z&debug=clouds&cloud=shell-lite&postEffect=off";
+
+  await page.goto(`/?${fixedQuery}&cloudReliefLighting=off`);
+  await waitForLightingFrame(page);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudReliefLightingStrength))
+    .toBe(0);
+  const disabled = await sampleCloudBodyRoi(page);
+  if (disabled) {
+    await testInfo.attach("near-cloud-body-relief-off", {
+      body: await page.screenshot({ clip: disabled.rect }),
+      contentType: "image/png"
+    });
+  }
+
+  await page.goto(`/?${fixedQuery}&cloudReliefLighting=on`);
+  await waitForLightingFrame(page);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudReliefLightingStrength))
+    .toBe(1);
+  const enabled = await sampleCloudBodyRoi(page);
+  if (enabled) {
+    await testInfo.attach("near-cloud-body-relief-on", {
+      body: await page.screenshot({ clip: enabled.rect }),
+      contentType: "image/png"
+    });
+  }
+
+  await page.goto(`/?${fixedQuery}&cloudDiagnostic=mask`);
+  await waitForLightingFrame(page);
+  await expect
+    .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudDiagnosticMode))
+    .toBe(1);
+  const mask = await sampleCloudBodyRoi(page);
+  if (mask) {
+    await testInfo.attach("near-cloud-body-core-edge-mask", {
+      body: await page.screenshot({ clip: mask.rect }),
+      contentType: "image/png"
+    });
+  }
+
+  const metrics = compareCloudBodyReliefLighting(disabled, enabled, mask);
+  console.log(`near cloud body relief lighting ${JSON.stringify(metrics)}`);
+  expect(metrics).not.toBeNull();
+  expect(metrics?.sampleCount).toBeGreaterThanOrEqual(120_000);
+  expect(metrics?.core.sampleCount).toBeGreaterThanOrEqual(5_000);
+  expect(metrics?.edge.sampleCount).toBeGreaterThanOrEqual(5_000);
+  expect(metrics?.core.activePixelFraction).toBeGreaterThanOrEqual(0.12);
+  expect(metrics?.core.meanAbsoluteDelta).toBeGreaterThanOrEqual(1.5);
+  expect(metrics?.core.p90AbsoluteDelta).toBeGreaterThanOrEqual(4);
+  expect(metrics?.core.positivePixelCount).toBeGreaterThanOrEqual(500);
+  expect(metrics?.core.negativePixelCount).toBeGreaterThanOrEqual(500);
+  expect(metrics?.core.positiveP90).toBeGreaterThanOrEqual(5);
+  expect(metrics?.core.negativeP90).toBeGreaterThanOrEqual(5);
+  expect(metrics?.core.stdDev).toBeGreaterThanOrEqual(2);
+  expect(metrics?.edgeToCoreMeanRatio).toBeLessThanOrEqual(2.5);
+  expect(runtimeMessages).toEqual([]);
+});
+
+test("near-to-far camera motion keeps one continuous cloud field", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "Cloud transition is calibrated once at 1440×960.");
+  const runtimeMessages = trackUnexpectedRuntimeMessages(page);
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await page.goto(
+    "/?progress=0&copy=hidden&quality=medium&visualTest=pixels&location=birth&moonPhase=today&sunDate=2026-07-12T09:00:00Z&debug=clouds&cloud=shell-lite&postEffect=off"
+  );
+  await waitForLightingFrame(page);
+
+  const frames: Array<{
+    offset: number;
+    progress: number;
+    radius: number;
+    textureUuid: string;
+  }> = [];
+  for (const sample of [
+    { name: "near", progress: 0 },
+    { name: "middle", progress: 0.5 },
+    { name: "far", progress: 1 }
+  ]) {
+    await page.evaluate((progress) => {
+      window.__MiraLithOpeningProgress = progress;
+    }, sample.progress);
+    await expect
+      .poll(
+        () => page.evaluate(() => window.__MiraLithLuBirthProjectedEarthLighting?.progress),
+        { timeout: 5_000 }
+      )
+      .toBeCloseTo(sample.progress, 2);
+    await page.waitForTimeout(240);
+    const frame = await page.evaluate(() => ({
+      offset: window.__MiraLithLuBirthCloudShellOffset ?? Number.NaN,
+      progress: window.__MiraLithLuBirthProjectedEarthLighting?.progress ?? Number.NaN,
+      radius: window.__MiraLithLuBirthProjectedEarthLighting?.radius ?? Number.NaN,
+      textureUuid: window.__MiraLithLuBirthCloudShellTextureUuid ?? ""
+    }));
+    frames.push(frame);
+    await testInfo.attach(`cloud-transition-${sample.name}`, {
+      body: await page.screenshot(),
+      contentType: "image/png"
+    });
+  }
+
+  console.log(`cloud transition continuity ${JSON.stringify(frames)}`);
+  expect(frames).toHaveLength(3);
+  expect(frames.every((frame) => Number.isFinite(frame.offset))).toBe(true);
+  expect(frames.every((frame) => frame.textureUuid === frames[0]?.textureUuid)).toBe(true);
+  expect(frames[0]?.textureUuid).not.toBe("");
+  expect(frames[0]?.radius ?? 0).toBeGreaterThan(frames[1]?.radius ?? 0);
+  expect(frames[1]?.radius ?? 0).toBeGreaterThan(frames[2]?.radius ?? 0);
+  expect(Math.abs((frames[2]?.offset ?? 0) - (frames[0]?.offset ?? 0))).toBeLessThan(0.0015);
+  expect(runtimeMessages).toEqual([]);
+});
+
+test("backlit cloud avoids a gray second shell and a white edge ribbon", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "Backlit cloud pixels are calibrated once at 1440×960.");
+  const runtimeMessages = trackUnexpectedRuntimeMessages(page);
+  await page.setViewportSize({ width: 1440, height: 960 });
+  const fixedQuery =
+    "progress=0&copy=hidden&quality=medium&visualTest=pixels&location=birth&moonPhase=today&sunDate=2026-07-12T00:00:00Z&debug=clouds&postEffect=off";
+
+  await page.goto(`/?${fixedQuery}&cloud=shell-lite&cloudDiagnostic=mask`);
+  await waitForLightingFrame(page);
+  const maskBody = await sampleCloudBodyRoi(page);
+
+  await page.goto(`/?${fixedQuery}&cloud=surface`);
+  await waitForLightingFrame(page);
+  const surface = await sampleCloudLimb(page);
+  const surfaceBody = await sampleCloudBodyRoi(page);
+
+  await page.goto(`/?${fixedQuery}&cloud=shell-lite`);
+  await waitForLightingFrame(page);
+  const shell = await sampleCloudLimb(page);
+  const shellBody = await sampleCloudBodyRoi(page);
+  await testInfo.attach("near-cloud-backlit-shell", {
+    body: await page.screenshot(),
+    contentType: "image/png"
+  });
+
+  const metrics = measureBacklitCloudLimb(surface, shell);
+  const bodyMetrics = compareCloudBodyContribution(surfaceBody, shellBody);
+  const maskedBodyMetrics = compareMaskedCloudContribution(surfaceBody, shellBody, maskBody);
+  console.log(`backlit cloud limb ${JSON.stringify({ bodyMetrics, maskedBodyMetrics, metrics })}`);
+  expect(metrics).not.toBeNull();
+  expect(bodyMetrics).not.toBeNull();
+  expect(maskedBodyMetrics).not.toBeNull();
+  expect(metrics?.worldLightZ).toBeLessThanOrEqual(-0.75);
+  expect(metrics?.backlitColumnCount).toBeGreaterThanOrEqual(25);
+  expect(metrics?.activeColumnCount).toBeLessThanOrEqual(10);
+  expect(metrics?.activePixelFraction).toBeLessThanOrEqual(0.02);
+  expect(metrics?.luminanceP95).toBeLessThanOrEqual(16);
+  expect(metrics?.positiveLiftP95).toBeLessThanOrEqual(15);
+  expect(metrics?.luminanceMax).toBeLessThanOrEqual(24);
+  expect(bodyMetrics?.sampleCount).toBeGreaterThanOrEqual(120_000);
+  expect(bodyMetrics?.activePixelFraction).toBeLessThanOrEqual(0.2);
+  expect(maskedBodyMetrics?.core.sampleCount).toBeGreaterThanOrEqual(5_000);
+  expect(maskedBodyMetrics?.edge.sampleCount).toBeGreaterThanOrEqual(10_000);
+  expect(maskedBodyMetrics?.edge.p95).toBeLessThanOrEqual(32);
+  expect(maskedBodyMetrics?.edge.p99).toBeLessThanOrEqual(48);
+  expect(maskedBodyMetrics?.edge.max).toBeLessThanOrEqual(64);
+  expect(runtimeMessages).toEqual([]);
 });
 
 test("forced fallback is hydration-stable and serves its poster", async ({ page }) => {

@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 4,
+  "capturedAt": "2026-07-26T12:13:17Z",
+  "gitHead": "b228ae0818d2fa6c03880d5a4ac61ad5d710400d",
+  "route": "/lubirth-hybrid-cloud-kill-spike?camera=sweep",
+  "captureState": "current-source System Chrome runtime revalidated; strict visual and physical-device gates remain pending",
+  "renderer": {
+    "machine": "Apple M4",
+    "browser": "macOS System Chrome, headed, serial",
+    "desktopViewport": [1440, 960],
+    "mobileTierViewport": [915, 412],
+    "videoEncoding": "Playwright video capture used system FFmpeg 8.1 via the Playwright cache path after the normal helper download did not complete in this environment.",
+    "note": "Mobile-tier evidence is a System Chrome configuration run, not a physical-device performance result."
+  },
+  "source": {
+    "state": "dirty-worktree-source-bound",
+    "component": {
+      "path": "apps/site/components/LuBirthHybridCloudKillSpikeRoute.tsx",
+      "fileSha256": "961d22cf2dff85c953e2a912674310eab3ee5c3e081bc5cf92e7a3d721d87d00",
+      "patchFromHeadSha256": "4a8198e9354b3d7e99d34cc51f16ad4aa717097a5d721ccf8fb269c498ea52b5"
+    },
+    "metrics": {
+      "path": "apps/site/components/lubirthHybridCloudMetrics.ts",
+      "fileSha256": "c0ae472d339d44854b7b89878d172f4bd1a15a41cf138ad6842cd1b0dce0a6bf",
+      "patchFromHeadSha256": "6d841ba2384998c3f0cbda9bcfc66dc52bc25b3da678cdab437fc2e5c6050b07"
+    },
+    "runtimeTest": {
+      "path": "tests/e2e/lubirth-hybrid-cloud-kill-spike.spec.ts",
+      "fileSha256": "10c0de94548cccf02395f77aea615d69b13c7f4b580240bf7e5b87f9d3992fad",
+      "patchFromHeadSha256": "a8968f24a14695db3cf3b9984573e4a33d725c7004c6978c3cbe03caa3107e51"
+    },
+    "contractTest": {
+      "path": "tests/e2e/lubirth-hybrid-cloud-contract.spec.ts",
+      "fileSha256": "c9c450089df67223ebbead3db07d0fabad60108439f940cd862ac843cd315e94",
+      "patchFromHeadSha256": "f78c9ebfe9c5ef2c6f37b2ae14fffdbbc0d1363e0e0bffd773f7097dff56375f"
+    },
+    "runnerConfig": {
+      "path": "playwright.phase1-system-chrome.config.ts",
+      "fileSha256": "fb24f80321a5b2ac3078685e57369d86f70204624a732dede129e4d179b3e2aa",
+      "patchFromHeadSha256": "39df83fbdd2247cf7e61bb172efe30b0f59cf9500821bc1fb06daf737fbf0aca"
+    },
+    "package": {
+      "path": "package.json",
+      "fileSha256": "bb74478343ce4831d7acb52110178cc229784a7b388cc023ac510c18318454b2",
+      "patchFromHeadSha256": "36436b6b5b7f60c148d06603992cb46afd7859d1e5a3386fdf6d75d20317bfc9"
+    },
+    "cpuTruth": {
+      "path": "apps/site/public/assets/lubirth/textures/earth-cloud-field-nasa-lite-v3-cpu-truth.bin",
+      "fileSha256": "c550cae60dd408b37272bd003956ac1f055c3851069108563e2fb433ad82f600",
+      "sourceSha256RecordedByTruthHeader": "a9e655609ca4dd875f5b2d23bf4a9dd12d6ee1f698e0905944f07f3b10101877"
+    },
+    "gpuField": {
+      "path": "apps/site/public/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.png",
+      "fileSha256": "39c70e34b99ecf550f557327a1b97dcc0d2cae9f3be03242911c067622bb0a1c"
+    }
+  },
+  "runtimeRevalidation": {
+    "desktopSystemChrome": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "report": "desktop-system-chrome.report.json"
+    },
+    "mobileLandscapeSystemChrome": {
+      "passed": 5,
+      "failed": 0,
+      "skipped": 2,
+      "report": "mobile-landscape-system-chrome.report.json"
+    },
+    "systemChromeGates": {
+      "desktopNear": {
+        "gpuP95Ms": 2.584,
+        "gpuSampleCount": 30,
+        "gpuDisjointResetCount": 0,
+        "coverageSpatialP95Estimate": 2,
+        "coverageTemporalP95Estimate": 2
+      },
+      "desktopOblique": {
+        "gpuP95Ms": 2.487041,
+        "gpuSampleCount": 30,
+        "gpuDisjointResetCount": 0,
+        "coverageSpatialP95Estimate": 1,
+        "coverageTemporalP95Estimate": 1
+      }
+    },
+    "sweep": {
+      "candidateHash": "cbe0db02",
+      "hierarchyHash": "4875b541",
+      "sampledFrames": ["near", "middle", "oblique"],
+      "baseCount": 14,
+      "baseComponentCount": 1,
+      "baseCarrierContainmentRatio": 1,
+      "baseCarrierFootprintUnionCoverageRatio": 0.7824944690265486,
+      "membershipChurnRatio": 0,
+      "artifacts": [
+        "sweep.webm",
+        "sweep-near.png",
+        "sweep-middle.png",
+        "sweep-oblique.png",
+        "sweep-telemetry.json"
+      ]
+    }
+  },
+  "currentChecks": {
+    "siteTypecheck": "passed",
+    "rotatedCarrierMetricCheck": "passed: same rotated carrier union=1 and duplicate rotated base union is invariant",
+    "contractPlaywright": "pending independent rerun"
+  }
+}

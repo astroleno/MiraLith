@@ -1,0 +1,276 @@
+{
+  "active": true,
+  "accumulationSize": [
+    720,
+    480
+  ],
+  "camera": "oblique",
+  "capability": "webgl2",
+  "compositeScissor": [
+    255,
+    155,
+    171,
+    137
+  ],
+  "coverageMeanEstimate": 0.1832031249999994,
+  "coverageAreaTemporalP95Estimate": 0.18320312499999994,
+  "coverageSpatialP95Estimate": 1,
+  "coverageTemporalP95Estimate": 1,
+  "frameP95Ms": 0.4000000059604645,
+  "accumulationProbe": {
+    "additiveDraw": true,
+    "colorBufferFloat": true,
+    "floatBlend": true,
+    "framebufferComplete": true,
+    "readbackMode": "float",
+    "rgba16fTexture": true,
+    "verified": true,
+    "verdict": "pass"
+  },
+  "candidateHash": "cbe0db02",
+  "candidateHashSchema": "fnv1a-instance-buffer-v2",
+  "candidateSetCount": 24,
+  "candidateSeedRange": [
+    0,
+    17999
+  ],
+  "cameraMatrixSignature": "47d49499",
+  "cameraFrameId": "oblique-earth-local-fov40",
+  "coordinateSpace": "earth-local-v3",
+  "densityProfileVersion": "hierarchical-quadratic-quartic-v1",
+  "earthOccludedCenterCount": 0,
+  "frustumCulledCount": 0,
+  "gpuP50Ms": 2.382875,
+  "gpuP95Ms": 2.487041,
+  "gpuFieldResolution": [
+    2048,
+    1024
+  ],
+  "gpuFieldSource": "/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.png",
+  "gpuRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+  "gpuPhaseSampleCount": 8,
+  "gpuPhaseP95Ms": {
+    "accumulation": 2.591166,
+    "clear": 1.884916,
+    "composite": 2.53575
+  },
+  "gpuSampleCount": 30,
+  "gpuDisjointResetCount": 0,
+  "gpuPhaseSampleInterval": 30,
+  "gpuTotalSampleInterval": 12,
+  "gpuTimingScope": "rgba16f-1bin-accumulation-composite",
+  "gpuTimerSupported": true,
+  "gpuWarmupFrames": 240,
+  "gpuWindowSize": 120,
+  "generatorVersion": "home-cloud-field-v3-cpu-truth-1",
+  "hierarchyHash": "4875b541",
+  "hierarchyMetrics": {
+    "baseCarrierContainmentRatio": 1,
+    "baseCarrierFootprintUnionCoverageRatio": 0.7824944690265486,
+    "baseCount": 14,
+    "baseComponentCount": 1,
+    "detailMeanElevation": 0.0036212010481255184,
+    "maxBaseNearestNeighborDistance": 0.022866324193383292,
+    "maxBaseNormalizedNearestSeparation": 0.5200560599370667,
+    "maxNormalizedTangentAttachment": 0.9500000000000001,
+    "towerMeanElevation": 0.008715442356327457
+  },
+  "hierarchyVersion": "base-tower-detail-v4",
+  "baseCarrierCount": 1,
+  "layoutId": "v3-r-depth-g-height-b-morphology-a-concavity",
+  "lobeCount": 24,
+  "lobeHierarchy": [
+    {
+      "id": -1,
+      "isCarrier": true,
+      "parentId": null,
+      "role": "base"
+    },
+    {
+      "id": 29820,
+      "isCarrier": false,
+      "parentId": null,
+      "role": "base"
+    },
+    {
+      "id": 70096,
+      "isCarrier": false,
+      "parentId": null,
+      "role": "base"
+    },
+    {
+      "id": 9032,
+      "isCarrier": false,
+      "parentId": null,
+      "role": "base"
+    },
+    {
+      "id": 7808,
+      "isCarrier": false,
+      "parentId": null,
+      "role": "base"
+    },
+    {
+      "id": 2048,
+      "isCarrier": false,
+      "parentId": null,
+      "role": "base"
+    },
+    {
+      "id": 33916,
+      "isCarrier": false,
+      "parentId": null,
+      "role": "base"
+    },
+    {
+      "id": 34228,
+      "isCarrier": false,
+      "parentId": null,
+      "role": "base"
+    },
+    {
+      "id": 50952,
+      "isCarrier": false,
+      "parentId": null,
+      "role": "base"
+    },
+    {
+      "id": 15200,
+      "isCarrier": false,
+      "parentId": null,
+      "role": "base"
+    },
+    {
+      "id": 39872,
+      "isCarrier": false,
+      "parentId": null,
+      "role": "base"
+    },
+    {
+      "id": 19232,
+      "isCarrier": false,
+      "parentId": null,
+      "role": "base"
+    },
+    {
+      "id": 16668,
+      "isCarrier": false,
+      "parentId": null,
+      "role": "base"
+    },
+    {
+      "id": 21988,
+      "isCarrier": false,
+      "parentId": null,
+      "role": "base"
+    },
+    {
+      "id": 23620,
+      "isCarrier": false,
+      "parentId": null,
+      "role": "base"
+    },
+    {
+      "id": 24909,
+      "isCarrier": false,
+      "parentId": 29820,
+      "role": "tower"
+    },
+    {
+      "id": 8593,
+      "isCarrier": false,
+      "parentId": 70096,
+      "role": "tower"
+    },
+    {
+      "id": 28565,
+      "isCarrier": false,
+      "parentId": 9032,
+      "role": "tower"
+    },
+    {
+      "id": 5557,
+      "isCarrier": false,
+      "parentId": 7808,
+      "role": "tower"
+    },
+    {
+      "id": 59898,
+      "isCarrier": false,
+      "parentId": 29820,
+      "role": "detail"
+    },
+    {
+      "id": 39142,
+      "isCarrier": false,
+      "parentId": 70096,
+      "role": "detail"
+    },
+    {
+      "id": 66946,
+      "isCarrier": false,
+      "parentId": 9032,
+      "role": "detail"
+    },
+    {
+      "id": 17926,
+      "isCarrier": false,
+      "parentId": 7808,
+      "role": "detail"
+    },
+    {
+      "id": 50726,
+      "isCarrier": false,
+      "parentId": 2048,
+      "role": "detail"
+    }
+  ],
+  "lobeRoleCounts": {
+    "base": 15,
+    "tower": 4,
+    "detail": 5
+  },
+  "membershipChurnRatio": 0,
+  "membershipChurnTemporalP95": 0,
+  "offset": [
+    0.045,
+    0.018
+  ],
+  "orientation": "equirect-u-repeat-v-clamp-north-up",
+  "occludedCount": 0,
+  "opticalMassEstimate": 0.0002817758693511602,
+  "orphanChildCount": 0,
+  "parentedLobeCount": 9,
+  "physicalSize": [
+    1440,
+    960
+  ],
+  "resolvedSize": [
+    720,
+    480
+  ],
+  "scissorEnabled": true,
+  "sourceSha256": "a9e655609ca4dd875f5b2d23bf4a9dd12d6ee1f698e0905944f07f3b10101877",
+  "sourceUvBounds": [
+    0.72265625,
+    0.41015625,
+    0.791015625,
+    0.5390625
+  ],
+  "submittedLobeCount": 24,
+  "submittedMembershipHash": "20b1ba42",
+  "submittedRoleCounts": {
+    "base": 15,
+    "tower": 4,
+    "detail": 5
+  },
+  "sunDirection": [
+    0.7743493988224265,
+    0.4326402979373605,
+    0.46174168226836365
+  ],
+  "sweepProgress": 1,
+  "tier": "desktop",
+  "topologyDistanceSpace": "earth-local-tangent-normalized-radius",
+  "visibleCount": 24
+}

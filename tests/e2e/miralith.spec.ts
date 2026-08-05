@@ -576,7 +576,7 @@ test("homepage intro can be skipped with keyboard input", async ({ page }) => {
   await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-home-intro-complete", "true");
   await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-copy-interactive", "false");
   await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-project-interactive", "false");
-  await expect(page.locator(".lubirth-revised__opening-title").getByRole("heading", { name: "LuBirth" })).toBeVisible();
+  await expect(page.locator(".lubirth-revised__travelling-title").getByRole("heading", { name: "LuBirth" })).toBeVisible();
 });
 
 test("homepage wheel and touch skip fade without leaking scroll into the pinned intro", async ({ page }) => {
@@ -705,16 +705,22 @@ test("homepage visual pixel mode removes visible copy", async ({ page }) => {
   await expect(page.locator("canvas")).toHaveCount(1);
 });
 
-test("homepage reduced motion skips pinned scroll choreography", async ({ page }) => {
+test("homepage reduced motion skips pinned choreography but keeps the next chapter link", async ({ page }, testInfo) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
 
   await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-motion", "reduced");
-  await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-copy-interactive", "false");
+  await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-copy-interactive", "true");
   await expect(page.locator(".lubirth-revised")).toHaveAttribute("data-project-interactive", "true");
-  await expect(page.locator(".lubirth-revised__opening-title").getByRole("heading", { name: "LuBirth" })).toBeVisible();
+  await expect(page.locator(".lubirth-revised__travelling-title").getByRole("heading", { name: "LuBirth" })).toBeVisible();
   await expect(page.locator(".lubirth-revised__project-intro").getByRole("heading", { name: "LuBirth 地月人" })).toBeVisible();
-  await expect(page.locator(".lubirth-revised__title-rail")).toBeHidden();
+  if (testInfo.project.name === "desktop") {
+    await expect(page.locator(".lubirth-revised__title-rail")).toBeVisible();
+    await expect(page.locator(".miralith-chapter-nav__terminal")).toContainText("Radio Gaga");
+  } else {
+    await expect(page.locator(".lubirth-revised__mobile-title-bar")).toBeVisible();
+    await expect(page.locator(".miralith-chapter-bar__terminal")).toContainText("Radio Gaga");
+  }
 
   const scrollHeight = await page.evaluate(() => document.documentElement.scrollHeight);
   const viewportHeight = await page.evaluate(() => window.innerHeight);

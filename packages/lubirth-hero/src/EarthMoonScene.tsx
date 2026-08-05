@@ -22,7 +22,12 @@ import { LandingAuroraOval } from "./LandingAuroraOval";
 import { LandingCloudDeck } from "./LandingCloudDeck";
 import { LandingCloudDeckV2 } from "./LandingCloudDeckV2";
 import { LandingCloudLayer } from "./LandingCloudLayer";
+import { LandingNasaLiteCloud } from "./LandingNasaLiteCloud";
+import { LandingDirectionalAtmosphere } from "./LandingDirectionalAtmosphere";
 import { LandingEarth } from "./LandingEarth";
+import { LandingLimbDiffuseGlow } from "./LandingLimbDiffuseGlow";
+import { LandingLimbAtmosphere } from "./LandingLimbAtmosphere";
+import { LandingReliefCloud } from "./LandingReliefCloud";
 import { LandingHorizonAuroraRibbon } from "./LandingHorizonAuroraRibbon";
 import { LandingHorizonCloudBelt } from "./LandingHorizonCloudBelt";
 import { LandingLimbAirglowV2 } from "./LandingLimbAirglowV2";
@@ -35,6 +40,7 @@ import { LandingVolumetricAtmospherePass } from "./LandingVolumetricAtmospherePa
 import { LUBIRTH_EXPANDED_SPACE_BACKGROUND } from "./assetManifest";
 import { HOME_CLOUD_FIELD_SCROLL_SPEED } from "./homeCloudField";
 import { resolveLandingVisualPolicy } from "./landingVisualPolicy";
+import { createLandingPlanetLightingFrame } from "./landingPlanetLighting";
 import { EMPTY_CLOSE_ATMOSPHERE_TUNING } from "./landingAtmosphereTuning";
 import type {
   EarthMoonSceneProps,
@@ -234,8 +240,19 @@ export function EarthMoonScene({
     () => earthLocalLightDirection.clone(),
     [earthLocalLightDirection]
   );
+  const planetLightingFrame = useMemo(
+    () => createLandingPlanetLightingFrame(sceneLightDirection, homeCloudOffset),
+    [sceneLightDirection]
+  );
   const exposeLightingDiagnostics = useMemo(
-    () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("visualTest") === "pixels",
+    () => {
+      if (typeof window === "undefined") {
+        return false;
+      }
+      const params = new URLSearchParams(window.location.search);
+      return params.get("visualTest") === "pixels" ||
+        params.get("reliefLiteValidation") === "on";
+    },
     []
   );
   const activeRenderProfile = resolveRenderProfile(renderProfile, visualDebugLayer);
@@ -260,8 +277,16 @@ export function EarthMoonScene({
 
   const showEarth = !debugStars;
   const showMoon = isNasaProfile || isCleanProfile;
-  const showClouds = isNasaProfile || debugClouds;
-  const showAtmosphere = isNasaProfile || debugAtmosphere;
+  const showClouds =
+    isNasaProfile ||
+    debugClouds ||
+    activeVisualPolicy.cloudMode === "nasa-lite" ||
+    activeVisualPolicy.cloudMode === "relief-lite";
+  const showAtmosphere =
+    isNasaProfile ||
+    debugAtmosphere ||
+    activeVisualPolicy.atmosphereMode === "directional-lite" ||
+    activeVisualPolicy.atmosphereMode === "limb-lite";
   const showAurora = debugAurora && quality.aurora;
   const showProjectedHorizonComposite = false;
   const canUseVolumetricAtmosphere =
@@ -269,12 +294,26 @@ export function EarthMoonScene({
     quality.tier !== "low" &&
     quality.tier !== "fallback";
   const activeAtmosphereVariant: LandingAtmosphereVariant = canUseVolumetricAtmosphere ? "volumetric" : "stack";
-  const showAtmosphereStack = showAtmosphere && activeAtmosphereVariant === "stack";
-  const showVolumetricAtmosphere = showAtmosphere && activeAtmosphereVariant === "volumetric";
+  const showDirectionalAtmosphere =
+    showAtmosphere && activeVisualPolicy.atmosphereMode === "directional-lite";
+  const showLimbAtmosphere =
+    showAtmosphere && activeVisualPolicy.atmosphereMode === "limb-lite";
+  const showAtmosphereStack =
+    showAtmosphere &&
+    activeAtmosphereVariant === "stack" &&
+    !showDirectionalAtmosphere &&
+    !showLimbAtmosphere;
+  const showVolumetricAtmosphere =
+    showAtmosphere &&
+    activeAtmosphereVariant === "volumetric" &&
+    !showDirectionalAtmosphere &&
+    !showLimbAtmosphere;
   const showProjectedLimbScattering =
     debugAtmosphere &&
     quality.tier !== "fallback" &&
-    activeAtmosphereVariant === "stack";
+    activeAtmosphereVariant === "stack" &&
+    !showDirectionalAtmosphere &&
+    !showLimbAtmosphere;
   const showCloudShells =
     showClouds &&
     activeVisualPolicy.cloudMode !== "surface" &&
@@ -286,6 +325,8 @@ export function EarthMoonScene({
   const showSurfaceTextureClouds =
     showClouds &&
     activeVisualPolicy.cloudMode !== "shell-lite" &&
+    activeVisualPolicy.cloudMode !== "nasa-lite" &&
+    activeVisualPolicy.cloudMode !== "relief-lite" &&
     quality.tier !== "fallback";
   const useReferenceCloseOrbitFraming =
     isNasaProfile &&
@@ -758,25 +799,46 @@ export function EarthMoonScene({
             referenceVolumetricSurfaceClouds={useReferenceVolumetricSurfaceClouds}
             runtimeProfile={runtimeProfile}
             visualPolicy={activeVisualPolicy}
+            lightingFrame={planetLightingFrame}
             closeAtmosphereTuning={activeCloseAtmosphereTuning}
           />
         ) : null}
         {showCloudShells ? (
           <>
-            <LandingCloudLayer
-              composition={composition}
-              assets={assets}
-              quality={quality}
-              sceneLightDirection={sceneLightDirection}
-              emphasis={debugClouds}
-              referenceLook={useReferenceVolumetricSurfaceClouds}
-              reducedMotion={reducedMotion}
-              paused={paused}
-              cloudOffsetRef={homeCloudOffset}
-              cloudDeckEnabled={cloudDeckEnabled}
-              cloudMode={activeVisualPolicy.cloudMode}
-              closeAtmosphereTuning={activeCloseAtmosphereTuning}
-            />
+            {activeVisualPolicy.cloudMode === "nasa-lite" ? (
+              <LandingNasaLiteCloud
+                composition={composition}
+                assets={assets}
+                quality={quality}
+                projection={projectedEarthFrame}
+                sceneLightDirection={sceneLightDirection}
+                emphasis={debugClouds}
+                cloudOffsetRef={homeCloudOffset}
+              />
+            ) : activeVisualPolicy.cloudMode === "relief-lite" ? (
+              <LandingReliefCloud
+                composition={composition}
+                assets={assets}
+                quality={quality}
+                lightingFrame={planetLightingFrame}
+                emphasis={debugClouds}
+              />
+            ) : (
+              <LandingCloudLayer
+                composition={composition}
+                assets={assets}
+                quality={quality}
+                sceneLightDirection={sceneLightDirection}
+                emphasis={debugClouds}
+                referenceLook={useReferenceVolumetricSurfaceClouds}
+                reducedMotion={reducedMotion}
+                paused={paused}
+                cloudOffsetRef={homeCloudOffset}
+                cloudDeckEnabled={cloudDeckEnabled}
+                cloudMode={activeVisualPolicy.cloudMode}
+                closeAtmosphereTuning={activeCloseAtmosphereTuning}
+              />
+            )}
             {cloudDeckEnabled && debugClouds && assets.earthCloudDeck ? (
               useCloudDeckV2 ? (
                 <>
@@ -888,6 +950,31 @@ export function EarthMoonScene({
             closeAtmosphereTuning={activeCloseAtmosphereTuning}
           />
         ) : null}
+        {showDirectionalAtmosphere ? (
+          <LandingDirectionalAtmosphere
+            composition={composition}
+            quality={quality}
+            projection={projectedEarthFrame}
+            sceneLightDirection={sceneLightDirection}
+            emphasis={debugAtmosphere}
+          />
+        ) : null}
+        {showLimbAtmosphere ? (
+          <>
+            <LandingLimbAtmosphere
+              composition={composition}
+              quality={quality}
+              lightingFrame={planetLightingFrame}
+              emphasis={debugAtmosphere}
+            />
+            <LandingLimbDiffuseGlow
+              composition={composition}
+              quality={quality}
+              lightingFrame={planetLightingFrame}
+              emphasis={debugAtmosphere}
+            />
+          </>
+        ) : null}
         {showAtmosphereStack && activeVisualPolicy.postEffectMode !== "off" ? (
           <LandingPostEffect
             composition={composition}
@@ -935,6 +1022,12 @@ export function EarthMoonScene({
           sceneLightDirection={sceneLightDirection}
           position={moonTargetPosition}
           targetScale={moonTargetScale}
+          nasaLiteOptics={
+            activeVisualPolicy.cloudMode === "nasa-lite" ||
+            activeVisualPolicy.cloudMode === "relief-lite" ||
+            activeVisualPolicy.atmosphereMode === "directional-lite" ||
+            activeVisualPolicy.atmosphereMode === "limb-lite"
+          }
           onTextureReady={onMoonTextureReady}
         />
       ) : null}

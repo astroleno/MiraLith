@@ -1,0 +1,53 @@
+<testsuites id="" name="" tests="7" failures="0" skipped="0" errors="0" time="139.16179200000002">
+<testsuite name="lubirth-hybrid-cloud-kill-spike.spec.ts" timestamp="2026-07-26T12:13:49.429Z" hostname="desktop-system-chrome" tests="7" failures="0" skipped="0" time="105.443" errors="0">
+<testcase name="Phase -1 hybrid cloud kill-spike renders near camera with bounded telemetry" classname="lubirth-hybrid-cloud-kill-spike.spec.ts" time="11.978">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../miralith-phase1-current-3/playwright-output/lubirth-hybrid-cloud-kill--a2eff-mera-with-bounded-telemetry-desktop-system-chrome/video.webm]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Phase -1 hybrid cloud kill-spike renders oblique camera with bounded telemetry" classname="lubirth-hybrid-cloud-kill-spike.spec.ts" time="11.401">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../miralith-phase1-current-3/playwright-output/lubirth-hybrid-cloud-kill--6efec-mera-with-bounded-telemetry-desktop-system-chrome/video.webm]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Phase -1 near and oblique cameras reuse the same tier-specific Earth-local lobe set" classname="lubirth-hybrid-cloud-kill-spike.spec.ts" time="22.245">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../miralith-phase1-current-3/playwright-output/lubirth-hybrid-cloud-kill--bf8fa-ecific-Earth-local-lobe-set-desktop-system-chrome/video.webm]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Phase -1 desktop tau silhouette suppresses lobe-bead contour noise" classname="lubirth-hybrid-cloud-kill-spike.spec.ts" time="11.307">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../miralith-phase1-current-3/playwright-output/lubirth-hybrid-cloud-kill--95fc3-ses-lobe-bead-contour-noise-desktop-system-chrome/video.webm]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Phase -1 desktop oblique radiance preserves physical top, side, and underside ordering" classname="lubirth-hybrid-cloud-kill-spike.spec.ts" time="22.48">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../miralith-phase1-current-3/playwright-output/lubirth-hybrid-cloud-kill--7d435-side-and-underside-ordering-desktop-system-chrome/video.webm]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Phase -1 motion sweep preserves hierarchy identity and bounded temporal overdraw" classname="lubirth-hybrid-cloud-kill-spike.spec.ts" time="3.575">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../miralith-phase1-current-3/playwright-output/lubirth-hybrid-cloud-kill--7878b-d-bounded-temporal-overdraw-desktop-system-chrome/video.webm]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Phase -1 conservative scissor is pixel-equivalent to the unclipped reference" classname="lubirth-hybrid-cloud-kill-spike.spec.ts" time="22.457">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../miralith-phase1-current-3/playwright-output/lubirth-hybrid-cloud-kill--80c1e--to-the-unclipped-reference-desktop-system-chrome/video.webm]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

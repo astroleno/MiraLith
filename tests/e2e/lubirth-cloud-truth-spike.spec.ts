@@ -263,7 +263,7 @@ test("production home uses one packed-normal cloud shell and one ground shadow s
     .toBe("analytic-halo");
   await expect
     .poll(() => page.evaluate(() => window.__MiraLithLuBirthCloudFieldTexture), { timeout: 25_000 })
-    .toBe("/assets/lubirth/textures/earth-cloud-field-home.webp");
+    .toBe("/assets/lubirth/textures/earth-cloud-field-home.png");
   await expect
     .poll(
       () => page.evaluate(() => ({
@@ -311,7 +311,7 @@ test("production home uses one packed-normal cloud shell and one ground shadow s
 
   const packedChannels = await page.evaluate(async () => {
     const image = new Image();
-    image.src = "/assets/lubirth/textures/earth-cloud-field-home.webp";
+    image.src = "/assets/lubirth/textures/earth-cloud-field-home.png";
     await image.decode();
     const canvas = document.createElement("canvas");
     canvas.width = 192;
@@ -339,12 +339,12 @@ test("production home uses one packed-normal cloud shell and one ground shadow s
   });
 
   expect(packedChannels).not.toBeNull();
-  expect(packedChannels).toMatchObject({ width: 1536, height: 768 });
+  expect(packedChannels).toMatchObject({ width: 1024, height: 512 });
   expect(packedChannels!.ranges[0]).toBeGreaterThan(120);
   expect(packedChannels!.ranges[1]).toBeGreaterThan(24);
   expect(packedChannels!.ranges[2]).toBeGreaterThan(24);
   expect(packedChannels!.ranges[3]).toBeGreaterThan(90);
-  expect(Array.from(requests).some((pathname) => pathname.includes("earth-cloud-field-home.webp"))).toBe(true);
+  expect(Array.from(requests).some((pathname) => pathname.includes("earth-cloud-field-home.png"))).toBe(true);
   expect(Array.from(requests).some((pathname) => pathname.includes("earth-clouds-2k"))).toBe(false);
   expect(Array.from(requests).some((pathname) => pathname.includes("earth-cloud-deck"))).toBe(false);
   expect(shaderErrors).toEqual([]);

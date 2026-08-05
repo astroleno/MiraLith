@@ -1,0 +1,351 @@
+{
+  "capturedAt": "2026-07-25T06:45:56.728Z",
+  "telemetry": {
+    "active": true,
+    "accumulationSize": [
+      720,
+      480
+    ],
+    "camera": "sweep",
+    "capability": "webgl2",
+    "compositeScissor": [
+      256,
+      125,
+      179,
+      199
+    ],
+    "coverageMeanEstimate": 0.25466054205246896,
+    "coverageAreaTemporalP95Estimate": 0.28172743055555555,
+    "coverageSpatialP95Estimate": 2,
+    "coverageTemporalP95Estimate": 2,
+    "frameP95Ms": 0.3999999985098839,
+    "accumulationProbe": {
+      "additiveDraw": true,
+      "colorBufferFloat": true,
+      "floatBlend": true,
+      "framebufferComplete": true,
+      "readbackMode": "float",
+      "rgba16fTexture": true,
+      "verified": true,
+      "verdict": "pass"
+    },
+    "candidateHash": "5cba55c8",
+    "candidateHashSchema": "fnv1a-instance-buffer-v2",
+    "candidateSetCount": 44,
+    "candidateSeedRange": [
+      0,
+      17999
+    ],
+    "cameraMatrixSignature": "9882f64e",
+    "cameraFrameId": "sweep-earth-local-near-oblique",
+    "coordinateSpace": "earth-local-v3",
+    "densityProfileVersion": "hierarchical-quadratic-quartic-v1",
+    "earthOccludedCenterCount": 0,
+    "frustumCulledCount": 0,
+    "gpuP50Ms": 1.146125,
+    "gpuP95Ms": 1.513083,
+    "gpuFieldResolution": [
+      2048,
+      1024
+    ],
+    "gpuFieldSource": "/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.png",
+    "gpuRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+    "gpuPhaseSampleCount": 8,
+    "gpuPhaseP95Ms": {
+      "accumulation": 1.228791,
+      "clear": 0.503875,
+      "composite": 0.762625
+    },
+    "gpuSampleCount": 40,
+    "gpuDisjointResetCount": 0,
+    "gpuPhaseSampleInterval": 30,
+    "gpuTotalSampleInterval": 12,
+    "gpuTimingScope": "rgba16f-1bin-accumulation-composite",
+    "gpuTimerSupported": true,
+    "gpuWarmupFrames": 60,
+    "gpuWindowSize": 120,
+    "generatorVersion": "home-cloud-field-v3-cpu-truth-1",
+    "hierarchyHash": "39bba2d6",
+    "hierarchyMetrics": {
+      "baseComponentCount": 1,
+      "detailMeanElevation": 0.003508690172575764,
+      "maxBaseNearestNeighborDistance": 0.022946304259669613,
+      "maxBaseNormalizedNearestSeparation": 0.5571964769096135,
+      "maxNormalizedTangentAttachment": 0.9500000000000003,
+      "towerMeanElevation": 0.008658489605924575
+    },
+    "hierarchyVersion": "base-tower-detail-v4",
+    "layoutId": "v3-r-depth-g-height-b-morphology-a-concavity",
+    "lobeCount": 44,
+    "lobeHierarchy": [
+      {
+        "id": 29820,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 70096,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 9032,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 7808,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 2048,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 33916,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 34228,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 50952,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 15200,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 39872,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 19232,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 16668,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 21988,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 23620,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 19392,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 38208,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 8740,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 20992,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 41864,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 17840,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 16112,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 9996,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 54952,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 41340,
+        "parentId": null,
+        "role": "base"
+      },
+      {
+        "id": 24909,
+        "parentId": 29820,
+        "role": "tower"
+      },
+      {
+        "id": 8593,
+        "parentId": 70096,
+        "role": "tower"
+      },
+      {
+        "id": 28565,
+        "parentId": 9032,
+        "role": "tower"
+      },
+      {
+        "id": 5557,
+        "parentId": 7808,
+        "role": "tower"
+      },
+      {
+        "id": 14825,
+        "parentId": 2048,
+        "role": "tower"
+      },
+      {
+        "id": 17925,
+        "parentId": 33916,
+        "role": "tower"
+      },
+      {
+        "id": 7777,
+        "parentId": 34228,
+        "role": "tower"
+      },
+      {
+        "id": 26313,
+        "parentId": 50952,
+        "role": "tower"
+      },
+      {
+        "id": 59898,
+        "parentId": 29820,
+        "role": "detail"
+      },
+      {
+        "id": 39142,
+        "parentId": 70096,
+        "role": "detail"
+      },
+      {
+        "id": 66946,
+        "parentId": 9032,
+        "role": "detail"
+      },
+      {
+        "id": 36902,
+        "parentId": 7808,
+        "role": "detail"
+      },
+      {
+        "id": 50726,
+        "parentId": 2048,
+        "role": "detail"
+      },
+      {
+        "id": 68906,
+        "parentId": 33916,
+        "role": "detail"
+      },
+      {
+        "id": 28418,
+        "parentId": 34228,
+        "role": "detail"
+      },
+      {
+        "id": 69606,
+        "parentId": 50952,
+        "role": "detail"
+      },
+      {
+        "id": 48262,
+        "parentId": 15200,
+        "role": "detail"
+      },
+      {
+        "id": 13506,
+        "parentId": 39872,
+        "role": "detail"
+      },
+      {
+        "id": 9590,
+        "parentId": 19232,
+        "role": "detail"
+      },
+      {
+        "id": 68822,
+        "parentId": 16668,
+        "role": "detail"
+      }
+    ],
+    "lobeRoleCounts": {
+      "base": 24,
+      "tower": 8,
+      "detail": 12
+    },
+    "membershipChurnRatio": 0,
+    "membershipChurnTemporalP95": 0,
+    "offset": [
+      0.045,
+      0.018
+    ],
+    "orientation": "equirect-u-repeat-v-clamp-north-up",
+    "occludedCount": 0,
+    "opticalMassEstimate": 0.00016997451712854795,
+    "orphanChildCount": 0,
+    "parentedLobeCount": 20,
+    "physicalSize": [
+      1440,
+      960
+    ],
+    "resolvedSize": [
+      720,
+      480
+    ],
+    "scissorEnabled": true,
+    "sourceSha256": "a9e655609ca4dd875f5b2d23bf4a9dd12d6ee1f698e0905944f07f3b10101877",
+    "sourceUvBounds": [
+      0.72265625,
+      0.41015625,
+      0.791015625,
+      0.5390625
+    ],
+    "submittedLobeCount": 44,
+    "submittedMembershipHash": "3301e718",
+    "submittedRoleCounts": {
+      "base": 24,
+      "tower": 8,
+      "detail": 12
+    },
+    "sunDirection": [
+      0.9043395723234613,
+      0.30813927581330897,
+      0.2953305345389613
+    ],
+    "sweepProgress": 0.4541188416774395,
+    "tier": "desktop",
+    "topologyDistanceSpace": "earth-local-tangent-normalized-radius",
+    "visibleCount": 44
+  }
+}

@@ -6,6 +6,14 @@ import * as landingPostEffect from "../../packages/lubirth-hero/src/LandingPostE
 import { resolveLuBirthAtmospherePolicy } from "../../packages/lubirth-hero/src/atmospherePolicy";
 import { resolveLandingVisualPolicy } from "../../packages/lubirth-hero/src/landingVisualPolicy";
 import {
+  LANDING_LIMB_LITE_ATMOSPHERE_RADIUS_SCALE,
+  LANDING_RELIEF_LITE_CLOUD_BOTTOM_SCALE,
+  LANDING_RELIEF_LITE_CLOUD_TOP_SCALE,
+  hasValidReliefLiteLayerOrdering,
+  resolveLandingReliefLiteBudget
+} from "../../packages/lubirth-hero/src/landingEarthLiteV2Policy";
+import { resolvePlanetLightMasks } from "../../packages/lubirth-hero/src/landingPlanetLighting";
+import {
   EMPTY_CLOSE_ATMOSPHERE_TUNING,
   HOME_CLOSE_ATMOSPHERE_TUNING,
   resolveLandingCloseAtmosphereTuning
@@ -136,6 +144,89 @@ test("resolves low quality to the surface-only safety policy", () => {
     postEffectMode: "off",
     reason: "quality-low"
   });
+});
+
+test("applies Nasa-lite overrides through the shared final visual policy", () => {
+  expect(resolveLandingVisualPolicy({
+    runtimeProfile: "home-lite",
+    qualityTier: "medium",
+    renderProfile: "nasa",
+    overrides: {
+      atmosphereMode: "directional-lite",
+      cloudMode: "nasa-lite",
+      postEffectMode: "off"
+    }
+  })).toEqual({
+    atmosphereMode: "directional-lite",
+    cloudMode: "nasa-lite",
+    groundShadow: true,
+    postEffectMode: "off",
+    reason: "home-lite"
+  });
+});
+
+test("applies Relief Lite V2 overrides without promoting the query-only path", () => {
+  expect(resolveLandingVisualPolicy({
+    runtimeProfile: "home-lite",
+    qualityTier: "medium",
+    renderProfile: "nasa",
+    overrides: {
+      atmosphereMode: "limb-lite",
+      cloudMode: "relief-lite",
+      postEffectMode: "off"
+    }
+  })).toEqual({
+    atmosphereMode: "limb-lite",
+    cloudMode: "relief-lite",
+    groundShadow: true,
+    postEffectMode: "off",
+    reason: "home-lite"
+  });
+
+  expect(resolveLandingVisualPolicy({
+    runtimeProfile: "home-lite",
+    qualityTier: "medium",
+    renderProfile: "nasa"
+  }).cloudMode).toBe("shell-lite");
+});
+
+test("keeps relief clouds physically below the analytic atmosphere", () => {
+  expect(hasValidReliefLiteLayerOrdering()).toBe(true);
+  expect(LANDING_RELIEF_LITE_CLOUD_BOTTOM_SCALE).toBeGreaterThan(1);
+  expect(LANDING_RELIEF_LITE_CLOUD_TOP_SCALE).toBeGreaterThan(
+    LANDING_RELIEF_LITE_CLOUD_BOTTOM_SCALE
+  );
+  expect(LANDING_RELIEF_LITE_CLOUD_TOP_SCALE).toBeLessThan(
+    LANDING_LIMB_LITE_ATMOSPHERE_RADIUS_SCALE
+  );
+});
+
+test("uses one fixed relief model with bounded mobile and desktop texture reads", () => {
+  expect(resolveLandingReliefLiteBudget(true)).toEqual({
+    mobile: true,
+    sunSteps: 1,
+    textureReads: 3,
+    viewSteps: 2
+  });
+  expect(resolveLandingReliefLiteBudget(false)).toEqual({
+    mobile: false,
+    sunSteps: 1,
+    textureReads: 4,
+    viewSteps: 3
+  });
+});
+
+test("shares strict day, twilight, and deep-night lighting semantics", () => {
+  const day = resolvePlanetLightMasks(0.7, 0.13);
+  const twilight = resolvePlanetLightMasks(0, 0.13);
+  const night = resolvePlanetLightMasks(-0.7, 0.13);
+
+  expect(day.dayMask).toBe(1);
+  expect(day.deepNightMask).toBe(0);
+  expect(twilight.twilightMask).toBeGreaterThan(0.99);
+  expect(night.nightMask).toBe(1);
+  expect(night.deepNightMask).toBe(1);
+  expect(day.deepNightMask / Math.max(night.deepNightMask, 1e-6)).toBeLessThan(0.01);
 });
 
 test("keeps study and debug routes on full lookdev policies", () => {

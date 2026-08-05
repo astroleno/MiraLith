@@ -1,0 +1,391 @@
+{
+  "config": {
+    "configFile": "/Users/aitoshuu/Documents/GitHub/MiraLith/playwright.phase1-system-chrome.config.ts",
+    "rootDir": "/Users/aitoshuu/Documents/GitHub/MiraLith/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/aitoshuu/Documents/GitHub/MiraLith/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "desktop-system-chrome",
+        "name": "desktop-system-chrome",
+        "testDir": "/Users/aitoshuu/Documents/GitHub/MiraLith/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "lubirth-hybrid-cloud-kill-spike.spec.ts"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/aitoshuu/Documents/GitHub/MiraLith/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "mobile-landscape-system-chrome",
+        "name": "mobile-landscape-system-chrome",
+        "testDir": "/Users/aitoshuu/Documents/GitHub/MiraLith/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "lubirth-hybrid-cloud-kill-spike.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/tmp/miralith-phase1-current-mobile/report.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "/tmp/miralith-phase1-current-mobile/report.junit.xml"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 1,
+    "webServer": {
+      "command": "pnpm build && pnpm --filter @miralith/site exec next start -H 127.0.0.1 -p 3114",
+      "cwd": "/Users/aitoshuu/Documents/GitHub/MiraLith",
+      "url": "http://127.0.0.1:3114",
+      "reuseExistingServer": true,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "lubirth-hybrid-cloud-kill-spike.spec.ts",
+      "file": "lubirth-hybrid-cloud-kill-spike.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Phase -1 hybrid cloud kill-spike renders near camera with bounded telemetry",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "mobile-landscape-system-chrome",
+              "projectName": "mobile-landscape-system-chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11600,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-07-26T12:17:31.938Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e6add2e9c67cb9f84759-f355edf8edfd7a59aec3",
+          "file": "lubirth-hybrid-cloud-kill-spike.spec.ts",
+          "line": 325,
+          "column": 7
+        },
+        {
+          "title": "Phase -1 hybrid cloud kill-spike renders oblique camera with bounded telemetry",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "mobile-landscape-system-chrome",
+              "projectName": "mobile-landscape-system-chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11193,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-07-26T12:17:44.259Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e6add2e9c67cb9f84759-fd204bd1300dd18f765e",
+          "file": "lubirth-hybrid-cloud-kill-spike.spec.ts",
+          "line": 325,
+          "column": 7
+        },
+        {
+          "title": "Phase -1 near and oblique cameras reuse the same tier-specific Earth-local lobe set",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "mobile-landscape-system-chrome",
+              "projectName": "mobile-landscape-system-chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 22158,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-07-26T12:17:55.459Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e6add2e9c67cb9f84759-48bf5e211fbe0c080e63",
+          "file": "lubirth-hybrid-cloud-kill-spike.spec.ts",
+          "line": 497,
+          "column": 5
+        },
+        {
+          "title": "Phase -1 desktop tau silhouette suppresses lobe-bead contour noise",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "The contour gate is calibrated on the desktop reference viewport.",
+                  "location": {
+                    "file": "/Users/aitoshuu/Documents/GitHub/MiraLith/tests/e2e/lubirth-hybrid-cloud-kill-spike.spec.ts",
+                    "line": 523,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "mobile-landscape-system-chrome",
+              "projectName": "mobile-landscape-system-chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 178,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-07-26T12:18:17.624Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "The contour gate is calibrated on the desktop reference viewport.",
+                      "location": {
+                        "file": "/Users/aitoshuu/Documents/GitHub/MiraLith/tests/e2e/lubirth-hybrid-cloud-kill-spike.spec.ts",
+                        "line": 523,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "e6add2e9c67cb9f84759-0c3704d43161dc14ab38",
+          "file": "lubirth-hybrid-cloud-kill-spike.spec.ts",
+          "line": 519,
+          "column": 5
+        },
+        {
+          "title": "Phase -1 desktop oblique radiance preserves physical top, side, and underside ordering",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "The lighting gate is calibrated on the desktop reference viewport.",
+                  "location": {
+                    "file": "/Users/aitoshuu/Documents/GitHub/MiraLith/tests/e2e/lubirth-hybrid-cloud-kill-spike.spec.ts",
+                    "line": 544,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "mobile-landscape-system-chrome",
+              "projectName": "mobile-landscape-system-chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 208,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-07-26T12:18:17.811Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "The lighting gate is calibrated on the desktop reference viewport.",
+                      "location": {
+                        "file": "/Users/aitoshuu/Documents/GitHub/MiraLith/tests/e2e/lubirth-hybrid-cloud-kill-spike.spec.ts",
+                        "line": 544,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "e6add2e9c67cb9f84759-c3a2263c769b1dcca7a3",
+          "file": "lubirth-hybrid-cloud-kill-spike.spec.ts",
+          "line": 540,
+          "column": 5
+        },
+        {
+          "title": "Phase -1 motion sweep preserves hierarchy identity and bounded temporal overdraw",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "mobile-landscape-system-chrome",
+              "projectName": "mobile-landscape-system-chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3371,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-07-26T12:18:18.024Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "phase1-sweep-telemetry.json",
+                      "contentType": "application/json",
+                      "body": "ewogICJuZWFyIjogewogICAgImFjdGl2ZSI6IHRydWUsCiAgICAiYWNjdW11bGF0aW9uU2l6ZSI6IFsKICAgICAgNDgwLAogICAgICAyNzAKICAgIF0sCiAgICAiY2FtZXJhIjogInN3ZWVwIiwKICAgICJjYXBhYmlsaXR5IjogIndlYmdsMiIsCiAgICAiY29tcG9zaXRlU2Npc3NvciI6IFsKICAgICAgMTc0LAogICAgICA2OSwKICAgICAgMTI4LAogICAgICAxMDkKICAgIF0sCiAgICAiY292ZXJhZ2VNZWFuRXN0aW1hdGUiOiAwLjE1NzMxODA1MDU3NzQ1OTEyLAogICAgImNvdmVyYWdlQXJlYVRlbXBvcmFsUDk1RXN0aW1hdGUiOiAwLjE1ODMxNzkwMTIzNDU2NzkzLAogICAgImNvdmVyYWdlU3BhdGlhbFA5NUVzdGltYXRlIjogMSwKICAgICJjb3ZlcmFnZVRlbXBvcmFsUDk1RXN0aW1hdGUiOiAxLAogICAgImZyYW1lUDk1TXMiOiAxLjU5OTk5OTk5NDAzOTUzNTUsCiAgICAiYWNjdW11bGF0aW9uUHJvYmUiOiB7CiAgICAgICJhZGRpdGl2ZURyYXciOiB0cnVlLAogICAgICAiY29sb3JCdWZmZXJGbG9hdCI6IHRydWUsCiAgICAgICJmbG9hdEJsZW5kIjogdHJ1ZSwKICAgICAgImZyYW1lYnVmZmVyQ29tcGxldGUiOiB0cnVlLAogICAgICAicmVhZGJhY2tNb2RlIjogImZsb2F0IiwKICAgICAgInJnYmExNmZUZXh0dXJlIjogdHJ1ZSwKICAgICAgInZlcmlmaWVkIjogdHJ1ZSwKICAgICAgInZlcmRpY3QiOiAicGFzcyIKICAgIH0sCiAgICAiY2FuZGlkYXRlSGFzaCI6ICI1OTEyMmQxNCIsCiAgICAiY2FuZGlkYXRlSGFzaFNjaGVtYSI6ICJmbnYxYS1pbnN0YW5jZS1idWZmZXItdjIiLAogICAgImNhbmRpZGF0ZVNldENvdW50IjogMTMsCiAgICAiY2FuZGlkYXRlU2VlZFJhbmdlIjogWwogICAgICAwLAogICAgICA3MDM5CiAgICBdLAogICAgImNhbWVyYU1hdHJpeFNpZ25hdHVyZSI6ICJkN2M3NGEwOCIsCiAgICAiY2FtZXJhRnJhbWVJZCI6ICJzd2VlcC1lYXJ0aC1sb2NhbC1uZWFyLW9ibGlxdWUiLAogICAgImNvb3JkaW5hdGVTcGFjZSI6ICJlYXJ0aC1sb2NhbC12MyIsCiAgICAiZGVuc2l0eVByb2ZpbGVWZXJzaW9uIjogImhpZXJhcmNoaWNhbC1xdWFkcmF0aWMtcXVhcnRpYy12MSIsCiAgICAiZWFydGhPY2NsdWRlZENlbnRlckNvdW50IjogMCwKICAgICJmcnVzdHVtQ3VsbGVkQ291bnQiOiAwLAogICAgImdwdVA1ME1zIjogbnVsbCwKICAgICJncHVQOTVNcyI6IG51bGwsCiAgICAiZ3B1RmllbGRSZXNvbHV0aW9uIjogWwogICAgICAyMDQ4LAogICAgICAxMDI0CiAgICBdLAogICAgImdwdUZpZWxkU291cmNlIjogIi9hc3NldHMvbHViaXJ0aC90ZXh0dXJlcy9lYXJ0aC1jbG91ZC1maWVsZC1uYXNhLWxpdGUtMmsucG5nIiwKICAgICJncHVSZW5kZXJlciI6ICJBTkdMRSAoQXBwbGUsIEFOR0xFIE1ldGFsIFJlbmRlcmVyOiBBcHBsZSBNNCwgVW5zcGVjaWZpZWQgVmVyc2lvbikiLAogICAgImdwdVBoYXNlU2FtcGxlQ291bnQiOiAwLAogICAgImdwdVBoYXNlUDk1TXMiOiB7CiAgICAgICJhY2N1bXVsYXRpb24iOiBudWxsLAogICAgICAiY2xlYXIiOiBudWxsLAogICAgICAiY29tcG9zaXRlIjogbnVsbAogICAgfSwKICAgICJncHVTYW1wbGVDb3VudCI6IDAsCiAgICAiZ3B1RGlzam9pbnRSZXNldENvdW50IjogMCwKICAgICJncHVQaGFzZVNhbXBsZUludGVydmFsIjogMzAsCiAgICAiZ3B1VG90YWxTYW1wbGVJbnRlcnZhbCI6IDEyLAogICAgImdwdVRpbWluZ1Njb3BlIjogInJnYmExNmYtMWJpbi1hY2N1bXVsYXRpb24tY29tcG9zaXRlIiwKICAgICJncHVUaW1lclN1cHBvcnRlZCI6IHRydWUsCiAgICAiZ3B1V2FybXVwRnJhbWVzIjogMjQwLAogICAgImdwdVdpbmRvd1NpemUiOiAxMjAsCiAgICAiZ2VuZXJhdG9yVmVyc2lvbiI6ICJob21lLWNsb3VkLWZpZWxkLXYzLWNwdS10cnV0aC0xIiwKICAgICJoaWVyYXJjaHlIYXNoIjogIjhjMGJkZDc2IiwKICAgICJoaWVyYXJjaHlNZXRyaWNzIjogewogICAgICAiYmFzZUNhcnJpZXJDb250YWlubWVudFJhdGlvIjogMSwKICAgICAgImJhc2VDYXJyaWVyRm9vdHByaW50VW5pb25Db3ZlcmFnZVJhdGlvIjogMC42NzM1MzQyOTIwMzUzOTgzLAogICAgICAiYmFzZUNvdW50IjogNywKICAgICAgImJhc2VDb21wb25lbnRDb3VudCI6IDEsCiAgICAgICJkZXRhaWxNZWFuRWxldmF0aW9uIjogMC4wMDM2NTM1MTcwMDM4MzI4NjEsCiAgICAgICJtYXhCYXNlTmVhcmVzdE5laWdoYm9yRGlzdGFuY2UiOiAwLjAzMDg2MDcxNjEzOTU5NTM1MiwKICAgICAgIm1heEJhc2VOb3JtYWxpemVkTmVhcmVzdFNlcGFyYXRpb24iOiAwLjQ4MjcyMzM1OTUxNzAyODk0LAogICAgICAibWF4Tm9ybWFsaXplZFRhbmdlbnRBdHRhY2htZW50IjogMC45NTAwMDAwMDAwMDAwMDAxLAogICAgICAidG93ZXJNZWFuRWxldmF0aW9uIjogMC4wMDg3NjYzNjcxNDg4OTk3NTgKICAgIH0sCiAgICAiaGllcmFyY2h5VmVyc2lvbiI6ICJiYXNlLXRvd2VyLWRldGFpbC12NCIsCiAgICAiYmFzZUNhcnJpZXJDb3VudCI6IDEsCiAgICAibGF5b3V0SWQiOiAidjMtci1kZXB0aC1nLWhlaWdodC1iLW1vcnBob2xvZ3ktYS1jb25jYXZpdHkiLAogICAgImxvYmVDb3VudCI6IDEzLAogICAgImxvYmVIaWVyYXJjaHkiOiBbCiAgICAgIHsKICAgICAgICAiaWQiOiAtMSwKICAgICAgICAiaXNDYXJyaWVyIjogdHJ1ZSwKICAgICAgICAicGFyZW50SWQiOiBudWxsLAogICAgICAgICJyb2xlIjogImJhc2UiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaWQiOiAxMzUwNCwKICAgICAgICAiaXNDYXJyaWVyIjogZmFsc2UsCiAgICAgICAgInBhcmVudElkIjogbnVsbCwKICAgICAgICAicm9sZSI6ICJiYXNlIgogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogNzc3NiwKICAgICAgICAiaXNDYXJyaWVyIjogZmFsc2UsCiAgICAgICAgInBhcmVudElkIjogbnVsbCwKICAgICAgICAicm9sZSI6ICJiYXNlIgogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogMjE5ODgsCiAgICAgICAgImlzQ2FycmllciI6IGZhbHNlLAogICAgICAgICJwYXJlbnRJZCI6IG51bGwsCiAgICAgICAgInJvbGUiOiAiYmFzZSIKICAgICAgfSwKICAgICAgewogICAgICAgICJpZCI6IDE0ODI0LAogICAgICAgICJpc0NhcnJpZXIiOiBmYWxzZSwKICAgICAgICAicGFyZW50SWQiOiBudWxsLAogICAgICAgICJyb2xlIjogImJhc2UiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaWQiOiAxOTIzMiwKICAgICAgICAiaXNDYXJyaWVyIjogZmFsc2UsCiAgICAgICAgInBhcmVudElkIjogbnVsbCwKICAgICAgICAicm9sZSI6ICJiYXNlIgogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogMTkzOTIsCiAgICAgICAgImlzQ2FycmllciI6IGZhbHNlLAogICAgICAgICJwYXJlbnRJZCI6IG51bGwsCiAgICAgICAgInJvbGUiOiAiYmFzZSIKICAgICAgfSwKICAgICAgewogICAgICAgICJpZCI6IDEzMzg4LAogICAgICAgICJpc0NhcnJpZXIiOiBmYWxzZSwKICAgICAgICAicGFyZW50SWQiOiBudWxsLAogICAgICAgICJyb2xlIjogImJhc2UiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaWQiOiA5MDMzLAogICAgICAgICJpc0NhcnJpZXIiOiBmYWxzZSwKICAgICAgICAicGFyZW50SWQiOiAxMzUwNCwKICAgICAgICAicm9sZSI6ICJ0b3dlciIKICAgICAgfSwKICAgICAgewogICAgICAgICJpZCI6IDE1MjAxLAogICAgICAgICJpc0NhcnJpZXIiOiBmYWxzZSwKICAgICAgICAicGFyZW50SWQiOiA3Nzc2LAogICAgICAgICJyb2xlIjogInRvd2VyIgogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogNzgxMCwKICAgICAgICAiaXNDYXJyaWVyIjogZmFsc2UsCiAgICAgICAgInBhcmVudElkIjogMTM1MDQsCiAgICAgICAgInJvbGUiOiAiZGV0YWlsIgogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogMjY0MzAsCiAgICAgICAgImlzQ2FycmllciI6IGZhbHNlLAogICAgICAgICJwYXJlbnRJZCI6IDc3NzYsCiAgICAgICAgInJvbGUiOiAiZGV0YWlsIgogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogMjA1MCwKICAgICAgICAiaXNDYXJyaWVyIjogZmFsc2UsCiAgICAgICAgInBhcmVudElkIjogMjE5ODgsCiAgICAgICAgInJvbGUiOiAiZGV0YWlsIgogICAgICB9CiAgICBdLAogICAgImxvYmVSb2xlQ291bnRzIjogewogICAgICAiYmFzZSI6IDgsCiAgICAgICJ0b3dlciI6IDIsCiAgICAgICJkZXRhaWwiOiAzCiAgICB9LAogICAgIm1lbWJlcnNoaXBDaHVyblJhdGlvIjogMCwKICAgICJtZW1iZXJzaGlwQ2h1cm5UZW1wb3JhbFA5NSI6IDAsCiAgICAib2Zmc2V0IjogWwogICAgICAwLjA0NSwKICAgICAgMC4wMTgKICAgIF0sCiAgICAib3JpZW50YXRpb24iOiAiZXF1aXJlY3QtdS1yZXBlYXQtdi1jbGFtcC1ub3J0aC11cCIsCiAgICAib2NjbHVkZWRDb3VudCI6IDAsCiAgICAib3B0aWNhbE1hc3NFc3RpbWF0ZSI6IDAuMDAwMjg5ODUzMjMxODI4NzA1OSwKICAgICJvcnBoYW5DaGlsZENvdW50IjogMCwKICAgICJwYXJlbnRlZExvYmVDb3VudCI6IDUsCiAgICAicGh5c2ljYWxTaXplIjogWwogICAgICAyNDAxLAogICAgICAxMDgxCiAgICBdLAogICAgInJlc29sdmVkU2l6ZSI6IFsKICAgICAgNDgwLAogICAgICAyNzAKICAgIF0sCiAgICAic2Npc3NvckVuYWJsZWQiOiB0cnVlLAogICAgInNvdXJjZVNoYTI1NiI6ICJhOWU2NTU2MDljYTRkZDg3NWY1YjJkMjNiZjRhOWRkMTJkNmVlMWY2OThlMDkwNTk0NGYwN2YzYjEwMTAxODc3IiwKICAgICJzb3VyY2VVdkJvdW5kcyI6IFsKICAgICAgMC43MjI2NTYyNSwKICAgICAgMC40MTAxNTYyNSwKICAgICAgMC43OTEwMTU2MjUsCiAgICAgIDAuNTM5MDYyNQogICAgXSwKICAgICJzdWJtaXR0ZWRMb2JlQ291bnQiOiAxMywKICAgICJzdWJtaXR0ZWRNZW1iZXJzaGlwSGFzaCI6ICJmYTEyYThjNiIsCiAgICAic3VibWl0dGVkUm9sZUNvdW50cyI6IHsKICAgICAgImJhc2UiOiA4LAogICAgICAidG93ZXIiOiAyLAogICAgICAiZGV0YWlsIjogMwogICAgfSwKICAgICJzdW5EaXJlY3Rpb24iOiBbCiAgICAgIDAuNzc0MzQ5Mzk4ODIyNDI2NSwKICAgICAgMC40MzI2NDAyOTc5MzczNjA1LAogICAgICAwLjQ2MTc0MTY4MjI2ODM2MzY1CiAgICBdLAogICAgInN3ZWVwUHJvZ3Jlc3MiOiAwLjA0MzIzNzkyMDE0NTI0NDEzNSwKICAgICJ0aWVyIjogIm1vYmlsZSIsCiAgICAidG9wb2xvZ3lEaXN0YW5jZVNwYWNlIjogImVhcnRoLWxvY2FsLXRhbmdlbnQtbm9ybWFsaXplZC1yYWRpdXMiLAogICAgInZpc2libGVDb3VudCI6IDEzCiAgfSwKICAibWlkZGxlIjogewogICAgImFjdGl2ZSI6IHRydWUsCiAgICAiYWNjdW11bGF0aW9uU2l6ZSI6IFsKICAgICAgNDgwLAogICAgICAyNzAKICAgIF0sCiAgICAiY2FtZXJhIjogInN3ZWVwIiwKICAgICJjYXBhYmlsaXR5IjogIndlYmdsMiIsCiAgICAiY29tcG9zaXRlU2Npc3NvciI6IFsKICAgICAgMTcxLAogICAgICA2NCwKICAgICAgMTMzLAogICAgICAxMTEKICAgIF0sCiAgICAiY292ZXJhZ2VNZWFuRXN0aW1hdGUiOiAwLjE2MDYwMDc0OTU1OTA4Mjg4LAogICAgImNvdmVyYWdlQXJlYVRlbXBvcmFsUDk1RXN0aW1hdGUiOiAwLjE2OTI1OTI1OTI1OTI1OTI1LAogICAgImNvdmVyYWdlU3BhdGlhbFA5NUVzdGltYXRlIjogMSwKICAgICJjb3ZlcmFnZVRlbXBvcmFsUDk1RXN0aW1hdGUiOiAxLAogICAgImZyYW1lUDk1TXMiOiAxLjU5OTk5OTk5NDAzOTUzNTUsCiAgICAiYWNjdW11bGF0aW9uUHJvYmUiOiB7CiAgICAgICJhZGRpdGl2ZURyYXciOiB0cnVlLAogICAgICAiY29sb3JCdWZmZXJGbG9hdCI6IHRydWUsCiAgICAgICJmbG9hdEJsZW5kIjogdHJ1ZSwKICAgICAgImZyYW1lYnVmZmVyQ29tcGxldGUiOiB0cnVlLAogICAgICAicmVhZGJhY2tNb2RlIjogImZsb2F0IiwKICAgICAgInJnYmExNmZUZXh0dXJlIjogdHJ1ZSwKICAgICAgInZlcmlmaWVkIjogdHJ1ZSwKICAgICAgInZlcmRpY3QiOiAicGFzcyIKICAgIH0sCiAgICAiY2FuZGlkYXRlSGFzaCI6ICI1OTEyMmQxNCIsCiAgICAiY2FuZGlkYXRlSGFzaFNjaGVtYSI6ICJmbnYxYS1pbnN0YW5jZS1idWZmZXItdjIiLAogICAgImNhbmRpZGF0ZVNldENvdW50IjogMTMsCiAgICAiY2FuZGlkYXRlU2VlZFJhbmdlIjogWwogICAgICAwLAogICAgICA3MDM5CiAgICBdLAogICAgImNhbWVyYU1hdHJpeFNpZ25hdHVyZSI6ICIyZDU0MTRhNiIsCiAgICAiY2FtZXJhRnJhbWVJZCI6ICJzd2VlcC1lYXJ0aC1sb2NhbC1uZWFyLW9ibGlxdWUiLAogICAgImNvb3JkaW5hdGVTcGFjZSI6ICJlYXJ0aC1sb2NhbC12MyIsCiAgICAiZGVuc2l0eVByb2ZpbGVWZXJzaW9uIjogImhpZXJhcmNoaWNhbC1xdWFkcmF0aWMtcXVhcnRpYy12MSIsCiAgICAiZWFydGhPY2NsdWRlZENlbnRlckNvdW50IjogMCwKICAgICJmcnVzdHVtQ3VsbGVkQ291bnQiOiAwLAogICAgImdwdVA1ME1zIjogbnVsbCwKICAgICJncHVQOTVNcyI6IG51bGwsCiAgICAiZ3B1RmllbGRSZXNvbHV0aW9uIjogWwogICAgICAyMDQ4LAogICAgICAxMDI0CiAgICBdLAogICAgImdwdUZpZWxkU291cmNlIjogIi9hc3NldHMvbHViaXJ0aC90ZXh0dXJlcy9lYXJ0aC1jbG91ZC1maWVsZC1uYXNhLWxpdGUtMmsucG5nIiwKICAgICJncHVSZW5kZXJlciI6ICJBTkdMRSAoQXBwbGUsIEFOR0xFIE1ldGFsIFJlbmRlcmVyOiBBcHBsZSBNNCwgVW5zcGVjaWZpZWQgVmVyc2lvbikiLAogICAgImdwdVBoYXNlU2FtcGxlQ291bnQiOiAwLAogICAgImdwdVBoYXNlUDk1TXMiOiB7CiAgICAgICJhY2N1bXVsYXRpb24iOiBudWxsLAogICAgICAiY2xlYXIiOiBudWxsLAogICAgICAiY29tcG9zaXRlIjogbnVsbAogICAgfSwKICAgICJncHVTYW1wbGVDb3VudCI6IDAsCiAgICAiZ3B1RGlzam9pbnRSZXNldENvdW50IjogMCwKICAgICJncHVQaGFzZVNhbXBsZUludGVydmFsIjogMzAsCiAgICAiZ3B1VG90YWxTYW1wbGVJbnRlcnZhbCI6IDEyLAogICAgImdwdVRpbWluZ1Njb3BlIjogInJnYmExNmYtMWJpbi1hY2N1bXVsYXRpb24tY29tcG9zaXRlIiwKICAgICJncHVUaW1lclN1cHBvcnRlZCI6IHRydWUsCiAgICAiZ3B1V2FybXVwRnJhbWVzIjogMjQwLAogICAgImdwdVdpbmRvd1NpemUiOiAxMjAsCiAgICAiZ2VuZXJhdG9yVmVyc2lvbiI6ICJob21lLWNsb3VkLWZpZWxkLXYzLWNwdS10cnV0aC0xIiwKICAgICJoaWVyYXJjaHlIYXNoIjogIjhjMGJkZDc2IiwKICAgICJoaWVyYXJjaHlNZXRyaWNzIjogewogICAgICAiYmFzZUNhcnJpZXJDb250YWlubWVudFJhdGlvIjogMSwKICAgICAgImJhc2VDYXJyaWVyRm9vdHByaW50VW5pb25Db3ZlcmFnZVJhdGlvIjogMC42NzM1MzQyOTIwMzUzOTgzLAogICAgICAiYmFzZUNvdW50IjogNywKICAgICAgImJhc2VDb21wb25lbnRDb3VudCI6IDEsCiAgICAgICJkZXRhaWxNZWFuRWxldmF0aW9uIjogMC4wMDM2NTM1MTcwMDM4MzI4NjEsCiAgICAgICJtYXhCYXNlTmVhcmVzdE5laWdoYm9yRGlzdGFuY2UiOiAwLjAzMDg2MDcxNjEzOTU5NTM1MiwKICAgICAgIm1heEJhc2VOb3JtYWxpemVkTmVhcmVzdFNlcGFyYXRpb24iOiAwLjQ4MjcyMzM1OTUxNzAyODk0LAogICAgICAibWF4Tm9ybWFsaXplZFRhbmdlbnRBdHRhY2htZW50IjogMC45NTAwMDAwMDAwMDAwMDAxLAogICAgICAidG93ZXJNZWFuRWxldmF0aW9uIjogMC4wMDg3NjYzNjcxNDg4OTk3NTgKICAgIH0sCiAgICAiaGllcmFyY2h5VmVyc2lvbiI6ICJiYXNlLXRvd2VyLWRldGFpbC12NCIsCiAgICAiYmFzZUNhcnJpZXJDb3VudCI6IDEsCiAgICAibGF5b3V0SWQiOiAidjMtci1kZXB0aC1nLWhlaWdodC1iLW1vcnBob2xvZ3ktYS1jb25jYXZpdHkiLAogICAgImxvYmVDb3VudCI6IDEzLAogICAgImxvYmVIaWVyYXJjaHkiOiBbCiAgICAgIHsKICAgICAgICAiaWQiOiAtMSwKICAgICAgICAiaXNDYXJyaWVyIjogdHJ1ZSwKICAgICAgICAicGFyZW50SWQiOiBudWxsLAogICAgICAgICJyb2xlIjogImJhc2UiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaWQiOiAxMzUwNCwKICAgICAgICAiaXNDYXJyaWVyIjogZmFsc2UsCiAgICAgICAgInBhcmVudElkIjogbnVsbCwKICAgICAgICAicm9sZSI6ICJiYXNlIgogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogNzc3NiwKICAgICAgICAiaXNDYXJyaWVyIjogZmFsc2UsCiAgICAgICAgInBhcmVudElkIjogbnVsbCwKICAgICAgICAicm9sZSI6ICJiYXNlIgogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogMjE5ODgsCiAgICAgICAgImlzQ2FycmllciI6IGZhbHNlLAogICAgICAgICJwYXJlbnRJZCI6IG51bGwsCiAgICAgICAgInJvbGUiOiAiYmFzZSIKICAgICAgfSwKICAgICAgewogICAgICAgICJpZCI6IDE0ODI0LAogICAgICAgICJpc0NhcnJpZXIiOiBmYWxzZSwKICAgICAgICAicGFyZW50SWQiOiBudWxsLAogICAgICAgICJyb2xlIjogImJhc2UiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaWQiOiAxOTIzMiwKICAgICAgICAiaXNDYXJyaWVyIjogZmFsc2UsCiAgICAgICAgInBhcmVudElkIjogbnVsbCwKICAgICAgICAicm9sZSI6ICJiYXNlIgogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogMTkzOTIsCiAgICAgICAgImlzQ2FycmllciI6IGZhbHNlLAogICAgICAgICJwYXJlbnRJZCI6IG51bGwsCiAgICAgICAgInJvbGUiOiAiYmFzZSIKICAgICAgfSwKICAgICAgewogICAgICAgICJpZCI6IDEzMzg4LAogICAgICAgICJpc0NhcnJpZXIiOiBmYWxzZSwKICAgICAgICAicGFyZW50SWQiOiBudWxsLAogICAgICAgICJyb2xlIjogImJhc2UiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaWQiOiA5MDMzLAogICAgICAgICJpc0NhcnJpZXIiOiBmYWxzZSwKICAgICAgICAicGFyZW50SWQiOiAxMzUwNCwKICAgICAgICAicm9sZSI6ICJ0b3dlciIKICAgICAgfSwKICAgICAgewogICAgICAgICJpZCI6IDE1MjAxLAogICAgICAgICJpc0NhcnJpZXIiOiBmYWxzZSwKICAgICAgICAicGFyZW50SWQiOiA3Nzc2LAogICAgICAgICJyb2xlIjogInRvd2VyIgogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogNzgxMCwKICAgICAgICAiaXNDYXJyaWVyIjogZmFsc2UsCiAgICAgICAgInBhcmVudElkIjogMTM1MDQsCiAgICAgICAgInJvbGUiOiAiZGV0YWlsIgogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogMjY0MzAsCiAgICAgICAgImlzQ2FycmllciI6IGZhbHNlLAogICAgICAgICJwYXJlbnRJZCI6IDc3NzYsCiAgICAgICAgInJvbGUiOiAiZGV0YWlsIgogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogMjA1MCwKICAgICAgICAiaXNDYXJyaWVyIjogZmFsc2UsCiAgICAgICAgInBhcmVudElkIjogMjE5ODgsCiAgICAgICAgInJvbGUiOiAiZGV0YWlsIgogICAgICB9CiAgICBdLAogICAgImxvYmVSb2xlQ291bnRzIjogewogICAgICAiYmFzZSI6IDgsCiAgICAgICJ0b3dlciI6IDIsCiAgICAgICJkZXRhaWwiOiAzCiAgICB9LAogICAgIm1lbWJlcnNoaXBDaHVyblJhdGlvIjogMCwKICAgICJtZW1iZXJzaGlwQ2h1cm5UZW1wb3JhbFA5NSI6IDAsCiAgICAib2Zmc2V0IjogWwogICAgICAwLjA0NSwKICAgICAgMC4wMTgKICAgIF0sCiAgICAib3JpZW50YXRpb24iOiAiZXF1aXJlY3QtdS1yZXBlYXQtdi1jbGFtcC1ub3J0aC11cCIsCiAgICAib2NjbHVkZWRDb3VudCI6IDAsCiAgICAib3B0aWNhbE1hc3NFc3RpbWF0ZSI6IDAuMDAwMjg5ODUzMjMxODI4NzA1OSwKICAgICJvcnBoYW5DaGlsZENvdW50IjogMCwKICAgICJwYXJlbnRlZExvYmVDb3VudCI6IDUsCiAgICAicGh5c2ljYWxTaXplIjogWwogICAgICAyNDAxLAogICAgICAxMDgxCiAgICBdLAogICAgInJlc29sdmVkU2l6ZSI6IFsKICAgICAgNDgwLAogICAgICAyNzAKICAgIF0sCiAgICAic2Npc3NvckVuYWJsZWQiOiB0cnVlLAogICAgInNvdXJjZVNoYTI1NiI6ICJhOWU2NTU2MDljYTRkZDg3NWY1YjJkMjNiZjRhOWRkMTJkNmVlMWY2OThlMDkwNTk0NGYwN2YzYjEwMTAxODc3IiwKICAgICJzb3VyY2VVdkJvdW5kcyI6IFsKICAgICAgMC43MjI2NTYyNSwKICAgICAgMC40MTAxNTYyNSwKICAgICAgMC43OTEwMTU2MjUsCiAgICAgIDAuNTM5MDYyNQogICAgXSwKICAgICJzdWJtaXR0ZWRMb2JlQ291bnQiOiAxMywKICAgICJzdWJtaXR0ZWRNZW1iZXJzaGlwSGFzaCI6ICJmYTEyYThjNiIsCiAgICAic3VibWl0dGVkUm9sZUNvdW50cyI6IHsKICAgICAgImJhc2UiOiA4LAogICAgICAidG93ZXIiOiAyLAogICAgICAiZGV0YWlsIjogMwogICAgfSwKICAgICJzdW5EaXJlY3Rpb24iOiBbCiAgICAgIDAuNzc0MzQ5Mzk4ODIyNDI2NSwKICAgICAgMC40MzI2NDAyOTc5MzczNjA1LAogICAgICAwLjQ2MTc0MTY4MjI2ODM2MzY1CiAgICBdLAogICAgInN3ZWVwUHJvZ3Jlc3MiOiAwLjIwMDg1ODY3NjkwMDUwOTQ2LAogICAgInRpZXIiOiAibW9iaWxlIiwKICAgICJ0b3BvbG9neURpc3RhbmNlU3BhY2UiOiAiZWFydGgtbG9jYWwtdGFuZ2VudC1ub3JtYWxpemVkLXJhZGl1cyIsCiAgICAidmlzaWJsZUNvdW50IjogMTMKICB9LAogICJvYmxpcXVlIjogewogICAgImFjdGl2ZSI6IHRydWUsCiAgICAiYWNjdW11bGF0aW9uU2l6ZSI6IFsKICAgICAgNDgwLAogICAgICAyNzAKICAgIF0sCiAgICAiY2FtZXJhIjogInN3ZWVwIiwKICAgICJjYXBhYmlsaXR5IjogIndlYmdsMiIsCiAgICAiY29tcG9zaXRlU2Npc3NvciI6IFsKICAgICAgMTczLAogICAgICA3NywKICAgICAgMTI0LAogICAgICA4OAogICAgXSwKICAgICJjb3ZlcmFnZU1lYW5Fc3RpbWF0ZSI6IDAuMTU1NzY0ODgwMzM2NTc0ODUsCiAgICAiY292ZXJhZ2VBcmVhVGVtcG9yYWxQOTVFc3RpbWF0ZSI6IDAuMTc3Mzc2NTQzMjA5ODc2NTYsCiAgICAiY292ZXJhZ2VTcGF0aWFsUDk1RXN0aW1hdGUiOiAxLAogICAgImNvdmVyYWdlVGVtcG9yYWxQOTVFc3RpbWF0ZSI6IDEsCiAgICAiZnJhbWVQOTVNcyI6IDEuNTk5OTk5OTk0MDM5NTM1NSwKICAgICJhY2N1bXVsYXRpb25Qcm9iZSI6IHsKICAgICAgImFkZGl0aXZlRHJhdyI6IHRydWUsCiAgICAgICJjb2xvckJ1ZmZlckZsb2F0IjogdHJ1ZSwKICAgICAgImZsb2F0QmxlbmQiOiB0cnVlLAogICAgICAiZnJhbWVidWZmZXJDb21wbGV0ZSI6IHRydWUsCiAgICAgICJyZWFkYmFja01vZGUiOiAiZmxvYXQiLAogICAgICAicmdiYTE2ZlRleHR1cmUiOiB0cnVlLAogICAgICAidmVyaWZpZWQiOiB0cnVlLAogICAgICAidmVyZGljdCI6ICJwYXNzIgogICAgfSwKICAgICJjYW5kaWRhdGVIYXNoIjogIjU5MTIyZDE0IiwKICAgICJjYW5kaWRhdGVIYXNoU2NoZW1hIjogImZudjFhLWluc3RhbmNlLWJ1ZmZlci12MiIsCiAgICAiY2FuZGlkYXRlU2V0Q291bnQiOiAxMywKICAgICJjYW5kaWRhdGVTZWVkUmFuZ2UiOiBbCiAgICAgIDAsCiAgICAgIDcwMzkKICAgIF0sCiAgICAiY2FtZXJhTWF0cml4U2lnbmF0dXJlIjogImZmOTcxNDdhIiwKICAgICJjYW1lcmFGcmFtZUlkIjogInN3ZWVwLWVhcnRoLWxvY2FsLW5lYXItb2JsaXF1ZSIsCiAgICAiY29vcmRpbmF0ZVNwYWNlIjogImVhcnRoLWxvY2FsLXYzIiwKICAgICJkZW5zaXR5UHJvZmlsZVZlcnNpb24iOiAiaGllcmFyY2hpY2FsLXF1YWRyYXRpYy1xdWFydGljLXYxIiwKICAgICJlYXJ0aE9jY2x1ZGVkQ2VudGVyQ291bnQiOiAwLAogICAgImZydXN0dW1DdWxsZWRDb3VudCI6IDAsCiAgICAiZ3B1UDUwTXMiOiBudWxsLAogICAgImdwdVA5NU1zIjogbnVsbCwKICAgICJncHVGaWVsZFJlc29sdXRpb24iOiBbCiAgICAgIDIwNDgsCiAgICAgIDEwMjQKICAgIF0sCiAgICAiZ3B1RmllbGRTb3VyY2UiOiAiL2Fzc2V0cy9sdWJpcnRoL3RleHR1cmVzL2VhcnRoLWNsb3VkLWZpZWxkLW5hc2EtbGl0ZS0yay5wbmciLAogICAgImdwdVJlbmRlcmVyIjogIkFOR0xFIChBcHBsZSwgQU5HTEUgTWV0YWwgUmVuZGVyZXI6IEFwcGxlIE00LCBVbnNwZWNpZmllZCBWZXJzaW9uKSIsCiAgICAiZ3B1UGhhc2VTYW1wbGVDb3VudCI6IDAsCiAgICAiZ3B1UGhhc2VQOTVNcyI6IHsKICAgICAgImFjY3VtdWxhdGlvbiI6IG51bGwsCiAgICAgICJjbGVhciI6IG51bGwsCiAgICAgICJjb21wb3NpdGUiOiBudWxsCiAgICB9LAogICAgImdwdVNhbXBsZUNvdW50IjogMCwKICAgICJncHVEaXNqb2ludFJlc2V0Q291bnQiOiAwLAogICAgImdwdVBoYXNlU2FtcGxlSW50ZXJ2YWwiOiAzMCwKICAgICJncHVUb3RhbFNhbXBsZUludGVydmFsIjogMTIsCiAgICAiZ3B1VGltaW5nU2NvcGUiOiAicmdiYTE2Zi0xYmluLWFjY3VtdWxhdGlvbi1jb21wb3NpdGUiLAogICAgImdwdVRpbWVyU3VwcG9ydGVkIjogdHJ1ZSwKICAgICJncHVXYXJtdXBGcmFtZXMiOiAyNDAsCiAgICAiZ3B1V2luZG93U2l6ZSI6IDEyMCwKICAgICJnZW5lcmF0b3JWZXJzaW9uIjogImhvbWUtY2xvdWQtZmllbGQtdjMtY3B1LXRydXRoLTEiLAogICAgImhpZXJhcmNoeUhhc2giOiAiOGMwYmRkNzYiLAogICAgImhpZXJhcmNoeU1ldHJpY3MiOiB7CiAgICAgICJiYXNlQ2FycmllckNvbnRhaW5tZW50UmF0aW8iOiAxLAogICAgICAiYmFzZUNhcnJpZXJGb290cHJpbnRVbmlvbkNvdmVyYWdlUmF0aW8iOiAwLjY3MzUzNDI5MjAzNTM5ODMsCiAgICAgICJiYXNlQ291bnQiOiA3LAogICAgICAiYmFzZUNvbXBvbmVudENvdW50IjogMSwKICAgICAgImRldGFpbE1lYW5FbGV2YXRpb24iOiAwLjAwMzY1MzUxNzAwMzgzMjg2MSwKICAgICAgIm1heEJhc2VOZWFyZXN0TmVpZ2hib3JEaXN0YW5jZSI6IDAuMDMwODYwNzE2MTM5NTk1MzUyLAogICAgICAibWF4QmFzZU5vcm1hbGl6ZWROZWFyZXN0U2VwYXJhdGlvbiI6IDAuNDgyNzIzMzU5NTE3MDI4OTQsCiAgICAgICJtYXhOb3JtYWxpemVkVGFuZ2VudEF0dGFjaG1lbnQiOiAwLjk1MDAwMDAwMDAwMDAwMDEsCiAgICAgICJ0b3dlck1lYW5FbGV2YXRpb24iOiAwLjAwODc2NjM2NzE0ODg5OTc1OAogICAgfSwKICAgICJoaWVyYXJjaHlWZXJzaW9uIjogImJhc2UtdG93ZXItZGV0YWlsLXY0IiwKICAgICJiYXNlQ2FycmllckNvdW50IjogMSwKICAgICJsYXlvdXRJZCI6ICJ2My1yLWRlcHRoLWctaGVpZ2h0LWItbW9ycGhvbG9neS1hLWNvbmNhdml0eSIsCiAgICAibG9iZUNvdW50IjogMTMsCiAgICAibG9iZUhpZXJhcmNoeSI6IFsKICAgICAgewogICAgICAgICJpZCI6IC0xLAogICAgICAgICJpc0NhcnJpZXIiOiB0cnVlLAogICAgICAgICJwYXJlbnRJZCI6IG51bGwsCiAgICAgICAgInJvbGUiOiAiYmFzZSIKICAgICAgfSwKICAgICAgewogICAgICAgICJpZCI6IDEzNTA0LAogICAgICAgICJpc0NhcnJpZXIiOiBmYWxzZSwKICAgICAgICAicGFyZW50SWQiOiBudWxsLAogICAgICAgICJyb2xlIjogImJhc2UiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaWQiOiA3Nzc2LAogICAgICAgICJpc0NhcnJpZXIiOiBmYWxzZSwKICAgICAgICAicGFyZW50SWQiOiBudWxsLAogICAgICAgICJyb2xlIjogImJhc2UiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaWQiOiAyMTk4OCwKICAgICAgICAiaXNDYXJyaWVyIjogZmFsc2UsCiAgICAgICAgInBhcmVudElkIjogbnVsbCwKICAgICAgICAicm9sZSI6ICJiYXNlIgogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogMTQ4MjQsCiAgICAgICAgImlzQ2FycmllciI6IGZhbHNlLAogICAgICAgICJwYXJlbnRJZCI6IG51bGwsCiAgICAgICAgInJvbGUiOiAiYmFzZSIKICAgICAgfSwKICAgICAgewogICAgICAgICJpZCI6IDE5MjMyLAogICAgICAgICJpc0NhcnJpZXIiOiBmYWxzZSwKICAgICAgICAicGFyZW50SWQiOiBudWxsLAogICAgICAgICJyb2xlIjogImJhc2UiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaWQiOiAxOTM5MiwKICAgICAgICAiaXNDYXJyaWVyIjogZmFsc2UsCiAgICAgICAgInBhcmVudElkIjogbnVsbCwKICAgICAgICAicm9sZSI6ICJiYXNlIgogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogMTMzODgsCiAgICAgICAgImlzQ2FycmllciI6IGZhbHNlLAogICAgICAgICJwYXJlbnRJZCI6IG51bGwsCiAgICAgICAgInJvbGUiOiAiYmFzZSIKICAgICAgfSwKICAgICAgewogICAgICAgICJpZCI6IDkwMzMsCiAgICAgICAgImlzQ2FycmllciI6IGZhbHNlLAogICAgICAgICJwYXJlbnRJZCI6IDEzNTA0LAogICAgICAgICJyb2xlIjogInRvd2VyIgogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogMTUyMDEsCiAgICAgICAgImlzQ2FycmllciI6IGZhbHNlLAogICAgICAgICJwYXJlbnRJZCI6IDc3NzYsCiAgICAgICAgInJvbGUiOiAidG93ZXIiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaWQiOiA3ODEwLAogICAgICAgICJpc0NhcnJpZXIiOiBmYWxzZSwKICAgICAgICAicGFyZW50SWQiOiAxMzUwNCwKICAgICAgICAicm9sZSI6ICJkZXRhaWwiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaWQiOiAyNjQzMCwKICAgICAgICAiaXNDYXJyaWVyIjogZmFsc2UsCiAgICAgICAgInBhcmVudElkIjogNzc3NiwKICAgICAgICAicm9sZSI6ICJkZXRhaWwiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaWQiOiAyMDUwLAogICAgICAgICJpc0NhcnJpZXIiOiBmYWxzZSwKICAgICAgICAicGFyZW50SWQiOiAyMTk4OCwKICAgICAgICAicm9sZSI6ICJkZXRhaWwiCiAgICAgIH0KICAgIF0sCiAgICAibG9iZVJvbGVDb3VudHMiOiB7CiAgICAgICJiYXNlIjogOCwKICAgICAgInRvd2VyIjogMiwKICAgICAgImRldGFpbCI6IDMKICAgIH0sCiAgICAibWVtYmVyc2hpcENodXJuUmF0aW8iOiAwLAogICAgIm1lbWJlcnNoaXBDaHVyblRlbXBvcmFsUDk1IjogMCwKICAgICJvZmZzZXQiOiBbCiAgICAgIDAuMDQ1LAogICAgICAwLjAxOAogICAgXSwKICAgICJvcmllbnRhdGlvbiI6ICJlcXVpcmVjdC11LXJlcGVhdC12LWNsYW1wLW5vcnRoLXVwIiwKICAgICJvY2NsdWRlZENvdW50IjogMCwKICAgICJvcHRpY2FsTWFzc0VzdGltYXRlIjogMC4wMDAyODk4NTMyMzE4Mjg3MDU5LAogICAgIm9ycGhhbkNoaWxkQ291bnQiOiAwLAogICAgInBhcmVudGVkTG9iZUNvdW50IjogNSwKICAgICJwaHlzaWNhbFNpemUiOiBbCiAgICAgIDI0MDEsCiAgICAgIDEwODEKICAgIF0sCiAgICAicmVzb2x2ZWRTaXplIjogWwogICAgICA0ODAsCiAgICAgIDI3MAogICAgXSwKICAgICJzY2lzc29yRW5hYmxlZCI6IHRydWUsCiAgICAic291cmNlU2hhMjU2IjogImE5ZTY1NTYwOWNhNGRkODc1ZjViMmQyM2JmNGE5ZGQxMmQ2ZWUxZjY5OGUwOTA1OTQ0ZjA3ZjNiMTAxMDE4NzciLAogICAgInNvdXJjZVV2Qm91bmRzIjogWwogICAgICAwLjcyMjY1NjI1LAogICAgICAwLjQxMDE1NjI1LAogICAgICAwLjc5MTAxNTYyNSwKICAgICAgMC41MzkwNjI1CiAgICBdLAogICAgInN1Ym1pdHRlZExvYmVDb3VudCI6IDEzLAogICAgInN1Ym1pdHRlZE1lbWJlcnNoaXBIYXNoIjogImZhMTJhOGM2IiwKICAgICJzdWJtaXR0ZWRSb2xlQ291bnRzIjogewogICAgICAiYmFzZSI6IDgsCiAgICAgICJ0b3dlciI6IDIsCiAgICAgICJkZXRhaWwiOiAzCiAgICB9LAogICAgInN1bkRpcmVjdGlvbiI6IFsKICAgICAgMC43NzQzNDkzOTg4MjI0MjY1LAogICAgICAwLjQzMjY0MDI5NzkzNzM2MDUsCiAgICAgIDAuNDYxNzQxNjgyMjY4MzYzNjUKICAgIF0sCiAgICAic3dlZXBQcm9ncmVzcyI6IDAuODUzNTUzMzkwNTkzMjczNywKICAgICJ0aWVyIjogIm1vYmlsZSIsCiAgICAidG9wb2xvZ3lEaXN0YW5jZVNwYWNlIjogImVhcnRoLWxvY2FsLXRhbmdlbnQtbm9ybWFsaXplZC1yYWRpdXMiLAogICAgInZpc2libGVDb3VudCI6IDEzCiAgfQp9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e6add2e9c67cb9f84759-b80deb8076e043a24db4",
+          "file": "lubirth-hybrid-cloud-kill-spike.spec.ts",
+          "line": 563,
+          "column": 5
+        },
+        {
+          "title": "Phase -1 conservative scissor is pixel-equivalent to the unclipped reference",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "mobile-landscape-system-chrome",
+              "projectName": "mobile-landscape-system-chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 22427,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-07-26T12:18:21.401Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e6add2e9c67cb9f84759-4c0cf50be2df8df0f890",
+          "file": "lubirth-hybrid-cloud-kill-spike.spec.ts",
+          "line": 629,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-07-26T12:16:59.275Z",
+    "duration": 104801.034,
+    "expected": 5,
+    "skipped": 2,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
