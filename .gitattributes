@@ -1,0 +1,3 @@
+# Unified diff fixtures intentionally contain context-only blank lines with a
+# leading space; do not report those patch-format bytes as source whitespace.
+patches/*.patch -whitespace

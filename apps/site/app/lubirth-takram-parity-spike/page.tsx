@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { LuBirthTakramParitySpikeClient } from "../../components/LuBirthTakramParitySpikeClient";
 
 export const metadata = {
@@ -6,5 +7,9 @@ export const metadata = {
 
 /** Query-only evidence route; it is never mounted by a product route. */
 export default function LuBirthTakramParitySpikePage() {
-  return <LuBirthTakramParitySpikeClient />;
+  return (
+    <Suspense fallback={<main data-runtime="resolving" data-takram-parity-route="true" />}>
+      <LuBirthTakramParitySpikeClient />
+    </Suspense>
+  );
 }

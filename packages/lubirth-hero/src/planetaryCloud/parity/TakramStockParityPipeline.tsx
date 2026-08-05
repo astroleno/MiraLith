@@ -9,10 +9,10 @@ import {
   type AtmosphereApi
 } from "@takram/three-atmosphere/r3f";
 import type { AerialPerspectiveEffect } from "@takram/three-atmosphere";
-import { Clouds } from "@takram/three-clouds/r3f";
-import { CloudLayers, type CloudsEffect } from "@takram/three-clouds";
+import { CloudLayer as TakramCloudLayer, Clouds } from "@takram/three-clouds/r3f";
+import type { CloudsEffect } from "@takram/three-clouds";
 import type { ExpandNestedProps } from "@takram/three-geospatial/r3f";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { mapOpeningProgress } from "@miralith/visual-core";
 import {
   Euler,
@@ -33,13 +33,19 @@ import {
   TAKRAM_PARITY_DEFAULTS,
   TAKRAM_PARITY_ELLIPSOID,
   TAKRAM_PARITY_RENDERER_FINGERPRINT,
+  TAKRAM_PARITY_RENDERER_FINGERPRINT_HASH,
   type TakramParityDiagnostic,
   type TakramParityInput,
   type TakramParityTelemetry,
   type TakramParityView
 } from "./TakramParityContract";
-import { useTakramParityRuntimeAssets } from "./TakramParityAssetLoader";
+import {
+  useTakramParityRuntimeAssets,
+  type TakramParityRuntimeAssets
+} from "./TakramParityAssetLoader";
 import { useTakramParityAtmospherePrecompute } from "./TakramParityAtmospherePrecompute";
+import { resolveTakramParityAdapter } from "./TakramParityV3Adapter";
+import { TAKRAM_PARITY_V3_LAYERS } from "./TakramParityV3Layers";
 
 const EARTH_DAY_SRC = "/assets/lubirth/textures/earth-day-nasa-lite-4k.webp";
 const CONTROL_CAMERA_ALTITUDE_M =
@@ -160,7 +166,6 @@ function nativeFeatures(clouds: CloudsEffect | null, aerialPerspective: AerialPe
   return {
     aerialPerspective: aerialPerspective !== null,
     beerShadowMaps: (clouds?.shadowMaps.cascadeCount ?? 0) > 0,
-    defaultCloudLayers: clouds !== null && clouds.cloudLayers.length === CloudLayers.DEFAULT.length,
     haze: clouds?.haze === true,
     lightShafts: clouds?.lightShafts === true,
     qualityPreset: TAKRAM_PARITY_DEFAULTS.qualityPreset,
@@ -168,6 +173,39 @@ function nativeFeatures(clouds: CloudsEffect | null, aerialPerspective: AerialPe
     shapeDetail: clouds?.shapeDetail === true,
     temporalUpscale: clouds?.temporalUpscale === true,
     turbulence: clouds?.turbulence === true
+  };
+}
+
+function resolveAdapterTelemetry(
+  clouds: CloudsEffect | null,
+  assets: TakramParityRuntimeAssets | null,
+  input: TakramParityInput
+): TakramParityTelemetry["adapter"] {
+  const adapter = resolveTakramParityAdapter(input);
+  return {
+    cloudLayers: clouds === null
+      ? []
+      : Array.from(clouds.cloudLayers, (layer) => ({
+        altitude: layer.altitude,
+        channel: layer.channel,
+        coverageFilterWidth: layer.coverageFilterWidth,
+        densityScale: layer.densityScale,
+        height: layer.height,
+        shadow: layer.shadow,
+        shapeAmount: layer.shapeAmount,
+        shapeDetailAmount: layer.shapeDetailAmount,
+        weatherExponent: layer.weatherExponent
+      })),
+    disableDefaultLayers: adapter.disableDefaultLayers,
+    globalWeatherMapping: clouds?.globalWeatherMapping ?? adapter.globalWeatherMapping,
+    localWeatherHash: assets?.localWeatherSha256 ?? null,
+    localWeatherOffset: clouds === null
+      ? null
+      : [clouds.localWeatherOffset.x, clouds.localWeatherOffset.y],
+    localWeatherRepeat: clouds === null
+      ? null
+      : [clouds.localWeatherRepeat.x, clouds.localWeatherRepeat.y],
+    localWeatherSource: assets?.localWeatherSource ?? null
   };
 }
 
@@ -194,7 +232,8 @@ export function TakramStockParityPipeline({
 }: TakramStockParityPipelineProps) {
   const { gl, camera } = useThree();
   const earthTexture = useLoader(TextureLoader, EARTH_DAY_SRC);
-  const assetsState = useTakramParityRuntimeAssets(gl.domElement);
+  const adapter = resolveTakramParityAdapter(input);
+  const assetsState = useTakramParityRuntimeAssets(gl.domElement, input);
   const atmosphereState = useTakramParityAtmospherePrecompute(gl, gl.domElement);
   const atmosphereRef = useRef<AtmosphereApi>(null);
   const cloudsRef = useRef<TakramCloudsRef>(null);
@@ -210,6 +249,15 @@ export function TakramStockParityPipeline({
   const nativeFrameEpochRef = useRef("");
   const [bridgeReady, setBridgeReady] = useState(false);
   onTelemetryRef.current = onTelemetry;
+  const setCloudsRef = useCallback((clouds: TakramCloudsRef | null) => {
+    cloudsRef.current = clouds;
+    if (clouds === null) {
+      return;
+    }
+    clouds.localWeatherRepeat.set(...adapter.localWeatherRepeat);
+    clouds.localWeatherOffset.set(...adapter.localWeatherOffset);
+    clouds.localWeatherVelocity.set(0, 0);
+  }, [adapter]);
 
   useEffect(() => {
     earthTexture.colorSpace = SRGBColorSpace;
@@ -363,7 +411,9 @@ export function TakramStockParityPipeline({
       assetsState.assetGeneration,
       atmosphereState.atmosphereGeneration,
       coordinateMode,
-      diagnostic
+      diagnostic,
+      input,
+      assetsState.assets?.localWeatherSha256 ?? "pending"
     ].join(":");
     if (nativeFrameEpochRef.current !== nativeFrameEpoch) {
       nativeFrameEpochRef.current = nativeFrameEpoch;
@@ -379,6 +429,7 @@ export function TakramStockParityPipeline({
     const telemetry: TakramParityTelemetry = {
       active: nativePipelineReady &&
         (diagnostic === "history-reset-first" || temporalConverged),
+      adapter: resolveAdapterTelemetry(clouds, assetsState.assets, input),
       assetGeneration: assetsState.assetGeneration,
       assetsReady: assetsState.ready,
       atmosphereGeneration: atmosphereState.atmosphereGeneration,
@@ -397,10 +448,8 @@ export function TakramStockParityPipeline({
       nativeFrameCount,
       progress: clampOpeningProgress(progress),
       rendererFingerprint: TAKRAM_PARITY_RENDERER_FINGERPRINT,
+      rendererFingerprintHash: TAKRAM_PARITY_RENDERER_FINGERPRINT_HASH,
       stockCoverage: view === "control" ? TAKRAM_PARITY_CONTROL.coverage : null,
-      stockWeatherRepeat: clouds === null
-        ? null
-        : [clouds.localWeatherRepeat.x, clouds.localWeatherRepeat.y],
       temporalConverged,
       transformFallback,
       view
@@ -416,6 +465,7 @@ export function TakramStockParityPipeline({
       diagnostic: telemetry.diagnostic,
       diagnosticApplied: telemetry.diagnosticApplied,
       diagnosticState: telemetry.diagnosticState,
+      adapter: telemetry.adapter,
       native: telemetry.native,
       nativeFrameCount: Math.min(
         telemetry.nativeFrameCount,
@@ -433,7 +483,7 @@ export function TakramStockParityPipeline({
     }
   }, -1);
 
-  const stockAssets = input === "stock" ? assetsState.assets : null;
+  const runtimeAssets = assetsState.assets;
   const atmosphereTextures = atmosphereState.ready ? atmosphereState.textures : null;
 
   return (
@@ -448,7 +498,7 @@ export function TakramStockParityPipeline({
           />
         </mesh>
       </group>
-      {bridgeReady && stockAssets !== null && atmosphereTextures !== null ? (
+      {bridgeReady && runtimeAssets !== null && atmosphereTextures !== null ? (
         <Atmosphere
           ref={atmosphereRef}
           correctAltitude={false}
@@ -458,20 +508,30 @@ export function TakramStockParityPipeline({
         >
           <EffectComposer enableNormalPass>
             <Clouds
-              ref={cloudsRef}
+              ref={setCloudsRef}
               {...(view === "control" ? { coverage: TAKRAM_PARITY_CONTROL.coverage } : {})}
-              localWeatherTexture={stockAssets.localWeather}
+              disableDefaultLayers={adapter.disableDefaultLayers}
+              globalWeatherMapping={input === "v3"}
+              localWeatherTexture={runtimeAssets.localWeather}
               qualityPreset={TAKRAM_PARITY_DEFAULTS.qualityPreset}
-              shapeDetailTexture={stockAssets.shapeDetail}
-              shapeTexture={stockAssets.shape}
-              stbnTexture={stockAssets.stbn}
-              turbulenceTexture={stockAssets.turbulence}
-            />
+              shapeDetailTexture={runtimeAssets.shapeDetail}
+              shapeTexture={runtimeAssets.shape}
+              stbnTexture={runtimeAssets.stbn}
+              turbulenceTexture={runtimeAssets.turbulence}
+            >
+              {input === "v3" ? TAKRAM_PARITY_V3_LAYERS.map((layer, index) => (
+                <TakramCloudLayer
+                  key={layer.channel}
+                  index={index}
+                  {...layer}
+                />
+              )) : null}
+            </Clouds>
             <AerialPerspective
               ref={aerialPerspectiveRef}
               sky
               skyLight
-              stbnTexture={stockAssets.stbn}
+              stbnTexture={runtimeAssets.stbn}
               sunLight
             />
           </EffectComposer>

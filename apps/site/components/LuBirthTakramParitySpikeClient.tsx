@@ -1,6 +1,7 @@
 "use client";
 
-import { lazy, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { lazy, useEffect, useMemo, useState } from "react";
 import {
   resolveTakramParityRouteQuery,
   type TakramParityRouteQueryResult,
@@ -8,8 +9,8 @@ import {
 } from "../../../packages/lubirth-hero/src/planetaryCloud/parity/TakramParityContract";
 import { VisualCanvas } from "../visual/VisualCanvas";
 
-// Keep Takram in a Canvas-native lazy boundary: this leaves V3 inert during
-// Task 0T and prevents product routes from requesting the parity subpath.
+// Keep Takram in a Canvas-native lazy boundary so the parity-only route owns
+// the optional renderer and V3 weather request; product routes stay inert.
 const TakramUpstreamControlScene = lazy(
   () => import(
     "../../../packages/lubirth-hero/src/planetaryCloud/parity/TakramUpstreamControlScene"
@@ -29,12 +30,17 @@ declare global {
 }
 
 export function LuBirthTakramParitySpikeClient() {
-  const [routeResult, setRouteResult] = useState<TakramParityRouteQueryResult | null>(null);
+  const searchParams = useSearchParams();
+  const routeResult = useMemo<TakramParityRouteQueryResult>(
+    () => resolveTakramParityRouteQuery(searchParams),
+    [searchParams]
+  );
   const [telemetry, setTelemetry] = useState<TakramParityTelemetry | null>(null);
 
   useEffect(() => {
-    setRouteResult(resolveTakramParityRouteQuery(new URLSearchParams(window.location.search)));
-  }, []);
+    setTelemetry(null);
+    delete window.__MiraLithTakramParity;
+  }, [searchParams]);
 
   useEffect(() => {
     if (telemetry) {
@@ -42,16 +48,12 @@ export function LuBirthTakramParitySpikeClient() {
     }
   }, [telemetry]);
 
-  const query = routeResult?.ok ? routeResult.value : null;
-  const runtime = routeResult === null
-    ? "resolving"
-    : !routeResult.ok
-      ? "invalid-query"
-      : query?.input === "v3"
-        ? "v3-not-authorized"
-        : telemetry?.active
-          ? "ready"
-          : "loading";
+  const query = routeResult.ok ? routeResult.value : null;
+  const runtime = !routeResult.ok
+    ? "invalid-query"
+    : telemetry?.active
+      ? "ready"
+      : "loading";
 
   return (
     <main
@@ -62,7 +64,7 @@ export function LuBirthTakramParitySpikeClient() {
       data-takram-parity-route="true"
       data-view={query?.view ?? "pending"}
     >
-      {query?.input === "stock" ? (
+      {query !== null ? (
         <VisualCanvas
           antialias={false}
           ariaLabel="LuBirth Takram parity spike"
@@ -78,6 +80,7 @@ export function LuBirthTakramParitySpikeClient() {
           ) : (
             <LuBirthTakramParityScene
               diagnostic={query.diagnostic}
+              input={query.input}
               onTelemetry={setTelemetry}
               progress={query.progress}
             />
@@ -100,11 +103,9 @@ export function LuBirthTakramParitySpikeClient() {
           zIndex: 3
         }}
       >
-        {runtime === "v3-not-authorized"
-          ? "V3 adapter remains locked until Task 0V."
-          : telemetry
-            ? `Takram ${telemetry.view} ${telemetry.active ? "native path active" : "preparing"}`
-            : "Preparing Takram stock parity…"}
+        {telemetry
+          ? `Takram ${telemetry.input} ${telemetry.view} ${telemetry.active ? "native path active" : "preparing"}`
+          : "Preparing Takram parity…"}
       </output>
     </main>
   );

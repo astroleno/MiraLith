@@ -11,7 +11,12 @@ import {
   UnsignedByteType
 } from "three";
 import { useEffect, useState } from "react";
-import { TAKRAM_PARITY_STOCK_ASSETS, type TakramParityStockAsset } from "./TakramParityContract";
+import {
+  TAKRAM_PARITY_STOCK_ASSETS,
+  type TakramParityInput,
+  type TakramParityStockAsset
+} from "./TakramParityContract";
+import { TAKRAM_PARITY_V3_ADAPTER } from "./TakramParityV3Adapter";
 
 type TakramParityRuntimeAssetId = Exclude<TakramParityStockAsset["id"], "upstreamTokyo">;
 type TakramParityRuntimeAsset = TakramParityStockAsset & { runtimeUrl: string };
@@ -34,6 +39,8 @@ export const TAKRAM_PARITY_RUNTIME_ASSET_URLS = Object.freeze({
 
 export interface TakramParityRuntimeAssets {
   localWeather: Texture;
+  localWeatherSha256: string;
+  localWeatherSource: "stock" | "v3";
   shape: Data3DTexture;
   shapeDetail: Data3DTexture;
   stbn: Data3DTexture;
@@ -97,18 +104,31 @@ export function configureTakramParityTexture(
   return configureThreeDimensionalTexture(texture, assetId === "stbn");
 }
 
-function loadLocalTexture(
-  assetId: "localWeather" | "turbulence"
-): Promise<Texture> {
+function loadTextureAtUrl(runtimeUrl: string): Promise<Texture> {
   const loader = new TextureLoader();
   return new Promise((resolve, reject) => {
     loader.load(
-      TAKRAM_PARITY_RUNTIME_ASSET_URLS[assetId],
-      (texture) => resolve(configureTakramParityTexture(assetId, texture)),
+      runtimeUrl,
+      (texture) => resolve(configureTwoDimensionalTexture(texture)),
       undefined,
       reject
     );
   });
+}
+
+function resolveLocalWeatherSource(input: TakramParityInput) {
+  if (input === "v3") {
+    return {
+      runtimeUrl: TAKRAM_PARITY_V3_ADAPTER.runtimeUrl,
+      sha256: TAKRAM_PARITY_V3_ADAPTER.localWeatherSha256,
+      source: "v3" as const
+    };
+  }
+  return {
+    runtimeUrl: TAKRAM_PARITY_RUNTIME_ASSET_URLS.localWeather,
+    sha256: getRuntimeAsset("localWeather").sha256,
+    source: "stock" as const
+  };
 }
 
 async function loadLocalData3DTexture(
@@ -132,16 +152,26 @@ async function loadLocalData3DTexture(
 }
 
 export async function loadTakramParityRuntimeAssets(
+  input: TakramParityInput,
   signal?: AbortSignal
 ): Promise<TakramParityRuntimeAssets> {
+  const localWeatherSource = resolveLocalWeatherSource(input);
   const [localWeather, turbulence, shape, shapeDetail, stbn] = await Promise.all([
-    loadLocalTexture("localWeather"),
-    loadLocalTexture("turbulence"),
+    loadTextureAtUrl(localWeatherSource.runtimeUrl),
+    loadTextureAtUrl(TAKRAM_PARITY_RUNTIME_ASSET_URLS.turbulence),
     loadLocalData3DTexture("shape", signal),
     loadLocalData3DTexture("shapeDetail", signal),
     loadLocalData3DTexture("stbn", signal)
   ]);
-  return { localWeather, shape, shapeDetail, stbn, turbulence };
+  return {
+    localWeather,
+    localWeatherSha256: localWeatherSource.sha256,
+    localWeatherSource: localWeatherSource.source,
+    shape,
+    shapeDetail,
+    stbn,
+    turbulence
+  };
 }
 
 export function disposeTakramParityRuntimeAssets(
@@ -164,7 +194,8 @@ export function getNextTakramParityAssetGeneration(generation: number) {
  * rather than relying on an already-uploaded resource from the lost context.
  */
 export function useTakramParityRuntimeAssets(
-  canvas: HTMLCanvasElement | null
+  canvas: HTMLCanvasElement | null,
+  input: TakramParityInput
 ): TakramParityRuntimeAssetsState {
   const [generation, setGeneration] = useState(0);
   const [state, setState] = useState<TakramParityRuntimeAssetsState>({
@@ -192,7 +223,7 @@ export function useTakramParityRuntimeAssets(
     let loadedAssets: TakramParityRuntimeAssets | null = null;
     setState({ assetGeneration: generation, assets: null, error: null, ready: false });
 
-    void loadTakramParityRuntimeAssets(controller.signal)
+    void loadTakramParityRuntimeAssets(input, controller.signal)
       .then((assets) => {
         loadedAssets = assets;
         if (!active) {
@@ -218,7 +249,7 @@ export function useTakramParityRuntimeAssets(
       controller.abort();
       disposeTakramParityRuntimeAssets(loadedAssets);
     };
-  }, [generation]);
+  }, [generation, input]);
 
   return state;
 }

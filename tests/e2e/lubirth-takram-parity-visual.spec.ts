@@ -13,6 +13,13 @@ declare global {
   interface Window {
     __MiraLithTakramParity?: {
       active: boolean;
+      adapter: {
+        disableDefaultLayers: boolean;
+        globalWeatherMapping: boolean;
+        localWeatherOffset: [number, number] | null;
+        localWeatherRepeat: [number, number] | null;
+        localWeatherSource: "stock" | "v3" | null;
+      };
       cameraPosition: [number, number, number];
       cameraMatrixWorld: number[];
       coordinateMode: "lubirth-bridge" | "upstream-ecef";
@@ -147,37 +154,52 @@ test("stock control exposes the frozen full, BSM, history, raw and aerial diagno
   }
 });
 
-test("stock opening keeps the Task -1R camera and Earth bridge at all four review frames", async ({ page }) => {
-  for (const progress of ["0.00", "0.06", "0.12", "0.18"] as const) {
-    for (const diagnostic of ["full", "cloud-raw"] as const) {
-      await page.goto(
-        `/lubirth-takram-parity-spike?input=stock&view=opening&progress=${progress}&diagnostic=${diagnostic}&visualTest=pixels`
-      );
-      await waitForNativeParity(page);
-      const telemetry = await page.evaluate(() => window.__MiraLithTakramParity);
-      expect(telemetry?.coordinateMode).toBe("lubirth-bridge");
-      expect(telemetry?.transformFallback).toBeNull();
-      expect(telemetry?.cameraMatrixWorld).toHaveLength(16);
-      expect(telemetry?.earthMatrixWorld).toHaveLength(16);
-      const task1r = resolveTask1ROpeningMatrices(Number(progress));
-      expectMatrixCloseTo(telemetry?.cameraMatrixWorld, task1r.cameraMatrixWorld);
-      expectMatrixCloseTo(telemetry?.earthMatrixWorld, task1r.earthMatrixWorld);
-      telemetry?.cameraPosition.forEach((value, index) => {
-        expect(value).toBeCloseTo(task1r.cameraPosition[index]!, 6);
-      });
-      expect(telemetry?.native.beerShadowMaps).toBe(true);
-      expect(telemetry?.native.aerialPerspective).toBe(true);
-      expect(telemetry?.diagnosticState.cloudRawOutput).toBe(
-        diagnostic === "cloud-raw"
-      );
-      expect(telemetry?.diagnosticState.aerialPerspectiveComposite).toBe(
-        diagnostic === "full"
-      );
-      await page.waitForTimeout(2_000);
-      await captureIfRequested(
-        page,
-        `opening-${progress.replace(".", "-")}-${diagnostic}`
-      );
+test("stock and V3 opening preserve the Task -1R bridge across all review frames", async ({ page }) => {
+  for (const input of ["stock", "v3"] as const) {
+    for (const progress of ["0.00", "0.06", "0.12", "0.18"] as const) {
+      for (const diagnostic of ["full", "cloud-raw"] as const) {
+        await page.goto(
+          `/lubirth-takram-parity-spike?input=${input}&view=opening&progress=${progress}&diagnostic=${diagnostic}&visualTest=pixels`
+        );
+        await waitForNativeParity(page);
+        const telemetry = await page.evaluate(() => window.__MiraLithTakramParity);
+        expect(telemetry?.coordinateMode).toBe("lubirth-bridge");
+        expect(telemetry?.transformFallback).toBeNull();
+        expect(telemetry?.cameraMatrixWorld).toHaveLength(16);
+        expect(telemetry?.earthMatrixWorld).toHaveLength(16);
+        const task1r = resolveTask1ROpeningMatrices(Number(progress));
+        expectMatrixCloseTo(telemetry?.cameraMatrixWorld, task1r.cameraMatrixWorld);
+        expectMatrixCloseTo(telemetry?.earthMatrixWorld, task1r.earthMatrixWorld);
+        telemetry?.cameraPosition.forEach((value, index) => {
+          expect(value).toBeCloseTo(task1r.cameraPosition[index]!, 6);
+        });
+        expect(telemetry?.native.beerShadowMaps).toBe(true);
+        expect(telemetry?.native.aerialPerspective).toBe(true);
+        expect(telemetry?.adapter).toMatchObject(input === "v3" ? {
+          disableDefaultLayers: true,
+          globalWeatherMapping: true,
+          localWeatherOffset: [-0.045, 0.018],
+          localWeatherRepeat: [1, 1],
+          localWeatherSource: "v3"
+        } : {
+          disableDefaultLayers: false,
+          globalWeatherMapping: false,
+          localWeatherOffset: [0, 0],
+          localWeatherRepeat: [100, 100],
+          localWeatherSource: "stock"
+        });
+        expect(telemetry?.diagnosticState.cloudRawOutput).toBe(
+          diagnostic === "cloud-raw"
+        );
+        expect(telemetry?.diagnosticState.aerialPerspectiveComposite).toBe(
+          diagnostic === "full"
+        );
+        await page.waitForTimeout(2_000);
+        await captureIfRequested(
+          page,
+          `opening-${input}-${progress.replace(".", "-")}-${diagnostic}`
+        );
+      }
     }
   }
 });

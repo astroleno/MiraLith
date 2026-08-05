@@ -2,29 +2,32 @@
 
 import type {
   TakramParityDiagnostic,
+  TakramParityInput,
   TakramParityTelemetry
 } from "./TakramParityContract";
 import { TakramStockParityPipeline } from "./TakramStockParityPipeline";
 
 export interface LuBirthTakramParitySceneProps {
   diagnostic?: TakramParityDiagnostic;
+  input: TakramParityInput;
   onTelemetry?: (telemetry: TakramParityTelemetry) => void;
   progress: number;
 }
 
 /**
- * The stock opening is intentionally a transform/camera mirror only. V3 stays
- * absent until Task 0V authorizes the adapter path.
+ * Both stock and V3 retain the exact Task -1R opening transform/camera; input
+ * only selects the adapter-owned weather mapping and cloud-layer contract.
  */
 export function LuBirthTakramParityScene({
   diagnostic,
+  input,
   onTelemetry,
   progress
 }: LuBirthTakramParitySceneProps) {
   return (
     <TakramStockParityPipeline
       diagnostic={diagnostic}
-      input="stock"
+      input={input}
       onTelemetry={onTelemetry}
       progress={progress}
       view="opening"

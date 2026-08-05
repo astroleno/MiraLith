@@ -1,0 +1,64 @@
+{
+  "clearAirThreshold": 0.05,
+  "flipU": true,
+  "flipY": true,
+  "generatorVersion": "takram-parity-v3-weather/v2",
+  "localWeatherVelocity": [
+    0,
+    0
+  ],
+  "offset": [
+    -0.045,
+    0.018
+  ],
+  "orientation": "equirectangular-y-up-source-to-z-up-ecef",
+  "output": {
+    "byteLength": 3297772,
+    "dimensions": [
+      2048,
+      1024,
+      1
+    ],
+    "format": "rgba8",
+    "path": "apps/site/public/assets/lubirth/takram-parity/v3/weather.png",
+    "runtimeUrl": "/assets/lubirth/takram-parity/v3/weather.png",
+    "sha256": "ff2b7715cc59a4031a7eb6ff7e77ce52a730996c9dfe9d529dfa25aa01481a9b"
+  },
+  "outputLayoutId": "takram-v1-r-base-g-tower-b-structure-a-wisp",
+  "patch": {
+    "hunkSha256": "9558c389131609a7edbc20a1b09576b679472ef8f60a9c0e026314b81861a507",
+    "package": "@takram/three-clouds@0.7.6",
+    "packageJsonSha256": "320a9a736ea74e63e4524e173df0b9f320951b8d6896c1a94a5c6b32acf22e6e",
+    "patchSha256": "e831999601c877a63dfd3b272555ac73a701ca6b8b2e6fb6904651f608b4467f",
+    "patchedSourceHashes": {
+      "build/shared.cjs": "ca0aa68f3aab3e1c61c4580391431264e4d6d960644ddf9e9b820e4227b52828",
+      "build/shared.js": "45c5046fdd58e062e98b87098ab35fbfaad77bd81946ce687c82be0b638fae49",
+      "src/CloudsEffect.ts": "ccc1d0db7627e5d2e13e81748619e5e6c52a96ceb2d2ba8f34a43a03e2778cff",
+      "src/r3f/Clouds.tsx": "5a05e9c5fe97386be85b54dec588ba84237f857bb21404726179c53f018d4e53",
+      "src/shaders/clouds.glsl": "1fc4a4de4927c12dea23bf0590b24babf7251a0e6a6a442ac141d43c60caae19"
+    },
+    "upstreamSourceHashes": {
+      "build/shared.js": "cb1b4ec2400f873c1fe8cac6a00331a3972c9b7cdbc6349496e3c2de06886804",
+      "src/CloudsEffect.ts": "db3800833dfb13e96ec292a631f9a782f7637909fb167c9443cd64583c9b43c3",
+      "src/r3f/Clouds.tsx": "5a05e9c5fe97386be85b54dec588ba84237f857bb21404726179c53f018d4e53",
+      "src/shaders/clouds.glsl": "bbb3f037e55aed6c989d77d197af33f44ee5565b0ca7988eab44f52ddd509eb5"
+    }
+  },
+  "repeat": [
+    1,
+    1
+  ],
+  "schemaVersion": 1,
+  "source": {
+    "dimensions": [
+      2048,
+      1024,
+      1
+    ],
+    "layout": "v3-r-depth-g-height-b-morphology-a-concavity",
+    "path": "apps/site/public/assets/lubirth/textures/earth-cloud-field-nasa-lite-2k.png",
+    "sha256": "39c70e34b99ecf550f557327a1b97dcc0d2cae9f3be03242911c067622bb0a1c"
+  },
+  "sourceLayoutId": "v3-r-depth-g-height-b-morphology-a-concavity",
+  "sphericalMappingSha256": "f9c740bec6d19cd58ef777bd5d001b16677b08fac428b2a1cae55c5b122931bb"
+}

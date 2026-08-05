@@ -21,6 +21,7 @@ export type StockOpeningDecision =
   | "PASS"
   | "STOCK_OPENING_LIMITATION"
   | "TAKRAM_NATIVE_OPENING_FAIL";
+export type V3AdapterDecision = "PASS" | "V3_ADAPTER_VISUAL_FAIL";
 
 export const TAKRAM_PARITY_CONTROL = Object.freeze({
   altitudeMeters: 2_500,
@@ -109,14 +110,15 @@ export const TAKRAM_PARITY_RENDERER_FINGERPRINT = Object.freeze({
   aerialPerspective: true,
   beerShadowMaps: true,
   composerOrder: "Clouds>AerialPerspective",
-  defaultCloudLayers: true,
   ...TAKRAM_PARITY_DEFAULTS
 });
+
+export const TAKRAM_PARITY_RENDERER_FINGERPRINT_HASH =
+  "sha256:43c23b5207ad4c05ab08d176dfe05c8f4a7ade00b296b2612912b15f85bd2c7a" as const;
 
 export interface TakramParityNativeFeatures {
   aerialPerspective: boolean;
   beerShadowMaps: boolean;
-  defaultCloudLayers: boolean;
   haze: boolean;
   lightShafts: boolean;
   qualityPreset: "high";
@@ -124,6 +126,32 @@ export interface TakramParityNativeFeatures {
   shapeDetail: boolean;
   temporalUpscale: boolean;
   turbulence: boolean;
+}
+
+export interface TakramParityResolvedCloudLayer {
+  altitude: number;
+  channel: "r" | "g" | "b" | "a";
+  coverageFilterWidth: number;
+  densityScale: number;
+  height: number;
+  shadow: boolean;
+  shapeAmount: number;
+  shapeDetailAmount: number;
+  weatherExponent: number;
+}
+
+/**
+ * This is the complete adapter allow-list for stock/V3 comparison. No native
+ * renderer parameter belongs here: changing anything else invalidates parity.
+ */
+export interface TakramParityAdapterTelemetry {
+  cloudLayers: readonly TakramParityResolvedCloudLayer[];
+  disableDefaultLayers: boolean;
+  globalWeatherMapping: boolean;
+  localWeatherHash: string | null;
+  localWeatherOffset: [number, number] | null;
+  localWeatherRepeat: [number, number] | null;
+  localWeatherSource: "stock" | "v3" | null;
 }
 
 /**
@@ -141,6 +169,7 @@ export interface TakramParityDiagnosticState {
 
 export interface TakramParityTelemetry {
   active: boolean;
+  adapter: TakramParityAdapterTelemetry;
   assetGeneration: number;
   assetsReady: boolean;
   atmosphereGeneration: number;
@@ -159,8 +188,8 @@ export interface TakramParityTelemetry {
   nativeFrameCount: number;
   progress: number;
   rendererFingerprint: typeof TAKRAM_PARITY_RENDERER_FINGERPRINT;
+  rendererFingerprintHash: typeof TAKRAM_PARITY_RENDERER_FINGERPRINT_HASH;
   stockCoverage: number | null;
-  stockWeatherRepeat: [number, number] | null;
   temporalConverged: boolean;
   transformFallback:
     | "invalid-composition-radius"
