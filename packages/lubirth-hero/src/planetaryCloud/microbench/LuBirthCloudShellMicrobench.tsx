@@ -44,7 +44,8 @@ import {
 import {
   TAKRAM_BOTTOM_RADIUS_M,
   buildLuBirthWorldToEcef,
-  raySphereIntervalGeneral
+  raySphereIntervalGeneral,
+  resolveCloudShellWorldSegment
 } from "../planetaryCloudMath";
 import { DEFAULT_LUBIRTH_SUN_DIRECTION } from "../../constants";
 import {
@@ -591,15 +592,12 @@ function updateDepthProbeOccluder(
     return;
   }
 
-  const cloudEnter = Math.max(outerInterval.near, 0);
-  let cloudExit = outerInterval.far;
-  if (innerInterval) {
-    if (innerInterval.near > cloudEnter) {
-      cloudExit = Math.min(cloudExit, innerInterval.near);
-    } else if (innerInterval.far > cloudEnter) {
-      cloudExit = Math.max(cloudEnter, innerInterval.far);
-    }
+  const cloudSegment = resolveCloudShellWorldSegment(outerInterval, innerInterval);
+  if (!cloudSegment) {
+    occluder.visible = false;
+    return;
   }
+  const { enter: cloudEnter, exit: cloudExit } = cloudSegment;
   if (!Number.isFinite(cloudEnter) || !Number.isFinite(cloudExit) || cloudExit <= cloudEnter) {
     occluder.visible = false;
     return;

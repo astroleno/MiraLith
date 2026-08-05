@@ -151,7 +151,7 @@ test("GPU depth probe fully, partially, and not-at-all clamps the cloud shell", 
   const luminanceByOccluder = new Map<string, number>();
   for (const occluderMode of ["front", "middle", "behind"] as const) {
     await page.goto(
-      `/lubirth-planetary-cloud-microbench?case=24%2F6&progress=0.12&debug=cloud&transform=reduced&occluder=${occluderMode}&visualTest=pixels`
+      `/lubirth-planetary-cloud-microbench?case=24%2F6&progress=0.12&debug=cloud&transform=reduced&occluder=${occluderMode}&showSceneDepthClamp=1&visualTest=pixels`
     );
     await expect.poll(
       () => page.evaluate(() => window.__MiraLithLuBirthCloudMicrobench?.active ?? false),
@@ -159,6 +159,7 @@ test("GPU depth probe fully, partially, and not-at-all clamps the cloud shell", 
     ).toBe(true);
     const telemetry = await page.evaluate(() => window.__MiraLithLuBirthCloudMicrobench);
     expect(telemetry?.occluderMode).toBe(occluderMode);
+    expect(telemetry?.showSceneDepthClamp).toBe(true);
     if (captureEvidence) {
       await page.locator("canvas").screenshot({
         path: path.join(evidenceDirectory, `depth-probe-${occluderMode}.png`)
@@ -174,8 +175,8 @@ test("GPU depth probe fully, partially, and not-at-all clamps the cloud shell", 
   const behind = luminanceByOccluder.get("behind") ?? 0;
   const probeValues = JSON.stringify({ front, middle, behind });
   expect(front, probeValues).toBeLessThan(behind * 0.15);
-  expect(middle, probeValues).toBeGreaterThan(front * 1.5);
-  expect(middle, probeValues).toBeLessThan(behind * 0.9);
+  expect(middle, probeValues).toBeGreaterThan(front + 1);
+  expect(middle, probeValues).toBeLessThan(behind * 0.1);
 });
 
 test("microbenchmark exposes the fixed opening matrix and isolated debug buffers", async ({ page }) => {

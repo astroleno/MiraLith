@@ -38,6 +38,10 @@ uniform bool showSceneDepthClamp;
 const float EPSILON = 0.000001;
 const float FAR_DISTANCE = 1.0e20;
 const float CLOUD_PI = 3.141592653589793;
+const float CLOUD_ALBEDO = 0.88;
+const float SKY_FILL = 0.11;
+const float SUN_ILLUMINANCE = 8.0;
+const float PHASE_G = 0.32;
 
 vec3 reconstructWorldPosition(vec2 uv, float deviceDepth) {
   vec4 clipPosition = vec4(uv * 2.0 - 1.0, deviceDepth * 2.0 - 1.0, 1.0);
@@ -76,6 +80,53 @@ vec2 getEquirectangularUv(vec3 positionEcef) {
   return vec2(longitude, 0.5 - latitude / CLOUD_PI);
 }
 
+float hash31(vec3 position) {
+  position = fract(position * 0.1031);
+  position += dot(position, position.yzx + 33.33);
+  return fract((position.x + position.y) * position.z);
+}
+
+float valueNoise3d(vec3 position) {
+  vec3 cell = floor(position);
+  vec3 fraction = fract(position);
+  vec3 smoothFraction = fraction * fraction * (3.0 - 2.0 * fraction);
+  float n000 = hash31(cell + vec3(0.0, 0.0, 0.0));
+  float n100 = hash31(cell + vec3(1.0, 0.0, 0.0));
+  float n010 = hash31(cell + vec3(0.0, 1.0, 0.0));
+  float n110 = hash31(cell + vec3(1.0, 1.0, 0.0));
+  float n001 = hash31(cell + vec3(0.0, 0.0, 1.0));
+  float n101 = hash31(cell + vec3(1.0, 0.0, 1.0));
+  float n011 = hash31(cell + vec3(0.0, 1.0, 1.0));
+  float n111 = hash31(cell + vec3(1.0, 1.0, 1.0));
+  float x00 = mix(n000, n100, smoothFraction.x);
+  float x10 = mix(n010, n110, smoothFraction.x);
+  float x01 = mix(n001, n101, smoothFraction.x);
+  float x11 = mix(n011, n111, smoothFraction.x);
+  return mix(mix(x00, x10, smoothFraction.y), mix(x01, x11, smoothFraction.y), smoothFraction.z);
+}
+
+// This is a deliberately bounded, seamless ECEF-domain base-shape field.
+// It has no time evolution or detail erosion: V3 remains the macro weather map.
+float baseShape3d(vec3 positionEcef, float shellHeight01) {
+  vec3 normal = normalize(positionEcef);
+  vec3 coordinates = normal * 96.0 + vec3(
+    shellHeight01 * 13.0,
+    shellHeight01 * 7.0,
+    shellHeight01 * 19.0
+  );
+  float coarse = valueNoise3d(coordinates);
+  float medium = valueNoise3d(coordinates * 1.93 + vec3(19.7, 7.1, 31.4));
+  return mix(coarse, medium, 0.38);
+}
+
+float remapCoverageToBaseShape(float weatherCoverage, float baseShape) {
+  if (weatherCoverage <= EPSILON) {
+    return 0.0;
+  }
+  float coverageThreshold = 1.0 - clamp(weatherCoverage, 0.0, 1.0);
+  return smoothstep(coverageThreshold - 0.12, coverageThreshold + 0.12, baseShape);
+}
+
 float cloudDensity(vec3 positionEcef) {
   float radius = length(positionEcef);
   float shellHeight01 = (radius - shellBaseRadiusEcef) / shellThicknessEcef;
@@ -85,23 +136,75 @@ float cloudDensity(vec3 positionEcef) {
 
   vec4 weather = texture2D(weatherTexture, getEquirectangularUv(positionEcef));
   float sourceCoverage = weather.r;
+  float weatherCoverage = clamp(sourceCoverage, 0.0, 1.0);
   float cloudTop = mix(0.35, 1.0, weather.g);
   float verticalProfile =
-    smoothstep(0.0, 0.08, shellHeight01) *
-    (1.0 - smoothstep(max(0.08, cloudTop - 0.18), cloudTop, shellHeight01));
+    smoothstep(0.02, 0.12, shellHeight01) *
+    (1.0 - smoothstep(max(0.16, cloudTop - 0.22), cloudTop, shellHeight01));
   float morphologyGain = mix(0.75, 1.25, weather.b);
   float concavityGain = mix(1.0, 0.72, weather.a);
-  return sourceCoverage * verticalProfile * morphologyGain * concavityGain;
+  float occupancy = remapCoverageToBaseShape(
+    weatherCoverage,
+    baseShape3d(positionEcef, shellHeight01)
+  );
+  return occupancy * verticalProfile * morphologyGain * concavityGain;
+}
+
+float forwardCloudShellLightDistance(vec3 positionEcef) {
+  float outerRadiusEcef = shellBaseRadiusEcef + shellThicknessEcef;
+  float tOuterNearMeters;
+  float tOuterFarMeters;
+  if (!raySphereInterval(
+    positionEcef,
+    sunDirectionEcef,
+    outerRadiusEcef,
+    tOuterNearMeters,
+    tOuterFarMeters
+  ) || tOuterFarMeters <= 0.0) {
+    return 0.0;
+  }
+
+  float tLightEnterMeters = max(tOuterNearMeters, 0.0);
+  float tLightExitMeters = tOuterFarMeters;
+  float cloudBaseRadiusEcef = shellBaseRadiusEcef;
+  float tCloudBaseNearMeters;
+  float tCloudBaseFarMeters;
+  if (raySphereInterval(
+    positionEcef,
+    sunDirectionEcef,
+    cloudBaseRadiusEcef,
+    tCloudBaseNearMeters,
+    tCloudBaseFarMeters
+  )) {
+    if (tCloudBaseNearMeters > tLightEnterMeters && tCloudBaseNearMeters < tLightExitMeters) {
+      tLightExitMeters = min(tLightExitMeters, tCloudBaseNearMeters);
+    } else if (tCloudBaseFarMeters > tLightEnterMeters) {
+      // A sunlight ray that starts inside (or enters) the cloud-base sphere
+      // is blocked instead of resuming in an opposite shell behind the Earth.
+      return 0.0;
+    }
+  }
+  return max(tLightExitMeters - tLightEnterMeters, 0.0);
 }
 
 float traceSunTransmittance(vec3 positionEcef) {
-  float stepLengthMeters = shellThicknessEcef / float(LIGHT_STEPS);
+  float lightDistanceMeters = forwardCloudShellLightDistance(positionEcef);
+  if (lightDistanceMeters <= EPSILON) {
+    return 0.0;
+  }
+  float stepLengthMeters = lightDistanceMeters / float(LIGHT_STEPS);
   float opticalDepth = 0.0;
   for (int index = 0; index < LIGHT_STEPS; index += 1) {
     float t = (float(index) + 0.5) * stepLengthMeters;
     opticalDepth += cloudDensity(positionEcef + sunDirectionEcef * t) * stepLengthMeters * densityScale;
   }
   return exp(-opticalDepth);
+}
+
+float henyeyGreensteinPhase(float cosineTheta, float anisotropy) {
+  float anisotropySquared = anisotropy * anisotropy;
+  float denominator = max(1.0 + anisotropySquared - 2.0 * anisotropy * cosineTheta, EPSILON);
+  return (1.0 - anisotropySquared) / (4.0 * CLOUD_PI * pow(denominator, 1.5));
 }
 
 void main() {
@@ -168,6 +271,8 @@ void main() {
 
   float stepLengthWorld = (tCloudExitWorld - tCloudEnterWorld) / float(PRIMARY_STEPS);
   float stepLengthMeters = stepLengthWorld * length(directionEcefPerWorldUnit);
+  vec3 rayDirectionEcef = normalize(directionEcefPerWorldUnit);
+  float phase = henyeyGreensteinPhase(dot(-rayDirectionEcef, sunDirectionEcef), PHASE_G);
   float transmittance = 1.0;
   vec3 radiance = vec3(0.0);
   for (int index = 0; index < PRIMARY_STEPS; index += 1) {
@@ -176,8 +281,18 @@ void main() {
     float density = cloudDensity(samplePositionEcef);
     float opticalDepth = density * stepLengthMeters * densityScale;
     float sampleTransmittance = exp(-opticalDepth);
-    float scattering = 1.0 - sampleTransmittance;
-    radiance += transmittance * scattering * traceSunTransmittance(samplePositionEcef) * vec3(1.0, 0.97, 0.92);
+    float singleScatter = (1.0 - sampleTransmittance) * CLOUD_ALBEDO;
+    float directSun = traceSunTransmittance(samplePositionEcef) * SUN_ILLUMINANCE * phase;
+    float sampleShellHeight01 = clamp(
+      (length(samplePositionEcef) - shellBaseRadiusEcef) / shellThicknessEcef,
+      0.0,
+      1.0
+    );
+    float skyFill = SKY_FILL * mix(0.72, 1.0, sampleShellHeight01);
+    vec3 inScattering =
+      directSun * vec3(1.0, 0.97, 0.92) +
+      skyFill * vec3(0.48, 0.62, 0.88);
+    radiance += transmittance * singleScatter * inScattering;
     transmittance *= sampleTransmittance;
   }
 

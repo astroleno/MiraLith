@@ -397,7 +397,17 @@ test("cloud-shell shader keeps the general ray parameter and world-depth clamp c
   expect(source).toContain("float cloudTop = mix(0.35, 1.0, weather.g)");
   expect(source).toContain("float morphologyGain = mix(0.75, 1.25, weather.b)");
   expect(source).toContain("float concavityGain = mix(1.0, 0.72, weather.a)");
-  expect(source).not.toContain("normalize(directionEcefPerWorldUnit)");
+  expect(source).toContain("float forwardCloudShellLightDistance");
+  expect(source).toContain("float baseShape3d");
+  expect(source).toContain("float remapCoverageToBaseShape");
+  expect(source).toContain("float henyeyGreensteinPhase");
+  expect(source).toContain("const float SKY_FILL");
+  expect(source).toContain("float cloudBaseRadiusEcef = shellBaseRadiusEcef");
+  expect(source).toContain("float lightDistanceMeters = forwardCloudShellLightDistance(positionEcef)");
+  expect(source).toContain("float singleScatter = (1.0 - sampleTransmittance) * CLOUD_ALBEDO");
+  expect(source).not.toContain("float stepLengthMeters = shellThicknessEcef / float(LIGHT_STEPS)");
+  expect(source).toContain("vec3 directionEcefPerWorldUnit = mat3(worldToEcef) * rayDirectionWorld");
+  expect(source).toContain("vec3 rayDirectionEcef = normalize(directionEcefPerWorldUnit)");
 });
 
 test("cloud-shell GPU summary counts every non-overlapping stage and rejects disjoint frames", async () => {
