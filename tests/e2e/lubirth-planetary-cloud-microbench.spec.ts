@@ -164,6 +164,52 @@ test("GPU timing restarts from a new ready frame after a render-target resize", 
   );
 });
 
+test("GPU timing restarts from a new ready frame after WebGL context restoration", async ({ page }, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "desktop" && testInfo.project.name !== "desktop-system-chrome",
+    "Context-restoration timing-state coverage is desktop-only."
+  );
+
+  await page.goto(
+    "/lubirth-planetary-cloud-microbench?case=32%2F2&progress=0.12&debug=raw&measure=1&visualGate=pass"
+  );
+  await expect.poll(
+    () => page.evaluate(() => window.__MiraLithLuBirthCloudMicrobench?.active ?? false),
+    { timeout: 25_000 }
+  ).toBe(true);
+  const timerSupported = await page.evaluate(
+    () => window.__MiraLithLuBirthCloudMicrobench?.gpu.supported ?? false
+  );
+  test.skip(!timerSupported, "EXT_disjoint_timer_query_webgl2 is unavailable in this browser.");
+
+  await expect.poll(
+    () => page.evaluate(() => {
+      const telemetry = window.__MiraLithLuBirthCloudMicrobench;
+      return telemetry?.measurementState === "sampling" && (telemetry.gpu.sampleCount ?? 0) > 0;
+    }),
+    { timeout: 120_000 }
+  ).toBe(true);
+  const beforeRestore = await page.evaluate(() => window.__MiraLithLuBirthCloudMicrobench);
+  await page.locator("canvas").dispatchEvent("webglcontextrestored");
+  await expect.poll(
+    () => page.evaluate((previousFrameId) => {
+      const telemetry = window.__MiraLithLuBirthCloudMicrobench;
+      return (telemetry?.measurement.measurementReadyFrame ?? -1) > previousFrameId;
+    }, beforeRestore?.frameId ?? -1),
+    { timeout: 25_000 }
+  ).toBe(true);
+
+  const afterRestore = await page.evaluate(() => window.__MiraLithLuBirthCloudMicrobench);
+  expect(afterRestore?.gpu.sampleCount).toBe(0);
+  expect(afterRestore?.measurementState).toBe("warming");
+  expect(afterRestore?.measurement.warmupStartFrame).toBe(
+    (afterRestore?.measurement.measurementReadyFrame ?? 0) + 1
+  );
+  expect(afterRestore?.measurement.samplingStartFrame).toBe(
+    (afterRestore?.measurement.warmupStartFrame ?? 0) + 120
+  );
+});
+
 test("microbenchmark keeps the general ray/depth contract under every required Earth transform", async ({ page }) => {
   for (const transformScenario of ["identity", "enlarged", "reduced"] as const) {
     await page.goto(

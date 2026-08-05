@@ -149,12 +149,14 @@ interface PipelineTargets {
 }
 
 interface Pipeline {
+  colorGatesPending: boolean;
   cloudAccumulationScene: Scene;
   cloudCompositeScene: Scene;
   cloudRaymarchMaterial: ShaderMaterial;
   cloudResolveScene: Scene;
   cloudResolveMaterial: ShaderMaterial;
   compositeMaterial: ShaderMaterial;
+  contextRestorePending: boolean;
   earthMesh: Mesh<SphereGeometry, MeshStandardMaterial>;
   earthGroup: Group;
   earthMaterial: MeshStandardMaterial;
@@ -343,12 +345,14 @@ function createPipeline(renderer: WebGLRenderer, caseId: CloudShellMicrobenchCas
   });
 
   pipeline = {
+    colorGatesPending: true,
     cloudAccumulationScene: createFullscreenScene(fullscreenGeometry, cloudRaymarchMaterial),
     cloudCompositeScene: createFullscreenScene(fullscreenGeometry, compositeMaterial),
     cloudRaymarchMaterial,
     cloudResolveScene: createFullscreenScene(fullscreenGeometry, resolveMaterial),
     cloudResolveMaterial: resolveMaterial,
     compositeMaterial,
+    contextRestorePending: false,
     earthGroup,
     earthMaterial,
     earthMesh,
@@ -410,6 +414,24 @@ function resetPipelineMeasurementWindow(pipeline: Pipeline) {
   pipeline.samplingStartFrame = window.samplingStartFrame;
   pipeline.gpuFrames.length = 0;
   pipeline.profiler?.resetMeasurementWindow();
+}
+
+function resetPipelineAfterContextRestore(pipeline: Pipeline, renderer: WebGLRenderer) {
+  disposeTargets(pipeline.targets);
+  pipeline.targets = null;
+  pipeline.resolvedWidth = 0;
+  pipeline.resolvedHeight = 0;
+  pipeline.hdrColorPass = false;
+  pipeline.gammaColorPass = false;
+  pipeline.colorGatesPending = true;
+  pipeline.weatherTexture.needsUpdate = true;
+  pipeline.earthTexture.needsUpdate = true;
+  pipeline.earthMaterial.needsUpdate = true;
+  pipeline.profiler?.dispose();
+  pipeline.profiler = renderer.capabilities.isWebGL2
+    ? new CloudShellMicrobenchProfiler(renderer.getContext() as WebGL2RenderingContext)
+    : null;
+  resetPipelineMeasurementWindow(pipeline);
 }
 
 function estimateRtPeakBytes(width: number, height: number) {
@@ -705,8 +727,15 @@ export function LuBirthCloudShellMicrobench({
     gl.outputColorSpace = SRGBColorSpace;
     const pipeline = createPipeline(gl, caseId);
     pipelineRef.current = pipeline;
+    const onContextRestored = () => {
+      if (pipelineRef.current === pipeline) {
+        pipeline.contextRestorePending = true;
+      }
+    };
+    gl.domElement.addEventListener("webglcontextrestored", onContextRestored);
 
     return () => {
+      gl.domElement.removeEventListener("webglcontextrestored", onContextRestored);
       pipelineRef.current = null;
       disposeTargets(pipeline.targets);
       pipeline.profiler?.dispose();
@@ -736,6 +765,11 @@ export function LuBirthCloudShellMicrobench({
     const pipeline = pipelineRef.current;
     if (!pipeline || !(camera instanceof PerspectiveCamera)) {
       return;
+    }
+
+    if (pipeline.contextRestorePending) {
+      pipeline.contextRestorePending = false;
+      resetPipelineAfterContextRestore(pipeline, gl);
     }
 
     gl.getDrawingBufferSize(scratchDrawSize);
@@ -824,9 +858,10 @@ export function LuBirthCloudShellMicrobench({
     gl.clear(true, true, true);
     gl.render(pipeline.outputScene, pipeline.fullscreenCamera);
 
-    if (pipeline.frameId === 1) {
+    if (pipeline.colorGatesPending) {
       pipeline.hdrColorPass = runHdrProbe(gl, pipeline.fullscreenCamera);
       pipeline.gammaColorPass = runGammaProbe(gl, pipeline.fullscreenCamera);
+      pipeline.colorGatesPending = false;
     }
     const measurementAfterFrame = {
       coordinatePass,
