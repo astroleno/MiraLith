@@ -12,12 +12,18 @@
     "generate:home-cloud-field": "node scripts/generate-home-cloud-field.mjs",
     "generate:nasa-lite-cloud-field": "LUBIRTH_HOME_CLOUD_PROFILE=nasa-lite node scripts/generate-home-cloud-field.mjs",
     "generate:nasa-lite-color-assets": "node scripts/generate-nasa-lite-color-assets.mjs",
+    "vendor:takram-parity-assets": "node scripts/vendor-takram-parity-assets.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "@miralith/visual-core": "workspace:*",
     "@react-three/drei": "10.7.7",
     "@react-three/fiber": "9.6.0",
+    "@react-three/postprocessing": "3.0.4",
+    "@takram/three-atmosphere": "0.19.1",
+    "@takram/three-clouds": "0.7.6",
+    "@takram/three-geospatial": "0.9.1",
+    "postprocessing": "6.39.1",
     "three": "0.184.0"
   },
   "peerDependencies": {

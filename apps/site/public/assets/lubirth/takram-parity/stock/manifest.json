@@ -1,0 +1,108 @@
+{
+  "assets": [
+    {
+      "byteLength": 679653,
+      "dimensions": [
+        512,
+        512,
+        1
+      ],
+      "format": "rgba8",
+      "id": "localWeather",
+      "localPath": "apps/site/public/assets/lubirth/takram-parity/stock/local-weather.png",
+      "runtimeUrl": "/assets/lubirth/takram-parity/stock/local-weather.png",
+      "sha256": "b84daef855dc5eebcc9b174fe832ba75a98e44b846dde201bce354417cc08031",
+      "sourceRef": "45a1c6c1bb9fd38b3680fd120795ff4c32df68ff",
+      "sourceUrl": "https://media.githubusercontent.com/media/takram-design-engineering/three-geospatial/45a1c6c1bb9fd38b3680fd120795ff4c32df68ff/packages/clouds/assets/local_weather.png"
+    },
+    {
+      "byteLength": 2097152,
+      "dimensions": [
+        128,
+        128,
+        128
+      ],
+      "format": "r8",
+      "id": "shape",
+      "localPath": "apps/site/public/assets/lubirth/takram-parity/stock/shape.bin",
+      "runtimeUrl": "/assets/lubirth/takram-parity/stock/shape.bin",
+      "sha256": "ef65cf6156894720c00bf572c49e3e254f8899c4b5158246e5a35a1922e2519c",
+      "sourceRef": "45a1c6c1bb9fd38b3680fd120795ff4c32df68ff",
+      "sourceUrl": "https://media.githubusercontent.com/media/takram-design-engineering/three-geospatial/45a1c6c1bb9fd38b3680fd120795ff4c32df68ff/packages/clouds/assets/shape.bin"
+    },
+    {
+      "byteLength": 32768,
+      "dimensions": [
+        32,
+        32,
+        32
+      ],
+      "format": "r8",
+      "id": "shapeDetail",
+      "localPath": "apps/site/public/assets/lubirth/takram-parity/stock/shape-detail.bin",
+      "runtimeUrl": "/assets/lubirth/takram-parity/stock/shape-detail.bin",
+      "sha256": "c09112199c6e0281b74ff5283c11c2943ae082650b9b67978cf5d59ed2956e4f",
+      "sourceRef": "45a1c6c1bb9fd38b3680fd120795ff4c32df68ff",
+      "sourceUrl": "https://media.githubusercontent.com/media/takram-design-engineering/three-geospatial/45a1c6c1bb9fd38b3680fd120795ff4c32df68ff/packages/clouds/assets/shape_detail.bin"
+    },
+    {
+      "byteLength": 49691,
+      "dimensions": [
+        128,
+        128,
+        1
+      ],
+      "format": "rgba8",
+      "id": "turbulence",
+      "localPath": "apps/site/public/assets/lubirth/takram-parity/stock/turbulence.png",
+      "runtimeUrl": "/assets/lubirth/takram-parity/stock/turbulence.png",
+      "sha256": "ec2b1b0af4a6a6104102b21e58beb300b0a3d334c0281d84fde8c91d322910f9",
+      "sourceRef": "45a1c6c1bb9fd38b3680fd120795ff4c32df68ff",
+      "sourceUrl": "https://media.githubusercontent.com/media/takram-design-engineering/three-geospatial/45a1c6c1bb9fd38b3680fd120795ff4c32df68ff/packages/clouds/assets/turbulence.png"
+    },
+    {
+      "byteLength": 1048576,
+      "dimensions": [
+        128,
+        128,
+        64
+      ],
+      "format": "r8",
+      "id": "stbn",
+      "localPath": "apps/site/public/assets/lubirth/takram-parity/stock/stbn.bin",
+      "runtimeUrl": "/assets/lubirth/takram-parity/stock/stbn.bin",
+      "sha256": "51f52f21e5578384585050390821a0a486dcb81e11a716fa7b92fbb6515ba852",
+      "sourceRef": "9627216cc50057994c98a2118f3c4a23765d43b9",
+      "sourceUrl": "https://media.githubusercontent.com/media/takram-design-engineering/three-geospatial/9627216cc50057994c98a2118f3c4a23765d43b9/packages/core/assets/stbn.bin"
+    },
+    {
+      "byteLength": 1728473,
+      "dimensions": [
+        1920,
+        1080,
+        1
+      ],
+      "format": "rgb8",
+      "id": "upstreamTokyo",
+      "localPath": "docs/lubirth-planetary-cloud-evidence/2026-08-05/takram-parity/reference/upstream-tokyo.jpg",
+      "runtimeUrl": null,
+      "sha256": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5",
+      "sourceRef": "b012ad06d858fc035d88aacfd73f092f93c994e4",
+      "sourceUrl": "https://media.githubusercontent.com/media/takram-design-engineering/three-geospatial/b012ad06d858fc035d88aacfd73f092f93c994e4/packages/clouds/docs/tokyo.jpg"
+    }
+  ],
+  "license": "MIT",
+  "npmPackages": {
+    "@react-three/postprocessing": "3.0.4",
+    "@takram/three-atmosphere": "0.19.1",
+    "@takram/three-clouds": "0.7.6",
+    "@takram/three-geospatial": "0.9.1",
+    "postprocessing": "6.39.1"
+  },
+  "schemaVersion": 1,
+  "upstream": {
+    "repository": "https://github.com/takram-design-engineering/three-geospatial",
+    "visualReferenceCommit": "b012ad06d858fc035d88aacfd73f092f93c994e4"
+  },
+  "copiedAt": "2026-08-05T14:10:53.545Z"
+}
