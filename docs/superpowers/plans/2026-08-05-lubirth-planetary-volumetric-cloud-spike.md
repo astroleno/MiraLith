@@ -296,7 +296,8 @@ DPR 1
 
 | 条件 | 决策 | 后续 |
 | --- | --- | --- |
-| Task -1 coordinate/HDR/micro visual 失败 | `EARLY_KILL` | 停止 Task 0–8 |
+| Task -1 coordinate/HDR/timer 合同失败 | `EARLY_KILL` | 停止 Task 0–8 |
+| Task -1 micro visual 失败 | `EARLY_REPRESENTATION_FAIL` | 停止 Task 0–8；不得把 disposable representation 失败解释为 V3 或 Takram-first 否决 |
 | Task -1 所有 visual-passing case `>4 ms` | `MICROBENCH_OVER_BUDGET` | 当前计划停止；需要单独 review/修订后才可进入 Task 0 |
 | 视觉/遮挡/资源恢复任一硬门槛失败 | `KILL` | 停止 Task 6–8 |
 | cloud GPU p95 `> 4.0 ms` | `KILL` | 停止 Task 6–8 |
@@ -581,7 +582,7 @@ export const CLOUD_SHELL_MICROBENCH_CASES = Object.freeze({
 });
 ```
 
-- [ ] 只对 `microbench/visual-review.json` 全项通过的 case 开正式 GPU 窗口；视觉全失败时直接 `EARLY_KILL`，不花时间做 120-frame 性能采样。
+- [ ] 只对 `microbench/visual-review.json` 全项通过的 case 开正式 GPU 窗口；视觉全失败时直接 `EARLY_REPRESENTATION_FAIL`，不花时间做 120-frame 性能采样。
 - [ ] 性能测量固定 Apple M4 / headed System Chrome / production build / `1440×960` / DPR 1 / `resolutionScale=0.5` / `adaptive=false`。
 - [ ] 每个 visual-passing case 先 hidden warmup `120` frames，再采集至少 `120` 个有效 GPU frames；compile、resize、hidden、context restore、disjoint 样本作废。
 - [ ] microbench cloud total 必须逐帧覆盖：
@@ -600,7 +601,7 @@ opaque baseline 不计入 cloud GPU，但其 color/depth RT 必须进入 increme
 
 ```json
 {
-  "decision": "EARLY_KILL | MICROBENCH_OVER_BUDGET | MICROBENCH_VIABLE",
+  "decision": "EARLY_KILL | EARLY_REPRESENTATION_FAIL | MICROBENCH_OVER_BUDGET | MICROBENCH_VIABLE",
   "bestCase": "24/6 | 32/2 | 48/6 | null",
   "bestCloudGpuP95Ms": null,
   "validGpuSamples": 0,
@@ -614,8 +615,11 @@ opaque baseline 不计入 cloud GPU，但其 color/depth RT 必须进入 increme
 判定固定为：
 
 ```ts
-if (!coordinatePass || !hdrColorPass || !microVisualPass || !timerSupported) {
+if (!coordinatePass || !hdrColorPass || !timerSupported) {
   return "EARLY_KILL";
+}
+if (!microVisualPass) {
+  return "EARLY_REPRESENTATION_FAIL";
 }
 if (Math.min(...visualPassingCaseP95Ms) > 4) {
   return "MICROBENCH_OVER_BUDGET";
@@ -625,6 +629,7 @@ return "MICROBENCH_VIABLE";
 
 - `<=4 ms` 在此仍只是 incomplete early-cost viability；即使 `<=3 ms` 也绝不能给 `PROMOTION_ELIGIBLE`。
 - `EARLY_KILL` 时停止 Task 0–8，只固化 Task -1 失败证据并执行 Task 10 的去留记录。
+- `EARLY_REPRESENTATION_FAIL` 时同样停止 Task 0–8，但只固化该 disposable representation 的失败证据；不得外推为 V3 或 Takram-first 不可行。
 - `MICROBENCH_OVER_BUDGET` 默认停止 Task 0–8；因为 Takram 可能用 BSM/temporal 改变成本结构，它不是最终 `KILL` 证据。若仍要继续，必须先提交一轮明确解释预期收益与更窄预算的新 plan amendment，本计划本身不授权越过。
 - `MICROBENCH_VIABLE` 后暂停，review `README.md + checkpoint.json + 四帧 contact sheet`；确认后才允许 Task 0。
 
@@ -1528,7 +1533,7 @@ rg --files . \
   - 默认首页是否零成本；
   - 最终 `KILL / SPIKE_VIABLE_BUT_NOT_PROMOTABLE / PROMOTION_ELIGIBLE`。
 
-- [ ] Task -1 若为 `EARLY_KILL` 或 `MICROBENCH_OVER_BUDGET`，决策文档只陈述 isolated microbenchmark/coordinate/HDR/visual 结果，不伪造 Takram、temporal、occupancy 或完整 pipeline 数据；这些字段明确写 `NOT_RUN_AFTER_TASK_MINUS_ONE`。
+- [ ] Task -1 若为 `EARLY_KILL`、`EARLY_REPRESENTATION_FAIL` 或 `MICROBENCH_OVER_BUDGET`，决策文档只陈述 isolated microbenchmark/coordinate/HDR/visual 结果，不伪造 Takram、temporal、occupancy 或完整 pipeline 数据；这些字段明确写 `NOT_RUN_AFTER_TASK_MINUS_ONE`。
 
 - [ ] `PROMOTION_ELIGIBLE` 也不直接修改 `landingVisualPolicy.ts` 默认值。推广首页需要独立、经确认的 production plan。
 - [ ] 如果缺失的 `lubirth-cloud-volume-v3-evidence/2026-08-05/README.md` 在执行前恢复，先把它与本计划的 V3/坐标/性能假设逐项做差异 review；有冲突时更新计划和 checkpoint schema，再继续执行。

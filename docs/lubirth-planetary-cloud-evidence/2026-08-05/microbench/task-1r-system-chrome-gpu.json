@@ -13,24 +13,30 @@
       "caseId": "32/2",
       "gpu": {
         "invalidFrames": 0,
-        "p50Ms": 24.594206999999997,
-        "p95Ms": 32.961416,
+        "p50Ms": 29.599874,
+        "p95Ms": 36.146749,
         "sampleCount": 121,
         "stages": {
           "cloudComposite": {
-            "p50Ms": 8.768374,
-            "p95Ms": 12.415791
+            "p50Ms": 10.206874,
+            "p95Ms": 14.040124
           },
           "densityAndLightRaymarch": {
-            "p50Ms": 7.854125,
-            "p95Ms": 10.222624
+            "p50Ms": 9.522791,
+            "p95Ms": 10.94875
           },
           "resolve": {
-            "p50Ms": 7.967374,
-            "p95Ms": 10.378875
+            "p50Ms": 9.621041,
+            "p95Ms": 11.071
           }
         },
         "supported": true
+      },
+      "measurement": {
+        "measurementReadyFrame": 3,
+        "samplingStartFrame": 124,
+        "warmupStartFrame": 4,
+        "weatherReady": true
       },
       "renderScale": 0.5,
       "resolvedSize": [

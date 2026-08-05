@@ -186,7 +186,15 @@ Expected: all checks pass before staging. Commit docs/evidence with `docs(lubirt
 
 - 原 Task -1 的 EARLY_KILL 已追溯更正为 EARLY_REPRESENTATION_FAIL：当时的固定光线路径与二维 coverage 径向挤出并不能否决 V3 或 Takram-first。
 - Task -1R 三个 opening case 已通过这一受限 representation 的人工视觉门，因此启动了 headed System Chrome 的正式 GPU 窗口。
-- 最低固定工作量的 visual-pass case 32/2 在 121 个有效、非 disjoint GPU 样本中得到 total p95 32.961416 ms，超过 4 ms 预算；最终 checkpoint 为 MICROBENCH_OVER_BUDGET。本计划在此停止，Task 0–8 仍未获授权。
+- 最低固定工作量的 visual-pass case 32/2 在 weather ready frame 3 后才开始 warmup，并在 121 个有效、非 disjoint GPU 样本中得到 total p95 36.146749 ms，超过 4 ms 预算；最终 checkpoint 为 MICROBENCH_OVER_BUDGET。本计划在此停止，Task 0–8 仍未获授权。
+
+## Correctness review follow-up
+
+- P1：sampling 停止条件改为有效样本数；disjoint / 非有限 completed frame 会保留在 invalid 统计中并继续补采。
+- P1：V3 weatherReady、coordinate/HDR/gamma gate 与一轮完整 render 共同定义 ready frame；本次 formal run 记录 ready=3、warmup=4、sampling=124。
+- P2：HG 相位改为 camera-to-sample dot sample-to-sun，并在该方向修正后重抓三组 opening contact sheet。
+- P2：主计划的 micro visual failure 已同步为 EARLY_REPRESENTATION_FAIL。
+- no-op/copy-only/combined-total timer baseline 与逐帧 raw 样本不是本 amendment 的既定测量架构，保留为新计划的校准项。
 
 ## Plan self-review
 

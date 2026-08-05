@@ -2,6 +2,13 @@
   "schemaVersion": 2,
   "reviewedAt": "2026-08-05",
   "reviewer": "Codex manual visual review",
+  "correctnessRerun": {
+    "hgPhaseConvention": "camera-to-sample dot sample-to-sun",
+    "reviewedAfterHgCorrection": true,
+    "weatherReadyFrame": 3,
+    "warmupStartFrame": 4,
+    "samplingStartFrame": 124
+  },
   "configuration": {
     "openingProgress": [0, 0.06, 0.12, 0.18],
     "viewportCssPx": [1440, 960],

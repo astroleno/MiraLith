@@ -2,8 +2,8 @@
   "decision": "MICROBENCH_OVER_BUDGET",
   "taskMinusOneInitialDecision": "EARLY_REPRESENTATION_FAIL",
   "bestCase": "32/2",
-  "bestCloudGpuP50Ms": 24.594207,
-  "bestCloudGpuP95Ms": 32.961416,
+  "bestCloudGpuP50Ms": 29.599874,
+  "bestCloudGpuP95Ms": 36.146749,
   "validGpuSamples": 121,
   "invalidGpuSamples": 0,
   "budgetCloudGpuP95Ms": 4,
@@ -12,17 +12,24 @@
   "hdrColorGate": "PASS",
   "gammaGate": "PASS",
   "incrementalRtPeakBytes": 33177632,
-  "timerSupported": "PASS: headed System Chrome GPU timer, 121 valid non-disjoint samples after 120 warmup frames",
+  "timerSupported": "PASS: headed System Chrome GPU timer, 121 valid non-disjoint samples after weather-ready 120-frame warmup",
+  "measurementReadyFrame": 3,
+  "warmupStartFrame": 4,
+  "samplingStartFrame": 124,
   "stageGpuP95Ms": {
-    "densityAndLightRaymarch": 10.222624,
-    "resolve": 10.378875,
-    "cloudComposite": 12.415791
+    "densityAndLightRaymarch": 10.94875,
+    "resolve": 11.071,
+    "cloudComposite": 14.040124
   },
   "reason": [
     "The original Task -1 visual failure is reclassified as EARLY_REPRESENTATION_FAIL; it does not reject V3 or Takram-first.",
     "Task -1R visual gate passes after true to-sun shell bounds, macro-only V3 coverage, 3D base-shape remap, and a vertical profile.",
-    "The lowest fixed primary×light-cost visual-pass case, 32/2, records total GPU p95 32.961416 ms, exceeding the 4 ms budget by about 8.2x.",
+    "The readiness-gated lowest fixed primary×light-cost visual-pass case, 32/2, records total GPU p95 36.146749 ms, exceeding the 4 ms budget by about 9.0x.",
     "All three timed stages exceed the full total-budget threshold independently, so more samples of higher-work cases cannot reverse this checkpoint."
+  ],
+  "calibrationLimitations": [
+    "No no-op, copy-only, or combined-total timer-query baseline is part of this constrained amendment.",
+    "Per-frame raw timings are not stored; this checkpoint only blocks the current plan and is not a calibrated Takram-first stage-cost claim."
   ],
   "nextAuthorizedWork": "None under the current plan. Task 0-8 remain blocked; any next implementation requires a new architecture and cost-budget amendment."
 }
