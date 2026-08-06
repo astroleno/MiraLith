@@ -1,5 +1,6 @@
 import {
   Data3DTexture,
+  ClampToEdgeWrapping,
   LinearFilter,
   LinearMipmapLinearFilter,
   NearestFilter,
@@ -54,13 +55,21 @@ export interface TakramParityRuntimeAssetsState {
   ready: boolean;
 }
 
-function configureTwoDimensionalTexture(texture: Texture) {
+export type TakramParityTextureDomain = "stock" | "v3";
+
+function configureTwoDimensionalTexture(
+  texture: Texture,
+  domain: TakramParityTextureDomain = "stock"
+) {
   texture.colorSpace = NoColorSpace;
   texture.flipY = true;
   texture.magFilter = LinearFilter;
   texture.minFilter = LinearMipmapLinearFilter;
   texture.wrapS = RepeatWrapping;
-  texture.wrapT = RepeatWrapping;
+  // Stock Takram textures are local cube-sphere fields and retain upstream
+  // repeat semantics. V3 is equirectangular: longitude repeats, latitude
+  // clamps so polar filtering never wraps the north pole into the south.
+  texture.wrapT = domain === "v3" ? ClampToEdgeWrapping : RepeatWrapping;
   texture.needsUpdate = true;
   return texture;
 }
@@ -84,7 +93,8 @@ function isData3DTexture(texture: Texture): texture is Data3DTexture {
 
 export function configureTakramParityTexture<T extends Texture>(
   assetId: "localWeather" | "turbulence",
-  texture: T
+  texture: T,
+  domain?: TakramParityTextureDomain
 ): T;
 export function configureTakramParityTexture(
   assetId: "shape" | "shapeDetail" | "stbn",
@@ -92,10 +102,11 @@ export function configureTakramParityTexture(
 ): Data3DTexture;
 export function configureTakramParityTexture(
   assetId: TakramParityRuntimeAssetId,
-  texture: Texture
+  texture: Texture,
+  domain: TakramParityTextureDomain = "stock"
 ): Texture {
   if (assetId === "localWeather" || assetId === "turbulence") {
-    return configureTwoDimensionalTexture(texture);
+    return configureTwoDimensionalTexture(texture, domain);
   }
 
   if (!isData3DTexture(texture)) {
@@ -104,12 +115,15 @@ export function configureTakramParityTexture(
   return configureThreeDimensionalTexture(texture, assetId === "stbn");
 }
 
-function loadTextureAtUrl(runtimeUrl: string): Promise<Texture> {
+function loadTextureAtUrl(
+  runtimeUrl: string,
+  domain: TakramParityTextureDomain = "stock"
+): Promise<Texture> {
   const loader = new TextureLoader();
   return new Promise((resolve, reject) => {
     loader.load(
       runtimeUrl,
-      (texture) => resolve(configureTwoDimensionalTexture(texture)),
+      (texture) => resolve(configureTwoDimensionalTexture(texture, domain)),
       undefined,
       reject
     );
@@ -157,7 +171,7 @@ export async function loadTakramParityRuntimeAssets(
 ): Promise<TakramParityRuntimeAssets> {
   const localWeatherSource = resolveLocalWeatherSource(input);
   const [localWeather, turbulence, shape, shapeDetail, stbn] = await Promise.all([
-    loadTextureAtUrl(localWeatherSource.runtimeUrl),
+    loadTextureAtUrl(localWeatherSource.runtimeUrl, localWeatherSource.source),
     loadTextureAtUrl(TAKRAM_PARITY_RUNTIME_ASSET_URLS.turbulence),
     loadLocalData3DTexture("shape", signal),
     loadLocalData3DTexture("shapeDetail", signal),

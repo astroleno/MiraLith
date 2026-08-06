@@ -19,6 +19,10 @@ const localYUpToEcefZUp = new Matrix4().makeRotationX(Math.PI / 2);
 export interface LuBirthWorldToEcefBridge {
   valid: boolean;
   worldToEcef: Matrix4 | null;
+  /** Metres represented by one Earth-local composition unit in ECEF. */
+  worldToEcefScale: number | null;
+  /** Metres represented by one rendered world unit after earth.matrixWorld. */
+  worldToEcefDistanceScale: number | null;
   reason?: PlanetTransformInvalidReason | "invalid-composition-radius";
 }
 
@@ -64,12 +68,24 @@ export function buildLuBirthWorldToEcef(
   compositionRadius: number
 ): LuBirthWorldToEcefBridge {
   if (!Number.isFinite(compositionRadius) || compositionRadius <= WORLD_SCALE_EPSILON) {
-    return { valid: false, worldToEcef: null, reason: "invalid-composition-radius" };
+    return {
+      valid: false,
+      worldToEcef: null,
+      worldToEcefScale: null,
+      worldToEcefDistanceScale: null,
+      reason: "invalid-composition-radius"
+    };
   }
 
   const invalidTransformReason = resolvePlanetTransformInvalidReason(earthMatrixWorld);
   if (invalidTransformReason) {
-    return { valid: false, worldToEcef: null, reason: invalidTransformReason };
+    return {
+      valid: false,
+      worldToEcef: null,
+      worldToEcefScale: null,
+      worldToEcefDistanceScale: null,
+      reason: invalidTransformReason
+    };
   }
 
   const meterScale = TAKRAM_BOTTOM_RADIUS_M / compositionRadius;
@@ -78,7 +94,20 @@ export function buildLuBirthWorldToEcef(
     .multiply(localYUpToEcefZUp)
     .multiply(earthMatrixWorld.clone().invert());
 
-  return { valid: true, worldToEcef };
+  // Clouds' ray direction is transformed by the complete worldToECEF matrix,
+  // including the current rendered Earth scale. Scene depth is still measured
+  // in rendered world units, so its conversion must use that complete uniform
+  // scale rather than the local composition-radius scale alone.
+  const worldToEcefDistanceScale = worldToEcef.getMaxScaleOnAxis();
+
+  return {
+    valid: true,
+    worldToEcef,
+    worldToEcefScale: meterScale,
+    worldToEcefDistanceScale: Number.isFinite(worldToEcefDistanceScale)
+      ? worldToEcefDistanceScale
+      : null
+  };
 }
 
 export function transformWorldRayToEcefParameterization(

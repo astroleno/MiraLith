@@ -103,12 +103,13 @@ test("keeps stock cube-sphere UVs while the narrow V3 patch enables spherical UV
   const adapter = await importAdapter();
   expect(adapter).not.toBeNull();
 
-  const [sourceCloudsEffect, sourceR3fClouds, sourceCloudsGlsl, bundledShader, patch] =
+  const [sourceCloudsEffect, sourceR3fClouds, sourceCloudsGlsl, bundledShader, bundledCjsShader, patch] =
     await Promise.all([
       readFile(path.join(cloudsRoot, "src/CloudsEffect.ts"), "utf8"),
       readFile(path.join(cloudsRoot, "src/r3f/Clouds.tsx"), "utf8"),
       readFile(path.join(cloudsRoot, "src/shaders/clouds.glsl"), "utf8"),
       readFile(path.join(cloudsRoot, "build/shared.js"), "utf8"),
+      readFile(path.join(cloudsRoot, "build/shared.cjs"), "utf8"),
       readFile(patchPath, "utf8")
     ]);
 
@@ -119,12 +120,14 @@ test("keeps stock cube-sphere UVs while the narrow V3 patch enables spherical UV
     "src/shaders/clouds.glsl": "bbb3f037e55aed6c989d77d197af33f44ee5565b0ca7988eab44f52ddd509eb5"
   });
   expect(adapter?.TAKRAM_PARITY_V3_PATCH_AUDIT.patchedSourceHashes).toEqual({
-    "build/shared.js": "45c5046fdd58e062e98b87098ab35fbfaad77bd81946ce687c82be0b638fae49",
+    "build/shared.cjs": "b099d176aa70e9c938b0599fece0180aeb33af4b3b81936f40092c9ae89ed602",
+    "build/shared.js": "c2115702324e01760429187faf6203c2a118812c508429edbebe37e2e1d7c018",
     "src/CloudsEffect.ts": "ccc1d0db7627e5d2e13e81748619e5e6c52a96ceb2d2ba8f34a43a03e2778cff",
     "src/r3f/Clouds.tsx": "5a05e9c5fe97386be85b54dec588ba84237f857bb21404726179c53f018d4e53",
     "src/shaders/clouds.glsl": "1fc4a4de4927c12dea23bf0590b24babf7251a0e6a6a442ac141d43c60caae19"
   });
   expect(adapter?.TAKRAM_PARITY_V3_PATCH_AUDIT.patchedSourceHashes).toEqual({
+    "build/shared.cjs": sha256(bundledCjsShader),
     "build/shared.js": sha256(bundledShader),
     "src/CloudsEffect.ts": sha256(sourceCloudsEffect),
     "src/r3f/Clouds.tsx": sha256(sourceR3fClouds),
@@ -134,6 +137,22 @@ test("keeps stock cube-sphere UVs while the narrow V3 patch enables spherical UV
   const mappingHunk = `vec2 getGlobeUv(const vec3 position) {\n#ifdef GLOBAL_WEATHER_MAPPING\n  return getSphericalUv(position);\n#else\n  return getCubeSphereUv(position);\n#endif\n}`;
   expect(sourceCloudsGlsl).toContain(mappingHunk);
   expect(bundledShader).toContain(mappingHunk);
+  const nativeCloudsMaterial = await readFile(path.join(cloudsRoot, "src/CloudsMaterial.ts"), "utf8");
+  const nativeCloudsFragment = await readFile(path.join(cloudsRoot, "src/shaders/clouds.frag"), "utf8");
+  expect(nativeCloudsMaterial).toContain("sceneDepthScale: Uniform<number>");
+  expect(nativeCloudsMaterial).toContain("sceneDepthScale: new Uniform(1)");
+  expect(nativeCloudsFragment).toContain("uniform float sceneDepthScale;");
+  expect(nativeCloudsFragment).toContain(
+    "return -viewZ * sceneDepthScale /\n      dot(rayDirection, normalize(vCameraDirection));"
+  );
+  expect(bundledShader).toContain("uniform float sceneDepthScale;");
+  expect(bundledShader).toContain(
+    "return -viewZ * sceneDepthScale / dot(rayDirection, normalize(vCameraDirection));"
+  );
+  expect(bundledCjsShader).toContain("uniform float sceneDepthScale;");
+  expect(bundledCjsShader).toContain(
+    "return -viewZ * sceneDepthScale /\n      dot(rayDirection, normalize(vCameraDirection));"
+  );
   expect(patch).toContain("+#ifdef GLOBAL_WEATHER_MAPPING");
   expect(patch).toContain("+  return getSphericalUv(position);");
   expect(patch).toContain("+#else");
@@ -146,6 +165,7 @@ test("keeps stock cube-sphere UVs while the narrow V3 patch enables spherical UV
       "src/CloudsEffect.ts",
       "src/CloudsMaterial.ts",
       "src/ShadowMaterial.ts",
+      "src/shaders/clouds.frag",
       "src/shaders/clouds.glsl",
       "types/CloudsEffect.d.ts",
       "types/CloudsMaterial.d.ts",

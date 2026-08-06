@@ -8,7 +8,7 @@ packageExtensionsChecksum: dbfb6871ada96626a617c227f9535283
 
 patchedDependencies:
   '@takram/three-clouds@0.7.6':
-    hash: c2rzy2zqbpqfizj5rbiagr5ozi
+    hash: z2hrs7uvdcop2pgfgrrayft7de
     path: patches/@takram__three-clouds@0.7.6.patch
 
 importers:
@@ -140,7 +140,7 @@ importers:
         version: 0.19.1(@react-three/drei@10.7.7)(@react-three/fiber@9.6.0)(@react-three/postprocessing@3.0.4)(postprocessing@6.39.1)(react-dom@19.2.5)(react@19.2.5)(three@0.184.0)
       '@takram/three-clouds':
         specifier: 0.7.6
-        version: 0.7.6(patch_hash=c2rzy2zqbpqfizj5rbiagr5ozi)(@react-three/drei@10.7.7)(@react-three/fiber@9.6.0)(@react-three/postprocessing@3.0.4)(postprocessing@6.39.1)(react-dom@19.2.5)(react@19.2.5)(three@0.184.0)
+        version: 0.7.6(patch_hash=z2hrs7uvdcop2pgfgrrayft7de)(@react-three/drei@10.7.7)(@react-three/fiber@9.6.0)(@react-three/postprocessing@3.0.4)(postprocessing@6.39.1)(react-dom@19.2.5)(react@19.2.5)(three@0.184.0)
       '@takram/three-geospatial':
         specifier: 0.9.1
         version: 0.9.1(@react-three/fiber@9.6.0)(react-dom@19.2.5)(react@19.2.5)(three@0.184.0)
@@ -1273,7 +1273,7 @@ packages:
       url-join: 5.0.0
     dev: false
 
-  /@takram/three-clouds@0.7.6(patch_hash=c2rzy2zqbpqfizj5rbiagr5ozi)(@react-three/drei@10.7.7)(@react-three/fiber@9.6.0)(@react-three/postprocessing@3.0.4)(postprocessing@6.39.1)(react-dom@19.2.5)(react@19.2.5)(three@0.184.0):
+  /@takram/three-clouds@0.7.6(patch_hash=z2hrs7uvdcop2pgfgrrayft7de)(@react-three/drei@10.7.7)(@react-three/fiber@9.6.0)(@react-three/postprocessing@3.0.4)(postprocessing@6.39.1)(react-dom@19.2.5)(react@19.2.5)(three@0.184.0):
     resolution: {integrity: sha512-cfoEI3W5NJuYUL1Pd4k5UXLlb7rLThh3dNIOO+/EPw8cbuRUgiIVEVtNPmA+v5KRJf87gPI+rjuxgK0huAajDw==}
     peerDependencies:
       '@react-three/drei': '*'

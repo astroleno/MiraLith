@@ -13,8 +13,12 @@ export type TakramParityCoordinateMode = "lubirth-bridge" | "upstream-ecef";
 export type TakramParityDiagnostic =
   | "full"
   | "bsm-off"
+  | "depth-off"
+  | "density-debug"
+  | "uv-debug"
   | "history-reset-first"
   | "cloud-raw"
+  | "sample-count-debug"
   | "aerial-final";
 export type UpstreamControlDecision = "PASS" | "UPSTREAM_CONTROL_FAIL";
 export type StockOpeningDecision =
@@ -52,8 +56,12 @@ export function resolveTakramParityRouteQuery(
   const parsedProgress = Number.parseFloat(input.get("progress") ?? "0");
   const value: TakramParityRouteQuery = {
     diagnostic: requestedDiagnostic === "bsm-off" ||
+      requestedDiagnostic === "depth-off" ||
+      requestedDiagnostic === "density-debug" ||
+      requestedDiagnostic === "uv-debug" ||
       requestedDiagnostic === "history-reset-first" ||
       requestedDiagnostic === "cloud-raw" ||
+      requestedDiagnostic === "sample-count-debug" ||
       requestedDiagnostic === "aerial-final"
       ? requestedDiagnostic
       : "full",
@@ -71,7 +79,8 @@ export function resolveTakramParityRouteQuery(
   // BSM/history/Aerial probes are deliberately not exposed in this path.
   return {
     ok: true,
-    value: value.view === "opening" && value.diagnostic !== "cloud-raw"
+    value: value.view === "opening" &&
+      !["cloud-raw", "depth-off", "density-debug", "uv-debug", "sample-count-debug"].includes(value.diagnostic)
       ? { ...value, diagnostic: "full" }
       : value
   };
@@ -102,19 +111,282 @@ export const TAKRAM_PARITY_DEFAULTS = Object.freeze({
   turbulence: true
 });
 
-/**
- * The stock renderer fingerprint is intentionally independent from its input.
- * Task 0V may only add adapter-owned fields around this frozen native path.
- */
-export const TAKRAM_PARITY_RENDERER_FINGERPRINT = Object.freeze({
-  aerialPerspective: true,
-  beerShadowMaps: true,
-  composerOrder: "Clouds>AerialPerspective",
-  ...TAKRAM_PARITY_DEFAULTS
-});
+export interface TakramParityRendererFingerprint {
+  schemaVersion: 2;
+  packageVersions: typeof TAKRAM_PARITY_NPM_PACKAGES;
+  composer: {
+    order: readonly ["CloudsEffect", "AerialPerspectiveEffect"];
+    normalPass: boolean;
+  };
+  clouds: {
+    defines: Record<string, string | number | boolean>;
+    properties: Record<string, boolean | number>;
+    uniforms: Record<string, unknown>;
+  };
+  shadow: {
+    defines: Record<string, string | number | boolean>;
+    properties: Record<string, boolean | number>;
+    uniforms: Record<string, unknown>;
+  };
+  aerialPerspective: {
+    defines: Record<string, string | number | boolean>;
+    properties: Record<string, boolean | number>;
+    uniforms: Record<string, unknown>;
+  };
+  renderTargets: {
+    clouds: Record<string, unknown>;
+    resolve: Record<string, unknown>;
+    history: Record<string, unknown>;
+  };
+  sharedAssets: Record<"shape" | "shapeDetail" | "stbn" | "turbulence", string>;
+}
 
-export const TAKRAM_PARITY_RENDERER_FINGERPRINT_HASH =
-  "sha256:43c23b5207ad4c05ab08d176dfe05c8f4a7ade00b296b2612912b15f85bd2c7a" as const;
+type RuntimeObject = Record<string, any>;
+
+const FINGERPRINT_CLOUD_UNIFORMS = [
+  "maxIterationCount",
+  "minStepSize",
+  "maxStepSize",
+  "maxRayDistance",
+  "perspectiveStepScale",
+  "minDensity",
+  "minExtinction",
+  "minTransmittance",
+  "maxIterationCountToSun",
+  "maxIterationCountToGround",
+  "minSecondaryStepSize",
+  "secondaryStepScale",
+  "maxShadowFilterRadius",
+  "maxShadowLengthIterationCount",
+  "minShadowLengthStepSize",
+  "maxShadowLengthRayDistance",
+  "hazeDensityScale",
+  "hazeExponent",
+  "hazeScatteringCoefficient",
+  "hazeAbsorptionCoefficient",
+  "skyLightScale",
+  "groundBounceScale",
+  "powderScale",
+  "powderExponent",
+  "scatteringCoefficient",
+  "absorptionCoefficient"
+] as const;
+
+const FINGERPRINT_SHADOW_UNIFORMS = [
+  "maxIterationCount",
+  "minStepSize",
+  "maxStepSize",
+  "minDensity",
+  "minExtinction",
+  "minTransmittance",
+  "opticalDepthTailScale"
+] as const;
+
+const FINGERPRINT_AERIAL_UNIFORMS = [
+  "albedoScale",
+  "geometricErrorCorrectionAmount",
+  "shadowRadius",
+  "lunarRadianceScale"
+] as const;
+
+function getUniformValue(uniforms: unknown, key: string): unknown {
+  if (uniforms instanceof Map) {
+    return (uniforms.get(key) as { value?: unknown } | undefined)?.value;
+  }
+  const entry = (uniforms as RuntimeObject | null | undefined)?.[key];
+  return entry && typeof entry === "object" && "value" in entry
+    ? entry.value
+    : undefined;
+}
+
+function canonicalValue(value: unknown): unknown {
+  if (value === undefined || value === null || typeof value === "string" ||
+    typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : String(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry) => canonicalValue(entry));
+  }
+  if (typeof value === "object") {
+    const object = value as RuntimeObject;
+    if (typeof object.x === "number" && typeof object.y === "number") {
+      const result: RuntimeObject = { x: object.x, y: object.y };
+      if (typeof object.z === "number") result.z = object.z;
+      if (typeof object.w === "number") result.w = object.w;
+      return result;
+    }
+    const result: RuntimeObject = {};
+    for (const key of Object.keys(object).sort()) {
+      if (key === "uuid" || key === "id" || key === "version") continue;
+      const entry = object[key];
+      if (typeof entry === "function") continue;
+      if (key === "isTexture" || key === "isRenderTargetTexture") {
+        result[key] = Boolean(entry);
+        continue;
+      }
+      if (["format", "type", "colorSpace", "minFilter", "magFilter", "width", "height"].includes(key)) {
+        result[key] = canonicalValue(entry);
+      }
+    }
+    return result;
+  }
+  return String(value);
+}
+
+function canonicalDefines(defines: unknown) {
+  const entries = defines instanceof Map
+    ? Array.from(defines.entries())
+    : Object.entries((defines as RuntimeObject | null | undefined) ?? {});
+  return Object.fromEntries(
+    entries
+      .filter(([key]) => key !== "GLOBAL_WEATHER_MAPPING")
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, value]) => [key, canonicalValue(value)])
+  ) as Record<string, string | number | boolean>;
+}
+
+function canonicalUniforms(uniforms: unknown, keys: readonly string[]) {
+  return Object.fromEntries(
+    keys
+      .map((key) => [key, canonicalValue(getUniformValue(uniforms, key))])
+      .filter(([, value]) => value !== undefined)
+  );
+}
+
+function canonicalRenderTarget(target: unknown): Record<string, unknown> {
+  const value = target as RuntimeObject | null | undefined;
+  if (!value) return { present: false };
+  const texture = value.texture as RuntimeObject | undefined;
+  return {
+    present: true,
+    width: value.width ?? null,
+    height: value.height ?? null,
+    depthBuffer: Boolean(value.depthBuffer),
+    stencilBuffer: Boolean(value.stencilBuffer),
+    attachments: Array.isArray(value.textures)
+      ? value.textures.map((entry) => canonicalValue(entry))
+      : [],
+    texture: canonicalValue(texture)
+  };
+}
+
+function canonicalProperties(object: RuntimeObject, keys: readonly string[]) {
+  return Object.fromEntries(
+    keys.map((key) => [key, canonicalValue(object[key])])
+  ) as Record<string, boolean | number>;
+}
+
+function readCloudsRenderTargets(cloudsPass: RuntimeObject) {
+  return {
+    clouds: canonicalRenderTarget(cloudsPass.currentRenderTarget),
+    resolve: canonicalRenderTarget(cloudsPass.resolveRenderTarget),
+    history: canonicalRenderTarget(cloudsPass.historyRenderTarget)
+  };
+}
+
+export interface TakramParityRendererRuntimeInputs {
+  clouds: RuntimeObject;
+  aerialPerspective: RuntimeObject;
+  sharedAssets: Record<"shape" | "shapeDetail" | "stbn" | "turbulence", string>;
+}
+
+/**
+ * Build the parity fingerprint from resolved native runtime state. Adapter
+ * fields (weather texture, spherical mapping, layers and offsets) are omitted
+ * deliberately; any other native define, budget, material uniform, target
+ * format or shared asset drift changes the resulting fingerprint.
+ */
+export function buildTakramParityRendererFingerprint({
+  clouds,
+  aerialPerspective,
+  sharedAssets
+}: TakramParityRendererRuntimeInputs): TakramParityRendererFingerprint {
+  const cloudsMaterial = clouds.cloudsPass.currentMaterial as RuntimeObject;
+  const shadowMaterial = clouds.shadowPass.currentMaterial as RuntimeObject;
+  const cloudsPass = clouds.cloudsPass as RuntimeObject;
+  const shadowPass = clouds.shadowPass as RuntimeObject;
+  return {
+    schemaVersion: 2,
+    packageVersions: TAKRAM_PARITY_NPM_PACKAGES,
+    composer: {
+      order: ["CloudsEffect", "AerialPerspectiveEffect"],
+      normalPass: true
+    },
+    clouds: {
+      defines: canonicalDefines(cloudsMaterial.defines),
+      properties: canonicalProperties(cloudsMaterial, [
+        "temporalUpscale",
+        "shapeDetail",
+        "turbulence",
+        "shadowLength",
+        "haze",
+        "multiScatteringOctaves",
+        "accurateSunSkyLight",
+        "accuratePhaseFunction",
+        "shadowCascadeCount",
+        "shadowSampleCount",
+        "scatterAnisotropy1",
+        "scatterAnisotropy2",
+        "scatterAnisotropyMix"
+      ]),
+      uniforms: canonicalUniforms(cloudsMaterial.uniforms, FINGERPRINT_CLOUD_UNIFORMS)
+    },
+    shadow: {
+      defines: canonicalDefines(shadowMaterial.defines),
+      properties: canonicalProperties(shadowMaterial, [
+        "temporalPass",
+        "temporalJitter",
+        "shapeDetail",
+        "turbulence",
+        "cascadeCount"
+      ]),
+      uniforms: canonicalUniforms(shadowMaterial.uniforms, FINGERPRINT_SHADOW_UNIFORMS)
+    },
+    aerialPerspective: {
+      defines: canonicalDefines(aerialPerspective.defines),
+      properties: canonicalProperties(aerialPerspective, [
+        "correctGeometricError",
+        "sunLight",
+        "skyLight",
+        "transmittance",
+        "inscatter",
+        "sky",
+        "sun",
+        "moon",
+        "ground",
+        "octEncodedNormal",
+        "reconstructNormal"
+      ]),
+      uniforms: canonicalUniforms(aerialPerspective.uniforms, FINGERPRINT_AERIAL_UNIFORMS)
+    },
+    renderTargets: readCloudsRenderTargets(cloudsPass),
+    sharedAssets: { ...sharedAssets }
+  };
+}
+
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value as RuntimeObject).sort().map((key) =>
+      `${JSON.stringify(key)}:${stableStringify((value as RuntimeObject)[key])}`
+    ).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+export function hashTakramParityRendererFingerprint(
+  fingerprint: TakramParityRendererFingerprint
+) {
+  let hash = 14695981039346656037n;
+  for (const byte of new TextEncoder().encode(stableStringify(fingerprint))) {
+    hash ^= BigInt(byte);
+    hash = BigInt.asUintN(64, hash * 1099511628211n);
+  }
+  return `fnv1a-64:${hash.toString(16).padStart(16, "0")}`;
+}
 
 export interface TakramParityNativeFeatures {
   aerialPerspective: boolean;
@@ -164,6 +436,10 @@ export interface TakramParityDiagnosticState {
   aerialPerspectiveComposite: boolean;
   beerShadowOcclusion: boolean;
   cloudRawOutput: boolean;
+  densityDebug: boolean;
+  uvDebug: boolean;
+  sceneDepthClamp: boolean;
+  sampleCountDebug: boolean;
   historyResetFirstFrame: boolean;
 }
 
@@ -187,8 +463,10 @@ export interface TakramParityTelemetry {
   native: TakramParityNativeFeatures;
   nativeFrameCount: number;
   progress: number;
-  rendererFingerprint: typeof TAKRAM_PARITY_RENDERER_FINGERPRINT;
-  rendererFingerprintHash: typeof TAKRAM_PARITY_RENDERER_FINGERPRINT_HASH;
+  rendererFingerprint: TakramParityRendererFingerprint | null;
+  rendererFingerprintHash: string | null;
+  sceneDepthContract: "world-depth-to-ecef-v1";
+  sceneDepthScale: number;
   stockCoverage: number | null;
   temporalConverged: boolean;
   transformFallback:

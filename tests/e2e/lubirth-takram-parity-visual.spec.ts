@@ -27,6 +27,10 @@ declare global {
         aerialPerspectiveComposite: boolean;
         beerShadowOcclusion: boolean;
         cloudRawOutput: boolean;
+        densityDebug: boolean;
+        uvDebug: boolean;
+        sceneDepthClamp: boolean;
+        sampleCountDebug: boolean;
         historyResetFirstFrame: boolean;
       };
       earthMatrixWorld: number[];
@@ -36,6 +40,8 @@ declare global {
         temporalUpscale: boolean;
       };
       nativeFrameCount: number;
+      sceneDepthContract: "world-depth-to-ecef-v1";
+      sceneDepthScale: number;
       temporalConverged: boolean;
       transformFallback: string | null;
     };
@@ -201,5 +207,24 @@ test("stock and V3 opening preserve the Task -1R bridge across all review frames
         );
       }
     }
+  }
+});
+
+test("opening evidence exposes depth, UV, density and native sample-count diagnostics", async ({ page }) => {
+  for (const diagnostic of ["full", "depth-off", "uv-debug", "density-debug", "sample-count-debug"] as const) {
+    await page.goto(
+      `/lubirth-takram-parity-spike?input=v3&view=opening&progress=0.06&diagnostic=${diagnostic}&visualTest=pixels`
+    );
+    await waitForNativeParity(page);
+    const telemetry = await page.evaluate(() => window.__MiraLithTakramParity);
+    expect(telemetry?.diagnosticState.sceneDepthClamp).toBe(diagnostic !== "depth-off");
+    expect(telemetry?.diagnosticState.densityDebug).toBe(diagnostic === "density-debug");
+    expect(telemetry?.diagnosticState.uvDebug).toBe(diagnostic === "uv-debug");
+    expect(telemetry?.diagnosticState.sampleCountDebug).toBe(diagnostic === "sample-count-debug");
+    expect(telemetry?.diagnosticState.cloudRawOutput).toBe(
+      ["density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic)
+    );
+    expect(telemetry?.sceneDepthContract).toBe("world-depth-to-ecef-v1");
+    await captureIfRequested(page, `opening-v3-0-06-${diagnostic}`);
   }
 });

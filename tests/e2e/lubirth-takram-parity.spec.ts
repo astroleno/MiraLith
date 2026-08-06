@@ -2,6 +2,13 @@ import { expect, test } from "@playwright/test";
 
 test.setTimeout(180_000);
 
+function resolveEarthWorldScale(matrix: number[] | undefined) {
+  if (!matrix || matrix.length < 3) {
+    return Number.NaN;
+  }
+  return Math.hypot(matrix[0] ?? Number.NaN, matrix[1] ?? Number.NaN, matrix[2] ?? Number.NaN);
+}
+
 declare global {
   interface Window {
     __MiraLithTakramParity?: {
@@ -37,8 +44,10 @@ declare global {
         turbulence: boolean;
       };
       progress: number;
-      rendererFingerprint: Record<string, unknown>;
-      rendererFingerprintHash: string;
+      rendererFingerprint: Record<string, unknown> | null;
+      rendererFingerprintHash: string | null;
+      sceneDepthContract: "world-depth-to-ecef-v1";
+      sceneDepthScale: number;
       view: "control" | "opening";
     };
   }
@@ -173,8 +182,16 @@ test("V3 changes only resolved adapter fields while preserving the native render
       localWeatherRepeat: [1, 1],
       localWeatherSource: "v3"
     },
-    rendererFingerprintHash: "sha256:43c23b5207ad4c05ab08d176dfe05c8f4a7ade00b296b2612912b15f85bd2c7a"
+    rendererFingerprintHash: expect.stringMatching(/^fnv1a-64:[0-9a-f]{16}$/),
+    sceneDepthContract: "world-depth-to-ecef-v1"
   });
+  expect(stock?.rendererFingerprint).not.toBeNull();
+  expect(v3?.rendererFingerprint).not.toBeNull();
+  expect(v3?.rendererFingerprintHash).toBe(stock?.rendererFingerprintHash);
+  expect(v3?.sceneDepthScale).toBeGreaterThan(1);
+  const expectedSceneDepthScale = 6_360_000 / resolveEarthWorldScale(v3?.earthMatrixWorld);
+  expect(v3?.sceneDepthScale).toBeCloseTo(expectedSceneDepthScale, 3);
+  expect(stock?.sceneDepthScale).toBeCloseTo(expectedSceneDepthScale, 3);
   expect(v3?.adapter.cloudLayers).toMatchObject([
     { channel: "r", altitude: 8_000, height: 26_000, shadow: true },
     { channel: "g", altitude: 10_000, height: 50_000, shadow: true },

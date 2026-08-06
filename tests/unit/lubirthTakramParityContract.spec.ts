@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   Data3DTexture,
+  ClampToEdgeWrapping,
   LinearFilter,
   LinearMipmapLinearFilter,
   NearestFilter,
@@ -18,7 +19,7 @@ interface TakramParityContractModule {
     | {
       ok: true;
       value: {
-        diagnostic: "aerial-final" | "bsm-off" | "cloud-raw" | "full" | "history-reset-first";
+        diagnostic: "aerial-final" | "bsm-off" | "cloud-raw" | "depth-off" | "density-debug" | "full" | "history-reset-first" | "sample-count-debug" | "uv-debug";
         input: "stock" | "v3";
         progress: number;
         view: "control" | "opening";
@@ -64,12 +65,19 @@ interface TakramParityContractModule {
     visualReferenceCommit: "b012ad06d858fc035d88aacfd73f092f93c994e4";
   };
   isTakramParityLocalAssetUrl(value: string): boolean;
+  buildTakramParityRendererFingerprint(input: {
+    clouds: Record<string, unknown>;
+    aerialPerspective: Record<string, unknown>;
+    sharedAssets: Record<string, string>;
+  }): Record<string, unknown>;
+  hashTakramParityRendererFingerprint(fingerprint: Record<string, unknown>): string;
 }
 
 interface TakramParityAssetLoaderModule {
   configureTakramParityTexture<T extends Texture>(
     assetId: "localWeather" | "shape" | "shapeDetail" | "stbn" | "turbulence",
-    texture: T
+    texture: T,
+    domain?: "stock" | "v3"
   ): T;
   getNextTakramParityAssetGeneration(generation: number): number;
   TAKRAM_PARITY_RUNTIME_ASSET_URLS: {
@@ -184,6 +192,18 @@ test("pins the official stock Takram contract to auditable local assets", async 
   ))).toEqual({
     ok: true,
     value: { diagnostic: "cloud-raw", input: "stock", progress: 0, view: "opening" }
+  });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=v3&view=opening&diagnostic=depth-off"
+  ))).toEqual({
+    ok: true,
+    value: { diagnostic: "depth-off", input: "v3", progress: 0, view: "opening" }
+  });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=v3&view=opening&diagnostic=uv-debug"
+  ))).toEqual({
+    ok: true,
+    value: { diagnostic: "uv-debug", input: "v3", progress: 0, view: "opening" }
   });
   expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
     "input=stock&view=opening&diagnostic=bsm-off"
@@ -319,6 +339,7 @@ test("configures each native Takram texture from an explicit local asset contrac
   });
 
   const weather = loader?.configureTakramParityTexture("localWeather", new Texture());
+  const v3Weather = loader?.configureTakramParityTexture("localWeather", new Texture(), "v3");
   const turbulence = loader?.configureTakramParityTexture("turbulence", new Texture());
   const shape = loader?.configureTakramParityTexture(
     "shape",
@@ -342,6 +363,9 @@ test("configures each native Takram texture from an explicit local asset contrac
     expect(texture?.wrapT).toBe(RepeatWrapping);
   }
 
+  expect(v3Weather?.wrapS).toBe(RepeatWrapping);
+  expect(v3Weather?.wrapT).toBe(ClampToEdgeWrapping);
+
   for (const texture of [shape, shapeDetail]) {
     expect(texture?.colorSpace).toBe(NoColorSpace);
     expect(texture?.format).toBe(RedFormat);
@@ -362,4 +386,122 @@ test("configures each native Takram texture from an explicit local asset contrac
   expect(stbn?.wrapT).toBe(RepeatWrapping);
   expect(stbn?.wrapR).toBe(RepeatWrapping);
   expect(loader?.getNextTakramParityAssetGeneration(4)).toBe(5);
+});
+
+test("fingerprints resolved native state and rejects non-adapter drift", async () => {
+  const contract = await loadTakramParityContract();
+  expect(contract).not.toBeNull();
+
+  const runtime = {
+    clouds: {
+      cloudsPass: {
+        currentMaterial: {
+          defines: {
+            PERSPECTIVE_CAMERA: "1",
+            GLOBAL_WEATHER_MAPPING: "1"
+          },
+          temporalUpscale: true,
+          shapeDetail: true,
+          turbulence: true,
+          shadowLength: true,
+          haze: true,
+          multiScatteringOctaves: 2,
+          accurateSunSkyLight: true,
+          accuratePhaseFunction: true,
+          shadowCascadeCount: 4,
+          shadowSampleCount: 8,
+          scatterAnisotropy1: 0.7,
+          scatterAnisotropy2: -0.2,
+          scatterAnisotropyMix: 0.5,
+          uniforms: {
+            maxIterationCount: { value: 128 },
+            minStepSize: { value: 100 },
+            maxStepSize: { value: 1000 },
+            maxRayDistance: { value: 100000 },
+            perspectiveStepScale: { value: 1 },
+            minDensity: { value: 0.01 },
+            minExtinction: { value: 0.01 },
+            minTransmittance: { value: 0.01 },
+            maxIterationCountToSun: { value: 6 },
+            maxIterationCountToGround: { value: 2 },
+            minSecondaryStepSize: { value: 100 },
+            secondaryStepScale: { value: 1 },
+            maxShadowFilterRadius: { value: 6 },
+            maxShadowLengthIterationCount: { value: 24 },
+            minShadowLengthStepSize: { value: 100 },
+            maxShadowLengthRayDistance: { value: 100000 },
+            hazeDensityScale: { value: 0.00003 },
+            hazeExponent: { value: 0.001 },
+            hazeScatteringCoefficient: { value: 0.9 },
+            hazeAbsorptionCoefficient: { value: 0.5 },
+            skyLightScale: { value: 1 },
+            groundBounceScale: { value: 1 },
+            powderScale: { value: 0.8 },
+            powderExponent: { value: 150 },
+            scatteringCoefficient: { value: 1 },
+            absorptionCoefficient: { value: 0 }
+          }
+        },
+        currentRenderTarget: { width: 64, height: 64, textures: [], texture: { format: 1023, type: 1016 } },
+        resolveRenderTarget: { width: 256, height: 256, textures: [], texture: { format: 1023, type: 1016 } },
+        historyRenderTarget: { width: 256, height: 256, textures: [], texture: { format: 1023, type: 1016 } }
+      },
+      shadowPass: {
+        currentMaterial: {
+          defines: { SHADOW: "1", GLOBAL_WEATHER_MAPPING: "1" },
+          temporalPass: true,
+          temporalJitter: true,
+          shapeDetail: true,
+          turbulence: true,
+          cascadeCount: 4,
+          uniforms: {
+            maxIterationCount: { value: 64 },
+            minStepSize: { value: 100 },
+            maxStepSize: { value: 1000 },
+            minDensity: { value: 0.01 },
+            minExtinction: { value: 0.01 },
+            minTransmittance: { value: 0.01 },
+            opticalDepthTailScale: { value: 2 }
+          }
+        }
+      }
+    },
+    aerialPerspective: {
+      defines: { SUN_LIGHT: "1", SKY_LIGHT: "1", GLOBAL_WEATHER_MAPPING: "1" },
+      correctGeometricError: true,
+      sunLight: true,
+      skyLight: true,
+      transmittance: true,
+      inscatter: true,
+      sky: true,
+      sun: false,
+      moon: false,
+      ground: true,
+      octEncodedNormal: true,
+      reconstructNormal: false,
+      uniforms: {
+        albedoScale: { value: 1 },
+        geometricErrorCorrectionAmount: { value: 1 },
+        shadowRadius: { value: 1 },
+        lunarRadianceScale: { value: 1 }
+      }
+    },
+    sharedAssets: {
+      shape: "shape",
+      shapeDetail: "detail",
+      stbn: "stbn",
+      turbulence: "turbulence"
+    }
+  };
+
+  const first = contract!.buildTakramParityRendererFingerprint(runtime);
+  const firstHash = contract!.hashTakramParityRendererFingerprint(first);
+  expect(firstHash).toMatch(/^fnv1a-64:[0-9a-f]{16}$/);
+  expect((first.clouds as Record<string, unknown>).defines).not.toHaveProperty(
+    "GLOBAL_WEATHER_MAPPING"
+  );
+
+  (runtime.clouds.cloudsPass.currentMaterial.uniforms.maxIterationCount.value as number) = 129;
+  const second = contract!.buildTakramParityRendererFingerprint(runtime);
+  expect(contract!.hashTakramParityRendererFingerprint(second)).not.toBe(firstHash);
 });

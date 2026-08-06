@@ -29,10 +29,10 @@
     "hunkSha256": "9558c389131609a7edbc20a1b09576b679472ef8f60a9c0e026314b81861a507",
     "package": "@takram/three-clouds@0.7.6",
     "packageJsonSha256": "320a9a736ea74e63e4524e173df0b9f320951b8d6896c1a94a5c6b32acf22e6e",
-    "patchSha256": "e831999601c877a63dfd3b272555ac73a701ca6b8b2e6fb6904651f608b4467f",
+    "patchSha256": "2bfa2dd78d4e9ac82c82eddba1273f9d2f95e932b7021584ce840f497b4f745c",
     "patchedSourceHashes": {
-      "build/shared.cjs": "ca0aa68f3aab3e1c61c4580391431264e4d6d960644ddf9e9b820e4227b52828",
-      "build/shared.js": "45c5046fdd58e062e98b87098ab35fbfaad77bd81946ce687c82be0b638fae49",
+      "build/shared.cjs": "b099d176aa70e9c938b0599fece0180aeb33af4b3b81936f40092c9ae89ed602",
+      "build/shared.js": "c2115702324e01760429187faf6203c2a118812c508429edbebe37e2e1d7c018",
       "src/CloudsEffect.ts": "ccc1d0db7627e5d2e13e81748619e5e6c52a96ceb2d2ba8f34a43a03e2778cff",
       "src/r3f/Clouds.tsx": "5a05e9c5fe97386be85b54dec588ba84237f857bb21404726179c53f018d4e53",
       "src/shaders/clouds.glsl": "1fc4a4de4927c12dea23bf0590b24babf7251a0e6a6a442ac141d43c60caae19"

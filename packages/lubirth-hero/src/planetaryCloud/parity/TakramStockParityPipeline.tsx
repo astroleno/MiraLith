@@ -32,8 +32,9 @@ import {
   TAKRAM_PARITY_CONTROL,
   TAKRAM_PARITY_DEFAULTS,
   TAKRAM_PARITY_ELLIPSOID,
-  TAKRAM_PARITY_RENDERER_FINGERPRINT,
-  TAKRAM_PARITY_RENDERER_FINGERPRINT_HASH,
+  TAKRAM_PARITY_STOCK_ASSETS,
+  buildTakramParityRendererFingerprint,
+  hashTakramParityRendererFingerprint,
   type TakramParityDiagnostic,
   type TakramParityInput,
   type TakramParityTelemetry,
@@ -209,11 +210,22 @@ function resolveAdapterTelemetry(
   };
 }
 
+const TAKRAM_PARITY_SHARED_ASSET_HASHES = Object.freeze({
+  shape: TAKRAM_PARITY_STOCK_ASSETS.find((asset) => asset.id === "shape")!.sha256,
+  shapeDetail: TAKRAM_PARITY_STOCK_ASSETS.find((asset) => asset.id === "shapeDetail")!.sha256,
+  stbn: TAKRAM_PARITY_STOCK_ASSETS.find((asset) => asset.id === "stbn")!.sha256,
+  turbulence: TAKRAM_PARITY_STOCK_ASSETS.find((asset) => asset.id === "turbulence")!.sha256
+});
+
 function resolveDiagnosticState(diagnostic: TakramParityDiagnostic) {
   return {
-    aerialPerspectiveComposite: diagnostic !== "cloud-raw",
+    aerialPerspectiveComposite: !["cloud-raw", "density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic),
     beerShadowOcclusion: diagnostic !== "bsm-off",
-    cloudRawOutput: diagnostic === "cloud-raw",
+    cloudRawOutput: ["cloud-raw", "density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic),
+    densityDebug: diagnostic === "density-debug",
+    uvDebug: diagnostic === "uv-debug",
+    sceneDepthClamp: diagnostic !== "depth-off",
+    sampleCountDebug: diagnostic === "sample-count-debug",
     historyResetFirstFrame: diagnostic === "history-reset-first"
   };
 }
@@ -308,10 +320,19 @@ export function TakramStockParityPipeline({
         layer.shadow = false;
       });
     }
-    clouds.skipRendering = diagnostic !== "cloud-raw";
-    aerialPerspective.blendMode.blendFunction = diagnostic === "cloud-raw"
+    const cloudRawDiagnostic = ["cloud-raw", "density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic);
+    clouds.skipRendering = !cloudRawDiagnostic;
+    aerialPerspective.blendMode.blendFunction = cloudRawDiagnostic
       ? BlendFunction.SKIP
       : BlendFunction.NORMAL;
+    if (diagnostic === "sample-count-debug") {
+      clouds.cloudsPass.currentMaterial.defines.DEBUG_SHOW_SAMPLE_COUNT = "1";
+      clouds.cloudsPass.currentMaterial.needsUpdate = true;
+    }
+    if (diagnostic === "uv-debug") {
+      clouds.cloudsPass.currentMaterial.defines.DEBUG_SHOW_UV = "1";
+      clouds.cloudsPass.currentMaterial.needsUpdate = true;
+    }
     appliedDiagnosticRef.current = diagnostic;
 
     if (diagnostic === "history-reset-first" && historyDiagnosticRef.current !== diagnostic) {
@@ -332,6 +353,14 @@ export function TakramStockParityPipeline({
       clouds.skipRendering = true;
       clouds.temporalUpscale = true;
       aerialPerspective.blendMode.blendFunction = BlendFunction.NORMAL;
+      if (diagnostic === "sample-count-debug") {
+        delete clouds.cloudsPass.currentMaterial.defines.DEBUG_SHOW_SAMPLE_COUNT;
+        clouds.cloudsPass.currentMaterial.needsUpdate = true;
+      }
+      if (diagnostic === "uv-debug") {
+        delete clouds.cloudsPass.currentMaterial.defines.DEBUG_SHOW_UV;
+        clouds.cloudsPass.currentMaterial.needsUpdate = true;
+      }
     };
   }, [assetsState.ready, atmosphereState.ready, bridgeReady, diagnostic]);
 
@@ -404,6 +433,19 @@ export function TakramStockParityPipeline({
 
     const clouds = cloudsRef.current;
     const aerialPerspective = aerialPerspectiveRef.current;
+    const sceneDepthScaleContract = coordinateMode === "upstream-ecef"
+      ? 1
+      : bridge?.valid && bridge.worldToEcefDistanceScale !== null
+        ? bridge.worldToEcefDistanceScale
+        : 1;
+    const sceneDepthScale = diagnostic === "depth-off" ? 0 : sceneDepthScaleContract;
+    if (clouds) {
+      // Takram reconstructs scene depth from the native world-space depth
+      // buffer, while its cloud ray is parameterized in ECEF metres. Keep the
+      // contract explicit for both the identity control and the LuBirth bridge
+      // instead of allowing a non-unit matrix scale to silently clip clouds.
+      clouds.cloudsPass.currentMaterial.uniforms.sceneDepthScale.value = sceneDepthScale;
+    }
     const nativePipelineReady = assetsState.ready && atmosphereState.ready &&
       bridgeReadyRef.current && clouds !== null && aerialPerspective !== null &&
       appliedDiagnosticRef.current === diagnostic;
@@ -426,6 +468,13 @@ export function TakramStockParityPipeline({
     const temporalConverged = diagnostic !== "history-reset-first" &&
       nativeFrameCount >= TEMPORAL_CONVERGENCE_FRAME_COUNT;
     const resolvedNative = nativeFeatures(clouds, aerialPerspective);
+    const rendererFingerprint = clouds && aerialPerspective
+      ? buildTakramParityRendererFingerprint({
+        clouds,
+        aerialPerspective,
+        sharedAssets: TAKRAM_PARITY_SHARED_ASSET_HASHES
+      })
+      : null;
     const telemetry: TakramParityTelemetry = {
       active: nativePipelineReady &&
         (diagnostic === "history-reset-first" || temporalConverged),
@@ -447,8 +496,12 @@ export function TakramStockParityPipeline({
       native: resolvedNative,
       nativeFrameCount,
       progress: clampOpeningProgress(progress),
-      rendererFingerprint: TAKRAM_PARITY_RENDERER_FINGERPRINT,
-      rendererFingerprintHash: TAKRAM_PARITY_RENDERER_FINGERPRINT_HASH,
+      rendererFingerprint,
+      rendererFingerprintHash: rendererFingerprint
+        ? hashTakramParityRendererFingerprint(rendererFingerprint)
+        : null,
+      sceneDepthScale,
+      sceneDepthContract: "world-depth-to-ecef-v1",
       stockCoverage: view === "control" ? TAKRAM_PARITY_CONTROL.coverage : null,
       temporalConverged,
       transformFallback,
@@ -467,6 +520,8 @@ export function TakramStockParityPipeline({
       diagnosticState: telemetry.diagnosticState,
       adapter: telemetry.adapter,
       native: telemetry.native,
+      rendererFingerprintHash: telemetry.rendererFingerprintHash,
+      sceneDepthScale: telemetry.sceneDepthScale,
       nativeFrameCount: Math.min(
         telemetry.nativeFrameCount,
         TEMPORAL_CONVERGENCE_FRAME_COUNT

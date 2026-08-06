@@ -321,6 +321,11 @@ test("buildLuBirthWorldToEcef holds a translated, rotated, uniformly scaled Eart
 
   expect(bridge.valid).toBe(true);
   expect(bridge.worldToEcef).not.toBeNull();
+  expect(bridge.worldToEcefScale).toBeCloseTo(6_360_000 / compositionRadius, 8);
+  expect(bridge.worldToEcefDistanceScale).toBeCloseTo(
+    6_360_000 / (compositionRadius * 1.75),
+    8
+  );
 
   const worldToEcef = bridge.worldToEcef!;
   const origin = new Vector3(0, 0, 0).applyMatrix4(earthMatrixWorld).applyMatrix4(worldToEcef);
@@ -457,16 +462,22 @@ test("buildLuBirthWorldToEcef rejects non-uniform, negative, and singular Earth 
   expect(nonUniform).toMatchObject({
     valid: false,
     worldToEcef: null,
+    worldToEcefScale: null,
+    worldToEcefDistanceScale: null,
     reason: "non-uniform-scale"
   });
   expect(negative).toMatchObject({
     valid: false,
     worldToEcef: null,
+    worldToEcefScale: null,
+    worldToEcefDistanceScale: null,
     reason: "negative-determinant"
   });
   expect(singular).toMatchObject({
     valid: false,
     worldToEcef: null,
+    worldToEcefScale: null,
+    worldToEcefDistanceScale: null,
     reason: "singular-scale"
   });
 });

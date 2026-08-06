@@ -36,8 +36,8 @@ const upstreamSourceHashes = Object.freeze({
   "src/shaders/clouds.glsl": "bbb3f037e55aed6c989d77d197af33f44ee5565b0ca7988eab44f52ddd509eb5"
 });
 const expectedPatchedSourceHashes = Object.freeze({
-  "build/shared.cjs": "ca0aa68f3aab3e1c61c4580391431264e4d6d960644ddf9e9b820e4227b52828",
-  "build/shared.js": "45c5046fdd58e062e98b87098ab35fbfaad77bd81946ce687c82be0b638fae49",
+  "build/shared.cjs": "b099d176aa70e9c938b0599fece0180aeb33af4b3b81936f40092c9ae89ed602",
+  "build/shared.js": "c2115702324e01760429187faf6203c2a118812c508429edbebe37e2e1d7c018",
   "src/CloudsEffect.ts": "ccc1d0db7627e5d2e13e81748619e5e6c52a96ceb2d2ba8f34a43a03e2778cff",
   "src/r3f/Clouds.tsx": "5a05e9c5fe97386be85b54dec588ba84237f857bb21404726179c53f018d4e53",
   "src/shaders/clouds.glsl": "1fc4a4de4927c12dea23bf0590b24babf7251a0e6a6a442ac141d43c60caae19"

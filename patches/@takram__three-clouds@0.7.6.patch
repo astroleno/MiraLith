@@ -1,8 +1,31 @@
 diff --git a/build/shared.cjs b/build/shared.cjs
-index b60f3375d6aca1b4282fcb6e361a165b53e7523b..c4c9b836383b28bc69dc86886302a205cf48cd7d 100644
+index b60f3375d6aca1b4282fcb6e361a165b53e7523b..03597e63b32bd4f19968bb15648d59307ab43db5 100644
 --- a/build/shared.cjs
 +++ b/build/shared.cjs
-@@ -1045,7 +1045,11 @@ vec2 getCubeSphereUv(const vec3 position) {
+@@ -47,6 +47,7 @@ uniform float cameraHeight;
+ uniform vec2 temporalJitter;
+ uniform vec2 targetUvScale;
+ uniform float mipLevelScale;
++uniform float sceneDepthScale;
+ 
+ // Scattering
+ const vec2 scatterAnisotropy = vec2(SCATTER_ANISOTROPY_1, SCATTER_ANISOTROPY_2);
+@@ -814,7 +815,13 @@ float getRayDistanceToScene(const vec3 rayDirection, out float viewZ) {
+   if (depth < 1.0 - 1e-7) {
+     depth = reverseLogDepth(depth, cameraNear, cameraFar);
+     viewZ = getViewZ(depth);
+-    return -viewZ / dot(rayDirection, vCameraDirection);
++    // viewZ is reconstructed in the native scene world units while the
++    // cloud ray is marched in ECEF metres. The vertex path applies the
++    // world-to-ECEF matrix to both directions, so normalize the transformed
++    // camera direction before recovering the world ray parameter and then
++    // convert that parameter to the ECEF distance contract explicitly.
++    return -viewZ * sceneDepthScale /
++      dot(rayDirection, normalize(vCameraDirection));
+   }
+   viewZ = 0.0;
+   return 0.0;
+@@ -1045,7 +1052,11 @@ vec2 getCubeSphereUv(const vec3 position) {
  }
  
  vec2 getGlobeUv(const vec3 position) {
@@ -14,16 +37,16 @@ index b60f3375d6aca1b4282fcb6e361a165b53e7523b..c4c9b836383b28bc69dc86886302a205
  }
  
  float getMipLevel(const vec2 uv) {
-@@ -1356,7 +1360,7 @@ struct CloudDensityProfile {
+@@ -1356,7 +1367,7 @@ struct CloudDensityProfile {
    vec4 linearTerms;
    vec4 constantTerms;
  };
 -`;var Re=Object.defineProperty,v=(o,e,t,a)=>{for(var i=void 0,r=o.length-1,s;r>=0;r--)(s=o[r])&&(i=s(e,t,i)||i);return i&&Re(e,t,i),i};const Le=new n.Vector3,Ue=new h.Geodetic;class m extends z.AtmosphereMaterialBase{constructor({parameterUniforms:e,layerUniforms:t,atmosphereUniforms:a},i=z.AtmosphereParameters.DEFAULT){super({name:"CloudsMaterial",glslVersion:n.GLSL3,vertexShader:h.resolveIncludes(Oe,{atmosphere:{bruneton:{common:P.common,definitions:P.definitions,runtime:P.runtime}},types:j}),fragmentShader:h.unrollLoops(h.resolveIncludes(Pe,{core:{depth:g.depth,math:g.math,turbo:g.turbo,generators:g.generators,raySphereIntersection:g.raySphereIntersection,cascadedShadowMaps:g.cascadedShadowMaps,interleavedGradientNoise:g.interleavedGradientNoise,vogelDisk:g.vogelDisk},atmosphere:{bruneton:{common:P.common,definitions:P.definitions,runtime:P.runtime}},types:j,parameters:oe,clouds:re})),uniforms:{...e,...t,...a,depthBuffer:new n.Uniform(null),viewMatrix:new n.Uniform(new n.Matrix4),inverseProjectionMatrix:new n.Uniform(new n.Matrix4),inverseViewMatrix:new n.Uniform(new n.Matrix4),reprojectionMatrix:new n.Uniform(new n.Matrix4),viewReprojectionMatrix:new n.Uniform(new n.Matrix4),resolution:new n.Uniform(new n.Vector2),cameraNear:new n.Uniform(0),cameraFar:new n.Uniform(0),cameraHeight:new n.Uniform(0),frame:new n.Uniform(0),temporalJitter:new n.Uniform(new n.Vector2),targetUvScale:new n.Uniform(new n.Vector2),mipLevelScale:new n.Uniform(1),stbnTexture:new n.Uniform(null),skyLightScale:new n.Uniform(1),groundBounceScale:new n.Uniform(1),powderScale:new n.Uniform(.8),powderExponent:new n.Uniform(150),maxIterationCount:new n.Uniform(c.clouds.maxIterationCount),minStepSize:new n.Uniform(c.clouds.minStepSize),maxStepSize:new n.Uniform(c.clouds.maxStepSize),maxRayDistance:new n.Uniform(c.clouds.maxRayDistance),perspectiveStepScale:new n.Uniform(c.clouds.perspectiveStepScale),minDensity:new n.Uniform(c.clouds.minDensity),minExtinction:new n.Uniform(c.clouds.minExtinction),minTransmittance:new n.Uniform(c.clouds.minTransmittance),maxIterationCountToSun:new n.Uniform(c.clouds.maxIterationCountToSun),maxIterationCountToGround:new n.Uniform(c.clouds.maxIterationCountToGround),minSecondaryStepSize:new n.Uniform(c.clouds.minSecondaryStepSize),secondaryStepScale:new n.Uniform(c.clouds.secondaryStepScale),shadowBuffer:new n.Uniform(null),shadowTexelSize:new n.Uniform(new n.Vector2),shadowIntervals:new n.Uniform(Array.from({length:4},()=>new n.Vector2)),shadowMatrices:new n.Uniform(Array.from({length:4},()=>new n.Matrix4)),shadowFar:new n.Uniform(0),maxShadowFilterRadius:new n.Uniform(6),shadowLayerMask:new n.Uniform(new n.Vector4().setScalar(1)),maxShadowLengthIterationCount:new n.Uniform(c.clouds.maxShadowLengthIterationCount),minShadowLengthStepSize:new n.Uniform(c.clouds.minShadowLengthStepSize),maxShadowLengthRayDistance:new n.Uniform(c.clouds.maxShadowLengthRayDistance),hazeDensityScale:new n.Uniform(3e-5),hazeExponent:new n.Uniform(.001),hazeScatteringCoefficient:new n.Uniform(.9),hazeAbsorptionCoefficient:new n.Uniform(.5)}},i),this.temporalUpscale=!0,this.depthPacking=0,this.localWeatherChannels="rgba",this.shapeDetail=c.shapeDetail,this.turbulence=c.turbulence,this.shadowLength=c.lightShafts,this.haze=c.haze,this.multiScatteringOctaves=c.clouds.multiScatteringOctaves,this.accurateSunSkyLight=c.clouds.accurateSunSkyLight,this.accuratePhaseFunction=c.clouds.accuratePhaseFunction,this.shadowCascadeCount=c.shadow.cascadeCount,this.shadowSampleCount=8,this.scatterAnisotropy1=.7,this.scatterAnisotropy2=-.2,this.scatterAnisotropyMix=.5}onBeforeRender(e,t,a,i,r,s){const l=this.defines.USE_LOGARITHMIC_DEPTH_BUFFER!=null,u=e.capabilities.logarithmicDepthBuffer;u!==l&&(u?this.defines.USE_LOGARITHMIC_DEPTH_BUFFER="1":delete this.defines.USE_LOGARITHMIC_DEPTH_BUFFER);const d=this.defines.POWDER!=null,p=this.uniforms.powderScale.value>0;p!==d&&(p?this.defines.POWDER="1":delete this.defines.POWDER,this.needsUpdate=!0);const f=this.defines.GROUND_BOUNCE!=null;(this.uniforms.groundBounceScale.value>0&&this.uniforms.maxIterationCountToGround.value>0)!==f&&(p?this.defines.GROUND_BOUNCE="1":delete this.defines.GROUND_BOUNCE,this.needsUpdate=!0)}copyCameraSettings(e){e.isPerspectiveCamera===!0?this.defines.PERSPECTIVE_CAMERA!=="1"&&(this.defines.PERSPECTIVE_CAMERA="1",this.needsUpdate=!0):this.defines.PERSPECTIVE_CAMERA!=null&&(delete this.defines.PERSPECTIVE_CAMERA,this.needsUpdate=!0);const t=this.uniforms;t.viewMatrix.value.copy(e.matrixWorldInverse),t.inverseViewMatrix.value.copy(e.matrixWorld);const a=this.previousProjectionMatrix??e.projectionMatrix,i=this.previousViewMatrix??e.matrixWorldInverse,r=t.inverseProjectionMatrix.value,s=t.inverseViewMatrix.value,l=t.reprojectionMatrix.value,u=t.viewReprojectionMatrix.value;if(this.temporalUpscale){const f=t.frame.value%16,x=t.resolution.value,C=ie[f],A=(C.x-.5)/x.x*4,_=(C.y-.5)/x.y*4;t.temporalJitter.value.set(A,_),t.mipLevelScale.value=.25,r.copy(e.projectionMatrix),r.elements[8]+=A*2,r.elements[9]+=_*2,r.invert(),l.copy(a),l.elements[8]+=A*2,l.elements[9]+=_*2,l.multiply(i),u.copy(l).multiply(s)}else t.temporalJitter.value.setScalar(0),t.mipLevelScale.value=1,r.copy(e.projectionMatrixInverse),l.copy(a).multiply(i),u.copy(l).multiply(s);h.reinterpretType(e),t.cameraNear.value=e.near,t.cameraFar.value=e.far;const d=e.getWorldPosition(t.cameraPosition.value),p=Le.copy(d).applyMatrix4(t.worldToECEFMatrix.value);try{t.cameraHeight.value=Ue.setFromECEF(p).height}catch{}}copyReprojectionMatrix(e){this.previousProjectionMatrix??=new n.Matrix4,this.previousViewMatrix??=new n.Matrix4,this.previousProjectionMatrix.copy(e.projectionMatrix),this.previousViewMatrix.copy(e.matrixWorldInverse)}setSize(e,t,a,i){this.uniforms.resolution.value.set(e,t),a!=null&&i!=null?this.uniforms.targetUvScale.value.set(e/a,t/i):this.uniforms.targetUvScale.value.setScalar(1),this.previousProjectionMatrix=void 0,this.previousViewMatrix=void 0}setShadowSize(e,t){this.uniforms.shadowTexelSize.value.set(1/e,1/t)}get depthBuffer(){return this.uniforms.depthBuffer.value}set depthBuffer(e){this.uniforms.depthBuffer.value=e}}v([h.defineInt("DEPTH_PACKING")],m.prototype,"depthPacking");v([h.defineExpression("LOCAL_WEATHER_CHANNELS",{validate:o=>/^[rgba]{4}$/.test(o)})],m.prototype,"localWeatherChannels");v([h.define("SHAPE_DETAIL")],m.prototype,"shapeDetail");v([h.define("TURBULENCE")],m.prototype,"turbulence");v([h.define("SHADOW_LENGTH")],m.prototype,"shadowLength");v([h.define("HAZE")],m.prototype,"haze");v([h.defineInt("MULTI_SCATTERING_OCTAVES",{min:1,max:12})],m.prototype,"multiScatteringOctaves");v([h.define("ACCURATE_SUN_SKY_LIGHT")],m.prototype,"accurateSunSkyLight");v([h.define("ACCURATE_PHASE_FUNCTION")],m.prototype,"accuratePhaseFunction");v([h.defineInt("SHADOW_CASCADE_COUNT",{min:1,max:4})],m.prototype,"shadowCascadeCount");v([h.defineInt("SHADOW_SAMPLE_COUNT",{min:1,max:16})],m.prototype,"shadowSampleCount");v([h.defineFloat("SCATTER_ANISOTROPY_1")],m.prototype,"scatterAnisotropy1");v([h.defineFloat("SCATTER_ANISOTROPY_2")],m.prototype,"scatterAnisotropy2");v([h.defineFloat("SCATTER_ANISOTROPY_MIX")],m.prototype,"scatterAnisotropyMix");const Me=`// Taken from https://gist.github.com/TheRealMJP/c83b8c0f46b63f3a88a5986f4fa982b1
-+`;var Re=Object.defineProperty,v=(o,e,t,a)=>{for(var i=void 0,r=o.length-1,s;r>=0;r--)(s=o[r])&&(i=s(e,t,i)||i);return i&&Re(e,t,i),i};const Le=new n.Vector3,Ue=new h.Geodetic;class m extends z.AtmosphereMaterialBase{constructor({parameterUniforms:e,layerUniforms:t,atmosphereUniforms:a},i=z.AtmosphereParameters.DEFAULT){super({name:"CloudsMaterial",glslVersion:n.GLSL3,vertexShader:h.resolveIncludes(Oe,{atmosphere:{bruneton:{common:P.common,definitions:P.definitions,runtime:P.runtime}},types:j}),fragmentShader:h.unrollLoops(h.resolveIncludes(Pe,{core:{depth:g.depth,math:g.math,turbo:g.turbo,generators:g.generators,raySphereIntersection:g.raySphereIntersection,cascadedShadowMaps:g.cascadedShadowMaps,interleavedGradientNoise:g.interleavedGradientNoise,vogelDisk:g.vogelDisk},atmosphere:{bruneton:{common:P.common,definitions:P.definitions,runtime:P.runtime}},types:j,parameters:oe,clouds:re})),uniforms:{...e,...t,...a,depthBuffer:new n.Uniform(null),viewMatrix:new n.Uniform(new n.Matrix4),inverseProjectionMatrix:new n.Uniform(new n.Matrix4),inverseViewMatrix:new n.Uniform(new n.Matrix4),reprojectionMatrix:new n.Uniform(new n.Matrix4),viewReprojectionMatrix:new n.Uniform(new n.Matrix4),resolution:new n.Uniform(new n.Vector2),cameraNear:new n.Uniform(0),cameraFar:new n.Uniform(0),cameraHeight:new n.Uniform(0),frame:new n.Uniform(0),temporalJitter:new n.Uniform(new n.Vector2),targetUvScale:new n.Uniform(new n.Vector2),mipLevelScale:new n.Uniform(1),stbnTexture:new n.Uniform(null),skyLightScale:new n.Uniform(1),groundBounceScale:new n.Uniform(1),powderScale:new n.Uniform(.8),powderExponent:new n.Uniform(150),maxIterationCount:new n.Uniform(c.clouds.maxIterationCount),minStepSize:new n.Uniform(c.clouds.minStepSize),maxStepSize:new n.Uniform(c.clouds.maxStepSize),maxRayDistance:new n.Uniform(c.clouds.maxRayDistance),perspectiveStepScale:new n.Uniform(c.clouds.perspectiveStepScale),minDensity:new n.Uniform(c.clouds.minDensity),minExtinction:new n.Uniform(c.clouds.minExtinction),minTransmittance:new n.Uniform(c.clouds.minTransmittance),maxIterationCountToSun:new n.Uniform(c.clouds.maxIterationCountToSun),maxIterationCountToGround:new n.Uniform(c.clouds.maxIterationCountToGround),minSecondaryStepSize:new n.Uniform(c.clouds.minSecondaryStepSize),secondaryStepScale:new n.Uniform(c.clouds.secondaryStepScale),shadowBuffer:new n.Uniform(null),shadowTexelSize:new n.Uniform(new n.Vector2),shadowIntervals:new n.Uniform(Array.from({length:4},()=>new n.Vector2)),shadowMatrices:new n.Uniform(Array.from({length:4},()=>new n.Matrix4)),shadowFar:new n.Uniform(0),maxShadowFilterRadius:new n.Uniform(6),shadowLayerMask:new n.Uniform(new n.Vector4().setScalar(1)),maxShadowLengthIterationCount:new n.Uniform(c.clouds.maxShadowLengthIterationCount),minShadowLengthStepSize:new n.Uniform(c.clouds.minShadowLengthStepSize),maxShadowLengthRayDistance:new n.Uniform(c.clouds.maxShadowLengthRayDistance),hazeDensityScale:new n.Uniform(3e-5),hazeExponent:new n.Uniform(.001),hazeScatteringCoefficient:new n.Uniform(.9),hazeAbsorptionCoefficient:new n.Uniform(.5)}},i),this.temporalUpscale=!0,this.depthPacking=0,this.localWeatherChannels="rgba",this.globalWeatherMapping=!1,this.shapeDetail=c.shapeDetail,this.turbulence=c.turbulence,this.shadowLength=c.lightShafts,this.haze=c.haze,this.multiScatteringOctaves=c.clouds.multiScatteringOctaves,this.accurateSunSkyLight=c.clouds.accurateSunSkyLight,this.accuratePhaseFunction=c.clouds.accuratePhaseFunction,this.shadowCascadeCount=c.shadow.cascadeCount,this.shadowSampleCount=8,this.scatterAnisotropy1=.7,this.scatterAnisotropy2=-.2,this.scatterAnisotropyMix=.5}onBeforeRender(e,t,a,i,r,s){const l=this.defines.USE_LOGARITHMIC_DEPTH_BUFFER!=null,u=e.capabilities.logarithmicDepthBuffer;u!==l&&(u?this.defines.USE_LOGARITHMIC_DEPTH_BUFFER="1":delete this.defines.USE_LOGARITHMIC_DEPTH_BUFFER);const d=this.defines.POWDER!=null,p=this.uniforms.powderScale.value>0;p!==d&&(p?this.defines.POWDER="1":delete this.defines.POWDER,this.needsUpdate=!0);const f=this.defines.GROUND_BOUNCE!=null;(this.uniforms.groundBounceScale.value>0&&this.uniforms.maxIterationCountToGround.value>0)!==f&&(p?this.defines.GROUND_BOUNCE="1":delete this.defines.GROUND_BOUNCE,this.needsUpdate=!0)}copyCameraSettings(e){e.isPerspectiveCamera===!0?this.defines.PERSPECTIVE_CAMERA!=="1"&&(this.defines.PERSPECTIVE_CAMERA="1",this.needsUpdate=!0):this.defines.PERSPECTIVE_CAMERA!=null&&(delete this.defines.PERSPECTIVE_CAMERA,this.needsUpdate=!0);const t=this.uniforms;t.viewMatrix.value.copy(e.matrixWorldInverse),t.inverseViewMatrix.value.copy(e.matrixWorld);const a=this.previousProjectionMatrix??e.projectionMatrix,i=this.previousViewMatrix??e.matrixWorldInverse,r=t.inverseProjectionMatrix.value,s=t.inverseViewMatrix.value,l=t.reprojectionMatrix.value,u=t.viewReprojectionMatrix.value;if(this.temporalUpscale){const f=t.frame.value%16,x=t.resolution.value,C=ie[f],A=(C.x-.5)/x.x*4,_=(C.y-.5)/x.y*4;t.temporalJitter.value.set(A,_),t.mipLevelScale.value=.25,r.copy(e.projectionMatrix),r.elements[8]+=A*2,r.elements[9]+=_*2,r.invert(),l.copy(a),l.elements[8]+=A*2,l.elements[9]+=_*2,l.multiply(i),u.copy(l).multiply(s)}else t.temporalJitter.value.setScalar(0),t.mipLevelScale.value=1,r.copy(e.projectionMatrixInverse),l.copy(a).multiply(i),u.copy(l).multiply(s);h.reinterpretType(e),t.cameraNear.value=e.near,t.cameraFar.value=e.far;const d=e.getWorldPosition(t.cameraPosition.value),p=Le.copy(d).applyMatrix4(t.worldToECEFMatrix.value);try{t.cameraHeight.value=Ue.setFromECEF(p).height}catch{}}copyReprojectionMatrix(e){this.previousProjectionMatrix??=new n.Matrix4,this.previousViewMatrix??=new n.Matrix4,this.previousProjectionMatrix.copy(e.projectionMatrix),this.previousViewMatrix.copy(e.matrixWorldInverse)}setSize(e,t,a,i){this.uniforms.resolution.value.set(e,t),a!=null&&i!=null?this.uniforms.targetUvScale.value.set(e/a,t/i):this.uniforms.targetUvScale.value.setScalar(1),this.previousProjectionMatrix=void 0,this.previousViewMatrix=void 0}setShadowSize(e,t){this.uniforms.shadowTexelSize.value.set(1/e,1/t)}get depthBuffer(){return this.uniforms.depthBuffer.value}set depthBuffer(e){this.uniforms.depthBuffer.value=e}}v([h.defineInt("DEPTH_PACKING")],m.prototype,"depthPacking");v([h.defineExpression("LOCAL_WEATHER_CHANNELS",{validate:o=>/^[rgba]{4}$/.test(o)})],m.prototype,"localWeatherChannels");v([h.define("GLOBAL_WEATHER_MAPPING")],m.prototype,"globalWeatherMapping");v([h.define("SHAPE_DETAIL")],m.prototype,"shapeDetail");v([h.define("TURBULENCE")],m.prototype,"turbulence");v([h.define("SHADOW_LENGTH")],m.prototype,"shadowLength");v([h.define("HAZE")],m.prototype,"haze");v([h.defineInt("MULTI_SCATTERING_OCTAVES",{min:1,max:12})],m.prototype,"multiScatteringOctaves");v([h.define("ACCURATE_SUN_SKY_LIGHT")],m.prototype,"accurateSunSkyLight");v([h.define("ACCURATE_PHASE_FUNCTION")],m.prototype,"accuratePhaseFunction");v([h.defineInt("SHADOW_CASCADE_COUNT",{min:1,max:4})],m.prototype,"shadowCascadeCount");v([h.defineInt("SHADOW_SAMPLE_COUNT",{min:1,max:16})],m.prototype,"shadowSampleCount");v([h.defineFloat("SCATTER_ANISOTROPY_1")],m.prototype,"scatterAnisotropy1");v([h.defineFloat("SCATTER_ANISOTROPY_2")],m.prototype,"scatterAnisotropy2");v([h.defineFloat("SCATTER_ANISOTROPY_MIX")],m.prototype,"scatterAnisotropyMix");const Me=`// Taken from https://gist.github.com/TheRealMJP/c83b8c0f46b63f3a88a5986f4fa982b1
++`;var Re=Object.defineProperty,v=(o,e,t,a)=>{for(var i=void 0,r=o.length-1,s;r>=0;r--)(s=o[r])&&(i=s(e,t,i)||i);return i&&Re(e,t,i),i};const Le=new n.Vector3,Ue=new h.Geodetic;class m extends z.AtmosphereMaterialBase{constructor({parameterUniforms:e,layerUniforms:t,atmosphereUniforms:a},i=z.AtmosphereParameters.DEFAULT){super({name:"CloudsMaterial",glslVersion:n.GLSL3,vertexShader:h.resolveIncludes(Oe,{atmosphere:{bruneton:{common:P.common,definitions:P.definitions,runtime:P.runtime}},types:j}),fragmentShader:h.unrollLoops(h.resolveIncludes(Pe,{core:{depth:g.depth,math:g.math,turbo:g.turbo,generators:g.generators,raySphereIntersection:g.raySphereIntersection,cascadedShadowMaps:g.cascadedShadowMaps,interleavedGradientNoise:g.interleavedGradientNoise,vogelDisk:g.vogelDisk},atmosphere:{bruneton:{common:P.common,definitions:P.definitions,runtime:P.runtime}},types:j,parameters:oe,clouds:re})),uniforms:{...e,...t,...a,depthBuffer:new n.Uniform(null),viewMatrix:new n.Uniform(new n.Matrix4),inverseProjectionMatrix:new n.Uniform(new n.Matrix4),inverseViewMatrix:new n.Uniform(new n.Matrix4),reprojectionMatrix:new n.Uniform(new n.Matrix4),viewReprojectionMatrix:new n.Uniform(new n.Matrix4),resolution:new n.Uniform(new n.Vector2),cameraNear:new n.Uniform(0),cameraFar:new n.Uniform(0),cameraHeight:new n.Uniform(0),frame:new n.Uniform(0),temporalJitter:new n.Uniform(new n.Vector2),targetUvScale:new n.Uniform(new n.Vector2),mipLevelScale:new n.Uniform(1),sceneDepthScale:new n.Uniform(1),stbnTexture:new n.Uniform(null),skyLightScale:new n.Uniform(1),groundBounceScale:new n.Uniform(1),powderScale:new n.Uniform(.8),powderExponent:new n.Uniform(150),maxIterationCount:new n.Uniform(c.clouds.maxIterationCount),minStepSize:new n.Uniform(c.clouds.minStepSize),maxStepSize:new n.Uniform(c.clouds.maxStepSize),maxRayDistance:new n.Uniform(c.clouds.maxRayDistance),perspectiveStepScale:new n.Uniform(c.clouds.perspectiveStepScale),minDensity:new n.Uniform(c.clouds.minDensity),minExtinction:new n.Uniform(c.clouds.minExtinction),minTransmittance:new n.Uniform(c.clouds.minTransmittance),maxIterationCountToSun:new n.Uniform(c.clouds.maxIterationCountToSun),maxIterationCountToGround:new n.Uniform(c.clouds.maxIterationCountToGround),minSecondaryStepSize:new n.Uniform(c.clouds.minSecondaryStepSize),secondaryStepScale:new n.Uniform(c.clouds.secondaryStepScale),shadowBuffer:new n.Uniform(null),shadowTexelSize:new n.Uniform(new n.Vector2),shadowIntervals:new n.Uniform(Array.from({length:4},()=>new n.Vector2)),shadowMatrices:new n.Uniform(Array.from({length:4},()=>new n.Matrix4)),shadowFar:new n.Uniform(0),maxShadowFilterRadius:new n.Uniform(6),shadowLayerMask:new n.Uniform(new n.Vector4().setScalar(1)),maxShadowLengthIterationCount:new n.Uniform(c.clouds.maxShadowLengthIterationCount),minShadowLengthStepSize:new n.Uniform(c.clouds.minShadowLengthStepSize),maxShadowLengthRayDistance:new n.Uniform(c.clouds.maxShadowLengthRayDistance),hazeDensityScale:new n.Uniform(3e-5),hazeExponent:new n.Uniform(.001),hazeScatteringCoefficient:new n.Uniform(.9),hazeAbsorptionCoefficient:new n.Uniform(.5)}},i),this.temporalUpscale=!0,this.depthPacking=0,this.localWeatherChannels="rgba",this.globalWeatherMapping=!1,this.shapeDetail=c.shapeDetail,this.turbulence=c.turbulence,this.shadowLength=c.lightShafts,this.haze=c.haze,this.multiScatteringOctaves=c.clouds.multiScatteringOctaves,this.accurateSunSkyLight=c.clouds.accurateSunSkyLight,this.accuratePhaseFunction=c.clouds.accuratePhaseFunction,this.shadowCascadeCount=c.shadow.cascadeCount,this.shadowSampleCount=8,this.scatterAnisotropy1=.7,this.scatterAnisotropy2=-.2,this.scatterAnisotropyMix=.5}onBeforeRender(e,t,a,i,r,s){const l=this.defines.USE_LOGARITHMIC_DEPTH_BUFFER!=null,u=e.capabilities.logarithmicDepthBuffer;u!==l&&(u?this.defines.USE_LOGARITHMIC_DEPTH_BUFFER="1":delete this.defines.USE_LOGARITHMIC_DEPTH_BUFFER);const d=this.defines.POWDER!=null,p=this.uniforms.powderScale.value>0;p!==d&&(p?this.defines.POWDER="1":delete this.defines.POWDER,this.needsUpdate=!0);const f=this.defines.GROUND_BOUNCE!=null;(this.uniforms.groundBounceScale.value>0&&this.uniforms.maxIterationCountToGround.value>0)!==f&&(p?this.defines.GROUND_BOUNCE="1":delete this.defines.GROUND_BOUNCE,this.needsUpdate=!0)}copyCameraSettings(e){e.isPerspectiveCamera===!0?this.defines.PERSPECTIVE_CAMERA!=="1"&&(this.defines.PERSPECTIVE_CAMERA="1",this.needsUpdate=!0):this.defines.PERSPECTIVE_CAMERA!=null&&(delete this.defines.PERSPECTIVE_CAMERA,this.needsUpdate=!0);const t=this.uniforms;t.viewMatrix.value.copy(e.matrixWorldInverse),t.inverseViewMatrix.value.copy(e.matrixWorld);const a=this.previousProjectionMatrix??e.projectionMatrix,i=this.previousViewMatrix??e.matrixWorldInverse,r=t.inverseProjectionMatrix.value,s=t.inverseViewMatrix.value,l=t.reprojectionMatrix.value,u=t.viewReprojectionMatrix.value;if(this.temporalUpscale){const f=t.frame.value%16,x=t.resolution.value,C=ie[f],A=(C.x-.5)/x.x*4,_=(C.y-.5)/x.y*4;t.temporalJitter.value.set(A,_),t.mipLevelScale.value=.25,r.copy(e.projectionMatrix),r.elements[8]+=A*2,r.elements[9]+=_*2,r.invert(),l.copy(a),l.elements[8]+=A*2,l.elements[9]+=_*2,l.multiply(i),u.copy(l).multiply(s)}else t.temporalJitter.value.setScalar(0),t.mipLevelScale.value=1,r.copy(e.projectionMatrixInverse),l.copy(a).multiply(i),u.copy(l).multiply(s);h.reinterpretType(e),t.cameraNear.value=e.near,t.cameraFar.value=e.far;const d=e.getWorldPosition(t.cameraPosition.value),p=Le.copy(d).applyMatrix4(t.worldToECEFMatrix.value);try{t.cameraHeight.value=Ue.setFromECEF(p).height}catch{}}copyReprojectionMatrix(e){this.previousProjectionMatrix??=new n.Matrix4,this.previousViewMatrix??=new n.Matrix4,this.previousProjectionMatrix.copy(e.projectionMatrix),this.previousViewMatrix.copy(e.matrixWorldInverse)}setSize(e,t,a,i){this.uniforms.resolution.value.set(e,t),a!=null&&i!=null?this.uniforms.targetUvScale.value.set(e/a,t/i):this.uniforms.targetUvScale.value.setScalar(1),this.previousProjectionMatrix=void 0,this.previousViewMatrix=void 0}setShadowSize(e,t){this.uniforms.shadowTexelSize.value.set(1/e,1/t)}get depthBuffer(){return this.uniforms.depthBuffer.value}set depthBuffer(e){this.uniforms.depthBuffer.value=e}}v([h.defineInt("DEPTH_PACKING")],m.prototype,"depthPacking");v([h.defineExpression("LOCAL_WEATHER_CHANNELS",{validate:o=>/^[rgba]{4}$/.test(o)})],m.prototype,"localWeatherChannels");v([h.define("GLOBAL_WEATHER_MAPPING")],m.prototype,"globalWeatherMapping");v([h.define("SHAPE_DETAIL")],m.prototype,"shapeDetail");v([h.define("TURBULENCE")],m.prototype,"turbulence");v([h.define("SHADOW_LENGTH")],m.prototype,"shadowLength");v([h.define("HAZE")],m.prototype,"haze");v([h.defineInt("MULTI_SCATTERING_OCTAVES",{min:1,max:12})],m.prototype,"multiScatteringOctaves");v([h.define("ACCURATE_SUN_SKY_LIGHT")],m.prototype,"accurateSunSkyLight");v([h.define("ACCURATE_PHASE_FUNCTION")],m.prototype,"accuratePhaseFunction");v([h.defineInt("SHADOW_CASCADE_COUNT",{min:1,max:4})],m.prototype,"shadowCascadeCount");v([h.defineInt("SHADOW_SAMPLE_COUNT",{min:1,max:16})],m.prototype,"shadowSampleCount");v([h.defineFloat("SCATTER_ANISOTROPY_1")],m.prototype,"scatterAnisotropy1");v([h.defineFloat("SCATTER_ANISOTROPY_2")],m.prototype,"scatterAnisotropy2");v([h.defineFloat("SCATTER_ANISOTROPY_MIX")],m.prototype,"scatterAnisotropyMix");const Me=`// Taken from https://gist.github.com/TheRealMJP/c83b8c0f46b63f3a88a5986f4fa982b1
  // TODO: Use 5-taps version: https://www.shadertoy.com/view/MtVGWz
  // Or even 4 taps (requires preprocessing in the input buffer):
  // https://www.shadertoy.com/view/4tyGDD
-@@ -2074,7 +2078,7 @@ void intersectStructuredPlanes(
+@@ -2074,7 +2085,7 @@ void intersectStructuredPlanes(
      stepOffset += stepSize;
    }
  }
@@ -32,7 +55,7 @@ index b60f3375d6aca1b4282fcb6e361a165b53e7523b..c4c9b836383b28bc69dc86886302a205
  precision highp sampler2DArray;
  
  #define VARIANCE_9_SAMPLES 1
-@@ -2171,5 +2175,5 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
+@@ -2171,5 +2182,5 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
    outputColor.a = inputColor.a * (1.0 - clouds.a) + clouds.a;
    #endif // SKIP_RENDERING
  }
@@ -40,10 +63,30 @@ index b60f3375d6aca1b4282fcb6e361a165b53e7523b..c4c9b836383b28bc69dc86886302a205
 +`;var Qe=Object.defineProperty,et=(o,e,t,a)=>{for(var i=void 0,r=o.length-1,s;r>=0;r--)(s=o[r])&&(i=s(e,t,i)||i);return i&&Qe(e,t,i),i};const U=new n.Vector3,tt=new n.Vector2,nt=new n.Matrix3,at=["maxIterationCount","minStepSize","maxStepSize","maxRayDistance","perspectiveStepScale","minDensity","minExtinction","minTransmittance","maxIterationCountToSun","maxIterationCountToGround","minSecondaryStepSize","secondaryStepScale","maxShadowFilterRadius","maxShadowLengthIterationCount","minShadowLengthStepSize","maxShadowLengthRayDistance","hazeDensityScale","hazeExponent","hazeScatteringCoefficient","hazeAbsorptionCoefficient"],it=["multiScatteringOctaves","accurateSunSkyLight","accuratePhaseFunction"],rt=["maxIterationCount","minStepSize","maxStepSize","minDensity","minExtinction","minTransmittance","opticalDepthTailScale"],ot=["temporalJitter"],st=["temporalPass"],ct=["cascadeCount","mapSize","maxFar","farScale","splitMode","splitLambda"],y={type:"change"},ue={resolutionScale:c.resolutionScale,width:w.Resolution.AUTO_SIZE,height:w.Resolution.AUTO_SIZE};class de extends w.Effect{constructor(e=new n.Camera,t,a=z.AtmosphereParameters.DEFAULT){super("CloudsEffect",Je,{attributes:w.EffectAttribute.DEPTH,uniforms:new Map([["cloudsBuffer",new n.Uniform(null)]])}),this.camera=e,this.atmosphere=a,this.cloudLayers=W.DEFAULT.clone(),this.correctAltitude=!0,this.localWeatherRepeat=new n.Vector2().setScalar(100),this.localWeatherOffset=new n.Vector2,this.shapeRepeat=new n.Vector3().setScalar(3e-4),this.shapeOffset=new n.Vector3,this.shapeDetailRepeat=new n.Vector3().setScalar(.006),this.shapeDetailOffset=new n.Vector3,this.turbulenceRepeat=new n.Vector2().setScalar(20),this.worldToECEFMatrix=new n.Matrix4,this.ecefToWorldMatrix=new n.Matrix4,this.altitudeCorrection=new n.Vector3,this.sunDirection=new n.Vector3,this.localWeatherVelocity=new n.Vector2,this.shapeVelocity=new n.Vector3,this.shapeDetailVelocity=new n.Vector3,this._atmosphereOverlay=null,this._atmosphereShadow=null,this._atmosphereShadowLength=null,this.events=new n.EventDispatcher,this.frame=0,this.shadowCascadeCount=0,this.shadowMapSize=new n.Vector2,this.onResolutionChange=()=>{this.setSize(this.resolution.baseWidth,this.resolution.baseHeight)},this.skipRendering=!0;const{resolutionScale:i,width:r,height:s,resolutionX:l=r,resolutionY:u=s}={...ue,...t};this.shadowMaps=new Ee({cascadeCount:c.shadow.cascadeCount,mapSize:c.shadow.mapSize,splitLambda:.6}),this.parameterUniforms=qe({localWeatherTexture:this.proceduralLocalWeather?.texture??null,localWeatherRepeat:this.localWeatherRepeat,localWeatherOffset:this.localWeatherOffset,shapeTexture:this.proceduralShape?.texture??null,shapeRepeat:this.shapeRepeat,shapeOffset:this.shapeOffset,shapeDetailTexture:this.proceduralShapeDetail?.texture??null,shapeDetailRepeat:this.shapeDetailRepeat,shapeDetailOffset:this.shapeDetailOffset,turbulenceTexture:this.proceduralTurbulence?.texture??null,turbulenceRepeat:this.turbulenceRepeat}),this.layerUniforms=Xe(),this.atmosphereUniforms=$e(a,{worldToECEFMatrix:this.worldToECEFMatrix,ecefToWorldMatrix:this.ecefToWorldMatrix,altitudeCorrection:this.altitudeCorrection,sunDirection:this.sunDirection});const d={shadow:this.shadowMaps,parameterUniforms:this.parameterUniforms,layerUniforms:this.layerUniforms,atmosphereUniforms:this.atmosphereUniforms};this.shadowPass=new Ze(d),this.shadowPass.mainCamera=e,this.cloudsPass=new He(d,a),this.cloudsPass.mainCamera=e,this.clouds=h.definePropertyShorthand(h.defineUniformShorthand({},this.cloudsPass.currentMaterial,at),this.cloudsPass.currentMaterial,it),this.shadow=h.definePropertyShorthand(h.defineUniformShorthand({},this.shadowPass.currentMaterial,rt),this.shadowPass.currentMaterial,ot,this.shadowPass,st,this.shadowMaps,ct),this.resolution=new w.Resolution(this,l,u,i),this.resolution.addEventListener("change",this.onResolutionChange)}get mainCamera(){return this.camera}set mainCamera(e){this.camera=e,this.shadowPass.mainCamera=e,this.cloudsPass.mainCamera=e}initialize(e,t,a){this.shadowPass.initialize(e,t,a),this.cloudsPass.initialize(e,t,a)}updateSharedUniforms(e){Ke(this.layerUniforms,this.cloudLayers);const{parameterUniforms:t}=this;t.localWeatherOffset.value.add(tt.copy(this.localWeatherVelocity).multiplyScalar(e)),t.shapeOffset.value.add(U.copy(this.shapeVelocity).multiplyScalar(e)),t.shapeDetailOffset.value.add(U.copy(this.shapeDetailVelocity).multiplyScalar(e));const a=this.worldToECEFMatrix;this.ecefToWorldMatrix.copy(a).invert();const i=this.camera.getWorldPosition(U).applyMatrix4(this.worldToECEFMatrix),r=this.altitudeCorrection;this.correctAltitude?z.getAltitudeCorrectionOffset(i,this.atmosphere.bottomRadius,this.ellipsoid,r):r.setScalar(0);const s=this.ellipsoid.getSurfaceNormal(i,U),l=this.sunDirection.dot(s),u=h.lerp(1e6,1e3,l),d=nt.setFromMatrix4(a).transpose();this.shadowMaps.update(this.camera,U.copy(this.sunDirection).applyMatrix3(d),u)}updateWeatherTextureChannels(){const e=this.cloudLayers.localWeatherChannels;this.cloudsPass.currentMaterial.localWeatherChannels=e,this.shadowPass.currentMaterial.localWeatherChannels=e}updateAtmosphereComposition(){const{shadowMaps:e,shadowPass:t,cloudsPass:a}=this,i=t.currentMaterial.uniforms,r=a.currentMaterial.uniforms,s=this._atmosphereOverlay,l=Object.assign(this._atmosphereOverlay??{},{map:a.outputBuffer});s!==l&&(this._atmosphereOverlay=l,y.target=this,y.property="atmosphereOverlay",this.events.dispatchEvent(y));const u=this._atmosphereShadow,d=Object.assign(this._atmosphereShadow??{},{map:t.outputBuffer,mapSize:e.mapSize,cascadeCount:e.cascadeCount,intervals:r.shadowIntervals.value,matrices:r.shadowMatrices.value,inverseMatrices:i.inverseShadowMatrices.value,far:e.far,topHeight:r.shadowTopHeight.value});u!==d&&(this._atmosphereShadow=d,y.target=this,y.property="atmosphereShadow",this.events.dispatchEvent(y));const p=this._atmosphereShadowLength,f=a.shadowLengthBuffer!=null?Object.assign(this._atmosphereShadowLength??{},{map:a.shadowLengthBuffer}):null;p!==f&&(this._atmosphereShadowLength=f,y.target=this,y.property="atmosphereShadowLength",this.events.dispatchEvent(y))}update(e,t,a=0){const{shadowMaps:i,shadowPass:r,cloudsPass:s}=this;if(i.cascadeCount!==this.shadowCascadeCount||!i.mapSize.equals(this.shadowMapSize)){const{width:l,height:u}=i.mapSize,d=i.cascadeCount;this.shadowMapSize.set(l,u),this.shadowCascadeCount=d,r.setSize(l,u,d),s.setShadowSize(l,u,d)}this.proceduralLocalWeather?.render(e,a),this.proceduralShape?.render(e,a),this.proceduralShapeDetail?.render(e,a),this.proceduralTurbulence?.render(e,a),++this.frame,this.updateSharedUniforms(a),this.updateWeatherTextureChannels(),r.update(e,this.frame,a),s.shadowBuffer=r.outputBuffer,s.update(e,this.frame,a),this.updateAtmosphereComposition(),this.uniforms.get("cloudsBuffer").value=this.cloudsPass.outputBuffer}setSize(e,t){const{resolution:a}=this;a.setBaseSize(e,t);const{width:i,height:r}=a;this.cloudsPass.setSize(i,r)}setDepthTexture(e,t){this.shadowPass.setDepthTexture(e,t),this.cloudsPass.setDepthTexture(e,t)}set qualityPreset(e){const{clouds:t,shadow:a,...i}=_e[e];Object.assign(this,i),Object.assign(this.clouds,t),Object.assign(this.shadow,a)}get localWeatherTexture(){return this.proceduralLocalWeather??this.parameterUniforms.localWeatherTexture.value}set localWeatherTexture(e){e instanceof n.Texture||e==null?(this.proceduralLocalWeather=void 0,this.parameterUniforms.localWeatherTexture.value=e):(this.proceduralLocalWeather=e,this.parameterUniforms.localWeatherTexture.value=e.texture)}get shapeTexture(){return this.proceduralShape??this.parameterUniforms.shapeTexture.value}set shapeTexture(e){e instanceof n.Data3DTexture||e==null?(this.proceduralShape=void 0,this.parameterUniforms.shapeTexture.value=e):(this.proceduralShape=e,this.parameterUniforms.shapeTexture.value=e.texture)}get shapeDetailTexture(){return this.proceduralShapeDetail??this.parameterUniforms.shapeDetailTexture.value}set shapeDetailTexture(e){e instanceof n.Data3DTexture||e==null?(this.proceduralShapeDetail=void 0,this.parameterUniforms.shapeDetailTexture.value=e):(this.proceduralShapeDetail=e,this.parameterUniforms.shapeDetailTexture.value=e.texture)}get turbulenceTexture(){return this.proceduralTurbulence??this.parameterUniforms.turbulenceTexture.value}set turbulenceTexture(e){e instanceof n.Texture||e==null?(this.proceduralTurbulence=void 0,this.parameterUniforms.turbulenceTexture.value=e):(this.proceduralTurbulence=e,this.parameterUniforms.turbulenceTexture.value=e.texture)}get stbnTexture(){return this.cloudsPass.currentMaterial.uniforms.stbnTexture.value}set stbnTexture(e){this.cloudsPass.currentMaterial.uniforms.stbnTexture.value=e,this.shadowPass.currentMaterial.uniforms.stbnTexture.value=e}get resolutionScale(){return this.resolution.scale}set resolutionScale(e){this.resolution.scale=e}get temporalUpscale(){return this.cloudsPass.temporalUpscale}set temporalUpscale(e){this.cloudsPass.temporalUpscale=e}get lightShafts(){return this.cloudsPass.lightShafts}set lightShafts(e){this.cloudsPass.lightShafts=e}get globalWeatherMapping(){return this.cloudsPass.currentMaterial.globalWeatherMapping}set globalWeatherMapping(e){this.cloudsPass.currentMaterial.globalWeatherMapping=e,this.shadowPass.currentMaterial.globalWeatherMapping=e}get shapeDetail(){return this.cloudsPass.currentMaterial.shapeDetail}set shapeDetail(e){this.cloudsPass.currentMaterial.shapeDetail=e,this.shadowPass.currentMaterial.shapeDetail=e}get turbulence(){return this.cloudsPass.currentMaterial.turbulence}set turbulence(e){this.cloudsPass.currentMaterial.turbulence=e,this.shadowPass.currentMaterial.turbulence=e}get haze(){return this.cloudsPass.currentMaterial.haze}set haze(e){this.cloudsPass.currentMaterial.haze=e}get scatteringCoefficient(){return this.parameterUniforms.scatteringCoefficient.value}set scatteringCoefficient(e){this.parameterUniforms.scatteringCoefficient.value=e}get absorptionCoefficient(){return this.parameterUniforms.absorptionCoefficient.value}set absorptionCoefficient(e){this.parameterUniforms.absorptionCoefficient.value=e}get coverage(){return this.parameterUniforms.coverage.value}set coverage(e){this.parameterUniforms.coverage.value=e}get turbulenceDisplacement(){return this.parameterUniforms.turbulenceDisplacement.value}set turbulenceDisplacement(e){this.parameterUniforms.turbulenceDisplacement.value=e}get scatterAnisotropy1(){return this.cloudsPass.currentMaterial.scatterAnisotropy1}set scatterAnisotropy1(e){this.cloudsPass.currentMaterial.scatterAnisotropy1=e}get scatterAnisotropy2(){return this.cloudsPass.currentMaterial.scatterAnisotropy2}set scatterAnisotropy2(e){this.cloudsPass.currentMaterial.scatterAnisotropy2=e}get scatterAnisotropyMix(){return this.cloudsPass.currentMaterial.scatterAnisotropyMix}set scatterAnisotropyMix(e){this.cloudsPass.currentMaterial.scatterAnisotropyMix=e}get skyLightScale(){return this.cloudsPass.currentMaterial.uniforms.skyLightScale.value}set skyLightScale(e){this.cloudsPass.currentMaterial.uniforms.skyLightScale.value=e}get groundBounceScale(){return this.cloudsPass.currentMaterial.uniforms.groundBounceScale.value}set groundBounceScale(e){this.cloudsPass.currentMaterial.uniforms.groundBounceScale.value=e}get powderScale(){return this.cloudsPass.currentMaterial.uniforms.powderScale.value}set powderScale(e){this.cloudsPass.currentMaterial.uniforms.powderScale.value=e}get powderExponent(){return this.cloudsPass.currentMaterial.uniforms.powderExponent.value}set powderExponent(e){this.cloudsPass.currentMaterial.uniforms.powderExponent.value=e}get atmosphereOverlay(){return this._atmosphereOverlay}get atmosphereShadow(){return this._atmosphereShadow}get atmosphereShadowLength(){return this._atmosphereShadowLength}get irradianceTexture(){return this.cloudsPass.currentMaterial.irradianceTexture}set irradianceTexture(e){this.cloudsPass.currentMaterial.irradianceTexture=e}get scatteringTexture(){return this.cloudsPass.currentMaterial.scatteringTexture}set scatteringTexture(e){this.cloudsPass.currentMaterial.scatteringTexture=e}get transmittanceTexture(){return this.cloudsPass.currentMaterial.transmittanceTexture}set transmittanceTexture(e){this.cloudsPass.currentMaterial.transmittanceTexture=e}get singleMieScatteringTexture(){return this.cloudsPass.currentMaterial.singleMieScatteringTexture}set singleMieScatteringTexture(e){this.cloudsPass.currentMaterial.singleMieScatteringTexture=e}get higherOrderScatteringTexture(){return this.cloudsPass.currentMaterial.higherOrderScatteringTexture}set higherOrderScatteringTexture(e){this.cloudsPass.currentMaterial.higherOrderScatteringTexture=e}get ellipsoid(){return this.cloudsPass.currentMaterial.ellipsoid}set ellipsoid(e){this.cloudsPass.currentMaterial.ellipsoid=e}get sunAngularRadius(){return this.cloudsPass.currentMaterial.sunAngularRadius}set sunAngularRadius(e){this.cloudsPass.currentMaterial.sunAngularRadius=e}}et([h.define("SKIP_RENDERING")],de.prototype,"skipRendering");const lt=128,ht=32,V="45a1c6c1bb9fd38b3680fd120795ff4c32df68ff",ut=`https://media.githubusercontent.com/media/takram-design-engineering/three-geospatial/${V}/packages/clouds/assets/local_weather.png`,dt=`https://media.githubusercontent.com/media/takram-design-engineering/three-geospatial/${V}/packages/clouds/assets/shape.bin`,pt=`https://media.githubusercontent.com/media/takram-design-engineering/three-geospatial/${V}/packages/clouds/assets/shape_detail.bin`,ft=`https://media.githubusercontent.com/media/takram-design-engineering/three-geospatial/${V}/packages/clouds/assets/turbulence.png`;exports.CLOUD_SHAPE_DETAIL_TEXTURE_SIZE=ht;exports.CLOUD_SHAPE_TEXTURE_SIZE=lt;exports.CloudLayer=S;exports.CloudLayers=W;exports.CloudsEffect=de;exports.DEFAULT_LOCAL_WEATHER_URL=ut;exports.DEFAULT_SHAPE_DETAIL_URL=pt;exports.DEFAULT_SHAPE_URL=dt;exports.DEFAULT_TURBULENCE_URL=ft;exports.DensityProfile=b;exports.cloudsPassOptionsDefaults=ue;
  //# sourceMappingURL=shared.cjs.map
 diff --git a/build/shared.js b/build/shared.js
-index 977e2568d1a15db2e07b435d3efb5c1dc6c8e4f2..8e2441cf3df18b55c7288abdf70fd096a28f20fe 100644
+index 977e2568d1a15db2e07b435d3efb5c1dc6c8e4f2..0a1fc7d9c4f38d97493c8b6f871729a6fa66ea84 100644
 --- a/build/shared.js
 +++ b/build/shared.js
-@@ -1575,7 +1575,11 @@ vec2 getCubeSphereUv(const vec3 position) {
+@@ -577,6 +577,7 @@ uniform float cameraHeight;
+ uniform vec2 temporalJitter;
+ uniform vec2 targetUvScale;
+ uniform float mipLevelScale;
++uniform float sceneDepthScale;
+ 
+ // Scattering
+ const vec2 scatterAnisotropy = vec2(SCATTER_ANISOTROPY_1, SCATTER_ANISOTROPY_2);
+@@ -1344,7 +1345,10 @@ float getRayDistanceToScene(const vec3 rayDirection, out float viewZ) {
+   if (depth < 1.0 - 1e-7) {
+     depth = reverseLogDepth(depth, cameraNear, cameraFar);
+     viewZ = getViewZ(depth);
+-    return -viewZ / dot(rayDirection, vCameraDirection);
++    // Convert native world-space scene depth into the ECEF length units used
++    // by the cloud raymarch. The transformed camera direction is normalized
++    // before recovering the world ray parameter.
++    return -viewZ * sceneDepthScale / dot(rayDirection, normalize(vCameraDirection));
+   }
+   viewZ = 0.0;
+   return 0.0;
+@@ -1575,7 +1579,11 @@ vec2 getCubeSphereUv(const vec3 position) {
  }
  
  vec2 getGlobeUv(const vec3 position) {
@@ -55,7 +98,15 @@ index 977e2568d1a15db2e07b435d3efb5c1dc6c8e4f2..8e2441cf3df18b55c7288abdf70fd096
  }
  
  float getMipLevel(const vec2 uv) {
-@@ -2003,7 +2007,7 @@ class g extends Ze {
+@@ -1956,6 +1964,7 @@ class g extends Ze {
+           temporalJitter: new r(new f()),
+           targetUvScale: new r(new f()),
+           mipLevelScale: new r(1),
++          sceneDepthScale: new r(1),
+           stbnTexture: new r(null),
+           // Scattering
+           skyLightScale: new r(1),
+@@ -2003,7 +2012,7 @@ class g extends Ze {
          }
        },
        a
@@ -64,7 +115,7 @@ index 977e2568d1a15db2e07b435d3efb5c1dc6c8e4f2..8e2441cf3df18b55c7288abdf70fd096
    }
    onBeforeRender(e, t, n, a, i, s) {
      const l = this.defines.USE_LOGARITHMIC_DEPTH_BUFFER != null, h = e.capabilities.logarithmicDepthBuffer;
-@@ -2061,6 +2065,9 @@ y([
+@@ -2061,6 +2070,9 @@ y([
      validate: (o) => /^[rgba]{4}$/.test(o)
    })
  ], g.prototype, "localWeatherChannels");
@@ -74,7 +125,7 @@ index 977e2568d1a15db2e07b435d3efb5c1dc6c8e4f2..8e2441cf3df18b55c7288abdf70fd096
  y([
    x("SHAPE_DETAIL")
  ], g.prototype, "shapeDetail");
-@@ -3078,7 +3085,7 @@ class _ extends Q {
+@@ -3078,7 +3090,7 @@ class _ extends Q {
          TEMPORAL_PASS: "1",
          TEMPORAL_JITTER: "1"
        }
@@ -83,7 +134,7 @@ index 977e2568d1a15db2e07b435d3efb5c1dc6c8e4f2..8e2441cf3df18b55c7288abdf70fd096
    }
    setSize(e, t) {
      this.uniforms.resolution.value.set(e, t);
-@@ -3089,6 +3096,9 @@ M([
+@@ -3089,6 +3101,9 @@ M([
      validate: (o) => /^[rgba]{4}$/.test(o)
    })
  ], _.prototype, "localWeatherChannels");
@@ -93,7 +144,7 @@ index 977e2568d1a15db2e07b435d3efb5c1dc6c8e4f2..8e2441cf3df18b55c7288abdf70fd096
  M([
    L("CASCADE_COUNT", { min: 1, max: 4 })
  ], _.prototype, "cascadeCount");
-@@ -3648,6 +3658,12 @@ class Xt extends ze {
+@@ -3648,6 +3663,12 @@ class Xt extends ze {
    set lightShafts(e) {
      this.cloudsPass.lightShafts = e;
    }
@@ -127,10 +178,31 @@ index 64a5b9e4eb96ae5d6c58d353f840c956aad18435..6d1906383128efba95bec4d9eb0435b1
      return this.cloudsPass.currentMaterial.shapeDetail
    }
 diff --git a/src/CloudsMaterial.ts b/src/CloudsMaterial.ts
-index f9e96fbef9adf3b31dac4e14fb572daa2b862260..6b93dee4a336ead6464a23192234483f99bd96f6 100644
+index f9e96fbef9adf3b31dac4e14fb572daa2b862260..650e4f35b7f76d507913a5d64bf176823563cd49 100644
 --- a/src/CloudsMaterial.ts
 +++ b/src/CloudsMaterial.ts
-@@ -441,6 +441,9 @@ export class CloudsMaterial extends AtmosphereMaterialBase {
+@@ -88,6 +88,12 @@ export interface CloudsMaterialUniforms
+   temporalJitter: Uniform<Vector2>
+   targetUvScale: Uniform<Vector2>
+   mipLevelScale: Uniform<number>
++  /**
++   * Scale from the scene's world-space depth parameter to the ECEF length
++   * units used by the cloud raymarch. The stock path is 1; a normalized
++   * globe bridge supplies its uniform metres-per-world-unit scale.
++   */
++  sceneDepthScale: Uniform<number>
+   stbnTexture: Uniform<Data3DTexture | null>
+ 
+   // Scattering
+@@ -206,6 +212,7 @@ export class CloudsMaterial extends AtmosphereMaterialBase {
+           temporalJitter: new Uniform(new Vector2()),
+           targetUvScale: new Uniform(new Vector2()),
+           mipLevelScale: new Uniform(1),
++          sceneDepthScale: new Uniform(1),
+           stbnTexture: new Uniform(null),
+ 
+           // Scattering
+@@ -441,6 +448,9 @@ export class CloudsMaterial extends AtmosphereMaterialBase {
    })
    localWeatherChannels = 'rgba'
  
@@ -154,6 +226,33 @@ index e078da1ab7e0d2b61a58c816fd06c2b503986ce3..1012bcba93bdfb8d1d26e33ff4b303c4
    @defineInt('CASCADE_COUNT', { min: 1, max: 4 })
    cascadeCount: number = defaults.shadow.cascadeCount
  
+diff --git a/src/shaders/clouds.frag b/src/shaders/clouds.frag
+index 039696bc74da4c8a8a64966b20170bd8d124d684..a4adb8f4bd2f3ab40581717d37499a9c48889ae8 100644
+--- a/src/shaders/clouds.frag
++++ b/src/shaders/clouds.frag
+@@ -47,6 +47,7 @@ uniform float cameraHeight;
+ uniform vec2 temporalJitter;
+ uniform vec2 targetUvScale;
+ uniform float mipLevelScale;
++uniform float sceneDepthScale;
+ 
+ // Scattering
+ const vec2 scatterAnisotropy = vec2(SCATTER_ANISOTROPY_1, SCATTER_ANISOTROPY_2);
+@@ -814,7 +815,13 @@ float getRayDistanceToScene(const vec3 rayDirection, out float viewZ) {
+   if (depth < 1.0 - 1e-7) {
+     depth = reverseLogDepth(depth, cameraNear, cameraFar);
+     viewZ = getViewZ(depth);
+-    return -viewZ / dot(rayDirection, vCameraDirection);
++    // `viewZ` is reconstructed in the native scene's world units while the
++    // cloud ray is marched in ECEF metres. The vertex path applies the
++    // world-to-ECEF matrix to both directions, so normalize the transformed
++    // camera direction before recovering the world ray parameter and then
++    // convert that parameter to the ECEF distance contract explicitly.
++    return -viewZ * sceneDepthScale /
++      dot(rayDirection, normalize(vCameraDirection));
+   }
+   viewZ = 0.0;
+   return 0.0;
 diff --git a/src/shaders/clouds.glsl b/src/shaders/clouds.glsl
 index e790863437b0a1200f746bf038c7e9407760d9b3..7285c0c8bc1452e1efb7c7132b340174e393f3c4 100644
 --- a/src/shaders/clouds.glsl
@@ -184,10 +283,18 @@ index 23a295443e41148f8e65be648c6386b77941d265..3bb40f1d0abe837669c7d7f5972de570
      set shapeDetail(value: boolean);
      get turbulence(): boolean;
 diff --git a/types/CloudsMaterial.d.ts b/types/CloudsMaterial.d.ts
-index 5944636f51b0d0c902edde3dad168b9f9cfaf25f..4e695d32213826b371cd42c22e8f3e195d840561 100644
+index 5944636f51b0d0c902edde3dad168b9f9cfaf25f..0633f414c7fe38720e833c5c6e5cf65458f021d5 100644
 --- a/types/CloudsMaterial.d.ts
 +++ b/types/CloudsMaterial.d.ts
-@@ -67,6 +67,7 @@ export declare class CloudsMaterial extends AtmosphereMaterialBase {
+@@ -21,6 +21,7 @@ export interface CloudsMaterialUniforms extends CloudParameterUniforms, CloudLay
+     temporalJitter: Uniform<Vector2>;
+     targetUvScale: Uniform<Vector2>;
+     mipLevelScale: Uniform<number>;
++    sceneDepthScale: Uniform<number>;
+     stbnTexture: Uniform<Data3DTexture | null>;
+     skyLightScale: Uniform<number>;
+     groundBounceScale: Uniform<number>;
+@@ -67,6 +68,7 @@ export declare class CloudsMaterial extends AtmosphereMaterialBase {
      set depthBuffer(value: Texture | null);
      depthPacking: number;
      localWeatherChannels: string;
