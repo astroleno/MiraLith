@@ -54,6 +54,11 @@ const CONTROL_CAMERA_ALTITUDE_M =
 const CONTROL_SCENE_RADIUS_M = TAKRAM_PARITY_BOTTOM_RADIUS_M;
 const DEG_TO_RAD = Math.PI / 180;
 const TEMPORAL_CONVERGENCE_FRAME_COUNT = 32;
+// Keep Takram's native 3D shape/detail sampling, but make the macro forms
+// legible from the LuBirth opening camera instead of a field of tiny cloudlets.
+// Both stock and V3 use the same native scale so parity remains meaningful.
+const TAKRAM_PARITY_SHAPE_REPEAT = 0.000025;
+const TAKRAM_PARITY_SHAPE_DETAIL_REPEAT = 0.0006;
 
 const scratchCameraPosition = new Vector3();
 const scratchCameraTarget = new Vector3();
@@ -269,6 +274,8 @@ export function TakramStockParityPipeline({
     clouds.localWeatherRepeat.set(...adapter.localWeatherRepeat);
     clouds.localWeatherOffset.set(...adapter.localWeatherOffset);
     clouds.localWeatherVelocity.set(0, 0);
+    clouds.shapeRepeat.setScalar(TAKRAM_PARITY_SHAPE_REPEAT);
+    clouds.shapeDetailRepeat.setScalar(TAKRAM_PARITY_SHAPE_DETAIL_REPEAT);
   }, [adapter]);
 
   useEffect(() => {
@@ -568,7 +575,11 @@ export function TakramStockParityPipeline({
           <EffectComposer enableNormalPass>
             <Clouds
               ref={setCloudsRef}
-              {...(view === "control" ? { coverage: TAKRAM_PARITY_CONTROL.coverage } : {})}
+              // The opening bridge is viewed from space, so the stock native
+              // 0.3 coverage threshold leaves the V3 weather field as sparse
+              // pinpricks. Keep the same native coverage on stock/V3 opening
+              // candidates and reserve the official 0.4 value for control.
+              coverage={view === "control" ? TAKRAM_PARITY_CONTROL.coverage : 0.55}
               disableDefaultLayers={adapter.disableDefaultLayers}
               globalWeatherMapping={input === "v3"}
               localWeatherTexture={runtimeAssets.localWeather}

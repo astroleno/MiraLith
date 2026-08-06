@@ -169,7 +169,9 @@ const FINGERPRINT_CLOUD_UNIFORMS = [
   "powderScale",
   "powderExponent",
   "scatteringCoefficient",
-  "absorptionCoefficient"
+  "absorptionCoefficient",
+  "shapeRepeat",
+  "shapeDetailRepeat"
 ] as const;
 
 const FINGERPRINT_SHADOW_UNIFORMS = [
