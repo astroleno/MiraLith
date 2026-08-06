@@ -135,7 +135,7 @@
   "classificationRationale": "The upstream control remains a visual PASS and stock opening remains the documented Takram stock space-view/mapping limitation. After the world-depth-to-ECEF scale fix, spherical mapping, source-footprint-gated V3 weather transform and four explicit layers are applied, the LuBirth opening still renders no visible V3 cloud volume. This is recorded as V3_ADAPTER_VISUAL_FAIL, not TAKRAM_NATIVE_OPENING_FAIL or a cost conclusion. The renderer fingerprint is resolved at runtime and the stock/V3 hashes are equal; a native non-adapter drift changes the hash in unit coverage.",
   "reproduction": {
     "command": "MIRALITH_TAKRAM_PARITY_CAPTURE=1 pnpm exec playwright test tests/e2e/lubirth-takram-parity-visual.spec.ts --project=desktop --workers=1",
-    "result": "PASS (5 control diagnostics + 16 opening frame captures + corrected depth/UV/density/sample-count diagnostics)"
+    "result": "PASS (historical 5 control diagnostics + 16 opening frame captures; corrected revalidation is recorded below)"
   },
   "correctedRevalidation": {
     "command": "MIRALITH_TAKRAM_PARITY_CAPTURE=1 pnpm exec playwright test --config=playwright.config.ts tests/e2e/lubirth-takram-parity-visual.spec.ts --project=desktop --grep 'opening evidence exposes depth' --workers=1",

@@ -81,7 +81,7 @@
   "classificationRationale": "The upstream near-ground stock control passes with the same resolved native renderer fingerprint and assets. After the world-depth-to-ECEF scale fix (including the non-unit opening scale), this opening still uses the known unsupported stock envelope: cube-sphere local weather mapping, local repeat [100,100], default 0.75–8 km layers, and a space-view/global framing. The absence of a readable stock cloud volume remains input/mapping/framing-specific, not evidence of an input-independent native depth, BSM, resolve, or AerialPerspective failure.",
   "reproduction": {
     "command": "MIRALITH_TAKRAM_PARITY_CAPTURE=1 pnpm exec playwright test tests/e2e/lubirth-takram-parity-visual.spec.ts --project=desktop --workers=1",
-    "result": "PASS (5 control diagnostics + 16 opening frame captures + corrected depth/UV/density/sample-count diagnostics)"
+    "result": "PASS (historical 5 control diagnostics + 16 opening frame captures; corrected revalidation is recorded below)"
   },
   "correctedRevalidation": {
     "command": "MIRALITH_PLAYWRIGHT_PORT=3100 pnpm exec playwright test --config=playwright.config.ts tests/e2e/lubirth-takram-parity.spec.ts --project=desktop --grep 'V3 changes' --workers=1",
