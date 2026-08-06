@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAt": "2026-08-05T19:01:50Z",
-  "baseCommit": "61caac1",
+  "reviewedAt": "2026-08-06T08:49:58Z",
+  "baseCommit": "1fe28d9",
   "upstreamControl": "PASS",
   "decision": "STOCK_OPENING_LIMITATION",
   "scope": "Task 0T unmodified Takram stock input in the Task -1R LuBirth opening mirror. This decision does not evaluate the V3 adapter.",
@@ -22,6 +22,16 @@
     "beerShadowMaps": true,
     "temporalUpscale": true,
     "aerialPerspective": true
+  },
+  "sceneDepthContract": {
+    "decision": "PASS",
+    "contract": "world-depth-to-ecef-v1",
+    "sceneDepthScale": "full worldToECEF linear scale",
+    "openingScaleSamples": {
+      "progress0.06": 652463.8418681555,
+      "progress0.18": 671531.589654256
+    },
+    "depthRegression": "The corrected native shader receives the non-unit scale; depth-enabled and depth-disabled opening diagnostics were captured at progress 0.06."
   },
   "captures": {
     "contactSheet": {
@@ -68,10 +78,15 @@
       "evidence": "No full capture contains a continuous bright-white cloud rim."
     }
   ],
-  "classificationRationale": "The upstream near-ground stock control passes with the same renderer fingerprint and assets, while this opening uses the known unsupported stock envelope: cube-sphere local weather mapping, local repeat [100,100], default 0.75–8 km layers, and a space-view/global framing. The absence of a readable stock cloud volume is therefore input/mapping/framing-specific, not evidence of an input-independent native depth, BSM, resolve, or AerialPerspective failure.",
+  "classificationRationale": "The upstream near-ground stock control passes with the same resolved native renderer fingerprint and assets. After the world-depth-to-ECEF scale fix (including the non-unit opening scale), this opening still uses the known unsupported stock envelope: cube-sphere local weather mapping, local repeat [100,100], default 0.75–8 km layers, and a space-view/global framing. The absence of a readable stock cloud volume remains input/mapping/framing-specific, not evidence of an input-independent native depth, BSM, resolve, or AerialPerspective failure.",
   "reproduction": {
     "command": "MIRALITH_TAKRAM_PARITY_CAPTURE=1 pnpm exec playwright test tests/e2e/lubirth-takram-parity-visual.spec.ts --project=desktop --workers=1",
-    "result": "PASS (5 control diagnostics + 16 opening frame/diagnostic captures)"
+    "result": "PASS (5 control diagnostics + 16 opening frame captures + corrected depth/UV/density/sample-count diagnostics)"
+  },
+  "correctedRevalidation": {
+    "command": "MIRALITH_PLAYWRIGHT_PORT=3100 pnpm exec playwright test --config=playwright.config.ts tests/e2e/lubirth-takram-parity.spec.ts --project=desktop --grep 'V3 changes' --workers=1",
+    "result": "PASS; stock and V3 opening report the same runtime fingerprint and non-unit scene-depth scale",
+    "runtimeFingerprintHash": "fnv1a-64:3ae11ddbe1c87448"
   },
   "nextAuthorizedWork": "Task 0V completed with V3_ADAPTER_VISUAL_FAIL; Task 0P remains locked because no opening visual-pass candidate exists."
 }

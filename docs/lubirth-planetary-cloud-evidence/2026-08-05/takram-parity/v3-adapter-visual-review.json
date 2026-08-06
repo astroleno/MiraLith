@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAt": "2026-08-05T19:01:50Z",
-  "baseCommit": "61caac1",
+  "reviewedAt": "2026-08-06T08:49:58Z",
+  "baseCommit": "1fe28d9",
   "candidate": "v3",
   "decision": "V3_ADAPTER_VISUAL_FAIL",
   "scope": "Task 0V spherical-weather adapter over the complete native Takram Clouds -> temporal resolve -> AerialPerspective path. This decision is specific to the V3 adapter and does not reject Takram or measure cost.",
@@ -41,7 +41,7 @@
     ]
   },
   "nativeRenderer": {
-    "rendererFingerprintHash": "sha256:43c23b5207ad4c05ab08d176dfe05c8f4a7ade00b296b2612912b15f85bd2c7a",
+    "rendererFingerprintHash": "fnv1a-64:3ae11ddbe1c87448",
     "sameFingerprintAsStock": true,
     "features": {
       "beerShadowMaps": true,
@@ -55,6 +55,16 @@
       "resolutionScale": 1
     }
   },
+  "sceneDepthContract": {
+    "decision": "PASS",
+    "contract": "world-depth-to-ecef-v1",
+    "sceneDepthScale": "full worldToECEF linear scale",
+    "openingScaleSamples": {
+      "progress0.06": 652463.8418681555,
+      "progress0.18": 671531.589654256
+    },
+    "depthRegression": "The corrected native shader receives the non-unit scale; depth-enabled and depth-disabled opening diagnostics were captured at progress 0.06."
+  },
   "captures": {
     "contactSheet": {
       "path": "opening-parity-contact-sheet.png",
@@ -62,7 +72,7 @@
     },
     "fullByProgress": {
       "0.00": { "path": "captures/opening-v3-0-00-full.png", "sha256": "1a30bd812b0bfeb373481ac78afe9b5ef23c5aee639997dfe189c98f5a9d881d" },
-      "0.06": { "path": "captures/opening-v3-0-06-full.png", "sha256": "a54518338739a722c9895ed7e8916c19bc618d88c503cbf8536034ed7ca0d748" },
+      "0.06": { "path": "captures/opening-v3-0-06-full.png", "sha256": "cac3fdedbb338f7abacf7c770d0e0cd9629587458b3f7d845efcabd8ebb19a9d" },
       "0.12": { "path": "captures/opening-v3-0-12-full.png", "sha256": "bbf0a5b6671c0e9ffa8ea648a28a5ad5dd8ccceb67aac90a6f2849e6ad44ec3b" },
       "0.18": { "path": "captures/opening-v3-0-18-full.png", "sha256": "627cb12be61fdf8c7ba1a10a7c2498e29e025d6ff0bfe644218fb2cfc9ed6f21" }
     },
@@ -71,6 +81,13 @@
       "0.06": { "path": "captures/opening-v3-0-06-cloud-raw.png", "sha256": "c3e3e9e2ec4afadf90d8d25bae0110aab98e06d89966d5b3062f5e8b40b38c27" },
       "0.12": { "path": "captures/opening-v3-0-12-cloud-raw.png", "sha256": "d3e8791af003371babad2317132a4964653169f4251e5e587a12443b1fed4c74" },
       "0.18": { "path": "captures/opening-v3-0-18-cloud-raw.png", "sha256": "d80c18b5b6ab80ce5500e6728d3f460b550dbe66a59d75adc861c9c84e08e2a7" }
+    },
+    "correctedDiagnosticsAtProgress0.06": {
+      "full": { "path": "captures/opening-v3-0-06-full.png", "sha256": "cac3fdedbb338f7abacf7c770d0e0cd9629587458b3f7d845efcabd8ebb19a9d" },
+      "depthOff": { "path": "captures/opening-v3-0-06-depth-off.png", "sha256": "d65480f0e893cf37a00a235f04be12f520fcfd876c295b9e8a74d436b572dbee" },
+      "uvDebug": { "path": "captures/opening-v3-0-06-uv-debug.png", "sha256": "d0feb552149786beffdb6e75da80e274426cc60484eef1e0088d6157ab63c522" },
+      "densityDebug": { "path": "captures/opening-v3-0-06-density-debug.png", "sha256": "29a22b39bd36d390180bacd7f7ed21528123e12d5cf7bf93750967f2da827089" },
+      "sampleCountDebug": { "path": "captures/opening-v3-0-06-sample-count-debug.png", "sha256": "8c1b24194d14c0f0ac9d34840617b2779f811bcb4563249747bfdc5465fb5c28" }
     }
   },
   "checks": [
@@ -115,10 +132,15 @@
       "evidence": "The V3 frames contain no continuous bright-white shell. This is not counted as a visual pass because the required cloud volume is absent."
     }
   ],
-  "classificationRationale": "The upstream control remains a visual PASS and stock opening remains the documented Takram stock space-view/mapping limitation. After the spherical mapping, source-footprint-gated V3 weather transform and four explicit layers are applied, the LuBirth opening still renders no visible V3 cloud volume. This is recorded as V3_ADAPTER_VISUAL_FAIL, not TAKRAM_NATIVE_OPENING_FAIL or a cost conclusion.",
+  "classificationRationale": "The upstream control remains a visual PASS and stock opening remains the documented Takram stock space-view/mapping limitation. After the world-depth-to-ECEF scale fix, spherical mapping, source-footprint-gated V3 weather transform and four explicit layers are applied, the LuBirth opening still renders no visible V3 cloud volume. This is recorded as V3_ADAPTER_VISUAL_FAIL, not TAKRAM_NATIVE_OPENING_FAIL or a cost conclusion. The renderer fingerprint is resolved at runtime and the stock/V3 hashes are equal; a native non-adapter drift changes the hash in unit coverage.",
   "reproduction": {
     "command": "MIRALITH_TAKRAM_PARITY_CAPTURE=1 pnpm exec playwright test tests/e2e/lubirth-takram-parity-visual.spec.ts --project=desktop --workers=1",
-    "result": "PASS (5 control diagnostics + 16 opening frame/diagnostic captures)"
+    "result": "PASS (5 control diagnostics + 16 opening frame captures + corrected depth/UV/density/sample-count diagnostics)"
+  },
+  "correctedRevalidation": {
+    "command": "MIRALITH_TAKRAM_PARITY_CAPTURE=1 pnpm exec playwright test --config=playwright.config.ts tests/e2e/lubirth-takram-parity-visual.spec.ts --project=desktop --grep 'opening evidence exposes depth' --workers=1",
+    "result": "PASS (5 corrected V3 diagnostics at progress 0.06)",
+    "runtimeFingerprintHash": "fnv1a-64:3ae11ddbe1c87448"
   },
   "nextAuthorizedWork": "NONE",
   "blockedWork": "Task 0P V3 cost/promotion window is locked because no V3 visual-pass candidate exists. Original Task 0-8 remains locked; this evidence does not reject Takram or authorize a disposable renderer fallback."

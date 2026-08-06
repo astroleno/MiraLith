@@ -1,9 +1,34 @@
 {
-  "schemaVersion": 1,
-  "recordedAt": "2026-08-05T19:01:50Z",
-  "baseCommit": "61caac1",
+  "schemaVersion": 2,
+  "recordedAt": "2026-08-06T08:49:58Z",
+  "baseCommit": "1fe28d9",
   "v3InputContract": "V3_INPUT_CONTRACT_PASS",
   "disposableRenderer": "DISPOSABLE_RENDERER_REJECTED",
+  "coordinateDepth": {
+    "decision": "PASS",
+    "contract": "world-depth-to-ecef-v1",
+    "sceneDepthUniform": "sceneDepthScale",
+    "scaleSource": "full worldToECEF linear scale, not composition-radius-only scale",
+    "nonUnitOpeningScale": true,
+    "openingScaleSamples": {
+      "progress0.06": 652463.8418681555,
+      "progress0.18": 671531.589654256
+    },
+    "regression": "V3 route E2E asserts sceneDepthScale = 6360000 / earthWorldScale; depth-enabled and depth-disabled GPU diagnostics are captured at progress 0.06"
+  },
+  "rendererFingerprint": {
+    "decision": "PASS",
+    "schemaVersion": 2,
+    "source": "resolved CloudsEffect, BSM, AerialPerspective, native uniforms/defines, render targets and shared asset hashes",
+    "openingRuntimeHash": "fnv1a-64:3ae11ddbe1c87448",
+    "adapterExclusions": ["GLOBAL_WEATHER_MAPPING", "weather texture", "weather repeat/offset", "V3 cloud layers"],
+    "negativeDriftTest": "maxIterationCount mutation changes the fnv1a-64 hash"
+  },
+  "visualRevalidation": {
+    "progress": 0.06,
+    "diagnostics": ["full", "depth-off", "uv-debug", "density-debug", "sample-count-debug"],
+    "nonUnitDepthRegression": "sceneDepthScale is non-unit in opening telemetry and depth-enabled/depth-disabled GPU diagnostics are captured"
+  },
   "stockSetup": "PASS",
   "upstreamControl": "PASS",
   "stockOpeningVisual": "STOCK_OPENING_LIMITATION",
@@ -17,5 +42,5 @@
     "v3": false
   },
   "nextAuthorizedWork": "NONE",
-  "stopReason": "V3 opening visual gate failed after the spherical weather mapping and four-layer adapter were exercised on the complete native Takram path. No Task 0P cost or promotion conclusion is authorized."
+  "stopReason": "After the world-depth-to-ECEF scene-depth contract and runtime fingerprint were corrected and revalidated, the V3 opening visual gate still fails: no readable V3 cloud volume appears in the corrected native path. No Task 0P cost or promotion conclusion is authorized."
 }

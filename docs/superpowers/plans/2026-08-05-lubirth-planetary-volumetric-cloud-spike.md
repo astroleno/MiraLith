@@ -1,7 +1,7 @@
 # LuBirth Takram-first 行星体积云 Spike 实施计划
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan task-by-task. 不得并行越过 0T/0V/0P checkpoint，也不得把 parity route 提升为默认产品路径。
-> 状态：Task -1 / Task -1R、Task 0T、Task 0V 已完成并留下可复核 evidence。当前结论是 `V3_INPUT_CONTRACT_PASS`、`DISPOSABLE_RENDERER_REJECTED`、`upstreamControl=PASS`、`stockOpeningVisual=STOCK_OPENING_LIMITATION`、`v3AdapterVisual=V3_ADAPTER_VISUAL_FAIL`；Task 0P 与原 Task 0–8 仍锁定。
+> 状态：Task -1 / Task -1R、Task 0T、Task 0V 已完成并留下可复核 evidence。2026-08-06 复核修正了 LuBirth opening 的 `world-depth-to-ecef-v1` scene-depth scale、V3 纬度 clamp、运行时 renderer fingerprint，并重抓 depth/UV/density/sample-count diagnostics；修正后结论仍是 `V3_INPUT_CONTRACT_PASS`、`DISPOSABLE_RENDERER_REJECTED`、`upstreamControl=PASS`、`stockOpeningVisual=STOCK_OPENING_LIMITATION`、`v3AdapterVisual=V3_ADAPTER_VISUAL_FAIL`；Task 0P 与原 Task 0–8 仍锁定。
 > 计划日期：2026-08-05。
 > 主实现：[takram-design-engineering/three-geospatial@b012ad0](https://github.com/takram-design-engineering/three-geospatial/tree/b012ad06d858fc035d88aacfd73f092f93c994e4)，MIT。
 > 正式性能依据：[LuBirth 混合云架构 Phase -1（当前 line 911）](../../lubirth-hybrid-cloud-architecture.md#phase--1---visual-kill-spike)。
@@ -789,7 +789,7 @@ git commit -m "feat(lubirth): add stock takram parity spike"
 
 > **前置条件：** Task 0T 的 `upstreamControl=PASS`，且 stock opening 为 `PASS` 或 `STOCK_OPENING_LIMITATION`。目标是在保留完整 Takram renderer 的前提下，让 V3 adapter 明确拥有 global weather mapping 与四层体积语义；stock 仍走原 cube-sphere/default layers，不能被补丁静默改变。
 >
-> **执行结果（2026-08-05）：** 0V-A/B/C 已实现并通过 contract/unit/route/visual suite。V3 adapter 视觉结论为 `V3_ADAPTER_VISUAL_FAIL`；详见 [`v3-adapter-visual-review.json`](../../lubirth-planetary-cloud-evidence/2026-08-05/takram-parity/v3-adapter-visual-review.json) 与 [`checkpoint.json`](../../lubirth-planetary-cloud-evidence/2026-08-05/takram-parity/checkpoint.json)。因此不执行 Task 0P，且不解锁原 Task 0–8。
+> **执行结果（2026-08-06 复核）：** 0V-A/B/C 已实现并通过 contract/unit/route/visual suite；另补齐 native scene-depth scale contract、CommonJS/ESM patch audit、V3 极区 clamp 与 runtime fingerprint drift test。V3 adapter 视觉结论在修正后的 native path 上仍为 `V3_ADAPTER_VISUAL_FAIL`；详见 [`v3-adapter-visual-review.json`](../../lubirth-planetary-cloud-evidence/2026-08-05/takram-parity/v3-adapter-visual-review.json) 与 [`checkpoint.json`](../../lubirth-planetary-cloud-evidence/2026-08-05/takram-parity/checkpoint.json)。因此不执行 Task 0P，且不解锁原 Task 0–8。
 
 **Files**
 

@@ -22,6 +22,8 @@
     "playwrightProject": "desktop"
   },
   "nativeRendererFingerprint": {
+    "runtimeResolvedHash": "fnv1a-64:3ae11ddbe1c87448",
+    "fingerprintContract": "resolved CloudsEffect/BSM/AerialPerspective state; adapter-owned weather/layer fields excluded",
     "composerOrder": "Clouds>AerialPerspective",
     "qualityPreset": "high",
     "resolutionScale": 1,

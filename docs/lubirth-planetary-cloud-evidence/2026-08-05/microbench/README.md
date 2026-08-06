@@ -43,6 +43,16 @@ invalidFrames=0，但 total p95 比预算高约 9.1 倍。此前的 37.579247 ms
 - HG 使用 camera-to-sample 与 sample-to-sun 的正向散射余弦。三个 opening contact sheet 已在该修正后重抓并重新人工复核。
 - 本结果仍没有 no-op、copy-only 或 combined-total timer-query 校准，也不保存逐帧 raw timings；因此它是当前 harness 的超预算观测，不可解释为经校准的阶段归因，更不可外推为 Takram-first 成本结论。新增计时校准需要独立 plan amendment。
 
+## 2026-08-06 parity 复核边界
+
+本轮修正只属于独立的 Task 0T/0V parity route，不改写上面的 Task -1R 数字：
+
+- native Takram scene depth 通过 `sceneDepthScale` 把 opening 的 world-space depth 转为完整 `worldToECEF` ECEF 距离；progress 0.06/0.18 的 telemetry scale 分别约为 652,464 / 671,532，且 depth-enabled、depth-disabled、UV、density、sample-count diagnostics 已重抓。
+- V3 equirectangular weather 的 S 方向保持 Repeat，T 方向使用 ClampToEdge，避免极区 mip filtering 跨极回卷；stock 纹理继续保持 upstream repeat。
+- parity fingerprint 不再是静态常量，而是从实际 Clouds/BSM/AerialPerspective uniforms、defines、RT formats 和共享 asset hashes 生成；stock/V3 只排除 adapter-owned weather/layer 字段，并以负向 drift test 锁定。
+
+这些修正后的 parity 结论记录在 `takram-parity/checkpoint.json`、`stock-opening-visual-review.json` 与 `v3-adapter-visual-review.json`。它们仍然不授权 Task 0P，也不解锁原 Task 0–8。
+
 ## 运行环境与复现
 
 - 视觉证据：production build + Playwright desktop Chromium，1440×960 CSS px、DPR 1、resolutionScale=0.5、无 bloom / atmosphere / veil / blur / temporal / adaptive。
