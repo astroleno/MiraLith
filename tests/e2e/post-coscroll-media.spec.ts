@@ -397,6 +397,27 @@ test("the local-preview server resolver verifies real files and degrades to a re
   }
 });
 
+test("the local-preview resolver never exposes its filesystem path in client-safe diagnostics", async ({
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The source contract only needs one project.");
+  const emptyRoot = await mkdtemp(join(tmpdir(), "miralith-post-coscroll-diagnostic-"));
+
+  try {
+    const result = await resolvePostCoScrollMediaManifest({
+      mode: "local-preview",
+      nodeEnv: "development",
+      publicRoot: emptyRoot
+    });
+    expect(result).toMatchObject({
+      status: "invalid",
+      diagnostics: [expect.objectContaining({ code: "LOCAL_PREVIEW_MANIFEST_UNREADABLE" })]
+    });
+    expect(JSON.stringify(result.diagnostics)).not.toContain(emptyRoot);
+  } finally {
+    await rm(emptyRoot, { recursive: true, force: true });
+  }
+});
+
 test("production rejects both the local-preview flag and preview residue", async ({}, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "The source contract only needs one project.");
   const emptyRoot = await mkdtemp(join(tmpdir(), "miralith-post-coscroll-production-"));
@@ -419,6 +440,17 @@ test("production rejects both the local-preview flag and preview residue", async
       })
     ).toThrow(/preview media residue/i);
 
+    const productionResidue = await resolvePostCoScrollMediaManifest({
+      mode: "off",
+      nodeEnv: "production",
+      publicRoot: fixture.publicRoot
+    });
+    expect(productionResidue).toMatchObject({
+      status: "invalid",
+      diagnostics: [expect.objectContaining({ code: "PRODUCTION_PREVIEW_ISOLATION_FAILED" })]
+    });
+    expect(JSON.stringify(productionResidue.diagnostics)).not.toContain(fixture.publicRoot);
+
     await expect(
       resolvePostCoScrollMediaManifest({
         mode: "off",
@@ -430,6 +462,25 @@ test("production rejects both the local-preview flag and preview residue", async
     await rm(emptyRoot, { recursive: true, force: true });
     await rm(fixture.root, { recursive: true, force: true });
   }
+});
+
+test("production ArtBreeze direct entry is a deterministic unpublished fallback with no local video", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The production route boundary only needs one browser profile.");
+
+  await page.goto("/artbreeze");
+  const route = page.locator("[data-post-coscroll-route='artbreeze']");
+  await expect(route).toBeVisible();
+  await expect(route).toHaveAttribute("data-post-coscroll-resolver-status", "disabled");
+  await expect(route).toHaveAttribute("data-post-coscroll-fallback", "true");
+  await expect(route.locator("video")).toHaveCount(0);
+  await expect(page.locator("a[aria-label^='01 LuBirth']")).toBeVisible();
+  await expect(page.locator("a[aria-label^='02 Radio Gaga']")).toBeVisible();
+  await expect(page.locator("a[aria-label^='03 CoScroll']")).toBeVisible();
+  await expect(page.locator("a[aria-label^='04 ArtBreeze']")).toHaveCount(0);
+  await expect(page.locator("a[aria-label^='05 Floating Constellation']")).toHaveCount(0);
+  await expect(page.locator("a[aria-label^='06 Client Works']")).toHaveCount(0);
+  await expect(page.locator("a[aria-label^='07 Now Building']")).toHaveCount(0);
+  await expect(page.locator("[data-chapter-transition-layer]")).toHaveAttribute("data-state", "idle");
 });
 
 test("the URL resolver accepts only trusted bases and stable relative media keys", ({}, testInfo) => {
