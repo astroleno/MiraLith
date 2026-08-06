@@ -321,7 +321,11 @@ export function TakramStockParityPipeline({
       });
     }
     const cloudRawDiagnostic = ["cloud-raw", "density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic);
-    clouds.skipRendering = !cloudRawDiagnostic;
+    // The native Clouds pass must remain enabled for the normal full frame and
+    // every cloud-side diagnostic. `aerial-final` is the only intentional
+    // cloud-disabled probe; the previous inverse assignment silently skipped
+    // the renderer for every full opening frame.
+    clouds.skipRendering = diagnostic === "aerial-final";
     aerialPerspective.blendMode.blendFunction = cloudRawDiagnostic
       ? BlendFunction.SKIP
       : BlendFunction.NORMAL;
@@ -350,7 +354,7 @@ export function TakramStockParityPipeline({
       clouds.cloudLayers.forEach((layer, index) => {
         layer.shadow = shadowLayerFlags[index] ?? false;
       });
-      clouds.skipRendering = true;
+      clouds.skipRendering = false;
       clouds.temporalUpscale = true;
       aerialPerspective.blendMode.blendFunction = BlendFunction.NORMAL;
       if (diagnostic === "sample-count-debug") {
