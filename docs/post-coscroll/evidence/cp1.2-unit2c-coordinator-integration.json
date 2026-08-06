@@ -1,0 +1,92 @@
+{
+  "kind": "miralith.post-coscroll.cp1.2.unit2c.integration",
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-06",
+  "checkpoint": {
+    "id": "CP1.2",
+    "status": "IN PROGRESS"
+  },
+  "unit": {
+    "id": "2C",
+    "name": "Coordinator access integration",
+    "status": "PASS / INTEGRATED",
+    "reviewerVerdict": "PASS — UNIT 2C"
+  },
+  "integration": {
+    "targetBranch": "codex/coscroll-shader4-miralith",
+    "targetBaselineCommit": "96d1422b373aa2c23d2d08cd25985e122bb6c378",
+    "originalCandidateCommit": "38ceff87eaad2681d9aa4ea3a79865801fa6f1f3",
+    "originalCandidatePatchSha256": "f51caab3ec187b4f79d3f920b1f5fddac188ae06f85f2626a3e7ef143e8c3579",
+    "integratedCommit": "905692ac2008f3d44f6d8ace5b7b7d242dadc7c1",
+    "patchSha256AgainstTarget": "bed2dfe19b4d8517a7d2129b1c448949e40207b28d7e49d73afb473f727587a8",
+    "files": [
+      "apps/site/app/globals.css",
+      "apps/site/components/MiraLithChapterNavigation.tsx",
+      "apps/site/components/chapter-transition/ChapterTransitionProvider.tsx",
+      "apps/site/components/chapter-transition/ChapterTransitionVisual.tsx",
+      "apps/site/components/chapter-transition/chapterTransitionTypes.ts",
+      "apps/site/components/chapter-transition/preloadChapterTarget.ts",
+      "apps/site/components/chapter-transition/useChapterTerminalGate.ts",
+      "tests/e2e/chapter-navigation.spec.ts",
+      "tests/e2e/chapter-transition.spec.ts"
+    ]
+  },
+  "verification": {
+    "typecheck": {
+      "command": "pnpm --filter @miralith/site typecheck; pnpm --filter @miralith/coscroll-scene typecheck; pnpm --filter @miralith/radio-gaga-scene typecheck",
+      "result": "passed"
+    },
+    "lint": {
+      "command": "pnpm --filter @miralith/site lint",
+      "result": "passed"
+    },
+    "diffCheck": {
+      "command": "git diff --check 96d1422..905692a",
+      "result": "passed"
+    },
+    "reversePatchCheck": {
+      "command": "git diff --binary 96d1422..905692a | git apply --check --reverse",
+      "result": "passed"
+    },
+    "focusedAccessE2E": {
+      "command": "CI=1 MIRALITH_PLAYWRIGHT_PORT=3125 pnpm exec playwright test -c playwright.config.ts tests/e2e/chapter-transition.spec.ts tests/e2e/chapter-navigation.spec.ts --project=desktop --workers=1 --grep 'a valid preview session expands the CoScroll review rail|a valid preview session keeps ArtBreeze visible|a known preview history target stays native|preview access admits the ArtBreeze review link|public access rejects ArtBreeze warmup'",
+      "result": "5 passed"
+    },
+    "fullDesktopBaselineComparison": {
+      "command": "CI=1 MIRALITH_PLAYWRIGHT_PORT=<isolated-port> pnpm exec playwright test -c playwright.config.ts tests/e2e/chapter-transition.spec.ts tests/e2e/chapter-navigation.spec.ts --project=desktop",
+      "targetBaseline": {
+        "commit": "96d1422b373aa2c23d2d08cd25985e122bb6c378",
+        "result": "34 passed / 6 failed / 3 expected skipped",
+        "exitCode": 1
+      },
+      "rebaseCandidate": {
+        "commit": "905692ac2008f3d44f6d8ace5b7b7d242dadc7c1",
+        "result": "40 passed / 5 failed / 3 expected skipped",
+        "exitCode": 1
+      },
+      "note": "The candidate has five additional Unit 2C cases. Full-suite failure counts are not used as a pass claim because the target baseline is already red. The access-specific focused suite passed."
+    },
+    "baselineReadinessReproduction": {
+      "command": "CI=1 MIRALITH_PLAYWRIGHT_PORT=<isolated-port> pnpm exec playwright test -c playwright.config.ts tests/e2e/chapter-transition.spec.ts --project=desktop --workers=1 --repeat-each=3 --grep 'the veil locks target input until a real Radio Gaga frame is ready'",
+      "targetBaseline": "3 failed / 3 runs",
+      "rebaseCandidate": "3 failed / 3 runs",
+      "conclusion": "The deterministic waiting-ready failure predates Unit 2C and was not introduced or hidden by its resolver integration."
+    }
+  },
+  "scope": {
+    "included": [
+      "resolver-derived Provider access decisions",
+      "resolved chapter endpoint snapshot migration",
+      "resolver-derived navigation visibility and terminal target",
+      "resolver-derived target preloading",
+      "public and preview history fail-closed behavior"
+    ],
+    "explicitlyExcluded": [
+      "CoScroll terminal enablement",
+      "03 to 04 destination readiness and route shell",
+      "04 to 07 route shells",
+      "ScrollTrigger, Canvas, particleization, or Stage 2 visual work",
+      "repairing target-baseline LuBirth, RadioGaga, or CoScroll visual/readiness failures"
+    ]
+  }
+}

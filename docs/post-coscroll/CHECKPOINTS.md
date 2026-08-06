@@ -161,7 +161,7 @@ CP1.1 的 source / derivative / resolver / isolation contract 已关闭。Dulwic
 
 ## CP1.2 — Chapter Access Graph
 
-状态：`IN PROGRESS — Unit 2.0 foundation、Unit 2A 与 Unit 2B 已集成；Unit 2C–2D 尚未开始`
+状态：`IN PROGRESS — Unit 2.0、2A、2B 与 2C 已集成；Unit 2D 尚未开始`
 
 ### Unit 2.0 — Transition Foundation
 
@@ -199,10 +199,19 @@ Unit 2B 已以提交 [`13557fa`](../../commit/13557fa1022d245df3761c9da1d7a5c50f
 
 该提交只加入 build-scoped preview session、history marker 与 scope validation；未接入 endpoint/coordinator，未启用 CoScroll terminal，未创建 `/artbreeze` 或其他 04–07 route shell，也未实现真实 `03 → 04` 转场。根工作区中用户未暂存的 `apps/site/next.config.ts` 不构成此阶段或后续 Unit 2C 的基线。
 
-### Unit 2C — Coordinator integration preparation
+### Unit 2C — Coordinator access integration
 
-状态：`READY TO START — NO IMPLEMENTATION`
+状态：`PASS — INTEGRATED，2026-08-06`
 
-已从干净的 `13557fa1022d245df3761c9da1d7a5c50ffab801` 建立隔离分支 `codex/unit2c-access-coordinator`。该分支仅用于下一阶段统一 resolver、endpoint 类型、terminal/preloader/navigation 接入；真实 `03 → 04` 转场及 destination route shell 仍保留给 Unit 2D。`stash@{0}` 作为主工作区 merge 的恢复备份被保留，未自动 apply 或 drop。
+Unit 2C 的原始获批候选 `38ceff87eaad2681d9aa4ea3a79865801fa6f1f3` 已在隔离 worktree 从当前目标基线 `96d1422b373aa2c23d2d08cd25985e122bb6c378` 重新 cherry-pick 为 `905692ac2008f3d44f6d8ace5b7b7d242dadc7c1`。基线相关的新的 LuBirth、RadioGaga、CoScroll 改动未被混入候选；只有 `globals.css` 的 resolver 可见性选择器发生自动的非冲突合并。精确范围、patch identity 与验收记录见 [Unit 2C integration evidence](evidence/cp1.2-unit2c-coordinator-integration.json) 及其 [checksum](evidence/cp1.2-unit2c-coordinator-integration-checksums.sha256)。
+
+| 验证 | 已记录结果 |
+| --- | --- |
+| scope / source integrity | 相对 `96d1422` 的 9 文件 patch SHA-256 为 `bed2dfe19b4d8517a7d2129b1c448949e40207b28d7e49d73afb473f727587a8`；`git diff --check` 与反向 patch check 均通过。 |
+| 静态检查 | site、CoScroll、RadioGaga typecheck 和 site lint 全部通过。 |
+| Unit 2C 访问契约 | 5 条 focused desktop E2E 全部通过：preview rail、armed RadioGaga rail 可见性、preview-history fail-closed、preview warmup、public warmup 拒绝。 |
+| 01–03 目标基线例外 | `96d1422` 自身的完整 desktop transition/navigation suite 不是绿色基线。关键的 RadioGaga `waiting-ready` 用例在 base 与 rebase candidate 上各连续 3 次均复现；其余失败属于当前 LuBirth/RadioGaga/CoScroll visual/readiness 面，未由本 Unit 修复或掩盖。完整命令与失败名见 evidence；因此 CP1.2 继续保持 `IN PROGRESS`，不得把本项当作 CP1.2 PASS。 |
+
+本 Unit 仅将 canonical resolver 接入 Provider、endpoint snapshot、terminal gate、target preloader 和 navigation；它保持 `data-published` 的章节固有语义，并以 resolver 派生的 `data-visible-in-navigation` 控制 armed-terminal 下的可见性。它没有创建 04–07 route shell、没有实现 `03 → 04` destination readiness、没有启用 CoScroll terminal、没有加入 ScrollTrigger、Canvas 或任何 Stage 2 视觉转场。
 
 CP1.2 仅会在 access matrix、history、production isolation 与独立 local-preview 实播验证均完成后才可标记 `PASS`；本次 Unit 2B 集成不打开 Unit 3。
