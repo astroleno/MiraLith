@@ -45,9 +45,7 @@ export function assertPostCoScrollProductionMediaIsolation(
 
   const previewRoot = join(options.publicRoot, PREVIEW_ROOT_RELATIVE);
   if (existsSync(previewRoot)) {
-    throw new Error(
-      `Post-CoScroll preview media residue is forbidden in production: ${previewRoot}`
-    );
+    throw new Error("Post-CoScroll preview media residue is forbidden in production.");
   }
 }
 
@@ -218,16 +216,14 @@ export async function resolvePostCoScrollMediaManifest(
   let parsed: unknown;
   try {
     parsed = JSON.parse(await readFile(manifestPath, "utf8"));
-  } catch (error) {
+  } catch {
     return {
       status: "invalid",
       manifest: null,
       diagnostics: [
         diagnostic(
           "LOCAL_PREVIEW_MANIFEST_UNREADABLE",
-          `Could not read ${manifestPath}: ${
-            error instanceof Error ? error.message : String(error)
-          }`
+          "The local preview manifest could not be read."
         )
       ]
     };
