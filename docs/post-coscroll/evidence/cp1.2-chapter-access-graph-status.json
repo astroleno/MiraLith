@@ -1,0 +1,155 @@
+{
+  "kind": "miralith.post-coscroll.cp1.2.chapter-access-graph",
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-06",
+  "checkpoint": {
+    "id": "CP1.2",
+    "status": "IN REVIEW",
+    "passBlockedBy": "Five pre-existing 01–03 production desktop failures remain red; they require an independent foundation fix or an explicit waiver before CP1.2 can be marked PASS — TECH."
+  },
+  "baseline": {
+    "commit": "db64a2b7f0427e7606ce2a7c244ca871f00bf08b",
+    "branch": "codex/coscroll-shader4-miralith"
+  },
+  "unit2D": {
+    "status": "TECH COMPLETE / NOT INTEGRATED",
+    "commit": "309c201cb037dc0fd2c48ddcdba2a68b33ffac6e",
+    "parent": "db64a2b7f0427e7606ce2a7c244ca871f00bf08b",
+    "branch": "codex/unit2d-route-shell",
+    "patchSha256": "61df4bee47a939c3450e4d74d2139e5ad249e9dddd2ff5c3ca486017bee9bbbc",
+    "files": [
+      "apps/site/app/artbreeze/page.tsx",
+      "apps/site/app/client-works/page.tsx",
+      "apps/site/app/constellation/page.tsx",
+      "apps/site/app/globals.css",
+      "apps/site/app/now-building/page.tsx",
+      "apps/site/components/post-coscroll/PostCoScrollRouteShell.tsx",
+      "apps/site/lib/media/resolvePostCoScrollMediaManifest.server.ts",
+      "playwright.local-preview.config.ts",
+      "tests/e2e/post-coscroll-media.spec.ts",
+      "tests/e2e/post-coscroll-route-shell.spec.ts"
+    ]
+  },
+  "accessMatrix": {
+    "public": {
+      "01-03": {
+        "directEntryAllowed": true,
+        "coordinatorAllowed": true,
+        "visibleInNavigation": true,
+        "preloadAllowed": true
+      },
+      "04-07": {
+        "directEntryAllowed": true,
+        "coordinatorAllowed": false,
+        "visibleInNavigation": false,
+        "preloadAllowed": false
+      }
+    },
+    "validPreviewSession": {
+      "01-07": {
+        "directEntryAllowed": true,
+        "coordinatorAllowed": true,
+        "visibleInNavigation": true,
+        "preloadAllowed": true
+      }
+    }
+  },
+  "localPreviewCatalog": {
+    "mode": "local-preview",
+    "resolverResult": "ready",
+    "manifestRelativePath": "apps/site/public/media/post-coscroll/manifest.preview.json",
+    "manifestSha256": "ee5da2f945f8c1e8029ab3c91e6c611fbf7b6a32e1e1903919f1752b1be28604",
+    "manifestBytes": 32071,
+    "generatedFileCount": 39,
+    "generatedBytes": 101244094,
+    "readyItemCount": 13,
+    "pendingItemCount": 2,
+    "artBreezeItem": "artbreeze-first-sequence",
+    "sourceSpecSha256": "0abfd288738e0197ccea9ec6808d3a23064e177c7a4d72e287cc4a3599b0ebbd",
+    "editorialFreezeSha256": "d906937cc0b885b12fc942f91ce50e9af919878142cead5c0b36d8bd648140a1",
+    "gitIgnoreProof": ".gitignore:30:/apps/site/public/media/post-coscroll/"
+  },
+  "verification": {
+    "static": [
+      {
+        "command": "pnpm --filter @miralith/site typecheck",
+        "result": "passed"
+      },
+      {
+        "command": "pnpm --filter @miralith/site lint",
+        "result": "passed"
+      },
+      {
+        "command": "pnpm --filter @miralith/site media:post-coscroll:check",
+        "result": "passed"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      }
+    ],
+    "nodeContracts": {
+      "command": "pnpm exec playwright test -c playwright.unit.config.ts tests/unit/miraLithChapters.spec.ts tests/unit/resolveChapterPreviewScope.spec.ts --workers=1",
+      "result": "8 passed"
+    },
+    "isolatedProduction": {
+      "worktree": "/tmp/miralith-cp12-production-CFAhu0",
+      "head": "309c201cb037dc0fd2c48ddcdba2a68b33ffac6e",
+      "previewMediaRootPresent": false,
+      "dependencyInstall": "pnpm install --frozen-lockfile: passed",
+      "mediaBoundary": {
+        "command": "CI=1 MIRALITH_PLAYWRIGHT_PORT=3126 pnpm exec playwright test -c playwright.config.ts tests/e2e/post-coscroll-media.spec.ts --project=desktop --workers=1",
+        "result": "15 passed",
+        "proves": [
+          "production ArtBreeze direct entry is a deterministic fallback with no local video",
+          "production navigation exposes 01–03 only",
+          "production resolver rejects both forbidden local-preview mode and preview-media residue",
+          "client-safe diagnostics never include a local filesystem path"
+        ]
+      },
+      "sharedRail": {
+        "command": "CI=1 MIRALITH_PLAYWRIGHT_PORT=3110 pnpm exec playwright test -c playwright.config.ts tests/e2e/chapter-transition.spec.ts tests/e2e/chapter-navigation.spec.ts tests/e2e/post-coscroll-media.spec.ts --project=desktop --workers=1",
+        "result": "54 passed / 6 failed / 3 expected skipped",
+        "exitCode": 1,
+        "confirmedBaselineFailures": [
+          "radioGAGA finale keeps its closing line clear of the chapter rail",
+          "a rejected preview target-marker write fails closed without an uncaught runtime error",
+          "automatic warmup requests only the next published chapter",
+          "history back during waiting-ready cancels the stale destination before restoring source",
+          "the veil locks target input until a real Radio Gaga frame is ready"
+        ],
+        "sequenceSensitiveObservation": "The full serial run also failed the stored build-scope mismatch test once. It passed 3/3 on both the db64a2b baseline and 309c201 candidate in isolated repeat runs, so it is recorded as an existing test-order timing risk rather than a candidate regression."
+      },
+      "worktreeRemovedAfterVerification": true
+    },
+    "localPreview": {
+      "runner": "playwright.local-preview.config.ts",
+      "command": "CI=1 MIRALITH_LOCAL_PREVIEW_PLAYWRIGHT_PORT=3127 pnpm exec playwright test -c playwright.local-preview.config.ts tests/e2e/post-coscroll-route-shell.spec.ts --project=desktop --workers=1",
+      "result": "5 passed",
+      "proves": [
+        "all four known post-CoScroll routes mount directly without a permanent veil",
+        "valid preview review rail traverses 03 to 04 to 05 to 06 to 07 and supports back/forward",
+        "03 to 04 remains covered until the verified ArtBreeze poster resolves",
+        "ArtBreeze explicitly plays the verified local desktop MP4 only after user action",
+        "expired storage and forged history state fail closed while a direct known shell remains visible"
+      ]
+    }
+  },
+  "scope": {
+    "included": [
+      "stable server route shells for /artbreeze, /constellation, /client-works, and /now-building",
+      "noindex/nofollow metadata for 04–07",
+      "poster-ready/fallback-ready destination registration",
+      "explicit local media playback",
+      "safe client diagnostics",
+      "separate production and local-preview Playwright runners"
+    ],
+    "explicitlyExcluded": [
+      "CoScroll terminal enablement",
+      "final 03 to 04 cinematic transition",
+      "ScrollTrigger, Canvas, particles, residue, or animation implementation",
+      "production CDN or manifest publication",
+      "repairing the five inherited 01–03 foundation failures"
+    ]
+  }
+}

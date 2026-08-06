@@ -161,7 +161,7 @@ CP1.1 的 source / derivative / resolver / isolation contract 已关闭。Dulwic
 
 ## CP1.2 — Chapter Access Graph
 
-状态：`IN PROGRESS — Unit 2.0、2A、2B 与 2C 已集成；Unit 2D 尚未开始`
+状态：`IN REVIEW — Unit 2.0、2A、2B 与 2C 已集成；Unit 2D 技术候选已完成，但 01–03 shared foundation 仍有 5 条既有 production desktop 失败，Unit 3 保持关闭`
 
 ### Unit 2.0 — Transition Foundation
 
@@ -215,3 +215,21 @@ Unit 2C 的原始获批候选 `38ceff87eaad2681d9aa4ea3a79865801fa6f1f3` 已在�
 本 Unit 仅将 canonical resolver 接入 Provider、endpoint snapshot、terminal gate、target preloader 和 navigation；它保持 `data-published` 的章节固有语义，并以 resolver 派生的 `data-visible-in-navigation` 控制 armed-terminal 下的可见性。它没有创建 04–07 route shell、没有实现 `03 → 04` destination readiness、没有启用 CoScroll terminal、没有加入 ScrollTrigger、Canvas 或任何 Stage 2 视觉转场。
 
 CP1.2 仅会在 access matrix、history、production isolation 与独立 local-preview 实播验证均完成后才可标记 `PASS`；本次 Unit 2B 集成不打开 Unit 3。
+
+### Unit 2D — Known route shells and real local media consumption
+
+状态：`TECH COMPLETE / NOT INTEGRATED，2026-08-06`
+
+Unit 2D 候选为 `309c201cb037dc0fd2c48ddcdba2a68b33ffac6e`（parent `db64a2b7f0427e7606ce2a7c244ca871f00bf08b`；精确 patch SHA-256 `61df4bee47a939c3450e4d74d2139e5ad249e9dddd2ff5c3ca486017bee9bbbc`）。它创建 `/artbreeze`、`/constellation`、`/client-works`、`/now-building` 的稳定 route shell；各 route 在 server 端仅传递 chapter、resolver status、client-safe diagnostics 与 normalized media item。四个 preview route 都是 `noindex, nofollow`。
+
+| 验证 | 已记录结果 |
+| --- | --- |
+| local preview catalog | 恢复并复核 `15` 个条目（`13 ready / 2 pending`）；`artbreeze-first-sequence` 为唯一首段候选。manifest SHA-256 为 `ee5da2f945f8c1e8029ab3c91e6c611fbf7b6a32e1e1903919f1752b1be28604`，仍被 `.gitignore` 排除。 |
+| production isolation | 无 preview-media root 的隔离 `309c201` worktree 内，production media suite `15 passed`；`/artbreeze` 没有本地 video，且 public rail 只显示 01–03。 |
+| local-preview 实播 | 专用 `playwright.local-preview.config.ts` 的 `5 passed` 证明 direct-entry 无永久 veil、03→04 poster-ready 揭幕、03→04→05→06→07 review rail 与 back/forward、真实 ArtBreeze desktop MP4 显式播放、session/history 伪造 fail closed。 |
+| source safety | resolver 的不可读 manifest / production residue 诊断不再携带绝对文件路径；对应 RED→GREEN 测试覆盖。 |
+| static / Node | site typecheck、lint、media toolchain、diff check 均通过；registry / preview-scope Node contracts 为 `8 passed`。 |
+
+Unit 2D 没有实现 CoScroll terminal、正式 03→04 电影化转场、ScrollTrigger、Canvas、particle/residue 或 production media publication。完整命令、access matrix、catalog identity、production 对照及失败清单见 [CP1.2 access-graph evidence](evidence/cp1.2-chapter-access-graph-status.json) 与其 [checksum](evidence/cp1.2-chapter-access-graph-checksums.sha256)。
+
+CP1.2 不能在此刻标记 `PASS — TECH`：同一 shared production suite 仍有 5 条已在 `db64a2b` 基线复现的 01–03 failure；另有一条 scope-mismatch 用例在 serial run 中波动，但在 base 与 candidate 各 `3/3` 通过。它们必须由独立 foundation 修复或获得明确 waiver，之后才可合入 Unit 2D、关闭 CP1.2 并开启 Unit 3。
