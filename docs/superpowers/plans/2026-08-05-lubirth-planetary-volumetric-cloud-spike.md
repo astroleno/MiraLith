@@ -1,7 +1,7 @@
 # LuBirth Takram-first 行星体积云 Spike 实施计划
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan task-by-task. 不得并行越过 0T/0V/0P checkpoint，也不得把 parity route 提升为默认产品路径。
-> 状态：Task -1 / Task -1R、Task 0T、Task 0V 已完成并留下可复核 evidence。2026-08-06 复核修正了 LuBirth opening 的 `world-depth-to-ecef-v1` scene-depth scale、V3 纬度 clamp、运行时 renderer fingerprint，并重抓 depth/UV/density/sample-count diagnostics；修正后结论仍是 `V3_INPUT_CONTRACT_PASS`、`DISPOSABLE_RENDERER_REJECTED`、`upstreamControl=PASS`、`stockOpeningVisual=STOCK_OPENING_LIMITATION`、`v3AdapterVisual=V3_ADAPTER_VISUAL_FAIL`；Task 0P 与原 Task 0–8 仍锁定。
+> 状态：Task -1 / Task -1R、Task 0T、Task 0V 已完成并留下可复核 evidence。2026-08-06 复核修正了 LuBirth opening 的 `world-depth-to-ecef-v1` scene-depth scale、V3 纬度 clamp、运行时 renderer fingerprint，并重抓 depth/UV/density/sample-count diagnostics；修正后结论仍是 `V3_INPUT_CONTRACT_PASS`、`DISPOSABLE_RENDERER_REJECTED`、`upstreamControl=PASS`、`stockOpeningVisual=STOCK_OPENING_LIMITATION`、`v3AdapterVisual=V3_ADAPTER_VISUAL_FAIL`；Task 0P 与原 Task 0–8 仍锁定。2026-08-07 增加一次共享 native coarse-mass preset（`shapeRepeat=0.000025`、`shapeDetailRepeat=0.0006`、opening `coverage=0.55`，V3 layer detail 下降）以满足“大块面、少碎片”的视觉方向；仅完成 spot check，未把它冒充正式四帧 gate。
 > 计划日期：2026-08-05。
 > 主实现：[takram-design-engineering/three-geospatial@b012ad0](https://github.com/takram-design-engineering/three-geospatial/tree/b012ad06d858fc035d88aacfd73f092f93c994e4)，MIT。
 > 正式性能依据：[LuBirth 混合云架构 Phase -1（当前 line 911）](../../lubirth-hybrid-cloud-architecture.md#phase--1---visual-kill-spike)。
@@ -839,8 +839,8 @@ export const TAKRAM_PARITY_V3_LAYERS = [
     altitude: 8_000,
     height: 26_000,
     densityScale: 0.18,
-    shapeAmount: 0.7,
-    shapeDetailAmount: 0.45,
+    shapeAmount: 0.9,
+    shapeDetailAmount: 0.18,
     coverageFilterWidth: 0.6,
     shadow: true
   },
@@ -849,9 +849,9 @@ export const TAKRAM_PARITY_V3_LAYERS = [
     altitude: 10_000,
     height: 50_000,
     densityScale: 0.11,
-    shapeAmount: 0.85,
-    shapeDetailAmount: 0.7,
-    weatherExponent: 1.15,
+    shapeAmount: 0.95,
+    shapeDetailAmount: 0.22,
+    weatherExponent: 1,
     coverageFilterWidth: 0.52,
     shadow: true
   },
@@ -860,9 +860,9 @@ export const TAKRAM_PARITY_V3_LAYERS = [
     altitude: 8_000,
     height: 36_000,
     densityScale: 0.06,
-    shapeAmount: 0.9,
-    shapeDetailAmount: 0.85,
-    weatherExponent: 1.2,
+    shapeAmount: 1,
+    shapeDetailAmount: 0.28,
+    weatherExponent: 1.05,
     coverageFilterWidth: 0.45
   },
   {
@@ -870,9 +870,9 @@ export const TAKRAM_PARITY_V3_LAYERS = [
     altitude: 18_000,
     height: 20_000,
     densityScale: 0.035,
-    shapeAmount: 0.55,
-    shapeDetailAmount: 0.25,
-    weatherExponent: 1.4,
+    shapeAmount: 0.7,
+    shapeDetailAmount: 0.1,
+    weatherExponent: 1.1,
     coverageFilterWidth: 0.5
   }
 ] as const;
