@@ -1,0 +1,169 @@
+{
+  "kind": "miralith.post-coscroll.cp1.2.chapter-access-graph",
+  "schemaVersion": 2,
+  "recordedAt": "2026-08-08",
+  "checkpoint": {
+    "id": "CP1.2",
+    "status": "IN REVIEW",
+    "passBlockedBy": "All technical matrix gates recorded here are green, but CP1.2 remains pending independent review and author confirmation. Unit 3 remains closed."
+  },
+  "baseline": {
+    "commit": "db64a2b7f0427e7606ce2a7c244ca871f00bf08b",
+    "branch": "codex/coscroll-shader4-miralith"
+  },
+  "foundationRepair": {
+    "status": "TECH COMPLETE / NOT INTEGRATED",
+    "commit": "6b3f35bc4a1844794ae084753ec0e3aa90e56459",
+    "parent": "db64a2b7f0427e7606ce2a7c244ca871f00bf08b",
+    "patchSha256": "3f78de4e1206d28041d772dcff57eea14e26c01effc735cee5eaaeefd748e725",
+    "files": [
+      "package.json",
+      "packages/radio-gaga-scene/package.json",
+      "pnpm-lock.yaml"
+    ],
+    "rootCause": "apps/site and packages/radio-gaga-scene resolved different @react-three/fiber and @react-three/drei peer instances because their @types/react peer graphs diverged. RadioGagaSceneContent then evaluated useThree against a Canvas context from the other Fiber instance, causing an uncaught Canvas-outside error and an unintended fallback chain.",
+    "repair": "Pin the root and RadioGaga @types/react constraints to 19.2.17 and regenerate the lockfile so site and RadioGaga resolve the identical Fiber, Drei, React, and React DOM module paths.",
+    "moduleResolutionProof": {
+      "@react-three/fiber": "shared",
+      "@react-three/drei": "shared",
+      "react": "shared",
+      "react-dom": "shared"
+    }
+  },
+  "unit2D": {
+    "status": "TECH COMPLETE / NOT INTEGRATED",
+    "commit": "fcb352990ffd36c41df377c8a19e958e9fe450f4",
+    "tree": "5566fd33db476a4697c89040b331a8cc5f0ba21c",
+    "parent": "6b3f35bc4a1844794ae084753ec0e3aa90e56459",
+    "reappliedFromCommit": "309c201cb037dc0fd2c48ddcdba2a68b33ffac6e",
+    "patchSha256FromFoundation": "87506bd442cc7e42bce0aaefec21dd4c666435d5f7b9f089cd00e373ce1da892",
+    "combinedPatchSha256FromDb64": "834f857cfa64dd55e27aec0701e9765f650373257fa239db921530f419bd64ca",
+    "files": [
+      "apps/site/app/artbreeze/page.tsx",
+      "apps/site/app/client-works/page.tsx",
+      "apps/site/app/constellation/page.tsx",
+      "apps/site/app/globals.css",
+      "apps/site/app/now-building/page.tsx",
+      "apps/site/components/post-coscroll/PostCoScrollRouteShell.tsx",
+      "apps/site/lib/media/resolvePostCoScrollMediaManifest.server.ts",
+      "playwright.local-preview.config.ts",
+      "tests/e2e/post-coscroll-media.spec.ts",
+      "tests/e2e/post-coscroll-route-shell.spec.ts"
+    ]
+  },
+  "accessMatrix": {
+    "public": {
+      "01-03": {
+        "directEntryAllowed": true,
+        "coordinatorAllowed": true,
+        "visibleInNavigation": true,
+        "preloadAllowed": true
+      },
+      "04-07": {
+        "directEntryAllowed": true,
+        "coordinatorAllowed": false,
+        "visibleInNavigation": false,
+        "preloadAllowed": false
+      }
+    },
+    "validPreviewSession": {
+      "01-07": {
+        "directEntryAllowed": true,
+        "coordinatorAllowed": true,
+        "visibleInNavigation": true,
+        "preloadAllowed": true
+      }
+    }
+  },
+  "localPreviewCatalog": {
+    "mode": "local-preview",
+    "resolverResult": "ready",
+    "manifestRelativePath": "apps/site/public/media/post-coscroll/manifest.preview.json",
+    "manifestSha256": "0eb47bf84358e3a9a01494c92770c0885c3adc0870521579550c53b086e7cc2f",
+    "manifestBytes": 32071,
+    "generatedFileCount": 39,
+    "generatedBytes": 101244094,
+    "readyItemCount": 13,
+    "pendingItemCount": 2,
+    "artBreezeItem": "artbreeze-first-sequence",
+    "sourceSpecSha256": "0abfd288738e0197ccea9ec6808d3a23064e177c7a4d72e287cc4a3599b0ebbd",
+    "editorialFreezeSha256": "d906937cc0b885b12fc942f91ce50e9af919878142cead5c0b36d8bd648140a1",
+    "gitIgnoreProof": ".gitignore:30:/apps/site/public/media/post-coscroll/",
+    "sourcePathPolicy": "The regenerated manifest contains no absolute source path. Source-root and explicit Dulwich override paths were command-local only."
+  },
+  "verification": {
+    "static": [
+      {
+        "command": "pnpm typecheck",
+        "result": "passed"
+      },
+      {
+        "command": "pnpm lint",
+        "result": "passed"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      },
+      {
+        "command": "git apply --check --reverse <candidate binary patch>",
+        "result": "passed"
+      }
+    ],
+    "nodeContracts": {
+      "command": "pnpm exec playwright test -c playwright.unit.config.ts tests/unit/miraLithChapters.spec.ts tests/unit/resolveChapterPreviewScope.spec.ts --workers=1",
+      "result": "8 passed"
+    },
+    "isolatedProduction": {
+      "candidateTree": "5566fd33db476a4697c89040b331a8cc5f0ba21c",
+      "verificationTree": "5566fd33db476a4697c89040b331a8cc5f0ba21c",
+      "previewMediaRootPresent": false,
+      "sharedRail": {
+        "command": "CI=1 MIRALITH_PLAYWRIGHT_PORT=3149 pnpm exec playwright test -c playwright.config.ts tests/e2e/chapter-transition.spec.ts tests/e2e/chapter-navigation.spec.ts tests/e2e/post-coscroll-media.spec.ts --project=desktop --workers=1",
+        "result": "60 passed / 3 expected skipped",
+        "exitCode": 0,
+        "proves": [
+          "public navigation remains limited to 01-03",
+          "preview marker loss, forged history state, back/forward, waiting-ready cancellation, and target input locking all complete fail closed",
+          "production rejects local-preview mode and preview-media residue"
+        ]
+      },
+      "scopeMismatchSerial": {
+        "command": "CI=1 MIRALITH_PLAYWRIGHT_PORT=3148 pnpm exec playwright test -c playwright.config.ts tests/e2e/chapter-transition.spec.ts --project=desktop --workers=1 --repeat-each=3 --grep 'a cancelled preview transition cannot write a stale target marker|a scope or forged history-marker mismatch cannot re-enable preview marking|a stored build-scope mismatch cannot re-enable preview marking'",
+        "result": "9 passed",
+        "conclusion": "The smallest relevant predecessor chain was repeated after the Fiber closure and did not reproduce a scope-state leak. No timeout or URL assertion was loosened."
+      }
+    },
+    "localPreview": {
+      "runner": "playwright.local-preview.config.ts",
+      "command": "MIRALITH_LOCAL_PREVIEW_PLAYWRIGHT_PORT=3146 pnpm exec playwright test -c playwright.local-preview.config.ts tests/e2e/post-coscroll-route-shell.spec.ts --project=desktop --workers=1",
+      "result": "6 passed",
+      "proves": [
+        "all four known post-CoScroll routes mount directly without a permanent veil",
+        "a valid preview session traverses 03 to 04 to 05 to 06 to 07 and supports back/forward",
+        "03 to 04 remains covered until the verified ArtBreeze poster resolves",
+        "a forced poster 503 changes the destination to fallback-ready, reveals the route, and keeps the next chapter control operable",
+        "ArtBreeze creates and plays the verified local desktop MP4 only after explicit user action",
+        "expired storage and forged history state hide the review rail while direct known shells remain veil-free"
+      ]
+    }
+  },
+  "scope": {
+    "included": [
+      "foundation dependency closure for one shared React Three Fiber context",
+      "stable server route shells for /artbreeze, /constellation, /client-works, and /now-building",
+      "poster-ready and fallback-ready destination registration",
+      "explicit verified local-media playback",
+      "separate production and local-preview Playwright runners",
+      "forced poster-error fallback regression coverage"
+    ],
+    "explicitlyExcluded": [
+      "CoScroll terminal enablement",
+      "final 03 to 04 cinematic transition",
+      "ScrollTrigger, Canvas particles, residue, or animation implementation",
+      "production CDN or media manifest publication",
+      "Unit 3 or later work"
+    ]
+  },
+  "checksumVerificationCommand": "shasum -a 256 -c docs/post-coscroll/evidence/cp1.2-chapter-access-graph-checksums.sha256"
+}

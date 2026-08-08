@@ -161,7 +161,7 @@ CP1.1 的 source / derivative / resolver / isolation contract 已关闭。Dulwic
 
 ## CP1.2 — Chapter Access Graph
 
-状态：`IN PROGRESS — Unit 2.0、2A、2B 与 2C 已集成；Unit 2D 尚未开始`
+状态：`IN REVIEW — foundation repair 与 Unit 2D rebase candidate 已完成技术验证；CP1.2 尚待独立复核，Unit 3 继续关闭`
 
 ### Unit 2.0 — Transition Foundation
 
@@ -215,3 +215,20 @@ Unit 2C 的原始获批候选 `38ceff87eaad2681d9aa4ea3a79865801fa6f1f3` 已在�
 本 Unit 仅将 canonical resolver 接入 Provider、endpoint snapshot、terminal gate、target preloader 和 navigation；它保持 `data-published` 的章节固有语义，并以 resolver 派生的 `data-visible-in-navigation` 控制 armed-terminal 下的可见性。它没有创建 04–07 route shell、没有实现 `03 → 04` destination readiness、没有启用 CoScroll terminal、没有加入 ScrollTrigger、Canvas 或任何 Stage 2 视觉转场。
 
 CP1.2 仅会在 access matrix、history、production isolation 与独立 local-preview 实播验证均完成后才可标记 `PASS`；本次 Unit 2B 集成不打开 Unit 3。
+
+### Foundation repair and Unit 2D rebase candidate
+
+状态：`IN REVIEW — TECH COMPLETE / NOT INTEGRATED，2026-08-08`
+
+此前 CP1.2 的 production shared suite 不能 waiver：RadioGaga package 与站点解析出了两份 R3F/Drei peer instance，`RadioGagaSceneContent` 的 `useThree()` 因此落在另一份 Canvas context 外，连带触发错误 fallback、提前 warmup 与 readiness 假象。独立 foundation commit [`6b3f35b`](../../commit/6b3f35bc4a1844794ae084753ec0e3aa90e56459) 将 root 与 RadioGaga 的 `@types/react` 锁定到 `19.2.17`，令 Fiber、Drei、React、React DOM 均解析到同一路径；其精确 patch SHA-256 为 `3f78de4e1206d28041d772dcff57eea14e26c01effc735cee5eaaeefd748e725`。
+
+原 Unit 2D route-shell 代码从 `309c201` 重新应用到该 foundation，形成候选 [`fcb3529`](../../commit/fcb352990ffd36c41df377c8a19e958e9fe450f4)。它保留 04–07 稳定 route shell、poster/fallback destination gate、显式本地播放和 production/local-preview runner 的边界；另加入 forced poster-503 回归，证明活跃 `03 → 04` 交棒在 poster 失败时会经 `fallback-ready` 解除 veil，且可继续导航到 05。候选相对 foundation 的 patch SHA-256 为 `87506bd442cc7e42bce0aaefec21dd4c666435d5f7b9f089cd00e373ce1da892`；相对 `db64a2b` 的合并 patch SHA-256 为 `834f857cfa64dd55e27aec0701e9765f650373257fa239db921530f419bd64ca`。
+
+| 验证层 | 结果 |
+| --- | --- |
+| final-HEAD 静态 / Node | typecheck、lint、`git diff --check` 与 8 条 Node contracts 通过。 |
+| production isolation | 在无 `public/media/post-coscroll/` 的等 tree worktree 运行 shared suite：`60 passed / 3 expected skipped`，退出码 `0`。公开 rail 仍限 01–03，preview/history/input 的 fail-closed 覆盖保持有效。 |
+| scope 串行复核 | cancelled → forged marker → stored scope 的最小相关前序链以 `--repeat-each=3` 运行 `9 passed`；未通过放宽 timeout 或 URL 断言规避。 |
+| local-preview 实播 | 忽略的真实 catalog 已从冻结素材重建（13 ready / 2 pending，manifest SHA `0eb47bf…cc2f`）；独立 dev runner 为 `6 passed`，包括真实 ArtBreeze MP4 的显式播放和 poster 503 fallback。 |
+
+完整身份、命令、媒体 hash、scope 串行结论和 root-relative checksum 命令见 [CP1.2 status evidence](evidence/cp1.2-chapter-access-graph-status.json) 与 [checksum index](evidence/cp1.2-chapter-access-graph-checksums.sha256)。在独立复核与作者确认前，**不得**将 CP1.2 标为 `PASS`，不得打开 Unit 3，也不得实现 CoScroll terminal、正式 `03 → 04` 视觉接力、ScrollTrigger、粒子、CDN 或 production media manifest。
