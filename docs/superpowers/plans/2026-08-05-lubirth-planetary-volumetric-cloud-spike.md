@@ -936,13 +936,14 @@ transmittance（平均 / minimum / center）
 pre-temporal in-scattered radiance（平均 / peak / center）
 post-temporal history result（平均 / peak / center）
 AerialPerspective final result（平均 / peak / center）
+final framebuffer cloud-on minus cloud-off difference（平均 / peak / center）
 ```
 
 其中 pre-temporal radiance 是 capture-only `marchClouds` 输出；transmittance 来自 native `transmittanceIntegral`，不能使用已经经过 remap 或 haze 的输出 alpha。density 使用 Takram `MediaSample.scattering` 的有效介质贡献，weather 单独记录，避免把“weather 有值”误当成“最终云光学信号存在”。每一级都必须通过 `gpu-readback-v1`、half-float/unorm 语义和非空字段断言。
 
-`altitude-ladder.json` 另存 `firstNearZeroAltitudeMeters`、`firstNearZeroStage` 与 `signalConclusion`。只有某一级所有 native signal stage 的 peak 都低于 `1e-6` 才能标为 `near-zero`；单个中心像素或平均值变小不能直接宣布物理坍缩，必须同时保留 average/peak/center 供审计。
+`altitude-ladder.json` 使用 schema v3，分别保存 `signalStages`、`firstNearZeroByStage` 与 `signalConclusion`。每个 stage 独立按平均 signal 判定 `near-zero`；不得用 pre/post/AerialPerspective 三者的最大值给整级盖章。AerialPerspective 的原始值包含 Earth/sky 背景，不能单独代表云信号；final stage 必须来自同一相机、同一 renderer 的 cloud-on 与 cloud-off 最终 framebuffer 的逐像素绝对 sRGB-luma 差分。每一级同时保留 average/peak/center 供审计。
 
-**首轮结果（2026-08-08）：** 四级的 weather、participating-media density、optical depth、pre-temporal radiance、temporal history 和 AerialPerspective 都为有限非零值；`firstNearZeroAltitudeMeters=null`，`signalConclusion=NO_NEAR_ZERO_COLLAPSE_IN_SAMPLED_RANGE`。因此当前没有被证据定位的 ray interval、depth clamp、raymarch、temporal 或 AerialPerspective 物理修复，不得凭“opening full-frame 仍看不到云”继续修改这些 stage。该结果只说明固定 V3 列能形成 native optical signal，不等于 full-frame visual gate 已通过。
+**首轮结果（2026-08-08）：** 四级的 weather、participating-media density、optical depth、pre-temporal radiance、temporal history、AerialPerspective 以及 cloud-on/off final difference 都为有限非零值；`firstNearZeroByStage` 四项均为 `null`，`signalConclusion=NO_FINAL_CLOUD_SIGNAL_NEAR_ZERO_IN_SAMPLED_RANGE`。因此当前没有被证据定位的 ray interval、depth clamp、raymarch、temporal 或 AerialPerspective 物理修复，不得凭“opening full-frame 仍是贴地色块”继续修改这些 stage。该结果只说明固定 V3 列能形成 native optical signal，不等于 full-frame volumetric morphology gate 已通过。
 
 **后续授权：** 0L 无 near-zero collapse 后，才允许进行一轮受限的 coarse-mass full-frame visual iteration；调节只能发生在 V3 adapter presentation fields（大块面、少碎片），每次必须重跑同一 ladder 证明 optical signal 未被调参破坏。若后续 ladder 出现首个 near-zero，则先修正证据指向的单一 stage 并重跑全 ladder，禁止同时调 shape 和 lighting。0P 仍必须等待 V3 visual PASS，原 Task 0–8 继续锁定。
 
@@ -962,8 +963,9 @@ AerialPerspective final result（平均 / peak / center）
 pnpm exec playwright test -c playwright.unit.config.ts \
   tests/unit/lubirthTakramAltitudeLadder.spec.ts
 MIRALITH_PLAYWRIGHT_PORT=3134 pnpm exec playwright test \
-  -c playwright.config.ts tests/e2e/lubirth-takram-altitude-ladder.spec.ts \
-  --project=desktop --workers=1
+  -c playwright.takram-parity-system-chrome.config.ts \
+  tests/e2e/lubirth-takram-altitude-ladder.spec.ts \
+  --project=desktop-system-chrome
 pnpm --filter @miralith/lubirth-hero typecheck
 pnpm build
 git diff --check
@@ -2027,7 +2029,7 @@ git status --short
 - [ ] “行星级”通过 Earth-local → ECEF 的统一 scale bridge 实现，不要求真实 GIS 世界尺度。
 - [ ] Y-up → Z-up、longitude flip、V3 offsets 有纯函数测试；non-1 scale + rotation + translation 的 ray interval 采用一般二次式，scene depth 与返回 `t` 都是 world distance。
 - [ ] Cloud Field V3 仍是唯一宏观云源，adapter 不在 clear-air 制造云。
-- [ ] 实际 opening camera 的 `0.00/0.06/0.12/0.18` raw contact sheet 已证明身份连续、结构演化、视差、厚度与核心遮挡；没有用 opacity、bloom 或 veil 代替表示正确性。
+- [ ] 实际 opening camera 的 `0.00/0.06/0.12/0.18` raw/full contact sheet 已证明 V3 footprint 连续且 clear-air 约束成立；当前 coarse-mass 仍未通过厚度、base/core/top、自阴影与 planet-relative parallax，因此不得把这轮 evidence 写成视觉 PASS，也没有用 opacity、bloom 或 veil 代替表示正确性。
 - [ ] Takram patch 只包含被证据证明必要且默认关闭的 `globalWeatherMapping`、timer hook、history reset；stock 仍调用原 `getCubeSphereUv`，V3 才调用 `getSphericalUv`，没有复制整套 raymarch。
 - [ ] challenger 只在 query-only spike route 动态加载。
 - [ ] challenger active 时只有一个 final render owner。

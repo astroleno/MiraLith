@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAt": "2026-08-06T08:49:58Z",
-  "baseCommit": "1fe28d9",
+  "reviewedAt": "2026-08-08T15:29:56Z",
+  "baseCommit": "81c4632013d25ebb831fec7135a05825a0e38a16",
   "upstreamControl": "PASS",
   "decision": "STOCK_OPENING_LIMITATION",
   "scope": "Task 0T unmodified Takram stock input in the Task -1R LuBirth opening mirror. This decision does not evaluate the V3 adapter.",
@@ -11,7 +11,7 @@
     "progresses": [0, 0.06, 0.12, 0.18],
     "viewportCssPixels": [1440, 960],
     "devicePixelRatio": 1,
-    "playwrightProject": "desktop"
+    "playwrightProject": "desktop-system-chrome"
   },
   "fixedStockContract": {
     "globalWeatherMapping": false,
@@ -36,7 +36,7 @@
   "captures": {
     "contactSheet": {
       "path": "stock-opening-contact-sheet.png",
-      "sha256": "95fe9bc16778aabea41e9701ec2db15457eb3b4a2370adf19b3cc285d907fc94"
+      "sha256": "3e9dc1cf59e437d83519e3e3bf2817e889a47240d89d6a98d3daa864feea9138"
     },
     "fullByProgress": {
       "0.00": "captures/opening-stock-0-00-full.png",
@@ -80,13 +80,13 @@
   ],
   "classificationRationale": "The upstream near-ground stock control passes with the same resolved native renderer fingerprint and assets. After the world-depth-to-ECEF scale fix (including the non-unit opening scale), this opening still uses the known unsupported stock envelope: cube-sphere local weather mapping, local repeat [100,100], default 0.75–8 km layers, and a space-view/global framing. The absence of a readable stock cloud volume remains input/mapping/framing-specific, not evidence of an input-independent native depth, BSM, resolve, or AerialPerspective failure.",
   "reproduction": {
-    "command": "MIRALITH_TAKRAM_PARITY_CAPTURE=1 pnpm exec playwright test tests/e2e/lubirth-takram-parity-visual.spec.ts --project=desktop --workers=1",
-    "result": "PASS (historical 5 control diagnostics + 16 opening frame captures; corrected revalidation is recorded below)"
+    "command": "MIRALITH_PLAYWRIGHT_PORT=3134 MIRALITH_TAKRAM_PARITY_CAPTURE=1 pnpm exec playwright test -c playwright.takram-parity-system-chrome.config.ts tests/e2e/lubirth-takram-parity-visual.spec.ts --project=desktop-system-chrome --grep 'stock and V3 opening preserve'",
+    "result": "PASS (current 16 stock/V3 opening full/raw captures and contact sheets)"
   },
   "correctedRevalidation": {
-    "command": "MIRALITH_PLAYWRIGHT_PORT=3100 pnpm exec playwright test --config=playwright.config.ts tests/e2e/lubirth-takram-parity.spec.ts --project=desktop --grep 'V3 changes' --workers=1",
+    "command": "MIRALITH_PLAYWRIGHT_PORT=3134 pnpm exec playwright test -c playwright.takram-parity-system-chrome.config.ts tests/e2e/lubirth-takram-parity.spec.ts --project=desktop-system-chrome --grep 'V3 changes'",
     "result": "PASS; stock and V3 opening report the same runtime fingerprint and non-unit scene-depth scale",
-    "runtimeFingerprintHash": "fnv1a-64:3ae11ddbe1c87448"
+    "runtimeFingerprintHash": "fnv1a-64:b6657a30c5d0def2"
   },
   "nextAuthorizedWork": "Task 0V completed with V3_ADAPTER_VISUAL_FAIL; Task 0P remains locked because no opening visual-pass candidate exists."
 }

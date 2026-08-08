@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
-  "recordedAt": "2026-08-08T13:12:14Z",
-  "baseCommit": "672098ad45ebdb06751ab8b06a21085d632362bb",
+  "recordedAt": "2026-08-08T15:29:56Z",
+  "baseCommit": "81c4632013d25ebb831fec7135a05825a0e38a16",
   "v3InputContract": "V3_INPUT_CONTRACT_PASS",
   "disposableRenderer": "DISPOSABLE_RENDERER_REJECTED",
   "coordinateDepth": {
@@ -28,7 +28,9 @@
     "progress": 0.06,
     "diagnostics": ["full", "depth-off", "uv-debug", "density-debug", "sample-count-debug"],
     "nonUnitDepthRegression": "sceneDepthScale is non-unit in opening telemetry and depth-enabled/depth-disabled GPU diagnostics are captured",
-    "visualStatus": "V3_ADAPTER_VISUAL_FAIL_PENDING_COARSE_MASS_REVIEW"
+    "visualStatus": "V3_ADAPTER_SIGNAL_VISIBLE_MORPHOLOGY_FAIL",
+    "currentEvidence": "v3-adapter-visual-review.json",
+    "currentCaptureSet": "opening-parity-contact-sheet.png"
   },
   "altitudeLadder": {
     "evidence": "altitude-ladder.json",
@@ -36,7 +38,14 @@
     "requestedAltitudesMeters": [2500, 50000, 200000, 3578429],
     "firstNearZeroAltitudeMeters": null,
     "firstNearZeroStage": null,
-    "signalConclusion": "NO_NEAR_ZERO_COLLAPSE_IN_SAMPLED_RANGE"
+    "signalConclusion": "NO_FINAL_CLOUD_SIGNAL_NEAR_ZERO_IN_SAMPLED_RANGE",
+    "stageStatus": {
+      "preTemporal": "visible",
+      "postTemporal": "visible",
+      "aerialPerspective": "visible-background-inclusive",
+      "finalCloudDifference": "visible"
+    },
+    "finalFramebufferDifference": "same-camera cloud-on/off per-pixel absolute sRGB-luma"
   },
   "stockSetup": "PASS",
   "upstreamControl": "PASS",
@@ -51,5 +60,5 @@
     "v3": false
   },
   "nextAuthorizedWork": "V3_COARSE_MASS_VISUAL_REVIEW_ONLY",
-  "stopReason": "The fixed-geography altitude ladder retains finite non-zero native density, optical depth, pre/post-temporal radiance and AerialPerspective signal at every sampled altitude. No stage-specific physical collapse was found; Task 0P and original Task 0-8 remain locked while a narrow coarse-mass full-frame visual review is performed."
+  "stopReason": "The fixed-geography altitude ladder retains finite non-zero native density, optical depth, pre/post-temporal radiance, AerialPerspective output and cloud-on/off final difference at every sampled altitude. No stage-specific physical collapse was found; the current full-frame evidence is reclassified as signal/footprint visible but volumetric morphology fail. Task 0P and original Task 0-8 remain locked while the next coarse-mass visual iteration is prepared."
 }
