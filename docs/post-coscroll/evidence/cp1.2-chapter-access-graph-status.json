@@ -1,6 +1,6 @@
 {
   "kind": "miralith.post-coscroll.cp1.2.chapter-access-graph",
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "recordedAt": "2026-08-08",
   "checkpoint": {
     "id": "CP1.2",
@@ -11,6 +11,7 @@
     "commit": "db64a2b7f0427e7606ce2a7c244ca871f00bf08b",
     "branch": "codex/coscroll-shader4-miralith"
   },
+  "previewScopeAlgorithmVersion": "chapter-preview-scope-v1",
   "foundationRepair": {
     "status": "TECH COMPLETE / NOT INTEGRATED",
     "commit": "6b3f35bc4a1844794ae084753ec0e3aa90e56459",
@@ -129,6 +130,7 @@
     },
     "isolatedProduction": {
       "candidateTree": "5566fd33db476a4697c89040b331a8cc5f0ba21c",
+      "verificationHead": "a7e1fe5ae26528a1c4d58a4f29fd11aa4b2fbd85",
       "verificationTree": "5566fd33db476a4697c89040b331a8cc5f0ba21c",
       "previewMediaRootPresent": false,
       "sharedRail": {
