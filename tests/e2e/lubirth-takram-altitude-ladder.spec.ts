@@ -240,6 +240,12 @@ test("V3 opening exposes the planetary optical-signal altitude ladder", async ({
     openingAltitudeMeters,
     requestedAltitudes,
     thresholds: signalThresholds,
+    finalFramebufferDifference: {
+      method: "same-camera-same-renderer-cloud-on-off-v1",
+      metric: "per-pixel absolute sRGB-luma difference",
+      backgroundExcluded: true,
+      fields: ["finalCloudSignal", "finalCloudSignalPeak", "finalCloudSignalCenter"]
+    },
     firstNearZeroAltitudeMeters: firstNearZero?.requestedAltitudeMeters ?? null,
     firstNearZeroStage: firstNearZero?.stage ?? null,
     firstNearZeroByStage,
