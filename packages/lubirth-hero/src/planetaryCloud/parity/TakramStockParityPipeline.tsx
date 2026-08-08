@@ -471,9 +471,10 @@ export function TakramStockParityPipeline({
     }
     const cloudRawDiagnostic = ["cloud-raw", "density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic);
     // The native Clouds pass must remain enabled for the normal full frame and
-    // every cloud-side diagnostic. `aerial-final` is the only intentional
-    // cloud-disabled probe; the previous inverse assignment silently skipped
-    // the renderer for every full opening frame.
+    // every cloud-side diagnostic. `aerial-final` and the explicit
+    // altitude-ladder cloud-off probe are the only intentional cloud-disabled
+    // modes; the previous inverse assignment silently skipped the renderer
+    // for every full opening frame.
     clouds.skipRendering = diagnostic === "aerial-final" ||
       diagnostic === "altitude-ladder-cloud-off";
     aerialPerspective.blendMode.blendFunction = cloudRawDiagnostic
@@ -527,6 +528,20 @@ export function TakramStockParityPipeline({
       }
     };
   }, [assetsState.ready, atmosphereState.ready, bridgeReady, diagnostic]);
+
+  // `skipRendering` only disables the CloudsEffect composite; the native
+  // cloud buffer is still exposed to AerialPerspective through the atmosphere
+  // transient overlay. Keep the explicit cloud-off diagnostic honest by
+  // clearing both owners immediately before the composer renders.
+  useFrame(() => {
+    if (diagnostic !== "altitude-ladder-cloud-off" && diagnostic !== "aerial-final") {
+      return;
+    }
+    const clouds = cloudsRef.current;
+    const aerialPerspective = aerialPerspectiveRef.current;
+    if (clouds) clouds.skipRendering = true;
+    if (aerialPerspective) aerialPerspective.overlay = null;
+  }, 1);
 
   // Camera and planet transforms must settle before the -1 native bridge
   // update, so Clouds observes the matching world/ECEF state in its own frame.

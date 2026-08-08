@@ -19,7 +19,7 @@ interface TakramParityContractModule {
     | {
       ok: true;
       value: {
-        diagnostic: "altitude-ladder" | "aerial-final" | "bsm-off" | "cloud-raw" | "depth-off" | "density-debug" | "full" | "history-reset-first" | "sample-count-debug" | "uv-debug";
+        diagnostic: "altitude-ladder" | "altitude-ladder-cloud-off" | "aerial-final" | "bsm-off" | "cloud-raw" | "depth-off" | "density-debug" | "full" | "history-reset-first" | "sample-count-debug" | "uv-debug";
         input: "stock" | "v3";
         progress: number;
         view: "control" | "opening";
@@ -230,6 +230,18 @@ test("pins the official stock Takram contract to auditable local assets", async 
     ok: true,
     value: {
       diagnostic: "altitude-ladder",
+      input: "v3",
+      progress: 0,
+      view: "opening",
+      altitudeMeters: 200_000
+    }
+  });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=v3&view=opening&diagnostic=altitude-ladder-cloud-off&altitudeMeters=200000"
+  ))).toEqual({
+    ok: true,
+    value: {
+      diagnostic: "altitude-ladder-cloud-off",
       input: "v3",
       progress: 0,
       view: "opening",
