@@ -86,6 +86,49 @@ test("the CoScroll to ArtBreeze coordinator remains covered until its poster is 
   }
 });
 
+test("a failed ArtBreeze poster releases the covered coordinator through its verified fallback", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The destination fallback contract needs one desktop profile.");
+
+  let posterRequested = false;
+  let releasePoster!: () => void;
+  const heldPoster = new Promise<void>((resolve) => {
+    releasePoster = resolve;
+  });
+  await page.route("**/media/post-coscroll/artbreeze-first-sequence/poster.jpg", async (route) => {
+    posterRequested = true;
+    await heldPoster;
+    await route.fulfill({
+      status: 503,
+      contentType: "text/plain",
+      body: "Injected local-preview poster failure"
+    });
+  });
+
+  try {
+    await page.goto(`/coscroll${previewQuery}`);
+    await page.locator("a[aria-label^='04 ArtBreeze']").click();
+    await expect(page).toHaveURL(/\/artbreeze$/);
+    await expect.poll(() => posterRequested).toBe(true);
+    await expect(page.locator("[data-chapter-transition-layer]")).toHaveAttribute("data-state", "waiting-ready");
+
+    releasePoster();
+    const artBreeze = page.locator("[data-post-coscroll-route='artbreeze']");
+    await expect(artBreeze).toHaveAttribute("data-post-coscroll-poster-state", "error");
+    await expect(artBreeze).toHaveAttribute("data-post-coscroll-fallback", "true");
+    await expect(artBreeze.locator("[data-post-coscroll-fallback-content]")).toBeVisible();
+    await waitForIdle(page);
+
+    const nextChapter = artBreeze.locator("a[aria-label^='05 Floating Constellation']");
+    await expect(nextChapter).toBeVisible();
+    await nextChapter.click();
+    await expect(page).toHaveURL(/\/constellation$/);
+    await waitForIdle(page);
+  } finally {
+    releasePoster();
+    await page.unroute("**/media/post-coscroll/artbreeze-first-sequence/poster.jpg");
+  }
+});
+
 test("ArtBreeze explicitly plays the verified local video instead of treating the poster as playback", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "The local playback contract needs one desktop profile.");
 
