@@ -1,0 +1,1847 @@
+{
+  "schemaVersion": 1,
+  "baseCommit": "fe8ba8df992cbac2df8770850c438a4ee3a3bd36",
+  "generatedAt": "2026-08-08T18:05:41.467Z",
+  "fixedContract": {
+    "coverage": 0.55,
+    "weather": "v3",
+    "renderer": "stock-takram-0.7.6",
+    "candidateCount": 2,
+    "replayViews": [
+      "near-oblique",
+      "aerial-oblique",
+      "near-orbit",
+      "opening-orbit"
+    ]
+  },
+  "generatedCandidates": [
+    {
+      "view": "near-oblique",
+      "targetShapePixels": 16,
+      "targetDetailPixels": 4,
+      "shapeWavelengthMeters": 98979.961507182,
+      "detailWavelengthMeters": 24744.9903767955,
+      "shapeRepeat": 0.000010103055050465339,
+      "shapeDetailRepeat": 0.000040412220201861355,
+      "physicalRangePass": false
+    },
+    {
+      "view": "near-oblique",
+      "targetShapePixels": 16,
+      "targetDetailPixels": 6,
+      "shapeWavelengthMeters": 98979.961507182,
+      "detailWavelengthMeters": 37117.48556519325,
+      "shapeRepeat": 0.000010103055050465339,
+      "shapeDetailRepeat": 0.000026941480134574238,
+      "physicalRangePass": false
+    },
+    {
+      "view": "near-oblique",
+      "targetShapePixels": 16,
+      "targetDetailPixels": 8,
+      "shapeWavelengthMeters": 98979.961507182,
+      "detailWavelengthMeters": 49489.980753591,
+      "shapeRepeat": 0.000010103055050465339,
+      "shapeDetailRepeat": 0.000020206110100930678,
+      "physicalRangePass": false
+    },
+    {
+      "view": "near-oblique",
+      "targetShapePixels": 32,
+      "targetDetailPixels": 4,
+      "shapeWavelengthMeters": 197959.923014364,
+      "detailWavelengthMeters": 24744.9903767955,
+      "shapeRepeat": 0.000005051527525232669,
+      "shapeDetailRepeat": 0.000040412220201861355,
+      "physicalRangePass": false
+    },
+    {
+      "view": "near-oblique",
+      "targetShapePixels": 32,
+      "targetDetailPixels": 6,
+      "shapeWavelengthMeters": 197959.923014364,
+      "detailWavelengthMeters": 37117.48556519325,
+      "shapeRepeat": 0.000005051527525232669,
+      "shapeDetailRepeat": 0.000026941480134574238,
+      "physicalRangePass": false
+    },
+    {
+      "view": "near-oblique",
+      "targetShapePixels": 32,
+      "targetDetailPixels": 8,
+      "shapeWavelengthMeters": 197959.923014364,
+      "detailWavelengthMeters": 49489.980753591,
+      "shapeRepeat": 0.000005051527525232669,
+      "shapeDetailRepeat": 0.000020206110100930678,
+      "physicalRangePass": false
+    },
+    {
+      "view": "near-oblique",
+      "targetShapePixels": 48,
+      "targetDetailPixels": 4,
+      "shapeWavelengthMeters": 296939.884521546,
+      "detailWavelengthMeters": 24744.9903767955,
+      "shapeRepeat": 0.0000033676850168217797,
+      "shapeDetailRepeat": 0.000040412220201861355,
+      "physicalRangePass": false
+    },
+    {
+      "view": "near-oblique",
+      "targetShapePixels": 48,
+      "targetDetailPixels": 6,
+      "shapeWavelengthMeters": 296939.884521546,
+      "detailWavelengthMeters": 37117.48556519325,
+      "shapeRepeat": 0.0000033676850168217797,
+      "shapeDetailRepeat": 0.000026941480134574238,
+      "physicalRangePass": false
+    },
+    {
+      "view": "near-oblique",
+      "targetShapePixels": 48,
+      "targetDetailPixels": 8,
+      "shapeWavelengthMeters": 296939.884521546,
+      "detailWavelengthMeters": 49489.980753591,
+      "shapeRepeat": 0.0000033676850168217797,
+      "shapeDetailRepeat": 0.000020206110100930678,
+      "physicalRangePass": false
+    },
+    {
+      "view": "aerial-oblique",
+      "targetShapePixels": 16,
+      "targetDetailPixels": 4,
+      "shapeWavelengthMeters": 74805.7859159579,
+      "detailWavelengthMeters": 18701.446478989474,
+      "shapeRepeat": 0.000013367949921994947,
+      "shapeDetailRepeat": 0.000053471799687979786,
+      "physicalRangePass": false
+    },
+    {
+      "view": "aerial-oblique",
+      "targetShapePixels": 16,
+      "targetDetailPixels": 6,
+      "shapeWavelengthMeters": 74805.7859159579,
+      "detailWavelengthMeters": 28052.16971848421,
+      "shapeRepeat": 0.000013367949921994947,
+      "shapeDetailRepeat": 0.00003564786645865319,
+      "physicalRangePass": false
+    },
+    {
+      "view": "aerial-oblique",
+      "targetShapePixels": 16,
+      "targetDetailPixels": 8,
+      "shapeWavelengthMeters": 74805.7859159579,
+      "detailWavelengthMeters": 37402.89295797895,
+      "shapeRepeat": 0.000013367949921994947,
+      "shapeDetailRepeat": 0.000026735899843989893,
+      "physicalRangePass": false
+    },
+    {
+      "view": "aerial-oblique",
+      "targetShapePixels": 32,
+      "targetDetailPixels": 4,
+      "shapeWavelengthMeters": 149611.5718319158,
+      "detailWavelengthMeters": 18701.446478989474,
+      "shapeRepeat": 0.000006683974960997473,
+      "shapeDetailRepeat": 0.000053471799687979786,
+      "physicalRangePass": false
+    },
+    {
+      "view": "aerial-oblique",
+      "targetShapePixels": 32,
+      "targetDetailPixels": 6,
+      "shapeWavelengthMeters": 149611.5718319158,
+      "detailWavelengthMeters": 28052.16971848421,
+      "shapeRepeat": 0.000006683974960997473,
+      "shapeDetailRepeat": 0.00003564786645865319,
+      "physicalRangePass": false
+    },
+    {
+      "view": "aerial-oblique",
+      "targetShapePixels": 32,
+      "targetDetailPixels": 8,
+      "shapeWavelengthMeters": 149611.5718319158,
+      "detailWavelengthMeters": 37402.89295797895,
+      "shapeRepeat": 0.000006683974960997473,
+      "shapeDetailRepeat": 0.000026735899843989893,
+      "physicalRangePass": false
+    },
+    {
+      "view": "aerial-oblique",
+      "targetShapePixels": 48,
+      "targetDetailPixels": 4,
+      "shapeWavelengthMeters": 224417.35774787367,
+      "detailWavelengthMeters": 18701.446478989474,
+      "shapeRepeat": 0.000004455983307331649,
+      "shapeDetailRepeat": 0.000053471799687979786,
+      "physicalRangePass": false
+    },
+    {
+      "view": "aerial-oblique",
+      "targetShapePixels": 48,
+      "targetDetailPixels": 6,
+      "shapeWavelengthMeters": 224417.35774787367,
+      "detailWavelengthMeters": 28052.16971848421,
+      "shapeRepeat": 0.000004455983307331649,
+      "shapeDetailRepeat": 0.00003564786645865319,
+      "physicalRangePass": false
+    },
+    {
+      "view": "aerial-oblique",
+      "targetShapePixels": 48,
+      "targetDetailPixels": 8,
+      "shapeWavelengthMeters": 224417.35774787367,
+      "detailWavelengthMeters": 37402.89295797895,
+      "shapeRepeat": 0.000004455983307331649,
+      "shapeDetailRepeat": 0.000026735899843989893,
+      "physicalRangePass": false
+    },
+    {
+      "view": "near-orbit",
+      "targetShapePixels": 16,
+      "targetDetailPixels": 4,
+      "shapeWavelengthMeters": 65448.80309305446,
+      "detailWavelengthMeters": 16362.200773263616,
+      "shapeRepeat": 0.000015279118222807067,
+      "shapeDetailRepeat": 0.00006111647289122827,
+      "physicalRangePass": true
+    },
+    {
+      "view": "near-orbit",
+      "targetShapePixels": 16,
+      "targetDetailPixels": 6,
+      "shapeWavelengthMeters": 65448.80309305446,
+      "detailWavelengthMeters": 24543.301159895425,
+      "shapeRepeat": 0.000015279118222807067,
+      "shapeDetailRepeat": 0.00004074431526081884,
+      "physicalRangePass": false
+    },
+    {
+      "view": "near-orbit",
+      "targetShapePixels": 16,
+      "targetDetailPixels": 8,
+      "shapeWavelengthMeters": 65448.80309305446,
+      "detailWavelengthMeters": 32724.40154652723,
+      "shapeRepeat": 0.000015279118222807067,
+      "shapeDetailRepeat": 0.000030558236445614133,
+      "physicalRangePass": false
+    },
+    {
+      "view": "near-orbit",
+      "targetShapePixels": 32,
+      "targetDetailPixels": 4,
+      "shapeWavelengthMeters": 130897.60618610893,
+      "detailWavelengthMeters": 16362.200773263616,
+      "shapeRepeat": 0.000007639559111403533,
+      "shapeDetailRepeat": 0.00006111647289122827,
+      "physicalRangePass": true
+    },
+    {
+      "view": "near-orbit",
+      "targetShapePixels": 32,
+      "targetDetailPixels": 6,
+      "shapeWavelengthMeters": 130897.60618610893,
+      "detailWavelengthMeters": 24543.301159895425,
+      "shapeRepeat": 0.000007639559111403533,
+      "shapeDetailRepeat": 0.00004074431526081884,
+      "physicalRangePass": false
+    },
+    {
+      "view": "near-orbit",
+      "targetShapePixels": 32,
+      "targetDetailPixels": 8,
+      "shapeWavelengthMeters": 130897.60618610893,
+      "detailWavelengthMeters": 32724.40154652723,
+      "shapeRepeat": 0.000007639559111403533,
+      "shapeDetailRepeat": 0.000030558236445614133,
+      "physicalRangePass": false
+    },
+    {
+      "view": "near-orbit",
+      "targetShapePixels": 48,
+      "targetDetailPixels": 4,
+      "shapeWavelengthMeters": 196346.4092791634,
+      "detailWavelengthMeters": 16362.200773263616,
+      "shapeRepeat": 0.000005093039407602355,
+      "shapeDetailRepeat": 0.00006111647289122827,
+      "physicalRangePass": false
+    },
+    {
+      "view": "near-orbit",
+      "targetShapePixels": 48,
+      "targetDetailPixels": 6,
+      "shapeWavelengthMeters": 196346.4092791634,
+      "detailWavelengthMeters": 24543.301159895425,
+      "shapeRepeat": 0.000005093039407602355,
+      "shapeDetailRepeat": 0.00004074431526081884,
+      "physicalRangePass": false
+    },
+    {
+      "view": "near-orbit",
+      "targetShapePixels": 48,
+      "targetDetailPixels": 8,
+      "shapeWavelengthMeters": 196346.4092791634,
+      "detailWavelengthMeters": 32724.40154652723,
+      "shapeRepeat": 0.000005093039407602355,
+      "shapeDetailRepeat": 0.000030558236445614133,
+      "physicalRangePass": false
+    },
+    {
+      "view": "opening-orbit",
+      "targetShapePixels": 16,
+      "targetDetailPixels": 4,
+      "shapeWavelengthMeters": 165371.5137974115,
+      "detailWavelengthMeters": 41342.87844935287,
+      "shapeRepeat": 0.000006046990663851883,
+      "shapeDetailRepeat": 0.00002418796265540753,
+      "physicalRangePass": false
+    },
+    {
+      "view": "opening-orbit",
+      "targetShapePixels": 16,
+      "targetDetailPixels": 6,
+      "shapeWavelengthMeters": 165371.5137974115,
+      "detailWavelengthMeters": 62014.317674029306,
+      "shapeRepeat": 0.000006046990663851883,
+      "shapeDetailRepeat": 0.000016125308436938353,
+      "physicalRangePass": false
+    },
+    {
+      "view": "opening-orbit",
+      "targetShapePixels": 16,
+      "targetDetailPixels": 8,
+      "shapeWavelengthMeters": 165371.5137974115,
+      "detailWavelengthMeters": 82685.75689870575,
+      "shapeRepeat": 0.000006046990663851883,
+      "shapeDetailRepeat": 0.000012093981327703765,
+      "physicalRangePass": false
+    },
+    {
+      "view": "opening-orbit",
+      "targetShapePixels": 32,
+      "targetDetailPixels": 4,
+      "shapeWavelengthMeters": 330743.027594823,
+      "detailWavelengthMeters": 41342.87844935287,
+      "shapeRepeat": 0.0000030234953319259413,
+      "shapeDetailRepeat": 0.00002418796265540753,
+      "physicalRangePass": false
+    },
+    {
+      "view": "opening-orbit",
+      "targetShapePixels": 32,
+      "targetDetailPixels": 6,
+      "shapeWavelengthMeters": 330743.027594823,
+      "detailWavelengthMeters": 62014.317674029306,
+      "shapeRepeat": 0.0000030234953319259413,
+      "shapeDetailRepeat": 0.000016125308436938353,
+      "physicalRangePass": false
+    },
+    {
+      "view": "opening-orbit",
+      "targetShapePixels": 32,
+      "targetDetailPixels": 8,
+      "shapeWavelengthMeters": 330743.027594823,
+      "detailWavelengthMeters": 82685.75689870575,
+      "shapeRepeat": 0.0000030234953319259413,
+      "shapeDetailRepeat": 0.000012093981327703765,
+      "physicalRangePass": false
+    },
+    {
+      "view": "opening-orbit",
+      "targetShapePixels": 48,
+      "targetDetailPixels": 4,
+      "shapeWavelengthMeters": 496114.54139223445,
+      "detailWavelengthMeters": 41342.87844935287,
+      "shapeRepeat": 0.000002015663554617294,
+      "shapeDetailRepeat": 0.00002418796265540753,
+      "physicalRangePass": false
+    },
+    {
+      "view": "opening-orbit",
+      "targetShapePixels": 48,
+      "targetDetailPixels": 6,
+      "shapeWavelengthMeters": 496114.54139223445,
+      "detailWavelengthMeters": 62014.317674029306,
+      "shapeRepeat": 0.000002015663554617294,
+      "shapeDetailRepeat": 0.000016125308436938353,
+      "physicalRangePass": false
+    },
+    {
+      "view": "opening-orbit",
+      "targetShapePixels": 48,
+      "targetDetailPixels": 8,
+      "shapeWavelengthMeters": 496114.54139223445,
+      "detailWavelengthMeters": 82685.75689870575,
+      "shapeRepeat": 0.000002015663554617294,
+      "shapeDetailRepeat": 0.000012093981327703765,
+      "physicalRangePass": false
+    }
+  ],
+  "candidates": [
+    {
+      "id": "horizontal-orbit-shape-16-detail-4",
+      "shapeRepeat": 0.000015279118222807067,
+      "shapeDetailRepeat": 0.00006111647289122827
+    },
+    {
+      "id": "horizontal-orbit-shape-32-detail-4",
+      "shapeRepeat": 0.000007639559111403533,
+      "shapeDetailRepeat": 0.00006111647289122827
+    }
+  ],
+  "records": [
+    {
+      "candidate": "horizontal-orbit-shape-16-detail-4",
+      "view": "near-oblique",
+      "diagnostic": "full",
+      "cameraHeightMeters": 2499.9999999990687,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 65448.80309305446,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.00018852908245912614,
+          "north": 0.00012929619638535163,
+          "up": 0.00018773451964696085
+        },
+        "horizontalPixelsPerMeter": 0.00016164888080744542,
+        "shapeProjectedPixels": 10.579725770179126,
+        "detailProjectedPixels": 2.6449314425447814,
+        "shapeStatus": "fragment-risk",
+        "detailStatus": "subpixel-risk",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 4.881097510820982,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 9.386725982348043,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 6.758442707290591,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 3.7546903929392172,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          809.8296176749052,
+          -136.785209149117
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:975ad335f3a7e52d"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-16-detail-4",
+      "view": "near-oblique",
+      "diagnostic": "cloud-raw",
+      "cameraHeightMeters": 2499.9999999990687,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 65448.80309305446,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.00018852908245912614,
+          "north": 0.00012929619638535163,
+          "up": 0.00018773451964696085
+        },
+        "horizontalPixelsPerMeter": 0.00016164888080744542,
+        "shapeProjectedPixels": 10.579725770179126,
+        "detailProjectedPixels": 2.6449314425447814,
+        "shapeStatus": "fragment-risk",
+        "detailStatus": "subpixel-risk",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 4.881097510820982,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 9.386725982348043,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 6.758442707290591,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 3.7546903929392172,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          809.8296176749052,
+          -136.785209149117
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:975ad335f3a7e52d"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-16-detail-4",
+      "view": "near-oblique",
+      "diagnostic": "sample-count-debug",
+      "cameraHeightMeters": 2499.9999999990687,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 65448.80309305446,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.00018852908245912614,
+          "north": 0.00012929619638535163,
+          "up": 0.00018773451964696085
+        },
+        "horizontalPixelsPerMeter": 0.00016164888080744542,
+        "shapeProjectedPixels": 10.579725770179126,
+        "detailProjectedPixels": 2.6449314425447814,
+        "shapeStatus": "fragment-risk",
+        "detailStatus": "subpixel-risk",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 4.881097510820982,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 9.386725982348043,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 6.758442707290591,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 3.7546903929392172,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          809.8296176749052,
+          -136.785209149117
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:91f3ff5f03b4312a"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-16-detail-4",
+      "view": "aerial-oblique",
+      "diagnostic": "full",
+      "cameraHeightMeters": 50000,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 65448.80309305446,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.00023402967069214312,
+          "north": 0.00019163919436173007,
+          "up": 0.00029060863771132584
+        },
+        "horizontalPixelsPerMeter": 0.00021388719875191915,
+        "shapeProjectedPixels": 13.998661155239361,
+        "detailProjectedPixels": 3.4996652888098403,
+        "shapeStatus": "fragment-risk",
+        "detailStatus": "target",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 7.5558245804944715,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 14.530431885566292,
+            "status": "target"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 10.46191095760773,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 5.812172754226517,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          831.37956222864,
+          -671.3262790416225
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:975ad335f3a7e52d"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-16-detail-4",
+      "view": "aerial-oblique",
+      "diagnostic": "cloud-raw",
+      "cameraHeightMeters": 50000,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 65448.80309305446,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.00023402967069214312,
+          "north": 0.00019163919436173007,
+          "up": 0.00029060863771132584
+        },
+        "horizontalPixelsPerMeter": 0.00021388719875191915,
+        "shapeProjectedPixels": 13.998661155239361,
+        "detailProjectedPixels": 3.4996652888098403,
+        "shapeStatus": "fragment-risk",
+        "detailStatus": "target",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 7.5558245804944715,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 14.530431885566292,
+            "status": "target"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 10.46191095760773,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 5.812172754226517,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          831.37956222864,
+          -671.3262790416225
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:975ad335f3a7e52d"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-16-detail-4",
+      "view": "aerial-oblique",
+      "diagnostic": "sample-count-debug",
+      "cameraHeightMeters": 50000,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 65448.80309305446,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.00023402967069214312,
+          "north": 0.00019163919436173007,
+          "up": 0.00029060863771132584
+        },
+        "horizontalPixelsPerMeter": 0.00021388719875191915,
+        "shapeProjectedPixels": 13.998661155239361,
+        "detailProjectedPixels": 3.4996652888098403,
+        "shapeStatus": "fragment-risk",
+        "detailStatus": "target",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 7.5558245804944715,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 14.530431885566292,
+            "status": "target"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 10.46191095760773,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 5.812172754226517,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          831.37956222864,
+          -671.3262790416225
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:91f3ff5f03b4312a"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-16-detail-4",
+      "view": "near-orbit",
+      "diagnostic": "full",
+      "cameraHeightMeters": 200000,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 65448.80309305446,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.0002593279100183211,
+          "north": 0.00022863984640212042,
+          "up": 0.0003646956698559806
+        },
+        "horizontalPixelsPerMeter": 0.00024446589156491307,
+        "shapeProjectedPixels": 16,
+        "detailProjectedPixels": 4,
+        "shapeStatus": "target",
+        "detailStatus": "target",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 9.482087416255496,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 18.23478349279903,
+            "status": "target"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 13.1290441148153,
+            "status": "target"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 7.293913397119612,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          843.3688861653411,
+          -937.4933616760022
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:975ad335f3a7e52d"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-16-detail-4",
+      "view": "near-orbit",
+      "diagnostic": "cloud-raw",
+      "cameraHeightMeters": 200000,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 65448.80309305446,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.0002593279100183211,
+          "north": 0.00022863984640212042,
+          "up": 0.0003646956698559806
+        },
+        "horizontalPixelsPerMeter": 0.00024446589156491307,
+        "shapeProjectedPixels": 16,
+        "detailProjectedPixels": 4,
+        "shapeStatus": "target",
+        "detailStatus": "target",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 9.482087416255496,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 18.23478349279903,
+            "status": "target"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 13.1290441148153,
+            "status": "target"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 7.293913397119612,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          843.3688861653411,
+          -937.4933616760022
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:975ad335f3a7e52d"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-16-detail-4",
+      "view": "near-orbit",
+      "diagnostic": "sample-count-debug",
+      "cameraHeightMeters": 200000,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 65448.80309305446,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.0002593279100183211,
+          "north": 0.00022863984640212042,
+          "up": 0.0003646956698559806
+        },
+        "horizontalPixelsPerMeter": 0.00024446589156491307,
+        "shapeProjectedPixels": 16,
+        "detailProjectedPixels": 4,
+        "shapeStatus": "target",
+        "detailStatus": "target",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 9.482087416255496,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 18.23478349279903,
+            "status": "target"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 13.1290441148153,
+            "status": "target"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 7.293913397119612,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          843.3688861653411,
+          -937.4933616760022
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:91f3ff5f03b4312a"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-16-detail-4",
+      "view": "opening-orbit",
+      "diagnostic": "full",
+      "cameraHeightMeters": 3578429.408265641,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 65448.80309305446,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.00007128152378871779,
+          "north": 0.00011679377365159035,
+          "up": 0.00009418299075967309
+        },
+        "horizontalPixelsPerMeter": 0.00009675185062163012,
+        "shapeProjectedPixels": 6.332292820223689,
+        "detailProjectedPixels": 1.5830732050559222,
+        "shapeStatus": "fragment-risk",
+        "detailStatus": "subpixel-risk",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 2.4487577597515005,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 4.709149537983654,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 3.3905876673482314,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 1.8836598151934618,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          1175.5645867781054,
+          837.8870486361263
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:755a7d87f289c768"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-16-detail-4",
+      "view": "opening-orbit",
+      "diagnostic": "cloud-raw",
+      "cameraHeightMeters": 3578429.408265641,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 65448.80309305446,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.00007128152378871779,
+          "north": 0.00011679377365159035,
+          "up": 0.00009418299075967309
+        },
+        "horizontalPixelsPerMeter": 0.00009675185062163012,
+        "shapeProjectedPixels": 6.332292820223689,
+        "detailProjectedPixels": 1.5830732050559222,
+        "shapeStatus": "fragment-risk",
+        "detailStatus": "subpixel-risk",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 2.4487577597515005,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 4.709149537983654,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 3.3905876673482314,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 1.8836598151934618,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          1175.5645867781054,
+          837.8870486361263
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:755a7d87f289c768"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-16-detail-4",
+      "view": "opening-orbit",
+      "diagnostic": "sample-count-debug",
+      "cameraHeightMeters": 3578429.408265641,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 65448.80309305446,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.00007128152378871779,
+          "north": 0.00011679377365159035,
+          "up": 0.00009418299075967309
+        },
+        "horizontalPixelsPerMeter": 0.00009675185062163012,
+        "shapeProjectedPixels": 6.332292820223689,
+        "detailProjectedPixels": 1.5830732050559222,
+        "shapeStatus": "fragment-risk",
+        "detailStatus": "subpixel-risk",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 2.4487577597515005,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 4.709149537983654,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 3.3905876673482314,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 1.8836598151934618,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          1175.5645867781054,
+          837.8870486361263
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:584c143ab3a76aaf"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-32-detail-4",
+      "view": "near-oblique",
+      "diagnostic": "full",
+      "cameraHeightMeters": 2499.9999999990687,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 130897.60618610893,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.00018852908245912614,
+          "north": 0.00012929619638535163,
+          "up": 0.00018773451964696085
+        },
+        "horizontalPixelsPerMeter": 0.00016164888080744542,
+        "shapeProjectedPixels": 21.15945154035825,
+        "detailProjectedPixels": 2.6449314425447814,
+        "shapeStatus": "target",
+        "detailStatus": "subpixel-risk",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 4.881097510820982,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 9.386725982348043,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 6.758442707290591,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 3.7546903929392172,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          809.8296176749052,
+          -136.785209149117
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:a07aba2a3d3f3acc"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-32-detail-4",
+      "view": "near-oblique",
+      "diagnostic": "cloud-raw",
+      "cameraHeightMeters": 2499.9999999990687,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 130897.60618610893,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.00018852908245912614,
+          "north": 0.00012929619638535163,
+          "up": 0.00018773451964696085
+        },
+        "horizontalPixelsPerMeter": 0.00016164888080744542,
+        "shapeProjectedPixels": 21.15945154035825,
+        "detailProjectedPixels": 2.6449314425447814,
+        "shapeStatus": "target",
+        "detailStatus": "subpixel-risk",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 4.881097510820982,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 9.386725982348043,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 6.758442707290591,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 3.7546903929392172,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          809.8296176749052,
+          -136.785209149117
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:a07aba2a3d3f3acc"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-32-detail-4",
+      "view": "near-oblique",
+      "diagnostic": "sample-count-debug",
+      "cameraHeightMeters": 2499.9999999990687,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 130897.60618610893,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.00018852908245912614,
+          "north": 0.00012929619638535163,
+          "up": 0.00018773451964696085
+        },
+        "horizontalPixelsPerMeter": 0.00016164888080744542,
+        "shapeProjectedPixels": 21.15945154035825,
+        "detailProjectedPixels": 2.6449314425447814,
+        "shapeStatus": "target",
+        "detailStatus": "subpixel-risk",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 4.881097510820982,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 9.386725982348043,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 6.758442707290591,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 3.7546903929392172,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          809.8296176749052,
+          -136.785209149117
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:e0030ccd343af4bb"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-32-detail-4",
+      "view": "aerial-oblique",
+      "diagnostic": "full",
+      "cameraHeightMeters": 50000,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 130897.60618610893,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.00023402967069214312,
+          "north": 0.00019163919436173007,
+          "up": 0.00029060863771132584
+        },
+        "horizontalPixelsPerMeter": 0.00021388719875191915,
+        "shapeProjectedPixels": 27.997322310478722,
+        "detailProjectedPixels": 3.4996652888098403,
+        "shapeStatus": "target",
+        "detailStatus": "target",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 7.5558245804944715,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 14.530431885566292,
+            "status": "target"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 10.46191095760773,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 5.812172754226517,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          831.37956222864,
+          -671.3262790416225
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:a07aba2a3d3f3acc"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-32-detail-4",
+      "view": "aerial-oblique",
+      "diagnostic": "cloud-raw",
+      "cameraHeightMeters": 50000,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 130897.60618610893,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.00023402967069214312,
+          "north": 0.00019163919436173007,
+          "up": 0.00029060863771132584
+        },
+        "horizontalPixelsPerMeter": 0.00021388719875191915,
+        "shapeProjectedPixels": 27.997322310478722,
+        "detailProjectedPixels": 3.4996652888098403,
+        "shapeStatus": "target",
+        "detailStatus": "target",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 7.5558245804944715,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 14.530431885566292,
+            "status": "target"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 10.46191095760773,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 5.812172754226517,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          831.37956222864,
+          -671.3262790416225
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:a07aba2a3d3f3acc"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-32-detail-4",
+      "view": "aerial-oblique",
+      "diagnostic": "sample-count-debug",
+      "cameraHeightMeters": 50000,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 130897.60618610893,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.00023402967069214312,
+          "north": 0.00019163919436173007,
+          "up": 0.00029060863771132584
+        },
+        "horizontalPixelsPerMeter": 0.00021388719875191915,
+        "shapeProjectedPixels": 27.997322310478722,
+        "detailProjectedPixels": 3.4996652888098403,
+        "shapeStatus": "target",
+        "detailStatus": "target",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 7.5558245804944715,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 14.530431885566292,
+            "status": "target"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 10.46191095760773,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 5.812172754226517,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          831.37956222864,
+          -671.3262790416225
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:e0030ccd343af4bb"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-32-detail-4",
+      "view": "near-orbit",
+      "diagnostic": "full",
+      "cameraHeightMeters": 200000,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 130897.60618610893,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.0002593279100183211,
+          "north": 0.00022863984640212042,
+          "up": 0.0003646956698559806
+        },
+        "horizontalPixelsPerMeter": 0.00024446589156491307,
+        "shapeProjectedPixels": 32,
+        "detailProjectedPixels": 4,
+        "shapeStatus": "target",
+        "detailStatus": "target",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 9.482087416255496,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 18.23478349279903,
+            "status": "target"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 13.1290441148153,
+            "status": "target"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 7.293913397119612,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          843.3688861653411,
+          -937.4933616760022
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:a07aba2a3d3f3acc"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-32-detail-4",
+      "view": "near-orbit",
+      "diagnostic": "cloud-raw",
+      "cameraHeightMeters": 200000,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 130897.60618610893,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.0002593279100183211,
+          "north": 0.00022863984640212042,
+          "up": 0.0003646956698559806
+        },
+        "horizontalPixelsPerMeter": 0.00024446589156491307,
+        "shapeProjectedPixels": 32,
+        "detailProjectedPixels": 4,
+        "shapeStatus": "target",
+        "detailStatus": "target",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 9.482087416255496,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 18.23478349279903,
+            "status": "target"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 13.1290441148153,
+            "status": "target"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 7.293913397119612,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          843.3688861653411,
+          -937.4933616760022
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:a07aba2a3d3f3acc"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-32-detail-4",
+      "view": "near-orbit",
+      "diagnostic": "sample-count-debug",
+      "cameraHeightMeters": 200000,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 130897.60618610893,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.0002593279100183211,
+          "north": 0.00022863984640212042,
+          "up": 0.0003646956698559806
+        },
+        "horizontalPixelsPerMeter": 0.00024446589156491307,
+        "shapeProjectedPixels": 32,
+        "detailProjectedPixels": 4,
+        "shapeStatus": "target",
+        "detailStatus": "target",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 9.482087416255496,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 18.23478349279903,
+            "status": "target"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 13.1290441148153,
+            "status": "target"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 7.293913397119612,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          843.3688861653411,
+          -937.4933616760022
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:e0030ccd343af4bb"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-32-detail-4",
+      "view": "opening-orbit",
+      "diagnostic": "full",
+      "cameraHeightMeters": 3578429.408265641,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 130897.60618610893,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.00007128152378871779,
+          "north": 0.00011679377365159035,
+          "up": 0.00009418299075967309
+        },
+        "horizontalPixelsPerMeter": 0.00009675185062163012,
+        "shapeProjectedPixels": 12.664585640447378,
+        "detailProjectedPixels": 1.5830732050559222,
+        "shapeStatus": "fragment-risk",
+        "detailStatus": "subpixel-risk",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 2.4487577597515005,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 4.709149537983654,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 3.3905876673482314,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 1.8836598151934618,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          1175.5645867781054,
+          837.8870486361263
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:90fe68e529778729"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-32-detail-4",
+      "view": "opening-orbit",
+      "diagnostic": "cloud-raw",
+      "cameraHeightMeters": 3578429.408265641,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 130897.60618610893,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.00007128152378871779,
+          "north": 0.00011679377365159035,
+          "up": 0.00009418299075967309
+        },
+        "horizontalPixelsPerMeter": 0.00009675185062163012,
+        "shapeProjectedPixels": 12.664585640447378,
+        "detailProjectedPixels": 1.5830732050559222,
+        "shapeStatus": "fragment-risk",
+        "detailStatus": "subpixel-risk",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 2.4487577597515005,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 4.709149537983654,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 3.3905876673482314,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 1.8836598151934618,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          1175.5645867781054,
+          837.8870486361263
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:90fe68e529778729"
+    },
+    {
+      "candidate": "horizontal-orbit-shape-32-detail-4",
+      "view": "opening-orbit",
+      "diagnostic": "sample-count-debug",
+      "cameraHeightMeters": 3578429.408265641,
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 130897.60618610893,
+        "detailWavelengthMeters": 16362.200773263616,
+        "pixelsPerMeter": {
+          "east": 0.00007128152378871779,
+          "north": 0.00011679377365159035,
+          "up": 0.00009418299075967309
+        },
+        "horizontalPixelsPerMeter": 0.00009675185062163012,
+        "shapeProjectedPixels": 12.664585640447378,
+        "detailProjectedPixels": 1.5830732050559222,
+        "shapeStatus": "fragment-risk",
+        "detailStatus": "subpixel-risk",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 2.4487577597515005,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 4.709149537983654,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 3.3905876673482314,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 1.8836598151934618,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          1175.5645867781054,
+          837.8870486361263
+        ],
+        "segmentMeters": 1000
+      },
+      "rendererFingerprintHash": "fnv1a-64:12504dc8aad3fbae"
+    }
+  ],
+  "checkpoint": {
+    "id": "HORIZONTAL_MORPHOLOGY_SCALE_FAIL",
+    "nearViews": [
+      "near-oblique",
+      "aerial-oblique",
+      "near-orbit"
+    ],
+    "reason": "No single repeat pair reaches both shape 16-48 px and detail 3-10 px in all three near views while remaining inside each view's physical wavelength range.",
+    "task3Unlocked": false,
+    "task4Unlocked": false,
+    "task5Unlocked": false,
+    "task6Unlocked": false,
+    "task0pLocked": true
+  }
+}

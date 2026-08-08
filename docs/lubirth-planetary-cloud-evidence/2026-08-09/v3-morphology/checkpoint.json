@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "baseCommit": "fe8ba8df992cbac2df8770850c438a4ee3a3bd36",
+  "checkpoint": "HORIZONTAL_MORPHOLOGY_SCALE_FAIL",
+  "status": "stopped",
+  "evidence": {
+    "baseline": "baseline.json",
+    "scaleAudit": "scale-audit.json",
+    "candidateMatrix": "candidate-matrix.json",
+    "captureDirectory": "captures/"
+  },
+  "fixedContract": {
+    "coverage": 0.55,
+    "shapeRepeatBaseline": 0.000025,
+    "shapeDetailRepeatBaseline": 0.0006,
+    "viewport": { "width": 1440, "height": 960, "dpr": 1 },
+    "renderer": "stock-takram-0.7.6",
+    "weather": "v3"
+  },
+  "finding": {
+    "nearOblique": {
+      "shapePixelsBaseline": 6.4659552323,
+      "detailPixelsBaseline": 0.2694148013
+    },
+    "aerialOblique": {
+      "shapePixelsBaseline": 8.5554879501,
+      "detailPixelsBaseline": 0.3564786646
+    },
+    "nearOrbit": {
+      "shapePixelsBaseline": 9.7786356626,
+      "detailPixelsBaseline": 0.4074431526
+    },
+    "openingOrbit": {
+      "shapePixelsBaseline": 3.8700740249,
+      "detailPixelsBaseline": 0.1612530844
+    },
+    "physicalRangeCandidates": {
+      "near-oblique": 0,
+      "aerial-oblique": 0,
+      "near-orbit": 2,
+      "opening-orbit": 0
+    },
+    "reason": "No single repeat pair reaches shape 16–48 px and detail 3–10 px in all three near views while staying inside the per-view physical wavelength ranges."
+  },
+  "unlock": {
+    "task3": false,
+    "task4": false,
+    "task5": false,
+    "task6": false,
+    "task0p": false,
+    "originalTask0To8": false
+  },
+  "nextAction": "Amend the camera/physical-scale contract or accept a new morphology plan; do not tune vertical profile, temporal, lighting or cost while the horizontal scale has no common candidate."
+}
