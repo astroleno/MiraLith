@@ -1,9 +1,10 @@
 {
-  "schemaVersion": 1,
-  "reviewedAt": "2026-08-06T08:49:58Z",
-  "baseCommit": "1fe28d9",
+  "schemaVersion": 2,
+  "reviewedAt": "2026-08-08T13:15:00Z",
+  "baseCommit": "672098ad45ebdb06751ab8b06a21085d632362bb",
   "candidate": "v3",
   "decision": "V3_ADAPTER_VISUAL_FAIL",
+  "decisionScope": "HISTORICAL_FULL_FRAME_REVIEW_ONLY_PENDING_COARSE_MASS_RECAPTURE",
   "scope": "Task 0V spherical-weather adapter over the complete native Takram Clouds -> temporal resolve -> AerialPerspective path. This decision is specific to the V3 adapter and does not reject Takram or measure cost.",
   "prerequisites": {
     "upstreamControl": "PASS",
@@ -33,15 +34,19 @@
     "sourceLayoutId": "v3-r-depth-g-height-b-morphology-a-concavity",
     "outputLayoutId": "takram-v1-r-base-g-tower-b-structure-a-wisp",
     "weatherManifest": "apps/site/public/assets/lubirth/takram-parity/v3/manifest.json",
+    "presentationPreset": "v3-opening-coarse",
+    "coverage": 0.55,
+    "shapeRepeat": 0.000025,
+    "shapeDetailRepeat": 0.0006,
     "layers": [
-      { "channel": "r", "altitude": 8000, "height": 26000, "densityScale": 0.18, "shapeAmount": 0.7, "shapeDetailAmount": 0.45, "coverageFilterWidth": 0.6, "shadow": true },
-      { "channel": "g", "altitude": 10000, "height": 50000, "densityScale": 0.11, "shapeAmount": 0.85, "shapeDetailAmount": 0.7, "weatherExponent": 1.15, "coverageFilterWidth": 0.52, "shadow": true },
-      { "channel": "b", "altitude": 8000, "height": 36000, "densityScale": 0.06, "shapeAmount": 0.9, "shapeDetailAmount": 0.85, "weatherExponent": 1.2, "coverageFilterWidth": 0.45, "shadow": false },
-      { "channel": "a", "altitude": 18000, "height": 20000, "densityScale": 0.035, "shapeAmount": 0.55, "shapeDetailAmount": 0.25, "weatherExponent": 1.4, "coverageFilterWidth": 0.5, "shadow": false }
+      { "channel": "r", "altitude": 8000, "height": 26000, "densityScale": 0.18, "shapeAmount": 0.9, "shapeDetailAmount": 0.18, "coverageFilterWidth": 0.6, "shadow": true },
+      { "channel": "g", "altitude": 10000, "height": 50000, "densityScale": 0.11, "shapeAmount": 0.95, "shapeDetailAmount": 0.22, "weatherExponent": 1, "coverageFilterWidth": 0.52, "shadow": true },
+      { "channel": "b", "altitude": 8000, "height": 36000, "densityScale": 0.06, "shapeAmount": 1, "shapeDetailAmount": 0.28, "weatherExponent": 1.05, "coverageFilterWidth": 0.45, "shadow": false },
+      { "channel": "a", "altitude": 18000, "height": 20000, "densityScale": 0.035, "shapeAmount": 0.7, "shapeDetailAmount": 0.1, "weatherExponent": 1.1, "coverageFilterWidth": 0.5, "shadow": false }
     ]
   },
   "nativeRenderer": {
-    "rendererFingerprintHash": "fnv1a-64:3ae11ddbe1c87448",
+    "rendererFingerprintHash": "fnv1a-64:b6657a30c5d0def2",
     "sameFingerprintAsStock": true,
     "features": {
       "beerShadowMaps": true,
@@ -66,13 +71,14 @@
     "depthRegression": "The corrected native shader receives the non-unit scale; depth-enabled and depth-disabled opening diagnostics were captured at progress 0.06."
   },
   "captures": {
+    "provenance": "The 0.06 diagnostic captures below were regenerated at baseCommit 672098a. The 0.00/0.12/0.18 contact-sheet captures remain historical and are not used as current coarse-mass sign-off.",
     "contactSheet": {
       "path": "opening-parity-contact-sheet.png",
       "sha256": "2fd467cfa21425a0c5e958fd46d62b8f9e7f75e34e5567363106c006a6273477"
     },
     "fullByProgress": {
       "0.00": { "path": "captures/opening-v3-0-00-full.png", "sha256": "1a30bd812b0bfeb373481ac78afe9b5ef23c5aee639997dfe189c98f5a9d881d" },
-      "0.06": { "path": "captures/opening-v3-0-06-full.png", "sha256": "cac3fdedbb338f7abacf7c770d0e0cd9629587458b3f7d845efcabd8ebb19a9d" },
+      "0.06": { "path": "captures/opening-v3-0-06-full.png", "sha256": "bbecc6ef0cb6f9f66761fd348b04b6a57dd7faf9f422fb54d2f932f2a42cacc3" },
       "0.12": { "path": "captures/opening-v3-0-12-full.png", "sha256": "bbf0a5b6671c0e9ffa8ea648a28a5ad5dd8ccceb67aac90a6f2849e6ad44ec3b" },
       "0.18": { "path": "captures/opening-v3-0-18-full.png", "sha256": "627cb12be61fdf8c7ba1a10a7c2498e29e025d6ff0bfe644218fb2cfc9ed6f21" }
     },
@@ -83,12 +89,21 @@
       "0.18": { "path": "captures/opening-v3-0-18-cloud-raw.png", "sha256": "d80c18b5b6ab80ce5500e6728d3f460b550dbe66a59d75adc861c9c84e08e2a7" }
     },
     "correctedDiagnosticsAtProgress0.06": {
-      "full": { "path": "captures/opening-v3-0-06-full.png", "sha256": "cac3fdedbb338f7abacf7c770d0e0cd9629587458b3f7d845efcabd8ebb19a9d" },
-      "depthOff": { "path": "captures/opening-v3-0-06-depth-off.png", "sha256": "d65480f0e893cf37a00a235f04be12f520fcfd876c295b9e8a74d436b572dbee" },
+      "full": { "path": "captures/opening-v3-0-06-full.png", "sha256": "bbecc6ef0cb6f9f66761fd348b04b6a57dd7faf9f422fb54d2f932f2a42cacc3" },
+      "depthOff": { "path": "captures/opening-v3-0-06-depth-off.png", "sha256": "af947743bda53466e356d136c60ebaa08cb730bdd03b84e95f0d3f38a5c294c7" },
       "uvDebug": { "path": "captures/opening-v3-0-06-uv-debug.png", "sha256": "d0feb552149786beffdb6e75da80e274426cc60484eef1e0088d6157ab63c522" },
-      "densityDebug": { "path": "captures/opening-v3-0-06-density-debug.png", "sha256": "29a22b39bd36d390180bacd7f7ed21528123e12d5cf7bf93750967f2da827089" },
-      "sampleCountDebug": { "path": "captures/opening-v3-0-06-sample-count-debug.png", "sha256": "8c1b24194d14c0f0ac9d34840617b2779f811bcb4563249747bfdc5465fb5c28" }
+      "densityDebug": { "path": "captures/opening-v3-0-06-density-debug.png", "sha256": "15b26970719c3df9ae54ed379d2c4084b574b3b938286aa2811fc20aa2e42a75" },
+      "sampleCountDebug": { "path": "captures/opening-v3-0-06-sample-count-debug.png", "sha256": "4648b7dcb2636385dc30ba7fc83afc5d24d74da64860754802cdfe22e112fe84" }
     }
+  },
+  "physicalSignalRevalidation": {
+    "status": "PASS_NO_NEAR_ZERO_COLLAPSE",
+    "evidence": "altitude-ladder.json",
+    "fixedSphericalUv": [0.076494140625, 0.73053515625],
+    "sampledAltitudesMeters": [2500, 50000, 200000, 3578429],
+    "firstNearZeroAltitudeMeters": null,
+    "firstNearZeroStage": null,
+    "conclusion": "The native path produces finite non-zero density, optical depth, pre/post-temporal radiance and AerialPerspective output at every sampled rung. The historical full-frame visual fail is not evidence of a physical-stage collapse."
   },
   "checks": [
     {
@@ -142,6 +157,6 @@
     "result": "PASS (5 corrected V3 diagnostics at progress 0.06)",
     "runtimeFingerprintHash": "fnv1a-64:3ae11ddbe1c87448"
   },
-  "nextAuthorizedWork": "NONE",
-  "blockedWork": "Task 0P V3 cost/promotion window is locked because no V3 visual-pass candidate exists. Original Task 0-8 remains locked; this evidence does not reject Takram or authorize a disposable renderer fallback."
+  "nextAuthorizedWork": "V3_COARSE_MASS_VISUAL_REVIEW_ONLY",
+  "blockedWork": "Task 0P V3 cost/promotion window is locked because no V3 visual-pass candidate exists. The next allowed work is a narrow coarse-mass full-frame review; any presentation change must rerun the fixed-geography altitude ladder. Original Task 0-8 remains locked; this evidence does not reject Takram or authorize a disposable renderer fallback."
 }

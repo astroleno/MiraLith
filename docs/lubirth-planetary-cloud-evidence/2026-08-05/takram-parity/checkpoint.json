@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 2,
-  "recordedAt": "2026-08-06T08:49:58Z",
-  "baseCommit": "1fe28d9",
+  "schemaVersion": 3,
+  "recordedAt": "2026-08-08T13:12:14Z",
+  "baseCommit": "672098ad45ebdb06751ab8b06a21085d632362bb",
   "v3InputContract": "V3_INPUT_CONTRACT_PASS",
   "disposableRenderer": "DISPOSABLE_RENDERER_REJECTED",
   "coordinateDepth": {
@@ -20,14 +20,23 @@
     "decision": "PASS",
     "schemaVersion": 2,
     "source": "resolved CloudsEffect, BSM, AerialPerspective, native uniforms/defines, render targets and shared asset hashes",
-    "openingRuntimeHash": "fnv1a-64:3ae11ddbe1c87448",
+    "openingRuntimeHash": "fnv1a-64:b6657a30c5d0def2",
     "adapterExclusions": ["GLOBAL_WEATHER_MAPPING", "weather texture", "weather repeat/offset", "V3 cloud layers"],
     "negativeDriftTest": "maxIterationCount mutation changes the fnv1a-64 hash"
   },
   "visualRevalidation": {
     "progress": 0.06,
     "diagnostics": ["full", "depth-off", "uv-debug", "density-debug", "sample-count-debug"],
-    "nonUnitDepthRegression": "sceneDepthScale is non-unit in opening telemetry and depth-enabled/depth-disabled GPU diagnostics are captured"
+    "nonUnitDepthRegression": "sceneDepthScale is non-unit in opening telemetry and depth-enabled/depth-disabled GPU diagnostics are captured",
+    "visualStatus": "V3_ADAPTER_VISUAL_FAIL_PENDING_COARSE_MASS_REVIEW"
+  },
+  "altitudeLadder": {
+    "evidence": "altitude-ladder.json",
+    "fixedSphericalUv": [0.076494140625, 0.73053515625],
+    "requestedAltitudesMeters": [2500, 50000, 200000, 3578429],
+    "firstNearZeroAltitudeMeters": null,
+    "firstNearZeroStage": null,
+    "signalConclusion": "NO_NEAR_ZERO_COLLAPSE_IN_SAMPLED_RANGE"
   },
   "stockSetup": "PASS",
   "upstreamControl": "PASS",
@@ -41,6 +50,6 @@
     "stock": false,
     "v3": false
   },
-  "nextAuthorizedWork": "NONE",
-  "stopReason": "After the world-depth-to-ECEF scene-depth contract and runtime fingerprint were corrected and revalidated, the V3 opening visual gate still fails: no readable V3 cloud volume appears in the corrected native path. No Task 0P cost or promotion conclusion is authorized."
+  "nextAuthorizedWork": "V3_COARSE_MASS_VISUAL_REVIEW_ONLY",
+  "stopReason": "The fixed-geography altitude ladder retains finite non-zero native density, optical depth, pre/post-temporal radiance and AerialPerspective signal at every sampled altitude. No stage-specific physical collapse was found; Task 0P and original Task 0-8 remain locked while a narrow coarse-mass full-frame visual review is performed."
 }

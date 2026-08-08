@@ -1,0 +1,247 @@
+{
+  "schemaVersion": 2,
+  "baseCommit": "672098ad45ebdb06751ab8b06a21085d632362bb",
+  "generatedAt": "2026-08-08T13:12:14.410Z",
+  "route": {
+    "input": "v3",
+    "view": "opening",
+    "progress": 0.06,
+    "fixedRenderer": "stock-takram-0.7.6",
+    "weather": "v3",
+    "sun": "LuBirth opening default"
+  },
+  "openingAltitudeMeters": 3578429,
+  "requestedAltitudes": [
+    2500,
+    50000,
+    200000,
+    3578429
+  ],
+  "thresholds": {
+    "visibleRadiance": 0.0001,
+    "nearZeroRadiance": 0.000001
+  },
+  "firstNearZeroAltitudeMeters": null,
+  "firstNearZeroStage": null,
+  "signalConclusion": "NO_NEAR_ZERO_COLLAPSE_IN_SAMPLED_RANGE",
+  "rendererFingerprintHash": "fnv1a-64:95333e24643436f9",
+  "presentationPreset": "v3-opening-coarse",
+  "sphericalUv": [
+    0.076494140625,
+    0.73053515625
+  ],
+  "measurements": [
+    {
+      "requestedAltitudeMeters": 2500,
+      "sphericalUv": [
+        0.076494140625,
+        0.73053515625
+      ],
+      "cameraHeightMeters": 2500,
+      "centerRayShellIntervalMeters": 52000.000000000015,
+      "shellIntervalLengthMeters": 56495.42243392379,
+      "validPrimarySampleCount": 2.959307343871505,
+      "maxDensity": 0.0369873046875,
+      "averageDensity": 0.021269400649600558,
+      "weatherMaxDensity": 0.515625,
+      "weatherAverageDensity": 0.361846396834762,
+      "accumulatedOpticalDepth": 6.292830189969136,
+      "peakAccumulatedOpticalDepth": 8.67625637332229,
+      "centerAccumulatedOpticalDepth": 6.53122864147244,
+      "transmittance": 0.002971768097745048,
+      "minimumTransmittance": 0.00017058849334716797,
+      "centerTransmittance": 0.00145721435546875,
+      "preTemporalInScatteredRadiance": 0.08357770152897559,
+      "preTemporalInScatteredRadiancePeak": 0.1645247802734375,
+      "preTemporalInScatteredRadianceCenter": 0.08832166748046875,
+      "postTemporalInScatteredRadiance": 0.08959150894344253,
+      "postTemporalInScatteredRadiancePeak": 0.16978525390625002,
+      "postTemporalInScatteredRadianceCenter": 0.09964346923828124,
+      "aerialPerspectiveResult": 0.3293003574925707,
+      "aerialPerspectiveResultPeak": 1,
+      "aerialPerspectiveResultCenter": 0.34901491096019743,
+      "signalStages": {
+        "preTemporal": {
+          "average": 0.08357770152897559,
+          "peak": 0.1645247802734375,
+          "center": 0.08832166748046875,
+          "status": "visible"
+        },
+        "postTemporal": {
+          "average": 0.08959150894344253,
+          "peak": 0.16978525390625002,
+          "center": 0.09964346923828124,
+          "status": "visible"
+        },
+        "aerialPerspective": {
+          "average": 0.3293003574925707,
+          "peak": 1,
+          "center": 0.34901491096019743,
+          "status": "visible"
+        }
+      },
+      "averageSignal": 0.3293003574925707,
+      "maxSignal": 1,
+      "signalStatus": "visible"
+    },
+    {
+      "requestedAltitudeMeters": 50000,
+      "sphericalUv": [
+        0.076494140625,
+        0.73053515625
+      ],
+      "cameraHeightMeters": 50000,
+      "centerRayShellIntervalMeters": 42000.00000000001,
+      "shellIntervalLengthMeters": 45703.057536372435,
+      "validPrimarySampleCount": 151.42650462962962,
+      "maxDensity": 0.047821044921875,
+      "averageDensity": 0.006554284206143132,
+      "weatherMaxDensity": 0.371337890625,
+      "weatherAverageDensity": 0.033189171685112845,
+      "accumulatedOpticalDepth": 6.2914301472129015,
+      "peakAccumulatedOpticalDepth": 13.815510557964274,
+      "centerAccumulatedOpticalDepth": 5.011566513679468,
+      "transmittance": 0.0037743759390230945,
+      "minimumTransmittance": 0.000001,
+      "centerTransmittance": 0.00666046142578125,
+      "preTemporalInScatteredRadiance": 0.09946498453232167,
+      "preTemporalInScatteredRadiancePeak": 0.1990988037109375,
+      "preTemporalInScatteredRadianceCenter": 0.1128130859375,
+      "postTemporalInScatteredRadiance": 0.09917471701727688,
+      "postTemporalInScatteredRadiancePeak": 0.19088635253906247,
+      "postTemporalInScatteredRadianceCenter": 0.10961854248046875,
+      "aerialPerspectiveResult": 0.3474110220287297,
+      "aerialPerspectiveResultPeak": 1,
+      "aerialPerspectiveResultCenter": 0.36495294922590255,
+      "signalStages": {
+        "preTemporal": {
+          "average": 0.09946498453232167,
+          "peak": 0.1990988037109375,
+          "center": 0.1128130859375,
+          "status": "visible"
+        },
+        "postTemporal": {
+          "average": 0.09917471701727688,
+          "peak": 0.19088635253906247,
+          "center": 0.10961854248046875,
+          "status": "visible"
+        },
+        "aerialPerspective": {
+          "average": 0.3474110220287297,
+          "peak": 1,
+          "center": 0.36495294922590255,
+          "status": "visible"
+        }
+      },
+      "averageSignal": 0.3474110220287297,
+      "maxSignal": 1,
+      "signalStatus": "visible"
+    },
+    {
+      "requestedAltitudeMeters": 200000,
+      "sphericalUv": [
+        0.076494140625,
+        0.73053515625
+      ],
+      "cameraHeightMeters": 200000,
+      "centerRayShellIntervalMeters": 52000,
+      "shellIntervalLengthMeters": 56838.25492858887,
+      "validPrimarySampleCount": 21.97516123453776,
+      "maxDensity": 0.1083984375,
+      "averageDensity": 0.018105735298660067,
+      "weatherMaxDensity": 0.513671875,
+      "weatherAverageDensity": 0.031723269246242664,
+      "accumulatedOpticalDepth": 12.118272647651581,
+      "peakAccumulatedOpticalDepth": 13.815510557964274,
+      "centerAccumulatedOpticalDepth": 13.815510557964274,
+      "transmittance": 0.0004528804550864696,
+      "minimumTransmittance": 0.000001,
+      "centerTransmittance": 0.000001,
+      "preTemporalInScatteredRadiance": 0.08492133971835969,
+      "preTemporalInScatteredRadiancePeak": 0.20922824707031248,
+      "preTemporalInScatteredRadianceCenter": 0.08965937499999999,
+      "postTemporalInScatteredRadiance": 0.08505283508596516,
+      "postTemporalInScatteredRadiancePeak": 0.197327734375,
+      "postTemporalInScatteredRadianceCenter": 0.1190641845703125,
+      "aerialPerspectiveResult": 0.3194466085888925,
+      "aerialPerspectiveResultPeak": 0.48146275253891946,
+      "aerialPerspectiveResultCenter": 0.38063922280073165,
+      "signalStages": {
+        "preTemporal": {
+          "average": 0.08492133971835969,
+          "peak": 0.20922824707031248,
+          "center": 0.08965937499999999,
+          "status": "visible"
+        },
+        "postTemporal": {
+          "average": 0.08505283508596516,
+          "peak": 0.197327734375,
+          "center": 0.1190641845703125,
+          "status": "visible"
+        },
+        "aerialPerspective": {
+          "average": 0.3194466085888925,
+          "peak": 0.48146275253891946,
+          "center": 0.38063922280073165,
+          "status": "visible"
+        }
+      },
+      "averageSignal": 0.3194466085888925,
+      "maxSignal": 0.48146275253891946,
+      "signalStatus": "visible"
+    },
+    {
+      "requestedAltitudeMeters": 3578429,
+      "sphericalUv": [
+        0.076494140625,
+        0.73053515625
+      ],
+      "cameraHeightMeters": 3578429,
+      "centerRayShellIntervalMeters": 52000,
+      "shellIntervalLengthMeters": 69474.9076981896,
+      "validPrimarySampleCount": 1.7287574530147067,
+      "maxDensity": 0.1402587890625,
+      "averageDensity": 0.012352603510509466,
+      "weatherMaxDensity": 0.75244140625,
+      "weatherAverageDensity": 0.13478966004905898,
+      "accumulatedOpticalDepth": 4.943015011870513,
+      "peakAccumulatedOpticalDepth": 13.815510557964274,
+      "centerAccumulatedOpticalDepth": 13.815510557964274,
+      "transmittance": 0.6376565675079681,
+      "minimumTransmittance": 0.000001,
+      "centerTransmittance": 0.000001,
+      "preTemporalInScatteredRadiance": 0.030218044003292362,
+      "preTemporalInScatteredRadiancePeak": 0.184391455078125,
+      "preTemporalInScatteredRadianceCenter": 0.03190526733398437,
+      "postTemporalInScatteredRadiance": 0.017067613412275886,
+      "postTemporalInScatteredRadiancePeak": 0.1848011962890625,
+      "postTemporalInScatteredRadianceCenter": 0.03608766479492187,
+      "aerialPerspectiveResult": 0.2412455046681877,
+      "aerialPerspectiveResultPeak": 0.5549474753558635,
+      "aerialPerspectiveResultCenter": 0.21007686512470247,
+      "signalStages": {
+        "preTemporal": {
+          "average": 0.030218044003292362,
+          "peak": 0.184391455078125,
+          "center": 0.03190526733398437,
+          "status": "visible"
+        },
+        "postTemporal": {
+          "average": 0.017067613412275886,
+          "peak": 0.1848011962890625,
+          "center": 0.03608766479492187,
+          "status": "visible"
+        },
+        "aerialPerspective": {
+          "average": 0.2412455046681877,
+          "peak": 0.5549474753558635,
+          "center": 0.21007686512470247,
+          "status": "visible"
+        }
+      },
+      "averageSignal": 0.2412455046681877,
+      "maxSignal": 0.5549474753558635,
+      "signalStatus": "visible"
+    }
+  ]
+}
