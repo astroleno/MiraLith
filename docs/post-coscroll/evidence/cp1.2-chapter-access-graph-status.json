@@ -1,6 +1,6 @@
 {
   "kind": "miralith.post-coscroll.cp1.2.chapter-access-graph",
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "recordedAt": "2026-08-08",
   "checkpoint": {
     "id": "CP1.2",
@@ -32,10 +32,23 @@
   },
   "unit2D": {
     "status": "TECH COMPLETE / NOT INTEGRATED",
-    "commit": "fcb352990ffd36c41df377c8a19e958e9fe450f4",
-    "tree": "5566fd33db476a4697c89040b331a8cc5f0ba21c",
-    "parent": "6b3f35bc4a1844794ae084753ec0e3aa90e56459",
-    "reappliedFromCommit": "309c201cb037dc0fd2c48ddcdba2a68b33ffac6e",
+    "candidateCommit": "fcb352990ffd36c41df377c8a19e958e9fe450f4",
+    "candidateTree": "5566fd33db476a4697c89040b331a8cc5f0ba21c",
+    "lineage": {
+      "foundationBase": {
+        "commit": "6b3f35bc4a1844794ae084753ec0e3aa90e56459",
+        "actualParent": "db64a2b7f0427e7606ce2a7c244ca871f00bf08b"
+      },
+      "routeShellImplementation": {
+        "commit": "1e16cfeea11d25b4608240f135707cae2af66114",
+        "actualParent": "6b3f35bc4a1844794ae084753ec0e3aa90e56459",
+        "reappliedFromCommit": "309c201cb037dc0fd2c48ddcdba2a68b33ffac6e"
+      },
+      "fallbackRegression": {
+        "commit": "fcb352990ffd36c41df377c8a19e958e9fe450f4",
+        "actualParent": "1e16cfeea11d25b4608240f135707cae2af66114"
+      }
+    },
     "patchSha256FromFoundation": "87506bd442cc7e42bce0aaefec21dd4c666435d5f7b9f089cd00e373ce1da892",
     "combinedPatchSha256FromDb64": "834f857cfa64dd55e27aec0701e9765f650373257fa239db921530f419bd64ca",
     "files": [
