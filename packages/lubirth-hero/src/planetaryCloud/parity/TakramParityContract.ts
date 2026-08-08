@@ -14,6 +14,7 @@ export type TakramParityCoordinateMode = "lubirth-bridge" | "upstream-ecef";
 export type TakramParityDiagnostic =
   | "full"
   | "altitude-ladder"
+  | "altitude-ladder-cloud-off"
   | "bsm-off"
   | "depth-off"
   | "density-debug"
@@ -46,6 +47,13 @@ export type TakramParityRouteQuery = {
   altitudeMeters?: number;
 };
 
+export function isTakramParityAltitudeLadderDiagnostic(
+  diagnostic: TakramParityDiagnostic
+) {
+  return diagnostic === "altitude-ladder" ||
+    diagnostic === "altitude-ladder-cloud-off";
+}
+
 export type TakramParityRouteQueryResult =
   | { ok: true; value: TakramParityRouteQuery }
   | { ok: false; reason: "control-requires-stock" };
@@ -59,6 +67,7 @@ export function resolveTakramParityRouteQuery(
   const parsedProgress = Number.parseFloat(input.get("progress") ?? "0");
   const parsedAltitudeMeters = Number.parseFloat(input.get("altitudeMeters") ?? "0");
   const diagnostic = requestedDiagnostic === "altitude-ladder" ||
+    requestedDiagnostic === "altitude-ladder-cloud-off" ||
     requestedDiagnostic === "bsm-off" ||
     requestedDiagnostic === "depth-off" ||
     requestedDiagnostic === "density-debug" ||
@@ -76,7 +85,7 @@ export function resolveTakramParityRouteQuery(
     view: requestedView === "control" ? "control" : "opening"
   };
 
-  if (diagnostic === "altitude-ladder") {
+  if (isTakramParityAltitudeLadderDiagnostic(diagnostic)) {
     value.altitudeMeters = Number.isFinite(parsedAltitudeMeters)
       ? Math.max(2_500, Math.min(TAKRAM_PARITY_ALTITUDE_LADDER_MAX_M, parsedAltitudeMeters))
       : 2_500;
@@ -92,7 +101,7 @@ export function resolveTakramParityRouteQuery(
   return {
     ok: true,
     value: value.view === "opening" &&
-      !["altitude-ladder", "cloud-raw", "depth-off", "density-debug", "uv-debug", "sample-count-debug"].includes(value.diagnostic)
+      !["altitude-ladder", "altitude-ladder-cloud-off", "cloud-raw", "depth-off", "density-debug", "uv-debug", "sample-count-debug"].includes(value.diagnostic)
       ? { ...value, diagnostic: "full" }
       : value
   };
@@ -478,6 +487,7 @@ export interface TakramParityAdapterTelemetry {
  */
 export interface TakramParityDiagnosticState {
   altitudeLadder: boolean;
+  cloudOff: boolean;
   aerialPerspectiveComposite: boolean;
   beerShadowOcclusion: boolean;
   cloudRawOutput: boolean;
@@ -555,6 +565,9 @@ export interface TakramParityAltitudeLadderTelemetry {
   aerialPerspectiveResult: number | null;
   aerialPerspectiveResultPeak: number | null;
   aerialPerspectiveResultCenter: number | null;
+  finalCloudSignal: number | null;
+  finalCloudSignalPeak: number | null;
+  finalCloudSignalCenter: number | null;
   readback: {
     cloudTargetWidth: number;
     cloudTargetHeight: number;

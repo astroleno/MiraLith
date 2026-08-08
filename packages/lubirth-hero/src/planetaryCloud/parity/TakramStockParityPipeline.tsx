@@ -38,6 +38,7 @@ import {
   TAKRAM_PARITY_V3_OPENING_PRESET,
   buildTakramParityRendererFingerprint,
   hashTakramParityRendererFingerprint,
+  isTakramParityAltitudeLadderDiagnostic,
   type TakramParityDiagnostic,
   type TakramParityInput,
   type TakramParityAltitudeLadderTelemetry,
@@ -55,6 +56,7 @@ import {
   readTakramAltitudeLadderRenderTarget,
   resolveTakramAltitudeLadderShellInterval,
   summarizeTakramAltitudeLadderDensity,
+  summarizeTakramAltitudeLadderFrameDifference,
   summarizeTakramAltitudeLadderRadiance,
   type TakramAltitudeLadderReadback
 } from "./TakramAltitudeLadderReadback";
@@ -92,7 +94,8 @@ type TakramCloudsRef = CloudsEffect &
   ExpandNestedProps<CloudsEffect, "shadow">;
 
 type TakramAltitudeLadderCapture = {
-  phase: "normal" | "radiance" | "density" | "weather" | "complete";
+  phase: "normal" | "cloud-off" | "radiance" | "density" | "weather" | "complete";
+  cloudOnFinalReadback: TakramAltitudeLadderReadback | null;
   telemetry: TakramParityAltitudeLadderTelemetry;
 };
 
@@ -126,6 +129,9 @@ function createEmptyAltitudeLadderTelemetry(
     aerialPerspectiveResult: null,
     aerialPerspectiveResultPeak: null,
     aerialPerspectiveResultCenter: null,
+    finalCloudSignal: null,
+    finalCloudSignalPeak: null,
+    finalCloudSignalCenter: null,
     readback: null
   };
 }
@@ -328,7 +334,8 @@ const TAKRAM_PARITY_SHARED_ASSET_HASHES = Object.freeze({
 
 function resolveDiagnosticState(diagnostic: TakramParityDiagnostic) {
   return {
-    altitudeLadder: diagnostic === "altitude-ladder",
+    altitudeLadder: isTakramParityAltitudeLadderDiagnostic(diagnostic),
+    cloudOff: diagnostic === "altitude-ladder-cloud-off",
     aerialPerspectiveComposite: !["cloud-raw", "density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic),
     beerShadowOcclusion: diagnostic !== "bsm-off",
     cloudRawOutput: ["cloud-raw", "density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic),
@@ -372,6 +379,7 @@ export function TakramStockParityPipeline({
   const nativeFrameEpochRef = useRef("");
   const ladderCaptureRef = useRef<TakramAltitudeLadderCapture>({
     phase: "normal",
+    cloudOnFinalReadback: null,
     telemetry: createEmptyAltitudeLadderTelemetry(altitudeMeters ?? 2_500)
   });
   const [bridgeReady, setBridgeReady] = useState(false);
@@ -393,7 +401,7 @@ export function TakramStockParityPipeline({
         ? TAKRAM_PARITY_V3_OPENING_PRESET.shapeDetailRepeat
         : OFFICIAL_SHAPE_DETAIL_REPEAT
     );
-    if (diagnostic === "altitude-ladder") {
+    if (isTakramParityAltitudeLadderDiagnostic(diagnostic)) {
       installTakramAltitudeLadderInstrumentation(
         clouds.cloudsPass.currentMaterial as unknown as TakramAltitudeLadderMaterial
       );
@@ -407,6 +415,7 @@ export function TakramStockParityPipeline({
   useEffect(() => {
     ladderCaptureRef.current = {
       phase: "normal",
+      cloudOnFinalReadback: null,
       telemetry: createEmptyAltitudeLadderTelemetry(altitudeMeters ?? 2_500)
     };
   }, [altitudeMeters, diagnostic]);
@@ -465,7 +474,8 @@ export function TakramStockParityPipeline({
     // every cloud-side diagnostic. `aerial-final` is the only intentional
     // cloud-disabled probe; the previous inverse assignment silently skipped
     // the renderer for every full opening frame.
-    clouds.skipRendering = diagnostic === "aerial-final";
+    clouds.skipRendering = diagnostic === "aerial-final" ||
+      diagnostic === "altitude-ladder-cloud-off";
     aerialPerspective.blendMode.blendFunction = cloudRawDiagnostic
       ? BlendFunction.SKIP
       : BlendFunction.NORMAL;
@@ -491,7 +501,7 @@ export function TakramStockParityPipeline({
 
     return () => {
       appliedDiagnosticRef.current = null;
-      if (diagnostic === "altitude-ladder") {
+      if (isTakramParityAltitudeLadderDiagnostic(diagnostic)) {
         try {
           setTakramAltitudeLadderShaderMode(
             clouds.cloudsPass.currentMaterial as unknown as TakramAltitudeLadderMaterial,
@@ -529,7 +539,7 @@ export function TakramStockParityPipeline({
     if (view === "control") {
       updateControlFrame(earthGroup, camera);
     } else {
-      updateOpeningFrame(earthGroup, camera, progress, diagnostic === "altitude-ladder"
+      updateOpeningFrame(earthGroup, camera, progress, isTakramParityAltitudeLadderDiagnostic(diagnostic)
         ? altitudeMeters
         : undefined);
     }
@@ -639,7 +649,7 @@ export function TakramStockParityPipeline({
     const telemetry: TakramParityTelemetry = {
       active: nativePipelineReady &&
         (diagnostic === "history-reset-first" ||
-          (temporalConverged && (diagnostic !== "altitude-ladder" ||
+          (temporalConverged && (!isTakramParityAltitudeLadderDiagnostic(diagnostic) ||
             ladderCaptureRef.current.phase === "complete"))),
       adapter: resolveAdapterTelemetry(clouds, assetsState.assets, input),
       assetGeneration: assetsState.assetGeneration,
@@ -675,7 +685,7 @@ export function TakramStockParityPipeline({
       temporalConverged,
       transformFallback,
       view,
-      altitudeLadder: diagnostic === "altitude-ladder"
+      altitudeLadder: isTakramParityAltitudeLadderDiagnostic(diagnostic)
         ? ladderCaptureRef.current.telemetry
         : null
     };
@@ -722,7 +732,7 @@ export function TakramStockParityPipeline({
   // weather encodings.
   // No production frame consumes these values.
   useFrame(() => {
-    if (diagnostic !== "altitude-ladder" ||
+    if (!isTakramParityAltitudeLadderDiagnostic(diagnostic) ||
       ladderCaptureRef.current.phase === "complete" ||
       nativeFrameCountRef.current < TEMPORAL_CONVERGENCE_FRAME_COUNT) {
       return;
@@ -767,7 +777,8 @@ export function TakramStockParityPipeline({
         )
         : null;
       ladderCaptureRef.current = {
-        phase: "radiance",
+        phase: "cloud-off",
+        cloudOnFinalReadback: aerialTarget,
         telemetry: {
           ...ladderCaptureRef.current.telemetry,
           cameraHeightMeters: Number.isFinite(cameraHeight) ? cameraHeight : null,
@@ -786,6 +797,40 @@ export function TakramStockParityPipeline({
           }
         }
       };
+      // Capture a same-frame baseline on the next render. Disabling both the
+      // native Clouds composite and AerialPerspective overlay is important:
+      // the latter otherwise re-applies the cloud output even when the former
+      // is skipped.
+      clouds.skipRendering = true;
+      if (aerialPerspectiveRef.current) {
+        aerialPerspectiveRef.current.overlay = null;
+      }
+      return;
+    }
+
+    if (ladderCaptureRef.current.phase === "cloud-off") {
+      const cloudOffFinalReadback = readTakramAltitudeLadderDefaultFramebuffer(gl);
+      const finalDifference = ladderCaptureRef.current.cloudOnFinalReadback &&
+        cloudOffFinalReadback
+        ? summarizeTakramAltitudeLadderFrameDifference(
+          ladderCaptureRef.current.cloudOnFinalReadback,
+          cloudOffFinalReadback
+        )
+        : null;
+      clouds.skipRendering = false;
+      if (aerialPerspectiveRef.current) {
+        aerialPerspectiveRef.current.overlay = clouds.atmosphereOverlay;
+      }
+      ladderCaptureRef.current = {
+        phase: "radiance",
+        cloudOnFinalReadback: null,
+        telemetry: {
+          ...ladderCaptureRef.current.telemetry,
+          finalCloudSignal: finalDifference?.averageLuma ?? null,
+          finalCloudSignalPeak: finalDifference?.peakLuma ?? null,
+          finalCloudSignalCenter: finalDifference?.centerLuma ?? null
+        }
+      };
       setTakramAltitudeLadderShaderMode(
         material,
         TAKRAM_ALTITUDE_LADDER_SHADER_MODES.radiance
@@ -802,6 +847,7 @@ export function TakramStockParityPipeline({
         : null;
       ladderCaptureRef.current = {
         phase: "density",
+        cloudOnFinalReadback: null,
         telemetry: {
           ...ladderCaptureRef.current.telemetry,
           accumulatedOpticalDepth: radiance?.accumulatedOpticalDepth ?? null,
@@ -837,6 +883,7 @@ export function TakramStockParityPipeline({
         : null;
       ladderCaptureRef.current = {
         phase: "weather",
+        cloudOnFinalReadback: null,
         telemetry: {
           ...ladderCaptureRef.current.telemetry,
           shellIntervalLengthMeters: density?.shellIntervalLengthMeters ?? null,
@@ -866,6 +913,7 @@ export function TakramStockParityPipeline({
       : null;
     ladderCaptureRef.current = {
       phase: "complete",
+      cloudOnFinalReadback: null,
       telemetry: {
         ...ladderCaptureRef.current.telemetry,
         completed: true,

@@ -40,7 +40,8 @@ test("altitude ladder instrumentation matches the pinned native shader contract"
 test("altitude ladder readback reports density and optical signal separately", async () => {
   const {
     summarizeTakramAltitudeLadderDensity,
-    summarizeTakramAltitudeLadderRadiance
+    summarizeTakramAltitudeLadderRadiance,
+    summarizeTakramAltitudeLadderFrameDifference
   } = await import(
     "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramAltitudeLadderReadback"
   );
@@ -74,4 +75,35 @@ test("altitude ladder readback reports density and optical signal separately", a
     4
   );
   expect(radiance.averageLuma).toBeGreaterThan(0);
+
+  const finalDifference = summarizeTakramAltitudeLadderFrameDifference(
+    {
+      values: Float32Array.from([
+        0.8, 0.4, 0.2, 1,
+        0.1, 0.2, 0.3, 1
+      ]),
+      width: 2,
+      height: 1,
+      precision: "unorm8"
+    },
+    {
+      values: Float32Array.from([
+        0.2, 0.4, 0.2, 1,
+        0.1, 0.1, 0.3, 1
+      ]),
+      width: 2,
+      height: 1,
+      precision: "unorm8"
+    }
+  );
+  expect(finalDifference?.averageLuma).toBeCloseTo(
+    (Math.abs(0.8 * 0.2126 - 0.2 * 0.2126) +
+      Math.abs(0.2 * 0.7152 - 0.1 * 0.7152)) / 2,
+    4
+  );
+  expect(finalDifference?.peakLuma).toBeGreaterThan(finalDifference?.averageLuma ?? 0);
+  expect(summarizeTakramAltitudeLadderFrameDifference(
+    { values: new Float32Array(4), width: 1, height: 1, precision: "unorm8" },
+    { values: new Float32Array(16), width: 2, height: 2, precision: "unorm8" }
+  )).toBeNull();
 });

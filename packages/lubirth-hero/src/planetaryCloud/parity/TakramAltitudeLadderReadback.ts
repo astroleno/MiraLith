@@ -41,6 +41,12 @@ export interface TakramAltitudeLadderRadianceSummary {
   centerAccumulatedOpticalDepth: number | null;
 }
 
+export interface TakramAltitudeLadderDifferenceSummary {
+  averageLuma: number | null;
+  peakLuma: number | null;
+  centerLuma: number | null;
+}
+
 const scratchOriginEcef = new Vector3();
 const scratchDirectionEcef = new Vector3();
 const scratchWorldDirection = new Vector3();
@@ -184,6 +190,55 @@ export function summarizeTakramAltitudeLadderRadiance(
     accumulatedOpticalDepth: opticalDepthSum / pixelCount,
     peakAccumulatedOpticalDepth: peakOpticalDepth,
     centerAccumulatedOpticalDepth: centerOpticalDepth
+  };
+}
+
+/**
+ * Isolate cloud contribution in the final framebuffer by comparing two
+ * converged captures made with the same camera and renderer: cloud-on minus
+ * cloud-off. Background Earth and atmosphere therefore do not count as
+ * optical cloud signal.
+ */
+export function summarizeTakramAltitudeLadderFrameDifference(
+  cloudOn: TakramAltitudeLadderReadback,
+  cloudOff: TakramAltitudeLadderReadback
+): TakramAltitudeLadderDifferenceSummary | null {
+  if (cloudOn.width !== cloudOff.width || cloudOn.height !== cloudOff.height) {
+    return null;
+  }
+  const pixelCount = cloudOn.width * cloudOn.height;
+  if (pixelCount <= 0 || cloudOn.values.length < pixelCount * 4 ||
+    cloudOff.values.length < pixelCount * 4) {
+    return null;
+  }
+
+  let lumaSum = 0;
+  let peakLuma = 0;
+  const centerPixel = Math.floor(cloudOn.height / 2) * cloudOn.width +
+    Math.floor(cloudOn.width / 2);
+  let centerLuma = 0;
+  for (let pixel = 0; pixel < pixelCount; pixel += 1) {
+    const offset = pixel * 4;
+    const cloudOnLuma = Math.max(0,
+      finite(cloudOn.values[offset] ?? 0) * 0.2126 +
+      finite(cloudOn.values[offset + 1] ?? 0) * 0.7152 +
+      finite(cloudOn.values[offset + 2] ?? 0) * 0.0722
+    );
+    const cloudOffLuma = Math.max(0,
+      finite(cloudOff.values[offset] ?? 0) * 0.2126 +
+      finite(cloudOff.values[offset + 1] ?? 0) * 0.7152 +
+      finite(cloudOff.values[offset + 2] ?? 0) * 0.0722
+    );
+    const difference = Math.abs(cloudOnLuma - cloudOffLuma);
+    lumaSum += difference;
+    peakLuma = Math.max(peakLuma, difference);
+    if (pixel === centerPixel) centerLuma = difference;
+  }
+
+  return {
+    averageLuma: lumaSum / pixelCount,
+    peakLuma,
+    centerLuma
   };
 }
 

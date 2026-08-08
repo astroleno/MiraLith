@@ -32,6 +32,9 @@ type AltitudeLadderTelemetry = {
   aerialPerspectiveResult: number | null;
   aerialPerspectiveResultPeak: number | null;
   aerialPerspectiveResultCenter: number | null;
+  finalCloudSignal: number | null;
+  finalCloudSignalPeak: number | null;
+  finalCloudSignalCenter: number | null;
   readback: {
     cloudTargetWidth: number;
     cloudTargetHeight: number;
@@ -149,29 +152,27 @@ test("V3 opening exposes the planetary optical-signal altitude ladder", async ({
         average: ladder.preTemporalInScatteredRadiance,
         peak: ladder.preTemporalInScatteredRadiancePeak,
         center: ladder.preTemporalInScatteredRadianceCenter,
-        status: statusForSignal(ladder.preTemporalInScatteredRadiancePeak)
+        status: statusForSignal(ladder.preTemporalInScatteredRadiance)
       },
       postTemporal: {
         average: ladder.postTemporalInScatteredRadiance,
         peak: ladder.postTemporalInScatteredRadiancePeak,
         center: ladder.postTemporalInScatteredRadianceCenter,
-        status: statusForSignal(ladder.postTemporalInScatteredRadiancePeak)
+        status: statusForSignal(ladder.postTemporalInScatteredRadiance)
       },
       aerialPerspective: {
         average: ladder.aerialPerspectiveResult,
         peak: ladder.aerialPerspectiveResultPeak,
         center: ladder.aerialPerspectiveResultCenter,
-        status: statusForSignal(ladder.aerialPerspectiveResultPeak)
+        status: statusForSignal(ladder.aerialPerspectiveResult)
+      },
+      finalCloudDifference: {
+        average: ladder.finalCloudSignal,
+        peak: ladder.finalCloudSignalPeak,
+        center: ladder.finalCloudSignalCenter,
+        status: statusForSignal(ladder.finalCloudSignal)
       }
     };
-    const signalValues = Object.values(signalStages)
-      .map((stage) => stage.peak)
-      .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
-    const averageSignalValues = Object.values(signalStages)
-      .map((stage) => stage.average)
-      .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
-    const maxSignal = signalValues.length > 0 ? Math.max(...signalValues) : null;
-    const averageSignal = averageSignalValues.length > 0 ? Math.max(...averageSignalValues) : null;
     return {
       requestedAltitudeMeters,
       sphericalUv: ladder.sphericalUv,
@@ -198,24 +199,34 @@ test("V3 opening exposes the planetary optical-signal altitude ladder", async ({
       aerialPerspectiveResult: ladder.aerialPerspectiveResult,
       aerialPerspectiveResultPeak: ladder.aerialPerspectiveResultPeak,
       aerialPerspectiveResultCenter: ladder.aerialPerspectiveResultCenter,
+      finalCloudSignal: ladder.finalCloudSignal,
+      finalCloudSignalPeak: ladder.finalCloudSignalPeak,
+      finalCloudSignalCenter: ladder.finalCloudSignalCenter,
       signalStages,
-      averageSignal,
-      maxSignal,
-      signalStatus: statusForSignal(maxSignal)
+      averageSignal: ladder.finalCloudSignal,
+      maxSignal: ladder.finalCloudSignalPeak,
+      signalStatus: statusForSignal(ladder.finalCloudSignal)
     };
   });
-  const firstNearZero = measurements.find((measurement) =>
-    measurement.signalStatus === "near-zero"
-  ) ?? null;
-  const firstNearZeroStage = measurements
-    .flatMap((measurement) => Object.entries(measurement.signalStages)
-      .filter(([, stage]) => stage.status === "near-zero")
-      .map(([stage]) => ({ altitudeMeters: measurement.requestedAltitudeMeters, stage })))
-    .at(0) ?? null;
+  const signalStageNames = [
+    "preTemporal",
+    "postTemporal",
+    "aerialPerspective",
+    "finalCloudDifference"
+  ] as const;
+  const firstNearZeroByStage = Object.fromEntries(signalStageNames.map((stageName) => {
+    const first = measurements.find((measurement) =>
+      measurement.signalStages[stageName].status === "near-zero"
+    );
+    return [stageName, first
+      ? { altitudeMeters: first.requestedAltitudeMeters, stage: stageName }
+      : null];
+  }));
+  const firstNearZero = firstNearZeroByStage.finalCloudDifference;
 
   mkdirSync(path.dirname(evidencePath), { recursive: true });
   writeFileSync(evidencePath, `${JSON.stringify({
-    schemaVersion: 2,
+    schemaVersion: 3,
     baseCommit: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
     generatedAt: new Date().toISOString(),
     route: {
@@ -230,10 +241,11 @@ test("V3 opening exposes the planetary optical-signal altitude ladder", async ({
     requestedAltitudes,
     thresholds: signalThresholds,
     firstNearZeroAltitudeMeters: firstNearZero?.requestedAltitudeMeters ?? null,
-    firstNearZeroStage,
+    firstNearZeroStage: firstNearZero?.stage ?? null,
+    firstNearZeroByStage,
     signalConclusion: firstNearZero
-      ? "FIRST_NEAR_ZERO_RECORDED"
-      : "NO_NEAR_ZERO_COLLAPSE_IN_SAMPLED_RANGE",
+      ? "FINAL_CLOUD_SIGNAL_NEAR_ZERO_RECORDED"
+      : "NO_FINAL_CLOUD_SIGNAL_NEAR_ZERO_IN_SAMPLED_RANGE",
     rendererFingerprintHash: windows[0]?.telemetry.rendererFingerprintHash ?? null,
     presentationPreset: windows[0]?.telemetry.presentationPreset ?? null,
     sphericalUv: windows[0]?.telemetry.altitudeLadder?.sphericalUv ?? null,
@@ -250,6 +262,7 @@ test("V3 opening exposes the planetary optical-signal altitude ladder", async ({
     measurement.transmittance !== null &&
     measurement.preTemporalInScatteredRadiance !== null &&
     measurement.postTemporalInScatteredRadiance !== null &&
-    measurement.aerialPerspectiveResult !== null
+    measurement.aerialPerspectiveResult !== null &&
+    measurement.finalCloudSignal !== null
   )).toBe(true);
 });
