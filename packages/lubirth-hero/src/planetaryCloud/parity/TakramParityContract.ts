@@ -7,6 +7,7 @@ import {
   type TakramV3MorphologyCandidateId,
   type TakramV3MorphologyViewId
 } from "./TakramV3MorphologyContract";
+import type { TakramV3MorphologyScaleAudit } from "./TakramV3MorphologyScaleAudit";
 
 export const TAKRAM_PARITY_BOTTOM_RADIUS_M = 6_360_000;
 export const TAKRAM_PARITY_ALTITUDE_LADDER_MAX_M = 20_000_000;
@@ -569,6 +570,7 @@ export interface TakramParityTelemetry {
     | "near-orbit"
     | "opening-orbit"
     | null;
+  morphologyScaleAudit: TakramV3MorphologyScaleAudit | null;
   progress: number;
   rendererFingerprint: TakramParityRendererFingerprint | null;
   rendererFingerprintHash: string | null;

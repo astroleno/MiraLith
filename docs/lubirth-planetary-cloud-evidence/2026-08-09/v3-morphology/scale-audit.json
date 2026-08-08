@@ -1,0 +1,389 @@
+{
+  "schemaVersion": 1,
+  "baseCommit": "078d729ccce95e4f79316808557f6c623a415152",
+  "generatedAt": "2026-08-08T17:55:44.001Z",
+  "candidate": {
+    "id": "baseline",
+    "coverage": 0.55,
+    "shapeRepeat": 0.000025,
+    "shapeDetailRepeat": 0.0006
+  },
+  "records": [
+    {
+      "view": "near-oblique",
+      "cameraHeightMeters": 2499.9999999990687,
+      "cameraMatrixWorld": [
+        -0.5875061325599824,
+        -0.3063303190735289,
+        -0.7489981841237814,
+        0,
+        -0.6942873192918799,
+        -0.28465524029221667,
+        0.6610117339689784,
+        0,
+        -0.41569419345825276,
+        0.9083683888106687,
+        -0.04544455671037384,
+        0,
+        -0.6644017042121055,
+        -0.34642427502407785,
+        0.6628324940355409,
+        1
+      ],
+      "earthMatrixWorld": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "rendererFingerprintHash": "fnv1a-64:95333e24643436f9",
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 40000,
+        "detailWavelengthMeters": 1666.6666666666667,
+        "pixelsPerMeter": {
+          "east": 0.00018852908245912614,
+          "north": 0.00012929619638535163,
+          "up": 0.00018773451964696085
+        },
+        "horizontalPixelsPerMeter": 0.00016164888080744542,
+        "shapeProjectedPixels": 6.465955232297817,
+        "detailProjectedPixels": 0.26941480134574236,
+        "shapeStatus": "fragment-risk",
+        "detailStatus": "subpixel-risk",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 4.881097510820982,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 9.386725982348043,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 6.758442707290591,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 3.7546903929392172,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          809.8296176749052,
+          -136.785209149117
+        ],
+        "segmentMeters": 1000
+      }
+    },
+    {
+      "view": "aerial-oblique",
+      "cameraHeightMeters": 50000,
+      "cameraMatrixWorld": [
+        -0.5875061325599815,
+        -0.30633031907353125,
+        -0.7489981841237815,
+        0,
+        -0.5480309350977298,
+        -0.5303953982414011,
+        0.6467942607199397,
+        0,
+        -0.5953978824116873,
+        0.7904697699094216,
+        0.14373205793776345,
+        0,
+        -0.669361874106027,
+        -0.3490105466254364,
+        0.667780948804372,
+        1
+      ],
+      "earthMatrixWorld": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "rendererFingerprintHash": "fnv1a-64:95333e24643436f9",
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 40000,
+        "detailWavelengthMeters": 1666.6666666666667,
+        "pixelsPerMeter": {
+          "east": 0.00023402967069214312,
+          "north": 0.00019163919436173007,
+          "up": 0.00029060863771132584
+        },
+        "horizontalPixelsPerMeter": 0.00021388719875191915,
+        "shapeProjectedPixels": 8.555487950076765,
+        "detailProjectedPixels": 0.35647866458653193,
+        "shapeStatus": "fragment-risk",
+        "detailStatus": "subpixel-risk",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 7.5558245804944715,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 14.530431885566292,
+            "status": "target"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 10.46191095760773,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 5.812172754226517,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          831.37956222864,
+          -671.3262790416225
+        ],
+        "segmentMeters": 1000
+      }
+    },
+    {
+      "view": "near-orbit",
+      "cameraHeightMeters": 200000,
+      "cameraMatrixWorld": [
+        -0.587506132559982,
+        -0.3063303190735305,
+        -0.7489981841237815,
+        0,
+        -0.49552049987000535,
+        -0.5955709373560869,
+        0.6322615699102486,
+        0,
+        -0.6397624390451452,
+        0.7426015043030153,
+        0.19810862523854378,
+        0,
+        -0.6850255685078841,
+        -0.35717772010341076,
+        0.6834076480743652,
+        1
+      ],
+      "earthMatrixWorld": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "rendererFingerprintHash": "fnv1a-64:95333e24643436f9",
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 40000,
+        "detailWavelengthMeters": 1666.6666666666667,
+        "pixelsPerMeter": {
+          "east": 0.0002593279100183211,
+          "north": 0.00022863984640212042,
+          "up": 0.0003646956698559806
+        },
+        "horizontalPixelsPerMeter": 0.00024446589156491307,
+        "shapeProjectedPixels": 9.778635662596523,
+        "detailProjectedPixels": 0.4074431526081885,
+        "shapeStatus": "fragment-risk",
+        "detailStatus": "subpixel-risk",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 9.482087416255496,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 18.23478349279903,
+            "status": "target"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 13.1290441148153,
+            "status": "target"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 7.293913397119612,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          843.3688861653411,
+          -937.4933616760022
+        ],
+        "segmentMeters": 1000
+      }
+    },
+    {
+      "view": "opening-orbit",
+      "cameraHeightMeters": 3578429.408265641,
+      "cameraMatrixWorld": [
+        0.03239014777291893,
+        5.551115123125783e-17,
+        -0.9994753015093711,
+        0,
+        0.8030186005282589,
+        0.5953855072786084,
+        0.02602354565063658,
+        0,
+        0.5950731094015971,
+        -0.8034401643698142,
+        0.019284624562608377,
+        0,
+        14.99212952264057,
+        -4.189560537415987,
+        0.48585221659378586,
+        1
+      ],
+      "earthMatrixWorld": [
+        -2.4029573607949466,
+        2.7055209743112583e-16,
+        9.446840746740142,
+        0,
+        4.4698995876729715,
+        8.587447354149838,
+        1.1369915513733513,
+        0,
+        -8.322427396522652,
+        4.6122393814473,
+        -2.1169445646743403,
+        0,
+        0,
+        -1.5403151765589782,
+        0,
+        1
+      ],
+      "rendererFingerprintHash": "fnv1a-64:b6657a30c5d0def2",
+      "morphologyScaleAudit": {
+        "shapeWavelengthMeters": 40000,
+        "detailWavelengthMeters": 1666.6666666666667,
+        "pixelsPerMeter": {
+          "east": 0.00007128152378871779,
+          "north": 0.00011679377365159035,
+          "up": 0.00009418299075967309
+        },
+        "horizontalPixelsPerMeter": 0.00009675185062163012,
+        "shapeProjectedPixels": 3.870074024865205,
+        "detailProjectedPixels": 0.16125308436938354,
+        "shapeStatus": "fragment-risk",
+        "detailStatus": "subpixel-risk",
+        "layers": [
+          {
+            "channel": "r",
+            "altitude": 8000,
+            "height": 26000,
+            "topAltitude": 34000,
+            "projectedThicknessPixels": 2.4487577597515005,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "g",
+            "altitude": 10000,
+            "height": 50000,
+            "topAltitude": 60000,
+            "projectedThicknessPixels": 4.709149537983654,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "b",
+            "altitude": 8000,
+            "height": 36000,
+            "topAltitude": 44000,
+            "projectedThicknessPixels": 3.3905876673482314,
+            "status": "fragment-risk"
+          },
+          {
+            "channel": "a",
+            "altitude": 18000,
+            "height": 20000,
+            "topAltitude": 38000,
+            "projectedThicknessPixels": 1.8836598151934618,
+            "status": "fragment-risk"
+          }
+        ],
+        "originScreenPixels": [
+          1175.5645867781054,
+          837.8870486361263
+        ],
+        "segmentMeters": 1000
+      }
+    }
+  ]
+}

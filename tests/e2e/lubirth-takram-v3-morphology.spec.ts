@@ -46,6 +46,26 @@ type MorphologyTelemetry = {
   input: "stock" | "v3";
   morphologyCandidate: "baseline" | null;
   morphologyView: string | null;
+  morphologyScaleAudit: {
+    shapeWavelengthMeters: number;
+    detailWavelengthMeters: number;
+    pixelsPerMeter: { east: number; north: number; up: number };
+    horizontalPixelsPerMeter: number;
+    shapeProjectedPixels: number;
+    detailProjectedPixels: number;
+    shapeStatus: string;
+    detailStatus: string;
+    layers: Array<{
+      channel: "r" | "g" | "b" | "a";
+      altitude: number;
+      height: number;
+      topAltitude: number;
+      projectedThicknessPixels: number;
+      status: string;
+    }>;
+    originScreenPixels: [number, number] | null;
+    segmentMeters: number;
+  } | null;
   nativeFrameCount: number;
   rendererFingerprint: Record<string, unknown> | null;
   rendererFingerprintHash: string | null;
@@ -205,3 +225,49 @@ test("morphology candidate query is V3-only and fails closed for stock", async (
   await expect(page.locator("canvas")).toHaveCount(0);
 });
 
+test("scale audit reports projected shape, detail and layer thickness", async ({ page }) => {
+  const records: Array<{ view: string; telemetry: MorphologyTelemetry }> = [];
+  for (const morphologyView of reviewViews) {
+    await page.goto(
+      `/lubirth-takram-parity-spike?input=v3&view=opening&progress=0.06&diagnostic=full&morphologyView=${morphologyView}&morphologyCandidate=baseline`
+    );
+    await waitForNativeMorphology(page);
+    const telemetry = await page.evaluate(() => window.__MiraLithTakramParity);
+    expect(telemetry?.morphologyScaleAudit).not.toBeNull();
+    const audit = telemetry!.morphologyScaleAudit!;
+    expect(audit.shapeWavelengthMeters).toBe(40_000);
+    expect(audit.detailWavelengthMeters).toBeCloseTo(1_666.6666666667, 6);
+    expect(audit.segmentMeters).toBe(1_000);
+    expect(audit.pixelsPerMeter.east).toBeGreaterThan(0);
+    expect(audit.pixelsPerMeter.north).toBeGreaterThan(0);
+    expect(audit.pixelsPerMeter.up).toBeGreaterThan(0);
+    expect(audit.shapeProjectedPixels).toBeGreaterThan(0);
+    expect(audit.detailProjectedPixels).toBeGreaterThan(0);
+    expect(audit.layers).toHaveLength(4);
+    records.push({ view: morphologyView, telemetry: telemetry! });
+  }
+
+  mkdirSync(evidenceDirectory, { recursive: true });
+  writeFileSync(
+    path.join(evidenceDirectory, "scale-audit.json"),
+    `${JSON.stringify({
+      schemaVersion: 1,
+      baseCommit: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
+      generatedAt: new Date().toISOString(),
+      candidate: {
+        id: "baseline",
+        coverage: 0.55,
+        shapeRepeat: 0.000025,
+        shapeDetailRepeat: 0.0006
+      },
+      records: records.map(({ view, telemetry }) => ({
+        view,
+        cameraHeightMeters: telemetry.cameraHeightMeters,
+        cameraMatrixWorld: telemetry.cameraMatrixWorld,
+        earthMatrixWorld: telemetry.earthMatrixWorld,
+        rendererFingerprintHash: telemetry.rendererFingerprintHash,
+        morphologyScaleAudit: telemetry.morphologyScaleAudit
+      }))
+    }, null, 2)}\n`
+  );
+});

@@ -51,6 +51,7 @@ import {
   type TakramV3MorphologyCandidateId,
   type TakramV3MorphologyViewId
 } from "./TakramV3MorphologyContract";
+import { auditMorphologyScale } from "./TakramV3MorphologyScaleAudit";
 import {
   installTakramAltitudeLadderInstrumentation,
   setTakramAltitudeLadderShaderMode,
@@ -96,7 +97,10 @@ const scratchCameraEcef = new Vector3();
 const scratchLadderRadial = new Vector3();
 const scratchMorphologyRadial = new Vector3();
 const scratchMorphologyEast = new Vector3();
+const scratchMorphologyNorth = new Vector3();
 const scratchMorphologyTarget = new Vector3();
+const scratchViewProjection = new Matrix4();
+const scratchEcefToWorld = new Matrix4();
 
 type TakramCloudsRef = CloudsEffect &
   ExpandNestedProps<CloudsEffect, "clouds"> &
@@ -323,6 +327,50 @@ function updateMorphologyNearFrame(
   camera.updateMatrixWorld(true);
   scratchSunDirectionWorld.set(...DEFAULT_LUBIRTH_SUN_DIRECTION).normalize();
   return true;
+}
+
+function resolveMorphologyScaleAudit(
+  camera: PerspectiveCamera,
+  bridge: ReturnType<typeof buildLuBirthWorldToEcef> | null,
+  clouds: TakramCloudsRef | null,
+  morphologyView: TakramV3MorphologyViewId,
+  viewport: { width: number; height: number }
+) {
+  const reviewView = resolveTakramV3MorphologyView(morphologyView);
+  if (!reviewView || !bridge || !bridge.valid || !bridge.worldToEcef || !clouds) {
+    return null;
+  }
+  const [sphericalU, sphericalV] = reviewView.sphericalUv;
+  const phi = (sphericalU - 0.5) * Math.PI * 2;
+  const theta = (sphericalV - 0.5) * Math.PI;
+  const radial = scratchMorphologyRadial.set(
+    Math.cos(theta) * Math.cos(phi),
+    Math.cos(theta) * Math.sin(phi),
+    Math.sin(theta)
+  ).normalize();
+  const east = scratchMorphologyEast.set(-Math.sin(phi), Math.cos(phi), 0).normalize();
+  const north = scratchMorphologyNorth.crossVectors(radial, east).normalize();
+  const origin = radial.clone().multiplyScalar(
+    TAKRAM_PARITY_BOTTOM_RADIUS_M + reviewView.targetAltitudeMeters
+  );
+  scratchViewProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+  scratchEcefToWorld.copy(bridge.worldToEcef).invert();
+  return auditMorphologyScale({
+    viewProjectionMatrix: scratchViewProjection.toArray(),
+    ecefToWorldMatrix: scratchEcefToWorld.toArray(),
+    originEcefMeters: [origin.x, origin.y, origin.z],
+    eastEcef: [east.x, east.y, east.z],
+    northEcef: [north.x, north.y, north.z],
+    upEcef: [radial.x, radial.y, radial.z],
+    viewport,
+    shapeRepeat: clouds.shapeRepeat.x,
+    shapeDetailRepeat: clouds.shapeDetailRepeat.x,
+    layers: TAKRAM_PARITY_V3_LAYERS.map((layer) => ({
+      channel: layer.channel,
+      altitude: layer.altitude,
+      height: layer.height
+    }))
+  });
 }
 
 function resolveCameraHeightMeters(
@@ -735,6 +783,15 @@ export function TakramStockParityPipeline({
         sharedAssets: TAKRAM_PARITY_SHARED_ASSET_HASHES
       })
       : null;
+    const morphologyScaleAudit = morphologyView
+      ? resolveMorphologyScaleAudit(
+        camera,
+        bridge,
+        clouds,
+        morphologyView,
+        { width: gl.domElement.width, height: gl.domElement.height }
+      )
+      : null;
     const telemetry: TakramParityTelemetry = {
       active: nativePipelineReady &&
         (diagnostic === "history-reset-first" ||
@@ -776,6 +833,7 @@ export function TakramStockParityPipeline({
       view,
       morphologyCandidate: resolvedMorphologyCandidate?.id ?? null,
       morphologyView: morphologyView ?? null,
+      morphologyScaleAudit,
       altitudeLadder: isTakramParityAltitudeLadderDiagnostic(diagnostic)
         ? ladderCaptureRef.current.telemetry
         : null
@@ -808,7 +866,8 @@ export function TakramStockParityPipeline({
       temporalConverged: telemetry.temporalConverged,
       transformFallback: telemetry.transformFallback,
       morphologyCandidate: telemetry.morphologyCandidate,
-      morphologyView: telemetry.morphologyView
+      morphologyView: telemetry.morphologyView,
+      morphologyScaleAudit: telemetry.morphologyScaleAudit
     });
     if (publishedTelemetryRef.current !== signature) {
       publishedTelemetryRef.current = signature;
