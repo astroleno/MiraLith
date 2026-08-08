@@ -46,6 +46,12 @@ import {
   type TakramParityView
 } from "./TakramParityContract";
 import {
+  resolveTakramV3MorphologyCandidate,
+  resolveTakramV3MorphologyView,
+  type TakramV3MorphologyCandidateId,
+  type TakramV3MorphologyViewId
+} from "./TakramV3MorphologyContract";
+import {
   installTakramAltitudeLadderInstrumentation,
   setTakramAltitudeLadderShaderMode,
   TAKRAM_ALTITUDE_LADDER_SHADER_MODES,
@@ -88,6 +94,9 @@ const scratchSunDirectionEcef = new Vector3();
 const scratchSunDirectionWorld = new Vector3();
 const scratchCameraEcef = new Vector3();
 const scratchLadderRadial = new Vector3();
+const scratchMorphologyRadial = new Vector3();
+const scratchMorphologyEast = new Vector3();
+const scratchMorphologyTarget = new Vector3();
 
 type TakramCloudsRef = CloudsEffect &
   ExpandNestedProps<CloudsEffect, "clouds"> &
@@ -146,6 +155,8 @@ export interface TakramStockParityPipelineProps {
   altitudeMeters?: number;
   diagnostic?: TakramParityDiagnostic;
   input: TakramParityInput;
+  morphologyCandidate?: TakramV3MorphologyCandidateId;
+  morphologyView?: TakramV3MorphologyViewId;
   onTelemetry?: (telemetry: TakramParityTelemetry) => void;
   progress: number;
   view: TakramParityView;
@@ -266,6 +277,54 @@ function updateOpeningFrame(
     .normalize();
 }
 
+function updateMorphologyNearFrame(
+  earthGroup: Group,
+  camera: PerspectiveCamera,
+  morphologyView: TakramV3MorphologyViewId
+) {
+  const reviewView = resolveTakramV3MorphologyView(morphologyView);
+  if (!reviewView || reviewView.usesOpeningFrame) {
+    return false;
+  }
+
+  // The near/aerial review cameras use the same normalized LuBirth bridge as
+  // the opening path, but place the camera in a local tangent frame around the
+  // fixed V3 geography. No production camera or scene transform is touched.
+  earthGroup.position.set(0, 0, 0);
+  earthGroup.quaternion.identity();
+  earthGroup.scale.setScalar(1);
+
+  const [sphericalU, sphericalV] = reviewView.sphericalUv;
+  const phi = (sphericalU - 0.5) * Math.PI * 2;
+  const theta = (sphericalV - 0.5) * Math.PI;
+  scratchMorphologyRadial.set(
+    Math.cos(theta) * Math.cos(phi),
+    Math.cos(theta) * Math.sin(phi),
+    Math.sin(theta)
+  ).normalize();
+  scratchMorphologyEast.set(-Math.sin(phi), Math.cos(phi), 0).normalize();
+
+  const radius = TAKRAM_PARITY_BOTTOM_RADIUS_M;
+  scratchCameraPosition
+    .copy(scratchMorphologyRadial)
+    .multiplyScalar(1 + reviewView.cameraAltitudeMeters / radius);
+  scratchMorphologyTarget
+    .copy(scratchMorphologyRadial)
+    .multiplyScalar(1 + reviewView.targetAltitudeMeters / radius)
+    .addScaledVector(scratchMorphologyEast, reviewView.targetDistanceMeters / radius);
+
+  camera.fov = 45;
+  camera.near = 0.00001;
+  camera.far = 20;
+  camera.up.copy(scratchMorphologyRadial);
+  camera.position.copy(scratchCameraPosition);
+  camera.lookAt(scratchMorphologyTarget);
+  camera.updateProjectionMatrix();
+  camera.updateMatrixWorld(true);
+  scratchSunDirectionWorld.set(...DEFAULT_LUBIRTH_SUN_DIRECTION).normalize();
+  return true;
+}
+
 function resolveCameraHeightMeters(
   camera: Camera,
   worldToEcef: Matrix4 | null | undefined
@@ -356,6 +415,8 @@ export function TakramStockParityPipeline({
   altitudeMeters,
   diagnostic = "full",
   input,
+  morphologyCandidate,
+  morphologyView,
   onTelemetry,
   progress,
   view
@@ -363,6 +424,9 @@ export function TakramStockParityPipeline({
   const { gl, camera } = useThree();
   const earthTexture = useLoader(TextureLoader, EARTH_DAY_SRC);
   const adapter = resolveTakramParityAdapter(input);
+  const resolvedMorphologyCandidate = input === "v3" && morphologyView
+    ? resolveTakramV3MorphologyCandidate(morphologyCandidate ?? "baseline")
+    : null;
   const assetsState = useTakramParityRuntimeAssets(gl.domElement, input);
   const atmosphereState = useTakramParityAtmospherePrecompute(gl, gl.domElement);
   const atmosphereRef = useRef<AtmosphereApi>(null);
@@ -393,12 +457,18 @@ export function TakramStockParityPipeline({
     clouds.localWeatherOffset.set(...adapter.localWeatherOffset);
     clouds.localWeatherVelocity.set(0, 0);
     const useV3OpeningPreset = input === "v3" && view === "opening";
+    const shapeRepeat = resolvedMorphologyCandidate?.shapeRepeat ??
+      TAKRAM_PARITY_V3_OPENING_PRESET.shapeRepeat;
+    const shapeDetailRepeat = resolvedMorphologyCandidate?.shapeDetailRepeat ??
+      TAKRAM_PARITY_V3_OPENING_PRESET.shapeDetailRepeat;
     clouds.shapeRepeat.setScalar(
-      useV3OpeningPreset ? TAKRAM_PARITY_V3_OPENING_PRESET.shapeRepeat : OFFICIAL_SHAPE_REPEAT
+      useV3OpeningPreset && input === "v3"
+        ? shapeRepeat
+        : OFFICIAL_SHAPE_REPEAT
     );
     clouds.shapeDetailRepeat.setScalar(
-      useV3OpeningPreset
-        ? TAKRAM_PARITY_V3_OPENING_PRESET.shapeDetailRepeat
+      useV3OpeningPreset && input === "v3"
+        ? shapeDetailRepeat
         : OFFICIAL_SHAPE_DETAIL_REPEAT
     );
     if (isTakramParityAltitudeLadderDiagnostic(diagnostic)) {
@@ -410,7 +480,7 @@ export function TakramStockParityPipeline({
         TAKRAM_ALTITUDE_LADDER_SHADER_MODES.normal
       );
     }
-  }, [adapter, altitudeMeters, diagnostic, input, view]);
+  }, [adapter, altitudeMeters, diagnostic, input, morphologyCandidate, morphologyView, resolvedMorphologyCandidate, view]);
 
   useEffect(() => {
     ladderCaptureRef.current = {
@@ -553,6 +623,10 @@ export function TakramStockParityPipeline({
 
     if (view === "control") {
       updateControlFrame(earthGroup, camera);
+    } else if (morphologyView && updateMorphologyNearFrame(earthGroup, camera, morphologyView)) {
+      // Query-only morphology cameras intentionally bypass the opening
+      // progress transform. `opening-orbit` returns false above and therefore
+      // continues through the exact opening mirror below.
     } else {
       updateOpeningFrame(earthGroup, camera, progress, isTakramParityAltitudeLadderDiagnostic(diagnostic)
         ? altitudeMeters
@@ -700,6 +774,8 @@ export function TakramStockParityPipeline({
       temporalConverged,
       transformFallback,
       view,
+      morphologyCandidate: resolvedMorphologyCandidate?.id ?? null,
+      morphologyView: morphologyView ?? null,
       altitudeLadder: isTakramParityAltitudeLadderDiagnostic(diagnostic)
         ? ladderCaptureRef.current.telemetry
         : null
@@ -730,7 +806,9 @@ export function TakramStockParityPipeline({
         TEMPORAL_CONVERGENCE_FRAME_COUNT
       ),
       temporalConverged: telemetry.temporalConverged,
-      transformFallback: telemetry.transformFallback
+      transformFallback: telemetry.transformFallback,
+      morphologyCandidate: telemetry.morphologyCandidate,
+      morphologyView: telemetry.morphologyView
     });
     if (publishedTelemetryRef.current !== signature) {
       publishedTelemetryRef.current = signature;

@@ -1,4 +1,12 @@
 import { Ellipsoid } from "@takram/three-geospatial";
+import {
+  TAKRAM_V3_MORPHOLOGY_BASELINE,
+  TAKRAM_V3_MORPHOLOGY_SPHERICAL_UV,
+  resolveTakramV3MorphologyCandidate,
+  resolveTakramV3MorphologyView,
+  type TakramV3MorphologyCandidateId,
+  type TakramV3MorphologyViewId
+} from "./TakramV3MorphologyContract";
 
 export const TAKRAM_PARITY_BOTTOM_RADIUS_M = 6_360_000;
 export const TAKRAM_PARITY_ALTITUDE_LADDER_MAX_M = 20_000_000;
@@ -45,6 +53,8 @@ export type TakramParityRouteQuery = {
   progress: number;
   view: TakramParityView;
   altitudeMeters?: number;
+  morphologyCandidate?: TakramV3MorphologyCandidateId;
+  morphologyView?: TakramV3MorphologyViewId;
 };
 
 export function isTakramParityAltitudeLadderDiagnostic(
@@ -56,7 +66,15 @@ export function isTakramParityAltitudeLadderDiagnostic(
 
 export type TakramParityRouteQueryResult =
   | { ok: true; value: TakramParityRouteQuery }
-  | { ok: false; reason: "control-requires-stock" };
+  | {
+    ok: false;
+    reason:
+      | "control-requires-stock"
+      | "morphology-candidate-requires-view"
+      | "morphology-requires-v3"
+      | "unknown-morphology-candidate"
+      | "unknown-morphology-view";
+  };
 
 export function resolveTakramParityRouteQuery(
   input: Pick<URLSearchParams, "get">
@@ -64,6 +82,8 @@ export function resolveTakramParityRouteQuery(
   const requestedInput = input.get("input");
   const requestedView = input.get("view");
   const requestedDiagnostic = input.get("diagnostic");
+  const requestedMorphologyCandidate = input.get("morphologyCandidate");
+  const requestedMorphologyView = input.get("morphologyView");
   const parsedProgress = Number.parseFloat(input.get("progress") ?? "0");
   const parsedAltitudeMeters = Number.parseFloat(input.get("altitudeMeters") ?? "0");
   const diagnostic = requestedDiagnostic === "altitude-ladder" ||
@@ -85,6 +105,31 @@ export function resolveTakramParityRouteQuery(
     view: requestedView === "control" ? "control" : "opening"
   };
 
+  const hasMorphologyQuery = requestedMorphologyView !== null ||
+    requestedMorphologyCandidate !== null;
+  if (hasMorphologyQuery && value.input !== "v3") {
+    return { ok: false, reason: "morphology-requires-v3" };
+  }
+  if (requestedMorphologyCandidate !== null && requestedMorphologyView === null) {
+    return { ok: false, reason: "morphology-candidate-requires-view" };
+  }
+  const morphologyView = requestedMorphologyView === null
+    ? null
+    : resolveTakramV3MorphologyView(requestedMorphologyView);
+  if (requestedMorphologyView !== null && morphologyView === null) {
+    return { ok: false, reason: "unknown-morphology-view" };
+  }
+  const morphologyCandidate = hasMorphologyQuery
+    ? resolveTakramV3MorphologyCandidate(requestedMorphologyCandidate ?? "baseline")
+    : null;
+  if (hasMorphologyQuery && morphologyCandidate === null) {
+    return { ok: false, reason: "unknown-morphology-candidate" };
+  }
+  if (morphologyView !== null && morphologyCandidate !== null) {
+    value.morphologyView = morphologyView.id;
+    value.morphologyCandidate = morphologyCandidate.id;
+  }
+
   if (isTakramParityAltitudeLadderDiagnostic(diagnostic)) {
     value.altitudeMeters = Number.isFinite(parsedAltitudeMeters)
       ? Math.max(2_500, Math.min(TAKRAM_PARITY_ALTITUDE_LADDER_MAX_M, parsedAltitudeMeters))
@@ -98,9 +143,11 @@ export function resolveTakramParityRouteQuery(
   // Opening has one narrow debug readback: stock/V3 review can compare the
   // native cloud buffer with the complete aerial composite. The control-only
   // BSM/history/Aerial probes are deliberately not exposed in this path.
+  const morphologyDiagnostic = value.morphologyView !== undefined &&
+    ["full", "cloud-raw", "history-reset-first", "bsm-off", "aerial-final", "sample-count-debug"].includes(value.diagnostic);
   return {
     ok: true,
-    value: value.view === "opening" &&
+    value: value.view === "opening" && !morphologyDiagnostic &&
       !["altitude-ladder", "altitude-ladder-cloud-off", "cloud-raw", "depth-off", "density-debug", "uv-debug", "sample-count-debug"].includes(value.diagnostic)
       ? { ...value, diagnostic: "full" }
       : value
@@ -138,9 +185,9 @@ export const TAKRAM_PARITY_DEFAULTS = Object.freeze({
  * visual comparator adjustment from silently rewriting the upstream control.
  */
 export const TAKRAM_PARITY_V3_OPENING_PRESET = Object.freeze({
-  coverage: 0.55,
-  shapeRepeat: 0.000025,
-  shapeDetailRepeat: 0.0006
+  coverage: TAKRAM_V3_MORPHOLOGY_BASELINE.coverage,
+  shapeRepeat: TAKRAM_V3_MORPHOLOGY_BASELINE.shapeRepeat,
+  shapeDetailRepeat: TAKRAM_V3_MORPHOLOGY_BASELINE.shapeDetailRepeat
 });
 
 /**
@@ -151,10 +198,7 @@ export const TAKRAM_PARITY_V3_OPENING_PRESET = Object.freeze({
  * a seam or clear-air sample. Every altitude rung uses this same ECEF
  * direction; it is deliberately not selected from the camera view per rung.
  */
-export const TAKRAM_PARITY_V3_LADDER_SPHERICAL_UV = Object.freeze([
-  0.076494140625,
-  0.73053515625
-] as const);
+export const TAKRAM_PARITY_V3_LADDER_SPHERICAL_UV = TAKRAM_V3_MORPHOLOGY_SPHERICAL_UV;
 
 export interface TakramParityRendererFingerprint {
   // Version 3 includes resolved coverage and native shape scales in the
@@ -518,6 +562,13 @@ export interface TakramParityTelemetry {
   input: TakramParityInput;
   native: TakramParityNativeFeatures;
   nativeFrameCount: number;
+  morphologyCandidate: "baseline" | null;
+  morphologyView:
+    | "near-oblique"
+    | "aerial-oblique"
+    | "near-orbit"
+    | "opening-orbit"
+    | null;
   progress: number;
   rendererFingerprint: TakramParityRendererFingerprint | null;
   rendererFingerprintHash: string | null;

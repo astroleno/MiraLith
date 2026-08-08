@@ -60,6 +60,8 @@ export function LuBirthTakramParitySpikeClient() {
       className="lubirth-takram-parity-spike"
       data-diagnostic={query?.diagnostic ?? "pending"}
       data-input={query?.input ?? "pending"}
+      data-morphology-candidate={query?.morphologyCandidate ?? "none"}
+      data-morphology-view={query?.morphologyView ?? "none"}
       data-runtime={runtime}
       data-takram-parity-route="true"
       data-view={query?.view ?? "pending"}
@@ -82,6 +84,8 @@ export function LuBirthTakramParitySpikeClient() {
               altitudeMeters={query.altitudeMeters}
               diagnostic={query.diagnostic}
               input={query.input}
+              morphologyCandidate={query.morphologyCandidate}
+              morphologyView={query.morphologyView}
               onTelemetry={setTelemetry}
               progress={query.progress}
             />

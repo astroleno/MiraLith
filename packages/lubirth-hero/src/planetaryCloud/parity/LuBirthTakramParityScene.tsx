@@ -5,12 +5,18 @@ import type {
   TakramParityInput,
   TakramParityTelemetry
 } from "./TakramParityContract";
+import type {
+  TakramV3MorphologyCandidateId,
+  TakramV3MorphologyViewId
+} from "./TakramV3MorphologyContract";
 import { TakramStockParityPipeline } from "./TakramStockParityPipeline";
 
 export interface LuBirthTakramParitySceneProps {
   altitudeMeters?: number;
   diagnostic?: TakramParityDiagnostic;
   input: TakramParityInput;
+  morphologyCandidate?: TakramV3MorphologyCandidateId;
+  morphologyView?: TakramV3MorphologyViewId;
   onTelemetry?: (telemetry: TakramParityTelemetry) => void;
   progress: number;
 }
@@ -23,6 +29,8 @@ export function LuBirthTakramParityScene({
   altitudeMeters,
   diagnostic,
   input,
+  morphologyCandidate,
+  morphologyView,
   onTelemetry,
   progress
 }: LuBirthTakramParitySceneProps) {
@@ -31,6 +39,8 @@ export function LuBirthTakramParityScene({
       altitudeMeters={altitudeMeters}
       diagnostic={diagnostic}
       input={input}
+      morphologyCandidate={morphologyCandidate}
+      morphologyView={morphologyView}
       onTelemetry={onTelemetry}
       progress={progress}
       view="opening"
