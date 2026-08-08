@@ -563,7 +563,11 @@ export interface TakramParityTelemetry {
   input: TakramParityInput;
   native: TakramParityNativeFeatures;
   nativeFrameCount: number;
-  morphologyCandidate: "baseline" | null;
+  morphologyCandidate:
+    | "baseline"
+    | "horizontal-orbit-shape-16-detail-4"
+    | "horizontal-orbit-shape-32-detail-4"
+    | null;
   morphologyView:
     | "near-oblique"
     | "aerial-oblique"

@@ -15,11 +15,22 @@ type MorphologyContractModule = {
     sphericalUv: readonly [number, number];
   }>;
   resolveTakramV3MorphologyCandidate(candidate: string | null | undefined):
-    | { id: "baseline"; shapeRepeat: number; shapeDetailRepeat: number }
+    | { id: string; shapeRepeat: number; shapeDetailRepeat: number }
     | null;
   resolveTakramV3MorphologyView(view: string | null | undefined):
     | MorphologyContractModule["TAKRAM_V3_MORPHOLOGY_VIEWS"][number]
     | null;
+  buildTakramV3MorphologyCandidates(inputs: ReadonlyArray<{
+    view: "near-oblique" | "aerial-oblique" | "near-orbit" | "opening-orbit";
+    horizontalPixelsPerMeter: number;
+  }>): ReadonlyArray<{
+    view: string;
+    targetShapePixels: number;
+    targetDetailPixels: number;
+    shapeRepeat: number;
+    shapeDetailRepeat: number;
+    physicalRangePass: boolean;
+  }>;
 };
 
 const modulePath =
@@ -84,8 +95,29 @@ test("freezes the V3 morphology review views and baseline contract", async () =>
     shapeDetailRepeat: 0.0006
   });
   expect(contract.resolveTakramV3MorphologyCandidate("unknown")).toBeNull();
+  expect(contract.resolveTakramV3MorphologyCandidate("horizontal-orbit-shape-16-detail-4"))
+    .toMatchObject({
+      id: "horizontal-orbit-shape-16-detail-4",
+      shapeRepeat: 0.000015279118222807067,
+      shapeDetailRepeat: 0.00006111647289122827
+    });
   expect(contract.resolveTakramV3MorphologyView("opening-orbit")?.usesOpeningFrame).toBe(true);
   expect(contract.resolveTakramV3MorphologyView("unknown")).toBeNull();
+  const generated = contract.buildTakramV3MorphologyCandidates([
+    { view: "near-oblique", horizontalPixelsPerMeter: 0.001 },
+    { view: "near-orbit", horizontalPixelsPerMeter: 0.00025 }
+  ]);
+  expect(generated).toHaveLength(18);
+  expect(generated.filter((candidate) => candidate.physicalRangePass)).toHaveLength(2);
+  expect(generated.find((candidate) =>
+    candidate.view === "near-orbit" &&
+    candidate.targetShapePixels === 16 &&
+    candidate.targetDetailPixels === 4
+  )).toMatchObject({
+    shapeRepeat: 0.000015625,
+    shapeDetailRepeat: 0.0000625,
+    physicalRangePass: true
+  });
   expect(parityContract.resolveTakramParityRouteQuery(new URLSearchParams(
     "input=v3&view=opening&diagnostic=cloud-raw&morphologyView=near-oblique"
   ))).toEqual({
