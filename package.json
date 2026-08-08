@@ -16,7 +16,7 @@
     "@eslint/eslintrc": "^3.3.1",
     "@playwright/test": "1.59.1",
     "@types/node": "latest",
-    "@types/react": "latest",
+    "@types/react": "19.2.17",
     "@types/react-dom": "latest",
     "@types/three": "0.184.0",
     "eslint": "9.39.2",
