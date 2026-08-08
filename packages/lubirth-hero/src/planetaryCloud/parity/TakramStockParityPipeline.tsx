@@ -16,6 +16,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { mapOpeningProgress } from "@miralith/visual-core";
 import {
   Euler,
+  Camera,
   Group,
   Matrix4,
   NoToneMapping,
@@ -33,13 +34,30 @@ import {
   TAKRAM_PARITY_DEFAULTS,
   TAKRAM_PARITY_ELLIPSOID,
   TAKRAM_PARITY_STOCK_ASSETS,
+  TAKRAM_PARITY_V3_LADDER_SPHERICAL_UV,
+  TAKRAM_PARITY_V3_OPENING_PRESET,
   buildTakramParityRendererFingerprint,
   hashTakramParityRendererFingerprint,
   type TakramParityDiagnostic,
   type TakramParityInput,
+  type TakramParityAltitudeLadderTelemetry,
   type TakramParityTelemetry,
   type TakramParityView
 } from "./TakramParityContract";
+import {
+  installTakramAltitudeLadderInstrumentation,
+  setTakramAltitudeLadderShaderMode,
+  TAKRAM_ALTITUDE_LADDER_SHADER_MODES,
+  type TakramAltitudeLadderMaterial
+} from "./TakramAltitudeLadderInstrumentation";
+import {
+  readTakramAltitudeLadderDefaultFramebuffer,
+  readTakramAltitudeLadderRenderTarget,
+  resolveTakramAltitudeLadderShellInterval,
+  summarizeTakramAltitudeLadderDensity,
+  summarizeTakramAltitudeLadderRadiance,
+  type TakramAltitudeLadderReadback
+} from "./TakramAltitudeLadderReadback";
 import {
   useTakramParityRuntimeAssets,
   type TakramParityRuntimeAssets
@@ -54,24 +72,63 @@ const CONTROL_CAMERA_ALTITUDE_M =
 const CONTROL_SCENE_RADIUS_M = TAKRAM_PARITY_BOTTOM_RADIUS_M;
 const DEG_TO_RAD = Math.PI / 180;
 const TEMPORAL_CONVERGENCE_FRAME_COUNT = 32;
-// Keep Takram's native 3D shape/detail sampling, but make the macro forms
-// legible from the LuBirth opening camera instead of a field of tiny cloudlets.
-// Both stock and V3 use the same native scale so parity remains meaningful.
-const TAKRAM_PARITY_SHAPE_REPEAT = 0.000025;
-const TAKRAM_PARITY_SHAPE_DETAIL_REPEAT = 0.0006;
+const OFFICIAL_SHAPE_REPEAT = 0.0003;
+const OFFICIAL_SHAPE_DETAIL_REPEAT = 0.006;
 
 const scratchCameraPosition = new Vector3();
 const scratchCameraTarget = new Vector3();
+const scratchLadderTarget = new Vector3();
 const scratchControlDirection = new Vector3();
 const scratchEarthEuler = new Euler();
 const scratchEarthMatrix = new Matrix4();
 const scratchEarthQuaternion = new Quaternion();
 const scratchSunDirectionEcef = new Vector3();
 const scratchSunDirectionWorld = new Vector3();
+const scratchCameraEcef = new Vector3();
+const scratchLadderRadial = new Vector3();
 
 type TakramCloudsRef = CloudsEffect &
   ExpandNestedProps<CloudsEffect, "clouds"> &
   ExpandNestedProps<CloudsEffect, "shadow">;
+
+type TakramAltitudeLadderCapture = {
+  phase: "normal" | "radiance" | "density" | "weather" | "complete";
+  telemetry: TakramParityAltitudeLadderTelemetry;
+};
+
+function createEmptyAltitudeLadderTelemetry(
+  requestedAltitudeMeters: number
+): TakramParityAltitudeLadderTelemetry {
+  return {
+    completed: false,
+    cameraHeightMeters: null,
+    requestedAltitudeMeters,
+    sphericalUv: TAKRAM_PARITY_V3_LADDER_SPHERICAL_UV,
+    centerRayShellIntervalMeters: null,
+    shellIntervalLengthMeters: null,
+    validPrimarySampleCount: null,
+    maxDensity: null,
+    averageDensity: null,
+    weatherMaxDensity: null,
+    weatherAverageDensity: null,
+    accumulatedOpticalDepth: null,
+    peakAccumulatedOpticalDepth: null,
+    centerAccumulatedOpticalDepth: null,
+    transmittance: null,
+    minimumTransmittance: null,
+    centerTransmittance: null,
+    preTemporalInScatteredRadiance: null,
+    preTemporalInScatteredRadiancePeak: null,
+    preTemporalInScatteredRadianceCenter: null,
+    postTemporalInScatteredRadiance: null,
+    postTemporalInScatteredRadiancePeak: null,
+    postTemporalInScatteredRadianceCenter: null,
+    aerialPerspectiveResult: null,
+    aerialPerspectiveResultPeak: null,
+    aerialPerspectiveResultCenter: null,
+    readback: null
+  };
+}
 
 declare global {
   interface Window {
@@ -80,6 +137,7 @@ declare global {
 }
 
 export interface TakramStockParityPipelineProps {
+  altitudeMeters?: number;
   diagnostic?: TakramParityDiagnostic;
   input: TakramParityInput;
   onTelemetry?: (telemetry: TakramParityTelemetry) => void;
@@ -131,7 +189,8 @@ function updateControlFrame(
 function updateOpeningFrame(
   earthGroup: Group,
   camera: PerspectiveCamera,
-  progress: number
+  progress: number,
+  ladderAltitudeMeters?: number
 ) {
   // This mirrors the isolated Task -1R opening frame exactly: the same
   // mapOpeningProgress output, Euler order, camera target and FOV. It remains
@@ -163,9 +222,54 @@ function updateOpeningFrame(
   camera.updateProjectionMatrix();
   camera.updateMatrixWorld(true);
 
+  if (ladderAltitudeMeters !== undefined) {
+    earthGroup.updateMatrixWorld(true);
+    const bridge = buildLuBirthWorldToEcef(earthGroup.matrixWorld, 1);
+    if (bridge.valid && bridge.worldToEcef && Number.isFinite(ladderAltitudeMeters)) {
+      const worldToEcef = bridge.worldToEcef;
+      const ecefToWorld = worldToEcef.clone().invert();
+      const [sphericalU, sphericalV] = TAKRAM_PARITY_V3_LADDER_SPHERICAL_UV;
+      const phi = (sphericalU - 0.5) * Math.PI * 2;
+      const theta = (sphericalV - 0.5) * Math.PI;
+      const radial = scratchLadderRadial.set(
+        Math.cos(theta) * Math.cos(phi),
+        Math.cos(theta) * Math.sin(phi),
+        Math.sin(theta)
+      );
+      // Aim every rung at the same near-side radial cloud column. At 2.5 km
+      // this points outward into the cloud base; above the shell it points
+      // inward through that same geographic column. Looking at the Earth
+      // centre would make the low-altitude rung terminate in opaque ground
+      // before it ever produces a cloud signal.
+      const targetWorld = scratchLadderTarget
+        .copy(radial)
+        .multiplyScalar(TAKRAM_PARITY_BOTTOM_RADIUS_M + 20_000)
+        .applyMatrix4(ecefToWorld);
+      scratchCameraPosition
+        .copy(radial)
+        .multiplyScalar(TAKRAM_PARITY_BOTTOM_RADIUS_M + ladderAltitudeMeters)
+        .applyMatrix4(ecefToWorld);
+      camera.position.copy(scratchCameraPosition);
+      camera.lookAt(targetWorld);
+      camera.updateMatrixWorld(true);
+    }
+  }
+
   scratchSunDirectionWorld.set(...DEFAULT_LUBIRTH_SUN_DIRECTION)
     .applyQuaternion(scratchEarthQuaternion)
     .normalize();
+}
+
+function resolveCameraHeightMeters(
+  camera: Camera,
+  worldToEcef: Matrix4 | null | undefined
+) {
+  if (!worldToEcef) return null;
+  const cameraEcef = scratchCameraEcef
+    .setFromMatrixPosition(camera.matrixWorld)
+    .applyMatrix4(worldToEcef);
+  const height = cameraEcef.length() - TAKRAM_PARITY_BOTTOM_RADIUS_M;
+  return Number.isFinite(height) ? height : null;
 }
 
 function nativeFeatures(clouds: CloudsEffect | null, aerialPerspective: AerialPerspectiveEffect | null) {
@@ -224,6 +328,7 @@ const TAKRAM_PARITY_SHARED_ASSET_HASHES = Object.freeze({
 
 function resolveDiagnosticState(diagnostic: TakramParityDiagnostic) {
   return {
+    altitudeLadder: diagnostic === "altitude-ladder",
     aerialPerspectiveComposite: !["cloud-raw", "density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic),
     beerShadowOcclusion: diagnostic !== "bsm-off",
     cloudRawOutput: ["cloud-raw", "density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic),
@@ -241,6 +346,7 @@ function resolveDiagnosticState(diagnostic: TakramParityDiagnostic) {
  * raymarch, BSM, resolve/history or cloud-composite substitute.
  */
 export function TakramStockParityPipeline({
+  altitudeMeters,
   diagnostic = "full",
   input,
   onTelemetry,
@@ -264,6 +370,10 @@ export function TakramStockParityPipeline({
   const appliedDiagnosticRef = useRef<TakramParityDiagnostic | null>(null);
   const nativeFrameCountRef = useRef(0);
   const nativeFrameEpochRef = useRef("");
+  const ladderCaptureRef = useRef<TakramAltitudeLadderCapture>({
+    phase: "normal",
+    telemetry: createEmptyAltitudeLadderTelemetry(altitudeMeters ?? 2_500)
+  });
   const [bridgeReady, setBridgeReady] = useState(false);
   onTelemetryRef.current = onTelemetry;
   const setCloudsRef = useCallback((clouds: TakramCloudsRef | null) => {
@@ -274,9 +384,32 @@ export function TakramStockParityPipeline({
     clouds.localWeatherRepeat.set(...adapter.localWeatherRepeat);
     clouds.localWeatherOffset.set(...adapter.localWeatherOffset);
     clouds.localWeatherVelocity.set(0, 0);
-    clouds.shapeRepeat.setScalar(TAKRAM_PARITY_SHAPE_REPEAT);
-    clouds.shapeDetailRepeat.setScalar(TAKRAM_PARITY_SHAPE_DETAIL_REPEAT);
-  }, [adapter]);
+    const useV3OpeningPreset = input === "v3" && view === "opening";
+    clouds.shapeRepeat.setScalar(
+      useV3OpeningPreset ? TAKRAM_PARITY_V3_OPENING_PRESET.shapeRepeat : OFFICIAL_SHAPE_REPEAT
+    );
+    clouds.shapeDetailRepeat.setScalar(
+      useV3OpeningPreset
+        ? TAKRAM_PARITY_V3_OPENING_PRESET.shapeDetailRepeat
+        : OFFICIAL_SHAPE_DETAIL_REPEAT
+    );
+    if (diagnostic === "altitude-ladder") {
+      installTakramAltitudeLadderInstrumentation(
+        clouds.cloudsPass.currentMaterial as unknown as TakramAltitudeLadderMaterial
+      );
+      setTakramAltitudeLadderShaderMode(
+        clouds.cloudsPass.currentMaterial as unknown as TakramAltitudeLadderMaterial,
+        TAKRAM_ALTITUDE_LADDER_SHADER_MODES.normal
+      );
+    }
+  }, [adapter, altitudeMeters, diagnostic, input, view]);
+
+  useEffect(() => {
+    ladderCaptureRef.current = {
+      phase: "normal",
+      telemetry: createEmptyAltitudeLadderTelemetry(altitudeMeters ?? 2_500)
+    };
+  }, [altitudeMeters, diagnostic]);
 
   useEffect(() => {
     earthTexture.colorSpace = SRGBColorSpace;
@@ -358,6 +491,16 @@ export function TakramStockParityPipeline({
 
     return () => {
       appliedDiagnosticRef.current = null;
+      if (diagnostic === "altitude-ladder") {
+        try {
+          setTakramAltitudeLadderShaderMode(
+            clouds.cloudsPass.currentMaterial as unknown as TakramAltitudeLadderMaterial,
+            TAKRAM_ALTITUDE_LADDER_SHADER_MODES.normal
+          );
+        } catch {
+          // The material may already have been disposed during route unmount.
+        }
+      }
       clouds.cloudLayers.forEach((layer, index) => {
         layer.shadow = shadowLayerFlags[index] ?? false;
       });
@@ -386,7 +529,9 @@ export function TakramStockParityPipeline({
     if (view === "control") {
       updateControlFrame(earthGroup, camera);
     } else {
-      updateOpeningFrame(earthGroup, camera, progress);
+      updateOpeningFrame(earthGroup, camera, progress, diagnostic === "altitude-ladder"
+        ? altitudeMeters
+        : undefined);
     }
     earthGroup.updateMatrixWorld(true);
 
@@ -479,6 +624,11 @@ export function TakramStockParityPipeline({
     const temporalConverged = diagnostic !== "history-reset-first" &&
       nativeFrameCount >= TEMPORAL_CONVERGENCE_FRAME_COUNT;
     const resolvedNative = nativeFeatures(clouds, aerialPerspective);
+    const cameraHeightMetersValue = clouds
+      ? Number((clouds.cloudsPass.currentMaterial.uniforms as Record<string, { value?: unknown }>).cameraHeight?.value)
+      : Number.NaN;
+    const cameraHeightMeters = resolveCameraHeightMeters(camera, bridge?.worldToEcef) ??
+      (Number.isFinite(cameraHeightMetersValue) ? cameraHeightMetersValue : null);
     const rendererFingerprint = clouds && aerialPerspective
       ? buildTakramParityRendererFingerprint({
         clouds,
@@ -488,12 +638,15 @@ export function TakramStockParityPipeline({
       : null;
     const telemetry: TakramParityTelemetry = {
       active: nativePipelineReady &&
-        (diagnostic === "history-reset-first" || temporalConverged),
+        (diagnostic === "history-reset-first" ||
+          (temporalConverged && (diagnostic !== "altitude-ladder" ||
+            ladderCaptureRef.current.phase === "complete"))),
       adapter: resolveAdapterTelemetry(clouds, assetsState.assets, input),
       assetGeneration: assetsState.assetGeneration,
       assetsReady: assetsState.ready,
       atmosphereGeneration: atmosphereState.atmosphereGeneration,
       atmosphereReady: atmosphereState.ready,
+      cameraHeightMeters,
       cameraMatrixWorld: camera.matrixWorld.toArray(),
       cameraPosition: [camera.position.x, camera.position.y, camera.position.z],
       coordinateMode,
@@ -511,12 +664,20 @@ export function TakramStockParityPipeline({
       rendererFingerprintHash: rendererFingerprint
         ? hashTakramParityRendererFingerprint(rendererFingerprint)
         : null,
+      presentationPreset: input === "v3" && view === "opening"
+        ? "v3-opening-coarse"
+        : "official-stock",
+      coverage: clouds?.coverage ?? null,
       sceneDepthScale,
       sceneDepthContract: "world-depth-to-ecef-v1",
-      stockCoverage: view === "control" ? TAKRAM_PARITY_CONTROL.coverage : null,
+      shapeRepeat: clouds?.shapeRepeat?.x ?? null,
+      shapeDetailRepeat: clouds?.shapeDetailRepeat?.x ?? null,
       temporalConverged,
       transformFallback,
-      view
+      view,
+      altitudeLadder: diagnostic === "altitude-ladder"
+        ? ladderCaptureRef.current.telemetry
+        : null
     };
     const signature = JSON.stringify({
       active: telemetry.active,
@@ -524,6 +685,7 @@ export function TakramStockParityPipeline({
       assetsReady: telemetry.assetsReady,
       atmosphereGeneration: telemetry.atmosphereGeneration,
       atmosphereReady: telemetry.atmosphereReady,
+      cameraHeightMeters: telemetry.cameraHeightMeters,
       coordinateMode: telemetry.coordinateMode,
       control: telemetry.control,
       diagnostic: telemetry.diagnostic,
@@ -532,7 +694,12 @@ export function TakramStockParityPipeline({
       adapter: telemetry.adapter,
       native: telemetry.native,
       rendererFingerprintHash: telemetry.rendererFingerprintHash,
+      presentationPreset: telemetry.presentationPreset,
+      coverage: telemetry.coverage,
       sceneDepthScale: telemetry.sceneDepthScale,
+      shapeRepeat: telemetry.shapeRepeat,
+      shapeDetailRepeat: telemetry.shapeDetailRepeat,
+      altitudeLadder: telemetry.altitudeLadder,
       nativeFrameCount: Math.min(
         telemetry.nativeFrameCount,
         TEMPORAL_CONVERGENCE_FRAME_COUNT
@@ -548,6 +715,175 @@ export function TakramStockParityPipeline({
       onTelemetryRef.current?.(telemetry);
     }
   }, -1);
+
+  // Read the native cloud targets only for the altitude ladder. The first
+  // converged frame preserves the normal renderer outputs; following frames
+  // switch the same native pass to capture-only raw-radiance, density and
+  // weather encodings.
+  // No production frame consumes these values.
+  useFrame(() => {
+    if (diagnostic !== "altitude-ladder" ||
+      ladderCaptureRef.current.phase === "complete" ||
+      nativeFrameCountRef.current < TEMPORAL_CONVERGENCE_FRAME_COUNT) {
+      return;
+    }
+
+    const clouds = cloudsRef.current;
+    if (!clouds) return;
+
+    const material = clouds.cloudsPass.currentMaterial as unknown as TakramAltitudeLadderMaterial;
+    const pass = clouds.cloudsPass as unknown as {
+      currentRenderTarget?: Parameters<typeof readTakramAltitudeLadderRenderTarget>[1];
+      historyRenderTarget?: Parameters<typeof readTakramAltitudeLadderRenderTarget>[1];
+    };
+
+    if (ladderCaptureRef.current.phase === "normal") {
+      const preTemporalTarget = pass.currentRenderTarget
+        ? readTakramAltitudeLadderRenderTarget(gl, pass.currentRenderTarget)
+        : null;
+      const postTemporalTarget = pass.historyRenderTarget
+        ? readTakramAltitudeLadderRenderTarget(gl, pass.historyRenderTarget)
+        : null;
+      const aerialTarget = readTakramAltitudeLadderDefaultFramebuffer(gl);
+      const postTemporal = postTemporalTarget
+        ? summarizeTakramAltitudeLadderRadiance(postTemporalTarget)
+        : null;
+      const aerial = aerialTarget
+        ? summarizeTakramAltitudeLadderRadiance(aerialTarget)
+        : null;
+      const uniforms = clouds.cloudsPass.currentMaterial.uniforms as Record<string, { value?: unknown }>;
+      const minHeight = Number(uniforms.minHeight?.value ?? 0);
+      const maxHeight = Number(uniforms.maxHeight?.value ?? 0);
+      const cameraHeight = resolveCameraHeightMeters(
+        camera,
+        buildLuBirthWorldToEcef(scratchEarthMatrix, 1).worldToEcef
+      ) ?? Number(uniforms.cameraHeight?.value ?? Number.NaN);
+      const centerRayShellIntervalMeters = bridgeReadyRef.current
+        ? resolveTakramAltitudeLadderShellInterval(
+          camera,
+          buildLuBirthWorldToEcef(scratchEarthMatrix, 1).worldToEcef,
+          minHeight,
+          maxHeight
+        )
+        : null;
+      ladderCaptureRef.current = {
+        phase: "radiance",
+        telemetry: {
+          ...ladderCaptureRef.current.telemetry,
+          cameraHeightMeters: Number.isFinite(cameraHeight) ? cameraHeight : null,
+          centerRayShellIntervalMeters,
+          postTemporalInScatteredRadiance: postTemporal?.averageLuma ?? null,
+          postTemporalInScatteredRadiancePeak: postTemporal?.peakLuma ?? null,
+          postTemporalInScatteredRadianceCenter: postTemporal?.centerLuma ?? null,
+          aerialPerspectiveResult: aerial?.averageLuma ?? null,
+          aerialPerspectiveResultPeak: aerial?.peakLuma ?? null,
+          aerialPerspectiveResultCenter: aerial?.centerLuma ?? null,
+          readback: {
+            cloudTargetWidth: preTemporalTarget?.width ?? postTemporalTarget?.width ?? 0,
+            cloudTargetHeight: preTemporalTarget?.height ?? postTemporalTarget?.height ?? 0,
+            precision: preTemporalTarget?.precision ?? postTemporalTarget?.precision ?? "unorm8",
+            source: "gpu-readback-v1"
+          }
+        }
+      };
+      setTakramAltitudeLadderShaderMode(
+        material,
+        TAKRAM_ALTITUDE_LADDER_SHADER_MODES.radiance
+      );
+      return;
+    }
+
+    if (ladderCaptureRef.current.phase === "radiance") {
+      const radianceTarget = pass.currentRenderTarget
+        ? readTakramAltitudeLadderRenderTarget(gl, pass.currentRenderTarget)
+        : null;
+      const radiance = radianceTarget
+        ? summarizeTakramAltitudeLadderRadiance(radianceTarget)
+        : null;
+      ladderCaptureRef.current = {
+        phase: "density",
+        telemetry: {
+          ...ladderCaptureRef.current.telemetry,
+          accumulatedOpticalDepth: radiance?.accumulatedOpticalDepth ?? null,
+          peakAccumulatedOpticalDepth: radiance?.peakAccumulatedOpticalDepth ?? null,
+          centerAccumulatedOpticalDepth: radiance?.centerAccumulatedOpticalDepth ?? null,
+          transmittance: radiance?.averageTransmittance ?? null,
+          minimumTransmittance: radiance?.minimumTransmittance ?? null,
+          centerTransmittance: radiance?.centerTransmittance ?? null,
+          preTemporalInScatteredRadiance: radiance?.averageLuma ?? null,
+          preTemporalInScatteredRadiancePeak: radiance?.peakLuma ?? null,
+          preTemporalInScatteredRadianceCenter: radiance?.centerLuma ?? null,
+          readback: {
+            cloudTargetWidth: radianceTarget?.width ?? ladderCaptureRef.current.telemetry.readback?.cloudTargetWidth ?? 0,
+            cloudTargetHeight: radianceTarget?.height ?? ladderCaptureRef.current.telemetry.readback?.cloudTargetHeight ?? 0,
+            precision: radianceTarget?.precision ?? ladderCaptureRef.current.telemetry.readback?.precision ?? "unorm8",
+            source: "gpu-readback-v1"
+          }
+        }
+      };
+      setTakramAltitudeLadderShaderMode(
+        material,
+        TAKRAM_ALTITUDE_LADDER_SHADER_MODES.density
+      );
+      return;
+    }
+
+    if (ladderCaptureRef.current.phase === "density") {
+      const densityTarget = pass.currentRenderTarget
+        ? readTakramAltitudeLadderRenderTarget(gl, pass.currentRenderTarget)
+        : null;
+      const density = densityTarget
+        ? summarizeTakramAltitudeLadderDensity(densityTarget)
+        : null;
+      ladderCaptureRef.current = {
+        phase: "weather",
+        telemetry: {
+          ...ladderCaptureRef.current.telemetry,
+          shellIntervalLengthMeters: density?.shellIntervalLengthMeters ?? null,
+          validPrimarySampleCount: density?.validPrimarySampleCount ?? null,
+          maxDensity: density?.maxDensity ?? null,
+          averageDensity: density?.averageDensity ?? null,
+          readback: {
+            cloudTargetWidth: densityTarget?.width ?? ladderCaptureRef.current.telemetry.readback?.cloudTargetWidth ?? 0,
+            cloudTargetHeight: densityTarget?.height ?? ladderCaptureRef.current.telemetry.readback?.cloudTargetHeight ?? 0,
+            precision: densityTarget?.precision ?? ladderCaptureRef.current.telemetry.readback?.precision ?? "unorm8",
+            source: "gpu-readback-v1"
+          }
+        }
+      };
+      setTakramAltitudeLadderShaderMode(
+        material,
+        TAKRAM_ALTITUDE_LADDER_SHADER_MODES.weather
+      );
+      return;
+    }
+
+    const weatherTarget = pass.currentRenderTarget
+      ? readTakramAltitudeLadderRenderTarget(gl, pass.currentRenderTarget)
+      : null;
+    const weather = weatherTarget
+      ? summarizeTakramAltitudeLadderDensity(weatherTarget)
+      : null;
+    ladderCaptureRef.current = {
+      phase: "complete",
+      telemetry: {
+        ...ladderCaptureRef.current.telemetry,
+        completed: true,
+        weatherMaxDensity: weather?.maxDensity ?? null,
+        weatherAverageDensity: weather?.averageDensity ?? null,
+        readback: {
+          cloudTargetWidth: weatherTarget?.width ?? ladderCaptureRef.current.telemetry.readback?.cloudTargetWidth ?? 0,
+          cloudTargetHeight: weatherTarget?.height ?? ladderCaptureRef.current.telemetry.readback?.cloudTargetHeight ?? 0,
+          precision: weatherTarget?.precision ?? ladderCaptureRef.current.telemetry.readback?.precision ?? "unorm8",
+          source: "gpu-readback-v1"
+        }
+      }
+    };
+    setTakramAltitudeLadderShaderMode(
+      material,
+      TAKRAM_ALTITUDE_LADDER_SHADER_MODES.normal
+    );
+  }, 2);
 
   const runtimeAssets = assetsState.assets;
   const atmosphereTextures = atmosphereState.ready ? atmosphereState.textures : null;
@@ -575,11 +911,11 @@ export function TakramStockParityPipeline({
           <EffectComposer enableNormalPass>
             <Clouds
               ref={setCloudsRef}
-              // The opening bridge is viewed from space, so the stock native
-              // 0.3 coverage threshold leaves the V3 weather field as sparse
-              // pinpricks. Keep the same native coverage on stock/V3 opening
-              // candidates and reserve the official 0.4 value for control.
-              coverage={view === "control" ? TAKRAM_PARITY_CONTROL.coverage : 0.55}
+              {...(view === "control"
+                ? { coverage: TAKRAM_PARITY_CONTROL.coverage }
+                : input === "v3"
+                  ? { coverage: TAKRAM_PARITY_V3_OPENING_PRESET.coverage }
+                  : {})}
               disableDefaultLayers={adapter.disableDefaultLayers}
               globalWeatherMapping={input === "v3"}
               localWeatherTexture={runtimeAssets.localWeather}

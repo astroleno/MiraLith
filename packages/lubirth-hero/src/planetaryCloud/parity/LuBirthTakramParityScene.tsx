@@ -8,6 +8,7 @@ import type {
 import { TakramStockParityPipeline } from "./TakramStockParityPipeline";
 
 export interface LuBirthTakramParitySceneProps {
+  altitudeMeters?: number;
   diagnostic?: TakramParityDiagnostic;
   input: TakramParityInput;
   onTelemetry?: (telemetry: TakramParityTelemetry) => void;
@@ -19,6 +20,7 @@ export interface LuBirthTakramParitySceneProps {
  * only selects the adapter-owned weather mapping and cloud-layer contract.
  */
 export function LuBirthTakramParityScene({
+  altitudeMeters,
   diagnostic,
   input,
   onTelemetry,
@@ -26,6 +28,7 @@ export function LuBirthTakramParityScene({
 }: LuBirthTakramParitySceneProps) {
   return (
     <TakramStockParityPipeline
+      altitudeMeters={altitudeMeters}
       diagnostic={diagnostic}
       input={input}
       onTelemetry={onTelemetry}

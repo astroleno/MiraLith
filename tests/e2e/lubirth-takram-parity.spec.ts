@@ -1,12 +1,30 @@
 import { expect, test } from "@playwright/test";
 
-test.setTimeout(180_000);
+// Each stock/V3 navigation owns a fresh atmosphere LUT precompute and native
+// convergence window. Keep the contract test long enough to cover two cold
+// routes on the software/WebGL CI renderer without weakening its assertions.
+test.setTimeout(360_000);
 
 function resolveEarthWorldScale(matrix: number[] | undefined) {
   if (!matrix || matrix.length < 3) {
     return Number.NaN;
   }
   return Math.hypot(matrix[0] ?? Number.NaN, matrix[1] ?? Number.NaN, matrix[2] ?? Number.NaN);
+}
+
+function normalizePresentationFingerprint(
+  fingerprint: Record<string, unknown> | null | undefined
+) {
+  if (!fingerprint) return null;
+  const normalized = JSON.parse(JSON.stringify(fingerprint)) as Record<string, unknown>;
+  const clouds = normalized.clouds as Record<string, unknown> | undefined;
+  const uniforms = clouds?.uniforms as Record<string, unknown> | undefined;
+  if (uniforms) {
+    delete uniforms.coverage;
+    delete uniforms.shapeRepeat;
+    delete uniforms.shapeDetailRepeat;
+  }
+  return normalized;
 }
 
 declare global {
@@ -46,8 +64,12 @@ declare global {
       progress: number;
       rendererFingerprint: Record<string, unknown> | null;
       rendererFingerprintHash: string | null;
+      presentationPreset: "official-stock" | "v3-opening-coarse";
+      coverage: number | null;
       sceneDepthContract: "world-depth-to-ecef-v1";
       sceneDepthScale: number;
+      shapeRepeat: number | null;
+      shapeDetailRepeat: number | null;
       view: "control" | "opening";
     };
   }
@@ -157,8 +179,10 @@ test("V3 changes only resolved adapter fields while preserving the native render
   await expect(page.locator("canvas")).toHaveCount(1);
   const v3 = await page.evaluate(() => window.__MiraLithTakramParity);
 
-  expect(stock?.rendererFingerprint).toEqual(v3?.rendererFingerprint);
-  expect(stock?.rendererFingerprintHash).toBe(v3?.rendererFingerprintHash);
+  expect(normalizePresentationFingerprint(stock?.rendererFingerprint))
+    .toEqual(normalizePresentationFingerprint(v3?.rendererFingerprint));
+  expect(stock?.rendererFingerprint).not.toEqual(v3?.rendererFingerprint);
+  expect(stock?.rendererFingerprintHash).not.toBe(v3?.rendererFingerprintHash);
   expect(stock?.native).toEqual(v3?.native);
   expect(stock?.adapter).toMatchObject({
     disableDefaultLayers: false,
@@ -174,6 +198,10 @@ test("V3 changes only resolved adapter fields while preserving the native render
     coordinateMode: "lubirth-bridge",
     input: "v3",
     progress: 0.06,
+    presentationPreset: "v3-opening-coarse",
+    coverage: 0.55,
+    shapeRepeat: 0.000025,
+    shapeDetailRepeat: 0.0006,
     adapter: {
       disableDefaultLayers: true,
       globalWeatherMapping: true,
@@ -187,7 +215,13 @@ test("V3 changes only resolved adapter fields while preserving the native render
   });
   expect(stock?.rendererFingerprint).not.toBeNull();
   expect(v3?.rendererFingerprint).not.toBeNull();
-  expect(v3?.rendererFingerprintHash).toBe(stock?.rendererFingerprintHash);
+  expect(stock).toMatchObject({
+    presentationPreset: "official-stock",
+    coverage: 0.3,
+    shapeRepeat: 0.0003,
+    shapeDetailRepeat: 0.006
+  });
+  expect(v3?.rendererFingerprintHash).not.toBe(stock?.rendererFingerprintHash);
   expect(v3?.sceneDepthScale).toBeGreaterThan(1);
   const expectedSceneDepthScale = 6_360_000 / resolveEarthWorldScale(v3?.earthMatrixWorld);
   expect(v3?.sceneDepthScale).toBeCloseTo(expectedSceneDepthScale, 3);

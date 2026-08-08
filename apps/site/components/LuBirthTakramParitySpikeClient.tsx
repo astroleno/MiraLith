@@ -79,6 +79,7 @@ export function LuBirthTakramParitySpikeClient() {
             />
           ) : (
             <LuBirthTakramParityScene
+              altitudeMeters={query.altitudeMeters}
               diagnostic={query.diagnostic}
               input={query.input}
               onTelemetry={setTelemetry}

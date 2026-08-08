@@ -1,6 +1,7 @@
 import { Ellipsoid } from "@takram/three-geospatial";
 
 export const TAKRAM_PARITY_BOTTOM_RADIUS_M = 6_360_000;
+export const TAKRAM_PARITY_ALTITUDE_LADDER_MAX_M = 20_000_000;
 export const TAKRAM_PARITY_ELLIPSOID = new Ellipsoid(
   TAKRAM_PARITY_BOTTOM_RADIUS_M,
   TAKRAM_PARITY_BOTTOM_RADIUS_M,
@@ -12,6 +13,7 @@ export type TakramParityView = "control" | "opening";
 export type TakramParityCoordinateMode = "lubirth-bridge" | "upstream-ecef";
 export type TakramParityDiagnostic =
   | "full"
+  | "altitude-ladder"
   | "bsm-off"
   | "depth-off"
   | "density-debug"
@@ -41,6 +43,7 @@ export type TakramParityRouteQuery = {
   input: TakramParityInput;
   progress: number;
   view: TakramParityView;
+  altitudeMeters?: number;
 };
 
 export type TakramParityRouteQueryResult =
@@ -54,21 +57,30 @@ export function resolveTakramParityRouteQuery(
   const requestedView = input.get("view");
   const requestedDiagnostic = input.get("diagnostic");
   const parsedProgress = Number.parseFloat(input.get("progress") ?? "0");
+  const parsedAltitudeMeters = Number.parseFloat(input.get("altitudeMeters") ?? "0");
+  const diagnostic = requestedDiagnostic === "altitude-ladder" ||
+    requestedDiagnostic === "bsm-off" ||
+    requestedDiagnostic === "depth-off" ||
+    requestedDiagnostic === "density-debug" ||
+    requestedDiagnostic === "uv-debug" ||
+    requestedDiagnostic === "history-reset-first" ||
+    requestedDiagnostic === "cloud-raw" ||
+    requestedDiagnostic === "sample-count-debug" ||
+    requestedDiagnostic === "aerial-final"
+    ? requestedDiagnostic
+    : "full";
   const value: TakramParityRouteQuery = {
-    diagnostic: requestedDiagnostic === "bsm-off" ||
-      requestedDiagnostic === "depth-off" ||
-      requestedDiagnostic === "density-debug" ||
-      requestedDiagnostic === "uv-debug" ||
-      requestedDiagnostic === "history-reset-first" ||
-      requestedDiagnostic === "cloud-raw" ||
-      requestedDiagnostic === "sample-count-debug" ||
-      requestedDiagnostic === "aerial-final"
-      ? requestedDiagnostic
-      : "full",
+    diagnostic,
     input: requestedInput === "v3" ? "v3" : "stock",
     progress: Number.isFinite(parsedProgress) ? Math.max(0, Math.min(0.18, parsedProgress)) : 0,
     view: requestedView === "control" ? "control" : "opening"
   };
+
+  if (diagnostic === "altitude-ladder") {
+    value.altitudeMeters = Number.isFinite(parsedAltitudeMeters)
+      ? Math.max(2_500, Math.min(TAKRAM_PARITY_ALTITUDE_LADDER_MAX_M, parsedAltitudeMeters))
+      : 2_500;
+  }
 
   if (value.view === "control" && value.input !== "stock") {
     return { ok: false, reason: "control-requires-stock" };
@@ -80,7 +92,7 @@ export function resolveTakramParityRouteQuery(
   return {
     ok: true,
     value: value.view === "opening" &&
-      !["cloud-raw", "depth-off", "density-debug", "uv-debug", "sample-count-debug"].includes(value.diagnostic)
+      !["altitude-ladder", "cloud-raw", "depth-off", "density-debug", "uv-debug", "sample-count-debug"].includes(value.diagnostic)
       ? { ...value, diagnostic: "full" }
       : value
   };
@@ -111,8 +123,35 @@ export const TAKRAM_PARITY_DEFAULTS = Object.freeze({
   turbulence: true
 });
 
+/**
+ * V3-only opening presentation values. The official stock control and stock
+ * opening never consume these values; keeping them explicit prevents a
+ * visual comparator adjustment from silently rewriting the upstream control.
+ */
+export const TAKRAM_PARITY_V3_OPENING_PRESET = Object.freeze({
+  coverage: 0.55,
+  shapeRepeat: 0.000025,
+  shapeDetailRepeat: 0.0006
+});
+
+/**
+ * Fixed V3 geography for the planetary optical-signal ladder. The spherical
+ * coordinate is derived from the centre of a non-polar, high-coverage source
+ * weather patch (weather.png texel 64,257), after accounting for the V3 adapter
+ * offset and Texture.flipY. This is an interior R-footprint texel rather than
+ * a seam or clear-air sample. Every altitude rung uses this same ECEF
+ * direction; it is deliberately not selected from the camera view per rung.
+ */
+export const TAKRAM_PARITY_V3_LADDER_SPHERICAL_UV = Object.freeze([
+  0.076494140625,
+  0.73053515625
+] as const);
+
 export interface TakramParityRendererFingerprint {
-  schemaVersion: 2;
+  // Version 3 includes resolved coverage and native shape scales in the
+  // cloud uniform fingerprint. Stock/V3 presentation differences are now
+  // explicit instead of disappearing behind a same-value hash assertion.
+  schemaVersion: 3;
   packageVersions: typeof TAKRAM_PARITY_NPM_PACKAGES;
   composer: {
     order: readonly ["CloudsEffect", "AerialPerspectiveEffect"];
@@ -170,6 +209,7 @@ const FINGERPRINT_CLOUD_UNIFORMS = [
   "powderExponent",
   "scatteringCoefficient",
   "absorptionCoefficient",
+  "coverage",
   "shapeRepeat",
   "shapeDetailRepeat"
 ] as const;
@@ -311,7 +351,7 @@ export function buildTakramParityRendererFingerprint({
   const cloudsPass = clouds.cloudsPass as RuntimeObject;
   const shadowPass = clouds.shadowPass as RuntimeObject;
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     packageVersions: TAKRAM_PARITY_NPM_PACKAGES,
     composer: {
       order: ["CloudsEffect", "AerialPerspectiveEffect"],
@@ -402,6 +442,8 @@ export interface TakramParityNativeFeatures {
   turbulence: boolean;
 }
 
+export type TakramParityPresentationPreset = "official-stock" | "v3-opening-coarse";
+
 export interface TakramParityResolvedCloudLayer {
   altitude: number;
   channel: "r" | "g" | "b" | "a";
@@ -435,6 +477,7 @@ export interface TakramParityAdapterTelemetry {
  * extinction to those maps for the current diagnostic frame.
  */
 export interface TakramParityDiagnosticState {
+  altitudeLadder: boolean;
   aerialPerspectiveComposite: boolean;
   beerShadowOcclusion: boolean;
   cloudRawOutput: boolean;
@@ -453,6 +496,7 @@ export interface TakramParityTelemetry {
   atmosphereGeneration: number;
   atmosphereReady: boolean;
   cameraMatrixWorld: number[];
+  cameraHeightMeters: number | null;
   cameraPosition: [number, number, number];
   coordinateMode: TakramParityCoordinateMode;
   control: typeof TAKRAM_PARITY_CONTROL | null;
@@ -467,9 +511,12 @@ export interface TakramParityTelemetry {
   progress: number;
   rendererFingerprint: TakramParityRendererFingerprint | null;
   rendererFingerprintHash: string | null;
+  presentationPreset: TakramParityPresentationPreset;
+  coverage: number | null;
   sceneDepthContract: "world-depth-to-ecef-v1";
   sceneDepthScale: number;
-  stockCoverage: number | null;
+  shapeRepeat: number | null;
+  shapeDetailRepeat: number | null;
   temporalConverged: boolean;
   transformFallback:
     | "invalid-composition-radius"
@@ -478,6 +525,42 @@ export interface TakramParityTelemetry {
     | "singular-scale"
     | null;
   view: TakramParityView;
+  altitudeLadder: TakramParityAltitudeLadderTelemetry | null;
+}
+
+export interface TakramParityAltitudeLadderTelemetry {
+  completed: boolean;
+  cameraHeightMeters: number | null;
+  requestedAltitudeMeters: number;
+  sphericalUv: readonly [number, number];
+  centerRayShellIntervalMeters: number | null;
+  shellIntervalLengthMeters: number | null;
+  validPrimarySampleCount: number | null;
+  maxDensity: number | null;
+  averageDensity: number | null;
+  weatherMaxDensity: number | null;
+  weatherAverageDensity: number | null;
+  accumulatedOpticalDepth: number | null;
+  peakAccumulatedOpticalDepth: number | null;
+  centerAccumulatedOpticalDepth: number | null;
+  transmittance: number | null;
+  minimumTransmittance: number | null;
+  centerTransmittance: number | null;
+  preTemporalInScatteredRadiance: number | null;
+  preTemporalInScatteredRadiancePeak: number | null;
+  preTemporalInScatteredRadianceCenter: number | null;
+  postTemporalInScatteredRadiance: number | null;
+  postTemporalInScatteredRadiancePeak: number | null;
+  postTemporalInScatteredRadianceCenter: number | null;
+  aerialPerspectiveResult: number | null;
+  aerialPerspectiveResultPeak: number | null;
+  aerialPerspectiveResultCenter: number | null;
+  readback: {
+    cloudTargetWidth: number;
+    cloudTargetHeight: number;
+    precision: "half-float" | "unorm8";
+    source: "gpu-readback-v1";
+  } | null;
 }
 
 export type TakramParityStockAssetId =

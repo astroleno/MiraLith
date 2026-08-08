@@ -19,7 +19,7 @@ interface TakramParityContractModule {
     | {
       ok: true;
       value: {
-        diagnostic: "aerial-final" | "bsm-off" | "cloud-raw" | "depth-off" | "density-debug" | "full" | "history-reset-first" | "sample-count-debug" | "uv-debug";
+        diagnostic: "altitude-ladder" | "aerial-final" | "bsm-off" | "cloud-raw" | "depth-off" | "density-debug" | "full" | "history-reset-first" | "sample-count-debug" | "uv-debug";
         input: "stock" | "v3";
         progress: number;
         view: "control" | "opening";
@@ -43,6 +43,11 @@ interface TakramParityContractModule {
     shapeDetail: boolean;
     temporalUpscale: boolean;
     turbulence: boolean;
+  };
+  TAKRAM_PARITY_V3_OPENING_PRESET: {
+    coverage: number;
+    shapeRepeat: number;
+    shapeDetailRepeat: number;
   };
   TAKRAM_PARITY_LICENSE: "MIT";
   TAKRAM_PARITY_ELLIPSOID: {
@@ -161,6 +166,11 @@ test("pins the official stock Takram contract to auditable local assets", async 
     temporalUpscale: true,
     turbulence: true
   });
+  expect(contract?.TAKRAM_PARITY_V3_OPENING_PRESET).toEqual({
+    coverage: 0.55,
+    shapeRepeat: 0.000025,
+    shapeDetailRepeat: 0.0006
+  });
   expect(contract?.TAKRAM_PARITY_BOTTOM_RADIUS_M).toBe(6_360_000);
   expect(contract?.TAKRAM_PARITY_ELLIPSOID.radii).toMatchObject({
     x: 6_360_000,
@@ -214,6 +224,18 @@ test("pins the official stock Takram contract to auditable local assets", async 
   expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
     "input=v3&view=control"
   ))).toEqual({ ok: false, reason: "control-requires-stock" });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=v3&view=opening&diagnostic=altitude-ladder&altitudeMeters=200000"
+  ))).toEqual({
+    ok: true,
+    value: {
+      diagnostic: "altitude-ladder",
+      input: "v3",
+      progress: 0,
+      view: "opening",
+      altitudeMeters: 200_000
+    }
+  });
 
   expect(contract?.TAKRAM_PARITY_STOCK_ASSETS).toEqual([
     {
@@ -439,7 +461,10 @@ test("fingerprints resolved native state and rejects non-adapter drift", async (
             powderScale: { value: 0.8 },
             powderExponent: { value: 150 },
             scatteringCoefficient: { value: 1 },
-            absorptionCoefficient: { value: 0 }
+            absorptionCoefficient: { value: 0 },
+            coverage: { value: 0.3 },
+            shapeRepeat: { value: 0.0003 },
+            shapeDetailRepeat: { value: 0.006 }
           }
         },
         currentRenderTarget: { width: 64, height: 64, textures: [], texture: { format: 1023, type: 1016 } },
@@ -500,8 +525,19 @@ test("fingerprints resolved native state and rejects non-adapter drift", async (
   expect((first.clouds as Record<string, unknown>).defines).not.toHaveProperty(
     "GLOBAL_WEATHER_MAPPING"
   );
+  expect((first.clouds as Record<string, unknown>).uniforms).toMatchObject({
+    coverage: 0.3,
+    shapeRepeat: 0.0003,
+    shapeDetailRepeat: 0.006
+  });
 
   (runtime.clouds.cloudsPass.currentMaterial.uniforms.maxIterationCount.value as number) = 129;
   const second = contract!.buildTakramParityRendererFingerprint(runtime);
   expect(contract!.hashTakramParityRendererFingerprint(second)).not.toBe(firstHash);
+
+  (runtime.clouds.cloudsPass.currentMaterial.uniforms.coverage.value as number) = 0.55;
+  const presentationVariant = contract!.buildTakramParityRendererFingerprint(runtime);
+  expect(contract!.hashTakramParityRendererFingerprint(presentationVariant)).not.toBe(
+    contract!.hashTakramParityRendererFingerprint(second)
+  );
 });
