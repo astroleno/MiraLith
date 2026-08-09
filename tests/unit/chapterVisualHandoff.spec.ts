@@ -90,6 +90,72 @@ test("rejects schema drift, unknown keys, URL-like fields, and nested point exte
   )).toBeNull();
 });
 
+test("fails closed without throwing for hostile getters and revoked proxies", () => {
+  const throwingKind = { ...liveRing } as Record<string, unknown>;
+  Object.defineProperty(throwingKind, "kind", {
+    configurable: true,
+    enumerable: true,
+    get() {
+      throw new Error("hostile kind getter");
+    }
+  });
+
+  const throwingCenter = { x: 0.5, y: 0.5 } as Record<string, unknown>;
+  Object.defineProperty(throwingCenter, "x", {
+    configurable: true,
+    enumerable: true,
+    get() {
+      throw new Error("hostile point getter");
+    }
+  });
+
+  const revocable = Proxy.revocable({ ...liveRing }, {});
+  revocable.revoke();
+
+  for (const candidate of [
+    throwingKind,
+    { ...liveRing, center: throwingCenter },
+    revocable.proxy
+  ]) {
+    let parsed: ReturnType<typeof parseChapterVisualHandoff> | undefined;
+    expect(() => {
+      parsed = parseChapterVisualHandoff(candidate, "/coscroll", "/artbreeze");
+    }).not.toThrow();
+    expect(parsed).toBeNull();
+  }
+});
+
+test("rejects symbol and non-enumerable own keys", () => {
+  const symbolExtended = {
+    ...liveRing,
+    [Symbol("mediaUrl")]: "https://example.invalid/video.mp4"
+  };
+  const nonEnumerableExtended = { ...liveRing } as Record<string, unknown>;
+  Object.defineProperty(nonEnumerableExtended, "mediaUrl", {
+    configurable: true,
+    enumerable: false,
+    value: "https://example.invalid/video.mp4"
+  });
+
+  expect(parseChapterVisualHandoff(symbolExtended, "/coscroll", "/artbreeze")).toBeNull();
+  expect(parseChapterVisualHandoff(
+    nonEnumerableExtended,
+    "/coscroll",
+    "/artbreeze"
+  )).toBeNull();
+});
+
+test("rejects accessor descriptors even when their getters are benign", () => {
+  const accessorPayload = { ...liveRing } as Record<string, unknown>;
+  Object.defineProperty(accessorPayload, "angleRadians", {
+    configurable: true,
+    enumerable: true,
+    get: () => liveRing.angleRadians
+  });
+
+  expect(parseChapterVisualHandoff(accessorPayload, "/coscroll", "/artbreeze")).toBeNull();
+});
+
 test("enforces the ring discriminant and all normalized geometry bounds", () => {
   const invalidRings = [
     { ...liveRing, gapPhaseRadians: fallbackRing.gapPhaseRadians },

@@ -70,8 +70,18 @@ function isPlainObject(value: unknown): value is UnknownRecord {
 }
 
 function hasExactKeys(value: UnknownRecord, expectedKeys: readonly string[]): boolean {
-  const keys = Object.keys(value);
-  return keys.length === expectedKeys.length && keys.every((key) => expectedKeys.includes(key));
+  const keys = Reflect.ownKeys(value);
+  if (keys.length !== expectedKeys.length) {
+    return false;
+  }
+
+  return keys.every((key) => {
+    if (typeof key !== "string" || !expectedKeys.includes(key)) {
+      return false;
+    }
+    const descriptor = Reflect.getOwnPropertyDescriptor(value, key);
+    return Boolean(descriptor?.enumerable && "value" in descriptor);
+  });
 }
 
 function isFiniteNumber(value: unknown): value is number {
@@ -237,24 +247,28 @@ export function parseChapterVisualHandoff(
   sourceHref: string,
   targetHref: string
 ): ChapterVisualHandoff | null {
-  if (
-    !isPlainObject(value) ||
-    value.version !== CHAPTER_VISUAL_HANDOFF_VERSION ||
-    typeof value.kind !== "string"
-  ) {
+  try {
+    if (
+      !isPlainObject(value) ||
+      value.version !== CHAPTER_VISUAL_HANDOFF_VERSION ||
+      typeof value.kind !== "string"
+    ) {
+      return null;
+    }
+
+    if (value.kind === "coscroll-ring") {
+      return parseRing(value, sourceHref, targetHref);
+    }
+    if (value.kind === "focuence-stars") {
+      return parseStars(value, sourceHref, targetHref);
+    }
+    if (value.kind === "cosmic-water") {
+      return parseWater(value, sourceHref, targetHref);
+    }
+    return null;
+  } catch {
     return null;
   }
-
-  if (value.kind === "coscroll-ring") {
-    return parseRing(value, sourceHref, targetHref);
-  }
-  if (value.kind === "focuence-stars") {
-    return parseStars(value, sourceHref, targetHref);
-  }
-  if (value.kind === "cosmic-water") {
-    return parseWater(value, sourceHref, targetHref);
-  }
-  return null;
 }
 
 function percentage(value: number): string {
