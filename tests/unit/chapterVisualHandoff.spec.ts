@@ -125,6 +125,33 @@ test("fails closed without throwing for hostile getters and revoked proxies", ()
   }
 });
 
+test("snapshots active proxy descriptors without invoking their get traps", () => {
+  let pointGetTrapCalls = 0;
+  const proxiedCenter = new Proxy({ ...liveRing.center }, {
+    get(target, property, receiver) {
+      pointGetTrapCalls += 1;
+      return Reflect.get(target, property, receiver);
+    }
+  });
+
+  let rootGetTrapCalls = 0;
+  let diameterGetTrapCalls = 0;
+  const activeProxy = new Proxy({ ...liveRing, center: proxiedCenter }, {
+    get(target, property, receiver) {
+      rootGetTrapCalls += 1;
+      if (property === "diameter") {
+        diameterGetTrapCalls += 1;
+        return diameterGetTrapCalls <= 4 ? liveRing.diameter : 2;
+      }
+      return Reflect.get(target, property, receiver);
+    }
+  });
+
+  expect(parseChapterVisualHandoff(activeProxy, "/coscroll", "/artbreeze")).toEqual(liveRing);
+  expect(rootGetTrapCalls).toBe(0);
+  expect(pointGetTrapCalls).toBe(0);
+});
+
 test("rejects symbol and non-enumerable own keys", () => {
   const symbolExtended = {
     ...liveRing,

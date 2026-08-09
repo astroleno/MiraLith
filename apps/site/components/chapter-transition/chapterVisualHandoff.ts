@@ -61,27 +61,37 @@ const WATER_KEYS = [
   "ripplePhase"
 ] as const;
 
-function isPlainObject(value: unknown): value is UnknownRecord {
+function snapshotPlainDataRecord(value: unknown): UnknownRecord | null {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return false;
+    return null;
   }
   const prototype = Object.getPrototypeOf(value);
-  return prototype === Object.prototype || prototype === null;
-}
-
-function hasExactKeys(value: UnknownRecord, expectedKeys: readonly string[]): boolean {
-  const keys = Reflect.ownKeys(value);
-  if (keys.length !== expectedKeys.length) {
-    return false;
+  if (prototype !== Object.prototype && prototype !== null) {
+    return null;
   }
 
-  return keys.every((key) => {
-    if (typeof key !== "string" || !expectedKeys.includes(key)) {
-      return false;
+  const snapshot: UnknownRecord = {};
+  for (const key of Reflect.ownKeys(value)) {
+    if (typeof key !== "string") {
+      return null;
     }
     const descriptor = Reflect.getOwnPropertyDescriptor(value, key);
-    return Boolean(descriptor?.enumerable && "value" in descriptor);
-  });
+    if (!descriptor?.enumerable || !("value" in descriptor)) {
+      return null;
+    }
+    Object.defineProperty(snapshot, key, {
+      configurable: false,
+      enumerable: true,
+      value: descriptor.value,
+      writable: false
+    });
+  }
+  return Object.freeze(snapshot);
+}
+
+function hasExactSnapshotKeys(value: UnknownRecord, expectedKeys: readonly string[]): boolean {
+  const keys = Object.keys(value);
+  return keys.length === expectedKeys.length && keys.every((key) => expectedKeys.includes(key));
 }
 
 function isFiniteNumber(value: unknown): value is number {
@@ -93,13 +103,14 @@ function isNormalizedScalar(value: unknown): value is number {
 }
 
 function parseNormalizedPoint(value: unknown): Readonly<NormalizedChapterPoint> | null {
-  if (!isPlainObject(value) || !hasExactKeys(value, ["x", "y"])) {
+  const snapshot = snapshotPlainDataRecord(value);
+  if (!snapshot || !hasExactSnapshotKeys(snapshot, ["x", "y"])) {
     return null;
   }
-  if (!isNormalizedScalar(value.x) || !isNormalizedScalar(value.y)) {
+  if (!isNormalizedScalar(snapshot.x) || !isNormalizedScalar(snapshot.y)) {
     return null;
   }
-  return Object.freeze({ x: value.x, y: value.y });
+  return Object.freeze({ x: snapshot.x, y: snapshot.y });
 }
 
 function isExactEdge(
@@ -141,7 +152,7 @@ function parseRing(
 
   if (value.signalSource === "live") {
     if (
-      !hasExactKeys(value, LIVE_RING_KEYS) ||
+      !hasExactSnapshotKeys(value, LIVE_RING_KEYS) ||
       !isFiniteNumber(value.angleRadians) ||
       !isFiniteNumber(value.angularVelocityRadiansPerSecond)
     ) {
@@ -164,7 +175,10 @@ function parseRing(
   }
 
   if (value.signalSource === "fallback") {
-    if (!hasExactKeys(value, FALLBACK_RING_KEYS) || !isFiniteNumber(value.gapPhaseRadians)) {
+    if (
+      !hasExactSnapshotKeys(value, FALLBACK_RING_KEYS) ||
+      !isFiniteNumber(value.gapPhaseRadians)
+    ) {
       return null;
     }
     return Object.freeze({
@@ -192,7 +206,7 @@ function parseStars(
 ): FocuenceStarsHandoff | null {
   const collapseOrigin = parseNormalizedPoint(value.collapseOrigin);
   if (
-    !hasExactKeys(value, STARS_KEYS) ||
+    !hasExactSnapshotKeys(value, STARS_KEYS) ||
     !isExactEdge(value, sourceHref, targetHref, "/artbreeze", "/constellation") ||
     !collapseOrigin ||
     !Number.isInteger(value.seed) ||
@@ -221,7 +235,7 @@ function parseWater(
 ): CosmicWaterHandoff | null {
   const highlightOrigin = parseNormalizedPoint(value.highlightOrigin);
   if (
-    !hasExactKeys(value, WATER_KEYS) ||
+    !hasExactSnapshotKeys(value, WATER_KEYS) ||
     !isExactEdge(value, sourceHref, targetHref, "/constellation", "/client-works") ||
     !highlightOrigin ||
     !isFiniteNumber(value.radius) ||
@@ -248,22 +262,23 @@ export function parseChapterVisualHandoff(
   targetHref: string
 ): ChapterVisualHandoff | null {
   try {
+    const snapshot = snapshotPlainDataRecord(value);
     if (
-      !isPlainObject(value) ||
-      value.version !== CHAPTER_VISUAL_HANDOFF_VERSION ||
-      typeof value.kind !== "string"
+      !snapshot ||
+      snapshot.version !== CHAPTER_VISUAL_HANDOFF_VERSION ||
+      typeof snapshot.kind !== "string"
     ) {
       return null;
     }
 
-    if (value.kind === "coscroll-ring") {
-      return parseRing(value, sourceHref, targetHref);
+    if (snapshot.kind === "coscroll-ring") {
+      return parseRing(snapshot, sourceHref, targetHref);
     }
-    if (value.kind === "focuence-stars") {
-      return parseStars(value, sourceHref, targetHref);
+    if (snapshot.kind === "focuence-stars") {
+      return parseStars(snapshot, sourceHref, targetHref);
     }
-    if (value.kind === "cosmic-water") {
-      return parseWater(value, sourceHref, targetHref);
+    if (snapshot.kind === "cosmic-water") {
+      return parseWater(snapshot, sourceHref, targetHref);
     }
     return null;
   } catch {
