@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 3,
-  "baseCommit": "2839f2b86e625f68753e98232f34e1a5c2f68b27",
+  "schemaVersion": 4,
+  "baseCommit": "247bc9ac106bf1a232540a13e30a345a7339b3be",
   "historicalEvidenceCommit": "14a9d05b810540cb1efa189fbb60c142f2cdb55f",
   "checkpoint": "OPENING_MORPHOLOGY_VISUAL_FAIL",
   "diagnosis": "STAGE_ISOLATION_INCONCLUSIVE_WITH_ATTENUATION_OBSERVED",
@@ -20,7 +20,14 @@
     "nativeSampleCountArtifactCount": 24,
     "totalCaptureArtifactCount": 192,
     "contactSheetCount": 7,
-    "hashMismatchCount": 0
+    "hashMismatchCount": 0,
+    "stageRevalidation": {
+      "directory": "stage-revalidation/",
+      "manifest": "stage-revalidation/manifest.json",
+      "manifestSha256": "eaf2e70df31af4ba30c2a863a608e7cb31f0d235b5da4535013bb3c9f8ae9ca2",
+      "referencedArtifactCount": 57,
+      "hashMismatchCount": 0
+    }
   },
   "finding": {
     "orbitalShapeScaleTargetReachedByAllCandidates": true,
@@ -42,14 +49,23 @@
       "nativeRgbSampleCountsPresent": true,
       "historicalMaskMappedPrimaryMedian": 2,
       "historicalMaskMappedPrimaryMedianRole": "invalid-as-sampling-gate-threshold-sensitive",
-      "nativeHitPopulationCaptured": false,
-      "exactTemporalFramePairing": false,
+      "nativeHitPopulationCaptured": true,
+      "nativeHitPrimaryMeanRange": [2.049559471365639, 2.4865702479338845],
+      "nativeHitPrimaryP50": 2,
+      "nativeHitPrimaryP95": 3,
+      "nativeHitObservation": "LOW_SAMPLE_COUNT_VERIFIED_CAUSALITY_UNVERIFIED",
+      "exactTemporalFramePairing": true,
+      "exactFrame": 32,
+      "repeatPixelMae": 0,
       "healthySameCameraControl": false,
-      "finalToRawScreenDifferenceRatioRange": [0.07579991657320254, 0.10488806704674582],
+      "finalToRawScreenDifferenceRatioRange": [0.09284607612098301, 0.10828070410485956],
       "finalToRawRatioRole": "attenuation-observation-only",
-      "bsmResponseStableAndReadable": false
+      "bsmResponseStableAndReadable": false,
+      "exactFrameFullVsBsmOffMae": 0,
+      "resolvedSignalMeanLumaRetentionRange": [0.657842582145826, 0.692914274606837],
+      "temporalNearZeroCollapse": false
     },
-    "reason": "The visual failure and raw fragmentation remain observable. Sampling causality is unverified because the historical p50 depends strongly on post-temporal mask coverage, while stage A/B pages were not locked to one Takram temporal phase and no healthy same-camera control defines normal final/raw attenuation."
+    "reason": "The exact-frame revalidation confirms low primary sample counts in the direct native-hit population and rules out a temporal near-zero collapse. It still lacks a causal sample-budget A/B and a healthy same-camera attenuation control, so sampling, density/profile, BSM, and AerialPerspective remain unisolated."
   },
   "unlock": {
     "task3": false,
@@ -64,10 +80,11 @@
     "near-view-promotion-gates",
     "near-orbital-lod",
     "anisotropic-enu-compensation",
+    "uncontrolled-sample-budget-increase",
     "density-representation-redesign",
     "vertical-profile-tuning",
     "temporal-cleanup",
     "gpu-promotion"
   ],
-  "nextAction": "Freeze opening-shape-260-detail-40. Revalidate exact frame-32 stage populations with native hit alpha, weighted 25/50/75/100 percent mask sensitivity and repeat variance; then persist native density/profile, pre-temporal radiance, temporal history, AerialPerspective input and final output. Do not increase sample budget or start Task 3-6/0P before a stage-specific cause is demonstrated."
+  "nextAction": "Freeze opening-shape-260-detail-40 and run a diagnostic-only sample-budget causal A/B at exact frame 32. Change no weather, morphology, layer, light, BSM, temporal, resolution, exposure, or camera field; compare native-hit counts, pre-temporal fragmentation/radiance, resolved history, and final cloud-on/off signal. Do not promote the higher budget or start Task 3-6/0P from this checkpoint alone."
 }

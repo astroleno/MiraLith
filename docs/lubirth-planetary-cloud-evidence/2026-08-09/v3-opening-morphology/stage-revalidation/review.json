@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "baseCommit": "247bc9ac106bf1a232540a13e30a345a7339b3be",
+  "candidateId": "opening-shape-260-detail-40",
+  "manifest": {
+    "path": "manifest.json",
+    "sha256": "eaf2e70df31af4ba30c2a863a608e7cb31f0d235b5da4535013bb3c9f8ae9ca2",
+    "referencedArtifactCount": 57,
+    "hashMismatchCount": 0
+  },
+  "temporalContract": {
+    "nativeFrame": 32,
+    "cloudsFrame": 32,
+    "resolveFrame": 32,
+    "shadowFrame": 32,
+    "temporalJitterIndex": 0,
+    "stbnSliceIndex": 32,
+    "frameLockPass": true,
+    "repeatPixelMae": 0
+  },
+  "nativeHitSampleCount": {
+    "nativeHitPixelCountRange": [787, 968],
+    "primaryMeanRange": [2.049559471365639, 2.4865702479338845],
+    "primaryP50": 2,
+    "primaryP95": 3,
+    "observation": "NATIVE_HIT_SAMPLE_COUNT_LOW",
+    "causalClassification": "UNVERIFIED_UNTIL_SAMPLE_BUDGET_AB"
+  },
+  "maskCoverageSensitivity": {
+    "thresholds": [0.25, 0.5, 0.75, 1],
+    "primaryP50At25To75Percent": 2,
+    "primaryP50At100PercentRange": [15, 25],
+    "role": "diagnostic-only"
+  },
+  "nativeStages": {
+    "preTemporalSignalPixelFractionRange": [0.07439814814814814, 0.08293981481481481],
+    "preTemporalSignalMeanLumaRange": [0.031104150943211558, 0.03519981551222102],
+    "resolvedSignalPixelFractionRange": [0.07572337962962963, 0.08481770833333334],
+    "resolvedSignalMeanLumaRange": [0.021552510188077, 0.023155937527616174],
+    "resolvedMeanOpacityRetentionRange": [0.761133379425748, 0.7931164737169728],
+    "resolvedSignalMeanLumaRetentionRange": [0.657842582145826, 0.692914274606837],
+    "temporalNearZeroCollapse": false
+  },
+  "screenSpaceObservations": {
+    "exactFrameFinalToRawRatioRange": [0.09284607612098301, 0.10828070410485956],
+    "healthySameCameraControlAvailable": false,
+    "finalToRawRole": "attenuation-observation-only",
+    "exactFrameFullVsBsmOffMae": 0,
+    "bsmClassification": "VISIBLE_RESPONSE_ABSENT_CAUSE_UNRESOLVED"
+  },
+  "visualDecision": "OPENING_MORPHOLOGY_VISUAL_FAIL",
+  "diagnosis": "STAGE_ISOLATION_INCONCLUSIVE_WITH_ATTENUATION_OBSERVED",
+  "rootCause": "NOT_YET_ISOLATED",
+  "nextExperiment": "SAMPLE_BUDGET_CAUSAL_AB_AUTHORIZED_DIAGNOSTIC_ONLY",
+  "locks": {
+    "task3To6": true,
+    "task0p": true,
+    "originalTask0To8": true
+  }
+}

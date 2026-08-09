@@ -13,7 +13,7 @@ The visual matrix contains:
 
 The historical sample-count buffer comes directly from the native `360×240` half-float pre-temporal cloud target. Its RGB counts are intact, but its population was selected by a post-temporal mask with a `25%` cell-coverage threshold. Recalculation showed that this choice is highly sensitive: the central candidate at progress `0.06` moves from primary `p50=2` at `25%` coverage to `p50=25` at `100%`. Therefore the old `p50=2` is not an authoritative cloud-hit statistic and cannot implicate sampling.
 
-Commit `2839f2b` repairs the capture protocol without changing the renderer preset: it adds a native hit alpha channel, weighted `25/50/75/100%` sensitivity tables, exact Takram frame-32 captures with frame/jitter/history metadata, repeat noise-floor capture, and capture-only evidence writes. The formal matrix in this directory predates that repair and has not been relabeled as new evidence.
+Commit `2839f2b` repaired the capture protocol without changing the renderer preset: it added a native hit alpha channel, weighted `25/50/75/100%` sensitivity tables, exact Takram frame-32 captures with frame/jitter/history metadata, repeat noise-floor capture, and capture-only evidence writes. Commits `c3fc9fd–247bc9a` then added exact native pre-temporal, resolved-history/AerialPerspective-input, and final-framebuffer readbacks plus mask-independent stage summaries. The corrected central-candidate evidence is in `stage-revalidation/`.
 
 ## Visual result
 
@@ -39,27 +39,32 @@ The old independent populations show, but do not causally classify:
 - the independently captured final cloud-on/off MAE is `0.0342–0.0470`, or `7.58–10.49%` of the independently captured raw screen difference;
 - mask-local full/BSM-off MAE ranges from `0` to `0.0172`, so BSM does not yet produce a stable readable response.
 
-The `7.58–10.49%` ratio records screen-space attenuation only. Because the old diagnostic pages were not locked to the same Takram temporal frame and no healthy same-camera control defines a normal ratio, it cannot be labeled a later-stage fault. The evidence does not distinguish density/profile, ray sampling, optical integration, temporal resolve, and AerialPerspective composition well enough to authorize a representation rewrite or a sample-budget increase.
+The corrected exact-frame population reports a final/raw screen-difference ratio of `9.28–10.83%`; it remains an attenuation observation because no healthy same-camera control defines a normal ratio. Direct native-hit cells independently report primary `p50=2 / p95=3`, while resolved history retains `65.78–69.29%` of pre-temporal signal-pixel luma and therefore does not collapse to near zero. This authorizes a narrow sample-budget causal A/B, but still does not identify sampling, density/profile, BSM, or AerialPerspective as the root cause.
 
 ## Authoritative checkpoint
 
 ```text
 OPENING_MORPHOLOGY_VISUAL_FAIL
 STAGE_ISOLATION_INCONCLUSIVE_WITH_ATTENUATION_OBSERVED
+EXACT_FRAME_STAGE_POPULATIONS_PASS
+NATIVE_HIT_SAMPLE_COUNT_LOW
+NO_TEMPORAL_NEAR_ZERO_COLLAPSE
 SAMPLING_CAUSALITY_UNVERIFIED
 ROOT_CAUSE_NOT_YET_ISOLATED
+SAMPLE_BUDGET_CAUSAL_AB_AUTHORIZED_DIAGNOSTIC_ONLY
 TASK_3_TO_6_LOCKED
 TASK_0P_LOCKED
 ORIGINAL_TASK_0_TO_8_LOCKED
 ```
 
-The next amendment freezes `opening-shape-260-detail-40`, captures every population at the exact same local frame/jitter phase, records repeat variance, and uses the native hit channel plus the full mask-sensitivity table. It must separately persist native density/profile, pre-temporal radiance, temporal history, AerialPerspective input, and final cloud-on/off output. A sample-budget A/B remains unauthorized until the corrected native-hit population shows a sampling deficit. Without a same-camera healthy control, final/raw remains an attenuation observation rather than a fault threshold.
+The next permitted experiment freezes `opening-shape-260-detail-40` and changes only primary sampling density in a diagnostic A/B. It must reuse the exact frame-32 native/pre-temporal/resolved/final population and may only test whether more primary samples remove fragmentation and improve optical signal. It may not promote a higher budget, alter the production preset, or unlock Task 3–6/0P by itself. Without a same-camera healthy control, final/raw remains an attenuation observation rather than a fault threshold.
 
 ## Files
 
 - `candidate-matrix.json`: historical schema-3 environment, adapter/runtime contract, 144 source hashes, 24 mask hashes, 24 RGB sample artifacts, projection audits, and the now-limited stage metrics.
 - `visual-review.json`: orbital visual decisions plus explicit validity limits for the historical stage interpretation.
 - `checkpoint.json`: authoritative locks and next-action boundary.
+- `stage-revalidation/`: corrected exact-frame/native-hit population, native stage buffers, review, and reproduction contract.
 - `*-contact-sheet.png`: seven source/derived review atlases.
 - `captures/`: 192 source and derived artifacts.
 
