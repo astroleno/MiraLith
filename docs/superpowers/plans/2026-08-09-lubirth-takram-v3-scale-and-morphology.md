@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SKILL: Use `superpowers:executing-plans` to implement this plan task-by-task. Do not start Task 0P or the original Task 0–8 unless this plan reaches its explicit unlock checkpoint.
 
-**Goal:** 让 V3 云场在 LuBirth 的近地、空中和 opening 构图中都读成有尺度、有厚度、有自阴影的 Takram 原生体积云，而不是贴地色块或颗粒噪点；先取得视觉正确性，再授权成本测试。
+**Goal:** 先让 V3 云场在 LuBirth 当前实际产品 opening 构图中读成有尺度、有厚度、有自阴影的 Takram 原生体积云，而不是贴地色块或颗粒噪点；近地/空中镜头保留为诊断，不参与当前 promotion/kill。
 
-**Architecture:** 保留 V3 作为唯一宏观天气场，保留完整原生 `CloudsEffect → temporal resolve → AerialPerspectiveEffect` 渲染路径。新增一个以米和投影像素为单位的 morphology scale contract，先验证单一世界尺度能否跨视角成立；只有证据证明单一尺度无法同时服务近景与 opening 时，才引入带迟滞的两档 presentation LOD。禁止通过更换 renderer、降低分辨率、关闭 BSM/temporal/detail 或修改 V3 coverage footprint 来伪造通过。
+**Architecture:** 保留 V3 作为唯一宏观天气场，保留完整原生 `CloudsEffect → temporal resolve → AerialPerspectiveEffect` 渲染路径。正式 morphology contract 只覆盖 opening progress `0.00 / 0.06 / 0.12 / 0.18`；先验证轨道镜头中的米制波长、最终体积形态和 BSM 信号。当前产品没有低空镜头，因此禁止用近地 gate 阻断 opening，也不授权 near/orbital LOD 或 anisotropic ENU。禁止通过更换 renderer、降低分辨率、关闭 BSM/temporal/detail 或修改 V3 coverage footprint 来伪造通过。
 
 **Tech Stack:** TypeScript、React Three Fiber、Three.js、`@takram/three-clouds@0.7.6`、Vitest、headed System Chrome E2E、现有 Takram parity query route。
 
@@ -45,20 +45,21 @@
 V3_INPUT_CONTRACT_PASS
 DISPOSABLE_RENDERER_REJECTED
 TAKRAM_NATIVE_PATH_PASS
-V3_ADAPTER_SIGNAL_VISIBLE_MORPHOLOGY_FAIL
+OPENING_MORPHOLOGY_VISUAL_FAIL
+TASK_3_TO_6_LOCKED
 TASK_0P_LOCKED
 ORIGINAL_TASK_0_TO_8_LOCKED
 ```
 
-只有完成 Task 6 的正式视觉 gate 后，才允许把 `V3_ADAPTER_SIGNAL_VISIBLE_MORPHOLOGY_FAIL` 改为 `V3_ADAPTER_VISUAL_PASS` 并解锁 Task 0P。
+Task 2O 已在 commit `b135e75` 上完成 `6 candidates × 4 opening progresses × 4 diagnostics = 96` 帧正式矩阵。所有候选都达到目标轨道屏幕尺度，但没有出现可读体积 winner，因此 Task 3–6、Task 0P 与原 Task 0–8 继续锁定。只有后续 amendment 修复表示/光学链并通过 opening-only 正式视觉 gate，才允许改为 `V3_ADAPTER_VISUAL_PASS` 并解锁 Task 0P。
 
-### 0.4 执行结果（2026-08-09，view-space correction）
+### 0.4 历史诊断（2026-08-09，near view-space correction）
 
 commit `f3ac113` 在 `1440×960 / DPR 1` headed System Chrome 上重建了四视角 baseline、尺度审计和 Task 2 preflight。固定 target UV、球面相机距离、目标高度与 on-screen audit origin 继续通过；新的审计同时保存局部 tangent-plane projection Jacobian 与 SVD。
 
 这组数据证明上一版双轴判定本身无效，而不是证明 morphology 尺度失败。三个近景相机都明显沿 local east 方向观察，Jacobian condition number 分别为 `13.53 / 4.97 / 4.02`；east 屏幕投影因此天然远小于 north。要求物理各向同性形体在 raw east/north 两轴同时进入相同 pixel band，会把透视缩短误写成 renderer/morphology failure。
 
-正式 checkpoint 已降级为：
+该轮历史诊断 checkpoint 为：
 
 ```text
 VIEW_SPACE_ACCEPTANCE_CONTRACT_FAIL
@@ -71,7 +72,21 @@ Task 2 candidate replay 在 preflight 后停止，不再引用历史 10 组 repl
 
 Temporal history 已改为统一 epoch，覆盖 diagnostic、candidate、view、资源 generation、weather、coordinate mode 与完整 resolved renderer fingerprint；同页切换 candidate/view 的浏览器回归均重新捕获 exact `nativeFrameCount=1`。
 
-下一步必须先以独立 amendment 选择并冻结 foreshortening-aware view-space acceptance（例如基于 Jacobian/SVD 的 view-plane 主尺度）。在该合同确认前，不授权 anisotropic ENU，不继续 morphology/vertical/temporal/lighting 调参，也不运行 Task 0P。
+这组数据仍有效，但它不再是产品 promotion/kill gate。三个近景视角没有对应当前 LuBirth opening 产品镜头；其 Jacobian/SVD、candidate rejection 与 exact-frame-1 history regression 只保留为未来低空镜头的诊断依据，不再要求先修 near view-space acceptance，也不授权 anisotropic ENU。
+
+### 0.5 Task 2O 执行结果（2026-08-09，opening-only production gate）
+
+正式 gate 固定为：
+
+- opening progress `0.00 / 0.06 / 0.12 / 0.18`；
+- shape wavelength `220 / 260 / 300 km`；
+- detail wavelength `30 / 40 km`；
+- `full / cloud-raw / bsm-off / sample-count-debug`；
+- native Takram renderer、V3 weather、`coverage=0.55`、`1440×960 / DPR 1`。
+
+实测 shape 投影为 `20.814–29.182 px`，detail 为 `2.838–3.891 px`；六组参数已经排除“主形体在 opening 仍只有几像素”的直接解释。cloud-raw 对候选变化有响应，但 full output 仍收敛为相近的贴地浅色色块，缺少 base/core/top、厚度、billow 和局部 BSM 自阴影；暗面盐粒噪点仍存在。六组候选全部 `FAIL`，没有 winner。
+
+正式 evidence：`docs/lubirth-planetary-cloud-evidence/2026-08-09/v3-opening-morphology/`。后续不得继续水平 repeat 搜索，也不得执行本计划旧 Task 3–6；必须先有新的 density/optical representation amendment。
 
 ## 1. 目标文件结构
 
@@ -110,9 +125,11 @@ Temporal history 已改为统一 epoch，覆盖 diagnostic、candidate、view、
 - `docs/superpowers/plans/2026-08-05-lubirth-planetary-volumetric-cloud-spike.md`
   - 只在 Task 0V/0P checkpoint 增加本计划链接与最终结论，不把本计划重新复制进去。
 
-## 2. 固定验收视角与尺度指标
+## 2. 诊断视角与 opening 产品指标
 
-### 2.1 四个 review views
+本节原有四视角数据仍用于解释投影、采样和表示问题；只有 Task 2O 的四个 opening progress 参与当前产品判定。任何包含 near views 的共同区间、形态或 LOD 结论都不具 promotion/kill 权限。
+
+### 2.1 四个 diagnostic views
 
 所有视角使用同一 V3 高覆盖地理列、同一 sun、同一 viewport `1440×960 / DPR 1`。近地三个视角使用局部 ENU 相机，opening 保留现有 Task -1R matrix mirror。
 
@@ -274,9 +291,9 @@ pnpm --filter @miralith/lubirth-hero typecheck
 feat(lubirth): audit V3 cloud scale in projected pixels
 ```
 
-### Task 2：只解水平 morphology，禁止同时改垂直层和 coverage
+### Task 2N：近景水平 morphology 诊断（已降为 diagnostic-only）
 
-> **Precondition（2026-08-09 correction）：** Task 1 view-space preflight 必须通过，且后续 amendment 已冻结 foreshortening-aware acceptance。当前 checkpoint 为 `VIEW_SPACE_ACCEPTANCE_CONTRACT_FAIL`，因此本 Task 不得执行；以下 raw east/north intersection 规则已暂停，不能作为当前 winner/kill 合同。
+> **Authority correction（2026-08-09）：** 当前 LuBirth 产品 opening 不包含这些近景镜头。以下 near-view 候选求解与 raw east/north 规则仅保留为未来低空镜头的诊断草案，不参与当前 winner、kill、LOD 或 promotion。正式产品 gate 由 Task 2O 独立定义。
 
 **Files:**
 
@@ -353,7 +370,52 @@ pnpm exec playwright test \
 feat(lubirth): calibrate native cloud morphology scale
 ```
 
-### Task 3：校准垂直 profile、密度与原生自阴影
+### Task 2O：opening-only 轨道形态 gate（已执行，FAIL）
+
+**Files:**
+
+- Modify: `packages/lubirth-hero/src/planetaryCloud/parity/TakramV3MorphologyContract.ts`
+- Modify: `tests/unit/lubirthTakramV3MorphologyScale.spec.ts`
+- Modify: `tests/e2e/lubirth-takram-v3-morphology.spec.ts`
+- Create: `docs/lubirth-planetary-cloud-evidence/2026-08-09/v3-opening-morphology/`
+
+**Step 1: 冻结 opening-only 合同**
+
+产品 gate 只使用 opening progress `0.00 / 0.06 / 0.12 / 0.18`。近景三个视角明确标为 `diagnostic-only`，不得改变 checkpoint。
+
+**Step 2: 固定候选矩阵**
+
+运行 shape `220 / 260 / 300 km` × detail `30 / 40 km` 六组候选。每组必须保持同一 V3 weather、coverage、layers、sun、renderer fingerprint 与 native pipeline。
+
+**Step 3: 采集联合视觉证据**
+
+每个 candidate × progress 保存：
+
+- `full`
+- `cloud-raw`
+- `bsm-off`
+- `sample-count-debug`
+
+manifest 必须记录 commit、Chrome 版本和 executable、GPU vendor/renderer、viewport/DPR、复现命令、逐帧 PNG hash、projection audit 与 contact-sheet hash。
+
+**Step 4: 选择唯一 opening winner**
+
+候选只有在四个 progress 都出现可读大块面体积形态、base/core/top、局部 BSM 自阴影且无明显盐粒时才能 `PASS`。尺度进入目标像素范围、raw signal 非零或测试通过均不能替代视觉 PASS。零个 winner 记录 `OPENING_MORPHOLOGY_VISUAL_FAIL`；多个 winner 必须继续人工选择唯一 winner，不能自动进入 Task 3。
+
+**Step 5: 2026-08-09 实测 checkpoint**
+
+```text
+OPENING_MORPHOLOGY_VISUAL_FAIL
+TASK_3_TO_6_LOCKED
+TASK_0P_LOCKED
+ORIGINAL_TASK_0_TO_8_LOCKED
+```
+
+六组候选 shape/detail 已达到 `20.814–29.182 px / 2.838–3.891 px`，但最终画面仍是贴地平板且 BSM 差异弱，全部判 `FAIL`。停止 Task 2O；不得继续水平 repeat 调参。
+
+### Task 3：校准垂直 profile、密度与原生自阴影（当前锁定）
+
+> **Current authority:** Task 2O 没有 opening visual winner，因此本 Task 与后续 Task 4–6 均不得执行。以下内容是历史设计草案；新的 amendment 必须先重写为 opening-only 表示/光学合同，不能沿用近景 gate 直接开工。
 
 **Files:**
 
@@ -422,7 +484,7 @@ pnpm --filter @miralith/lubirth-hero typecheck
 feat(lubirth): restore V3 cloud volume profiles
 ```
 
-### Task 4：只在证据需要时增加 near/orbital presentation LOD
+### Task 4：只在证据需要时增加 near/orbital presentation LOD（当前锁定）
 
 **Files:**
 
@@ -480,7 +542,7 @@ pnpm exec playwright test \
 feat(lubirth): add evidence-gated orbital cloud morphology LOD
 ```
 
-### Task 5：处理 salt-and-pepper 与 temporal 收敛，不改变形体
+### Task 5：处理 salt-and-pepper 与 temporal 收敛，不改变形体（当前锁定）
 
 **Files:**
 
@@ -531,7 +593,7 @@ pnpm --filter @miralith/site build
 fix(lubirth): stabilize native V3 cloud morphology
 ```
 
-### Task 6：正式视觉 gate、evidence 和 Task 0P 解锁判定
+### Task 6：正式视觉 gate、evidence 和 Task 0P 解锁判定（当前锁定）
 
 **Files:**
 
@@ -652,40 +714,31 @@ Task 0 baseline reproducible?
   no  -> MORPHOLOGY_BASELINE_NOT_REPRODUCIBLE -> stop
   yes -> Task 1 scale plumbing responds?
            no  -> MORPHOLOGY_SCALE_PLUMBING_FAIL -> stop
-           yes -> view-space acceptance well-defined?
-                    no  -> VIEW_SPACE_ACCEPTANCE_CONTRACT_FAIL -> stop/amend
-                    yes -> Task 2 near horizontal winner exists?
-                             no  -> HORIZONTAL_MORPHOLOGY_SCALE_FAIL -> stop
-                             yes -> Task 3 volumetric candidate passes near gate?
-                                      no  -> V3_DENSITY_REPRESENTATION_FAIL -> stop
-                                      yes -> Task 4 LOD only if opening projection proves necessary
-                                               -> Task 5 temporal cleanup
-                                               -> Task 6 formal visual gate
-                                                    pass -> unlock Task 0P only
-                                                    fail -> keep Task 0P locked
+           yes -> Task 2O opening-only matrix complete and hash-valid?
+                    no  -> OPENING_MORPHOLOGY_EVIDENCE_INVALID -> stop
+                    yes -> exactly one opening visual winner?
+                             no winner -> OPENING_MORPHOLOGY_VISUAL_FAIL -> stop/amend
+                             multiple  -> OPENING_MORPHOLOGY_VISUAL_REVIEW_REQUIRED -> stop/review
+                             one       -> Task 3 becomes amendment-eligible
+                                          -> opening-only Task 3–6 rewrite required
+                                          -> final visual pass may unlock Task 0P only
 ```
 
 ## 5. 最终验收清单
 
-- [ ] 当前 40 km / 1.67 km 与 20–50 km layer 组合已被投影像素审计，而不是继续凭截图猜尺度。
-- [ ] 四个固定视角都保存 full/raw/first/BSM-off/cloud-off/sample-count evidence。
-- [ ] 近景能读出体积、厚度、视差和局部自阴影，不再像 Earth albedo 上的 weather mask。
-- [ ] opening 的主形体和 detail 不再落入碎点/亚像素区间。
-- [ ] V3 宏观 coverage identity 与 clear-air footprint 没有因 morphology 调整而改变。
-- [ ] 若引入 LOD，只有两档、具有迟滞、切档 reset history，并通过往返 transition gate。
-- [ ] temporal 只稳定已有正确形体，不承担掩盖 raw representation fail 的职责。
-- [ ] stock 路径、normalized renderer fingerprint、native Clouds/BSM/temporal/AerialPerspective 均保持不变。
-- [ ] visual PASS 前没有运行 Task 0P，没有得出性能或 promotion 结论。
-- [ ] visual PASS 后也只解锁 Task 0P，原 Task 0–8 继续等待独立授权。
+- [x] opening-only 正式 gate 已覆盖 progress `0.00 / 0.06 / 0.12 / 0.18`，近景视角不再阻断产品镜头。
+- [x] `220/260/300 km` shape × `30/40 km` detail 已按投影像素实测，不再凭截图猜 repeat。
+- [x] 96 帧 full/raw/BSM-off/sample-count evidence 来自同一 commit，浏览器/GPU/viewport/哈希/复现命令完整。
+- [x] opening shape 已进入 `20.814–29.182 px`，detail 已进入 `2.838–3.891 px`。
+- [x] V3 宏观 footprint 在四个 progress 中可见且连续。
+- [ ] opening 能读出体积、厚度、base/core/top 和局部自阴影。
+- [ ] 暗面 salt-and-pepper 已消除。
+- [x] stock 路径、normalized renderer fingerprint、native Clouds/BSM/temporal/AerialPerspective 保持不变。
+- [x] visual FAIL 后没有运行 Task 3–6 或 Task 0P，没有得出性能或 promotion 结论。
+- [x] 原 Task 0–8 继续等待独立授权。
 
 ## 6. 预期产出与时间边界
 
-按现有 parity harness 已可用的前提，本计划应在以下节点首次出现“真正像云”的结果：
+Task 0–1 已完成尺度与信号诊断。Task 2O 已把轨道主形体放大到目标屏幕范围，但结果仍是有 footprint、无可读体积的平板，因此在 `OPENING_MORPHOLOGY_VISUAL_FAIL` 停止。
 
-- Task 0–1：只完成诊断，不承诺视觉改善。
-- Task 2：应首次消除主要的尺度碎裂，但还可能是有轮廓的平板。
-- **Task 3：必须出现首个近景体积云候选；若仍看不到 base/core/top，立即以 `V3_DENSITY_REPRESENTATION_FAIL` 停止。**
-- Task 4–5：把通过的近景形体延伸到 opening，并处理 LOD/temporal 稳定性。
-- Task 6：才是正式可验收结果。
-
-执行方不应在 Task 3 失败后继续用 coverage、tone mapping 或更多 temporal pass 延长试错。
+当前计划不会进入 Task 3–6。下一份 amendment 必须解释并验证“cloud-raw 对尺度有响应，但 final native output 缺少体积与 BSM 层级”的表示/光学原因；不得继续用 horizontal repeat、coverage、tone mapping、近景 LOD 或更多 temporal pass 延长试错。

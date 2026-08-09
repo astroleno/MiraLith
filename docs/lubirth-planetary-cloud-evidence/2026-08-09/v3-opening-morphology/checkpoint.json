@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "baseCommit": "b135e75cbf5238973ac27d23227081714d9d08a3",
+  "checkpoint": "OPENING_MORPHOLOGY_VISUAL_FAIL",
+  "status": "stopped",
+  "productionGate": {
+    "view": "opening-only",
+    "progresses": [0, 0.06, 0.12, 0.18],
+    "nearViewsRole": "diagnostic-only"
+  },
+  "evidence": {
+    "candidateMatrix": "candidate-matrix.json",
+    "visualReview": "visual-review.json",
+    "captureDirectory": "captures/",
+    "captureCount": 96,
+    "hashMismatchCount": 0
+  },
+  "finding": {
+    "orbitalShapeScaleTargetReached": true,
+    "orbitalDetailScaleTargetReached": true,
+    "visualWinnerCandidateId": null,
+    "baseCoreTopReadable": false,
+    "volumetricMorphologyReadable": false,
+    "bsmLocalSelfShadowReadable": false,
+    "saltAndPepperAbsent": false,
+    "reason": "All six opening-only horizontal candidates remain surface-attached and nearly flat after the native temporal and atmosphere path. The result is no longer explained by sub-pixel horizontal wavelengths, and no candidate qualifies for Task 3."
+  },
+  "unlock": {
+    "task3": false,
+    "task4": false,
+    "task5": false,
+    "task6": false,
+    "task0p": false,
+    "originalTask0To8": false
+  },
+  "notAuthorized": [
+    "near-view-promotion-gates",
+    "near-orbital-lod",
+    "anisotropic-enu-compensation",
+    "vertical-profile-tuning",
+    "temporal-cleanup",
+    "gpu-promotion"
+  ],
+  "nextAction": "Stop Task 2O. A new amendment must diagnose or redesign the density/optical representation that converts the visible V3 raw footprint into final volumetric scattering; do not continue horizontal repeat tuning or start Task 3-6/0P under the current plan."
+}

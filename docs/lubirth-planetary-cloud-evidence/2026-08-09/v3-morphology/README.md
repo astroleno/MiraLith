@@ -1,12 +1,14 @@
 # V3 morphology scale checkpoint
 
+> Superseded for product gating by `../v3-opening-morphology/`. This directory remains the diagnostic record for the `2.5 / 50 / 200 km` review cameras; those cameras do not participate in the current LuBirth opening promotion/kill decision.
+
 This evidence set records the corrected 2026-08-09 scale and morphology preflight. It uses the native Takram `CloudsEffect → temporal resolve → AerialPerspective` path, the fixed V3 weather column, `coverage=0.55`, and a 1440×960 DPR 1 headed System Chrome run at commit `f3ac113`.
 
 The four query-only views keep the observed target at the frozen V3 spherical UV `[0.076494140625, 0.73053515625]`. Each near camera is solved backwards along the requested spherical arc, preserves the requested ECEF target altitude, and projects the audited target to the viewport centre. The measured target and ECEF/world contracts remain valid.
 
 The prior checkpoint interpretation was not valid. All three near cameras look substantially along the target's local east direction, so perspective foreshortening makes east screen scale much smaller than north screen scale. The recorded tangent-plane projection Jacobian has condition numbers `13.53`, `4.97`, and `4.02` for near-oblique, aerial-oblique, and near-orbit. Requiring an isotropic physical cloud to occupy the same `16–48 px` / `3–10 px` bands on both raw ENU axes therefore turns camera perspective into a false morphology failure.
 
-The computed checkpoint is now:
+The historical near-view diagnostic checkpoint is:
 
 ```text
 VIEW_SPACE_ACCEPTANCE_CONTRACT_FAIL
@@ -19,14 +21,14 @@ The current suite stops before candidate replay. `candidate-matrix.json` contain
 
 Connected-area semantics are also explicit: maximum connected-area dominance is diagnostic only, while a minimum connected mass remains a fragmentation gate. No image-metric winner is computed while the view-space acceptance contract is invalid. The temporal history epoch now covers diagnostic, candidate, view, resource generations, weather identity, coordinate mode, and the complete resolved renderer fingerprint; an in-place candidate/view browser regression proves a fresh immutable `nativeFrameCount=1` capture after both transitions.
 
-The next amendment must define a foreshortening-aware acceptance measure from the stored projection Jacobian/SVD (or another explicit view-plane contract). This evidence does not authorize anisotropic ENU stretching, vertical/profile tuning, temporal cleanup, or performance work.
+The stored projection Jacobian/SVD remains valid if a future low-altitude product camera needs a separate acceptance contract. It is not a prerequisite for the current opening-only gate and does not authorize anisotropic ENU stretching, vertical/profile tuning, temporal cleanup, or performance work.
 
 Files:
 
 - `baseline.json`: current 4 views × 6 baseline diagnostics and same-commit telemetry.
 - `scale-audit.json`: on-screen metre-to-pixel audit with the full horizontal projection Jacobian and singular values.
 - `candidate-matrix.json`: preflight-only records, candidate acceptance/rejection reasons, and the computed stop checkpoint.
-- `checkpoint.json`: authoritative unlock state and stop reason.
+- `checkpoint.json`: superseded near-view diagnostic state and pointer to the opening-only authority.
 - `captures/`: current baseline captures plus historical candidate-prefixed captures that are not part of this checkpoint.
 
 Reproduce the full evidence suite with:

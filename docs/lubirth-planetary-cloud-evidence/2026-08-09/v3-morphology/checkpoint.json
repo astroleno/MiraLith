@@ -2,7 +2,9 @@
   "schemaVersion": 4,
   "baseCommit": "f3ac113975aa8640bb3b5c219c1cef99bc641828",
   "checkpoint": "VIEW_SPACE_ACCEPTANCE_CONTRACT_FAIL",
-  "status": "stopped",
+  "status": "superseded-diagnostic",
+  "authority": "diagnostic-only",
+  "supersededBy": "../v3-opening-morphology/checkpoint.json",
   "evidence": {
     "baseline": "baseline.json",
     "scaleAudit": "scale-audit.json",
@@ -52,5 +54,5 @@
     "task0p": false,
     "originalTask0To8": false
   },
-  "nextAction": "Do not tune morphology, authorize anisotropic ENU, or run Task 0P. Amend the view-space acceptance contract using the recorded tangent-plane projection Jacobian/SVD or another explicitly foreshortening-aware measure, then regenerate Task 2 candidates."
+  "nextAction": "Retain this Jacobian/SVD evidence for a future low-altitude camera contract. Use ../v3-opening-morphology/checkpoint.json for the current product gate; do not authorize anisotropic ENU or Task 0P from this diagnostic."
 }

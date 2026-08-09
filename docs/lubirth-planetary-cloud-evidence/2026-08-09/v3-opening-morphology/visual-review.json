@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "baseCommit": "b135e75cbf5238973ac27d23227081714d9d08a3",
+  "scope": "opening-only-production-contract",
+  "nearViewsRole": "diagnostic-only",
+  "reviewedEvidence": {
+    "candidateMatrix": "candidate-matrix.json",
+    "fullContactSheet": {
+      "path": "full-contact-sheet.png",
+      "sha256": "27348f759ab21b3c7b67bf58282b86316ebb9232d01ab83e85dc6f254fd86b86"
+    },
+    "cloudRawContactSheet": {
+      "path": "cloud-raw-contact-sheet.png",
+      "sha256": "eb8e306c91e591f0751ffcfa77732913354c801425e3084c73e7f705021991ed"
+    },
+    "bsmOffContactSheet": {
+      "path": "bsm-off-contact-sheet.png",
+      "sha256": "5f09aa2cdbe921383993cd2df2882193ab7394a4d94085e09ddbefae807991bc"
+    },
+    "sampleCountDebugContactSheet": {
+      "path": "sample-count-debug-contact-sheet.png",
+      "sha256": "f484eeeede476452abbbea52dddafa050fdcaa7284430d75e6d8cf7c7b1e1bc4"
+    }
+  },
+  "measuredContract": {
+    "captureCount": 96,
+    "candidateCount": 6,
+    "progresses": [0, 0.06, 0.12, 0.18],
+    "cameraHeightMeters": [
+      3514738.190005284,
+      3578429.408265641,
+      3716320.852783883,
+      3843793.7480763514
+    ],
+    "shapeProjectedPixelsRange": [20.81404774534888, 29.182081236001615],
+    "detailProjectedPixelsRange": [2.83827923800212, 3.890944164800215],
+    "hashMismatchCount": 0
+  },
+  "candidateDecisions": [
+    { "candidateId": "opening-shape-220-detail-30", "decision": "FAIL" },
+    { "candidateId": "opening-shape-220-detail-40", "decision": "FAIL" },
+    { "candidateId": "opening-shape-260-detail-30", "decision": "FAIL" },
+    { "candidateId": "opening-shape-260-detail-40", "decision": "FAIL" },
+    { "candidateId": "opening-shape-300-detail-30", "decision": "FAIL" },
+    { "candidateId": "opening-shape-300-detail-40", "decision": "FAIL" }
+  ],
+  "visualGate": {
+    "v3MacroFootprintVisible": "PASS",
+    "openingFourFrameContinuity": "PASS",
+    "targetOrbitalScreenScaleReached": "PASS",
+    "baseCoreTopReadability": "FAIL",
+    "volumetricMorphology": "FAIL",
+    "cloudGroundSeparation": "FAIL",
+    "bsmLocalSelfShadow": "FAIL",
+    "saltAndPepperAbsence": "FAIL"
+  },
+  "quantitativeDiagnostics": {
+    "smallestVsLargestCandidate": {
+      "progress0.00": {
+        "fullNormalizedMae": 0.001419,
+        "fullChangedPixelFraction": 0.015903,
+        "cloudRawNormalizedMae": 0.021072,
+        "cloudRawChangedPixelFraction": 0.066171
+      },
+      "progress0.06": {
+        "fullNormalizedMae": 0.00148,
+        "fullChangedPixelFraction": 0.016616,
+        "cloudRawNormalizedMae": 0.031986,
+        "cloudRawChangedPixelFraction": 0.089922
+      },
+      "progress0.12": {
+        "fullNormalizedMae": 0.001522,
+        "fullChangedPixelFraction": 0.017429,
+        "cloudRawNormalizedMae": 0.025559,
+        "cloudRawChangedPixelFraction": 0.075721
+      },
+      "progress0.18": {
+        "fullNormalizedMae": 0.001584,
+        "fullChangedPixelFraction": 0.018491,
+        "cloudRawNormalizedMae": 0.02319,
+        "cloudRawChangedPixelFraction": 0.069932
+      }
+    },
+    "fullVsBsmOff": {
+      "normalizedMaeRange": [0, 0.001164],
+      "changedPixelFractionRange": [0, 0.014088],
+      "exactZeroComparisonCount": 1
+    },
+    "changedPixelThreshold": "absolute 8-bit channel delta > 4"
+  },
+  "finding": "The orbital-scale wavelengths are large enough on screen and visibly affect cloud-raw output, but all six candidates collapse to a nearly identical flat surface footprint in the final native pipeline. No candidate provides readable vertical morphology or stable BSM self-shadowing.",
+  "checkpoint": {
+    "id": "OPENING_MORPHOLOGY_VISUAL_FAIL",
+    "winnerCandidateId": null,
+    "task3Unlocked": false
+  }
+}

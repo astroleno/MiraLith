@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 3,
-  "recordedAt": "2026-08-08T15:29:56Z",
-  "baseCommit": "81c4632013d25ebb831fec7135a05825a0e38a16",
+  "schemaVersion": 4,
+  "recordedAt": "2026-08-09T08:30:00Z",
+  "baseCommit": "b135e75cbf5238973ac27d23227081714d9d08a3",
   "v3InputContract": "V3_INPUT_CONTRACT_PASS",
   "disposableRenderer": "DISPOSABLE_RENDERER_REJECTED",
   "coordinateDepth": {
@@ -47,6 +47,18 @@
     },
     "finalFramebufferDifference": "same-camera cloud-on/off per-pixel absolute sRGB-luma"
   },
+  "openingMorphology": {
+    "decision": "OPENING_MORPHOLOGY_VISUAL_FAIL",
+    "evidence": "../../2026-08-09/v3-opening-morphology/checkpoint.json",
+    "productionProgresses": [0, 0.06, 0.12, 0.18],
+    "nearViewsRole": "diagnostic-only",
+    "candidateCount": 6,
+    "captureCount": 96,
+    "shapeProjectedPixelsRange": [20.81404774534888, 29.182081236001615],
+    "detailProjectedPixelsRange": [2.83827923800212, 3.890944164800215],
+    "winnerCandidateId": null,
+    "task3To6Unlocked": false
+  },
   "stockSetup": "PASS",
   "upstreamControl": "PASS",
   "stockOpeningVisual": "STOCK_OPENING_LIMITATION",
@@ -59,6 +71,6 @@
     "stock": false,
     "v3": false
   },
-  "nextAuthorizedWork": "V3_COARSE_MASS_VISUAL_REVIEW_ONLY",
-  "stopReason": "The fixed-geography altitude ladder retains finite non-zero native density, optical depth, pre/post-temporal radiance, AerialPerspective output and cloud-on/off final difference at every sampled altitude. No stage-specific physical collapse was found; the current full-frame evidence is reclassified as signal/footprint visible but volumetric morphology fail. Task 0P and original Task 0-8 remain locked while the next coarse-mass visual iteration is prepared."
+  "nextAuthorizedWork": "NEW_OPENING_DENSITY_OPTICAL_REPRESENTATION_AMENDMENT_ONLY",
+  "stopReason": "The opening-only production matrix moves shape/detail wavelengths into the target orbital screen range, but all six candidates still converge to a flat surface-attached footprint with no readable base/core/top or stable BSM self-shadow. Horizontal repeat tuning is rejected for this checkpoint. Task 3-6, Task 0P and original Task 0-8 remain locked pending a new density/optical representation amendment."
 }
