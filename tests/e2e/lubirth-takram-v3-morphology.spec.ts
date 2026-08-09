@@ -424,6 +424,34 @@ test("morphology candidate query is V3-only and fails closed for stock", async (
   await expect(page.locator("canvas")).toHaveCount(0);
 });
 
+test("native sample-count diagnostic preserves accumulated count ordering", async ({ page }) => {
+  await page.goto(
+    "/lubirth-takram-parity-spike?input=v3&view=opening&progress=0.06&diagnostic=sample-count-debug&morphologyView=opening-orbit&morphologyCandidate=opening-shape-260-detail-40"
+  );
+  await waitForNativeMorphology(page);
+  const readback = await page.evaluate(() =>
+    window.__MiraLithTakramParity?.sampleCountReadback ?? null
+  );
+  expect(readback).toMatchObject({
+    width: 360,
+    height: 240,
+    precision: "half-float",
+    source: "native-cloud-current-render-target-v1",
+    origin: "bottom-left"
+  });
+  let nonZeroPrimaryPixelCount = 0;
+  let invariantViolationCount = 0;
+  for (let offset = 0; offset < readback!.values.length; offset += 3) {
+    const primary = Math.round((readback!.values[offset] ?? 0) * 500);
+    const shape = Math.round((readback!.values[offset + 1] ?? 0) * 5);
+    const detail = Math.round((readback!.values[offset + 2] ?? 0) * 5);
+    if (primary > 0) nonZeroPrimaryPixelCount += 1;
+    if (primary < shape || shape < detail) invariantViolationCount += 1;
+  }
+  expect(nonZeroPrimaryPixelCount).toBeGreaterThan(0);
+  expect(invariantViolationCount).toBe(0);
+});
+
 test("in-place morphology changes recapture exact native frame one", async ({ page }) => {
   const route = page.locator("[data-takram-parity-route='true']");
   await page.goto(
