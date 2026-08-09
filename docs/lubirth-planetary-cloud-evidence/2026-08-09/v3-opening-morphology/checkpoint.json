@@ -1,7 +1,9 @@
 {
-  "schemaVersion": 1,
-  "baseCommit": "b135e75cbf5238973ac27d23227081714d9d08a3",
+  "schemaVersion": 2,
+  "baseCommit": "14a9d05b810540cb1efa189fbb60c142f2cdb55f",
   "checkpoint": "OPENING_MORPHOLOGY_VISUAL_FAIL",
+  "diagnosis": "STAGE_ISOLATION_MIXED_FAILURE",
+  "rootCause": "NOT_YET_ISOLATED",
   "status": "stopped",
   "productionGate": {
     "view": "opening-only",
@@ -12,18 +14,37 @@
     "candidateMatrix": "candidate-matrix.json",
     "visualReview": "visual-review.json",
     "captureDirectory": "captures/",
-    "captureCount": 96,
+    "sourceCaptureCount": 144,
+    "cloudMaskCount": 24,
+    "nativeSampleCountArtifactCount": 24,
+    "totalCaptureArtifactCount": 192,
+    "contactSheetCount": 7,
     "hashMismatchCount": 0
   },
   "finding": {
-    "orbitalShapeScaleTargetReached": true,
-    "orbitalDetailScaleTargetReached": true,
+    "orbitalShapeScaleTargetReachedByAllCandidates": true,
+    "orbitalDetailScaleTargetReachedBy30KmCandidates": false,
+    "orbitalDetailScaleTargetReachedBy40KmCandidates": true,
     "visualWinnerCandidateId": null,
-    "baseCoreTopReadable": false,
-    "volumetricMorphologyReadable": false,
-    "bsmLocalSelfShadowReadable": false,
-    "saltAndPepperAbsent": false,
-    "reason": "All six opening-only horizontal candidates remain surface-attached and nearly flat after the native temporal and atmosphere path. The result is no longer explained by sub-pixel horizontal wavelengths, and no candidate qualifies for Task 3."
+    "orbitalVisualGate": {
+      "macroCloudContour": "PASS",
+      "cloudGroundSeparationOrLimbElevation": "FAIL",
+      "softTransparencyLayering": "FAIL",
+      "litBacklitResponse": "FAIL",
+      "localBsmResponse": "FAIL",
+      "saltAndPepperAbsence": "FAIL",
+      "baseCoreTopDiagnostic": "FAIL"
+    },
+    "stageIsolation": {
+      "rawCloudSignalPresent": true,
+      "rawFragmentationHigh": true,
+      "nativeSamplingPresent": true,
+      "nativePrimarySampleMedian": 2,
+      "nativePrimarySampleP95Range": [29, 35],
+      "finalToRawScreenDifferenceRatioRange": [0.07579991657320254, 0.10488806704674582],
+      "bsmResponseStableAndReadable": false
+    },
+    "reason": "The tested opening candidates already produce a strong but highly fragmented raw cloud contribution. Native sampling is non-zero but uneven, and the final path further suppresses matched screen-space cloud contrast. The current evidence cannot assign the visual failure to density/profile, ray sampling, optical integration, temporal resolve, or AerialPerspective alone."
   },
   "unlock": {
     "task3": false,
@@ -34,12 +55,14 @@
     "originalTask0To8": false
   },
   "notAuthorized": [
+    "more-horizontal-repeat-tuning",
     "near-view-promotion-gates",
     "near-orbital-lod",
     "anisotropic-enu-compensation",
+    "density-representation-redesign",
     "vertical-profile-tuning",
     "temporal-cleanup",
     "gpu-promotion"
   ],
-  "nextAction": "Stop Task 2O. A new amendment must diagnose or redesign the density/optical representation that converts the visible V3 raw footprint into final volumetric scattering; do not continue horizontal repeat tuning or start Task 3-6/0P under the current plan."
+  "nextAction": "Create a narrow stage-causality amendment around one 40 km detail candidate. Persist native density/profile, pre-temporal radiance, temporal history, and final cloud-on/off readbacks; use diagnostic-only sample-budget A/B only to test causality. Do not redesign representation or start Task 3-6/0P before a stage-specific cause is demonstrated."
 }

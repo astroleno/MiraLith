@@ -25,7 +25,7 @@
 1. 当前 `shapeRepeat=0.000025`，主形体波长为 `40 km`；官方默认 `0.0003` 对应约 `3.33 km`。当前主形体被放大约 12 倍。
 2. 当前 `shapeDetailRepeat=0.0006`，细节波长约 `1.67 km`；官方默认 `0.006` 对应约 `167 m`。当前细节被放大约 10 倍。
 3. 当前四层 base altitude 为 `8–18 km`，厚度为 `20–50 km`；官方示例主要是 `0.75–7.5 km` base、`0.5–1.2 km` 厚度。当前垂直尺度和水平尺度没有共同的形态比例约束。
-4. opening 虽然画面上像“近景行星”，Takram 实际接收的 camera altitude 约为 `3,578 km`。在这个投影下，`40 km` 主形体仍可能只覆盖少量像素，`1.67 km` detail 会落入亚像素；最新 opening ladder 的有效 primary sample 平均值又只有约 `1.73`，所以最终表现为碎点和表面色斑。
+4. opening 虽然画面上像“近景行星”，Takram 实际接收的 camera altitude 约为 `3,578 km`。Task 2O 已把主形体提升到 `220–300 km`；最新 mask-local 原生读回修正了旧 sample debug 的 `out` 参数缺陷后，primary sample 的均值为 `6.21–7.00`、中位数为 `2`、p95 为 `29–35`。采样没有归零，但分布明显不均，仍与碎点风险相符。
 5. 现有 altitude ladder 是 optical-signal 诊断，不是近景 morphology 视觉测试；它没有以斜视角展示 base/core/top，也没有证明近景尺度成立。
 
 所以本计划不再继续盲调一个共享 `coverage/shapeRepeat`。先建立“世界米制尺度 → 当前相机投影像素 → 原生采样密度”的可测合同，再做受控候选矩阵。
@@ -46,12 +46,14 @@ V3_INPUT_CONTRACT_PASS
 DISPOSABLE_RENDERER_REJECTED
 TAKRAM_NATIVE_PATH_PASS
 OPENING_MORPHOLOGY_VISUAL_FAIL
+STAGE_ISOLATION_MIXED_FAILURE
+ROOT_CAUSE_NOT_YET_ISOLATED
 TASK_3_TO_6_LOCKED
 TASK_0P_LOCKED
 ORIGINAL_TASK_0_TO_8_LOCKED
 ```
 
-Task 2O 已在 commit `b135e75` 上完成 `6 candidates × 4 opening progresses × 4 diagnostics = 96` 帧正式矩阵。所有候选都达到目标轨道屏幕尺度，但没有出现可读体积 winner，因此 Task 3–6、Task 0P 与原 Task 0–8 继续锁定。只有后续 amendment 修复表示/光学链并通过 opening-only 正式视觉 gate，才允许改为 `V3_ADAPTER_VISUAL_PASS` 并解锁 Task 0P。
+Task 2O/2S 已在 commit `14a9d05` 上完成 `6 candidates × 4 opening progresses × 6 diagnostics = 144` 张源帧、24 张 cloud-only mask 与 24 份原生 sample-count 缓冲。没有出现可读体积 winner；stage isolation 同时发现 raw 云信号高度碎裂、mask 内 sample 分布不均，以及 final screen-space cloud contrast 仅为 matched raw difference 的 `7.58–10.49%`。因此 Task 3–6、Task 0P 与原 Task 0–8 继续锁定；当前证据也不授权直接重写 density representation。
 
 ### 0.4 历史诊断（2026-08-09，near view-space correction）
 
@@ -81,12 +83,12 @@ Temporal history 已改为统一 epoch，覆盖 diagnostic、candidate、view、
 - opening progress `0.00 / 0.06 / 0.12 / 0.18`；
 - shape wavelength `220 / 260 / 300 km`；
 - detail wavelength `30 / 40 km`；
-- `full / cloud-raw / bsm-off / sample-count-debug`；
+- `full / cloud-raw / cloud-raw-off / bsm-off / aerial-final / sample-count-debug`，另派生 cloud-only mask 与原生半浮点 sample-count 缓冲；
 - native Takram renderer、V3 weather、`coverage=0.55`、`1440×960 / DPR 1`。
 
-实测 shape 投影为 `20.814–29.182 px`，detail 为 `2.838–3.891 px`；六组参数已经排除“主形体在 opening 仍只有几像素”的直接解释。cloud-raw 对候选变化有响应，但 full output 仍收敛为相近的贴地浅色色块，缺少 base/core/top、厚度、billow 和局部 BSM 自阴影；暗面盐粒噪点仍存在。六组候选全部 `FAIL`，没有 winner。
+实测 shape 投影为 `20.814–29.182 px`；六组 shape 均达标。detail 投影为 `2.838–3.891 px`，其中只有三组 `40 km` detail 达到 `3–10 px` 目标，三组 `30 km` 仍为 `subpixel-risk`。六组 full output 都没有云地分离、柔和透明层次、受光/背光体积变化或稳定局部 BSM 响应，暗面盐粒仍存在；六组全部 `FAIL`，没有 winner。base/core/top 在轨道距离只保留为诊断，不再作为硬门。
 
-正式 evidence：`docs/lubirth-planetary-cloud-evidence/2026-08-09/v3-opening-morphology/`。后续不得继续水平 repeat 搜索，也不得执行本计划旧 Task 3–6；必须先有新的 density/optical representation amendment。
+正式 evidence：`docs/lubirth-planetary-cloud-evidence/2026-08-09/v3-opening-morphology/`。后续不得继续水平 repeat 搜索，也不得执行本计划旧 Task 3–6；下一 amendment 必须先分离 native density/profile、pre-temporal radiance、temporal history 与 final composite，证明单一 stage 的因果后才能选择修复方向。
 
 ## 1. 目标文件结构
 
@@ -393,14 +395,16 @@ feat(lubirth): calibrate native cloud morphology scale
 
 - `full`
 - `cloud-raw`
+- `cloud-raw-off`
 - `bsm-off`
+- `aerial-final`
 - `sample-count-debug`
 
-manifest 必须记录 commit、Chrome 版本和 executable、GPU vendor/renderer、viewport/DPR、复现命令、逐帧 PNG hash、projection audit 与 contact-sheet hash。
+另保存 `cloud-raw - cloud-raw-off` cloud-only mask 与原生 pre-temporal sample-count 缓冲。manifest 必须记录 commit、Chrome 版本和 executable、GPU vendor/renderer、viewport/DPR、复现命令、逐帧/派生 artifact hash、projection audit、完整 adapter/runtime contract 与 contact-sheet hash。
 
 **Step 4: 选择唯一 opening winner**
 
-候选只有在四个 progress 都出现可读大块面体积形态、base/core/top、局部 BSM 自阴影且无明显盐粒时才能 `PASS`。尺度进入目标像素范围、raw signal 非零或测试通过均不能替代视觉 PASS。零个 winner 记录 `OPENING_MORPHOLOGY_VISUAL_FAIL`；多个 winner 必须继续人工选择唯一 winner，不能自动进入 Task 3。
+候选只有在四个 progress 都满足轨道视角标准时才能 `PASS`：宏观云团轮廓、云地分离或 limb elevation、柔和透明度层次、受光/背光变化、局部 BSM 响应以及无明显盐粒。`base/core/top` 只做诊断，不参与硬门。尺度进入目标像素范围、raw signal 非零或测试通过均不能替代视觉 PASS。零个 winner 记录 `OPENING_MORPHOLOGY_VISUAL_FAIL`；多个 winner 必须继续人工选择唯一 winner，不能自动进入 Task 3。
 
 **Step 5: 2026-08-09 实测 checkpoint**
 
@@ -411,7 +415,22 @@ TASK_0P_LOCKED
 ORIGINAL_TASK_0_TO_8_LOCKED
 ```
 
-六组候选 shape/detail 已达到 `20.814–29.182 px / 2.838–3.891 px`，但最终画面仍是贴地平板且 BSM 差异弱，全部判 `FAIL`。停止 Task 2O；不得继续水平 repeat 调参。
+六组 shape 已达到 `20.814–29.182 px`；只有 `40 km` detail 三组达到 detail 目标，`30 km` 三组仍为 `subpixel-risk`。所有 final 画面仍缺少轨道体积层次且 BSM 差异弱，全部判 `FAIL`。停止 Task 2O；不得继续水平 repeat 调参。
+
+### Task 2S：opening stage-isolation diagnosis（已执行，混合失败）
+
+Task 2S 使用相同 candidate/progress/runtime contract，将 `cloud-raw/cloud-raw-off`、`full/aerial-final` 与 `full/bsm-off` 建成独立 matched populations，并只在 cloud-only mask 内计算信号、碎片、BSM 与原生 sample-count 分布。
+
+实测结果：raw mask-local MAE 为 `0.4452–0.4587`，但 single-pixel fragments 为 `12.21–15.57%`、small fragments 为 `21.76–27.36%`、edge density 为 `81.70–83.43%`；原生 primary sample 中位数为 `2`，p95 为 `29–35`。final mask-local MAE 为 `0.0342–0.0470`，只有 matched raw screen difference 的 `7.58–10.49%`；BSM mask-local MAE 为 `0–0.0172`。
+
+因此 checkpoint 增加：
+
+```text
+STAGE_ISOLATION_MIXED_FAILURE
+ROOT_CAUSE_NOT_YET_ISOLATED
+```
+
+这同时指向 pre-temporal morphology/sampling 与后续 signal attenuation，但还不能在 density/profile、optical integration、temporal resolve 和 AerialPerspective composite 之间作单因判定。下一 amendment 只能冻结一组 `40 km` detail candidate，逐 stage 保存 native readback，并允许 diagnostic-only sample-budget A/B 验证因果；不得直接进入 density redesign、Task 3–6 或 Task 0P。
 
 ### Task 3：校准垂直 profile、密度与原生自阴影（当前锁定）
 
@@ -728,10 +747,10 @@ Task 0 baseline reproducible?
 
 - [x] opening-only 正式 gate 已覆盖 progress `0.00 / 0.06 / 0.12 / 0.18`，近景视角不再阻断产品镜头。
 - [x] `220/260/300 km` shape × `30/40 km` detail 已按投影像素实测，不再凭截图猜 repeat。
-- [x] 96 帧 full/raw/BSM-off/sample-count evidence 来自同一 commit，浏览器/GPU/viewport/哈希/复现命令完整。
+- [x] 144 张 source frame、24 张 cloud-only mask 与 24 份原生 sample-count artifact 来自同一 commit，浏览器/GPU/viewport/哈希/复现命令完整。
 - [x] opening shape 已进入 `20.814–29.182 px`，detail 已进入 `2.838–3.891 px`。
 - [x] V3 宏观 footprint 在四个 progress 中可见且连续。
-- [ ] opening 能读出体积、厚度、base/core/top 和局部自阴影。
+- [ ] opening 能满足轨道视觉门：宏观轮廓、云地分离/limb elevation、透明层次、受光/背光变化、局部 BSM 响应且无盐粒；base/core/top 仅诊断。
 - [ ] 暗面 salt-and-pepper 已消除。
 - [x] stock 路径、normalized renderer fingerprint、native Clouds/BSM/temporal/AerialPerspective 保持不变。
 - [x] visual FAIL 后没有运行 Task 3–6 或 Task 0P，没有得出性能或 promotion 结论。
@@ -739,6 +758,6 @@ Task 0 baseline reproducible?
 
 ## 6. 预期产出与时间边界
 
-Task 0–1 已完成尺度与信号诊断。Task 2O 已把轨道主形体放大到目标屏幕范围，但结果仍是有 footprint、无可读体积的平板，因此在 `OPENING_MORPHOLOGY_VISUAL_FAIL` 停止。
+Task 0–1 已完成尺度与信号诊断。Task 2O 已把轨道主形体放大到目标屏幕范围，但结果仍是有 footprint、无可读体积层次的平板，因此在 `OPENING_MORPHOLOGY_VISUAL_FAIL` 停止。Task 2S 又证明 raw fragmentation/sample 分布和 final contrast attenuation 同时存在，记录 `STAGE_ISOLATION_MIXED_FAILURE`，但尚未得到单一 root cause。
 
-当前计划不会进入 Task 3–6。下一份 amendment 必须解释并验证“cloud-raw 对尺度有响应，但 final native output 缺少体积与 BSM 层级”的表示/光学原因；不得继续用 horizontal repeat、coverage、tone mapping、近景 LOD 或更多 temporal pass 延长试错。
+当前计划不会进入 Task 3–6。下一份 amendment 必须分别验证 native density/profile、pre-temporal radiance、temporal history 与 final composite 的因果；不得继续用 horizontal repeat、coverage、tone mapping、近景 LOD 或更多 temporal pass 延长试错，也不得在证据不足时直接授权 density representation 重构。
