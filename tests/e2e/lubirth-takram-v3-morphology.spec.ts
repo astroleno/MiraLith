@@ -117,6 +117,7 @@ type MorphologyTelemetry = {
     height: number;
     precision: "half-float" | "unorm8";
     source: "native-cloud-current-render-target-v1";
+    origin: "bottom-left";
     encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5";
     values: number[];
   } | null;
@@ -575,9 +576,10 @@ test("opening-only morphology matrix covers every production review frame", asyn
       artifact: {
         path: string;
         sha256: string;
-        compression: "gzip";
-        scalar: "uint16-le";
-        channels: readonly ["primary", "shape", "detail"];
+            compression: "gzip";
+            scalar: "uint16-le";
+            channels: readonly ["primary", "shape", "detail"];
+            origin: "bottom-left";
       };
       metrics: ReturnType<typeof morphologyMetrics.analyzeTakramV3NativeSampleCountReadback>;
     };
@@ -670,6 +672,7 @@ test("opening-only morphology matrix covers every production review frame", asyn
           expect(telemetry?.sampleCountReadback).toMatchObject({
             precision: "half-float",
             source: "native-cloud-current-render-target-v1",
+            origin: "bottom-left",
             encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5"
           });
           nativeSampleCountReadback = telemetry!.sampleCountReadback;
@@ -770,7 +773,8 @@ test("opening-only morphology matrix covers every production review frame", asyn
             sha256: createHash("sha256").update(nativeSampleCountArtifact).digest("hex"),
             compression: "gzip",
             scalar: "uint16-le",
-            channels: ["primary", "shape", "detail"]
+            channels: ["primary", "shape", "detail"],
+            origin: "bottom-left"
           },
           metrics: nativeSampleCountMetrics
         },

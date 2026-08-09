@@ -593,6 +593,7 @@ export interface TakramParitySampleCountReadback {
   height: number;
   precision: "half-float" | "unorm8";
   source: "native-cloud-current-render-target-v1";
+  origin: "bottom-left";
   encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5";
   /** Packed normalized RGB copied from the native pre-temporal cloud target. */
   values: number[];

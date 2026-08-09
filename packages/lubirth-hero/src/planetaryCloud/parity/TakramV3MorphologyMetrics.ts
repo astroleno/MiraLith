@@ -72,6 +72,7 @@ export interface TakramV3NativeSampleCountReadback {
   height: number;
   precision: "half-float" | "unorm8";
   source: "native-cloud-current-render-target-v1";
+  origin: "bottom-left";
   encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5";
   /** Packed normalized RGB values read directly from CloudsPass.currentRenderTarget. */
   values: ArrayLike<number>;
@@ -86,6 +87,8 @@ export interface TakramV3NativeSampleCountMetrics {
   maskMapping: "full-resolution-cloud-mask-cell-coverage-v1";
   minimumMaskCoverage: number;
   maskedNativePixelCount: number;
+  signalPresent: boolean;
+  nonZeroPrimaryPixelFraction: number;
   invariantViolationCount: number;
   invariantViolationFraction: number;
   invariantPass: boolean;
@@ -235,10 +238,15 @@ export function analyzeTakramV3NativeSampleCountReadback(input: {
     detail: [] as number[]
   };
   let invariantViolationCount = 0;
+  let nonZeroPrimaryPixelCount = 0;
   for (let nativeY = 0; nativeY < readback.height; nativeY += 1) {
-    const maskY0 = Math.floor(nativeY * input.cloudMaskHeight / readback.height);
-    const maskY1 = Math.max(maskY0 + 1,
-      Math.floor((nativeY + 1) * input.cloudMaskHeight / readback.height));
+    // WebGL readPixels is bottom-left-origin while screenshots and sharp are
+    // top-left-origin. Map each native target cell into the vertically flipped
+    // full-resolution mask before selecting the cloud population.
+    const maskY0 = input.cloudMaskHeight -
+      Math.floor((nativeY + 1) * input.cloudMaskHeight / readback.height);
+    const maskY1 = input.cloudMaskHeight -
+      Math.floor(nativeY * input.cloudMaskHeight / readback.height);
     for (let nativeX = 0; nativeX < readback.width; nativeX += 1) {
       const maskX0 = Math.floor(nativeX * input.cloudMaskWidth / readback.width);
       const maskX1 = Math.max(maskX0 + 1,
@@ -262,12 +270,14 @@ export function analyzeTakramV3NativeSampleCountReadback(input: {
         primary < shape || shape < detail) {
         invariantViolationCount += 1;
       }
+      if (primary > 0) nonZeroPrimaryPixelCount += 1;
       counts.primary.push(primary);
       counts.shape.push(shape);
       counts.detail.push(detail);
     }
   }
   const maskedNativePixelCount = counts.primary.length;
+  const signalPresent = nonZeroPrimaryPixelCount > 0;
   return {
     source: readback.source,
     encoding: readback.encoding,
@@ -277,11 +287,15 @@ export function analyzeTakramV3NativeSampleCountReadback(input: {
     maskMapping: "full-resolution-cloud-mask-cell-coverage-v1",
     minimumMaskCoverage,
     maskedNativePixelCount,
+    signalPresent,
+    nonZeroPrimaryPixelFraction: maskedNativePixelCount > 0
+      ? nonZeroPrimaryPixelCount / maskedNativePixelCount
+      : 0,
     invariantViolationCount,
     invariantViolationFraction: maskedNativePixelCount > 0
       ? invariantViolationCount / maskedNativePixelCount
       : 0,
-    invariantPass: maskedNativePixelCount > 0 && invariantViolationCount === 0,
+    invariantPass: maskedNativePixelCount > 0 && signalPresent && invariantViolationCount === 0,
     primary: resolveSampleCountStatistics(counts.primary),
     shape: resolveSampleCountStatistics(counts.shape),
     detail: resolveSampleCountStatistics(counts.detail)

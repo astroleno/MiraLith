@@ -79,6 +79,7 @@ import {
 import { useTakramParityAtmospherePrecompute } from "./TakramParityAtmospherePrecompute";
 import { resolveTakramParityAdapter } from "./TakramParityV3Adapter";
 import { TAKRAM_PARITY_V3_LAYERS } from "./TakramParityV3Layers";
+import { installTakramSampleCountInstrumentation } from "./TakramSampleCountInstrumentation";
 
 const EARTH_DAY_SRC = "/assets/lubirth/textures/earth-day-nasa-lite-4k.webp";
 const CONTROL_CAMERA_ALTITUDE_M =
@@ -571,6 +572,7 @@ export function TakramStockParityPipeline({
       clouds.cloudLayers,
       (layer) => layer.shadow
     );
+    let restoreSampleCountInstrumentation: (() => void) | null = null;
     if (diagnostic === "bsm-off") {
       clouds.cloudLayers.forEach((layer) => {
         layer.shadow = false;
@@ -589,6 +591,9 @@ export function TakramStockParityPipeline({
       ? BlendFunction.SKIP
       : BlendFunction.NORMAL;
     if (diagnostic === "sample-count-debug") {
+      restoreSampleCountInstrumentation = installTakramSampleCountInstrumentation(
+        clouds.cloudsPass.currentMaterial
+      );
       clouds.cloudsPass.currentMaterial.defines.DEBUG_SHOW_SAMPLE_COUNT = "1";
       clouds.cloudsPass.currentMaterial.needsUpdate = true;
     }
@@ -618,6 +623,7 @@ export function TakramStockParityPipeline({
       aerialPerspective.blendMode.blendFunction = BlendFunction.NORMAL;
       if (diagnostic === "sample-count-debug") {
         delete clouds.cloudsPass.currentMaterial.defines.DEBUG_SHOW_SAMPLE_COUNT;
+        restoreSampleCountInstrumentation?.();
         clouds.cloudsPass.currentMaterial.needsUpdate = true;
       }
       if (diagnostic === "uv-debug") {
@@ -940,6 +946,7 @@ export function TakramStockParityPipeline({
       height: readback.height,
       precision: readback.precision,
       source: "native-cloud-current-render-target-v1",
+      origin: "bottom-left",
       encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5",
       values
     };

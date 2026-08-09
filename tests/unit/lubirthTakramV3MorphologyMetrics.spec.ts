@@ -262,22 +262,27 @@ test("decodes native cloud-target sample counts only where the full-resolution c
   const metrics = await import(metricsModulePath);
   const cloudMask = new Uint8Array([
     1, 1, 0, 0,
-    1, 1, 0, 0
+    1, 1, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0
   ]);
   const readbackValues = new Float32Array([
+    0, 0, 0,
+    0, 0, 0,
     20 / 500, 2 / 5, 1 / 5,
-    10 / 500, 1 / 5, 1 / 5
+    0, 0, 0
   ]);
 
   const result = metrics.analyzeTakramV3NativeSampleCountReadback({
     cloudMask,
     cloudMaskWidth: 4,
-    cloudMaskHeight: 2,
+    cloudMaskHeight: 4,
     readback: {
       width: 2,
-      height: 1,
+      height: 2,
       precision: "half-float",
       source: "native-cloud-current-render-target-v1",
+      origin: "bottom-left",
       encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5",
       values: readbackValues
     }
@@ -287,6 +292,8 @@ test("decodes native cloud-target sample counts only where the full-resolution c
     maskMapping: "full-resolution-cloud-mask-cell-coverage-v1",
     minimumMaskCoverage: 0.25,
     maskedNativePixelCount: 1,
+    signalPresent: true,
+    nonZeroPrimaryPixelFraction: 1,
     invariantViolationCount: 0,
     invariantPass: true,
     primary: { min: 20, mean: 20, p50: 20, p95: 20, max: 20 },
