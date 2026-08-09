@@ -39,7 +39,9 @@ import {
   buildTakramParityRendererFingerprint,
   hashTakramParityRendererFingerprint,
   isTakramParityAltitudeLadderDiagnostic,
+  shouldCaptureTakramHistoryFirstFrame,
   type TakramParityDiagnostic,
+  type TakramParityHistoryFirstFrameCapture,
   type TakramParityInput,
   type TakramParityAltitudeLadderTelemetry,
   type TakramParityTelemetry,
@@ -150,6 +152,7 @@ function createEmptyAltitudeLadderTelemetry(
 declare global {
   interface Window {
     __MiraLithTakramParity?: TakramParityTelemetry;
+    __MiraLithTakramHistoryFirstFrame?: TakramParityHistoryFirstFrameCapture;
   }
 }
 
@@ -341,6 +344,7 @@ function resolveMorphologyScaleAudit(
     viewProjectionMatrix: scratchViewProjection.toArray(),
     ecefToWorldMatrix: scratchEcefToWorld.toArray(),
     originEcefMeters: reviewFrame.targetEcefMeters,
+    targetSphericalUv: reviewView.sphericalUv,
     eastEcef: reviewFrame.eastEcef,
     northEcef: reviewFrame.northEcef,
     upEcef: reviewFrame.upEcef,
@@ -468,6 +472,7 @@ export function TakramStockParityPipeline({
   const bridgeReadyRef = useRef(false);
   const transformFallbackRef = useRef<TakramParityTelemetry["transformFallback"]>(null);
   const historyDiagnosticRef = useRef<TakramParityDiagnostic | null>(null);
+  const historyFirstFrameCaptureRef = useRef<TakramParityHistoryFirstFrameCapture | null>(null);
   const appliedDiagnosticRef = useRef<TakramParityDiagnostic | null>(null);
   const nativeFrameCountRef = useRef(0);
   const nativeFrameEpochRef = useRef("");
@@ -519,6 +524,13 @@ export function TakramStockParityPipeline({
       telemetry: createEmptyAltitudeLadderTelemetry(altitudeMeters ?? 2_500)
     };
   }, [altitudeMeters, diagnostic]);
+
+  useEffect(() => {
+    historyFirstFrameCaptureRef.current = null;
+    if (typeof window !== "undefined") {
+      delete window.__MiraLithTakramHistoryFirstFrame;
+    }
+  }, [diagnostic, input, morphologyCandidate, morphologyView]);
 
   useEffect(() => {
     earthTexture.colorSpace = SRGBColorSpace;
@@ -778,7 +790,8 @@ export function TakramStockParityPipeline({
       : null;
     const telemetry: TakramParityTelemetry = {
       active: nativePipelineReady &&
-        (diagnostic === "history-reset-first" ||
+        ((diagnostic === "history-reset-first" &&
+          historyFirstFrameCaptureRef.current !== null) ||
           (temporalConverged && (!isTakramParityAltitudeLadderDiagnostic(diagnostic) ||
             ladderCaptureRef.current.phase === "complete"))),
       adapter: resolveAdapterTelemetry(clouds, assetsState.assets, input),
@@ -799,6 +812,13 @@ export function TakramStockParityPipeline({
       input,
       native: resolvedNative,
       nativeFrameCount,
+      historyFirstFrameCapture: historyFirstFrameCaptureRef.current === null
+        ? null
+        : {
+            height: historyFirstFrameCaptureRef.current.height,
+            nativeFrameCount: historyFirstFrameCaptureRef.current.nativeFrameCount,
+            width: historyFirstFrameCaptureRef.current.width
+          },
       progress: clampOpeningProgress(progress),
       rendererFingerprint,
       rendererFingerprintHash: rendererFingerprint
@@ -847,6 +867,7 @@ export function TakramStockParityPipeline({
         telemetry.nativeFrameCount,
         TEMPORAL_CONVERGENCE_FRAME_COUNT
       ),
+      historyFirstFrameCapture: telemetry.historyFirstFrameCapture,
       temporalConverged: telemetry.temporalConverged,
       transformFallback: telemetry.transformFallback,
       morphologyCandidate: telemetry.morphologyCandidate,
@@ -861,6 +882,30 @@ export function TakramStockParityPipeline({
       onTelemetryRef.current?.(telemetry);
     }
   }, -1);
+
+  // Preserve the exact post-composer output of native frame 1. Browser-side
+  // screenshots happen on a later task and therefore cannot prove first-frame
+  // temporal state without this immutable capture.
+  useFrame(() => {
+    const alreadyCaptured = historyFirstFrameCaptureRef.current !== null;
+    if (!shouldCaptureTakramHistoryFirstFrame({
+      diagnostic,
+      nativeFrameCount: nativeFrameCountRef.current,
+      alreadyCaptured
+    })) {
+      return;
+    }
+    const capture: TakramParityHistoryFirstFrameCapture = {
+      dataUrl: gl.domElement.toDataURL("image/png"),
+      height: gl.domElement.height,
+      nativeFrameCount: 1,
+      width: gl.domElement.width
+    };
+    historyFirstFrameCaptureRef.current = capture;
+    if (typeof window !== "undefined") {
+      window.__MiraLithTakramHistoryFirstFrame = capture;
+    }
+  }, 2);
 
   // Read the native cloud targets only for the altitude ladder. The first
   // converged frame preserves the normal renderer outputs; following frames

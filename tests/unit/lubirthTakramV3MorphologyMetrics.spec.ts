@@ -44,6 +44,10 @@ test("measures connected cloud mass, fragments, leakage and temporal delta", asy
       edgeDensity: number;
       clearAirLeakage: number;
       firstFrameConvergedLumaDelta: number;
+      internalLumaStdDev: number;
+      multiScaleLumaVariation: number;
+      gradientEnergy: number;
+      localPeakDensity: number;
     };
   };
   const width = 8;
@@ -88,6 +92,7 @@ test("measures connected cloud mass, fragments, leakage and temporal delta", asy
   expect(result.edgeDensity).toBeCloseTo(0.9, 12);
   expect(result.clearAirLeakage).toBe(0);
   expect(result.firstFrameConvergedLumaDelta).toBeCloseTo(55 / 255, 12);
+  expect(result.internalLumaStdDev).toBeGreaterThanOrEqual(0);
 });
 
 test("classifies morphology metrics with explicit non-flat and stability floors", async () => {
@@ -101,6 +106,10 @@ test("classifies morphology metrics with explicit non-flat and stability floors"
       edgeDensity: number;
       clearAirLeakage: number;
       firstFrameConvergedLumaDelta: number;
+      internalLumaStdDev: number;
+      multiScaleLumaVariation: number;
+      gradientEnergy: number;
+      localPeakDensity: number;
     }): { pass: boolean; failed: readonly string[] };
   };
   expect(metrics.classifyTakramV3MorphologyImageMetrics({
@@ -111,7 +120,11 @@ test("classifies morphology metrics with explicit non-flat and stability floors"
     smallFragmentFraction: 0.02,
     edgeDensity: 0.2,
     clearAirLeakage: 0.01,
-    firstFrameConvergedLumaDelta: 0.02
+    firstFrameConvergedLumaDelta: 0.02,
+    internalLumaStdDev: 0.1,
+    multiScaleLumaVariation: 0.08,
+    gradientEnergy: 0.06,
+    localPeakDensity: 0.03
   })).toEqual({ pass: true, failed: [] });
 
   expect(metrics.classifyTakramV3MorphologyImageMetrics({
@@ -122,11 +135,14 @@ test("classifies morphology metrics with explicit non-flat and stability floors"
     smallFragmentFraction: 0.2,
     edgeDensity: 0.9,
     clearAirLeakage: 0.2,
-    firstFrameConvergedLumaDelta: 0.2
+    firstFrameConvergedLumaDelta: 0.2,
+    internalLumaStdDev: 0,
+    multiScaleLumaVariation: 0,
+    gradientEnergy: 0,
+    localPeakDensity: 0
   })).toEqual({
     pass: false,
     failed: [
-      "largest-connected-area",
       "single-pixel-fragments",
       "small-fragments",
       "edge-density",
@@ -134,4 +150,39 @@ test("classifies morphology metrics with explicit non-flat and stability floors"
       "temporal-luma-delta"
     ]
   });
+});
+
+test("keeps connected-area diagnostic while measuring internal billow structure", async () => {
+  const metrics = await import(metricsModulePath);
+  const width = 16;
+  const height = 16;
+  const off = createFrame(width, height);
+  const uniform = createFrame(width, height);
+  const textured = createFrame(width, height);
+  for (let y = 2; y < 14; y += 1) {
+    for (let x = 2; x < 14; x += 1) {
+      setPixel(uniform, width, x, y, 180);
+      setPixel(textured, width, x, y, (x + y) % 4 === 0 ? 240 : 120);
+    }
+  }
+  const analyze = (cloudRaw: Uint8Array) => metrics.analyzeTakramV3MorphologyImageMetrics({
+    width,
+    height,
+    cloudRaw,
+    cloudRawOff: off,
+    cloudOff: off,
+    firstFrame: cloudRaw,
+    convergedFull: cloudRaw
+  });
+  const uniformMetrics = analyze(uniform);
+  const texturedMetrics = analyze(textured);
+  expect(uniformMetrics.largestConnectedAreaFraction).toBe(1);
+  expect(texturedMetrics.largestConnectedAreaFraction).toBe(1);
+  expect(texturedMetrics.internalLumaStdDev).toBeGreaterThan(uniformMetrics.internalLumaStdDev);
+  expect(texturedMetrics.multiScaleLumaVariation)
+    .toBeGreaterThan(uniformMetrics.multiScaleLumaVariation);
+  expect(texturedMetrics.gradientEnergy).toBeGreaterThan(uniformMetrics.gradientEnergy);
+  expect(texturedMetrics.localPeakDensity).toBeGreaterThan(uniformMetrics.localPeakDensity);
+  expect(metrics.classifyTakramV3MorphologyImageMetrics(texturedMetrics).failed)
+    .not.toContain("largest-connected-area");
 });

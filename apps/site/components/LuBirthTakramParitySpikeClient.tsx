@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { lazy, useEffect, useMemo, useState } from "react";
 import {
   resolveTakramParityRouteQuery,
+  type TakramParityHistoryFirstFrameCapture,
   type TakramParityRouteQueryResult,
   type TakramParityTelemetry
 } from "../../../packages/lubirth-hero/src/planetaryCloud/parity/TakramParityContract";
@@ -26,6 +27,7 @@ const LuBirthTakramParityScene = lazy(
 declare global {
   interface Window {
     __MiraLithTakramParity?: TakramParityTelemetry;
+    __MiraLithTakramHistoryFirstFrame?: TakramParityHistoryFirstFrameCapture;
   }
 }
 
@@ -40,6 +42,7 @@ export function LuBirthTakramParitySpikeClient() {
   useEffect(() => {
     setTelemetry(null);
     delete window.__MiraLithTakramParity;
+    delete window.__MiraLithTakramHistoryFirstFrame;
   }, [searchParams]);
 
   useEffect(() => {

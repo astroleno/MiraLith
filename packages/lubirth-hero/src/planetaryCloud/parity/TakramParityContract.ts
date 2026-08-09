@@ -66,6 +66,23 @@ export function isTakramParityAltitudeLadderDiagnostic(
     diagnostic === "altitude-ladder-cloud-off";
 }
 
+export function shouldCaptureTakramHistoryFirstFrame(input: {
+  diagnostic: string;
+  nativeFrameCount: number;
+  alreadyCaptured: boolean;
+}) {
+  return input.diagnostic === "history-reset-first" &&
+    input.nativeFrameCount === 1 &&
+    !input.alreadyCaptured;
+}
+
+export interface TakramParityHistoryFirstFrameCapture {
+  dataUrl: string;
+  height: number;
+  nativeFrameCount: 1;
+  width: number;
+}
+
 export type TakramParityRouteQueryResult =
   | { ok: true; value: TakramParityRouteQuery }
   | {
@@ -565,6 +582,7 @@ export interface TakramParityTelemetry {
   input: TakramParityInput;
   native: TakramParityNativeFeatures;
   nativeFrameCount: number;
+  historyFirstFrameCapture: Omit<TakramParityHistoryFirstFrameCapture, "dataUrl"> | null;
   morphologyCandidate: TakramV3MorphologyCandidateId | null;
   morphologyView: TakramV3MorphologyViewId | null;
   morphologyScaleAudit: TakramV3MorphologyScaleAudit | null;

@@ -181,7 +181,7 @@ export const TAKRAM_V3_MORPHOLOGY_PHYSICAL_RANGES: Readonly<
 
 export interface TakramV3MorphologyProjectionScaleInput {
   view: TakramV3MorphologyViewId;
-  horizontalPixelsPerMeter: number;
+  pixelsPerMeter: Readonly<{ east: number; north: number }>;
 }
 
 export interface TakramV3MorphologyReviewFrame {
@@ -204,7 +204,7 @@ export type TakramV3HorizontalMorphologyCheckpointId =
   | "MORPHOLOGY_SCALE_EVIDENCE_INVALID"
   | "HORIZONTAL_MORPHOLOGY_SCALE_FAIL"
   | "HORIZONTAL_MORPHOLOGY_CANDIDATE_FAIL"
-  | "HORIZONTAL_MORPHOLOGY_CANDIDATE_PASS";
+  | "HORIZONTAL_MORPHOLOGY_VISUAL_REVIEW_REQUIRED";
 
 const NEAR_MORPHOLOGY_VIEWS = Object.freeze([
   "near-oblique",
@@ -251,25 +251,21 @@ export function resolveTakramV3MorphologyReviewFrame(
   const [sphericalU, sphericalV] = view.sphericalUv;
   const phi = (sphericalU - 0.5) * Math.PI * 2;
   const theta = (sphericalV - 0.5) * Math.PI;
-  const cameraRadialEcef = normalizeVector([
+  const targetRadialEcef = normalizeVector([
     Math.cos(theta) * Math.cos(phi),
     Math.cos(theta) * Math.sin(phi),
     Math.sin(theta)
   ]);
-  const cameraEastEcef = normalizeVector([-Math.sin(phi), Math.cos(phi), 0]);
+  const targetEastEcef = normalizeVector([-Math.sin(phi), Math.cos(phi), 0]);
   const centralAngle = view.targetDistanceMeters / planetRadiusMeters;
   const cosAngle = Math.cos(centralAngle);
   const sinAngle = Math.sin(centralAngle);
-  const targetRadialEcef = normalizeVector([
-    cameraRadialEcef[0] * cosAngle + cameraEastEcef[0] * sinAngle,
-    cameraRadialEcef[1] * cosAngle + cameraEastEcef[1] * sinAngle,
-    cameraRadialEcef[2] * cosAngle + cameraEastEcef[2] * sinAngle
+  const cameraRadialEcef = normalizeVector([
+    targetRadialEcef[0] * cosAngle - targetEastEcef[0] * sinAngle,
+    targetRadialEcef[1] * cosAngle - targetEastEcef[1] * sinAngle,
+    targetRadialEcef[2] * cosAngle - targetEastEcef[2] * sinAngle
   ]);
-  const eastEcef = normalizeVector([
-    cameraEastEcef[0] * cosAngle - cameraRadialEcef[0] * sinAngle,
-    cameraEastEcef[1] * cosAngle - cameraRadialEcef[1] * sinAngle,
-    cameraEastEcef[2] * cosAngle - cameraRadialEcef[2] * sinAngle
-  ]);
+  const eastEcef = targetEastEcef;
   const northEcef = normalizeVector(crossVector(targetRadialEcef, eastEcef));
   return {
     cameraEcefMeters: scaleVector(
@@ -293,16 +289,20 @@ export function resolveTakramV3MorphologyCommonRepeatInterval(
   kind: "shape" | "detail"
 ): TakramV3MorphologyRepeatInterval {
   const targetPixels = kind === "shape" ? [16, 48] as const : [3, 10] as const;
-  if (inputs.length === 0 || inputs.some((input) =>
-    !Number.isFinite(input.horizontalPixelsPerMeter) || input.horizontalPixelsPerMeter <= 0
+  const directionalScales = inputs.flatMap((input) => [
+    input.pixelsPerMeter.east,
+    input.pixelsPerMeter.north
+  ]);
+  if (inputs.length === 0 || directionalScales.some((pixelsPerMeter) =>
+    !Number.isFinite(pixelsPerMeter) || pixelsPerMeter <= 0
   )) {
     return { feasible: false, minimum: Number.NaN, maximum: Number.NaN };
   }
-  const minimum = Math.max(...inputs.map((input) =>
-    input.horizontalPixelsPerMeter / targetPixels[1]
+  const minimum = Math.max(...directionalScales.map((pixelsPerMeter) =>
+    pixelsPerMeter / targetPixels[1]
   ));
-  const maximum = Math.min(...inputs.map((input) =>
-    input.horizontalPixelsPerMeter / targetPixels[0]
+  const maximum = Math.min(...directionalScales.map((pixelsPerMeter) =>
+    pixelsPerMeter / targetPixels[0]
   ));
   return { feasible: minimum <= maximum, minimum, maximum };
 }
@@ -321,8 +321,10 @@ export function resolveTakramV3HorizontalMorphologyCheckpoint(input: {
   const evidenceValid = nearAudits.every((audit) => {
     if (!audit || !audit.originScreenPixels) return false;
     const [x, y] = audit.originScreenPixels;
-    return Number.isFinite(audit.horizontalPixelsPerMeter)
-      && audit.horizontalPixelsPerMeter > 0
+    return Number.isFinite(audit.pixelsPerMeter.east)
+      && audit.pixelsPerMeter.east > 0
+      && Number.isFinite(audit.pixelsPerMeter.north)
+      && audit.pixelsPerMeter.north > 0
       && x >= 0 && x <= audit.viewport.width
       && y >= 0 && y <= audit.viewport.height;
   });
@@ -338,18 +340,21 @@ export function resolveTakramV3HorizontalMorphologyCheckpoint(input: {
   if (input.metricCandidateCount <= 0 || input.passingMetricCandidateCount <= 0) {
     return { id: "HORIZONTAL_MORPHOLOGY_CANDIDATE_FAIL", task3Unlocked: false };
   }
-  return { id: "HORIZONTAL_MORPHOLOGY_CANDIDATE_PASS", task3Unlocked: true };
+  return { id: "HORIZONTAL_MORPHOLOGY_VISUAL_REVIEW_REQUIRED", task3Unlocked: false };
 }
 
 export interface TakramV3MorphologyGeneratedCandidate {
   view: TakramV3MorphologyViewId;
   targetShapePixels: number;
   targetDetailPixels: number;
+  projectedShapePixelsByAxis: Readonly<{ east: number; north: number }>;
+  projectedDetailPixelsByAxis: Readonly<{ east: number; north: number }>;
   shapeWavelengthMeters: number;
   detailWavelengthMeters: number;
   shapeRepeat: number;
   shapeDetailRepeat: number;
   physicalRangePass: boolean;
+  axisRangePass: boolean;
 }
 
 function withinRange(valueKm: number, range: readonly [number, number]) {
@@ -362,25 +367,45 @@ export function buildTakramV3MorphologyCandidates(
 ): readonly TakramV3MorphologyGeneratedCandidate[] {
   return inputs.flatMap((input) => {
     const range = TAKRAM_V3_MORPHOLOGY_PHYSICAL_RANGES[input.view];
-    if (!Number.isFinite(input.horizontalPixelsPerMeter) || input.horizontalPixelsPerMeter <= 0) {
+    const { east, north } = input.pixelsPerMeter;
+    if (![east, north].every((pixelsPerMeter) =>
+      Number.isFinite(pixelsPerMeter) && pixelsPerMeter > 0
+    )) {
       return [];
     }
+    const referencePixelsPerMeter = Math.sqrt(east * north);
     return TAKRAM_V3_MORPHOLOGY_TARGET_SHAPE_PIXELS.flatMap((targetShapePixels) =>
       TAKRAM_V3_MORPHOLOGY_TARGET_DETAIL_PIXELS.map((targetDetailPixels) => {
-        const shapeWavelengthMeters = targetShapePixels / input.horizontalPixelsPerMeter;
-        const detailWavelengthMeters = targetDetailPixels / input.horizontalPixelsPerMeter;
+        const shapeWavelengthMeters = targetShapePixels / referencePixelsPerMeter;
+        const detailWavelengthMeters = targetDetailPixels / referencePixelsPerMeter;
+        const projectedShapePixelsByAxis = {
+          east: shapeWavelengthMeters * east,
+          north: shapeWavelengthMeters * north
+        };
+        const projectedDetailPixelsByAxis = {
+          east: detailWavelengthMeters * east,
+          north: detailWavelengthMeters * north
+        };
+        const axisRangePass = Object.values(projectedShapePixelsByAxis).every((pixels) =>
+          pixels >= 16 && pixels <= 48
+        ) && Object.values(projectedDetailPixelsByAxis).every((pixels) =>
+          pixels >= 3 && pixels <= 10
+        );
         return {
           view: input.view,
           targetShapePixels,
           targetDetailPixels,
+          projectedShapePixelsByAxis,
+          projectedDetailPixelsByAxis,
           shapeWavelengthMeters,
           detailWavelengthMeters,
-          shapeRepeat: input.horizontalPixelsPerMeter / targetShapePixels,
-          shapeDetailRepeat: input.horizontalPixelsPerMeter / targetDetailPixels,
+          shapeRepeat: referencePixelsPerMeter / targetShapePixels,
+          shapeDetailRepeat: referencePixelsPerMeter / targetDetailPixels,
           physicalRangePass: withinRange(shapeWavelengthMeters / 1_000, range.shapeWavelengthKm) &&
-            withinRange(detailWavelengthMeters / 1_000, range.detailWavelengthKm)
+            withinRange(detailWavelengthMeters / 1_000, range.detailWavelengthKm),
+          axisRangePass
         };
-      })
+      }).filter((candidate) => candidate.axisRangePass)
     );
   });
 }

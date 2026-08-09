@@ -20,6 +20,7 @@ export interface TakramV3MorphologyScaleAuditInput {
   viewProjectionMatrix: readonly number[];
   ecefToWorldMatrix: readonly number[];
   originEcefMeters: readonly [number, number, number];
+  targetSphericalUv?: readonly [number, number];
   viewport: { width: number; height: number };
   shapeRepeat: number;
   shapeDetailRepeat: number;
@@ -41,12 +42,15 @@ export interface TakramV3MorphologyScaleAudit {
   detailWavelengthMeters: number;
   pixelsPerMeter: Record<TakramV3MorphologyScaleAxis, number>;
   horizontalPixelsPerMeter: number;
+  shapeProjectedPixelsByAxis: Record<"east" | "north", number>;
+  detailProjectedPixelsByAxis: Record<"east" | "north", number>;
   shapeProjectedPixels: number;
   detailProjectedPixels: number;
   shapeStatus: TakramV3MorphologyPixelStatus;
   detailStatus: TakramV3MorphologyPixelStatus;
   layers: readonly TakramV3MorphologyScaleLayerResult[];
   originScreenPixels: readonly [number, number] | null;
+  targetSphericalUv: readonly [number, number] | null;
   segmentMeters: number;
 }
 
@@ -183,6 +187,14 @@ export function auditMorphologyScale(
   const detailWavelengthMeters = wavelengthMetersFromRepeat(input.shapeDetailRepeat);
   const shapeProjectedPixels = shapeWavelengthMeters * horizontalPixelsPerMeter;
   const detailProjectedPixels = detailWavelengthMeters * horizontalPixelsPerMeter;
+  const shapeProjectedPixelsByAxis = {
+    east: shapeWavelengthMeters * pixelsPerMeter.east,
+    north: shapeWavelengthMeters * pixelsPerMeter.north
+  };
+  const detailProjectedPixelsByAxis = {
+    east: detailWavelengthMeters * pixelsPerMeter.east,
+    north: detailWavelengthMeters * pixelsPerMeter.north
+  };
   const layers = input.layers.map((layer) => {
     const projectedThicknessPixels = layer.height * pixelsPerMeter.up;
     return {
@@ -203,12 +215,15 @@ export function auditMorphologyScale(
     detailWavelengthMeters,
     pixelsPerMeter,
     horizontalPixelsPerMeter,
+    shapeProjectedPixelsByAxis,
+    detailProjectedPixelsByAxis,
     shapeProjectedPixels,
     detailProjectedPixels,
     shapeStatus: classifyProjectedPixels(shapeProjectedPixels, "shape"),
     detailStatus: classifyProjectedPixels(detailProjectedPixels, "detail"),
     layers,
     originScreenPixels: originScreen,
+    targetSphericalUv: input.targetSphericalUv ?? null,
     segmentMeters
   };
 }

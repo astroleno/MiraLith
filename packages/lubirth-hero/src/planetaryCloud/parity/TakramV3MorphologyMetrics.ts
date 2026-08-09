@@ -7,6 +7,10 @@ export interface TakramV3MorphologyImageMetrics {
   edgeDensity: number;
   clearAirLeakage: number;
   firstFrameConvergedLumaDelta: number;
+  internalLumaStdDev: number;
+  multiScaleLumaVariation: number;
+  gradientEnergy: number;
+  localPeakDensity: number;
 }
 
 export interface TakramV3MorphologyImageMetricInput {
@@ -23,7 +27,6 @@ export interface TakramV3MorphologyImageMetricInput {
 export const TAKRAM_V3_MORPHOLOGY_METRIC_THRESHOLDS = Object.freeze({
   minimumCloudPixelFraction: 0.002,
   minimumLargestConnectedAreaFraction: 0.25,
-  maximumLargestConnectedAreaFraction: 0.95,
   maximumSinglePixelFragmentFraction: 0.02,
   maximumSmallFragmentFraction: 0.08,
   maximumEdgeDensity: 0.65,
@@ -103,6 +106,95 @@ function dilateMask(mask: Uint8Array, width: number, height: number) {
   return dilated;
 }
 
+function neighbors8(index: number, width: number, height: number) {
+  const x = index % width;
+  const y = Math.floor(index / width);
+  const neighbors: number[] = [];
+  for (let yOffset = -1; yOffset <= 1; yOffset += 1) {
+    for (let xOffset = -1; xOffset <= 1; xOffset += 1) {
+      if (xOffset === 0 && yOffset === 0) continue;
+      const neighborX = x + xOffset;
+      const neighborY = y + yOffset;
+      if (neighborX >= 0 && neighborX < width && neighborY >= 0 && neighborY < height) {
+        neighbors.push(neighborY * width + neighborX);
+      }
+    }
+  }
+  return neighbors;
+}
+
+function resolveInternalStructureMetrics(
+  cloudMask: Uint8Array,
+  signal: Float32Array,
+  width: number,
+  height: number,
+  cloudPixelCount: number
+) {
+  if (cloudPixelCount === 0) {
+    return {
+      internalLumaStdDev: 0,
+      multiScaleLumaVariation: 0,
+      gradientEnergy: 0,
+      localPeakDensity: 0
+    };
+  }
+  let sum = 0;
+  let sumSquares = 0;
+  let variation = 0;
+  let variationSamples = 0;
+  let gradient = 0;
+  let gradientSamples = 0;
+  let localPeaks = 0;
+  for (let index = 0; index < cloudMask.length; index += 1) {
+    if (cloudMask[index] === 0) continue;
+    const value = signal[index]!;
+    sum += value;
+    sumSquares += value * value;
+    const x = index % width;
+    const y = Math.floor(index / width);
+    for (const radius of [1, 4] as const) {
+      const samples = [
+        [x - radius, y],
+        [x + radius, y],
+        [x, y - radius],
+        [x, y + radius]
+      ].filter(([sampleX, sampleY]) =>
+        sampleX! >= 0 && sampleX! < width && sampleY! >= 0 && sampleY! < height
+      ).map(([sampleX, sampleY]) => sampleY! * width + sampleX!)
+        .filter((sampleIndex) => cloudMask[sampleIndex] === 1);
+      if (samples.length > 0) {
+        const localMean = samples.reduce((total, sampleIndex) =>
+          total + signal[sampleIndex]!, 0
+        ) / samples.length;
+        variation += Math.abs(value - localMean);
+        variationSamples += 1;
+      }
+    }
+    const gradientNeighbors = [
+      x + 1 < width ? index + 1 : -1,
+      y + 1 < height ? index + width : -1
+    ].filter((neighbor) => neighbor >= 0 && cloudMask[neighbor] === 1);
+    for (const neighbor of gradientNeighbors) {
+      gradient += Math.abs(value - signal[neighbor]!);
+      gradientSamples += 1;
+    }
+    const peakNeighbors = neighbors8(index, width, height)
+      .filter((neighbor) => cloudMask[neighbor] === 1);
+    if (peakNeighbors.length >= 3 && peakNeighbors.every((neighbor) =>
+      value - signal[neighbor]! > 2 / 255
+    )) {
+      localPeaks += 1;
+    }
+  }
+  const mean = sum / cloudPixelCount;
+  return {
+    internalLumaStdDev: Math.sqrt(Math.max(0, sumSquares / cloudPixelCount - mean * mean)),
+    multiScaleLumaVariation: variation / Math.max(variationSamples, 1),
+    gradientEnergy: gradient / Math.max(gradientSamples, 1),
+    localPeakDensity: localPeaks / cloudPixelCount
+  };
+}
+
 export function analyzeTakramV3MorphologyImageMetrics(
   input: TakramV3MorphologyImageMetricInput
 ): TakramV3MorphologyImageMetrics {
@@ -117,12 +209,16 @@ export function analyzeTakramV3MorphologyImageMetrics(
   const threshold = input.differenceThreshold ?? DEFAULT_DIFFERENCE_THRESHOLD;
   const cloudMask = new Uint8Array(pixelCount);
   const fullMask = new Uint8Array(pixelCount);
+  const cloudSignal = new Float32Array(pixelCount);
   let cloudPixelCount = 0;
   let fullPixelCount = 0;
   for (let index = 0; index < pixelCount; index += 1) {
     if (pixelDifference(input.cloudRaw, input.cloudRawOff, index) > threshold) {
       cloudMask[index] = 1;
       cloudPixelCount += 1;
+      cloudSignal[index] = Math.abs(
+        luma(input.cloudRaw, index) - luma(input.cloudRawOff, index)
+      );
     }
     if (pixelDifference(input.convergedFull, input.cloudOff, index) > threshold) {
       fullMask[index] = 1;
@@ -156,6 +252,13 @@ export function analyzeTakramV3MorphologyImageMetrics(
     }
   }
   const safeCloudPixelCount = Math.max(cloudPixelCount, 1);
+  const internalStructure = resolveInternalStructureMetrics(
+    cloudMask,
+    cloudSignal,
+    input.width,
+    input.height,
+    cloudPixelCount
+  );
   return {
     cloudPixelFraction: cloudPixelCount / pixelCount,
     connectedComponentCount: componentSizes.length,
@@ -164,7 +267,8 @@ export function analyzeTakramV3MorphologyImageMetrics(
     smallFragmentFraction: smallFragmentPixelCount / safeCloudPixelCount,
     edgeDensity: edgePixelCount / safeCloudPixelCount,
     clearAirLeakage: leakedFullPixelCount / Math.max(fullPixelCount, 1),
-    firstFrameConvergedLumaDelta: temporalLumaDelta / safeCloudPixelCount
+    firstFrameConvergedLumaDelta: temporalLumaDelta / safeCloudPixelCount,
+    ...internalStructure
   };
 }
 
@@ -176,8 +280,7 @@ export function classifyTakramV3MorphologyImageMetrics(
   if (metrics.cloudPixelFraction < thresholds.minimumCloudPixelFraction) {
     failed.push("cloud-pixel-fraction");
   }
-  if (metrics.largestConnectedAreaFraction < thresholds.minimumLargestConnectedAreaFraction ||
-    metrics.largestConnectedAreaFraction > thresholds.maximumLargestConnectedAreaFraction) {
+  if (metrics.largestConnectedAreaFraction < thresholds.minimumLargestConnectedAreaFraction) {
     failed.push("largest-connected-area");
   }
   if (metrics.singlePixelFragmentFraction > thresholds.maximumSinglePixelFragmentFraction) {

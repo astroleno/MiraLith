@@ -55,6 +55,8 @@ type MorphologyTelemetry = {
     detailWavelengthMeters: number;
     pixelsPerMeter: { east: number; north: number; up: number };
     horizontalPixelsPerMeter: number;
+    shapeProjectedPixelsByAxis: { east: number; north: number };
+    detailProjectedPixelsByAxis: { east: number; north: number };
     shapeProjectedPixels: number;
     detailProjectedPixels: number;
     shapeStatus: string;
@@ -68,9 +70,15 @@ type MorphologyTelemetry = {
       status: string;
     }>;
     originScreenPixels: [number, number] | null;
+    targetSphericalUv: [number, number] | null;
     segmentMeters: number;
   } | null;
   nativeFrameCount: number;
+  historyFirstFrameCapture: {
+    height: number;
+    nativeFrameCount: 1;
+    width: number;
+  } | null;
   rendererFingerprint: Record<string, unknown> | null;
   rendererFingerprintHash: string | null;
   sceneDepthContract: "world-depth-to-ecef-v1";
@@ -86,6 +94,12 @@ type MorphologyTelemetry = {
 declare global {
   interface Window {
     __MiraLithTakramParity?: MorphologyTelemetry;
+    __MiraLithTakramHistoryFirstFrame?: {
+      dataUrl: string;
+      height: number;
+      nativeFrameCount: 1;
+      width: number;
+    };
   }
 }
 
@@ -143,6 +157,23 @@ async function decodeScreenshot(buffer: Buffer) {
     height: info.height,
     pixels: new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
   };
+}
+
+async function captureMorphologyFrame(
+  page: import("@playwright/test").Page,
+  diagnostic: string
+) {
+  if (diagnostic !== "history-reset-first") {
+    return page.screenshot({ scale: "css" });
+  }
+  const capture = await page.evaluate(() => window.__MiraLithTakramHistoryFirstFrame);
+  expect(capture).toMatchObject({
+    height: 960,
+    nativeFrameCount: 1,
+    width: 1440
+  });
+  expect(capture?.dataUrl.startsWith("data:image/png;base64,")).toBe(true);
+  return Buffer.from(capture!.dataUrl.split(",")[1]!, "base64");
 }
 
 test("morphology baseline reproduces all fixed views and diagnostics", async ({ page }) => {
@@ -223,7 +254,7 @@ test("morphology baseline reproduces all fixed views and diagnostics", async ({ 
           };
         });
       }
-      const screenshotBuffer = await page.screenshot({ scale: "css" });
+      const screenshotBuffer = await captureMorphologyFrame(page, diagnostic);
       const screenshotSha256 = createHash("sha256").update(screenshotBuffer).digest("hex");
       if (shouldCapture) {
         mkdirSync(captureDirectory, { recursive: true });
@@ -296,6 +327,7 @@ test("scale audit reports projected shape, detail and layer thickness", async ({
     expect(audit.detailProjectedPixels).toBeGreaterThan(0);
     expect(audit.layers).toHaveLength(4);
     expect(audit.originScreenPixels).not.toBeNull();
+    expect(audit.targetSphericalUv).toEqual([0.076494140625, 0.73053515625]);
     expect(audit.originScreenPixels![0]).toBeGreaterThanOrEqual(0);
     expect(audit.originScreenPixels![0]).toBeLessThanOrEqual(1440);
     expect(audit.originScreenPixels![1]).toBeGreaterThanOrEqual(0);
@@ -351,9 +383,7 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
     "sample-count-debug"
   ] as const;
   const persistedAtlasDiagnostics = [
-    "full",
-    "cloud-raw",
-    "sample-count-debug"
+    ...atlasDiagnostics
   ] as const;
   const atlas: Array<{
     candidate: string;
@@ -388,7 +418,7 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
         expect(telemetry?.shapeRepeat).toBeGreaterThan(0);
         expect(telemetry?.shapeDetailRepeat).toBeGreaterThan(0);
         expect(telemetry?.morphologyScaleAudit?.shapeWavelengthMeters).toBeGreaterThan(0);
-        const screenshotBuffer = await page.screenshot({ scale: "css" });
+        const screenshotBuffer = await captureMorphologyFrame(page, diagnostic);
         const screenshotSha256 = createHash("sha256").update(screenshotBuffer).digest("hex");
         screenshots.set(
           `${candidate}:${morphologyView}:${diagnostic}`,
@@ -451,7 +481,18 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
     })
   );
   const nearViews = reviewViews.filter((view) => view !== "opening-orbit");
-  const passingCandidates = candidates.filter((candidate) => nearViews.every((view) =>
+  const axisEligibleCandidates = candidates.filter((candidate) => nearViews.every((view) => {
+    const audit = atlas.find((record) =>
+      record.candidate === candidate && record.view === view && record.diagnostic === "full"
+    )?.telemetry.morphologyScaleAudit;
+    return audit !== undefined && audit !== null &&
+      Object.values(audit.shapeProjectedPixelsByAxis).every((pixels) =>
+        pixels >= 16 && pixels <= 48
+      ) && Object.values(audit.detailProjectedPixelsByAxis).every((pixels) =>
+        pixels >= 3 && pixels <= 10
+      );
+  }));
+  const passingCandidates = axisEligibleCandidates.filter((candidate) => nearViews.every((view) =>
     imageMetricRecords.find((record) =>
       record.candidate === candidate && record.view === view
     )?.classification.pass === true
@@ -463,7 +504,10 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
       )?.telemetry.morphologyScaleAudit;
       return {
         view,
-        horizontalPixelsPerMeter: audit?.horizontalPixelsPerMeter ?? Number.NaN,
+        pixelsPerMeter: {
+          east: audit?.pixelsPerMeter.east ?? Number.NaN,
+          north: audit?.pixelsPerMeter.north ?? Number.NaN
+        },
         originScreenPixels: audit?.originScreenPixels ?? null,
         viewport: { width: 1440, height: 960 }
       };
@@ -490,9 +534,14 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
       generatedCandidates: morphologyContract.buildTakramV3MorphologyCandidates(
         reviewViews.map((view) => ({
           view,
-          horizontalPixelsPerMeter: atlas.find((record) =>
-            record.view === view && record.diagnostic === "full"
-          )?.telemetry.morphologyScaleAudit?.horizontalPixelsPerMeter ?? Number.NaN
+          pixelsPerMeter: {
+            east: atlas.find((record) =>
+              record.view === view && record.diagnostic === "full"
+            )?.telemetry.morphologyScaleAudit?.pixelsPerMeter.east ?? Number.NaN,
+            north: atlas.find((record) =>
+              record.view === view && record.diagnostic === "full"
+            )?.telemetry.morphologyScaleAudit?.pixelsPerMeter.north ?? Number.NaN
+          }
         }))
       ),
       candidates: candidates.map((candidate) => ({
@@ -512,23 +561,34 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
         rendererFingerprintHash: telemetry.rendererFingerprintHash
       })),
       imageMetricRecords,
+      axisEligibleCandidates,
       passingCandidates,
       commonRepeatIntervals: {
         shape: morphologyContract.resolveTakramV3MorphologyCommonRepeatInterval(
           reviewViews.filter((view) => view !== "opening-orbit").map((view) => ({
             view,
-            horizontalPixelsPerMeter: atlas.find((record) =>
-              record.view === view && record.diagnostic === "full"
-            )?.telemetry.morphologyScaleAudit?.horizontalPixelsPerMeter ?? Number.NaN
+            pixelsPerMeter: {
+              east: atlas.find((record) =>
+                record.view === view && record.diagnostic === "full"
+              )?.telemetry.morphologyScaleAudit?.pixelsPerMeter.east ?? Number.NaN,
+              north: atlas.find((record) =>
+                record.view === view && record.diagnostic === "full"
+              )?.telemetry.morphologyScaleAudit?.pixelsPerMeter.north ?? Number.NaN
+            }
           })),
           "shape"
         ),
         detail: morphologyContract.resolveTakramV3MorphologyCommonRepeatInterval(
           reviewViews.filter((view) => view !== "opening-orbit").map((view) => ({
             view,
-            horizontalPixelsPerMeter: atlas.find((record) =>
-              record.view === view && record.diagnostic === "full"
-            )?.telemetry.morphologyScaleAudit?.horizontalPixelsPerMeter ?? Number.NaN
+            pixelsPerMeter: {
+              east: atlas.find((record) =>
+                record.view === view && record.diagnostic === "full"
+              )?.telemetry.morphologyScaleAudit?.pixelsPerMeter.east ?? Number.NaN,
+              north: atlas.find((record) =>
+                record.view === view && record.diagnostic === "full"
+              )?.telemetry.morphologyScaleAudit?.pixelsPerMeter.north ?? Number.NaN
+            }
           })),
           "detail"
         )

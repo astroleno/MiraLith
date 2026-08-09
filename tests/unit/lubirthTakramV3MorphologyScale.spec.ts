@@ -30,7 +30,7 @@ type MorphologyContractModule = {
     | null;
   buildTakramV3MorphologyCandidates(inputs: ReadonlyArray<{
     view: "near-oblique" | "aerial-oblique" | "near-orbit" | "opening-orbit";
-    horizontalPixelsPerMeter: number;
+    pixelsPerMeter: { east: number; north: number };
   }>): ReadonlyArray<{
     view: string;
     targetShapePixels: number;
@@ -53,7 +53,7 @@ type MorphologyContractModule = {
   resolveTakramV3MorphologyCommonRepeatInterval(
     inputs: ReadonlyArray<{
       view: "near-oblique" | "aerial-oblique" | "near-orbit" | "opening-orbit";
-      horizontalPixelsPerMeter: number;
+      pixelsPerMeter: { east: number; north: number };
     }>,
     kind: "shape" | "detail"
   ): {
@@ -64,7 +64,7 @@ type MorphologyContractModule = {
   resolveTakramV3HorizontalMorphologyCheckpoint(input: {
     audits: ReadonlyArray<{
       view: "near-oblique" | "aerial-oblique" | "near-orbit";
-      horizontalPixelsPerMeter: number;
+      pixelsPerMeter: { east: number; north: number };
       originScreenPixels: readonly [number, number] | null;
       viewport: { width: number; height: number };
     }>;
@@ -156,8 +156,8 @@ test("freezes the V3 morphology review views and baseline contract", async () =>
   expect(contract.resolveTakramV3MorphologyView("opening-orbit")?.usesOpeningFrame).toBe(true);
   expect(contract.resolveTakramV3MorphologyView("unknown")).toBeNull();
   const generated = contract.buildTakramV3MorphologyCandidates([
-    { view: "near-oblique", horizontalPixelsPerMeter: 0.001 },
-    { view: "near-orbit", horizontalPixelsPerMeter: 0.00025 }
+    { view: "near-oblique", pixelsPerMeter: { east: 0.001, north: 0.001 } },
+    { view: "near-orbit", pixelsPerMeter: { east: 0.00025, north: 0.00025 } }
   ]);
   expect(generated).toHaveLength(18);
   expect(generated.filter((candidate) => candidate.physicalRangePass)).toHaveLength(2);
@@ -216,6 +216,8 @@ test("audits repeat wavelengths and projected pixels in ECEF metres", async () =
       shapeWavelengthMeters: number;
       detailWavelengthMeters: number;
       pixelsPerMeter: { east: number; north: number; up: number };
+      shapeProjectedPixelsByAxis: { east: number; north: number };
+      detailProjectedPixelsByAxis: { east: number; north: number };
       shapeProjectedPixels: number;
       detailProjectedPixels: number;
       layers: ReadonlyArray<{ projectedThicknessPixels: number }>;
@@ -252,6 +254,9 @@ test("audits repeat wavelengths and projected pixels in ECEF metres", async () =
   expect(result.pixelsPerMeter.east).toBeCloseTo(5, 6);
   expect(result.pixelsPerMeter.north).toBeCloseTo(5, 6);
   expect(result.pixelsPerMeter.up).toBeCloseTo(5, 6);
+  expect(result.shapeProjectedPixelsByAxis).toEqual({ east: 200_000, north: 200_000 });
+  expect(result.detailProjectedPixelsByAxis.east).toBeCloseTo(8_333.333333333, 3);
+  expect(result.detailProjectedPixelsByAxis.north).toBeCloseTo(8_333.333333333, 3);
   expect(result.shapeProjectedPixels).toBeCloseTo(200_000, 3);
   expect(result.detailProjectedPixels).toBeCloseTo(8_333.333333333, 3);
   expect(result.layers.map((layer) => layer.projectedThicknessPixels)).toEqual([130_000, 250_000]);
@@ -287,6 +292,7 @@ test("audits repeat wavelengths and projected pixels in ECEF metres", async () =
 test("constructs morphology targets on the requested spherical arc", async () => {
   const contract = await import(modulePath) as MorphologyContractModule;
   const radius = 6_360_000;
+  const expectedTargetUv = contract.TAKRAM_V3_MORPHOLOGY_VIEWS[0]!.sphericalUv;
   for (const view of contract.TAKRAM_V3_MORPHOLOGY_VIEWS.filter(
     (candidate) => !candidate.usesOpeningFrame
   )) {
@@ -298,6 +304,13 @@ test("constructs morphology targets on the requested spherical arc", async () =>
       value / Math.hypot(...frame.cameraEcefMeters)
     );
     const targetRadial = frame.targetRadialEcef;
+    const targetPhi = Math.atan2(targetRadial[1], targetRadial[0]);
+    const targetUv = [
+      targetPhi / (Math.PI * 2) + 0.5,
+      Math.asin(targetRadial[2]) / Math.PI + 0.5
+    ];
+    expect(targetUv[0]).toBeCloseTo(expectedTargetUv[0], 12);
+    expect(targetUv[1]).toBeCloseTo(expectedTargetUv[1], 12);
     const centralAngle = Math.acos(Math.max(-1, Math.min(1,
       cameraRadial[0]! * targetRadial[0]!
       + cameraRadial[1]! * targetRadial[1]!
@@ -319,9 +332,9 @@ test("constructs morphology targets on the requested spherical arc", async () =>
 test("derives the common repeat interval and checkpoint from audit evidence", async () => {
   const contract = await import(modulePath) as MorphologyContractModule;
   const feasibleAudits = [
-    { view: "near-oblique" as const, horizontalPixelsPerMeter: 0.001 },
-    { view: "aerial-oblique" as const, horizontalPixelsPerMeter: 0.0015 },
-    { view: "near-orbit" as const, horizontalPixelsPerMeter: 0.002 }
+    { view: "near-oblique" as const, pixelsPerMeter: { east: 0.001, north: 0.0012 } },
+    { view: "aerial-oblique" as const, pixelsPerMeter: { east: 0.0015, north: 0.0014 } },
+    { view: "near-orbit" as const, pixelsPerMeter: { east: 0.002, north: 0.0018 } }
   ];
   expect(contract.resolveTakramV3MorphologyCommonRepeatInterval(feasibleAudits, "shape"))
     .toMatchObject({ feasible: true, minimum: 0.000041666666666666665, maximum: 0.0000625 });
@@ -338,8 +351,8 @@ test("derives the common repeat interval and checkpoint from audit evidence", as
     metricCandidateCount: 3,
     passingMetricCandidateCount: 1
   })).toEqual({
-    id: "HORIZONTAL_MORPHOLOGY_CANDIDATE_PASS",
-    task3Unlocked: true
+    id: "HORIZONTAL_MORPHOLOGY_VISUAL_REVIEW_REQUIRED",
+    task3Unlocked: false
   });
 
   expect(contract.resolveTakramV3HorizontalMorphologyCheckpoint({
@@ -355,9 +368,9 @@ test("derives the common repeat interval and checkpoint from audit evidence", as
 
   expect(contract.resolveTakramV3HorizontalMorphologyCheckpoint({
     audits: [
-      { ...onscreenAudits[0]!, horizontalPixelsPerMeter: 0.0001 },
-      { ...onscreenAudits[1]!, horizontalPixelsPerMeter: 0.001 },
-      { ...onscreenAudits[2]!, horizontalPixelsPerMeter: 0.01 }
+      { ...onscreenAudits[0]!, pixelsPerMeter: { east: 0.0001, north: 0.00135 } },
+      { ...onscreenAudits[1]!, pixelsPerMeter: { east: 0.001, north: 0.001 } },
+      { ...onscreenAudits[2]!, pixelsPerMeter: { east: 0.01, north: 0.01 } }
     ],
     metricCandidateCount: 3,
     passingMetricCandidateCount: 1
@@ -365,4 +378,43 @@ test("derives the common repeat interval and checkpoint from audit evidence", as
     id: "HORIZONTAL_MORPHOLOGY_SCALE_FAIL",
     task3Unlocked: false
   });
+
+  const anisotropicAudit = [{
+    view: "near-oblique" as const,
+    pixelsPerMeter: { east: 0.001, north: 0.0135 }
+  }];
+  expect(contract.resolveTakramV3MorphologyCommonRepeatInterval(anisotropicAudit, "shape"))
+    .toMatchObject({ feasible: false });
+  expect(contract.resolveTakramV3MorphologyCommonRepeatInterval(anisotropicAudit, "detail"))
+    .toMatchObject({ feasible: false });
+});
+
+test("captures temporal history only on the exact first native frame", async () => {
+  const parityContract = await import(parityContractModulePath) as {
+    shouldCaptureTakramHistoryFirstFrame(input: {
+      diagnostic: string;
+      nativeFrameCount: number;
+      alreadyCaptured: boolean;
+    }): boolean;
+  };
+  expect(parityContract.shouldCaptureTakramHistoryFirstFrame({
+    diagnostic: "history-reset-first",
+    nativeFrameCount: 1,
+    alreadyCaptured: false
+  })).toBe(true);
+  expect(parityContract.shouldCaptureTakramHistoryFirstFrame({
+    diagnostic: "history-reset-first",
+    nativeFrameCount: 2,
+    alreadyCaptured: false
+  })).toBe(false);
+  expect(parityContract.shouldCaptureTakramHistoryFirstFrame({
+    diagnostic: "history-reset-first",
+    nativeFrameCount: 1,
+    alreadyCaptured: true
+  })).toBe(false);
+  expect(parityContract.shouldCaptureTakramHistoryFirstFrame({
+    diagnostic: "full",
+    nativeFrameCount: 1,
+    alreadyCaptured: false
+  })).toBe(false);
 });
