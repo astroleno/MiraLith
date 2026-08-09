@@ -1,5 +1,15 @@
 import type { MiraLithKnownChapter } from "../../content/miraLithChapters";
 
+export type {
+  ChapterActiveMediaState,
+  ChapterLegacyRouteState,
+  ChapterPlaybackState,
+  ChapterReturnRevisionPlan,
+  ChapterRouteStateAdapter,
+  ChapterRouteStateManifest,
+  ChapterSemanticRouteState
+} from "./chapterRouteStateTypes";
+
 export interface ResolvedChapterTransitionEndpoint {
   chapter: MiraLithKnownChapter;
   level: "published" | "preview";
