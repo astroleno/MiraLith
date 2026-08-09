@@ -40,6 +40,18 @@ export interface TakramV3SampleCountStatistics {
   max: number;
 }
 
+export interface TakramV3MaskCoverageSensitivityPopulation {
+  minimumMaskCoverage: number;
+  selectedNativePixelCount: number;
+  coverageWeightSum: number;
+  primary: TakramV3SampleCountStatistics;
+  shape: TakramV3SampleCountStatistics;
+  detail: TakramV3SampleCountStatistics;
+  weightedPrimary: TakramV3SampleCountStatistics;
+  weightedShape: TakramV3SampleCountStatistics;
+  weightedDetail: TakramV3SampleCountStatistics;
+}
+
 export interface TakramV3OpeningStageIsolationMetrics {
   cloudPixelCount: number;
   cloudPixelFraction: number;
@@ -73,8 +85,8 @@ export interface TakramV3NativeSampleCountReadback {
   precision: "half-float" | "unorm8";
   source: "native-cloud-current-render-target-v1";
   origin: "bottom-left";
-  encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5";
-  /** Packed normalized RGB values read directly from CloudsPass.currentRenderTarget. */
+  encoding: "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask";
+  /** Packed normalized RGBA values read directly from CloudsPass.currentRenderTarget. */
   values: ArrayLike<number>;
 }
 
@@ -84,9 +96,8 @@ export interface TakramV3NativeSampleCountMetrics {
   precision: TakramV3NativeSampleCountReadback["precision"];
   nativeWidth: number;
   nativeHeight: number;
-  maskMapping: "full-resolution-cloud-mask-cell-coverage-v1";
-  minimumMaskCoverage: number;
-  maskedNativePixelCount: number;
+  populationMapping: "native-cloud-hit-alpha-v1";
+  nativeHitPixelCount: number;
   signalPresent: boolean;
   nonZeroPrimaryPixelFraction: number;
   invariantViolationCount: number;
@@ -95,6 +106,7 @@ export interface TakramV3NativeSampleCountMetrics {
   primary: TakramV3SampleCountStatistics;
   shape: TakramV3SampleCountStatistics;
   detail: TakramV3SampleCountStatistics;
+  maskCoverageSensitivity: TakramV3MaskCoverageSensitivityPopulation[];
 }
 
 export const TAKRAM_V3_MORPHOLOGY_METRIC_THRESHOLDS = Object.freeze({
@@ -209,12 +221,39 @@ function resolveSampleCountStatistics(values: number[]): TakramV3SampleCountStat
   };
 }
 
+function resolveWeightedSampleCountStatistics(
+  values: Array<{ value: number; weight: number }>
+): TakramV3SampleCountStatistics {
+  const sorted = values
+    .filter(({ value, weight }) => Number.isFinite(value) && weight > 0)
+    .sort((left, right) => left.value - right.value);
+  const weightSum = sorted.reduce((sum, entry) => sum + entry.weight, 0);
+  const weightedQuantile = (percentile: number) => {
+    if (weightSum <= 0) return 0;
+    const targetWeight = Math.max(0, Math.min(1, percentile)) * weightSum;
+    let cumulativeWeight = 0;
+    for (const entry of sorted) {
+      cumulativeWeight += entry.weight;
+      if (cumulativeWeight >= targetWeight) return entry.value;
+    }
+    return sorted.at(-1)?.value ?? 0;
+  };
+  return {
+    min: sorted[0]?.value ?? 0,
+    mean: weightSum > 0
+      ? sorted.reduce((sum, entry) => sum + entry.value * entry.weight, 0) / weightSum
+      : 0,
+    p50: weightedQuantile(0.5),
+    p95: weightedQuantile(0.95),
+    max: sorted.at(-1)?.value ?? 0
+  };
+}
+
 export function analyzeTakramV3NativeSampleCountReadback(input: {
   cloudMask: Uint8Array;
   cloudMaskWidth: number;
   cloudMaskHeight: number;
   readback: TakramV3NativeSampleCountReadback;
-  minimumMaskCoverage?: number;
 }): TakramV3NativeSampleCountMetrics {
   if (!Number.isInteger(input.cloudMaskWidth) || input.cloudMaskWidth <= 0 ||
     !Number.isInteger(input.cloudMaskHeight) || input.cloudMaskHeight <= 0 ||
@@ -224,19 +263,21 @@ export function analyzeTakramV3NativeSampleCountReadback(input: {
   const { readback } = input;
   if (!Number.isInteger(readback.width) || readback.width <= 0 ||
     !Number.isInteger(readback.height) || readback.height <= 0 ||
-    readback.values.length !== readback.width * readback.height * 3) {
-    throw new Error("Native sample-count readback must be packed normalized RGB.");
-  }
-  const minimumMaskCoverage = input.minimumMaskCoverage ?? 0.25;
-  if (!(minimumMaskCoverage > 0 && minimumMaskCoverage <= 1)) {
-    throw new Error("Native sample-count mask coverage must be in (0, 1].");
+    readback.values.length !== readback.width * readback.height * 4) {
+    throw new Error("Native sample-count readback must be packed normalized RGBA.");
   }
 
-  const counts = {
+  const nativeHitCounts = {
     primary: [] as number[],
     shape: [] as number[],
     detail: [] as number[]
   };
+  const cells: Array<{
+    coverage: number;
+    primary: number;
+    shape: number;
+    detail: number;
+  }> = [];
   let invariantViolationCount = 0;
   let nonZeroPrimaryPixelCount = 0;
   for (let nativeY = 0; nativeY < readback.height; nativeY += 1) {
@@ -259,46 +300,65 @@ export function analyzeTakramV3NativeSampleCountReadback(input: {
           maskedPixelCount += input.cloudMask[maskY * input.cloudMaskWidth + maskX] === 1 ? 1 : 0;
         }
       }
-      if (cellPixelCount === 0 || maskedPixelCount / cellPixelCount < minimumMaskCoverage) {
-        continue;
-      }
-      const offset = (nativeY * readback.width + nativeX) * 3;
+      const coverage = cellPixelCount > 0 ? maskedPixelCount / cellPixelCount : 0;
+      const offset = (nativeY * readback.width + nativeX) * 4;
       const primary = Math.max(0, Math.round(Number(readback.values[offset] ?? 0) * 500));
       const shape = Math.max(0, Math.round(Number(readback.values[offset + 1] ?? 0) * 5));
       const detail = Math.max(0, Math.round(Number(readback.values[offset + 2] ?? 0) * 5));
+      const nativeHit = Number(readback.values[offset + 3] ?? 0) >= 0.5;
+      cells.push({ coverage, primary, shape, detail });
+      if (!nativeHit) continue;
       if (!Number.isFinite(primary) || !Number.isFinite(shape) || !Number.isFinite(detail) ||
         primary < shape || shape < detail) {
         invariantViolationCount += 1;
       }
       if (primary > 0) nonZeroPrimaryPixelCount += 1;
-      counts.primary.push(primary);
-      counts.shape.push(shape);
-      counts.detail.push(detail);
+      nativeHitCounts.primary.push(primary);
+      nativeHitCounts.shape.push(shape);
+      nativeHitCounts.detail.push(detail);
     }
   }
-  const maskedNativePixelCount = counts.primary.length;
+  const nativeHitPixelCount = nativeHitCounts.primary.length;
   const signalPresent = nonZeroPrimaryPixelCount > 0;
+  const maskCoverageSensitivity = [0.25, 0.5, 0.75, 1].map((minimumMaskCoverage) => {
+    const selected = cells.filter(({ coverage }) => coverage >= minimumMaskCoverage);
+    const weighted = (key: "primary" | "shape" | "detail") => selected.map((cell) => ({
+      value: cell[key],
+      weight: cell.coverage
+    }));
+    return {
+      minimumMaskCoverage,
+      selectedNativePixelCount: selected.length,
+      coverageWeightSum: selected.reduce((sum, cell) => sum + cell.coverage, 0),
+      primary: resolveSampleCountStatistics(selected.map((cell) => cell.primary)),
+      shape: resolveSampleCountStatistics(selected.map((cell) => cell.shape)),
+      detail: resolveSampleCountStatistics(selected.map((cell) => cell.detail)),
+      weightedPrimary: resolveWeightedSampleCountStatistics(weighted("primary")),
+      weightedShape: resolveWeightedSampleCountStatistics(weighted("shape")),
+      weightedDetail: resolveWeightedSampleCountStatistics(weighted("detail"))
+    };
+  });
   return {
     source: readback.source,
     encoding: readback.encoding,
     precision: readback.precision,
     nativeWidth: readback.width,
     nativeHeight: readback.height,
-    maskMapping: "full-resolution-cloud-mask-cell-coverage-v1",
-    minimumMaskCoverage,
-    maskedNativePixelCount,
+    populationMapping: "native-cloud-hit-alpha-v1",
+    nativeHitPixelCount,
     signalPresent,
-    nonZeroPrimaryPixelFraction: maskedNativePixelCount > 0
-      ? nonZeroPrimaryPixelCount / maskedNativePixelCount
+    nonZeroPrimaryPixelFraction: nativeHitPixelCount > 0
+      ? nonZeroPrimaryPixelCount / nativeHitPixelCount
       : 0,
     invariantViolationCount,
-    invariantViolationFraction: maskedNativePixelCount > 0
-      ? invariantViolationCount / maskedNativePixelCount
+    invariantViolationFraction: nativeHitPixelCount > 0
+      ? invariantViolationCount / nativeHitPixelCount
       : 0,
-    invariantPass: maskedNativePixelCount > 0 && signalPresent && invariantViolationCount === 0,
-    primary: resolveSampleCountStatistics(counts.primary),
-    shape: resolveSampleCountStatistics(counts.shape),
-    detail: resolveSampleCountStatistics(counts.detail)
+    invariantPass: nativeHitPixelCount > 0 && signalPresent && invariantViolationCount === 0,
+    primary: resolveSampleCountStatistics(nativeHitCounts.primary),
+    shape: resolveSampleCountStatistics(nativeHitCounts.shape),
+    detail: resolveSampleCountStatistics(nativeHitCounts.detail),
+    maskCoverageSensitivity
   };
 }
 

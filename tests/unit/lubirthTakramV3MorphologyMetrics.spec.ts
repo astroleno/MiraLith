@@ -258,7 +258,7 @@ test("isolates opening stages inside the cloud-only mask", async () => {
   });
 });
 
-test("decodes native cloud-target sample counts only where the full-resolution cloud mask is present", async () => {
+test("uses native hit alpha for authoritative sample counts", async () => {
   const metrics = await import(metricsModulePath);
   const cloudMask = new Uint8Array([
     1, 1, 0, 0,
@@ -267,10 +267,10 @@ test("decodes native cloud-target sample counts only where the full-resolution c
     0, 0, 0, 0
   ]);
   const readbackValues = new Float32Array([
-    0, 0, 0,
-    0, 0, 0,
-    20 / 500, 2 / 5, 1 / 5,
-    0, 0, 0
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    20 / 500, 2 / 5, 1 / 5, 1,
+    0, 0, 0, 0
   ]);
 
   const result = metrics.analyzeTakramV3NativeSampleCountReadback({
@@ -283,15 +283,14 @@ test("decodes native cloud-target sample counts only where the full-resolution c
       precision: "half-float",
       source: "native-cloud-current-render-target-v1",
       origin: "bottom-left",
-      encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5",
+      encoding: "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask",
       values: readbackValues
     }
   });
 
   expect(result).toMatchObject({
-    maskMapping: "full-resolution-cloud-mask-cell-coverage-v1",
-    minimumMaskCoverage: 0.25,
-    maskedNativePixelCount: 1,
+    populationMapping: "native-cloud-hit-alpha-v1",
+    nativeHitPixelCount: 1,
     signalPresent: true,
     nonZeroPrimaryPixelFraction: 1,
     invariantViolationCount: 0,
@@ -300,4 +299,78 @@ test("decodes native cloud-target sample counts only where the full-resolution c
     shape: { min: 2, mean: 2, p50: 2, p95: 2, max: 2 },
     detail: { min: 1, mean: 1, p50: 1, p95: 1, max: 1 }
   });
+});
+
+test("reports weighted 25/50/75/100 percent post-temporal mask sensitivity", async () => {
+  const metrics = await import(metricsModulePath);
+  const cloudMask = new Uint8Array([
+    1, 1, 1, 1,
+    1, 1, 1, 0,
+    1, 1, 1, 0,
+    0, 0, 0, 0
+  ]);
+  const readbackValues = new Float32Array([
+    4 / 500, 2 / 5, 1 / 5, 1,
+    2 / 500, 1 / 5, 1 / 5, 0,
+    25 / 500, 3 / 5, 2 / 5, 1,
+    10 / 500, 2 / 5, 1 / 5, 0
+  ]);
+
+  const result = metrics.analyzeTakramV3NativeSampleCountReadback({
+    cloudMask,
+    cloudMaskWidth: 4,
+    cloudMaskHeight: 4,
+    readback: {
+      width: 2,
+      height: 2,
+      precision: "half-float",
+      source: "native-cloud-current-render-target-v1",
+      origin: "bottom-left",
+      encoding: "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask",
+      values: readbackValues
+    }
+  });
+
+  expect(result.primary).toMatchObject({ min: 4, mean: 14.5, p50: 14.5, max: 25 });
+  expect(result.maskCoverageSensitivity.map((entry) => ({
+    minimumMaskCoverage: entry.minimumMaskCoverage,
+    selectedNativePixelCount: entry.selectedNativePixelCount,
+    coverageWeightSum: entry.coverageWeightSum,
+    primaryP50: entry.primary.p50,
+    weightedPrimaryMean: entry.weightedPrimary.mean,
+    weightedPrimaryP50: entry.weightedPrimary.p50
+  }))).toEqual([
+    {
+      minimumMaskCoverage: 0.25,
+      selectedNativePixelCount: 4,
+      coverageWeightSum: 2.5,
+      primaryP50: 7,
+      weightedPrimaryMean: 14,
+      weightedPrimaryP50: 10
+    },
+    {
+      minimumMaskCoverage: 0.5,
+      selectedNativePixelCount: 3,
+      coverageWeightSum: 2.25,
+      primaryP50: 10,
+      weightedPrimaryMean: 15.333333333333334,
+      weightedPrimaryP50: 10
+    },
+    {
+      minimumMaskCoverage: 0.75,
+      selectedNativePixelCount: 2,
+      coverageWeightSum: 1.75,
+      primaryP50: 17.5,
+      weightedPrimaryMean: 18.571428571428573,
+      weightedPrimaryP50: 25
+    },
+    {
+      minimumMaskCoverage: 1,
+      selectedNativePixelCount: 1,
+      coverageWeightSum: 1,
+      primaryP50: 25,
+      weightedPrimaryMean: 25,
+      weightedPrimaryP50: 25
+    }
+  ]);
 });

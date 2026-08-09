@@ -15,6 +15,10 @@ const INOUT_PARAMETER = [
   ") {",
   "  vec4 density = weather.density;"
 ].join("\n");
+const OPAQUE_DEBUG_OUTPUT =
+  "outputColor = vec4(vec3(sampleCount) / vec3(500.0, 5.0, 5.0), 1.0);";
+const HIT_MASK_DEBUG_OUTPUT =
+  "outputColor = vec4(vec3(sampleCount) / vec3(500.0, 5.0, 5.0), step(0.0, marchedFrontDepth));";
 
 /**
  * The upstream debug overload declares sampleCount as `out`, which discards
@@ -30,7 +34,13 @@ export function installTakramSampleCountInstrumentation(
   if (firstMatch < 0 || originalShader.indexOf(OUT_PARAMETER, firstMatch + 1) >= 0) {
     throw new Error("Takram sample-count debug signature drifted from the audited source.");
   }
-  material.fragmentShader = originalShader.replace(OUT_PARAMETER, INOUT_PARAMETER);
+  const outputMatch = originalShader.indexOf(OPAQUE_DEBUG_OUTPUT);
+  if (outputMatch < 0 || originalShader.indexOf(OPAQUE_DEBUG_OUTPUT, outputMatch + 1) >= 0) {
+    throw new Error("Takram sample-count debug output drifted from the audited source.");
+  }
+  material.fragmentShader = originalShader
+    .replace(OUT_PARAMETER, INOUT_PARAMETER)
+    .replace(OPAQUE_DEBUG_OUTPUT, HIT_MASK_DEBUG_OUTPUT);
   material.needsUpdate = true;
   return () => {
     material.fragmentShader = originalShader;

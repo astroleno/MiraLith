@@ -41,8 +41,11 @@ import {
   hashTakramParityRendererFingerprint,
   isTakramParityAltitudeLadderDiagnostic,
   shouldCaptureTakramHistoryFirstFrame,
+  shouldCaptureTakramMatchedTemporalFrame,
+  resolveTakramParityTemporalFrameMetadata,
   type TakramParityDiagnostic,
   type TakramParityHistoryFirstFrameCapture,
+  type TakramParityMatchedTemporalFrameCapture,
   type TakramParityInput,
   type TakramParityAltitudeLadderTelemetry,
   type TakramParitySampleCountReadback,
@@ -156,6 +159,7 @@ declare global {
   interface Window {
     __MiraLithTakramParity?: TakramParityTelemetry;
     __MiraLithTakramHistoryFirstFrame?: TakramParityHistoryFirstFrameCapture;
+    __MiraLithTakramMatchedTemporalFrame?: TakramParityMatchedTemporalFrameCapture;
   }
 }
 
@@ -476,6 +480,7 @@ export function TakramStockParityPipeline({
   const transformFallbackRef = useRef<TakramParityTelemetry["transformFallback"]>(null);
   const historyEpochRef = useRef("");
   const historyFirstFrameCaptureRef = useRef<TakramParityHistoryFirstFrameCapture | null>(null);
+  const matchedTemporalFrameCaptureRef = useRef<TakramParityMatchedTemporalFrameCapture | null>(null);
   const sampleCountReadbackRef = useRef<TakramParitySampleCountReadback | null>(null);
   const appliedDiagnosticRef = useRef<TakramParityDiagnostic | null>(null);
   const nativeFrameCountRef = useRef(0);
@@ -764,11 +769,17 @@ export function TakramStockParityPipeline({
       historyEpochRef.current = historyEpoch;
       nativeFrameCountRef.current = 0;
       historyFirstFrameCaptureRef.current = null;
+      matchedTemporalFrameCaptureRef.current = null;
       sampleCountReadbackRef.current = null;
       if (typeof window !== "undefined") {
         delete window.__MiraLithTakramHistoryFirstFrame;
+        delete window.__MiraLithTakramMatchedTemporalFrame;
       }
       if (clouds) {
+        // The upstream effect owns the STBN/Bayer frame counter. Reset it with
+        // every immutable history epoch so separate diagnostic routes capture
+        // the same temporal phase instead of inheriting asset-load timing.
+        (clouds as unknown as { frame: number }).frame = 0;
         clouds.temporalUpscale = false;
         clouds.temporalUpscale = true;
       }
@@ -796,8 +807,10 @@ export function TakramStockParityPipeline({
       : null;
     const sampleCountReadbackReady = diagnostic !== "sample-count-debug" ||
       sampleCountReadbackRef.current !== null;
+    const matchedTemporalFrameReady = diagnostic === "history-reset-first" ||
+      matchedTemporalFrameCaptureRef.current !== null;
     const telemetry: TakramParityTelemetry = {
-      active: nativePipelineReady && sampleCountReadbackReady &&
+      active: nativePipelineReady && sampleCountReadbackReady && matchedTemporalFrameReady &&
         ((diagnostic === "history-reset-first" &&
           historyFirstFrameCaptureRef.current !== null) ||
           (temporalConverged && (!isTakramParityAltitudeLadderDiagnostic(diagnostic) ||
@@ -826,6 +839,20 @@ export function TakramStockParityPipeline({
             height: historyFirstFrameCaptureRef.current.height,
             nativeFrameCount: historyFirstFrameCaptureRef.current.nativeFrameCount,
             width: historyFirstFrameCaptureRef.current.width
+          },
+      matchedTemporalFrameCapture: matchedTemporalFrameCaptureRef.current === null
+        ? null
+        : {
+            height: matchedTemporalFrameCaptureRef.current.height,
+            nativeFrameCount: matchedTemporalFrameCaptureRef.current.nativeFrameCount,
+            width: matchedTemporalFrameCaptureRef.current.width,
+            cloudsFrame: matchedTemporalFrameCaptureRef.current.cloudsFrame,
+            resolveFrame: matchedTemporalFrameCaptureRef.current.resolveFrame,
+            shadowFrame: matchedTemporalFrameCaptureRef.current.shadowFrame,
+            temporalJitterIndex: matchedTemporalFrameCaptureRef.current.temporalJitterIndex,
+            stbnSliceIndex: matchedTemporalFrameCaptureRef.current.stbnSliceIndex,
+            historyEpochHash: matchedTemporalFrameCaptureRef.current.historyEpochHash,
+            frameLockPass: matchedTemporalFrameCaptureRef.current.frameLockPass
           },
       progress: clampOpeningProgress(progress),
       rendererFingerprint,
@@ -875,6 +902,7 @@ export function TakramStockParityPipeline({
         TEMPORAL_CONVERGENCE_FRAME_COUNT
       ),
       historyFirstFrameCapture: telemetry.historyFirstFrameCapture,
+      matchedTemporalFrameCapture: telemetry.matchedTemporalFrameCapture,
       temporalConverged: telemetry.temporalConverged,
       transformFallback: telemetry.transformFallback,
       morphologyCandidate: telemetry.morphologyCandidate,
@@ -889,6 +917,51 @@ export function TakramStockParityPipeline({
       onTelemetryRef.current?.(telemetry);
     }
   }, -1);
+
+  // Capture every diagnostic at the exact same native history frame. The
+  // effect frame is reset with the epoch above, so frame 32 also has a stable
+  // Bayer jitter index and STBN slice across independent page loads.
+  useFrame(() => {
+    if (diagnostic === "history-reset-first" ||
+      !shouldCaptureTakramMatchedTemporalFrame({
+        nativeFrameCount: nativeFrameCountRef.current,
+        targetNativeFrameCount: TEMPORAL_CONVERGENCE_FRAME_COUNT,
+        alreadyCaptured: matchedTemporalFrameCaptureRef.current !== null
+      })) {
+      return;
+    }
+    const clouds = cloudsRef.current;
+    if (!clouds) return;
+    const cloudsPass = clouds.cloudsPass as unknown as {
+      currentMaterial: { uniforms: Record<string, { value?: unknown }> };
+      resolveMaterial: { uniforms: Record<string, { value?: unknown }> };
+    };
+    const shadowPass = clouds.shadowPass as unknown as {
+      currentMaterial: { uniforms: Record<string, { value?: unknown }> };
+    };
+    const cloudsFrame = Number(cloudsPass.currentMaterial.uniforms.frame?.value ?? Number.NaN);
+    const resolveFrame = Number(cloudsPass.resolveMaterial.uniforms.frame?.value ?? Number.NaN);
+    const shadowFrame = Number(shadowPass.currentMaterial.uniforms.frame?.value ?? Number.NaN);
+    const stbnDepth = Number((clouds.stbnTexture?.image as { depth?: number } | undefined)?.depth ?? 1);
+    const metadata = resolveTakramParityTemporalFrameMetadata({
+      cloudsFrame,
+      resolveFrame,
+      shadowFrame,
+      stbnDepth,
+      historyEpoch: historyEpochRef.current
+    });
+    const capture: TakramParityMatchedTemporalFrameCapture = {
+      dataUrl: gl.domElement.toDataURL("image/png"),
+      height: gl.domElement.height,
+      nativeFrameCount: TEMPORAL_CONVERGENCE_FRAME_COUNT,
+      width: gl.domElement.width,
+      ...metadata
+    };
+    matchedTemporalFrameCaptureRef.current = capture;
+    if (typeof window !== "undefined") {
+      window.__MiraLithTakramMatchedTemporalFrame = capture;
+    }
+  }, 2);
 
   // Preserve the exact post-composer output of native frame 1. Browser-side
   // screenshots happen on a later task and therefore cannot prove first-frame
@@ -933,13 +1006,14 @@ export function TakramStockParityPipeline({
       ? readTakramAltitudeLadderRenderTarget(gl, pass.currentRenderTarget)
       : null;
     if (!readback) return;
-    const values = new Array<number>(readback.width * readback.height * 3);
+    const values = new Array<number>(readback.width * readback.height * 4);
     for (let pixel = 0; pixel < readback.width * readback.height; pixel += 1) {
       const sourceOffset = pixel * 4;
-      const targetOffset = pixel * 3;
+      const targetOffset = pixel * 4;
       values[targetOffset] = readback.values[sourceOffset] ?? 0;
       values[targetOffset + 1] = readback.values[sourceOffset + 1] ?? 0;
       values[targetOffset + 2] = readback.values[sourceOffset + 2] ?? 0;
+      values[targetOffset + 3] = readback.values[sourceOffset + 3] ?? 0;
     }
     sampleCountReadbackRef.current = {
       width: readback.width,
@@ -947,7 +1021,7 @@ export function TakramStockParityPipeline({
       precision: readback.precision,
       source: "native-cloud-current-render-target-v1",
       origin: "bottom-left",
-      encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5",
+      encoding: "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask",
       values
     };
   }, 2);

@@ -19,6 +19,9 @@ MediaSample sampleMedia(
   vec4 density = weather.density;
   ++sampleCount.y;
 }
+#ifdef DEBUG_SHOW_SAMPLE_COUNT
+outputColor = vec4(vec3(sampleCount) / vec3(500.0, 5.0, 5.0), 1.0);
+#endif // DEBUG_SHOW_SAMPLE_COUNT
 `;
   const material = {
     fragmentShader: originalShader,
@@ -28,6 +31,9 @@ MediaSample sampleMedia(
   const restore = instrumentation.installTakramSampleCountInstrumentation(material);
   expect(material.fragmentShader).toContain("inout ivec3 sampleCount");
   expect(material.fragmentShader).toContain("out float frontDepth,\n  out ivec3 sampleCount");
+  expect(material.fragmentShader).toContain(
+    "vec4(vec3(sampleCount) / vec3(500.0, 5.0, 5.0), step(0.0, marchedFrontDepth))"
+  );
   expect(material.needsUpdate).toBe(true);
 
   material.needsUpdate = false;

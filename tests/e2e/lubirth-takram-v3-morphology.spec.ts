@@ -7,6 +7,7 @@ import path from "node:path";
 import { Euler, Matrix4, PerspectiveCamera, Quaternion, Vector3 } from "three";
 import sharp from "../../packages/lubirth-hero/node_modules/sharp";
 import { mapOpeningProgress } from "../../packages/visual-core/src/theatre/openingTimeline";
+import { writeTakramV3FormalEvidence } from "../helpers/takramV3MorphologyEvidence";
 
 test.setTimeout(900_000);
 
@@ -118,7 +119,7 @@ type MorphologyTelemetry = {
     precision: "half-float" | "unorm8";
     source: "native-cloud-current-render-target-v1";
     origin: "bottom-left";
-    encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5";
+    encoding: "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask";
     values: number[];
   } | null;
   nativeFrameCount: number;
@@ -127,6 +128,18 @@ type MorphologyTelemetry = {
     height: number;
     nativeFrameCount: 1;
     width: number;
+  } | null;
+  matchedTemporalFrameCapture: {
+    height: number;
+    nativeFrameCount: number;
+    width: number;
+    cloudsFrame: number;
+    resolveFrame: number;
+    shadowFrame: number;
+    temporalJitterIndex: number;
+    stbnSliceIndex: number;
+    historyEpochHash: string;
+    frameLockPass: boolean;
   } | null;
   rendererFingerprint: Record<string, unknown> | null;
   rendererFingerprintHash: string | null;
@@ -149,6 +162,9 @@ declare global {
       nativeFrameCount: 1;
       width: number;
     };
+    __MiraLithTakramMatchedTemporalFrame?: NonNullable<
+      MorphologyTelemetry["matchedTemporalFrameCapture"]
+    > & { dataUrl: string };
   }
 }
 
@@ -226,10 +242,10 @@ async function encodeCloudOnlyMask(mask: Uint8Array, width: number, height: numb
 function encodeNativeSampleCountReadback(
   readback: NonNullable<MorphologyTelemetry["sampleCountReadback"]>
 ) {
-  const buffer = Buffer.allocUnsafe(readback.width * readback.height * 3 * 2);
-  const scales = [500, 5, 5] as const;
+  const buffer = Buffer.allocUnsafe(readback.width * readback.height * 4 * 2);
+  const scales = [500, 5, 5, 1] as const;
   for (let index = 0; index < readback.values.length; index += 1) {
-    const channel = index % 3;
+    const channel = index % 4;
     const count = Math.max(0, Math.min(65_535,
       Math.round((readback.values[index] ?? 0) * scales[channel]!)));
     buffer.writeUInt16LE(count, index * 2);
@@ -242,7 +258,19 @@ async function captureMorphologyFrame(
   diagnostic: string
 ) {
   if (diagnostic !== "history-reset-first") {
-    return page.screenshot({ scale: "css" });
+    const capture = await page.evaluate(() => window.__MiraLithTakramMatchedTemporalFrame);
+    expect(capture).toMatchObject({
+      height: 960,
+      nativeFrameCount: 32,
+      width: 1440,
+      cloudsFrame: 32,
+      resolveFrame: 32,
+      shadowFrame: 32,
+      temporalJitterIndex: 0,
+      frameLockPass: true
+    });
+    expect(capture?.dataUrl.startsWith("data:image/png;base64,")).toBe(true);
+    return Buffer.from(capture!.dataUrl.split(",")[1]!, "base64");
   }
   const capture = await page.evaluate(() => window.__MiraLithTakramHistoryFirstFrame);
   expect(capture).toMatchObject({
@@ -389,8 +417,9 @@ test("morphology baseline reproduces all fixed views and diagnostics", async ({ 
     }
   }
 
-  mkdirSync(evidenceDirectory, { recursive: true });
-  writeFileSync(
+  writeTakramV3FormalEvidence(shouldCapture, () => {
+    mkdirSync(evidenceDirectory, { recursive: true });
+    writeFileSync(
     path.join(evidenceDirectory, "baseline.json"),
     `${JSON.stringify({
       schemaVersion: 1,
@@ -410,7 +439,8 @@ test("morphology baseline reproduces all fixed views and diagnostics", async ({ 
       },
       records
     }, null, 2)}\n`
-  );
+    );
+  });
 });
 
 test("morphology candidate query is V3-only and fails closed for stock", async ({ page }) => {
@@ -437,18 +467,23 @@ test("native sample-count diagnostic preserves accumulated count ordering", asyn
     height: 240,
     precision: "half-float",
     source: "native-cloud-current-render-target-v1",
-    origin: "bottom-left"
+    origin: "bottom-left",
+    encoding: "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask"
   });
   let nonZeroPrimaryPixelCount = 0;
+  let nativeHitPixelCount = 0;
   let invariantViolationCount = 0;
-  for (let offset = 0; offset < readback!.values.length; offset += 3) {
+  for (let offset = 0; offset < readback!.values.length; offset += 4) {
     const primary = Math.round((readback!.values[offset] ?? 0) * 500);
     const shape = Math.round((readback!.values[offset + 1] ?? 0) * 5);
     const detail = Math.round((readback!.values[offset + 2] ?? 0) * 5);
+    const nativeHit = (readback!.values[offset + 3] ?? 0) >= 0.5;
     if (primary > 0) nonZeroPrimaryPixelCount += 1;
+    if (nativeHit) nativeHitPixelCount += 1;
     if (primary < shape || shape < detail) invariantViolationCount += 1;
   }
   expect(nonZeroPrimaryPixelCount).toBeGreaterThan(0);
+  expect(nativeHitPixelCount).toBeGreaterThan(0);
   expect(invariantViolationCount).toBe(0);
 });
 
@@ -549,8 +584,9 @@ test("scale audit reports projected shape, detail and layer thickness", async ({
     records.push({ view: morphologyView, telemetry: telemetry! });
   }
 
-  mkdirSync(evidenceDirectory, { recursive: true });
-  writeFileSync(
+  writeTakramV3FormalEvidence(shouldCapture, () => {
+    mkdirSync(evidenceDirectory, { recursive: true });
+    writeFileSync(
     path.join(evidenceDirectory, "scale-audit.json"),
     `${JSON.stringify({
       schemaVersion: 1,
@@ -571,7 +607,8 @@ test("scale audit reports projected shape, detail and layer thickness", async ({
         morphologyScaleAudit: telemetry.morphologyScaleAudit
       }))
     }, null, 2)}\n`
-  );
+    );
+  });
 });
 
 test("opening-only morphology matrix covers every production review frame", async ({ page }) => {
@@ -606,7 +643,7 @@ test("opening-only morphology matrix covers every production review frame", asyn
         sha256: string;
             compression: "gzip";
             scalar: "uint16-le";
-            channels: readonly ["primary", "shape", "detail"];
+            channels: readonly ["primary", "shape", "detail", "hit"];
             origin: "bottom-left";
       };
       metrics: ReturnType<typeof morphologyMetrics.analyzeTakramV3NativeSampleCountReadback>;
@@ -692,7 +729,7 @@ test("opening-only morphology matrix covers every production review frame", asyn
             };
           });
         }
-        const screenshot = await page.screenshot({ scale: "css" });
+        const screenshot = await captureMorphologyFrame(page, diagnostic);
         frames.set(`${candidateId}:${progress}:${diagnostic}`, screenshot);
         decodedFrames.set(diagnostic, await decodeScreenshot(screenshot));
         if (diagnostic === "full") fullTelemetry = telemetry!;
@@ -701,7 +738,7 @@ test("opening-only morphology matrix covers every production review frame", asyn
             precision: "half-float",
             source: "native-cloud-current-render-target-v1",
             origin: "bottom-left",
-            encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5"
+            encoding: "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask"
           });
           nativeSampleCountReadback = telemetry!.sampleCountReadback;
         }
@@ -769,13 +806,13 @@ test("opening-only morphology matrix covers every production review frame", asyn
           values: nativeSampleCountReadback!.values
         }
       });
-      expect(nativeSampleCountMetrics.maskedNativePixelCount).toBeGreaterThan(0);
+      expect(nativeSampleCountMetrics.nativeHitPixelCount).toBeGreaterThan(0);
       expect(nativeSampleCountMetrics.invariantPass).toBe(true);
       const nativeSampleCountArtifact = encodeNativeSampleCountReadback(
         nativeSampleCountReadback!
       );
       const nativeSampleCountName =
-        `${candidateId}-p${progressLabel}-native-sample-count-rgb-u16le.gz`;
+        `${candidateId}-p${progressLabel}-native-sample-count-rgba-u16le.gz`;
       if (shouldCapture) {
         writeFileSync(
           path.join(openingCaptureDirectory, nativeSampleCountName),
@@ -801,7 +838,7 @@ test("opening-only morphology matrix covers every production review frame", asyn
             sha256: createHash("sha256").update(nativeSampleCountArtifact).digest("hex"),
             compression: "gzip",
             scalar: "uint16-le",
-            channels: ["primary", "shape", "detail"],
+            channels: ["primary", "shape", "detail", "hit"],
             origin: "bottom-left"
           },
           metrics: nativeSampleCountMetrics
@@ -882,6 +919,75 @@ test("opening-only morphology matrix covers every production review frame", asyn
     record.runtimeContract.adapter.localWeatherHash ===
       stageIsolationRecords[0]!.runtimeContract.adapter.localWeatherHash
   )).toBe(true);
+  expect(records.every(({ telemetry }) =>
+    telemetry.matchedTemporalFrameCapture?.nativeFrameCount === 32 &&
+    telemetry.matchedTemporalFrameCapture.cloudsFrame === 32 &&
+    telemetry.matchedTemporalFrameCapture.resolveFrame === 32 &&
+    telemetry.matchedTemporalFrameCapture.shadowFrame === 32 &&
+    telemetry.matchedTemporalFrameCapture.temporalJitterIndex === 0 &&
+    telemetry.matchedTemporalFrameCapture.frameLockPass
+  )).toBe(true);
+
+  const repeatCandidateId = "opening-shape-260-detail-40";
+  const repeatProgress = 0.06;
+  const repeatMask = comparisonFrames.get(`${repeatCandidateId}:${repeatProgress}`)?.cloudMask;
+  expect(repeatMask).toBeDefined();
+  const temporalRepeatNoiseFloor: Array<{
+    candidateId: string;
+    progress: number;
+    diagnostic: "full" | "cloud-raw" | "bsm-off";
+    repeatIndex: number;
+    screenshotSha256: string;
+    difference: ReturnType<typeof morphologyMetrics.analyzeTakramV3MaskedFrameDifference>;
+    temporalFrame: NonNullable<MorphologyTelemetry["matchedTemporalFrameCapture"]>;
+  }> = [];
+  for (const diagnostic of ["full", "cloud-raw", "bsm-off"] as const) {
+    const referenceBuffer = frames.get(`${repeatCandidateId}:${repeatProgress}:${diagnostic}`);
+    expect(referenceBuffer).toBeDefined();
+    const referenceFrame = await decodeScreenshot(referenceBuffer!);
+    for (const repeatIndex of [1, 2]) {
+      await page.goto(
+        `/lubirth-takram-parity-spike?input=v3&view=opening&progress=${repeatProgress}&diagnostic=${diagnostic}&morphologyView=opening-orbit&morphologyCandidate=${repeatCandidateId}`
+      );
+      await waitForNativeMorphology(page);
+      const telemetry = await page.evaluate(() => window.__MiraLithTakramParity);
+      const repeatBuffer = await captureMorphologyFrame(page, diagnostic);
+      const repeatFrame = await decodeScreenshot(repeatBuffer);
+      const screenshotSha256 = createHash("sha256").update(repeatBuffer).digest("hex");
+      if (shouldCapture) {
+        writeFileSync(
+          path.join(
+            openingCaptureDirectory,
+            `${repeatCandidateId}-p0-06-${diagnostic}-repeat-${repeatIndex}.png`
+          ),
+          repeatBuffer
+        );
+      }
+      temporalRepeatNoiseFloor.push({
+        candidateId: repeatCandidateId,
+        progress: repeatProgress,
+        diagnostic,
+        repeatIndex,
+        screenshotSha256,
+        difference: morphologyMetrics.analyzeTakramV3MaskedFrameDifference({
+          width: referenceFrame.width,
+          height: referenceFrame.height,
+          mask: repeatMask!,
+          left: referenceFrame.pixels,
+          right: repeatFrame.pixels
+        }),
+        temporalFrame: telemetry!.matchedTemporalFrameCapture!
+      });
+    }
+  }
+  expect(temporalRepeatNoiseFloor.every(({ temporalFrame }) =>
+    temporalFrame.nativeFrameCount === 32 &&
+    temporalFrame.cloudsFrame === 32 &&
+    temporalFrame.resolveFrame === 32 &&
+    temporalFrame.shadowFrame === 32 &&
+    temporalFrame.temporalJitterIndex === 0 &&
+    temporalFrame.frameLockPass
+  )).toBe(true);
 
   const checkpointRecords = candidates.flatMap((candidateId) =>
     progresses.map((progress) => ({
@@ -903,7 +1009,9 @@ test("opening-only morphology matrix covers every production review frame", asyn
     winnerCandidateId: null
   });
 
-  mkdirSync(openingEvidenceDirectory, { recursive: true });
+  writeTakramV3FormalEvidence(shouldCapture, () => {
+    mkdirSync(openingEvidenceDirectory, { recursive: true });
+  });
   const contactSheets: Record<string, { path: string; sha256: string }> = {};
   const contactSheetDiagnostics = [
     ...openingDiagnostics,
@@ -925,10 +1033,10 @@ test("opening-only morphology matrix covers every production review frame", asyn
       sha256: createHash("sha256").update(contactSheet).digest("hex")
     };
   }
-  writeFileSync(
+  writeTakramV3FormalEvidence(shouldCapture, () => writeFileSync(
     path.join(openingEvidenceDirectory, "candidate-matrix.json"),
     `${JSON.stringify({
-      schemaVersion: 3,
+      schemaVersion: 4,
       baseCommit: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
       generatedAt: new Date().toISOString(),
       scope: "opening-only-production-contract",
@@ -945,7 +1053,7 @@ test("opening-only morphology matrix covers every production review frame", asyn
         diagnostics: openingDiagnostics,
         derivedDiagnostics: [
           "cloud-only-mask",
-          "native-sample-count-rgb-u16le"
+          "native-sample-count-rgba-u16le"
         ],
         orbitalVisualGates: morphologyContract.TAKRAM_V3_OPENING_ORBITAL_VISUAL_GATES,
         viewport: { width: 1440, height: 960, dpr: 1 },
@@ -970,15 +1078,22 @@ test("opening-only morphology matrix covers every production review frame", asyn
         cameraHeightMeters: telemetry.cameraHeightMeters,
         diagnosticState: telemetry.diagnosticState,
         rendererFingerprintHash: telemetry.rendererFingerprintHash,
-        morphologyScaleAudit: telemetry.morphologyScaleAudit
+        morphologyScaleAudit: telemetry.morphologyScaleAudit,
+        matchedTemporalFrameCapture: telemetry.matchedTemporalFrameCapture
       })),
       scaleQualification,
       stageIsolationRecords,
+      temporalPairing: {
+        targetNativeFrame: 32,
+        targetTemporalJitterIndex: 0,
+        allSourceFramesLocked: true,
+        repeatNoiseFloor: temporalRepeatNoiseFloor
+      },
       candidateDifferenceRecords,
       contactSheets,
       checkpoint
     }, null, 2)}\n`
-  );
+  ));
 });
 
 test("near morphology remains diagnostic-only", async ({ page }) => {
@@ -1039,8 +1154,9 @@ test("near morphology remains diagnostic-only", async ({ page }) => {
     const candidateResolution = morphologyContract.buildTakramV3MorphologyCandidateResolution(
       projectionInputs
     );
-    mkdirSync(evidenceDirectory, { recursive: true });
-    writeFileSync(
+    writeTakramV3FormalEvidence(shouldCapture, () => {
+      mkdirSync(evidenceDirectory, { recursive: true });
+      writeFileSync(
       path.join(evidenceDirectory, "near-diagnostic.json"),
       `${JSON.stringify({
         schemaVersion: 2,
@@ -1092,7 +1208,8 @@ test("near morphology remains diagnostic-only", async ({ page }) => {
           task0pLocked: true
         }
       }, null, 2)}\n`
-    );
+      );
+    });
     expect(candidateResolution.generatedCandidates.every((candidate) =>
       candidate.axisRangePass && candidate.physicalRangePass
     )).toBe(true);
@@ -1244,8 +1361,9 @@ test("near morphology remains diagnostic-only", async ({ page }) => {
     metricCandidateCount: candidates.length,
     passingMetricCandidateCount: passingCandidates.length
   });
-  mkdirSync(evidenceDirectory, { recursive: true });
-  writeFileSync(
+  writeTakramV3FormalEvidence(shouldCapture, () => {
+    mkdirSync(evidenceDirectory, { recursive: true });
+    writeFileSync(
     path.join(evidenceDirectory, "near-diagnostic.json"),
     `${JSON.stringify({
       schemaVersion: 1,
@@ -1343,5 +1461,6 @@ test("near morphology remains diagnostic-only", async ({ page }) => {
         task0pLocked: true
       }
     }, null, 2)}\n`
-  );
+    );
+  });
 });

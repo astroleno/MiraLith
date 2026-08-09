@@ -76,7 +76,70 @@ interface TakramParityContractModule {
     sharedAssets: Record<string, string>;
   }): Record<string, unknown>;
   hashTakramParityRendererFingerprint(fingerprint: Record<string, unknown>): string;
+  hashTakramParityHistoryEpoch(epoch: string): string;
+  shouldCaptureTakramMatchedTemporalFrame(input: {
+    nativeFrameCount: number;
+    targetNativeFrameCount: number;
+    alreadyCaptured: boolean;
+  }): boolean;
+  resolveTakramParityTemporalFrameMetadata(input: {
+    cloudsFrame: number;
+    resolveFrame: number;
+    shadowFrame: number;
+    stbnDepth: number;
+    historyEpoch: string;
+  }): {
+    cloudsFrame: number;
+    resolveFrame: number;
+    shadowFrame: number;
+    temporalJitterIndex: number;
+    stbnSliceIndex: number;
+    historyEpochHash: string;
+    frameLockPass: boolean;
+  };
 }
+
+test("captures one immutable matched temporal frame and hashes its epoch", async () => {
+  const contract = await loadTakramParityContract();
+  expect(contract).not.toBeNull();
+
+  expect(contract?.shouldCaptureTakramMatchedTemporalFrame({
+    nativeFrameCount: 32,
+    targetNativeFrameCount: 32,
+    alreadyCaptured: false
+  })).toBe(true);
+  expect(contract?.shouldCaptureTakramMatchedTemporalFrame({
+    nativeFrameCount: 33,
+    targetNativeFrameCount: 32,
+    alreadyCaptured: false
+  })).toBe(false);
+  expect(contract?.shouldCaptureTakramMatchedTemporalFrame({
+    nativeFrameCount: 32,
+    targetNativeFrameCount: 32,
+    alreadyCaptured: true
+  })).toBe(false);
+  expect(contract?.hashTakramParityHistoryEpoch("[1,2,\"full\"]")).toMatch(
+    /^fnv1a-64:[0-9a-f]{16}$/
+  );
+  expect(contract?.hashTakramParityHistoryEpoch("[1,2,\"full\"]")).not.toBe(
+    contract?.hashTakramParityHistoryEpoch("[1,2,\"bsm-off\"]")
+  );
+  expect(contract?.resolveTakramParityTemporalFrameMetadata({
+    cloudsFrame: 32,
+    resolveFrame: 32,
+    shadowFrame: 32,
+    stbnDepth: 64,
+    historyEpoch: "[1,2,\"full\"]"
+  })).toEqual({
+    cloudsFrame: 32,
+    resolveFrame: 32,
+    shadowFrame: 32,
+    temporalJitterIndex: 0,
+    stbnSliceIndex: 32,
+    historyEpochHash: contract?.hashTakramParityHistoryEpoch("[1,2,\"full\"]"),
+    frameLockPass: true
+  });
+});
 
 interface TakramParityAssetLoaderModule {
   configureTakramParityTexture<T extends Texture>(

@@ -76,6 +76,15 @@ export function shouldCaptureTakramHistoryFirstFrame(input: {
     !input.alreadyCaptured;
 }
 
+export function shouldCaptureTakramMatchedTemporalFrame(input: {
+  nativeFrameCount: number;
+  targetNativeFrameCount: number;
+  alreadyCaptured: boolean;
+}) {
+  return input.nativeFrameCount === input.targetNativeFrameCount &&
+    !input.alreadyCaptured;
+}
+
 export interface TakramParityHistoryEpochInput {
   assetGeneration: number;
   atmosphereGeneration: number;
@@ -102,11 +111,64 @@ export function buildTakramParityHistoryEpoch(input: TakramParityHistoryEpochInp
   ]);
 }
 
+function hashFnv1a64(value: string) {
+  let hash = 14695981039346656037n;
+  for (const byte of new TextEncoder().encode(value)) {
+    hash ^= BigInt(byte);
+    hash = BigInt.asUintN(64, hash * 1099511628211n);
+  }
+  return `fnv1a-64:${hash.toString(16).padStart(16, "0")}`;
+}
+
+export function hashTakramParityHistoryEpoch(epoch: string) {
+  return hashFnv1a64(epoch);
+}
+
+function positiveModulo(value: number, divisor: number) {
+  return ((value % divisor) + divisor) % divisor;
+}
+
+export function resolveTakramParityTemporalFrameMetadata(input: {
+  cloudsFrame: number;
+  resolveFrame: number;
+  shadowFrame: number;
+  stbnDepth: number;
+  historyEpoch: string;
+}) {
+  const stbnDepth = Number.isInteger(input.stbnDepth) && input.stbnDepth > 0
+    ? input.stbnDepth
+    : 1;
+  return {
+    cloudsFrame: input.cloudsFrame,
+    resolveFrame: input.resolveFrame,
+    shadowFrame: input.shadowFrame,
+    temporalJitterIndex: positiveModulo(input.cloudsFrame, 16),
+    stbnSliceIndex: positiveModulo(input.cloudsFrame, stbnDepth),
+    historyEpochHash: hashTakramParityHistoryEpoch(input.historyEpoch),
+    frameLockPass: input.cloudsFrame === input.resolveFrame &&
+      input.cloudsFrame === input.shadowFrame
+  };
+}
+
 export interface TakramParityHistoryFirstFrameCapture {
   dataUrl: string;
   height: number;
   nativeFrameCount: 1;
   width: number;
+}
+
+export interface TakramParityMatchedTemporalFrameCapture {
+  dataUrl: string;
+  height: number;
+  nativeFrameCount: number;
+  width: number;
+  cloudsFrame: number;
+  resolveFrame: number;
+  shadowFrame: number;
+  temporalJitterIndex: number;
+  stbnSliceIndex: number;
+  historyEpochHash: string;
+  frameLockPass: boolean;
 }
 
 export type TakramParityRouteQueryResult =
@@ -521,12 +583,7 @@ function stableStringify(value: unknown): string {
 export function hashTakramParityRendererFingerprint(
   fingerprint: TakramParityRendererFingerprint
 ) {
-  let hash = 14695981039346656037n;
-  for (const byte of new TextEncoder().encode(stableStringify(fingerprint))) {
-    hash ^= BigInt(byte);
-    hash = BigInt.asUintN(64, hash * 1099511628211n);
-  }
-  return `fnv1a-64:${hash.toString(16).padStart(16, "0")}`;
+  return hashFnv1a64(stableStringify(fingerprint));
 }
 
 export interface TakramParityNativeFeatures {
@@ -594,8 +651,8 @@ export interface TakramParitySampleCountReadback {
   precision: "half-float" | "unorm8";
   source: "native-cloud-current-render-target-v1";
   origin: "bottom-left";
-  encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5";
-  /** Packed normalized RGB copied from the native pre-temporal cloud target. */
+  encoding: "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask";
+  /** Packed normalized RGBA copied from the native pre-temporal cloud target. */
   values: number[];
 }
 
@@ -620,6 +677,7 @@ export interface TakramParityTelemetry {
   native: TakramParityNativeFeatures;
   nativeFrameCount: number;
   historyFirstFrameCapture: Omit<TakramParityHistoryFirstFrameCapture, "dataUrl"> | null;
+  matchedTemporalFrameCapture: Omit<TakramParityMatchedTemporalFrameCapture, "dataUrl"> | null;
   morphologyCandidate: TakramV3MorphologyCandidateId | null;
   morphologyView: TakramV3MorphologyViewId | null;
   morphologyScaleAudit: TakramV3MorphologyScaleAudit | null;
