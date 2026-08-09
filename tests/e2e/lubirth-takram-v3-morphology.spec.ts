@@ -438,7 +438,7 @@ test("scale audit reports projected shape, detail and layer thickness", async ({
   );
 });
 
-test("horizontal morphology atlas replays each candidate across all views", async ({ page }) => {
+test("horizontal morphology preflight gates candidate replay", async ({ page }) => {
   const morphologyContract = await import(
     "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramV3MorphologyContract"
   );

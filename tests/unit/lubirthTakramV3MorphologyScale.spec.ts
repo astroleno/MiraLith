@@ -350,6 +350,14 @@ test("constructs morphology targets on the requested spherical arc", async () =>
     const cameraRadial = frame.cameraEcefMeters.map((value) =>
       value / Math.hypot(...frame.cameraEcefMeters)
     );
+    const lineOfSight = frame.targetEcefMeters.map((value, index) =>
+      value - frame.cameraEcefMeters[index]!
+    );
+    const lineOfSightLength = Math.hypot(...lineOfSight);
+    const lineOfSightDotEast = lineOfSight.reduce((total, value, index) =>
+      total + value / lineOfSightLength * frame.eastEcef[index]!, 0
+    );
+    expect(Math.abs(lineOfSightDotEast)).toBeGreaterThan(0.95);
     const targetRadial = frame.targetRadialEcef;
     const targetPhi = Math.atan2(targetRadial[1], targetRadial[0]);
     const targetUv = [
@@ -376,7 +384,7 @@ test("constructs morphology targets on the requested spherical arc", async () =>
   }
 });
 
-test("derives the common repeat interval and checkpoint from audit evidence", async () => {
+test("rejects raw dual-axis acceptance under view-space foreshortening", async () => {
   const contract = await import(modulePath) as MorphologyContractModule;
   const feasibleAudits = [
     {
