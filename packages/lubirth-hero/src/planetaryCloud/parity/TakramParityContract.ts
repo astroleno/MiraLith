@@ -76,6 +76,32 @@ export function shouldCaptureTakramHistoryFirstFrame(input: {
     !input.alreadyCaptured;
 }
 
+export interface TakramParityHistoryEpochInput {
+  assetGeneration: number;
+  atmosphereGeneration: number;
+  coordinateMode: string;
+  diagnostic: string;
+  input: string;
+  localWeatherHash: string | null;
+  morphologyCandidate: string | null;
+  morphologyView: string | null;
+  rendererConfigurationHash: string | null;
+}
+
+export function buildTakramParityHistoryEpoch(input: TakramParityHistoryEpochInput) {
+  return JSON.stringify([
+    input.assetGeneration,
+    input.atmosphereGeneration,
+    input.coordinateMode,
+    input.diagnostic,
+    input.input,
+    input.localWeatherHash,
+    input.morphologyCandidate,
+    input.morphologyView,
+    input.rendererConfigurationHash
+  ]);
+}
+
 export interface TakramParityHistoryFirstFrameCapture {
   dataUrl: string;
   height: number;

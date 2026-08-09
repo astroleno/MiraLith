@@ -36,6 +36,7 @@ import {
   TAKRAM_PARITY_STOCK_ASSETS,
   TAKRAM_PARITY_V3_LADDER_SPHERICAL_UV,
   TAKRAM_PARITY_V3_OPENING_PRESET,
+  buildTakramParityHistoryEpoch,
   buildTakramParityRendererFingerprint,
   hashTakramParityRendererFingerprint,
   isTakramParityAltitudeLadderDiagnostic,
@@ -471,11 +472,10 @@ export function TakramStockParityPipeline({
   const publishedTelemetryRef = useRef("");
   const bridgeReadyRef = useRef(false);
   const transformFallbackRef = useRef<TakramParityTelemetry["transformFallback"]>(null);
-  const historyDiagnosticRef = useRef<TakramParityDiagnostic | null>(null);
+  const historyEpochRef = useRef("");
   const historyFirstFrameCaptureRef = useRef<TakramParityHistoryFirstFrameCapture | null>(null);
   const appliedDiagnosticRef = useRef<TakramParityDiagnostic | null>(null);
   const nativeFrameCountRef = useRef(0);
-  const nativeFrameEpochRef = useRef("");
   const ladderCaptureRef = useRef<TakramAltitudeLadderCapture>({
     phase: "normal",
     cloudOnFinalReadback: null,
@@ -524,13 +524,6 @@ export function TakramStockParityPipeline({
       telemetry: createEmptyAltitudeLadderTelemetry(altitudeMeters ?? 2_500)
     };
   }, [altitudeMeters, diagnostic]);
-
-  useEffect(() => {
-    historyFirstFrameCaptureRef.current = null;
-    if (typeof window !== "undefined") {
-      delete window.__MiraLithTakramHistoryFirstFrame;
-    }
-  }, [diagnostic, input, morphologyCandidate, morphologyView]);
 
   useEffect(() => {
     earthTexture.colorSpace = SRGBColorSpace;
@@ -602,16 +595,6 @@ export function TakramStockParityPipeline({
       clouds.cloudsPass.currentMaterial.needsUpdate = true;
     }
     appliedDiagnosticRef.current = diagnostic;
-
-    if (diagnostic === "history-reset-first" && historyDiagnosticRef.current !== diagnostic) {
-      historyDiagnosticRef.current = diagnostic;
-      // Toggle synchronously so the native pass reallocates its history, then
-      // returns to the frozen stock temporal mode before the next render. The
-      // next output is therefore the first frame of a genuine history reset.
-      clouds.temporalUpscale = false;
-      clouds.temporalUpscale = true;
-    }
-    historyDiagnosticRef.current = diagnostic;
 
     return () => {
       appliedDiagnosticRef.current = null;
@@ -748,17 +731,38 @@ export function TakramStockParityPipeline({
     const nativePipelineReady = assetsState.ready && atmosphereState.ready &&
       bridgeReadyRef.current && clouds !== null && aerialPerspective !== null &&
       appliedDiagnosticRef.current === diagnostic;
-    const nativeFrameEpoch = [
-      assetsState.assetGeneration,
-      atmosphereState.atmosphereGeneration,
+    const rendererFingerprint = clouds && aerialPerspective
+      ? buildTakramParityRendererFingerprint({
+        clouds,
+        aerialPerspective,
+        sharedAssets: TAKRAM_PARITY_SHARED_ASSET_HASHES
+      })
+      : null;
+    const rendererFingerprintHash = rendererFingerprint
+      ? hashTakramParityRendererFingerprint(rendererFingerprint)
+      : null;
+    const historyEpoch = buildTakramParityHistoryEpoch({
+      assetGeneration: assetsState.assetGeneration,
+      atmosphereGeneration: atmosphereState.atmosphereGeneration,
       coordinateMode,
       diagnostic,
       input,
-      assetsState.assets?.localWeatherSha256 ?? "pending"
-    ].join(":");
-    if (nativeFrameEpochRef.current !== nativeFrameEpoch) {
-      nativeFrameEpochRef.current = nativeFrameEpoch;
+      localWeatherHash: assetsState.assets?.localWeatherSha256 ?? null,
+      morphologyCandidate: resolvedMorphologyCandidate?.id ?? null,
+      morphologyView: morphologyView ?? null,
+      rendererConfigurationHash: rendererFingerprintHash
+    });
+    if (historyEpochRef.current !== historyEpoch) {
+      historyEpochRef.current = historyEpoch;
       nativeFrameCountRef.current = 0;
+      historyFirstFrameCaptureRef.current = null;
+      if (typeof window !== "undefined") {
+        delete window.__MiraLithTakramHistoryFirstFrame;
+      }
+      if (clouds) {
+        clouds.temporalUpscale = false;
+        clouds.temporalUpscale = true;
+      }
     }
     if (nativePipelineReady) {
       nativeFrameCountRef.current += 1;
@@ -772,13 +776,6 @@ export function TakramStockParityPipeline({
       : Number.NaN;
     const cameraHeightMeters = resolveCameraHeightMeters(camera, bridge?.worldToEcef) ??
       (Number.isFinite(cameraHeightMetersValue) ? cameraHeightMetersValue : null);
-    const rendererFingerprint = clouds && aerialPerspective
-      ? buildTakramParityRendererFingerprint({
-        clouds,
-        aerialPerspective,
-        sharedAssets: TAKRAM_PARITY_SHARED_ASSET_HASHES
-      })
-      : null;
     const morphologyScaleAudit = morphologyView
       ? resolveMorphologyScaleAudit(
         camera,
@@ -821,9 +818,7 @@ export function TakramStockParityPipeline({
           },
       progress: clampOpeningProgress(progress),
       rendererFingerprint,
-      rendererFingerprintHash: rendererFingerprint
-        ? hashTakramParityRendererFingerprint(rendererFingerprint)
-        : null,
+      rendererFingerprintHash,
       presentationPreset: input === "v3" && view === "opening"
         ? "v3-opening-coarse"
         : "official-stock",

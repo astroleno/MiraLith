@@ -129,6 +129,24 @@ test("classifies morphology metrics with explicit non-flat and stability floors"
 
   expect(metrics.classifyTakramV3MorphologyImageMetrics({
     cloudPixelFraction: 0.2,
+    connectedComponentCount: 12,
+    largestConnectedAreaFraction: 0.2,
+    singlePixelFragmentFraction: 0.005,
+    smallFragmentFraction: 0.02,
+    edgeDensity: 0.2,
+    clearAirLeakage: 0.01,
+    firstFrameConvergedLumaDelta: 0.02,
+    internalLumaStdDev: 0.1,
+    multiScaleLumaVariation: 0.08,
+    gradientEnergy: 0.06,
+    localPeakDensity: 0.03
+  })).toEqual({
+    pass: false,
+    failed: ["minimum-connected-mass"]
+  });
+
+  expect(metrics.classifyTakramV3MorphologyImageMetrics({
+    cloudPixelFraction: 0.2,
     connectedComponentCount: 20,
     largestConnectedAreaFraction: 0.99,
     singlePixelFragmentFraction: 0.1,

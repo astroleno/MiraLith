@@ -55,6 +55,15 @@ type MorphologyTelemetry = {
     detailWavelengthMeters: number;
     pixelsPerMeter: { east: number; north: number; up: number };
     horizontalPixelsPerMeter: number;
+    horizontalProjectionJacobian: {
+      east: [number, number];
+      north: [number, number];
+      singularValues: {
+        major: number;
+        minor: number;
+        conditionNumber: number;
+      };
+    };
     shapeProjectedPixelsByAxis: { east: number; north: number };
     detailProjectedPixelsByAxis: { east: number; north: number };
     shapeProjectedPixels: number;
@@ -307,6 +316,68 @@ test("morphology candidate query is V3-only and fails closed for stock", async (
   await expect(page.locator("canvas")).toHaveCount(0);
 });
 
+test("in-place morphology changes recapture exact native frame one", async ({ page }) => {
+  const route = page.locator("[data-takram-parity-route='true']");
+  await page.goto(
+    "/lubirth-takram-parity-spike?input=v3&view=opening&progress=0.06&diagnostic=history-reset-first&morphologyView=near-oblique&morphologyCandidate=baseline"
+  );
+  await waitForNativeMorphology(page);
+  const baselineCapture = await page.evaluate(() => window.__MiraLithTakramHistoryFirstFrame);
+  expect(baselineCapture).toMatchObject({ nativeFrameCount: 1 });
+
+  await page.evaluate(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set(
+      "morphologyCandidate",
+      "horizontal-near-oblique-shape-32-detail-4"
+    );
+    window.history.pushState({}, "", url);
+  });
+  await expect(route).toHaveAttribute(
+    "data-morphology-candidate",
+    "horizontal-near-oblique-shape-32-detail-4"
+  );
+  await expect.poll(
+    () => page.evaluate(() => ({
+      active: window.__MiraLithTakramParity?.active,
+      candidate: window.__MiraLithTakramParity?.morphologyCandidate,
+      nativeFrameCount: window.__MiraLithTakramParity?.historyFirstFrameCapture?.nativeFrameCount
+    })),
+    { timeout: 180_000 }
+  ).toEqual({
+    active: true,
+    candidate: "horizontal-near-oblique-shape-32-detail-4",
+    nativeFrameCount: 1
+  });
+  const candidateCapture = await page.evaluate(() => window.__MiraLithTakramHistoryFirstFrame);
+  expect(candidateCapture).toMatchObject({ nativeFrameCount: 1 });
+
+  await page.evaluate(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("morphologyView", "aerial-oblique");
+    window.history.pushState({}, "", url);
+  });
+  await expect(route).toHaveAttribute("data-morphology-view", "aerial-oblique");
+  await expect.poll(
+    () => page.evaluate(() => ({
+      active: window.__MiraLithTakramParity?.active,
+      candidate: window.__MiraLithTakramParity?.morphologyCandidate,
+      nativeFrameCount: window.__MiraLithTakramParity?.historyFirstFrameCapture?.nativeFrameCount,
+      view: window.__MiraLithTakramParity?.morphologyView
+    })),
+    { timeout: 180_000 }
+  ).toEqual({
+    active: true,
+    candidate: "horizontal-near-oblique-shape-32-detail-4",
+    nativeFrameCount: 1,
+    view: "aerial-oblique"
+  });
+  const viewCapture = await page.evaluate(() => window.__MiraLithTakramHistoryFirstFrame);
+  expect(viewCapture).toMatchObject({ nativeFrameCount: 1 });
+  expect(candidateCapture?.dataUrl).not.toBe(baselineCapture?.dataUrl);
+  expect(viewCapture?.dataUrl).not.toBe(candidateCapture?.dataUrl);
+});
+
 test("scale audit reports projected shape, detail and layer thickness", async ({ page }) => {
   const records: Array<{ view: string; telemetry: MorphologyTelemetry }> = [];
   for (const morphologyView of reviewViews) {
@@ -323,6 +394,9 @@ test("scale audit reports projected shape, detail and layer thickness", async ({
     expect(audit.pixelsPerMeter.east).toBeGreaterThan(0);
     expect(audit.pixelsPerMeter.north).toBeGreaterThan(0);
     expect(audit.pixelsPerMeter.up).toBeGreaterThan(0);
+    expect(audit.horizontalProjectionJacobian.singularValues.major).toBeGreaterThan(0);
+    expect(audit.horizontalProjectionJacobian.singularValues.minor).toBeGreaterThan(0);
+    expect(audit.horizontalProjectionJacobian.singularValues.conditionNumber).toBeGreaterThanOrEqual(1);
     expect(audit.shapeProjectedPixels).toBeGreaterThan(0);
     expect(audit.detailProjectedPixels).toBeGreaterThan(0);
     expect(audit.layers).toHaveLength(4);
@@ -371,6 +445,116 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
   const morphologyMetrics = await import(
     "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramV3MorphologyMetrics"
   );
+  const preflightRecords: Array<{
+    view: typeof reviewViews[number];
+    screenshotSha256: string;
+    telemetry: MorphologyTelemetry;
+  }> = [];
+  for (const morphologyView of reviewViews) {
+    await page.goto(
+      `/lubirth-takram-parity-spike?input=v3&view=opening&progress=0.06&diagnostic=full&morphologyView=${morphologyView}&morphologyCandidate=baseline`
+    );
+    await waitForNativeMorphology(page);
+    const telemetry = await page.evaluate(() => window.__MiraLithTakramParity);
+    expect(telemetry?.morphologyScaleAudit).not.toBeNull();
+    const screenshot = await page.screenshot({ scale: "css" });
+    preflightRecords.push({
+      view: morphologyView,
+      screenshotSha256: createHash("sha256").update(screenshot).digest("hex"),
+      telemetry: telemetry!
+    });
+  }
+  const projectionInputs = preflightRecords.map(({ view, telemetry }) => ({
+    view,
+    pixelsPerMeter: {
+      east: telemetry.morphologyScaleAudit?.pixelsPerMeter.east ?? Number.NaN,
+      north: telemetry.morphologyScaleAudit?.pixelsPerMeter.north ?? Number.NaN
+    },
+    projectionConditionNumber:
+      telemetry.morphologyScaleAudit?.horizontalProjectionJacobian.singularValues.conditionNumber ??
+      Number.NaN
+  }));
+  const preflightCheckpoint = morphologyContract.resolveTakramV3HorizontalMorphologyCheckpoint({
+    audits: preflightRecords
+      .filter(({ view }) => view !== "opening-orbit")
+      .map(({ view, telemetry }) => ({
+        view,
+        pixelsPerMeter: {
+          east: telemetry.morphologyScaleAudit?.pixelsPerMeter.east ?? Number.NaN,
+          north: telemetry.morphologyScaleAudit?.pixelsPerMeter.north ?? Number.NaN
+        },
+        projectionConditionNumber:
+          telemetry.morphologyScaleAudit?.horizontalProjectionJacobian.singularValues.conditionNumber ??
+          Number.NaN,
+        originScreenPixels: telemetry.morphologyScaleAudit?.originScreenPixels ?? null,
+        viewport: { width: 1440, height: 960 }
+      })),
+    metricCandidateCount: 0,
+    passingMetricCandidateCount: 0
+  });
+  if (preflightCheckpoint.id === "VIEW_SPACE_ACCEPTANCE_CONTRACT_FAIL") {
+    const candidateResolution = morphologyContract.buildTakramV3MorphologyCandidateResolution(
+      projectionInputs
+    );
+    mkdirSync(evidenceDirectory, { recursive: true });
+    writeFileSync(
+      path.join(evidenceDirectory, "candidate-matrix.json"),
+      `${JSON.stringify({
+        schemaVersion: 2,
+        baseCommit: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
+        generatedAt: new Date().toISOString(),
+        status: "STOPPED_BEFORE_CANDIDATE_REPLAY",
+        reason: "VIEW_SPACE_ACCEPTANCE_CONTRACT_FAIL",
+        interpretation: {
+          axisMagnitudes: "diagnostic-only",
+          conditionNumberThreshold:
+            morphologyContract.TAKRAM_V3_MAX_VIEW_SPACE_CONDITION_NUMBER,
+          anisotropicEnuAuthorization: false,
+          historicalCandidateCaptures: "not-used-by-current-checkpoint"
+        },
+        fixedContract: {
+          coverage: 0.55,
+          weather: "v3",
+          renderer: "stock-takram-0.7.6",
+          replayViews: reviewViews
+        },
+        preflightRecords: preflightRecords.map(({ view, screenshotSha256, telemetry }) => ({
+          view,
+          screenshotSha256,
+          cameraHeightMeters: telemetry.cameraHeightMeters,
+          morphologyScaleAudit: telemetry.morphologyScaleAudit,
+          rendererFingerprintHash: telemetry.rendererFingerprintHash
+        })),
+        candidateResolution,
+        commonRepeatIntervals: {
+          role: "diagnostic-only-until-view-space-contract-is-replaced",
+          shape: morphologyContract.resolveTakramV3MorphologyCommonRepeatInterval(
+            projectionInputs.filter(({ view }) => view !== "opening-orbit"),
+            "shape"
+          ),
+          detail: morphologyContract.resolveTakramV3MorphologyCommonRepeatInterval(
+            projectionInputs.filter(({ view }) => view !== "opening-orbit"),
+            "detail"
+          )
+        },
+        connectedAreaSemantics: {
+          maximumDominance: "diagnostic-only",
+          minimumConnectedMass: "fragmentation-gate"
+        },
+        checkpoint: {
+          ...preflightCheckpoint,
+          task4Unlocked: false,
+          task5Unlocked: false,
+          task6Unlocked: false,
+          task0pLocked: true
+        }
+      }, null, 2)}\n`
+    );
+    expect(candidateResolution.generatedCandidates.every((candidate) =>
+      candidate.axisRangePass && candidate.physicalRangePass
+    )).toBe(true);
+    return;
+  }
   const candidates = Object.keys(
     morphologyContract.TAKRAM_V3_MORPHOLOGY_HORIZONTAL_CANDIDATES
   );
@@ -508,6 +692,8 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
           east: audit?.pixelsPerMeter.east ?? Number.NaN,
           north: audit?.pixelsPerMeter.north ?? Number.NaN
         },
+        projectionConditionNumber:
+          audit?.horizontalProjectionJacobian.singularValues.conditionNumber ?? Number.NaN,
         originScreenPixels: audit?.originScreenPixels ?? null,
         viewport: { width: 1440, height: 960 }
       };
@@ -541,7 +727,11 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
             north: atlas.find((record) =>
               record.view === view && record.diagnostic === "full"
             )?.telemetry.morphologyScaleAudit?.pixelsPerMeter.north ?? Number.NaN
-          }
+          },
+          projectionConditionNumber: atlas.find((record) =>
+            record.view === view && record.diagnostic === "full"
+          )?.telemetry.morphologyScaleAudit?.horizontalProjectionJacobian.singularValues.conditionNumber ??
+            Number.NaN
         }))
       ),
       candidates: candidates.map((candidate) => ({
@@ -574,7 +764,11 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
               north: atlas.find((record) =>
                 record.view === view && record.diagnostic === "full"
               )?.telemetry.morphologyScaleAudit?.pixelsPerMeter.north ?? Number.NaN
-            }
+            },
+            projectionConditionNumber: atlas.find((record) =>
+              record.view === view && record.diagnostic === "full"
+            )?.telemetry.morphologyScaleAudit?.horizontalProjectionJacobian.singularValues.conditionNumber ??
+              Number.NaN
           })),
           "shape"
         ),
@@ -588,7 +782,11 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
               north: atlas.find((record) =>
                 record.view === view && record.diagnostic === "full"
               )?.telemetry.morphologyScaleAudit?.pixelsPerMeter.north ?? Number.NaN
-            }
+            },
+            projectionConditionNumber: atlas.find((record) =>
+              record.view === view && record.diagnostic === "full"
+            )?.telemetry.morphologyScaleAudit?.horizontalProjectionJacobian.singularValues.conditionNumber ??
+              Number.NaN
           })),
           "detail"
         )

@@ -44,6 +44,15 @@ export interface TakramV3MorphologyScaleAudit {
   horizontalPixelsPerMeter: number;
   shapeProjectedPixelsByAxis: Record<"east" | "north", number>;
   detailProjectedPixelsByAxis: Record<"east" | "north", number>;
+  horizontalProjectionJacobian: {
+    east: readonly [number, number];
+    north: readonly [number, number];
+    singularValues: {
+      major: number;
+      minor: number;
+      conditionNumber: number;
+    };
+  };
   shapeProjectedPixels: number;
   detailProjectedPixels: number;
   shapeStatus: TakramV3MorphologyPixelStatus;
@@ -102,7 +111,7 @@ function projectEcefPoint(
   ] as const;
 }
 
-function projectedPixelsPerMeter(
+function projectedPixelDeltaPerMeter(
   origin: readonly [number, number, number],
   axis: readonly [number, number, number],
   segmentMeters: number,
@@ -117,9 +126,32 @@ function projectedPixelsPerMeter(
     origin[2] + axis[2] * segmentMeters
   ], ecefToWorld, viewProjection, viewport);
   if (!start || !end || !Number.isFinite(segmentMeters) || segmentMeters <= 0) {
-    return Number.NaN;
+    return [Number.NaN, Number.NaN] as const;
   }
-  return Math.hypot(end[0] - start[0], end[1] - start[1]) / segmentMeters;
+  return [
+    (end[0] - start[0]) / segmentMeters,
+    (end[1] - start[1]) / segmentMeters
+  ] as const;
+}
+
+function resolveSingularValues(
+  east: readonly [number, number],
+  north: readonly [number, number]
+) {
+  const eastSquared = east[0] ** 2 + east[1] ** 2;
+  const northSquared = north[0] ** 2 + north[1] ** 2;
+  const crossTerm = east[0] * north[0] + east[1] * north[1];
+  const trace = eastSquared + northSquared;
+  const discriminant = Math.sqrt(
+    Math.max(0, (eastSquared - northSquared) ** 2 + 4 * crossTerm ** 2)
+  );
+  const major = Math.sqrt(Math.max(0, (trace + discriminant) / 2));
+  const minor = Math.sqrt(Math.max(0, (trace - discriminant) / 2));
+  return {
+    major,
+    minor,
+    conditionNumber: minor > EPSILON ? major / minor : Number.POSITIVE_INFINITY
+  };
 }
 
 export function classifyProjectedPixels(
@@ -154,8 +186,8 @@ export function auditMorphologyScale(
   const ecefToWorld = new Matrix4().fromArray([...input.ecefToWorldMatrix]);
   const segmentMeters = input.segmentMeters ?? DEFAULT_SEGMENT_METERS;
   const axes = resolveAxes(input);
-  const pixelsPerMeter = {
-    east: projectedPixelsPerMeter(
+  const projectedDeltas = {
+    east: projectedPixelDeltaPerMeter(
       input.originEcefMeters,
       axes.east,
       segmentMeters,
@@ -163,7 +195,7 @@ export function auditMorphologyScale(
       viewProjection,
       input.viewport
     ),
-    north: projectedPixelsPerMeter(
+    north: projectedPixelDeltaPerMeter(
       input.originEcefMeters,
       axes.north,
       segmentMeters,
@@ -171,7 +203,7 @@ export function auditMorphologyScale(
       viewProjection,
       input.viewport
     ),
-    up: projectedPixelsPerMeter(
+    up: projectedPixelDeltaPerMeter(
       input.originEcefMeters,
       axes.up,
       segmentMeters,
@@ -179,6 +211,16 @@ export function auditMorphologyScale(
       viewProjection,
       input.viewport
     )
+  };
+  const pixelsPerMeter = {
+    east: Math.hypot(...projectedDeltas.east),
+    north: Math.hypot(...projectedDeltas.north),
+    up: Math.hypot(...projectedDeltas.up)
+  };
+  const horizontalProjectionJacobian = {
+    east: projectedDeltas.east,
+    north: projectedDeltas.north,
+    singularValues: resolveSingularValues(projectedDeltas.east, projectedDeltas.north)
   };
   const horizontalPixelsPerMeter = Math.sqrt(
     (pixelsPerMeter.east ** 2 + pixelsPerMeter.north ** 2) / 2
@@ -217,6 +259,7 @@ export function auditMorphologyScale(
     horizontalPixelsPerMeter,
     shapeProjectedPixelsByAxis,
     detailProjectedPixelsByAxis,
+    horizontalProjectionJacobian,
     shapeProjectedPixels,
     detailProjectedPixels,
     shapeStatus: classifyProjectedPixels(shapeProjectedPixels, "shape"),

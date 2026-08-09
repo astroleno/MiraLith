@@ -281,7 +281,7 @@ export function classifyTakramV3MorphologyImageMetrics(
     failed.push("cloud-pixel-fraction");
   }
   if (metrics.largestConnectedAreaFraction < thresholds.minimumLargestConnectedAreaFraction) {
-    failed.push("largest-connected-area");
+    failed.push("minimum-connected-mass");
   }
   if (metrics.singlePixelFragmentFraction > thresholds.maximumSinglePixelFragmentFraction) {
     failed.push("single-pixel-fragments");

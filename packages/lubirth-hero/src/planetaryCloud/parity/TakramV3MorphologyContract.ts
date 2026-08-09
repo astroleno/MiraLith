@@ -182,6 +182,7 @@ export const TAKRAM_V3_MORPHOLOGY_PHYSICAL_RANGES: Readonly<
 export interface TakramV3MorphologyProjectionScaleInput {
   view: TakramV3MorphologyViewId;
   pixelsPerMeter: Readonly<{ east: number; north: number }>;
+  projectionConditionNumber: number;
 }
 
 export interface TakramV3MorphologyReviewFrame {
@@ -202,6 +203,7 @@ export interface TakramV3MorphologyRepeatInterval {
 
 export type TakramV3HorizontalMorphologyCheckpointId =
   | "MORPHOLOGY_SCALE_EVIDENCE_INVALID"
+  | "VIEW_SPACE_ACCEPTANCE_CONTRACT_FAIL"
   | "HORIZONTAL_MORPHOLOGY_SCALE_FAIL"
   | "HORIZONTAL_MORPHOLOGY_CANDIDATE_FAIL"
   | "HORIZONTAL_MORPHOLOGY_VISUAL_REVIEW_REQUIRED";
@@ -211,6 +213,8 @@ const NEAR_MORPHOLOGY_VIEWS = Object.freeze([
   "aerial-oblique",
   "near-orbit"
 ] as const);
+
+export const TAKRAM_V3_MAX_VIEW_SPACE_CONDITION_NUMBER = 3;
 
 function vectorLength(vector: readonly [number, number, number]) {
   return Math.hypot(vector[0], vector[1], vector[2]);
@@ -325,11 +329,18 @@ export function resolveTakramV3HorizontalMorphologyCheckpoint(input: {
       && audit.pixelsPerMeter.east > 0
       && Number.isFinite(audit.pixelsPerMeter.north)
       && audit.pixelsPerMeter.north > 0
+      && Number.isFinite(audit.projectionConditionNumber)
+      && audit.projectionConditionNumber >= 1
       && x >= 0 && x <= audit.viewport.width
       && y >= 0 && y <= audit.viewport.height;
   });
   if (!evidenceValid) {
     return { id: "MORPHOLOGY_SCALE_EVIDENCE_INVALID", task3Unlocked: false };
+  }
+  if (nearAudits.some((audit) =>
+    audit!.projectionConditionNumber > TAKRAM_V3_MAX_VIEW_SPACE_CONDITION_NUMBER
+  )) {
+    return { id: "VIEW_SPACE_ACCEPTANCE_CONTRACT_FAIL", task3Unlocked: false };
   }
   const projectionInputs = nearAudits as TakramV3MorphologyProjectionScaleInput[];
   const shape = resolveTakramV3MorphologyCommonRepeatInterval(projectionInputs, "shape");
@@ -357,15 +368,27 @@ export interface TakramV3MorphologyGeneratedCandidate {
   axisRangePass: boolean;
 }
 
+export type TakramV3MorphologyCandidateRejectionReason =
+  | "screen-axis-range"
+  | "physical-range";
+
+export interface TakramV3MorphologyRejectedCandidate
+  extends TakramV3MorphologyGeneratedCandidate {
+  rejectionReasons: readonly TakramV3MorphologyCandidateRejectionReason[];
+}
+
 function withinRange(valueKm: number, range: readonly [number, number]) {
   return valueKm >= range[0] && valueKm <= range[1];
 }
 
-/** Generate the Task 2 matrix directly from measured screen scale. */
-export function buildTakramV3MorphologyCandidates(
+/** Resolve accepted and rejected Task 2 candidates from measured screen scale. */
+export function buildTakramV3MorphologyCandidateResolution(
   inputs: readonly TakramV3MorphologyProjectionScaleInput[]
-): readonly TakramV3MorphologyGeneratedCandidate[] {
-  return inputs.flatMap((input) => {
+): {
+  generatedCandidates: readonly TakramV3MorphologyGeneratedCandidate[];
+  rejectedCandidates: readonly TakramV3MorphologyRejectedCandidate[];
+} {
+  const candidates = inputs.flatMap((input) => {
     const range = TAKRAM_V3_MORPHOLOGY_PHYSICAL_RANGES[input.view];
     const { east, north } = input.pixelsPerMeter;
     if (![east, north].every((pixelsPerMeter) =>
@@ -405,9 +428,30 @@ export function buildTakramV3MorphologyCandidates(
             withinRange(detailWavelengthMeters / 1_000, range.detailWavelengthKm),
           axisRangePass
         };
-      }).filter((candidate) => candidate.axisRangePass)
+      })
     );
   });
+  return {
+    generatedCandidates: candidates.filter((candidate) =>
+      candidate.axisRangePass && candidate.physicalRangePass
+    ),
+    rejectedCandidates: candidates.filter((candidate) =>
+      !candidate.axisRangePass || !candidate.physicalRangePass
+    ).map((candidate) => ({
+      ...candidate,
+      rejectionReasons: [
+        ...(!candidate.axisRangePass ? ["screen-axis-range" as const] : []),
+        ...(!candidate.physicalRangePass ? ["physical-range" as const] : [])
+      ]
+    }))
+  };
+}
+
+/** Generate only candidates that satisfy both screen and physical contracts. */
+export function buildTakramV3MorphologyCandidates(
+  inputs: readonly TakramV3MorphologyProjectionScaleInput[]
+): readonly TakramV3MorphologyGeneratedCandidate[] {
+  return buildTakramV3MorphologyCandidateResolution(inputs).generatedCandidates;
 }
 
 export function resolveTakramV3MorphologyView(

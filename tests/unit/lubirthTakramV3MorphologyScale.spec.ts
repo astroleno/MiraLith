@@ -31,6 +31,7 @@ type MorphologyContractModule = {
   buildTakramV3MorphologyCandidates(inputs: ReadonlyArray<{
     view: "near-oblique" | "aerial-oblique" | "near-orbit" | "opening-orbit";
     pixelsPerMeter: { east: number; north: number };
+    projectionConditionNumber: number;
   }>): ReadonlyArray<{
     view: string;
     targetShapePixels: number;
@@ -39,6 +40,16 @@ type MorphologyContractModule = {
     shapeDetailRepeat: number;
     physicalRangePass: boolean;
   }>;
+  buildTakramV3MorphologyCandidateResolution(inputs: ReadonlyArray<{
+    view: "near-oblique" | "aerial-oblique" | "near-orbit" | "opening-orbit";
+    pixelsPerMeter: { east: number; north: number };
+    projectionConditionNumber: number;
+  }>): {
+    generatedCandidates: ReadonlyArray<{ physicalRangePass: true; axisRangePass: true }>;
+    rejectedCandidates: ReadonlyArray<{
+      rejectionReasons: ReadonlyArray<"screen-axis-range" | "physical-range">;
+    }>;
+  };
   resolveTakramV3MorphologyReviewFrame(
     view: MorphologyContractModule["TAKRAM_V3_MORPHOLOGY_VIEWS"][number],
     planetRadiusMeters: number
@@ -54,6 +65,7 @@ type MorphologyContractModule = {
     inputs: ReadonlyArray<{
       view: "near-oblique" | "aerial-oblique" | "near-orbit" | "opening-orbit";
       pixelsPerMeter: { east: number; north: number };
+      projectionConditionNumber: number;
     }>,
     kind: "shape" | "detail"
   ): {
@@ -65,6 +77,7 @@ type MorphologyContractModule = {
     audits: ReadonlyArray<{
       view: "near-oblique" | "aerial-oblique" | "near-orbit";
       pixelsPerMeter: { east: number; north: number };
+      projectionConditionNumber: number;
       originScreenPixels: readonly [number, number] | null;
       viewport: { width: number; height: number };
     }>;
@@ -156,11 +169,19 @@ test("freezes the V3 morphology review views and baseline contract", async () =>
   expect(contract.resolveTakramV3MorphologyView("opening-orbit")?.usesOpeningFrame).toBe(true);
   expect(contract.resolveTakramV3MorphologyView("unknown")).toBeNull();
   const generated = contract.buildTakramV3MorphologyCandidates([
-    { view: "near-oblique", pixelsPerMeter: { east: 0.001, north: 0.001 } },
-    { view: "near-orbit", pixelsPerMeter: { east: 0.00025, north: 0.00025 } }
+    {
+      view: "near-oblique",
+      pixelsPerMeter: { east: 0.001, north: 0.001 },
+      projectionConditionNumber: 1
+    },
+    {
+      view: "near-orbit",
+      pixelsPerMeter: { east: 0.00025, north: 0.00025 },
+      projectionConditionNumber: 1
+    }
   ]);
-  expect(generated).toHaveLength(18);
-  expect(generated.filter((candidate) => candidate.physicalRangePass)).toHaveLength(2);
+  expect(generated).toHaveLength(2);
+  expect(generated.every((candidate) => candidate.physicalRangePass)).toBe(true);
   expect(generated.find((candidate) =>
     candidate.view === "near-orbit" &&
     candidate.targetShapePixels === 16 &&
@@ -170,6 +191,18 @@ test("freezes the V3 morphology review views and baseline contract", async () =>
     shapeDetailRepeat: 0.0000625,
     physicalRangePass: true
   });
+  const resolution = contract.buildTakramV3MorphologyCandidateResolution([
+    {
+      view: "opening-orbit",
+      pixelsPerMeter: { east: 0.0000712815, north: 0.0001167938 },
+      projectionConditionNumber: 1.64
+    }
+  ]);
+  expect(resolution.generatedCandidates).toEqual([]);
+  expect(resolution.rejectedCandidates.length).toBeGreaterThan(0);
+  expect(resolution.rejectedCandidates.some((candidate) =>
+    candidate.rejectionReasons.includes("physical-range")
+  )).toBe(true);
   expect(parityContract.resolveTakramParityRouteQuery(new URLSearchParams(
     "input=v3&view=opening&diagnostic=cloud-raw&morphologyView=near-oblique"
   ))).toEqual({
@@ -218,6 +251,15 @@ test("audits repeat wavelengths and projected pixels in ECEF metres", async () =
       pixelsPerMeter: { east: number; north: number; up: number };
       shapeProjectedPixelsByAxis: { east: number; north: number };
       detailProjectedPixelsByAxis: { east: number; north: number };
+      horizontalProjectionJacobian: {
+        east: readonly [number, number];
+        north: readonly [number, number];
+        singularValues: {
+          major: number;
+          minor: number;
+          conditionNumber: number;
+        };
+      };
       shapeProjectedPixels: number;
       detailProjectedPixels: number;
       layers: ReadonlyArray<{ projectedThicknessPixels: number }>;
@@ -257,6 +299,11 @@ test("audits repeat wavelengths and projected pixels in ECEF metres", async () =
   expect(result.shapeProjectedPixelsByAxis).toEqual({ east: 200_000, north: 200_000 });
   expect(result.detailProjectedPixelsByAxis.east).toBeCloseTo(8_333.333333333, 3);
   expect(result.detailProjectedPixelsByAxis.north).toBeCloseTo(8_333.333333333, 3);
+  expect(result.horizontalProjectionJacobian.singularValues).toEqual({
+    major: 5,
+    minor: 5,
+    conditionNumber: 1
+  });
   expect(result.shapeProjectedPixels).toBeCloseTo(200_000, 3);
   expect(result.detailProjectedPixels).toBeCloseTo(8_333.333333333, 3);
   expect(result.layers.map((layer) => layer.projectedThicknessPixels)).toEqual([130_000, 250_000]);
@@ -332,9 +379,21 @@ test("constructs morphology targets on the requested spherical arc", async () =>
 test("derives the common repeat interval and checkpoint from audit evidence", async () => {
   const contract = await import(modulePath) as MorphologyContractModule;
   const feasibleAudits = [
-    { view: "near-oblique" as const, pixelsPerMeter: { east: 0.001, north: 0.0012 } },
-    { view: "aerial-oblique" as const, pixelsPerMeter: { east: 0.0015, north: 0.0014 } },
-    { view: "near-orbit" as const, pixelsPerMeter: { east: 0.002, north: 0.0018 } }
+    {
+      view: "near-oblique" as const,
+      pixelsPerMeter: { east: 0.001, north: 0.0012 },
+      projectionConditionNumber: 1.2
+    },
+    {
+      view: "aerial-oblique" as const,
+      pixelsPerMeter: { east: 0.0015, north: 0.0014 },
+      projectionConditionNumber: 1.1
+    },
+    {
+      view: "near-orbit" as const,
+      pixelsPerMeter: { east: 0.002, north: 0.0018 },
+      projectionConditionNumber: 1.2
+    }
   ];
   expect(contract.resolveTakramV3MorphologyCommonRepeatInterval(feasibleAudits, "shape"))
     .toMatchObject({ feasible: true, minimum: 0.000041666666666666665, maximum: 0.0000625 });
@@ -381,12 +440,30 @@ test("derives the common repeat interval and checkpoint from audit evidence", as
 
   const anisotropicAudit = [{
     view: "near-oblique" as const,
-    pixelsPerMeter: { east: 0.001, north: 0.0135 }
+    pixelsPerMeter: { east: 0.001, north: 0.0135 },
+    projectionConditionNumber: 13.5
   }];
   expect(contract.resolveTakramV3MorphologyCommonRepeatInterval(anisotropicAudit, "shape"))
     .toMatchObject({ feasible: false });
   expect(contract.resolveTakramV3MorphologyCommonRepeatInterval(anisotropicAudit, "detail"))
     .toMatchObject({ feasible: false });
+
+  expect(contract.resolveTakramV3HorizontalMorphologyCheckpoint({
+    audits: [
+      {
+        ...onscreenAudits[0]!,
+        pixelsPerMeter: { east: 0.001, north: 0.0135 },
+        projectionConditionNumber: 13.5
+      },
+      onscreenAudits[1]!,
+      onscreenAudits[2]!
+    ],
+    metricCandidateCount: 3,
+    passingMetricCandidateCount: 1
+  })).toEqual({
+    id: "VIEW_SPACE_ACCEPTANCE_CONTRACT_FAIL",
+    task3Unlocked: false
+  });
 });
 
 test("captures temporal history only on the exact first native frame", async () => {
@@ -417,4 +494,45 @@ test("captures temporal history only on the exact first native frame", async () 
     nativeFrameCount: 1,
     alreadyCaptured: false
   })).toBe(false);
+});
+
+test("changes the temporal history epoch for candidate, view and renderer changes", async () => {
+  const parityContract = await import(parityContractModulePath) as {
+    buildTakramParityHistoryEpoch(input: {
+      assetGeneration: number;
+      atmosphereGeneration: number;
+      coordinateMode: string;
+      diagnostic: string;
+      input: string;
+      localWeatherHash: string | null;
+      morphologyCandidate: string | null;
+      morphologyView: string | null;
+      rendererConfigurationHash: string | null;
+    }): string;
+  };
+  const baseline = {
+    assetGeneration: 2,
+    atmosphereGeneration: 3,
+    coordinateMode: "lubirth-bridge",
+    diagnostic: "history-reset-first",
+    input: "v3",
+    localWeatherHash: "weather-hash",
+    morphologyCandidate: "baseline",
+    morphologyView: "near-oblique",
+    rendererConfigurationHash: "renderer-hash"
+  };
+  const epoch = parityContract.buildTakramParityHistoryEpoch(baseline);
+  expect(parityContract.buildTakramParityHistoryEpoch({
+    ...baseline,
+    morphologyCandidate: "horizontal-near-oblique-shape-32-detail-4"
+  })).not.toBe(epoch);
+  expect(parityContract.buildTakramParityHistoryEpoch({
+    ...baseline,
+    morphologyView: "aerial-oblique"
+  })).not.toBe(epoch);
+  expect(parityContract.buildTakramParityHistoryEpoch({
+    ...baseline,
+    rendererConfigurationHash: "changed-renderer-hash"
+  })).not.toBe(epoch);
+  expect(parityContract.buildTakramParityHistoryEpoch({ ...baseline })).toBe(epoch);
 });
