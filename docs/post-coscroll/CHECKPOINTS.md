@@ -237,6 +237,6 @@ CP1.2 的 access matrix、history、production isolation 与独立 local-preview
 
 ## CP1.3 — Playback / Scroll State Model
 
-状态：`IN REVIEW — PLAN CHANGES ADDRESSED (ROUND 2) / IMPLEMENTATION CLOSED，2026-08-09`
+状态：`PASS — PLAN / IMPLEMENTATION OPEN，2026-08-09`
 
-Unit 3 的详细边界、字段、TDD 顺序和验收矩阵记录在 [Unit 3 implementation plan](../plans/2026-08-09-001-unit3-handoff-recovery-state-contract-plan.md)。第二轮 review 指出的 Replay outcome、revision reset、attempt invalidation 与 pagehide 证明缺口已在计划中修订，等待独立复核；尚未开始 Task 1 RED，也未修改 production contract code。复核给出 GO 前 Unit 3 实现与 Unit 4 均继续关闭，不得提前进入正式 CoScroll → ArtBreeze 视觉接力。
+Unit 3 的详细边界、字段、TDD 顺序和验收矩阵记录在 [Unit 3 implementation plan](../plans/2026-08-09-001-unit3-handoff-recovery-state-contract-plan.md)。作者于 2026-08-09 针对提交 `f3b3504143b246451dc3efd650bbea5e489f1716`、计划 SHA-256 `3079232c28a7e07ed9d0db43236ee8c40dabbfdebce68f36bcf74a4389390c3e` 和 patch SHA-256 `17c8a73d5418ce23fc0ce02a47dbe9ef56d68dae17e4cdddf2025fe38d8900bf` 给出 `PASS — PLAN`，因此 Unit 3 implementation 已开放并从 Task 1 RED 开始。Unit 4 仍关闭，不得提前进入正式 CoScroll → ArtBreeze 视觉接力。
