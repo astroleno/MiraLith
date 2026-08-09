@@ -1,4 +1,5 @@
 import { Matrix4, Vector3, Vector4 } from "three";
+import type { TakramV3MorphologyViewId } from "./TakramV3MorphologyContract";
 
 export type TakramV3MorphologyScaleAxis = "east" | "north" | "up";
 export type TakramV3MorphologyPixelStatus =
@@ -15,6 +16,7 @@ export interface TakramV3MorphologyScaleLayerInput {
 }
 
 export interface TakramV3MorphologyScaleAuditInput {
+  view: TakramV3MorphologyViewId;
   viewProjectionMatrix: readonly number[];
   ecefToWorldMatrix: readonly number[];
   originEcefMeters: readonly [number, number, number];
@@ -118,7 +120,8 @@ function projectedPixelsPerMeter(
 
 export function classifyProjectedPixels(
   pixels: number,
-  axis: "shape" | "detail" | "thickness"
+  axis: "shape" | "detail" | "thickness",
+  view: TakramV3MorphologyViewId = "near-oblique"
 ): TakramV3MorphologyPixelStatus {
   if (!Number.isFinite(pixels) || pixels <= 0) return "unavailable";
   if (axis === "shape") {
@@ -132,7 +135,12 @@ export function classifyProjectedPixels(
     if (pixels >= 3 && pixels <= 10) return "target";
     return pixels < 3 ? "subpixel-risk" : "flat-risk";
   }
-  return pixels >= 12 ? "target" : "fragment-risk";
+  const minimumThicknessPixels = view === "opening-orbit"
+    ? 2
+    : view === "near-orbit"
+      ? 4
+      : 12;
+  return pixels >= minimumThicknessPixels ? "target" : "fragment-risk";
 }
 
 export function auditMorphologyScale(
@@ -181,7 +189,7 @@ export function auditMorphologyScale(
       ...layer,
       topAltitude: layer.altitude + layer.height,
       projectedThicknessPixels,
-      status: classifyProjectedPixels(projectedThicknessPixels, "thickness")
+      status: classifyProjectedPixels(projectedThicknessPixels, "thickness", input.view)
     };
   });
   const originScreen = projectEcefPoint(
@@ -204,4 +212,3 @@ export function auditMorphologyScale(
     segmentMeters
   };
 }
-

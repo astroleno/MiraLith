@@ -46,6 +46,7 @@ import {
   type TakramParityView
 } from "./TakramParityContract";
 import {
+  resolveTakramV3MorphologyReviewFrame,
   resolveTakramV3MorphologyCandidate,
   resolveTakramV3MorphologyView,
   type TakramV3MorphologyCandidateId,
@@ -95,9 +96,6 @@ const scratchSunDirectionEcef = new Vector3();
 const scratchSunDirectionWorld = new Vector3();
 const scratchCameraEcef = new Vector3();
 const scratchLadderRadial = new Vector3();
-const scratchMorphologyRadial = new Vector3();
-const scratchMorphologyEast = new Vector3();
-const scratchMorphologyNorth = new Vector3();
 const scratchMorphologyTarget = new Vector3();
 const scratchViewProjection = new Matrix4();
 const scratchEcefToWorld = new Matrix4();
@@ -297,30 +295,22 @@ function updateMorphologyNearFrame(
   earthGroup.position.set(0, 0, 0);
   earthGroup.quaternion.identity();
   earthGroup.scale.setScalar(1);
-
-  const [sphericalU, sphericalV] = reviewView.sphericalUv;
-  const phi = (sphericalU - 0.5) * Math.PI * 2;
-  const theta = (sphericalV - 0.5) * Math.PI;
-  scratchMorphologyRadial.set(
-    Math.cos(theta) * Math.cos(phi),
-    Math.cos(theta) * Math.sin(phi),
-    Math.sin(theta)
-  ).normalize();
-  scratchMorphologyEast.set(-Math.sin(phi), Math.cos(phi), 0).normalize();
+  earthGroup.updateMatrixWorld(true);
 
   const radius = TAKRAM_PARITY_BOTTOM_RADIUS_M;
-  scratchCameraPosition
-    .copy(scratchMorphologyRadial)
-    .multiplyScalar(1 + reviewView.cameraAltitudeMeters / radius);
-  scratchMorphologyTarget
-    .copy(scratchMorphologyRadial)
-    .multiplyScalar(1 + reviewView.targetAltitudeMeters / radius)
-    .addScaledVector(scratchMorphologyEast, reviewView.targetDistanceMeters / radius);
+  const reviewFrame = resolveTakramV3MorphologyReviewFrame(reviewView, radius);
+  const bridge = buildLuBirthWorldToEcef(earthGroup.matrixWorld, 1);
+  if (!bridge.valid || !bridge.worldToEcef) {
+    return false;
+  }
+  const ecefToWorld = bridge.worldToEcef.clone().invert();
+  scratchCameraPosition.set(...reviewFrame.cameraEcefMeters).applyMatrix4(ecefToWorld);
+  scratchMorphologyTarget.set(...reviewFrame.targetEcefMeters).applyMatrix4(ecefToWorld);
 
   camera.fov = 45;
   camera.near = 0.00001;
   camera.far = 20;
-  camera.up.copy(scratchMorphologyRadial);
+  camera.up.set(...reviewFrame.cameraRadialEcef).transformDirection(ecefToWorld);
   camera.position.copy(scratchCameraPosition);
   camera.lookAt(scratchMorphologyTarget);
   camera.updateProjectionMatrix();
@@ -340,28 +330,20 @@ function resolveMorphologyScaleAudit(
   if (!reviewView || !bridge || !bridge.valid || !bridge.worldToEcef || !clouds) {
     return null;
   }
-  const [sphericalU, sphericalV] = reviewView.sphericalUv;
-  const phi = (sphericalU - 0.5) * Math.PI * 2;
-  const theta = (sphericalV - 0.5) * Math.PI;
-  const radial = scratchMorphologyRadial.set(
-    Math.cos(theta) * Math.cos(phi),
-    Math.cos(theta) * Math.sin(phi),
-    Math.sin(theta)
-  ).normalize();
-  const east = scratchMorphologyEast.set(-Math.sin(phi), Math.cos(phi), 0).normalize();
-  const north = scratchMorphologyNorth.crossVectors(radial, east).normalize();
-  const origin = radial.clone().multiplyScalar(
-    TAKRAM_PARITY_BOTTOM_RADIUS_M + reviewView.targetAltitudeMeters
+  const reviewFrame = resolveTakramV3MorphologyReviewFrame(
+    reviewView,
+    TAKRAM_PARITY_BOTTOM_RADIUS_M
   );
   scratchViewProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
   scratchEcefToWorld.copy(bridge.worldToEcef).invert();
   return auditMorphologyScale({
+    view: morphologyView,
     viewProjectionMatrix: scratchViewProjection.toArray(),
     ecefToWorldMatrix: scratchEcefToWorld.toArray(),
-    originEcefMeters: [origin.x, origin.y, origin.z],
-    eastEcef: [east.x, east.y, east.z],
-    northEcef: [north.x, north.y, north.z],
-    upEcef: [radial.x, radial.y, radial.z],
+    originEcefMeters: reviewFrame.targetEcefMeters,
+    eastEcef: reviewFrame.eastEcef,
+    northEcef: reviewFrame.northEcef,
+    upEcef: reviewFrame.upEcef,
     viewport,
     shapeRepeat: clouds.shapeRepeat.x,
     shapeDetailRepeat: clouds.shapeDetailRepeat.x,

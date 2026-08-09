@@ -145,6 +145,163 @@ export interface TakramV3MorphologyProjectionScaleInput {
   horizontalPixelsPerMeter: number;
 }
 
+export interface TakramV3MorphologyReviewFrame {
+  cameraEcefMeters: readonly [number, number, number];
+  cameraRadialEcef: readonly [number, number, number];
+  targetEcefMeters: readonly [number, number, number];
+  targetRadialEcef: readonly [number, number, number];
+  eastEcef: readonly [number, number, number];
+  northEcef: readonly [number, number, number];
+  upEcef: readonly [number, number, number];
+}
+
+export interface TakramV3MorphologyRepeatInterval {
+  feasible: boolean;
+  minimum: number;
+  maximum: number;
+}
+
+export type TakramV3HorizontalMorphologyCheckpointId =
+  | "MORPHOLOGY_SCALE_EVIDENCE_INVALID"
+  | "HORIZONTAL_MORPHOLOGY_SCALE_FAIL"
+  | "HORIZONTAL_MORPHOLOGY_CANDIDATE_FAIL"
+  | "HORIZONTAL_MORPHOLOGY_CANDIDATE_PASS";
+
+const NEAR_MORPHOLOGY_VIEWS = Object.freeze([
+  "near-oblique",
+  "aerial-oblique",
+  "near-orbit"
+] as const);
+
+function vectorLength(vector: readonly [number, number, number]) {
+  return Math.hypot(vector[0], vector[1], vector[2]);
+}
+
+function normalizeVector(
+  vector: readonly [number, number, number]
+): readonly [number, number, number] {
+  const length = vectorLength(vector);
+  return length > 0 && Number.isFinite(length)
+    ? [vector[0] / length, vector[1] / length, vector[2] / length]
+    : [0, 0, 0];
+}
+
+function scaleVector(
+  vector: readonly [number, number, number],
+  scalar: number
+): readonly [number, number, number] {
+  return [vector[0] * scalar, vector[1] * scalar, vector[2] * scalar];
+}
+
+function crossVector(
+  left: readonly [number, number, number],
+  right: readonly [number, number, number]
+): readonly [number, number, number] {
+  return [
+    left[1] * right[2] - left[2] * right[1],
+    left[2] * right[0] - left[0] * right[2],
+    left[0] * right[1] - left[1] * right[0]
+  ];
+}
+
+/** Resolve one review camera and its observed target in a shared ECEF metre frame. */
+export function resolveTakramV3MorphologyReviewFrame(
+  view: TakramV3MorphologyView,
+  planetRadiusMeters: number
+): TakramV3MorphologyReviewFrame {
+  const [sphericalU, sphericalV] = view.sphericalUv;
+  const phi = (sphericalU - 0.5) * Math.PI * 2;
+  const theta = (sphericalV - 0.5) * Math.PI;
+  const cameraRadialEcef = normalizeVector([
+    Math.cos(theta) * Math.cos(phi),
+    Math.cos(theta) * Math.sin(phi),
+    Math.sin(theta)
+  ]);
+  const cameraEastEcef = normalizeVector([-Math.sin(phi), Math.cos(phi), 0]);
+  const centralAngle = view.targetDistanceMeters / planetRadiusMeters;
+  const cosAngle = Math.cos(centralAngle);
+  const sinAngle = Math.sin(centralAngle);
+  const targetRadialEcef = normalizeVector([
+    cameraRadialEcef[0] * cosAngle + cameraEastEcef[0] * sinAngle,
+    cameraRadialEcef[1] * cosAngle + cameraEastEcef[1] * sinAngle,
+    cameraRadialEcef[2] * cosAngle + cameraEastEcef[2] * sinAngle
+  ]);
+  const eastEcef = normalizeVector([
+    cameraEastEcef[0] * cosAngle - cameraRadialEcef[0] * sinAngle,
+    cameraEastEcef[1] * cosAngle - cameraRadialEcef[1] * sinAngle,
+    cameraEastEcef[2] * cosAngle - cameraRadialEcef[2] * sinAngle
+  ]);
+  const northEcef = normalizeVector(crossVector(targetRadialEcef, eastEcef));
+  return {
+    cameraEcefMeters: scaleVector(
+      cameraRadialEcef,
+      planetRadiusMeters + view.cameraAltitudeMeters
+    ),
+    cameraRadialEcef,
+    targetEcefMeters: scaleVector(
+      targetRadialEcef,
+      planetRadiusMeters + view.targetAltitudeMeters
+    ),
+    targetRadialEcef,
+    eastEcef,
+    northEcef,
+    upEcef: targetRadialEcef
+  };
+}
+
+export function resolveTakramV3MorphologyCommonRepeatInterval(
+  inputs: readonly TakramV3MorphologyProjectionScaleInput[],
+  kind: "shape" | "detail"
+): TakramV3MorphologyRepeatInterval {
+  const targetPixels = kind === "shape" ? [16, 48] as const : [3, 10] as const;
+  if (inputs.length === 0 || inputs.some((input) =>
+    !Number.isFinite(input.horizontalPixelsPerMeter) || input.horizontalPixelsPerMeter <= 0
+  )) {
+    return { feasible: false, minimum: Number.NaN, maximum: Number.NaN };
+  }
+  const minimum = Math.max(...inputs.map((input) =>
+    input.horizontalPixelsPerMeter / targetPixels[1]
+  ));
+  const maximum = Math.min(...inputs.map((input) =>
+    input.horizontalPixelsPerMeter / targetPixels[0]
+  ));
+  return { feasible: minimum <= maximum, minimum, maximum };
+}
+
+export function resolveTakramV3HorizontalMorphologyCheckpoint(input: {
+  audits: ReadonlyArray<TakramV3MorphologyProjectionScaleInput & {
+    originScreenPixels: readonly [number, number] | null;
+    viewport: { width: number; height: number };
+  }>;
+  metricCandidateCount: number;
+  passingMetricCandidateCount: number;
+}): { id: TakramV3HorizontalMorphologyCheckpointId; task3Unlocked: boolean } {
+  const nearAudits = NEAR_MORPHOLOGY_VIEWS.map((view) =>
+    input.audits.find((audit) => audit.view === view)
+  );
+  const evidenceValid = nearAudits.every((audit) => {
+    if (!audit || !audit.originScreenPixels) return false;
+    const [x, y] = audit.originScreenPixels;
+    return Number.isFinite(audit.horizontalPixelsPerMeter)
+      && audit.horizontalPixelsPerMeter > 0
+      && x >= 0 && x <= audit.viewport.width
+      && y >= 0 && y <= audit.viewport.height;
+  });
+  if (!evidenceValid) {
+    return { id: "MORPHOLOGY_SCALE_EVIDENCE_INVALID", task3Unlocked: false };
+  }
+  const projectionInputs = nearAudits as TakramV3MorphologyProjectionScaleInput[];
+  const shape = resolveTakramV3MorphologyCommonRepeatInterval(projectionInputs, "shape");
+  const detail = resolveTakramV3MorphologyCommonRepeatInterval(projectionInputs, "detail");
+  if (!shape.feasible || !detail.feasible) {
+    return { id: "HORIZONTAL_MORPHOLOGY_SCALE_FAIL", task3Unlocked: false };
+  }
+  if (input.metricCandidateCount <= 0 || input.passingMetricCandidateCount <= 0) {
+    return { id: "HORIZONTAL_MORPHOLOGY_CANDIDATE_FAIL", task3Unlocked: false };
+  }
+  return { id: "HORIZONTAL_MORPHOLOGY_CANDIDATE_PASS", task3Unlocked: true };
+}
+
 export interface TakramV3MorphologyGeneratedCandidate {
   view: TakramV3MorphologyViewId;
   targetShapePixels: number;

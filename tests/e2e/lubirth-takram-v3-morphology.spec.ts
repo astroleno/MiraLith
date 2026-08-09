@@ -248,6 +248,15 @@ test("scale audit reports projected shape, detail and layer thickness", async ({
     expect(audit.shapeProjectedPixels).toBeGreaterThan(0);
     expect(audit.detailProjectedPixels).toBeGreaterThan(0);
     expect(audit.layers).toHaveLength(4);
+    expect(audit.originScreenPixels).not.toBeNull();
+    expect(audit.originScreenPixels![0]).toBeGreaterThanOrEqual(0);
+    expect(audit.originScreenPixels![0]).toBeLessThanOrEqual(1440);
+    expect(audit.originScreenPixels![1]).toBeGreaterThanOrEqual(0);
+    expect(audit.originScreenPixels![1]).toBeLessThanOrEqual(960);
+    if (morphologyView !== "opening-orbit") {
+      expect(audit.originScreenPixels![0]).toBeCloseTo(720, 3);
+      expect(audit.originScreenPixels![1]).toBeCloseTo(480, 3);
+    }
     records.push({ view: morphologyView, telemetry: telemetry! });
   }
 
@@ -361,11 +370,43 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
         morphologyScaleAudit: telemetry.morphologyScaleAudit,
         rendererFingerprintHash: telemetry.rendererFingerprintHash
       })),
+      commonRepeatIntervals: {
+        shape: morphologyContract.resolveTakramV3MorphologyCommonRepeatInterval(
+          reviewViews.filter((view) => view !== "opening-orbit").map((view) => ({
+            view,
+            horizontalPixelsPerMeter: atlas.find((record) =>
+              record.view === view && record.diagnostic === "full"
+            )?.telemetry.morphologyScaleAudit?.horizontalPixelsPerMeter ?? Number.NaN
+          })),
+          "shape"
+        ),
+        detail: morphologyContract.resolveTakramV3MorphologyCommonRepeatInterval(
+          reviewViews.filter((view) => view !== "opening-orbit").map((view) => ({
+            view,
+            horizontalPixelsPerMeter: atlas.find((record) =>
+              record.view === view && record.diagnostic === "full"
+            )?.telemetry.morphologyScaleAudit?.horizontalPixelsPerMeter ?? Number.NaN
+          })),
+          "detail"
+        )
+      },
       checkpoint: {
-        id: "HORIZONTAL_MORPHOLOGY_SCALE_FAIL",
+        ...morphologyContract.resolveTakramV3HorizontalMorphologyCheckpoint({
+          audits: reviewViews.filter((view) => view !== "opening-orbit").map((view) => {
+            const audit = atlas.find((record) =>
+              record.view === view && record.diagnostic === "full"
+            )?.telemetry.morphologyScaleAudit;
+            return {
+              view,
+              horizontalPixelsPerMeter: audit?.horizontalPixelsPerMeter ?? Number.NaN,
+              originScreenPixels: audit?.originScreenPixels ?? null,
+              viewport: { width: 1440, height: 960 }
+            };
+          }),
+          metricCandidateCount: 0,
+          passingMetricCandidateCount: 0
+        }),
         nearViews: ["near-oblique", "aerial-oblique", "near-orbit"],
-        reason: "No single repeat pair reaches both shape 16-48 px and detail 3-10 px in all three near views while remaining inside each view's physical wavelength range.",
-        task3Unlocked: false,
         task4Unlocked: false,
         task5Unlocked: false,
         task6Unlocked: false,
