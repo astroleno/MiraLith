@@ -5,6 +5,63 @@ export interface ResolvedChapterTransitionEndpoint {
   level: "published" | "preview";
 }
 
+export const CHAPTER_VISUAL_HANDOFF_VERSION = "chapter-visual-handoff-v1" as const;
+
+export interface NormalizedChapterPoint {
+  x: number;
+  y: number;
+}
+
+interface CoScrollRingHandoffBase {
+  version: typeof CHAPTER_VISUAL_HANDOFF_VERSION;
+  kind: "coscroll-ring";
+  sourceHref: "/coscroll";
+  targetHref: "/artbreeze";
+  center: NormalizedChapterPoint;
+  diameter: number;
+  lineWidth: number;
+  exitProgress: number;
+  direction: "clockwise";
+}
+
+export interface CoScrollRingLiveHandoff extends CoScrollRingHandoffBase {
+  signalSource: "live";
+  angleRadians: number;
+  angularVelocityRadiansPerSecond: number;
+}
+
+export interface CoScrollRingFallbackHandoff extends CoScrollRingHandoffBase {
+  signalSource: "fallback";
+  gapPhaseRadians: number;
+}
+
+export type CoScrollRingHandoff = CoScrollRingLiveHandoff | CoScrollRingFallbackHandoff;
+
+export interface FocuenceStarsHandoff {
+  version: typeof CHAPTER_VISUAL_HANDOFF_VERSION;
+  kind: "focuence-stars";
+  sourceHref: "/artbreeze";
+  targetHref: "/constellation";
+  collapseOrigin: NormalizedChapterPoint;
+  seed: number;
+  collapsePhase: number;
+}
+
+export interface CosmicWaterHandoff {
+  version: typeof CHAPTER_VISUAL_HANDOFF_VERSION;
+  kind: "cosmic-water";
+  sourceHref: "/constellation";
+  targetHref: "/client-works";
+  highlightOrigin: NormalizedChapterPoint;
+  radius: number;
+  ripplePhase: number;
+}
+
+export type ChapterVisualHandoff =
+  | CoScrollRingHandoff
+  | FocuenceStarsHandoff
+  | CosmicWaterHandoff;
+
 export type ChapterTransitionState =
   | "idle"
   | "covering"
