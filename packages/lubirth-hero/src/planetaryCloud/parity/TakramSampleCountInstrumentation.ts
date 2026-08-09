@@ -3,8 +3,18 @@ interface TakramSampleCountMaterial {
   needsUpdate: boolean;
 }
 
-const OUT_PARAMETER = "  out ivec3 sampleCount\n) {";
-const INOUT_PARAMETER = "  inout ivec3 sampleCount\n) {";
+const OUT_PARAMETER = [
+  "  const float jitter,",
+  "  out ivec3 sampleCount",
+  ") {",
+  "  vec4 density = weather.density;"
+].join("\n");
+const INOUT_PARAMETER = [
+  "  const float jitter,",
+  "  inout ivec3 sampleCount",
+  ") {",
+  "  vec4 density = weather.density;"
+].join("\n");
 
 /**
  * The upstream debug overload declares sampleCount as `out`, which discards
