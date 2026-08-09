@@ -1,8 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { Euler, Matrix4, PerspectiveCamera, Quaternion, Vector3 } from "three";
+import sharp from "../../packages/lubirth-hero/node_modules/sharp";
 import { mapOpeningProgress } from "../../packages/visual-core/src/theatre/openingTimeline";
 
 test.setTimeout(900_000);
@@ -27,6 +29,8 @@ const evidenceDirectory = path.resolve(
 );
 const captureDirectory = path.join(evidenceDirectory, "captures");
 const shouldCapture = process.env.MIRALITH_TAKRAM_V3_MORPHOLOGY_CAPTURE === "1";
+const systemChromeExecutable = process.env.MIRALITH_SYSTEM_CHROME_EXECUTABLE ??
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
 type MorphologyTelemetry = {
   active: boolean;
@@ -44,11 +48,7 @@ type MorphologyTelemetry = {
   diagnostic: string;
   diagnosticApplied: boolean;
   input: "stock" | "v3";
-  morphologyCandidate:
-    | "baseline"
-    | "horizontal-orbit-shape-16-detail-4"
-    | "horizontal-orbit-shape-32-detail-4"
-    | null;
+  morphologyCandidate: string | null;
   morphologyView: string | null;
   morphologyScaleAudit: {
     shapeWavelengthMeters: number;
@@ -133,12 +133,31 @@ async function waitForNativeMorphology(page: import("@playwright/test").Page) {
   await expect(page.locator("[data-visual-fallback]")).toHaveCount(0);
 }
 
+async function decodeScreenshot(buffer: Buffer) {
+  const { data, info } = await sharp(buffer)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  return {
+    width: info.width,
+    height: info.height,
+    pixels: new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
+  };
+}
+
 test("morphology baseline reproduces all fixed views and diagnostics", async ({ page }) => {
   const records: Array<{
     view: string;
     diagnostic: string;
+    screenshotSha256: string;
     telemetry: MorphologyTelemetry;
   }> = [];
+  let gpu: {
+    vendor: string;
+    renderer: string;
+    unmaskedVendor: string | null;
+    unmaskedRenderer: string | null;
+  } | null = null;
 
   for (const morphologyView of reviewViews) {
     for (const diagnostic of diagnostics) {
@@ -186,14 +205,39 @@ test("morphology baseline reproduces all fixed views and diagnostics", async ({ 
           0, 0, 0, 1
         ]);
       }
-      if (shouldCapture) {
-        mkdirSync(captureDirectory, { recursive: true });
-        await page.screenshot({
-          path: path.join(captureDirectory, `${morphologyView}-${diagnostic}.png`),
-          scale: "css"
+      if (gpu === null) {
+        gpu = await page.evaluate(() => {
+          const canvas = document.querySelector("canvas");
+          const gl = canvas?.getContext("webgl2");
+          if (!gl) return null;
+          const debug = gl.getExtension("WEBGL_debug_renderer_info");
+          return {
+            vendor: String(gl.getParameter(gl.VENDOR)),
+            renderer: String(gl.getParameter(gl.RENDERER)),
+            unmaskedVendor: debug
+              ? String(gl.getParameter(debug.UNMASKED_VENDOR_WEBGL))
+              : null,
+            unmaskedRenderer: debug
+              ? String(gl.getParameter(debug.UNMASKED_RENDERER_WEBGL))
+              : null
+          };
         });
       }
-      records.push({ view: morphologyView, diagnostic, telemetry: telemetry! });
+      const screenshotBuffer = await page.screenshot({ scale: "css" });
+      const screenshotSha256 = createHash("sha256").update(screenshotBuffer).digest("hex");
+      if (shouldCapture) {
+        mkdirSync(captureDirectory, { recursive: true });
+        writeFileSync(
+          path.join(captureDirectory, `${morphologyView}-${diagnostic}.png`),
+          screenshotBuffer
+        );
+      }
+      records.push({
+        view: morphologyView,
+        diagnostic,
+        screenshotSha256,
+        telemetry: telemetry!
+      });
     }
   }
 
@@ -204,6 +248,9 @@ test("morphology baseline reproduces all fixed views and diagnostics", async ({ 
       schemaVersion: 1,
       baseCommit: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
       generatedAt: new Date().toISOString(),
+      browserExecutable: systemChromeExecutable,
+      gpu,
+      reproductionCommand: "MIRALITH_TAKRAM_V3_MORPHOLOGY_CAPTURE=1 pnpm exec playwright test -c playwright.takram-parity-system-chrome.config.ts tests/e2e/lubirth-takram-v3-morphology.spec.ts --project=desktop-system-chrome --grep 'morphology baseline'",
       viewport: { width: 1440, height: 960, dpr: 1 },
       route: {
         input: "v3",
@@ -286,22 +333,34 @@ test("scale audit reports projected shape, detail and layer thickness", async ({
 });
 
 test("horizontal morphology atlas replays each candidate across all views", async ({ page }) => {
-  const candidates = [
-    "horizontal-orbit-shape-16-detail-4",
-    "horizontal-orbit-shape-32-detail-4"
+  const morphologyContract = await import(
+    "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramV3MorphologyContract"
+  );
+  const morphologyMetrics = await import(
+    "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramV3MorphologyMetrics"
+  );
+  const candidates = Object.keys(
+    morphologyContract.TAKRAM_V3_MORPHOLOGY_HORIZONTAL_CANDIDATES
+  );
+  const atlasDiagnostics = [
+    "full",
+    "cloud-raw",
+    "cloud-raw-off",
+    "history-reset-first",
+    "aerial-final",
+    "sample-count-debug"
   ] as const;
   const atlas: Array<{
     candidate: string;
     view: string;
-    diagnostic: "full" | "cloud-raw" | "sample-count-debug";
+    diagnostic: typeof atlasDiagnostics[number];
+    screenshotSha256: string;
     telemetry: MorphologyTelemetry;
   }> = [];
-  const morphologyContract = await import(
-    "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramV3MorphologyContract"
-  );
+  const screenshots = new Map<string, Awaited<ReturnType<typeof decodeScreenshot>>>();
   for (const candidate of candidates) {
     for (const morphologyView of reviewViews) {
-      for (const diagnostic of ["full", "cloud-raw", "sample-count-debug"] as const) {
+      for (const diagnostic of atlasDiagnostics) {
         await page.goto(
           `/lubirth-takram-parity-spike?input=v3&view=opening&progress=0.06&diagnostic=${diagnostic}&morphologyView=${morphologyView}&morphologyCandidate=${candidate}`
         );
@@ -324,17 +383,89 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
         expect(telemetry?.shapeRepeat).toBeGreaterThan(0);
         expect(telemetry?.shapeDetailRepeat).toBeGreaterThan(0);
         expect(telemetry?.morphologyScaleAudit?.shapeWavelengthMeters).toBeGreaterThan(0);
+        const screenshotBuffer = await page.screenshot({ scale: "css" });
+        const screenshotSha256 = createHash("sha256").update(screenshotBuffer).digest("hex");
+        screenshots.set(
+          `${candidate}:${morphologyView}:${diagnostic}`,
+          await decodeScreenshot(screenshotBuffer)
+        );
         if (shouldCapture) {
           mkdirSync(captureDirectory, { recursive: true });
-          await page.screenshot({
-            path: path.join(captureDirectory, `${candidate}-${morphologyView}-${diagnostic}.png`),
-            scale: "css"
-          });
+          writeFileSync(
+            path.join(captureDirectory, `${candidate}-${morphologyView}-${diagnostic}.png`),
+            screenshotBuffer
+          );
         }
-        atlas.push({ candidate, view: morphologyView, diagnostic, telemetry: telemetry! });
+        atlas.push({
+          candidate,
+          view: morphologyView,
+          diagnostic,
+          screenshotSha256,
+          telemetry: telemetry!
+        });
       }
     }
   }
+  const imageMetricRecords = candidates.flatMap((candidate) =>
+    reviewViews.map((view) => {
+      const frames = Object.fromEntries(atlasDiagnostics.map((diagnostic) => [
+        diagnostic,
+        screenshots.get(`${candidate}:${view}:${diagnostic}`)
+      ])) as Record<typeof atlasDiagnostics[number],
+        Awaited<ReturnType<typeof decodeScreenshot>> | undefined>;
+      expect(frames.full).toBeDefined();
+      expect(frames["cloud-raw"]).toBeDefined();
+      expect(frames["cloud-raw-off"]).toBeDefined();
+      expect(frames["history-reset-first"]).toBeDefined();
+      expect(frames["aerial-final"]).toBeDefined();
+      const decoded = frames.full!;
+      for (const frame of [
+        frames["cloud-raw"]!,
+        frames["cloud-raw-off"]!,
+        frames["history-reset-first"]!,
+        frames["aerial-final"]!
+      ]) {
+        expect(frame.width).toBe(decoded.width);
+        expect(frame.height).toBe(decoded.height);
+      }
+      const metrics = morphologyMetrics.analyzeTakramV3MorphologyImageMetrics({
+        width: decoded.width,
+        height: decoded.height,
+        cloudRaw: frames["cloud-raw"]!.pixels,
+        cloudRawOff: frames["cloud-raw-off"]!.pixels,
+        cloudOff: frames["aerial-final"]!.pixels,
+        firstFrame: frames["history-reset-first"]!.pixels,
+        convergedFull: decoded.pixels
+      });
+      return {
+        candidate,
+        view,
+        metrics,
+        classification: morphologyMetrics.classifyTakramV3MorphologyImageMetrics(metrics)
+      };
+    })
+  );
+  const nearViews = reviewViews.filter((view) => view !== "opening-orbit");
+  const passingCandidates = candidates.filter((candidate) => nearViews.every((view) =>
+    imageMetricRecords.find((record) =>
+      record.candidate === candidate && record.view === view
+    )?.classification.pass === true
+  ));
+  const checkpoint = morphologyContract.resolveTakramV3HorizontalMorphologyCheckpoint({
+    audits: nearViews.map((view) => {
+      const audit = atlas.find((record) =>
+        record.view === view && record.diagnostic === "full"
+      )?.telemetry.morphologyScaleAudit;
+      return {
+        view,
+        horizontalPixelsPerMeter: audit?.horizontalPixelsPerMeter ?? Number.NaN,
+        originScreenPixels: audit?.originScreenPixels ?? null,
+        viewport: { width: 1440, height: 960 }
+      };
+    }),
+    metricCandidateCount: candidates.length,
+    passingMetricCandidateCount: passingCandidates.length
+  });
   mkdirSync(evidenceDirectory, { recursive: true });
   writeFileSync(
     path.join(evidenceDirectory, "candidate-matrix.json"),
@@ -347,6 +478,7 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
         weather: "v3",
         renderer: "stock-takram-0.7.6",
         candidateCount: candidates.length,
+        metricThresholds: morphologyMetrics.TAKRAM_V3_MORPHOLOGY_METRIC_THRESHOLDS,
         replayViews: reviewViews
       },
       generatedCandidates: morphologyContract.buildTakramV3MorphologyCandidates(
@@ -366,10 +498,15 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
         candidate,
         view,
         diagnostic,
+        screenshotSha256: atlas.find((record) =>
+          record.candidate === candidate && record.view === view && record.diagnostic === diagnostic
+        )?.screenshotSha256,
         cameraHeightMeters: telemetry.cameraHeightMeters,
         morphologyScaleAudit: telemetry.morphologyScaleAudit,
         rendererFingerprintHash: telemetry.rendererFingerprintHash
       })),
+      imageMetricRecords,
+      passingCandidates,
       commonRepeatIntervals: {
         shape: morphologyContract.resolveTakramV3MorphologyCommonRepeatInterval(
           reviewViews.filter((view) => view !== "opening-orbit").map((view) => ({
@@ -391,21 +528,7 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
         )
       },
       checkpoint: {
-        ...morphologyContract.resolveTakramV3HorizontalMorphologyCheckpoint({
-          audits: reviewViews.filter((view) => view !== "opening-orbit").map((view) => {
-            const audit = atlas.find((record) =>
-              record.view === view && record.diagnostic === "full"
-            )?.telemetry.morphologyScaleAudit;
-            return {
-              view,
-              horizontalPixelsPerMeter: audit?.horizontalPixelsPerMeter ?? Number.NaN,
-              originScreenPixels: audit?.originScreenPixels ?? null,
-              viewport: { width: 1440, height: 960 }
-            };
-          }),
-          metricCandidateCount: 0,
-          passingMetricCandidateCount: 0
-        }),
+        ...checkpoint,
         nearViews: ["near-oblique", "aerial-oblique", "near-orbit"],
         task4Unlocked: false,
         task5Unlocked: false,

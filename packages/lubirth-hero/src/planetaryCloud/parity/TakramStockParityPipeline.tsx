@@ -424,10 +424,10 @@ const TAKRAM_PARITY_SHARED_ASSET_HASHES = Object.freeze({
 function resolveDiagnosticState(diagnostic: TakramParityDiagnostic) {
   return {
     altitudeLadder: isTakramParityAltitudeLadderDiagnostic(diagnostic),
-    cloudOff: diagnostic === "altitude-ladder-cloud-off",
-    aerialPerspectiveComposite: !["cloud-raw", "density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic),
+    cloudOff: ["altitude-ladder-cloud-off", "aerial-final", "cloud-raw-off"].includes(diagnostic),
+    aerialPerspectiveComposite: !["cloud-raw", "cloud-raw-off", "density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic),
     beerShadowOcclusion: diagnostic !== "bsm-off",
-    cloudRawOutput: ["cloud-raw", "density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic),
+    cloudRawOutput: ["cloud-raw", "cloud-raw-off", "density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic),
     densityDebug: diagnostic === "density-debug",
     uvDebug: diagnostic === "uv-debug",
     sceneDepthClamp: diagnostic !== "depth-off",
@@ -569,13 +569,14 @@ export function TakramStockParityPipeline({
         layer.shadow = false;
       });
     }
-    const cloudRawDiagnostic = ["cloud-raw", "density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic);
+    const cloudRawDiagnostic = ["cloud-raw", "cloud-raw-off", "density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic);
     // The native Clouds pass must remain enabled for the normal full frame and
     // every cloud-side diagnostic. `aerial-final` and the explicit
     // altitude-ladder cloud-off probe are the only intentional cloud-disabled
     // modes; the previous inverse assignment silently skipped the renderer
     // for every full opening frame.
     clouds.skipRendering = diagnostic === "aerial-final" ||
+      diagnostic === "cloud-raw-off" ||
       diagnostic === "altitude-ladder-cloud-off";
     aerialPerspective.blendMode.blendFunction = cloudRawDiagnostic
       ? BlendFunction.SKIP
@@ -634,7 +635,8 @@ export function TakramStockParityPipeline({
   // transient overlay. Keep the explicit cloud-off diagnostic honest by
   // clearing both owners immediately before the composer renders.
   useFrame(() => {
-    if (diagnostic !== "altitude-ladder-cloud-off" && diagnostic !== "aerial-final") {
+    if (diagnostic !== "altitude-ladder-cloud-off" && diagnostic !== "aerial-final" &&
+      diagnostic !== "cloud-raw-off") {
       return;
     }
     const clouds = cloudsRef.current;

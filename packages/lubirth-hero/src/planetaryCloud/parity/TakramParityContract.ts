@@ -30,6 +30,7 @@ export type TakramParityDiagnostic =
   | "uv-debug"
   | "history-reset-first"
   | "cloud-raw"
+  | "cloud-raw-off"
   | "sample-count-debug"
   | "aerial-final";
 export type UpstreamControlDecision = "PASS" | "UPSTREAM_CONTROL_FAIL";
@@ -95,6 +96,7 @@ export function resolveTakramParityRouteQuery(
     requestedDiagnostic === "uv-debug" ||
     requestedDiagnostic === "history-reset-first" ||
     requestedDiagnostic === "cloud-raw" ||
+    requestedDiagnostic === "cloud-raw-off" ||
     requestedDiagnostic === "sample-count-debug" ||
     requestedDiagnostic === "aerial-final"
     ? requestedDiagnostic
@@ -145,11 +147,11 @@ export function resolveTakramParityRouteQuery(
   // native cloud buffer with the complete aerial composite. The control-only
   // BSM/history/Aerial probes are deliberately not exposed in this path.
   const morphologyDiagnostic = value.morphologyView !== undefined &&
-    ["full", "cloud-raw", "history-reset-first", "bsm-off", "aerial-final", "sample-count-debug"].includes(value.diagnostic);
+    ["full", "cloud-raw", "cloud-raw-off", "history-reset-first", "bsm-off", "aerial-final", "sample-count-debug"].includes(value.diagnostic);
   return {
     ok: true,
     value: value.view === "opening" && !morphologyDiagnostic &&
-      !["altitude-ladder", "altitude-ladder-cloud-off", "cloud-raw", "depth-off", "density-debug", "uv-debug", "sample-count-debug"].includes(value.diagnostic)
+      !["altitude-ladder", "altitude-ladder-cloud-off", "cloud-raw", "cloud-raw-off", "depth-off", "density-debug", "uv-debug", "sample-count-debug"].includes(value.diagnostic)
       ? { ...value, diagnostic: "full" }
       : value
   };
@@ -563,17 +565,8 @@ export interface TakramParityTelemetry {
   input: TakramParityInput;
   native: TakramParityNativeFeatures;
   nativeFrameCount: number;
-  morphologyCandidate:
-    | "baseline"
-    | "horizontal-orbit-shape-16-detail-4"
-    | "horizontal-orbit-shape-32-detail-4"
-    | null;
-  morphologyView:
-    | "near-oblique"
-    | "aerial-oblique"
-    | "near-orbit"
-    | "opening-orbit"
-    | null;
+  morphologyCandidate: TakramV3MorphologyCandidateId | null;
+  morphologyView: TakramV3MorphologyViewId | null;
   morphologyScaleAudit: TakramV3MorphologyScaleAudit | null;
   progress: number;
   rendererFingerprint: TakramParityRendererFingerprint | null;

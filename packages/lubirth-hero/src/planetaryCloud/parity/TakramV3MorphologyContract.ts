@@ -15,8 +15,16 @@ export type TakramV3MorphologyViewId =
 
 export type TakramV3MorphologyCandidateId =
   | "baseline"
-  | "horizontal-orbit-shape-16-detail-4"
-  | "horizontal-orbit-shape-32-detail-4";
+  | "horizontal-near-oblique-shape-32-detail-4"
+  | "horizontal-near-oblique-shape-32-detail-6"
+  | "horizontal-near-oblique-shape-32-detail-8"
+  | "horizontal-near-oblique-shape-48-detail-4"
+  | "horizontal-near-oblique-shape-48-detail-6"
+  | "horizontal-near-oblique-shape-48-detail-8"
+  | "horizontal-aerial-oblique-shape-48-detail-6"
+  | "horizontal-aerial-oblique-shape-48-detail-8"
+  | "horizontal-near-orbit-shape-48-detail-6"
+  | "horizontal-near-orbit-shape-48-detail-8";
 
 export const TAKRAM_V3_MORPHOLOGY_SPHERICAL_UV = Object.freeze([
   0.076494140625,
@@ -87,32 +95,63 @@ export const TAKRAM_V3_MORPHOLOGY_BASELINE: TakramV3MorphologyCandidate =
     shapeDetailRepeat: 0.0006
   });
 
-/**
- * Task 2 candidates are committed from the Task 1 scale-audit run. They are
- * intentionally generated from one physical projection (near-orbit) and are
- * then replayed unchanged across every review view. The candidate matrix may
- * reject them for other views; that is evidence for the horizontal-scale
- * checkpoint, not a reason to silently retune each screenshot.
- */
+export const TAKRAM_V3_MORPHOLOGY_CALIBRATED_PIXELS_PER_METER = Object.freeze({
+  "near-oblique": 0.010238030809047992,
+  "aerial-oblique": 0.004512678951320542,
+  "near-orbit": 0.0013233492506820326,
+  "opening-orbit": 0.00009675185062176135
+});
+
+function calibratedCandidate(
+  id: Exclude<TakramV3MorphologyCandidateId, "baseline">,
+  sourceView: TakramV3MorphologyViewId,
+  targetShapePixels: number,
+  targetDetailPixels: number
+): TakramV3MorphologyCandidate {
+  const pixelsPerMeter = TAKRAM_V3_MORPHOLOGY_CALIBRATED_PIXELS_PER_METER[sourceView];
+  return Object.freeze({
+    id,
+    coverage: 0.55,
+    shapeRepeat: pixelsPerMeter / targetShapePixels,
+    shapeDetailRepeat: pixelsPerMeter / targetDetailPixels,
+    sourceViews: [sourceView],
+    targetShapePixels,
+    targetDetailPixels
+  });
+}
+
+/** Physical-range candidates from every corrected near-view scale audit. */
 export const TAKRAM_V3_MORPHOLOGY_HORIZONTAL_CANDIDATES = Object.freeze({
-  "horizontal-orbit-shape-16-detail-4": Object.freeze({
-    id: "horizontal-orbit-shape-16-detail-4" as const,
-    coverage: 0.55,
-    shapeRepeat: 0.000015279118222807067,
-    shapeDetailRepeat: 0.00006111647289122827,
-    sourceViews: ["near-orbit"] as const,
-    targetShapePixels: 16,
-    targetDetailPixels: 4
-  }),
-  "horizontal-orbit-shape-32-detail-4": Object.freeze({
-    id: "horizontal-orbit-shape-32-detail-4" as const,
-    coverage: 0.55,
-    shapeRepeat: 0.000007639559111403533,
-    shapeDetailRepeat: 0.00006111647289122827,
-    sourceViews: ["near-orbit"] as const,
-    targetShapePixels: 32,
-    targetDetailPixels: 4
-  })
+  "horizontal-near-oblique-shape-32-detail-4": calibratedCandidate(
+    "horizontal-near-oblique-shape-32-detail-4", "near-oblique", 32, 4
+  ),
+  "horizontal-near-oblique-shape-32-detail-6": calibratedCandidate(
+    "horizontal-near-oblique-shape-32-detail-6", "near-oblique", 32, 6
+  ),
+  "horizontal-near-oblique-shape-32-detail-8": calibratedCandidate(
+    "horizontal-near-oblique-shape-32-detail-8", "near-oblique", 32, 8
+  ),
+  "horizontal-near-oblique-shape-48-detail-4": calibratedCandidate(
+    "horizontal-near-oblique-shape-48-detail-4", "near-oblique", 48, 4
+  ),
+  "horizontal-near-oblique-shape-48-detail-6": calibratedCandidate(
+    "horizontal-near-oblique-shape-48-detail-6", "near-oblique", 48, 6
+  ),
+  "horizontal-near-oblique-shape-48-detail-8": calibratedCandidate(
+    "horizontal-near-oblique-shape-48-detail-8", "near-oblique", 48, 8
+  ),
+  "horizontal-aerial-oblique-shape-48-detail-6": calibratedCandidate(
+    "horizontal-aerial-oblique-shape-48-detail-6", "aerial-oblique", 48, 6
+  ),
+  "horizontal-aerial-oblique-shape-48-detail-8": calibratedCandidate(
+    "horizontal-aerial-oblique-shape-48-detail-8", "aerial-oblique", 48, 8
+  ),
+  "horizontal-near-orbit-shape-48-detail-6": calibratedCandidate(
+    "horizontal-near-orbit-shape-48-detail-6", "near-orbit", 48, 6
+  ),
+  "horizontal-near-orbit-shape-48-detail-8": calibratedCandidate(
+    "horizontal-near-orbit-shape-48-detail-8", "near-orbit", 48, 8
+  )
 });
 
 export const TAKRAM_V3_MORPHOLOGY_CANDIDATES: Readonly<Record<

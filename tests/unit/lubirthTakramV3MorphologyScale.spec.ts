@@ -14,6 +14,14 @@ type MorphologyContractModule = {
     usesOpeningFrame: boolean;
     sphericalUv: readonly [number, number];
   }>;
+  TAKRAM_V3_MORPHOLOGY_HORIZONTAL_CANDIDATES: Readonly<Record<string, {
+    id: string;
+    shapeRepeat: number;
+    shapeDetailRepeat: number;
+    sourceViews: readonly string[];
+    targetShapePixels: number;
+    targetDetailPixels: number;
+  }>>;
   resolveTakramV3MorphologyCandidate(candidate: string | null | undefined):
     | { id: string; shapeRepeat: number; shapeDetailRepeat: number }
     | null;
@@ -130,11 +138,20 @@ test("freezes the V3 morphology review views and baseline contract", async () =>
     shapeDetailRepeat: 0.0006
   });
   expect(contract.resolveTakramV3MorphologyCandidate("unknown")).toBeNull();
-  expect(contract.resolveTakramV3MorphologyCandidate("horizontal-orbit-shape-16-detail-4"))
+  expect(Object.keys(contract.TAKRAM_V3_MORPHOLOGY_HORIZONTAL_CANDIDATES)).toHaveLength(10);
+  expect(contract.resolveTakramV3MorphologyCandidate("horizontal-near-oblique-shape-32-detail-4"))
     .toMatchObject({
-      id: "horizontal-orbit-shape-16-detail-4",
-      shapeRepeat: 0.000015279118222807067,
-      shapeDetailRepeat: 0.00006111647289122827
+      id: "horizontal-near-oblique-shape-32-detail-4",
+      shapeRepeat: 0.010238030809047992 / 32,
+      shapeDetailRepeat: 0.010238030809047992 / 4,
+      sourceViews: ["near-oblique"],
+      targetShapePixels: 32,
+      targetDetailPixels: 4
+    });
+  expect(contract.resolveTakramV3MorphologyCandidate("horizontal-aerial-oblique-shape-48-detail-8"))
+    .toMatchObject({
+      shapeRepeat: 0.004512678951320542 / 48,
+      shapeDetailRepeat: 0.004512678951320542 / 8
     });
   expect(contract.resolveTakramV3MorphologyView("opening-orbit")?.usesOpeningFrame).toBe(true);
   expect(contract.resolveTakramV3MorphologyView("unknown")).toBeNull();

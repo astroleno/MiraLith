@@ -19,7 +19,7 @@ interface TakramParityContractModule {
     | {
       ok: true;
       value: {
-        diagnostic: "altitude-ladder" | "altitude-ladder-cloud-off" | "aerial-final" | "bsm-off" | "cloud-raw" | "depth-off" | "density-debug" | "full" | "history-reset-first" | "sample-count-debug" | "uv-debug";
+        diagnostic: "altitude-ladder" | "altitude-ladder-cloud-off" | "aerial-final" | "bsm-off" | "cloud-raw" | "cloud-raw-off" | "depth-off" | "density-debug" | "full" | "history-reset-first" | "sample-count-debug" | "uv-debug";
         input: "stock" | "v3";
         progress: number;
         view: "control" | "opening";
@@ -202,6 +202,19 @@ test("pins the official stock Takram contract to auditable local assets", async 
   ))).toEqual({
     ok: true,
     value: { diagnostic: "cloud-raw", input: "stock", progress: 0, view: "opening" }
+  });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=v3&view=opening&diagnostic=cloud-raw-off&morphologyView=near-oblique&morphologyCandidate=baseline"
+  ))).toEqual({
+    ok: true,
+    value: {
+      diagnostic: "cloud-raw-off",
+      input: "v3",
+      morphologyCandidate: "baseline",
+      morphologyView: "near-oblique",
+      progress: 0,
+      view: "opening"
+    }
   });
   expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
     "input=v3&view=opening&diagnostic=depth-off"
