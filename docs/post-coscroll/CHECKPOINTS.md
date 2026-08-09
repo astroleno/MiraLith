@@ -237,6 +237,6 @@ CP1.2 的 access matrix、history、production isolation 与独立 local-preview
 
 ## CP1.3 — Playback / Scroll State Model
 
-状态：`IN REVIEW — PLAN ONLY，2026-08-09`
+状态：`IN REVIEW — PLAN CHANGES ADDRESSED / IMPLEMENTATION CLOSED，2026-08-09`
 
-Unit 3 的详细边界、字段、TDD 顺序和验收矩阵已冻结在 [Unit 3 implementation plan](../plans/2026-08-09-001-unit3-handoff-recovery-state-contract-plan.md)。当前仅完成计划与隔离基线；尚未修改 production contract code。Unit 4 继续关闭，不得提前进入正式 CoScroll → ArtBreeze 视觉接力。
+Unit 3 的详细边界、字段、TDD 顺序和验收矩阵记录在 [Unit 3 implementation plan](../plans/2026-08-09-001-unit3-handoff-recovery-state-contract-plan.md)。上一轮 review 的五项负载契约与补强项已在计划中修订，等待独立复核；尚未开始 Task 1 RED，也未修改 production contract code。复核给出 GO 前 Unit 3 实现与 Unit 4 均继续关闭，不得提前进入正式 CoScroll → ArtBreeze 视觉接力。
