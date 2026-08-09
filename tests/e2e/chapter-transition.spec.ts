@@ -1519,6 +1519,11 @@ test("a rejected target reset restores the source through reset and readiness ga
   await expect.poll(() => page.evaluate(() => performance.getEntriesByType("mark")
     .some((entry) => entry.name.endsWith(":recovery-begin"))), { timeout: 8_000 }).toBe(true);
   await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator("[data-chapter-transition-layer]")).not.toHaveAttribute(
+    "data-handoff-kind",
+    /.+/
+  );
+  await expect(page.locator("[data-chapter-handoff]")).toHaveCount(0);
   await waitForIdle(page);
   await expect(page.locator(".lubirth-revised [data-chapter-terminal='armed']").first()).toBeAttached();
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(sourceScrollY * 0.85);

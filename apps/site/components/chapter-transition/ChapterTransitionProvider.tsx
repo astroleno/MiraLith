@@ -25,7 +25,10 @@ import {
   revalidateChapterPreviewSession,
   type ChapterPreviewSessionState
 } from "./chapterPreviewSession";
-import { resolveChapterTransitionHandoff } from "./chapterVisualHandoff";
+import {
+  resetChapterTransitionVisualForRecovery,
+  resolveChapterTransitionHandoff
+} from "./chapterVisualHandoff";
 import type {
   ChapterDestinationControls,
   ChapterDestinationSignal,
@@ -480,7 +483,7 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
     }
     runtime.targetHref = runtime.sourceHref;
     runtime.targetEndpoint = runtime.sourceEndpoint;
-    runtime.kind = "direct";
+    resetChapterTransitionVisualForRecovery(runtime);
     runtime.destinationAttempt += 1;
     runtime.mounted = false;
     runtime.resetStarted = false;

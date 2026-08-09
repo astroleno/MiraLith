@@ -2,8 +2,13 @@ import { expect, test } from "@playwright/test";
 import {
   chapterVisualHandoffCssVariables,
   parseChapterVisualHandoff,
+  resetChapterTransitionVisualForRecovery,
   resolveChapterTransitionHandoff
 } from "../../apps/site/components/chapter-transition/chapterVisualHandoff";
+import type {
+  ChapterDestinationResetContext,
+  ChapterTransitionSnapshot
+} from "../../apps/site/components/chapter-transition/chapterTransitionTypes";
 
 const liveRing = {
   version: "chapter-visual-handoff-v1",
@@ -164,6 +169,52 @@ test("uses only a sanitized handoff as the visual variant and degrades invalid i
     "/coscroll",
     "/artbreeze"
   )).toEqual({ kind: "direct", handoff: null });
+  expect(resolveChapterTransitionHandoff(null, "/", "/radio-gaga")).toEqual({
+    kind: "direct",
+    handoff: null
+  });
+});
+
+test("source recovery atomically removes the target handoff from every downstream view", () => {
+  const resolved = resolveChapterTransitionHandoff(liveRing, "/coscroll", "/artbreeze");
+  const runtimeVisual = { ...resolved };
+
+  resetChapterTransitionVisualForRecovery(runtimeVisual);
+
+  expect(runtimeVisual).toEqual({ kind: "direct", handoff: null });
+  const resetContext: ChapterDestinationResetContext = {
+    transitionId: "chapter-recovery",
+    pathname: "/coscroll",
+    initiator: "link",
+    handoff: runtimeVisual.handoff,
+    returnSnapshot: null,
+    destinationAttempt: 2,
+    signal: new AbortController().signal
+  };
+  expect(resetContext.handoff).toBeNull();
+
+  const snapshot: ChapterTransitionSnapshot = {
+    id: "chapter-recovery",
+    state: "waiting-mount",
+    sourceHref: "/coscroll",
+    targetHref: "/coscroll",
+    sourceEndpoint: null,
+    targetEndpoint: null,
+    kind: runtimeVisual.kind,
+    handoff: runtimeVisual.handoff,
+    initiator: "link",
+    destinationAttempt: 2,
+    inputEnabled: false,
+    error: "target reset failed"
+  };
+  const layerHandoffKind = snapshot.handoff?.kind;
+  const markerHandoffKind = snapshot.handoff?.kind;
+  const markerStyle = snapshot.handoff
+    ? chapterVisualHandoffCssVariables(snapshot.handoff)
+    : undefined;
+  expect(layerHandoffKind).toBeUndefined();
+  expect(markerHandoffKind).toBeUndefined();
+  expect(markerStyle).toBeUndefined();
 });
 
 test("rejects symbol and non-enumerable own keys", () => {

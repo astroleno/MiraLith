@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import {
   CHAPTER_VISUAL_HANDOFF_VERSION,
   type ChapterVisualHandoff,
+  type ChapterTransitionKind,
   type CoScrollRingFallbackHandoff,
   type CoScrollRingLiveHandoff,
   type CosmicWaterHandoff,
@@ -298,6 +299,16 @@ export function resolveChapterTransitionHandoff(
   return handoff
     ? { kind: handoff.kind, handoff }
     : { kind: "direct", handoff: null };
+}
+
+export function resetChapterTransitionVisualForRecovery(
+  runtimeVisual: {
+    kind: ChapterTransitionKind;
+    handoff: ChapterVisualHandoff | null;
+  }
+): void {
+  runtimeVisual.kind = "direct";
+  runtimeVisual.handoff = null;
 }
 
 function percentage(value: number): string {
