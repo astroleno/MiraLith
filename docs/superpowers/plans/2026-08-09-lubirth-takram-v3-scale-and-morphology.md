@@ -46,14 +46,15 @@ V3_INPUT_CONTRACT_PASS
 DISPOSABLE_RENDERER_REJECTED
 TAKRAM_NATIVE_PATH_PASS
 OPENING_MORPHOLOGY_VISUAL_FAIL
-STAGE_ISOLATION_MIXED_FAILURE
+STAGE_ISOLATION_INCONCLUSIVE_WITH_ATTENUATION_OBSERVED
+SAMPLING_CAUSALITY_UNVERIFIED
 ROOT_CAUSE_NOT_YET_ISOLATED
 TASK_3_TO_6_LOCKED
 TASK_0P_LOCKED
 ORIGINAL_TASK_0_TO_8_LOCKED
 ```
 
-Task 2O/2S 已在 commit `14a9d05` 上完成 `6 candidates × 4 opening progresses × 6 diagnostics = 144` 张源帧、24 张 cloud-only mask 与 24 份原生 sample-count 缓冲。没有出现可读体积 winner；stage isolation 同时发现 raw 云信号高度碎裂、mask 内 sample 分布不均，以及 final screen-space cloud contrast 仅为 matched raw difference 的 `7.58–10.49%`。因此 Task 3–6、Task 0P 与原 Task 0–8 继续锁定；当前证据也不授权直接重写 density representation。
+Task 2O/2S 已在 commit `14a9d05` 上完成 `6 candidates × 4 opening progresses × 6 diagnostics = 144` 张源帧、24 张 cloud-only mask 与 24 份原生 sample-count 缓冲。没有出现可读体积 winner，raw 云信号高度碎裂，final/raw screen difference 为 `7.58–10.49%`。但旧 sample population 对 `25%` mask-cell threshold 高度敏感，且各 diagnostic 未锁定同一 temporal frame，也没有同相机 healthy control；因此这些数值只能记作 attenuation observation，不能判 sampling 或 later-stage fault。commit `2839f2b` 已补 native hit alpha、`25/50/75/100%` 加权 sensitivity、exact frame-32/jitter/history metadata、repeat noise floor 和 capture-only evidence 写入，等待中央候选正式重抓。Task 3–6、Task 0P 与原 Task 0–8 继续锁定；当前证据也不授权提高 sample budget 或直接重写 density representation。
 
 ### 0.4 历史诊断（2026-08-09，near view-space correction）
 
@@ -417,20 +418,21 @@ ORIGINAL_TASK_0_TO_8_LOCKED
 
 六组 shape 已达到 `20.814–29.182 px`；只有 `40 km` detail 三组达到 detail 目标，`30 km` 三组仍为 `subpixel-risk`。所有 final 画面仍缺少轨道体积层次且 BSM 差异弱，全部判 `FAIL`。停止 Task 2O；不得继续水平 repeat 调参。
 
-### Task 2S：opening stage-isolation diagnosis（已执行，混合失败）
+### Task 2S：opening stage-isolation diagnosis（历史观察；因果判定撤回）
 
 Task 2S 使用相同 candidate/progress/runtime contract，将 `cloud-raw/cloud-raw-off`、`full/aerial-final` 与 `full/bsm-off` 建成独立 matched populations，并只在 cloud-only mask 内计算信号、碎片、BSM 与原生 sample-count 分布。
 
-实测结果：raw mask-local MAE 为 `0.4452–0.4587`，但 single-pixel fragments 为 `12.21–15.57%`、small fragments 为 `21.76–27.36%`、edge density 为 `81.70–83.43%`；原生 primary sample 中位数为 `2`，p95 为 `29–35`。final mask-local MAE 为 `0.0342–0.0470`，只有 matched raw screen difference 的 `7.58–10.49%`；BSM mask-local MAE 为 `0–0.0172`。
+历史计算得到 raw mask-local MAE `0.4452–0.4587`、single-pixel fragments `12.21–15.57%`、small fragments `21.76–27.36%`、edge density `81.70–83.43%`；旧 `25%` mask 映射下 primary p50 为 `2`、p95 为 `29–35`。独立 final 页面计算的 mask-local MAE 为 `0.0342–0.0470`，是 raw 页面 screen difference 的 `7.58–10.49%`；独立 BSM 页面差异为 `0–0.0172`。后两组尚不是 exact-frame matched population，旧 sample 分布也不是 native-hit population。
 
-因此 checkpoint 增加：
+复核发现 `p50=2` 会随 mask-cell coverage threshold 从 `25%` 到 `100%` 变为 `25`；同时独立页面没有锁定相同 Takram frame/jitter，final/raw 也没有同相机 healthy control。因此 checkpoint 修正为：
 
 ```text
-STAGE_ISOLATION_MIXED_FAILURE
+STAGE_ISOLATION_INCONCLUSIVE_WITH_ATTENUATION_OBSERVED
+SAMPLING_CAUSALITY_UNVERIFIED
 ROOT_CAUSE_NOT_YET_ISOLATED
 ```
 
-这同时指向 pre-temporal morphology/sampling 与后续 signal attenuation，但还不能在 density/profile、optical integration、temporal resolve 和 AerialPerspective composite 之间作单因判定。下一 amendment 只能冻结一组 `40 km` detail candidate，逐 stage 保存 native readback，并允许 diagnostic-only sample-budget A/B 验证因果；不得直接进入 density redesign、Task 3–6 或 Task 0P。
+它只保留 raw fragmentation 与 final attenuation observation，不再指向 sampling 或后级故障。下一 amendment 冻结 `opening-shape-260-detail-40`，以 exact frame-32、相同 jitter/STBN phase、repeat noise floor、native hit population 和完整 threshold sensitivity 重抓；随后逐 stage 保存 native readback。修正后的 native-hit population 证明采样不足以前，不得运行 sample-budget A/B；不得直接进入 density redesign、Task 3–6 或 Task 0P。
 
 ### Task 3：校准垂直 profile、密度与原生自阴影（当前锁定）
 
@@ -758,6 +760,6 @@ Task 0 baseline reproducible?
 
 ## 6. 预期产出与时间边界
 
-Task 0–1 已完成尺度与信号诊断。Task 2O 已把轨道主形体放大到目标屏幕范围，但结果仍是有 footprint、无可读体积层次的平板，因此在 `OPENING_MORPHOLOGY_VISUAL_FAIL` 停止。Task 2S 又证明 raw fragmentation/sample 分布和 final contrast attenuation 同时存在，记录 `STAGE_ISOLATION_MIXED_FAILURE`，但尚未得到单一 root cause。
+Task 0–1 已完成尺度与信号诊断。Task 2O 已把轨道主形体放大到目标屏幕范围，但结果仍是有 footprint、无可读体积层次的平板，因此在 `OPENING_MORPHOLOGY_VISUAL_FAIL` 停止。Task 2S 只保留 raw fragmentation 与 final attenuation observation；旧 sample 分布和 stage fault 归因已因 threshold sensitivity、temporal 未配对和 control 缺失而撤回，记录 `STAGE_ISOLATION_INCONCLUSIVE_WITH_ATTENUATION_OBSERVED / SAMPLING_CAUSALITY_UNVERIFIED`。
 
 当前计划不会进入 Task 3–6。下一份 amendment 必须分别验证 native density/profile、pre-temporal radiance、temporal history 与 final composite 的因果；不得继续用 horizontal repeat、coverage、tone mapping、近景 LOD 或更多 temporal pass 延长试错，也不得在证据不足时直接授权 density representation 重构。

@@ -57,7 +57,7 @@
       "smallFragmentFractionRange": [0.21755115237171493, 0.27355544268778975],
       "edgeDensityRange": [0.8169691931088633, 0.8343473421442233]
     },
-    "nativeSampleCount": {
+    "historicalNativeSampleCount": {
       "source": "native-cloud-current-render-target-v1",
       "precision": "half-float",
       "size": [360, 240],
@@ -70,7 +70,12 @@
       "shapeP95": 2,
       "detailP50": 1,
       "detailP95": 1,
-      "countOrderingInvariantPass": true
+      "countOrderingInvariantPass": true,
+      "populationValidity": "INVALID_AS_SAMPLING_GATE_MASK_THRESHOLD_SENSITIVE",
+      "centralCandidateProgress006PrimaryP50Sensitivity": {
+        "25percent": 2,
+        "100percent": 25
+      }
     },
     "finalCloudSignal": {
       "maskLocalNormalizedMaeRange": [0.03423420216665865, 0.04696613126595126],
@@ -80,10 +85,10 @@
       "maskLocalNormalizedMaeRange": [0, 0.017171207814743978]
     }
   },
-  "finding": "All candidates produce a strong but highly fragmented raw cloud contribution. Native sampling is present but uneven, while the final path further suppresses matched screen-space cloud contrast and BSM response remains weak. This is a mixed-stage visual failure; current evidence does not justify assigning it solely to density representation.",
+  "finding": "All candidates produce a strong but highly fragmented raw cloud contribution and the final screen-space difference is smaller than the raw difference. The historical sample distribution is mask-threshold-sensitive, diagnostic pages were not exact-frame paired, and no healthy same-camera control defines a normal final/raw ratio. Sampling and later-stage fault causality are therefore unverified.",
   "checkpoint": {
     "id": "OPENING_MORPHOLOGY_VISUAL_FAIL",
-    "diagnosis": "STAGE_ISOLATION_MIXED_FAILURE",
+    "diagnosis": "STAGE_ISOLATION_INCONCLUSIVE_WITH_ATTENUATION_OBSERVED",
     "rootCause": "NOT_YET_ISOLATED",
     "winnerCandidateId": null,
     "task3Unlocked": false

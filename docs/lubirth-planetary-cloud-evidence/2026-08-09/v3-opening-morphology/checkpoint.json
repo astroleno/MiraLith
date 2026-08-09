@@ -1,8 +1,9 @@
 {
-  "schemaVersion": 2,
-  "baseCommit": "14a9d05b810540cb1efa189fbb60c142f2cdb55f",
+  "schemaVersion": 3,
+  "baseCommit": "2839f2b86e625f68753e98232f34e1a5c2f68b27",
+  "historicalEvidenceCommit": "14a9d05b810540cb1efa189fbb60c142f2cdb55f",
   "checkpoint": "OPENING_MORPHOLOGY_VISUAL_FAIL",
-  "diagnosis": "STAGE_ISOLATION_MIXED_FAILURE",
+  "diagnosis": "STAGE_ISOLATION_INCONCLUSIVE_WITH_ATTENUATION_OBSERVED",
   "rootCause": "NOT_YET_ISOLATED",
   "status": "stopped",
   "productionGate": {
@@ -38,13 +39,17 @@
     "stageIsolation": {
       "rawCloudSignalPresent": true,
       "rawFragmentationHigh": true,
-      "nativeSamplingPresent": true,
-      "nativePrimarySampleMedian": 2,
-      "nativePrimarySampleP95Range": [29, 35],
+      "nativeRgbSampleCountsPresent": true,
+      "historicalMaskMappedPrimaryMedian": 2,
+      "historicalMaskMappedPrimaryMedianRole": "invalid-as-sampling-gate-threshold-sensitive",
+      "nativeHitPopulationCaptured": false,
+      "exactTemporalFramePairing": false,
+      "healthySameCameraControl": false,
       "finalToRawScreenDifferenceRatioRange": [0.07579991657320254, 0.10488806704674582],
+      "finalToRawRatioRole": "attenuation-observation-only",
       "bsmResponseStableAndReadable": false
     },
-    "reason": "The tested opening candidates already produce a strong but highly fragmented raw cloud contribution. Native sampling is non-zero but uneven, and the final path further suppresses matched screen-space cloud contrast. The current evidence cannot assign the visual failure to density/profile, ray sampling, optical integration, temporal resolve, or AerialPerspective alone."
+    "reason": "The visual failure and raw fragmentation remain observable. Sampling causality is unverified because the historical p50 depends strongly on post-temporal mask coverage, while stage A/B pages were not locked to one Takram temporal phase and no healthy same-camera control defines normal final/raw attenuation."
   },
   "unlock": {
     "task3": false,
@@ -64,5 +69,5 @@
     "temporal-cleanup",
     "gpu-promotion"
   ],
-  "nextAction": "Create a narrow stage-causality amendment around one 40 km detail candidate. Persist native density/profile, pre-temporal radiance, temporal history, and final cloud-on/off readbacks; use diagnostic-only sample-budget A/B only to test causality. Do not redesign representation or start Task 3-6/0P before a stage-specific cause is demonstrated."
+  "nextAction": "Freeze opening-shape-260-detail-40. Revalidate exact frame-32 stage populations with native hit alpha, weighted 25/50/75/100 percent mask sensitivity and repeat variance; then persist native density/profile, pre-temporal radiance, temporal history, AerialPerspective input and final output. Do not increase sample budget or start Task 3-6/0P before a stage-specific cause is demonstrated."
 }
