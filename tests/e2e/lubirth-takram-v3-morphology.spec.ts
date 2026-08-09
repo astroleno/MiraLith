@@ -494,6 +494,12 @@ test("opening-only morphology matrix covers every production review frame", asyn
   const progresses = morphologyContract.TAKRAM_V3_OPENING_MORPHOLOGY_PROGRESS_VALUES;
   const openingDiagnostics = morphologyContract.TAKRAM_V3_OPENING_MORPHOLOGY_DIAGNOSTICS;
   const frames = new Map<string, Buffer>();
+  let gpu: {
+    vendor: string;
+    renderer: string;
+    unmaskedVendor: string | null;
+    unmaskedRenderer: string | null;
+  } | null = null;
   const records: Array<{
     candidateId: string;
     progress: number;
@@ -530,6 +536,24 @@ test("opening-only morphology matrix covers every production review frame", asyn
         expect(telemetry?.cameraHeightMeters).toBeGreaterThan(3_000_000);
         expect(telemetry?.shapeRepeat).toBeCloseTo(candidate!.shapeRepeat, 12);
         expect(telemetry?.shapeDetailRepeat).toBeCloseTo(candidate!.shapeDetailRepeat, 12);
+        if (gpu === null) {
+          gpu = await page.evaluate(() => {
+            const canvas = document.querySelector("canvas");
+            const gl = canvas?.getContext("webgl2");
+            if (!gl) return null;
+            const debug = gl.getExtension("WEBGL_debug_renderer_info");
+            return {
+              vendor: String(gl.getParameter(gl.VENDOR)),
+              renderer: String(gl.getParameter(gl.RENDERER)),
+              unmaskedVendor: debug
+                ? String(gl.getParameter(debug.UNMASKED_VENDOR_WEBGL))
+                : null,
+              unmaskedRenderer: debug
+                ? String(gl.getParameter(debug.UNMASKED_RENDERER_WEBGL))
+                : null
+            };
+          });
+        }
         const screenshot = await page.screenshot({ scale: "css" });
         frames.set(`${candidateId}:${progress}:${diagnostic}`, screenshot);
         if (shouldCapture) {
@@ -599,10 +623,17 @@ test("opening-only morphology matrix covers every production review frame", asyn
       generatedAt: new Date().toISOString(),
       scope: "opening-only-production-contract",
       nearViewsRole: "diagnostic-only",
+      browserExecutable: systemChromeExecutable,
+      browserVersion: execFileSync(systemChromeExecutable, ["--version"], {
+        encoding: "utf8"
+      }).trim(),
+      gpu,
+      reproductionCommand: "MIRALITH_TAKRAM_V3_MORPHOLOGY_CAPTURE=1 pnpm exec playwright test -c playwright.takram-parity-system-chrome.config.ts tests/e2e/lubirth-takram-v3-morphology.spec.ts --project=desktop-system-chrome --grep 'opening-only morphology matrix'",
       fixedContract: {
         coverage: 0.55,
         progresses,
         diagnostics: openingDiagnostics,
+        viewport: { width: 1440, height: 960, dpr: 1 },
         renderer: "stock-takram-0.7.6",
         weather: "v3"
       },
