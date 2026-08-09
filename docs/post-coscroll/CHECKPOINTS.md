@@ -161,7 +161,7 @@ CP1.1 的 source / derivative / resolver / isolation contract 已关闭。Dulwic
 
 ## CP1.2 — Chapter Access Graph
 
-状态：`IN REVIEW — foundation repair 与 Unit 2D rebase candidate 已完成技术验证；CP1.2 尚待独立复核，Unit 3 继续关闭`
+状态：`PASS — TECH，2026-08-09`
 
 ### Unit 2.0 — Transition Foundation
 
@@ -210,15 +210,15 @@ Unit 2C 的原始获批候选 `38ceff87eaad2681d9aa4ea3a79865801fa6f1f3` 已在�
 | scope / source integrity | 相对 `96d1422` 的 9 文件 patch SHA-256 为 `bed2dfe19b4d8517a7d2129b1c448949e40207b28d7e49d73afb473f727587a8`；`git diff --check` 与反向 patch check 均通过。 |
 | 静态检查 | site、CoScroll、RadioGaga typecheck 和 site lint 全部通过。 |
 | Unit 2C 访问契约 | 5 条 focused desktop E2E 全部通过：preview rail、armed RadioGaga rail 可见性、preview-history fail-closed、preview warmup、public warmup 拒绝。 |
-| 01–03 目标基线例外 | `96d1422` 自身的完整 desktop transition/navigation suite 不是绿色基线。关键的 RadioGaga `waiting-ready` 用例在 base 与 rebase candidate 上各连续 3 次均复现；其余失败属于当前 LuBirth/RadioGaga/CoScroll visual/readiness 面，未由本 Unit 修复或掩盖。完整命令与失败名见 evidence；因此 CP1.2 继续保持 `IN PROGRESS`，不得把本项当作 CP1.2 PASS。 |
+| 01–03 目标基线例外 | `96d1422` 自身的完整 desktop transition/navigation suite 当时不是绿色基线。关键的 RadioGaga `waiting-ready` 用例在 base 与 rebase candidate 上各连续 3 次均复现；其余失败属于当时的 LuBirth/RadioGaga/CoScroll visual/readiness 面，未由 Unit 2C 修复或掩盖。后续 foundation repair 已关闭该问题，最终 CP1.2 结果见下方集成记录。 |
 
 本 Unit 仅将 canonical resolver 接入 Provider、endpoint snapshot、terminal gate、target preloader 和 navigation；它保持 `data-published` 的章节固有语义，并以 resolver 派生的 `data-visible-in-navigation` 控制 armed-terminal 下的可见性。它没有创建 04–07 route shell、没有实现 `03 → 04` destination readiness、没有启用 CoScroll terminal、没有加入 ScrollTrigger、Canvas 或任何 Stage 2 视觉转场。
 
-CP1.2 仅会在 access matrix、history、production isolation 与独立 local-preview 实播验证均完成后才可标记 `PASS`；本次 Unit 2B 集成不打开 Unit 3。
+CP1.2 的 access matrix、history、production isolation 与独立 local-preview 实播门禁已在 Unit 2D 集成候选上全部完成；Unit 2C 自身仍不被追溯解释为 CP1.2 PASS。
 
-### Foundation repair and Unit 2D rebase candidate
+### Foundation repair and Unit 2D integration
 
-状态：`IN REVIEW — TECH COMPLETE / NOT INTEGRATED，2026-08-08`
+状态：`PASS — INTEGRATED，2026-08-09`
 
 此前 CP1.2 的 production shared suite 不能 waiver：RadioGaga package 与站点解析出了两份 R3F/Drei peer instance，`RadioGagaSceneContent` 的 `useThree()` 因此落在另一份 Canvas context 外，连带触发错误 fallback、提前 warmup 与 readiness 假象。独立 foundation commit [`6b3f35b`](../../commit/6b3f35bc4a1844794ae084753ec0e3aa90e56459) 将 root 与 RadioGaga 的 `@types/react` 锁定到 `19.2.17`，令 Fiber、Drei、React、React DOM 均解析到同一路径；其精确 patch SHA-256 为 `3f78de4e1206d28041d772dcff57eea14e26c01effc735cee5eaaeefd748e725`。
 
@@ -231,4 +231,12 @@ CP1.2 仅会在 access matrix、history、production isolation 与独立 local-p
 | scope 串行复核 | cancelled → forged marker → stored scope 的最小相关前序链以 `--repeat-each=3` 运行 `9 passed`；未通过放宽 timeout 或 URL 断言规避。 |
 | local-preview 实播 | 忽略的真实 catalog 已从冻结素材重建（13 ready / 2 pending，manifest SHA `0eb47bf…cc2f`）；独立 dev runner 为 `6 passed`，包括真实 ArtBreeze MP4 的显式播放和 poster 503 fallback。 |
 
-完整身份、命令、媒体 hash、scope 串行结论和 root-relative checksum 命令见 [CP1.2 status evidence](evidence/cp1.2-chapter-access-graph-status.json) 与 [checksum index](evidence/cp1.2-chapter-access-graph-checksums.sha256)。在独立复核与作者确认前，**不得**将 CP1.2 标为 `PASS`，不得打开 Unit 3，也不得实现 CoScroll terminal、正式 `03 → 04` 视觉接力、ScrollTrigger、粒子、CDN 或 production media manifest。
+完整身份、命令、媒体 hash、scope 串行结论和 root-relative checksum 命令见 [CP1.2 status evidence](evidence/cp1.2-chapter-access-graph-status.json) 与 [checksum index](evidence/cp1.2-chapter-access-graph-checksums.sha256)。独立 review 已对 `ba0918d` 给出 PASS；目标分支 `codex/coscroll-shader4-miralith` 随后从 `db64a2b` fast-forward 到该提交。集成后 fresh verification 为：typecheck、lint、8 条 Node contracts 通过；无 preview media 的 production rail 为 `60 passed / 3 expected skipped`；真实 local-preview route shell 为 `6 passed`。因此 **CP1.2 于 2026-08-09 标记为 `PASS — TECH`**。
+
+本 PASS 只开放 Unit 3 / CP1.3 的契约工作；仍不授权 CoScroll terminal、正式 `03 → 04` 视觉接力、ScrollTrigger、粒子、CDN 或 production media manifest。
+
+## CP1.3 — Playback / Scroll State Model
+
+状态：`NOT STARTED — OPEN，2026-08-09`
+
+Unit 3 可以开始建立 typed handoff payload、semantic capture/restore、playback attempt generation 与单一 input-owner 状态机。开始实现前仍需按计划拆分契约与 fixture；不得提前进入 Unit 4 的正式 CoScroll → ArtBreeze 视觉接力。

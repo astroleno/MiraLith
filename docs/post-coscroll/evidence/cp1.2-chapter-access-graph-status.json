@@ -1,11 +1,13 @@
 {
   "kind": "miralith.post-coscroll.cp1.2.chapter-access-graph",
-  "schemaVersion": 4,
-  "recordedAt": "2026-08-08",
+  "schemaVersion": 5,
+  "recordedAt": "2026-08-09",
   "checkpoint": {
     "id": "CP1.2",
-    "status": "IN REVIEW",
-    "passBlockedBy": "All technical matrix gates recorded here are green, but CP1.2 remains pending independent review and author confirmation. Unit 3 remains closed."
+    "status": "PASS — TECH",
+    "passedAt": "2026-08-09",
+    "reviewVerdict": "PASS — INDEPENDENT REVIEW",
+    "nextGate": "CP1.3 is open; Unit 3 implementation has not started."
   },
   "baseline": {
     "commit": "db64a2b7f0427e7606ce2a7c244ca871f00bf08b",
@@ -13,7 +15,7 @@
   },
   "previewScopeAlgorithmVersion": "chapter-preview-scope-v1",
   "foundationRepair": {
-    "status": "TECH COMPLETE / NOT INTEGRATED",
+    "status": "PASS — INTEGRATED",
     "commit": "6b3f35bc4a1844794ae084753ec0e3aa90e56459",
     "parent": "db64a2b7f0427e7606ce2a7c244ca871f00bf08b",
     "patchSha256": "3f78de4e1206d28041d772dcff57eea14e26c01effc735cee5eaaeefd748e725",
@@ -32,7 +34,7 @@
     }
   },
   "unit2D": {
-    "status": "TECH COMPLETE / NOT INTEGRATED",
+    "status": "PASS — INTEGRATED",
     "candidateCommit": "fcb352990ffd36c41df377c8a19e958e9fe450f4",
     "candidateTree": "5566fd33db476a4697c89040b331a8cc5f0ba21c",
     "lineage": {
@@ -64,6 +66,17 @@
       "tests/e2e/post-coscroll-media.spec.ts",
       "tests/e2e/post-coscroll-route-shell.spec.ts"
     ]
+  },
+  "integration": {
+    "targetBranch": "codex/coscroll-shader4-miralith",
+    "mode": "fast-forward",
+    "preIntegrationHead": "db64a2b7f0427e7606ce2a7c244ca871f00bf08b",
+    "integratedCandidateHead": "ba0918d211d1d0429bb65c07957eac5d6a5b5026",
+    "integratedCandidateTree": "6fbf9fab8ce0943b7c77aaec428e25e10337c204",
+    "runtimeCandidateCommit": "fcb352990ffd36c41df377c8a19e958e9fe450f4",
+    "runtimeCandidateTree": "5566fd33db476a4697c89040b331a8cc5f0ba21c",
+    "verifiedAt": "2026-08-09",
+    "workingTreeProtection": "The pre-existing package.json patched-dependency edit was restored after integration; untracked patch and Dulwich media remained outside the commit."
   },
   "accessMatrix": {
     "public": {
@@ -106,6 +119,8 @@
     "sourcePathPolicy": "The regenerated manifest contains no absolute source path. Source-root and explicit Dulwich override paths were command-local only."
   },
   "verification": {
+    "verifiedAt": "2026-08-09",
+    "integratedCandidateHead": "ba0918d211d1d0429bb65c07957eac5d6a5b5026",
     "static": [
       {
         "command": "pnpm typecheck",
@@ -150,6 +165,7 @@
       }
     },
     "localPreview": {
+      "verificationHead": "ba0918d211d1d0429bb65c07957eac5d6a5b5026",
       "runner": "playwright.local-preview.config.ts",
       "command": "MIRALITH_LOCAL_PREVIEW_PLAYWRIGHT_PORT=3146 pnpm exec playwright test -c playwright.local-preview.config.ts tests/e2e/post-coscroll-route-shell.spec.ts --project=desktop --workers=1",
       "result": "6 passed",
@@ -177,7 +193,7 @@
       "final 03 to 04 cinematic transition",
       "ScrollTrigger, Canvas particles, residue, or animation implementation",
       "production CDN or media manifest publication",
-      "Unit 3 or later work"
+      "Unit 3 or later implementation"
     ]
   },
   "checksumVerificationCommand": "shasum -a 256 -c docs/post-coscroll/evidence/cp1.2-chapter-access-graph-checksums.sha256"
