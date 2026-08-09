@@ -52,22 +52,26 @@ ORIGINAL_TASK_0_TO_8_LOCKED
 
 只有完成 Task 6 的正式视觉 gate 后，才允许把 `V3_ADAPTER_SIGNAL_VISIBLE_MORPHOLOGY_FAIL` 改为 `V3_ADAPTER_VISUAL_PASS` 并解锁 Task 0P。
 
-### 0.4 执行结果（2026-08-09）
+### 0.4 执行结果（2026-08-09，view-space correction）
 
-Task 0–2 已在 commit `1063909`、headed System Chrome、production build、`1440×960 / DPR 1` 下重新执行。四个视角的 review target 都锁定在同一个 V3 spherical UV；三个近景相机从该目标反向沿球面 arc 求解，审计点均位于画面中心，目标 ECEF altitude 与沿地表距离也由单测锁定。尺度审计保留 east/north 两轴，不再使用 RMS 代替二维投影。
+commit `f3ac113` 在 `1440×960 / DPR 1` headed System Chrome 上重建了四视角 baseline、尺度审计和 Task 2 preflight。固定 target UV、球面相机距离、目标高度与 on-screen audit origin 继续通过；新的审计同时保存局部 tangent-plane projection Jacobian 与 SVD。
 
-纠正后的 baseline east/north 投影为：near shape `42.67 / 577.58 px`、detail `1.78 / 24.07 px`；aerial shape `50.32 / 250.27 px`、detail `2.10 / 10.43 px`；near-orbit shape `18.06 / 72.65 px`、detail `0.75 / 3.03 px`；opening shape `2.85 / 4.67 px`、detail `0.12 / 0.19 px`。三个近景的 shape repeat 交集为 `[0.0003008209, 0.0000282150]`，detail 为 `[0.0014439402, 0.0001504800]`，均为空。
+这组数据证明上一版双轴判定本身无效，而不是证明 morphology 尺度失败。三个近景相机都明显沿 local east 方向观察，Jacobian condition number 分别为 `13.53 / 4.97 / 4.02`；east 屏幕投影因此天然远小于 north。要求物理各向同性形体在 raw east/north 两轴同时进入相同 pixel band，会把透视缩短误写成 renderer/morphology failure。
 
-Task 2 为可追溯性重放原 10 个 RMS-derived candidate ID，但 `axisEligibleCandidates=[]`，没有候选在三个近景的 east/north 两轴同时进入目标区间。`largestConnectedAreaFraction` 已降为诊断项：单一大连通区不能证明没有内部 billow。新增 internal luma stddev、multi-scale variation、gradient energy 与 local-peak density；这些指标不得替代人工体积视觉门。所有 raw-off、cloud-off 与 exact history-reset frame 都已持久化，首帧由 `nativeFrameCount=1` 的 immutable capture 绑定。因此当前 checkpoint 只由双轴尺度证据计算为：
+正式 checkpoint 已降级为：
 
 ```text
-HORIZONTAL_MORPHOLOGY_SCALE_FAIL
+VIEW_SPACE_ACCEPTANCE_CONTRACT_FAIL
 TASK_3_TO_6_LOCKED
 TASK_0P_LOCKED
 ORIGINAL_TASK_0_TO_8_LOCKED
 ```
 
-Task 3–6 与 Task 0P 继续锁定。单纯 near/aerial scalar LOD 无法修复单一视角内部的 east/north 投影跨度。下一步若要继续，必须先 amendment 明确修改 view-space acceptance contract，或授权 anisotropic ENU morphology representation；不得继续共享 scalar repeat 调参，也不得进入 vertical profile、temporal、lighting 或 GPU cost。
+Task 2 candidate replay 在 preflight 后停止，不再引用历史 10 组 replay 作为当前证据。候选生成器现在必须同时通过 screen 与 physical wavelength contract，并分别保存 rejected reason；当前 accepted `0` / rejected `36` 只是旧 view-space 规则下的诊断数，不能用来选择 LOD 或否决各向同性云体。最大连通区占比只做 dominance 诊断，最低连通质量仍作为 fragmentation gate。
+
+Temporal history 已改为统一 epoch，覆盖 diagnostic、candidate、view、资源 generation、weather、coordinate mode 与完整 resolved renderer fingerprint；同页切换 candidate/view 的浏览器回归均重新捕获 exact `nativeFrameCount=1`。
+
+下一步必须先以独立 amendment 选择并冻结 foreshortening-aware view-space acceptance（例如基于 Jacobian/SVD 的 view-plane 主尺度）。在该合同确认前，不授权 anisotropic ENU，不继续 morphology/vertical/temporal/lighting 调参，也不运行 Task 0P。
 
 ## 1. 目标文件结构
 
@@ -238,17 +242,20 @@ test(lubirth): freeze V3 morphology review views
 
 - resolved shape/detail wavelength meters
 - per-view east/north/up pixels-per-meter
+- local tangent-plane projection Jacobian、SVD major/minor scale 与 condition number
 - per-layer base/top altitude、height、projected thickness
-- shape/detail east/north projected pixels（两轴分别保留并分别判定）
+- shape/detail east/north projected pixels（保留为原始诊断，不得在高透视缩短视角直接套相同 band）
 - native primary sample-count statistics
 
 **Step 4: 生成 baseline scale audit**
 
-`scale-audit.json` 必须明确回答：当前 failure 是哪一项越界，不能只输出原始矩阵。
+`scale-audit.json` 必须先回答观测目标是否 on-screen、view-space mapping 是否良态。若 Jacobian condition number 超过 provisional preflight threshold `3`，raw ENU axis magnitude 只能做诊断，不能直接回答 morphology 哪一项越界。
 
 **Step 5: 执行 checkpoint 1**
 
 改变一个 query-only repeat 候选后，屏幕波长与 connected-component 中位尺寸必须同方向变化。若没有变化，结论为 `MORPHOLOGY_SCALE_PLUMBING_FAIL`，停止一切美术调参并修 uniform/fingerprint 应用链。
+
+在 candidate 生成前增加 view-space preflight：任一近景 Jacobian condition number `>3` 时，结论为 `VIEW_SPACE_ACCEPTANCE_CONTRACT_FAIL`。该结论只否决当前“raw east/north 同 band”验收规则，不否决 renderer、isotropic morphology 或 V3；立即停止 Task 2 replay，等待独立 amendment 冻结 foreshortening-aware measure。
 
 **Step 6: 验证并提交**
 
@@ -268,6 +275,8 @@ feat(lubirth): audit V3 cloud scale in projected pixels
 ```
 
 ### Task 2：只解水平 morphology，禁止同时改垂直层和 coverage
+
+> **Precondition（2026-08-09 correction）：** Task 1 view-space preflight 必须通过，且后续 amendment 已冻结 foreshortening-aware acceptance。当前 checkpoint 为 `VIEW_SPACE_ACCEPTANCE_CONTRACT_FAIL`，因此本 Task 不得执行；以下 raw east/north intersection 规则已暂停，不能作为当前 winner/kill 合同。
 
 **Files:**
 
@@ -294,11 +303,11 @@ repeat interval      = intersect(eastPixelsPerMeter / targetBand,
 - `near-orbit`: shape `30–160 km`，detail `4–20 km`
 - `opening-orbit`: shape `80–320 km`，detail `8–40 km`
 
-只有 east 与 north 两轴都进入目标 band 的组合才是 axis-eligible candidate。将四个 view 解出的有效数值合并、去重为一组世界尺度候选；**每个候选都必须原样运行全部四个 view**，不得为每张截图临时套用不同 repeat。历史 RMS-derived ID 可以作为 replay diagnostic 保留，但不得进入 winner 集合。候选矩阵先使用当前 layer tuple、shapeAmount、shapeDetailAmount、densityScale 和 `coverage=.55`。禁止同帧改变其他参数。
+旧规则“east 与 north 两轴都进入同一目标 band”只在 view-space preflight 已证明映射良态时适用。高透视缩短视角必须由后续 amendment 改用 Jacobian/SVD 导出的 view-plane 主尺度或其他明确允许 foreshortening 的合同；不得用 anisotropic ENU 拉伸抵消镜头透视。将四个 view 解出的有效数值合并、去重为一组世界尺度候选；**每个候选都必须原样运行全部四个 view**，不得为每张截图临时套用不同 repeat。历史 RMS-derived ID 可以作为 replay diagnostic 保留，但不得进入 winner 集合。候选矩阵先使用当前 layer tuple、shapeAmount、shapeDetailAmount、densityScale 和 `coverage=.55`。禁止同帧改变其他参数。
 
 **Step 2: 先写 candidate-resolution tests**
 
-测试必须证明候选可复现、按 view/candidate ID 稳定解析、不会流入 stock、不会覆盖 opening matrix 或 V3 weather transform。
+测试必须证明候选可复现、按 view/candidate ID 稳定解析、不会流入 stock、不会覆盖 opening matrix 或 V3 weather transform；`axisRangePass=false` 或 `physicalRangePass=false` 的项只能进入 `rejectedCandidates`，并保留拒绝原因。
 
 **Step 3: 采集水平尺度 atlas**
 
@@ -315,7 +324,7 @@ repeat interval      = intersect(eastPixelsPerMeter / targetBand,
 选择顺序：
 
 1. 先淘汰亚像素 detail 和大量碎片。
-2. connected area 只用于检测碎裂/缺失，不得因最大连通区接近 `1.0` 自动判 flat。
+2. 最大 connected-area dominance 只做诊断，不得因其接近 `1.0` 自动判 flat；最低 connected mass 仍可作为 fragmentation gate。
 3. 使用 internal luma variation、gradient/curvature 与 local peaks 辅助诊断，最后仍由人工视觉门选择 billow 层级最清楚的一组。
 
 不得按“最亮”或“覆盖最多”选择。
@@ -643,15 +652,17 @@ Task 0 baseline reproducible?
   no  -> MORPHOLOGY_BASELINE_NOT_REPRODUCIBLE -> stop
   yes -> Task 1 scale plumbing responds?
            no  -> MORPHOLOGY_SCALE_PLUMBING_FAIL -> stop
-           yes -> Task 2 near horizontal winner exists?
-                    no  -> HORIZONTAL_MORPHOLOGY_SCALE_FAIL -> stop
-                    yes -> Task 3 volumetric candidate passes near gate?
-                             no  -> V3_DENSITY_REPRESENTATION_FAIL -> stop
-                             yes -> Task 4 LOD only if opening projection proves necessary
-                                      -> Task 5 temporal cleanup
-                                      -> Task 6 formal visual gate
-                                           pass -> unlock Task 0P only
-                                           fail -> keep Task 0P locked
+           yes -> view-space acceptance well-defined?
+                    no  -> VIEW_SPACE_ACCEPTANCE_CONTRACT_FAIL -> stop/amend
+                    yes -> Task 2 near horizontal winner exists?
+                             no  -> HORIZONTAL_MORPHOLOGY_SCALE_FAIL -> stop
+                             yes -> Task 3 volumetric candidate passes near gate?
+                                      no  -> V3_DENSITY_REPRESENTATION_FAIL -> stop
+                                      yes -> Task 4 LOD only if opening projection proves necessary
+                                               -> Task 5 temporal cleanup
+                                               -> Task 6 formal visual gate
+                                                    pass -> unlock Task 0P only
+                                                    fail -> keep Task 0P locked
 ```
 
 ## 5. 最终验收清单

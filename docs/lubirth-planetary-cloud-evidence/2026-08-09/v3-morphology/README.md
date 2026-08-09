@@ -1,24 +1,33 @@
 # V3 morphology scale checkpoint
 
-This evidence set is the first execution of the 2026-08-09 scale and morphology plan. It uses the native Takram `CloudsEffect → temporal resolve → AerialPerspective` path, the fixed V3 weather column, `coverage=0.55`, and a 1440×960 DPR 1 headed System Chrome run.
+This evidence set records the corrected 2026-08-09 scale and morphology preflight. It uses the native Takram `CloudsEffect → temporal resolve → AerialPerspective` path, the fixed V3 weather column, `coverage=0.55`, and a 1440×960 DPR 1 headed System Chrome run at commit `f3ac113`.
 
-The baseline route is reproducible across four query-only review views and six diagnostics. The corrected review cameras keep the target, rather than the camera radial, at the frozen V3 spherical UV `[0.076494140625, 0.73053515625]`. Every near camera is solved backwards along the requested spherical arc, preserves the requested ECEF target altitude, and projects that same audited target to the centre of its viewport. The opening audit point remains on-screen.
+The four query-only views keep the observed target at the frozen V3 spherical UV `[0.076494140625, 0.73053515625]`. Each near camera is solved backwards along the requested spherical arc, preserves the requested ECEF target altitude, and projects the audited target to the viewport centre. The measured target and ECEF/world contracts remain valid.
 
-The audit no longer compresses the local tangent plane into an RMS scalar. For the `40 km / 1.667 km` baseline, east/north shape pixels are `42.67 / 577.58` at near-oblique, `50.32 / 250.27` at aerial-oblique, `18.06 / 72.65` at near-orbit, and `2.85 / 4.67` at opening. East/north detail pixels are respectively `1.78 / 24.07`, `2.10 / 10.43`, `0.75 / 3.03`, and `0.12 / 0.19`. The three-near-view shape repeat interval is `[0.0003008209, 0.0000282150]` and the detail interval is `[0.0014439402, 0.0001504800]`; both are empty.
+The prior checkpoint interpretation was not valid. All three near cameras look substantially along the target's local east direction, so perspective foreshortening makes east screen scale much smaller than north screen scale. The recorded tangent-plane projection Jacobian has condition numbers `13.53`, `4.97`, and `4.02` for near-oblique, aerial-oblique, and near-orbit. Requiring an isotropic physical cloud to occupy the same `16–48 px` / `3–10 px` bands on both raw ENU axes therefore turns camera perspective into a false morphology failure.
 
-Task 2 replays the ten previous RMS-derived candidate IDs for continuity, but none is axis-eligible across the three near views. The corrected dual-axis generator produces no eligible near candidate; it only finds two opening-only combinations. Each replay records paired raw/raw-off and full/cloud-off populations plus an immutable temporal frame captured at `nativeFrameCount=1`. Connected area is diagnostic only: a value near `1.0` is not treated as proof that internal billow is absent. Internal luma deviation, multi-scale variation, gradient energy and local peak density are recorded for later visual review, but do not auto-authorize a winner.
+The computed checkpoint is now:
 
-The checkpoint is therefore computed as `HORIZONTAL_MORPHOLOGY_SCALE_FAIL`. This is a presentation-scale result, not a new ECEF failure and not a Takram performance conclusion.
+```text
+VIEW_SPACE_ACCEPTANCE_CONTRACT_FAIL
+TASK_3_TO_6_LOCKED
+TASK_0P_LOCKED
+ORIGINAL_TASK_0_TO_8_LOCKED
+```
 
-Task 3–6 and Task 0P remain locked. A scalar near/aerial LOD cannot fix the within-view east/north mismatch by itself. The next amendment must explicitly revise the view-space acceptance contract or authorize an anisotropic ENU morphology representation; it must not hide the failure with vertical, temporal, lighting or performance tuning.
+The current suite stops before candidate replay. `candidate-matrix.json` contains four baseline preflight records, the Jacobian/SVD audit, and an explicit accepted/rejected candidate split. A candidate is accepted only when both its screen-space and physical-wavelength contracts pass; rejected items retain their reasons. The old candidate-prefixed captures remain in the directory only as historical artifacts and are not referenced by the current checkpoint.
+
+Connected-area semantics are also explicit: maximum connected-area dominance is diagnostic only, while a minimum connected mass remains a fragmentation gate. No image-metric winner is computed while the view-space acceptance contract is invalid. The temporal history epoch now covers diagnostic, candidate, view, resource generations, weather identity, coordinate mode, and the complete resolved renderer fingerprint; an in-place candidate/view browser regression proves a fresh immutable `nativeFrameCount=1` capture after both transitions.
+
+The next amendment must define a foreshortening-aware acceptance measure from the stored projection Jacobian/SVD (or another explicit view-plane contract). This evidence does not authorize anisotropic ENU stretching, vertical/profile tuning, temporal cleanup, or performance work.
 
 Files:
 
-- `baseline.json`: 4 views × 6 diagnostics, same-commit telemetry.
-- `scale-audit.json`: corrected on-screen repeat-to-metre and metre-to-pixel audit.
-- `candidate-matrix.json`: ten legacy replay candidates, dual-axis eligibility, independent image metrics, screenshot hashes, common intervals and computed checkpoint.
-- `checkpoint.json`: unlock state and stop reason.
-- `captures/`: all six candidate populations (`full`, `cloud-raw`, `cloud-raw-off`, exact `history-reset-first`, `aerial-final`, `sample-count-debug`) plus baseline diagnostics.
+- `baseline.json`: current 4 views × 6 baseline diagnostics and same-commit telemetry.
+- `scale-audit.json`: on-screen metre-to-pixel audit with the full horizontal projection Jacobian and singular values.
+- `candidate-matrix.json`: preflight-only records, candidate acceptance/rejection reasons, and the computed stop checkpoint.
+- `checkpoint.json`: authoritative unlock state and stop reason.
+- `captures/`: current baseline captures plus historical candidate-prefixed captures that are not part of this checkpoint.
 
 Reproduce the full evidence suite with:
 

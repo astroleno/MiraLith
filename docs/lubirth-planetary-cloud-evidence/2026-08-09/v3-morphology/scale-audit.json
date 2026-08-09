@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "baseCommit": "10639093bdef608420e5868c34ffe141c9d3bd5c",
-  "generatedAt": "2026-08-09T06:00:36.233Z",
+  "baseCommit": "f3ac113975aa8640bb3b5c219c1cef99bc641828",
+  "generatedAt": "2026-08-09T06:49:23.892Z",
   "candidate": {
     "id": "baseline",
     "coverage": 0.55,
@@ -65,6 +65,21 @@
         "detailProjectedPixelsByAxis": {
           "east": 1.7781149156426563,
           "north": 24.0656705898859
+        },
+        "horizontalProjectionJacobian": {
+          "east": [
+            -2.842170943040401e-15,
+            0.0010668689493855937
+          ],
+          "north": [
+            -0.01443940235393154,
+            0
+          ],
+          "singularValues": {
+            "major": 0.01443940235393154,
+            "minor": 0.0010668689493855922,
+            "conditionNumber": 13.53437304764298
+          }
         },
         "shapeProjectedPixels": 409.5212323617781,
         "detailProjectedPixels": 17.063384681740757,
@@ -172,6 +187,21 @@
           "east": 2.096459230941529,
           "north": 10.427832917085501
         },
+        "horizontalProjectionJacobian": {
+          "east": [
+            1.3642420526593924e-15,
+            -0.0012578755385649174
+          ],
+          "north": [
+            -0.0062566997502513004,
+            -7.332801033044234e-15
+          ],
+          "singularValues": {
+            "major": 0.0062566997502513004,
+            "minor": 0.0012578755385649176,
+            "conditionNumber": 4.974021322800689
+          }
+        },
         "shapeProjectedPixels": 180.50715805267038,
         "detailProjectedPixels": 7.521131585527933,
         "shapeStatus": "flat-risk",
@@ -278,6 +308,21 @@
           "east": 0.7524001578069791,
           "north": 3.02705775716125
         },
+        "horizontalProjectionJacobian": {
+          "east": [
+            7.958078640513122e-16,
+            -0.00045144009468418747
+          ],
+          "north": [
+            -0.0018162346542967497,
+            0
+          ],
+          "singularValues": {
+            "major": 0.0018162346542967497,
+            "minor": 0.0004514400946841875,
+            "conditionNumber": 4.023201916895147
+          }
+        },
         "shapeProjectedPixels": 52.933970027247355,
         "detailProjectedPixels": 2.20558208446864,
         "shapeStatus": "flat-risk",
@@ -383,6 +428,21 @@
         "detailProjectedPixelsByAxis": {
           "east": 0.11880253964822675,
           "north": 0.1946562894194576
+        },
+        "horizontalProjectionJacobian": {
+          "east": [
+            -0.00006842680051272509,
+            0.00001997069366007054
+          ],
+          "north": [
+            -0.00008388647694778228,
+            -0.00008126404216557148
+          ],
+          "singularValues": {
+            "major": 0.00012369173380410563,
+            "minor": 0.000058499540049520996,
+            "conditionNumber": 2.1144052363385795
+          }
         },
         "shapeProjectedPixels": 3.870074024870454,
         "detailProjectedPixels": 0.16125308436960226,

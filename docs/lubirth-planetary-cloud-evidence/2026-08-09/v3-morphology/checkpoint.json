@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 3,
-  "baseCommit": "10639093bdef608420e5868c34ffe141c9d3bd5c",
-  "checkpoint": "HORIZONTAL_MORPHOLOGY_SCALE_FAIL",
+  "schemaVersion": 4,
+  "baseCommit": "f3ac113975aa8640bb3b5c219c1cef99bc641828",
+  "checkpoint": "VIEW_SPACE_ACCEPTANCE_CONTRACT_FAIL",
   "status": "stopped",
   "evidence": {
     "baseline": "baseline.json",
@@ -21,40 +21,28 @@
   "finding": {
     "auditOriginsOnScreen": true,
     "sameTargetUvAcrossViews": true,
-    "nearOblique": {
-      "shapePixelsBaselineByAxis": { "east": 42.6747579754, "north": 577.5760941573 },
-      "detailPixelsBaselineByAxis": { "east": 1.7781149156, "north": 24.0656705899 }
+    "projectionJacobianRecorded": true,
+    "viewSpaceConditionNumbers": {
+      "nearOblique": 13.53437304764298,
+      "aerialOblique": 4.974021322800689,
+      "nearOrbit": 4.023201916895147,
+      "openingOrbit": 2.1144052363385795
     },
-    "aerialOblique": {
-      "shapePixelsBaselineByAxis": { "east": 50.3150215426, "north": 250.2679900101 },
-      "detailPixelsBaselineByAxis": { "east": 2.0964592309, "north": 10.4278329171 }
+    "axisMagnitudeRole": "diagnostic-only-until-view-space-contract-is-replaced",
+    "legacyCommonRepeatIntervalRole": "invalid-for-checkpoint-under-severe-foreshortening",
+    "candidateReplay": "not-run",
+    "acceptedGeneratedCandidateCount": 0,
+    "rejectedGeneratedCandidateCount": 36,
+    "rejectedForScreenAxisRangeCount": 34,
+    "rejectedForPhysicalRangeCount": 18,
+    "anisotropicEnuAuthorized": false,
+    "historyEpochIncludesCandidateViewResourcesAndRenderer": true,
+    "samePageCandidateAndViewFrameOneRecapture": "pass",
+    "connectedAreaSemantics": {
+      "maximumDominance": "diagnostic-only",
+      "minimumConnectedMass": "fragmentation-gate"
     },
-    "nearOrbit": {
-      "shapePixelsBaselineByAxis": { "east": 18.0576037874, "north": 72.6493861719 },
-      "detailPixelsBaselineByAxis": { "east": 0.7524001578, "north": 3.0270577572 }
-    },
-    "openingOrbit": {
-      "shapePixelsBaselineByAxis": { "east": 2.8512609516, "north": 4.6717509461 },
-      "detailPixelsBaselineByAxis": { "east": 0.1188025396, "north": 0.1946562894 }
-    },
-    "commonRepeatIntervals": {
-      "shape": {
-        "feasible": false,
-        "minimum": 0.00030082088237357377,
-        "maximum": 0.000028215005917761717
-      },
-      "detail": {
-        "feasible": false,
-        "minimum": 0.001443940235393154,
-        "maximum": 0.0001504800315613958
-      }
-    },
-    "legacyReplayCandidateCount": 10,
-    "axisEligibleCandidates": [],
-    "passingMetricCandidates": [],
-    "historyFirstFrameNativeFrameCount": 1,
-    "connectedAreaRole": "diagnostic-only",
-    "reason": "All review views now observe the same frozen V3 target. The corrected east/north projections have no shared shape or detail repeat interval across the three near views, and no replay candidate satisfies both axes. Connected-area dominance is not used to infer missing billow."
+    "reason": "The fixed target and projection measurements are valid, but the camera rays strongly foreshorten the local east direction. Applying equal east/north screen bands to an isotropic physical cloud therefore invalidates the acceptance contract; it does not establish a morphology-scale failure."
   },
   "unlock": {
     "task3": false,
@@ -64,5 +52,5 @@
     "task0p": false,
     "originalTask0To8": false
   },
-  "nextAction": "Do not tune vertical profile or run Task 0P. Amend the view-space acceptance contract or authorize an anisotropic ENU morphology representation; scalar near/aerial LOD alone cannot satisfy the within-view east/north bands."
+  "nextAction": "Do not tune morphology, authorize anisotropic ENU, or run Task 0P. Amend the view-space acceptance contract using the recorded tangent-plane projection Jacobian/SVD or another explicitly foreshortening-aware measure, then regenerate Task 2 candidates."
 }
