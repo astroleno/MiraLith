@@ -22,6 +22,21 @@ type MorphologyContractModule = {
     targetShapePixels: number;
     targetDetailPixels: number;
   }>>;
+  TAKRAM_V3_OPENING_MORPHOLOGY_PROGRESS_VALUES: readonly [0, 0.06, 0.12, 0.18];
+  TAKRAM_V3_OPENING_MORPHOLOGY_DIAGNOSTICS: readonly [
+    "full",
+    "cloud-raw",
+    "bsm-off",
+    "sample-count-debug"
+  ];
+  TAKRAM_V3_OPENING_MORPHOLOGY_CANDIDATES: Readonly<Record<string, {
+    id: string;
+    coverage: number;
+    shapeRepeat: number;
+    shapeDetailRepeat: number;
+    shapeWavelengthMeters: number;
+    detailWavelengthMeters: number;
+  }>>;
   resolveTakramV3MorphologyCandidate(candidate: string | null | undefined):
     | { id: string; shapeRepeat: number; shapeDetailRepeat: number }
     | null;
@@ -73,7 +88,7 @@ type MorphologyContractModule = {
     minimum: number;
     maximum: number;
   };
-  resolveTakramV3HorizontalMorphologyCheckpoint(input: {
+  resolveTakramV3NearMorphologyDiagnosticCheckpoint(input: {
     audits: ReadonlyArray<{
       view: "near-oblique" | "aerial-oblique" | "near-orbit";
       pixelsPerMeter: { east: number; north: number };
@@ -86,6 +101,19 @@ type MorphologyContractModule = {
   }): {
     id: string;
     task3Unlocked: boolean;
+  };
+  resolveTakramV3HorizontalMorphologyCheckpoint(input: {
+    candidateIds: readonly string[];
+    records: ReadonlyArray<{
+      candidateId: string;
+      progress: number;
+      diagnostics: readonly string[];
+    }>;
+    visualDecisions: Readonly<Record<string, "pass" | "fail">> | null;
+  }): {
+    id: string;
+    task3Unlocked: boolean;
+    winnerCandidateId: string | null;
   };
 };
 
@@ -413,7 +441,7 @@ test("rejects raw dual-axis acceptance under view-space foreshortening", async (
     originScreenPixels: [720, 480] as const,
     viewport: { width: 1440, height: 960 }
   }));
-  expect(contract.resolveTakramV3HorizontalMorphologyCheckpoint({
+  expect(contract.resolveTakramV3NearMorphologyDiagnosticCheckpoint({
     audits: onscreenAudits,
     metricCandidateCount: 3,
     passingMetricCandidateCount: 1
@@ -422,7 +450,7 @@ test("rejects raw dual-axis acceptance under view-space foreshortening", async (
     task3Unlocked: false
   });
 
-  expect(contract.resolveTakramV3HorizontalMorphologyCheckpoint({
+  expect(contract.resolveTakramV3NearMorphologyDiagnosticCheckpoint({
     audits: onscreenAudits.map((audit, index) => index === 0
       ? { ...audit, originScreenPixels: [720, -1] as const }
       : audit),
@@ -433,7 +461,7 @@ test("rejects raw dual-axis acceptance under view-space foreshortening", async (
     task3Unlocked: false
   });
 
-  expect(contract.resolveTakramV3HorizontalMorphologyCheckpoint({
+  expect(contract.resolveTakramV3NearMorphologyDiagnosticCheckpoint({
     audits: [
       { ...onscreenAudits[0]!, pixelsPerMeter: { east: 0.0001, north: 0.00135 } },
       { ...onscreenAudits[1]!, pixelsPerMeter: { east: 0.001, north: 0.001 } },
@@ -456,7 +484,7 @@ test("rejects raw dual-axis acceptance under view-space foreshortening", async (
   expect(contract.resolveTakramV3MorphologyCommonRepeatInterval(anisotropicAudit, "detail"))
     .toMatchObject({ feasible: false });
 
-  expect(contract.resolveTakramV3HorizontalMorphologyCheckpoint({
+  expect(contract.resolveTakramV3NearMorphologyDiagnosticCheckpoint({
     audits: [
       {
         ...onscreenAudits[0]!,
@@ -471,6 +499,97 @@ test("rejects raw dual-axis acceptance under view-space foreshortening", async (
   })).toEqual({
     id: "VIEW_SPACE_ACCEPTANCE_CONTRACT_FAIL",
     task3Unlocked: false
+  });
+});
+
+test("gates morphology on the four production opening progresses only", async () => {
+  const contract = await import(modulePath) as MorphologyContractModule;
+  expect(contract.TAKRAM_V3_OPENING_MORPHOLOGY_PROGRESS_VALUES).toEqual([
+    0,
+    0.06,
+    0.12,
+    0.18
+  ]);
+  expect(contract.TAKRAM_V3_OPENING_MORPHOLOGY_DIAGNOSTICS).toEqual([
+    "full",
+    "cloud-raw",
+    "bsm-off",
+    "sample-count-debug"
+  ]);
+  const candidates = Object.values(contract.TAKRAM_V3_OPENING_MORPHOLOGY_CANDIDATES);
+  expect(candidates).toHaveLength(6);
+  expect(candidates.map((candidate) => [
+    candidate.shapeWavelengthMeters,
+    candidate.detailWavelengthMeters
+  ])).toEqual([
+    [220_000, 30_000],
+    [220_000, 40_000],
+    [260_000, 30_000],
+    [260_000, 40_000],
+    [300_000, 30_000],
+    [300_000, 40_000]
+  ]);
+  expect(candidates[0]).toMatchObject({
+    id: "opening-shape-220-detail-30",
+    coverage: 0.55,
+    shapeRepeat: 1 / 220_000,
+    shapeDetailRepeat: 1 / 30_000
+  });
+  expect(contract.resolveTakramV3MorphologyCandidate("opening-shape-300-detail-40"))
+    .toMatchObject({
+      shapeRepeat: 1 / 300_000,
+      shapeDetailRepeat: 1 / 40_000
+    });
+
+  const candidateIds = candidates.map((candidate) => candidate.id);
+  const records = candidateIds.flatMap((candidateId) =>
+    contract.TAKRAM_V3_OPENING_MORPHOLOGY_PROGRESS_VALUES.map((progress) => ({
+      candidateId,
+      progress,
+      diagnostics: contract.TAKRAM_V3_OPENING_MORPHOLOGY_DIAGNOSTICS
+    }))
+  );
+  expect(contract.resolveTakramV3HorizontalMorphologyCheckpoint({
+    candidateIds,
+    records: records.slice(1),
+    visualDecisions: null
+  })).toEqual({
+    id: "OPENING_MORPHOLOGY_EVIDENCE_INVALID",
+    task3Unlocked: false,
+    winnerCandidateId: null
+  });
+  expect(contract.resolveTakramV3HorizontalMorphologyCheckpoint({
+    candidateIds,
+    records,
+    visualDecisions: null
+  })).toEqual({
+    id: "OPENING_MORPHOLOGY_VISUAL_REVIEW_REQUIRED",
+    task3Unlocked: false,
+    winnerCandidateId: null
+  });
+  expect(contract.resolveTakramV3HorizontalMorphologyCheckpoint({
+    candidateIds,
+    records,
+    visualDecisions: Object.fromEntries(candidateIds.map((candidateId) => [
+      candidateId,
+      "fail" as const
+    ]))
+  })).toEqual({
+    id: "OPENING_MORPHOLOGY_VISUAL_FAIL",
+    task3Unlocked: false,
+    winnerCandidateId: null
+  });
+  expect(contract.resolveTakramV3HorizontalMorphologyCheckpoint({
+    candidateIds,
+    records,
+    visualDecisions: Object.fromEntries(candidateIds.map((candidateId, index) => [
+      candidateId,
+      index === 3 ? "pass" as const : "fail" as const
+    ]))
+  })).toEqual({
+    id: "OPENING_MORPHOLOGY_VISUAL_PASS",
+    task3Unlocked: true,
+    winnerCandidateId: candidateIds[3]
   });
 });
 

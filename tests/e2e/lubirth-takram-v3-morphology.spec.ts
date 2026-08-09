@@ -28,6 +28,11 @@ const evidenceDirectory = path.resolve(
   "docs/lubirth-planetary-cloud-evidence/2026-08-09/v3-morphology"
 );
 const captureDirectory = path.join(evidenceDirectory, "captures");
+const openingEvidenceDirectory = path.resolve(
+  process.cwd(),
+  "docs/lubirth-planetary-cloud-evidence/2026-08-09/v3-opening-morphology"
+);
+const openingCaptureDirectory = path.join(openingEvidenceDirectory, "captures");
 const shouldCapture = process.env.MIRALITH_TAKRAM_V3_MORPHOLOGY_CAPTURE === "1";
 const systemChromeExecutable = process.env.MIRALITH_SYSTEM_CHROME_EXECUTABLE ??
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -45,6 +50,7 @@ type MorphologyTelemetry = {
   cameraHeightMeters: number | null;
   cameraMatrixWorld: number[];
   coordinateMode: "lubirth-bridge" | "upstream-ecef";
+  coverage: number | null;
   diagnostic: string;
   diagnosticApplied: boolean;
   input: "stock" | "v3";
@@ -83,6 +89,7 @@ type MorphologyTelemetry = {
     segmentMeters: number;
   } | null;
   nativeFrameCount: number;
+  progress: number;
   historyFirstFrameCapture: {
     height: number;
     nativeFrameCount: 1;
@@ -183,6 +190,45 @@ async function captureMorphologyFrame(
   });
   expect(capture?.dataUrl.startsWith("data:image/png;base64,")).toBe(true);
   return Buffer.from(capture!.dataUrl.split(",")[1]!, "base64");
+}
+
+async function buildOpeningContactSheet(input: {
+  candidates: readonly string[];
+  diagnostic: string;
+  frames: ReadonlyMap<string, Buffer>;
+  progresses: readonly number[];
+}) {
+  const cellWidth = 360;
+  const imageHeight = 240;
+  const labelHeight = 32;
+  const cellHeight = imageHeight + labelHeight;
+  const composites: Array<sharp.OverlayOptions> = [];
+  for (const [row, candidate] of input.candidates.entries()) {
+    for (const [column, progress] of input.progresses.entries()) {
+      const frame = input.frames.get(`${candidate}:${progress}:${input.diagnostic}`);
+      expect(frame).toBeDefined();
+      const left = column * cellWidth;
+      const top = row * cellHeight;
+      composites.push({
+        input: await sharp(frame).resize(cellWidth, imageHeight, { fit: "fill" }).png().toBuffer(),
+        left,
+        top
+      });
+      composites.push({
+        input: Buffer.from(`<svg width="${cellWidth}" height="${labelHeight}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#10131a"/><text x="8" y="21" fill="#f4f6fa" font-family="monospace" font-size="13">${candidate} · p=${progress.toFixed(2)}</text></svg>`),
+        left,
+        top: top + imageHeight
+      });
+    }
+  }
+  return sharp({
+    create: {
+      width: cellWidth * input.progresses.length,
+      height: cellHeight * input.candidates.length,
+      channels: 4,
+      background: "#10131a"
+    }
+  }).composite(composites).png().toBuffer();
 }
 
 test("morphology baseline reproduces all fixed views and diagnostics", async ({ page }) => {
@@ -438,7 +484,154 @@ test("scale audit reports projected shape, detail and layer thickness", async ({
   );
 });
 
-test("horizontal morphology preflight gates candidate replay", async ({ page }) => {
+test("opening-only morphology matrix covers every production review frame", async ({ page }) => {
+  const morphologyContract = await import(
+    "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramV3MorphologyContract"
+  );
+  const candidates = Object.keys(
+    morphologyContract.TAKRAM_V3_OPENING_MORPHOLOGY_CANDIDATES
+  );
+  const progresses = morphologyContract.TAKRAM_V3_OPENING_MORPHOLOGY_PROGRESS_VALUES;
+  const openingDiagnostics = morphologyContract.TAKRAM_V3_OPENING_MORPHOLOGY_DIAGNOSTICS;
+  const frames = new Map<string, Buffer>();
+  const records: Array<{
+    candidateId: string;
+    progress: number;
+    diagnostic: typeof openingDiagnostics[number];
+    screenshotSha256: string;
+    telemetry: MorphologyTelemetry;
+  }> = [];
+
+  for (const candidateId of candidates) {
+    const candidate = morphologyContract.resolveTakramV3MorphologyCandidate(candidateId);
+    expect(candidate).not.toBeNull();
+    for (const progress of progresses) {
+      for (const diagnostic of openingDiagnostics) {
+        await page.goto(
+          `/lubirth-takram-parity-spike?input=v3&view=opening&progress=${progress}&diagnostic=${diagnostic}&morphologyView=opening-orbit&morphologyCandidate=${candidateId}`
+        );
+        await expect(page.locator("[data-takram-parity-route='true']")).toHaveAttribute(
+          "data-morphology-candidate",
+          candidateId
+        );
+        await waitForNativeMorphology(page);
+        const telemetry = await page.evaluate(() => window.__MiraLithTakramParity);
+        expect(telemetry).toMatchObject({
+          active: true,
+          coverage: 0.55,
+          diagnostic,
+          input: "v3",
+          morphologyCandidate: candidateId,
+          morphologyView: "opening-orbit",
+          progress,
+          transformFallback: null,
+          view: "opening"
+        });
+        expect(telemetry?.cameraHeightMeters).toBeGreaterThan(3_000_000);
+        expect(telemetry?.shapeRepeat).toBeCloseTo(candidate!.shapeRepeat, 12);
+        expect(telemetry?.shapeDetailRepeat).toBeCloseTo(candidate!.shapeDetailRepeat, 12);
+        const screenshot = await page.screenshot({ scale: "css" });
+        frames.set(`${candidateId}:${progress}:${diagnostic}`, screenshot);
+        if (shouldCapture) {
+          mkdirSync(openingCaptureDirectory, { recursive: true });
+          writeFileSync(
+            path.join(
+              openingCaptureDirectory,
+              `${candidateId}-p${progress.toFixed(2).replace(".", "-")}-${diagnostic}.png`
+            ),
+            screenshot
+          );
+        }
+        records.push({
+          candidateId,
+          progress,
+          diagnostic,
+          screenshotSha256: createHash("sha256").update(screenshot).digest("hex"),
+          telemetry: telemetry!
+        });
+      }
+    }
+  }
+
+  const checkpointRecords = candidates.flatMap((candidateId) =>
+    progresses.map((progress) => ({
+      candidateId,
+      progress,
+      diagnostics: records.filter((record) =>
+        record.candidateId === candidateId && record.progress === progress
+      ).map((record) => record.diagnostic)
+    }))
+  );
+  const checkpoint = morphologyContract.resolveTakramV3HorizontalMorphologyCheckpoint({
+    candidateIds: candidates,
+    records: checkpointRecords,
+    visualDecisions: null
+  });
+  expect(checkpoint).toEqual({
+    id: "OPENING_MORPHOLOGY_VISUAL_REVIEW_REQUIRED",
+    task3Unlocked: false,
+    winnerCandidateId: null
+  });
+
+  mkdirSync(openingEvidenceDirectory, { recursive: true });
+  const contactSheets: Record<string, { path: string; sha256: string }> = {};
+  for (const diagnostic of openingDiagnostics) {
+    const contactSheet = await buildOpeningContactSheet({
+      candidates,
+      diagnostic,
+      frames,
+      progresses
+    });
+    const contactSheetName = `${diagnostic}-contact-sheet.png`;
+    if (shouldCapture) {
+      writeFileSync(path.join(openingEvidenceDirectory, contactSheetName), contactSheet);
+    }
+    contactSheets[diagnostic] = {
+      path: contactSheetName,
+      sha256: createHash("sha256").update(contactSheet).digest("hex")
+    };
+  }
+  writeFileSync(
+    path.join(openingEvidenceDirectory, "candidate-matrix.json"),
+    `${JSON.stringify({
+      schemaVersion: 1,
+      baseCommit: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
+      generatedAt: new Date().toISOString(),
+      scope: "opening-only-production-contract",
+      nearViewsRole: "diagnostic-only",
+      fixedContract: {
+        coverage: 0.55,
+        progresses,
+        diagnostics: openingDiagnostics,
+        renderer: "stock-takram-0.7.6",
+        weather: "v3"
+      },
+      candidates: candidates.map((candidateId) => {
+        const candidate = morphologyContract.resolveTakramV3MorphologyCandidate(candidateId)!;
+        return {
+          id: candidateId,
+          shapeWavelengthMeters: candidate.shapeWavelengthMeters,
+          detailWavelengthMeters: candidate.detailWavelengthMeters,
+          shapeRepeat: candidate.shapeRepeat,
+          shapeDetailRepeat: candidate.shapeDetailRepeat
+        };
+      }),
+      records: records.map(({ candidateId, progress, diagnostic, screenshotSha256, telemetry }) => ({
+        candidateId,
+        progress,
+        diagnostic,
+        screenshotSha256,
+        cameraHeightMeters: telemetry.cameraHeightMeters,
+        rendererFingerprintHash: telemetry.rendererFingerprintHash,
+        morphologyScaleAudit: telemetry.morphologyScaleAudit
+      })),
+      contactSheets,
+      checkpoint
+    }, null, 2)}\n`
+  );
+});
+
+test("near morphology remains diagnostic-only", async ({ page }) => {
   const morphologyContract = await import(
     "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramV3MorphologyContract"
   );
@@ -474,7 +667,7 @@ test("horizontal morphology preflight gates candidate replay", async ({ page }) 
       telemetry.morphologyScaleAudit?.horizontalProjectionJacobian.singularValues.conditionNumber ??
       Number.NaN
   }));
-  const preflightCheckpoint = morphologyContract.resolveTakramV3HorizontalMorphologyCheckpoint({
+  const preflightCheckpoint = morphologyContract.resolveTakramV3NearMorphologyDiagnosticCheckpoint({
     audits: preflightRecords
       .filter(({ view }) => view !== "opening-orbit")
       .map(({ view, telemetry }) => ({
@@ -498,7 +691,7 @@ test("horizontal morphology preflight gates candidate replay", async ({ page }) 
     );
     mkdirSync(evidenceDirectory, { recursive: true });
     writeFileSync(
-      path.join(evidenceDirectory, "candidate-matrix.json"),
+      path.join(evidenceDirectory, "near-diagnostic.json"),
       `${JSON.stringify({
         schemaVersion: 2,
         baseCommit: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
@@ -681,7 +874,7 @@ test("horizontal morphology preflight gates candidate replay", async ({ page }) 
       record.candidate === candidate && record.view === view
     )?.classification.pass === true
   ));
-  const checkpoint = morphologyContract.resolveTakramV3HorizontalMorphologyCheckpoint({
+  const checkpoint = morphologyContract.resolveTakramV3NearMorphologyDiagnosticCheckpoint({
     audits: nearViews.map((view) => {
       const audit = atlas.find((record) =>
         record.view === view && record.diagnostic === "full"
@@ -703,7 +896,7 @@ test("horizontal morphology preflight gates candidate replay", async ({ page }) 
   });
   mkdirSync(evidenceDirectory, { recursive: true });
   writeFileSync(
-    path.join(evidenceDirectory, "candidate-matrix.json"),
+    path.join(evidenceDirectory, "near-diagnostic.json"),
     `${JSON.stringify({
       schemaVersion: 1,
       baseCommit: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),

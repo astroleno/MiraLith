@@ -15,6 +15,12 @@ export type TakramV3MorphologyViewId =
 
 export type TakramV3MorphologyCandidateId =
   | "baseline"
+  | "opening-shape-220-detail-30"
+  | "opening-shape-220-detail-40"
+  | "opening-shape-260-detail-30"
+  | "opening-shape-260-detail-40"
+  | "opening-shape-300-detail-30"
+  | "opening-shape-300-detail-40"
   | "horizontal-near-oblique-shape-32-detail-4"
   | "horizontal-near-oblique-shape-32-detail-6"
   | "horizontal-near-oblique-shape-32-detail-8"
@@ -84,6 +90,8 @@ export interface TakramV3MorphologyCandidate {
   sourceViews?: readonly TakramV3MorphologyViewId[];
   targetShapePixels?: number;
   targetDetailPixels?: number;
+  shapeWavelengthMeters?: number;
+  detailWavelengthMeters?: number;
 }
 
 /** The current V3 opening preset, frozen before any scale candidate work. */
@@ -154,11 +162,64 @@ export const TAKRAM_V3_MORPHOLOGY_HORIZONTAL_CANDIDATES = Object.freeze({
   )
 });
 
+export const TAKRAM_V3_OPENING_MORPHOLOGY_PROGRESS_VALUES = Object.freeze([
+  0,
+  0.06,
+  0.12,
+  0.18
+] as const);
+
+export const TAKRAM_V3_OPENING_MORPHOLOGY_DIAGNOSTICS = Object.freeze([
+  "full",
+  "cloud-raw",
+  "bsm-off",
+  "sample-count-debug"
+] as const);
+
+function openingCandidate(
+  id: Extract<TakramV3MorphologyCandidateId, `opening-${string}`>,
+  shapeWavelengthMeters: 220_000 | 260_000 | 300_000,
+  detailWavelengthMeters: 30_000 | 40_000
+): TakramV3MorphologyCandidate {
+  return Object.freeze({
+    id,
+    coverage: 0.55,
+    shapeRepeat: 1 / shapeWavelengthMeters,
+    shapeDetailRepeat: 1 / detailWavelengthMeters,
+    shapeWavelengthMeters,
+    detailWavelengthMeters,
+    sourceViews: ["opening-orbit"] as const
+  });
+}
+
+/** Task 2O production-camera candidates. Near/aerial review cameras do not gate these values. */
+export const TAKRAM_V3_OPENING_MORPHOLOGY_CANDIDATES = Object.freeze({
+  "opening-shape-220-detail-30": openingCandidate(
+    "opening-shape-220-detail-30", 220_000, 30_000
+  ),
+  "opening-shape-220-detail-40": openingCandidate(
+    "opening-shape-220-detail-40", 220_000, 40_000
+  ),
+  "opening-shape-260-detail-30": openingCandidate(
+    "opening-shape-260-detail-30", 260_000, 30_000
+  ),
+  "opening-shape-260-detail-40": openingCandidate(
+    "opening-shape-260-detail-40", 260_000, 40_000
+  ),
+  "opening-shape-300-detail-30": openingCandidate(
+    "opening-shape-300-detail-30", 300_000, 30_000
+  ),
+  "opening-shape-300-detail-40": openingCandidate(
+    "opening-shape-300-detail-40", 300_000, 40_000
+  )
+});
+
 export const TAKRAM_V3_MORPHOLOGY_CANDIDATES: Readonly<Record<
   TakramV3MorphologyCandidateId,
   TakramV3MorphologyCandidate
 >> = Object.freeze({
   baseline: TAKRAM_V3_MORPHOLOGY_BASELINE,
+  ...TAKRAM_V3_OPENING_MORPHOLOGY_CANDIDATES,
   ...TAKRAM_V3_MORPHOLOGY_HORIZONTAL_CANDIDATES
 });
 
@@ -201,7 +262,7 @@ export interface TakramV3MorphologyRepeatInterval {
   maximum: number;
 }
 
-export type TakramV3HorizontalMorphologyCheckpointId =
+export type TakramV3NearMorphologyDiagnosticCheckpointId =
   | "MORPHOLOGY_SCALE_EVIDENCE_INVALID"
   | "VIEW_SPACE_ACCEPTANCE_CONTRACT_FAIL"
   | "HORIZONTAL_MORPHOLOGY_SCALE_FAIL"
@@ -215,6 +276,12 @@ const NEAR_MORPHOLOGY_VIEWS = Object.freeze([
 ] as const);
 
 export const TAKRAM_V3_MAX_VIEW_SPACE_CONDITION_NUMBER = 3;
+
+export type TakramV3OpeningMorphologyCheckpointId =
+  | "OPENING_MORPHOLOGY_EVIDENCE_INVALID"
+  | "OPENING_MORPHOLOGY_VISUAL_REVIEW_REQUIRED"
+  | "OPENING_MORPHOLOGY_VISUAL_FAIL"
+  | "OPENING_MORPHOLOGY_VISUAL_PASS";
 
 function vectorLength(vector: readonly [number, number, number]) {
   return Math.hypot(vector[0], vector[1], vector[2]);
@@ -311,14 +378,14 @@ export function resolveTakramV3MorphologyCommonRepeatInterval(
   return { feasible: minimum <= maximum, minimum, maximum };
 }
 
-export function resolveTakramV3HorizontalMorphologyCheckpoint(input: {
+export function resolveTakramV3NearMorphologyDiagnosticCheckpoint(input: {
   audits: ReadonlyArray<TakramV3MorphologyProjectionScaleInput & {
     originScreenPixels: readonly [number, number] | null;
     viewport: { width: number; height: number };
   }>;
   metricCandidateCount: number;
   passingMetricCandidateCount: number;
-}): { id: TakramV3HorizontalMorphologyCheckpointId; task3Unlocked: boolean } {
+}): { id: TakramV3NearMorphologyDiagnosticCheckpointId; task3Unlocked: false } {
   const nearAudits = NEAR_MORPHOLOGY_VIEWS.map((view) =>
     input.audits.find((audit) => audit.view === view)
   );
@@ -352,6 +419,80 @@ export function resolveTakramV3HorizontalMorphologyCheckpoint(input: {
     return { id: "HORIZONTAL_MORPHOLOGY_CANDIDATE_FAIL", task3Unlocked: false };
   }
   return { id: "HORIZONTAL_MORPHOLOGY_VISUAL_REVIEW_REQUIRED", task3Unlocked: false };
+}
+
+/**
+ * Resolve the Task 2O production checkpoint from the actual opening review frames.
+ * Near/aerial diagnostics are deliberately absent from this API and cannot block it.
+ */
+export function resolveTakramV3HorizontalMorphologyCheckpoint(input: {
+  candidateIds: readonly string[];
+  records: ReadonlyArray<{
+    candidateId: string;
+    progress: number;
+    diagnostics: readonly string[];
+  }>;
+  visualDecisions: Readonly<Record<string, "pass" | "fail">> | null;
+}): {
+  id: TakramV3OpeningMorphologyCheckpointId;
+  task3Unlocked: boolean;
+  winnerCandidateId: string | null;
+} {
+  const candidateIds = [...new Set(input.candidateIds)];
+  const evidenceValid = candidateIds.length > 0 &&
+    candidateIds.length === input.candidateIds.length &&
+    candidateIds.every((candidateId) =>
+      candidateId in TAKRAM_V3_OPENING_MORPHOLOGY_CANDIDATES
+    ) && candidateIds.every((candidateId) =>
+      TAKRAM_V3_OPENING_MORPHOLOGY_PROGRESS_VALUES.every((progress) => {
+        const record = input.records.find((candidateRecord) =>
+          candidateRecord.candidateId === candidateId &&
+          candidateRecord.progress === progress
+        );
+        return record !== undefined &&
+          TAKRAM_V3_OPENING_MORPHOLOGY_DIAGNOSTICS.every((diagnostic) =>
+            record.diagnostics.includes(diagnostic)
+          );
+      })
+    );
+  if (!evidenceValid) {
+    return {
+      id: "OPENING_MORPHOLOGY_EVIDENCE_INVALID",
+      task3Unlocked: false,
+      winnerCandidateId: null
+    };
+  }
+  if (input.visualDecisions === null || candidateIds.some((candidateId) =>
+    input.visualDecisions?.[candidateId] === undefined
+  )) {
+    return {
+      id: "OPENING_MORPHOLOGY_VISUAL_REVIEW_REQUIRED",
+      task3Unlocked: false,
+      winnerCandidateId: null
+    };
+  }
+  const passingCandidateIds = candidateIds.filter((candidateId) =>
+    input.visualDecisions?.[candidateId] === "pass"
+  );
+  if (passingCandidateIds.length === 0) {
+    return {
+      id: "OPENING_MORPHOLOGY_VISUAL_FAIL",
+      task3Unlocked: false,
+      winnerCandidateId: null
+    };
+  }
+  if (passingCandidateIds.length > 1) {
+    return {
+      id: "OPENING_MORPHOLOGY_VISUAL_REVIEW_REQUIRED",
+      task3Unlocked: false,
+      winnerCandidateId: null
+    };
+  }
+  return {
+    id: "OPENING_MORPHOLOGY_VISUAL_PASS",
+    task3Unlocked: true,
+    winnerCandidateId: passingCandidateIds[0]!
+  };
 }
 
 export interface TakramV3MorphologyGeneratedCandidate {
