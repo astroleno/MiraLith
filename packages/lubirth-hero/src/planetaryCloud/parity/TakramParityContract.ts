@@ -32,6 +32,7 @@ export type TakramParityDiagnostic =
   | "cloud-raw"
   | "cloud-raw-off"
   | "sample-count-debug"
+  | "stage-readback"
   | "aerial-final";
 export type UpstreamControlDecision = "PASS" | "UPSTREAM_CONTROL_FAIL";
 export type StockOpeningDecision =
@@ -203,6 +204,7 @@ export function resolveTakramParityRouteQuery(
     requestedDiagnostic === "cloud-raw" ||
     requestedDiagnostic === "cloud-raw-off" ||
     requestedDiagnostic === "sample-count-debug" ||
+    requestedDiagnostic === "stage-readback" ||
     requestedDiagnostic === "aerial-final"
     ? requestedDiagnostic
     : "full";
@@ -252,11 +254,11 @@ export function resolveTakramParityRouteQuery(
   // native cloud buffer with the complete aerial composite. The control-only
   // BSM/history/Aerial probes are deliberately not exposed in this path.
   const morphologyDiagnostic = value.morphologyView !== undefined &&
-    ["full", "cloud-raw", "cloud-raw-off", "history-reset-first", "bsm-off", "aerial-final", "sample-count-debug"].includes(value.diagnostic);
+    ["full", "cloud-raw", "cloud-raw-off", "history-reset-first", "bsm-off", "aerial-final", "sample-count-debug", "stage-readback"].includes(value.diagnostic);
   return {
     ok: true,
     value: value.view === "opening" && !morphologyDiagnostic &&
-      !["altitude-ladder", "altitude-ladder-cloud-off", "cloud-raw", "cloud-raw-off", "depth-off", "density-debug", "uv-debug", "sample-count-debug"].includes(value.diagnostic)
+      !["altitude-ladder", "altitude-ladder-cloud-off", "cloud-raw", "cloud-raw-off", "depth-off", "density-debug", "uv-debug", "sample-count-debug", "stage-readback"].includes(value.diagnostic)
       ? { ...value, diagnostic: "full" }
       : value
   };
@@ -642,7 +644,32 @@ export interface TakramParityDiagnosticState {
   uvDebug: boolean;
   sceneDepthClamp: boolean;
   sampleCountDebug: boolean;
+  stageReadback: boolean;
   historyResetFirstFrame: boolean;
+}
+
+export interface TakramParityStageReadbackBuffer {
+  width: number;
+  height: number;
+  precision: "half-float" | "unorm8";
+  source:
+    | "native-cloud-current-render-target"
+    | "native-cloud-resolved-history-render-target"
+    | "default-framebuffer-after-aerial-perspective";
+  origin: "bottom-left";
+  encoding: "linear-rgba" | "srgb-output-rgba";
+  scalar: "float32-le" | "uint8";
+  byteLength: number;
+  dataBase64: string;
+}
+
+export interface TakramParityStageReadbackCapture {
+  nativeFrameCount: number;
+  temporalFrame: Omit<TakramParityMatchedTemporalFrameCapture, "dataUrl" | "height" | "width">;
+  aerialPerspectiveInputSource: "native-cloud-resolved-history-render-target";
+  preTemporal: TakramParityStageReadbackBuffer;
+  resolvedHistory: TakramParityStageReadbackBuffer;
+  finalOutput: TakramParityStageReadbackBuffer;
 }
 
 export interface TakramParitySampleCountReadback {
@@ -678,6 +705,11 @@ export interface TakramParityTelemetry {
   nativeFrameCount: number;
   historyFirstFrameCapture: Omit<TakramParityHistoryFirstFrameCapture, "dataUrl"> | null;
   matchedTemporalFrameCapture: Omit<TakramParityMatchedTemporalFrameCapture, "dataUrl"> | null;
+  stageReadback: Omit<TakramParityStageReadbackCapture, "preTemporal" | "resolvedHistory" | "finalOutput"> & {
+    preTemporal: Omit<TakramParityStageReadbackBuffer, "dataBase64">;
+    resolvedHistory: Omit<TakramParityStageReadbackBuffer, "dataBase64">;
+    finalOutput: Omit<TakramParityStageReadbackBuffer, "dataBase64">;
+  } | null;
   morphologyCandidate: TakramV3MorphologyCandidateId | null;
   morphologyView: TakramV3MorphologyViewId | null;
   morphologyScaleAudit: TakramV3MorphologyScaleAudit | null;

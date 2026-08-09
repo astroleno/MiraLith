@@ -35,6 +35,14 @@ const openingEvidenceDirectory = path.resolve(
   "docs/lubirth-planetary-cloud-evidence/2026-08-09/v3-opening-morphology"
 );
 const openingCaptureDirectory = path.join(openingEvidenceDirectory, "captures");
+const stageRevalidationEvidenceDirectory = path.join(
+  openingEvidenceDirectory,
+  "stage-revalidation"
+);
+const stageRevalidationCaptureDirectory = path.join(
+  stageRevalidationEvidenceDirectory,
+  "captures"
+);
 const shouldCapture = process.env.MIRALITH_TAKRAM_V3_MORPHOLOGY_CAPTURE === "1";
 const systemChromeExecutable = process.env.MIRALITH_SYSTEM_CHROME_EXECUTABLE ??
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -76,6 +84,7 @@ type MorphologyTelemetry = {
     beerShadowOcclusion: boolean;
     cloudRawOutput: boolean;
     sampleCountDebug: boolean;
+    stageReadback: boolean;
   };
   ecefSunDirection: [number, number, number] | null;
   input: "stock" | "v3";
@@ -141,6 +150,14 @@ type MorphologyTelemetry = {
     historyEpochHash: string;
     frameLockPass: boolean;
   } | null;
+  stageReadback: {
+    nativeFrameCount: number;
+    temporalFrame: Omit<NonNullable<MorphologyTelemetry["matchedTemporalFrameCapture"]>, "height" | "width">;
+    aerialPerspectiveInputSource: "native-cloud-resolved-history-render-target";
+    preTemporal: StageReadbackBufferMetadata;
+    resolvedHistory: StageReadbackBufferMetadata;
+    finalOutput: StageReadbackBufferMetadata;
+  } | null;
   rendererFingerprint: Record<string, unknown> | null;
   rendererFingerprintHash: string | null;
   sceneDepthContract: "world-depth-to-ecef-v1";
@@ -165,8 +182,32 @@ declare global {
     __MiraLithTakramMatchedTemporalFrame?: NonNullable<
       MorphologyTelemetry["matchedTemporalFrameCapture"]
     > & { dataUrl: string };
+    __MiraLithTakramStageReadback?: {
+      nativeFrameCount: number;
+      temporalFrame: Omit<NonNullable<MorphologyTelemetry["matchedTemporalFrameCapture"]>, "height" | "width">;
+      aerialPerspectiveInputSource: "native-cloud-resolved-history-render-target";
+      preTemporal: StageReadbackBuffer;
+      resolvedHistory: StageReadbackBuffer;
+      finalOutput: StageReadbackBuffer;
+    };
   }
 }
+
+type StageReadbackBufferMetadata = {
+  width: number;
+  height: number;
+  precision: "half-float" | "unorm8";
+  source:
+    | "native-cloud-current-render-target"
+    | "native-cloud-resolved-history-render-target"
+    | "default-framebuffer-after-aerial-perspective";
+  origin: "bottom-left";
+  encoding: "linear-rgba" | "srgb-output-rgba";
+  scalar: "float32-le" | "uint8";
+  byteLength: number;
+};
+
+type StageReadbackBuffer = StageReadbackBufferMetadata & { dataBase64: string };
 
 function resolveOpeningMatrices(progress: number) {
   const openingFrame = mapOpeningProgress(progress);
@@ -251,6 +292,16 @@ function encodeNativeSampleCountReadback(
     buffer.writeUInt16LE(count, index * 2);
   }
   return gzipSync(buffer, { level: 9 });
+}
+
+function encodeStageReadbackBuffer(readback: StageReadbackBuffer) {
+  const values = Buffer.from(readback.dataBase64, "base64");
+  expect(values.byteLength).toBe(readback.byteLength);
+  return {
+    compression: "gzip" as const,
+    scalar: readback.scalar,
+    buffer: gzipSync(values, { level: 9 })
+  };
 }
 
 async function captureMorphologyFrame(
@@ -1094,6 +1145,372 @@ test("opening-only morphology matrix covers every production review frame", asyn
       checkpoint
     }, null, 2)}\n`
   ));
+});
+
+test("central candidate exact-frame stage revalidation", async ({ page }) => {
+  const morphologyMetrics = await import(
+    "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramV3MorphologyMetrics"
+  );
+  const candidateId = "opening-shape-260-detail-40";
+  const progresses = [0, 0.06, 0.12, 0.18] as const;
+  const stageDiagnostics = [
+    "stage-readback",
+    "cloud-raw",
+    "cloud-raw-off",
+    "bsm-off",
+    "aerial-final",
+    "sample-count-debug"
+  ] as const;
+  const frames = new Map<string, Buffer>();
+  const records: Array<{
+    progress: number;
+    diagnostic: typeof stageDiagnostics[number];
+    screenshotSha256: string;
+    temporalFrame: NonNullable<MorphologyTelemetry["matchedTemporalFrameCapture"]>;
+    rendererFingerprintHash: string | null;
+  }> = [];
+  const stageRecords: Array<{
+    progress: number;
+    cloudMask: { path: string; sha256: string };
+    metrics: ReturnType<typeof morphologyMetrics.analyzeTakramV3OpeningStageIsolation>["metrics"];
+    sampleCount: {
+      artifact: { path: string; sha256: string; channels: readonly string[] };
+      metrics: ReturnType<typeof morphologyMetrics.analyzeTakramV3NativeSampleCountReadback>;
+    };
+    nativeStages: Array<{
+      stage: "pre-temporal" | "resolved-history" | "final-output";
+      path: string;
+      sha256: string;
+      compression: "gzip";
+      scalar: "float32-le" | "uint8";
+      metadata: StageReadbackBufferMetadata;
+    }>;
+  }> = [];
+
+  writeTakramV3FormalEvidence(shouldCapture, () => {
+    mkdirSync(stageRevalidationCaptureDirectory, { recursive: true });
+  });
+
+  for (const progress of progresses) {
+    const decodedFrames = new Map<
+      typeof stageDiagnostics[number],
+      Awaited<ReturnType<typeof decodeScreenshot>>
+    >();
+    let sampleReadback: NonNullable<MorphologyTelemetry["sampleCountReadback"]> | null = null;
+    let nativeStages: (typeof stageRecords)[number]["nativeStages"] = [];
+    for (const diagnostic of stageDiagnostics) {
+      await page.goto(
+        `/lubirth-takram-parity-spike?input=v3&view=opening&progress=${progress}&diagnostic=${diagnostic}&morphologyView=opening-orbit&morphologyCandidate=${candidateId}`
+      );
+      await waitForNativeMorphology(page);
+      const telemetry = await page.evaluate(() => window.__MiraLithTakramParity);
+      expect(telemetry).toMatchObject({
+        active: true,
+        diagnostic,
+        morphologyCandidate: candidateId,
+        morphologyView: "opening-orbit",
+        progress
+      });
+      expect(telemetry?.matchedTemporalFrameCapture).toMatchObject({
+        nativeFrameCount: 32,
+        cloudsFrame: 32,
+        resolveFrame: 32,
+        shadowFrame: 32,
+        temporalJitterIndex: 0,
+        stbnSliceIndex: 32,
+        frameLockPass: true
+      });
+      const screenshot = await captureMorphologyFrame(page, diagnostic);
+      const screenshotSha256 = createHash("sha256").update(screenshot).digest("hex");
+      frames.set(`${candidateId}:${progress}:${diagnostic}`, screenshot);
+      decodedFrames.set(diagnostic, await decodeScreenshot(screenshot));
+      if (shouldCapture) {
+        writeFileSync(
+          path.join(
+            stageRevalidationCaptureDirectory,
+            `${candidateId}-p${progress.toFixed(2).replace(".", "-")}-${diagnostic}.png`
+          ),
+          screenshot
+        );
+      }
+      if (diagnostic === "sample-count-debug") {
+        sampleReadback = telemetry!.sampleCountReadback;
+        expect(sampleReadback).toMatchObject({
+          encoding: "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask",
+          precision: "half-float"
+        });
+      }
+      if (diagnostic === "stage-readback") {
+        const stageReadback = await page.evaluate(() => window.__MiraLithTakramStageReadback ?? null);
+        expect(stageReadback).toMatchObject({
+          nativeFrameCount: 32,
+          aerialPerspectiveInputSource: "native-cloud-resolved-history-render-target",
+          temporalFrame: {
+            cloudsFrame: 32,
+            resolveFrame: 32,
+            shadowFrame: 32,
+            temporalJitterIndex: 0,
+            stbnSliceIndex: 32,
+            frameLockPass: true
+          },
+          preTemporal: {
+            width: 360,
+            height: 240,
+            precision: "half-float",
+            source: "native-cloud-current-render-target",
+            origin: "bottom-left",
+            encoding: "linear-rgba"
+          },
+          resolvedHistory: {
+            width: 1440,
+            height: 960,
+            precision: "half-float",
+            source: "native-cloud-resolved-history-render-target",
+            origin: "bottom-left",
+            encoding: "linear-rgba"
+          },
+          finalOutput: {
+            width: 1440,
+            height: 960,
+            precision: "unorm8",
+            source: "default-framebuffer-after-aerial-perspective",
+            origin: "bottom-left",
+            encoding: "srgb-output-rgba"
+          }
+        });
+        expect(stageReadback?.preTemporal.byteLength).toBe(360 * 240 * 4 * 4);
+        expect(stageReadback?.resolvedHistory.byteLength).toBe(1440 * 960 * 4 * 4);
+        expect(stageReadback?.finalOutput.byteLength).toBe(1440 * 960 * 4);
+        nativeStages = ([
+          ["pre-temporal", stageReadback!.preTemporal],
+          ["resolved-history", stageReadback!.resolvedHistory],
+          ["final-output", stageReadback!.finalOutput]
+        ] as const).map(([stage, readback]) => {
+          const encoded = encodeStageReadbackBuffer(readback);
+          const extension = encoded.scalar === "uint8" ? "rgba-u8" : "rgba-f32le";
+          const fileName = `${candidateId}-p${progress.toFixed(2).replace(".", "-")}-${stage}-${extension}.gz`;
+          if (shouldCapture) {
+            writeFileSync(
+              path.join(stageRevalidationCaptureDirectory, fileName),
+              encoded.buffer
+            );
+          }
+          const { dataBase64: _dataBase64, ...metadata } = readback;
+          return {
+            stage,
+            path: `captures/${fileName}`,
+            sha256: createHash("sha256").update(encoded.buffer).digest("hex"),
+            compression: encoded.compression,
+            scalar: encoded.scalar,
+            metadata
+          };
+        });
+      }
+      records.push({
+        progress,
+        diagnostic,
+        screenshotSha256,
+        temporalFrame: telemetry!.matchedTemporalFrameCapture!,
+        rendererFingerprintHash: telemetry!.rendererFingerprintHash
+      });
+    }
+
+    const requireFrame = (diagnostic: typeof stageDiagnostics[number]) => {
+      const frame = decodedFrames.get(diagnostic);
+      expect(frame).toBeDefined();
+      return frame!;
+    };
+    const full = requireFrame("stage-readback");
+    const cloudRaw = requireFrame("cloud-raw");
+    const cloudRawOff = requireFrame("cloud-raw-off");
+    const bsmOff = requireFrame("bsm-off");
+    const aerialFinal = requireFrame("aerial-final");
+    const stageIsolation = morphologyMetrics.analyzeTakramV3OpeningStageIsolation({
+      width: full.width,
+      height: full.height,
+      cloudRaw: cloudRaw.pixels,
+      cloudRawOff: cloudRawOff.pixels,
+      full: full.pixels,
+      aerialFinal: aerialFinal.pixels,
+      bsmOff: bsmOff.pixels
+    });
+    const progressLabel = progress.toFixed(2).replace(".", "-");
+    const cloudMaskBuffer = await encodeCloudOnlyMask(
+      stageIsolation.cloudMask,
+      full.width,
+      full.height
+    );
+    const cloudMaskName = `${candidateId}-p${progressLabel}-cloud-only-mask.png`;
+    frames.set(`${candidateId}:${progress}:cloud-only-mask`, cloudMaskBuffer);
+    if (shouldCapture) {
+      writeFileSync(
+        path.join(stageRevalidationCaptureDirectory, cloudMaskName),
+        cloudMaskBuffer
+      );
+    }
+    expect(sampleReadback).not.toBeNull();
+    const sampleMetrics = morphologyMetrics.analyzeTakramV3NativeSampleCountReadback({
+      cloudMask: stageIsolation.cloudMask,
+      cloudMaskWidth: full.width,
+      cloudMaskHeight: full.height,
+      readback: sampleReadback!
+    });
+    expect(sampleMetrics.invariantPass).toBe(true);
+    expect(sampleMetrics.nativeHitPixelCount).toBeGreaterThan(0);
+    expect(sampleMetrics.maskCoverageSensitivity.map((entry) =>
+      entry.minimumMaskCoverage
+    )).toEqual([0.25, 0.5, 0.75, 1]);
+    const sampleBuffer = encodeNativeSampleCountReadback(sampleReadback!);
+    const sampleName = `${candidateId}-p${progressLabel}-native-sample-count-rgba-u16le.gz`;
+    if (shouldCapture) {
+      writeFileSync(
+        path.join(stageRevalidationCaptureDirectory, sampleName),
+        sampleBuffer
+      );
+    }
+    expect(nativeStages).toHaveLength(3);
+    stageRecords.push({
+      progress,
+      cloudMask: {
+        path: `captures/${cloudMaskName}`,
+        sha256: createHash("sha256").update(cloudMaskBuffer).digest("hex")
+      },
+      metrics: stageIsolation.metrics,
+      sampleCount: {
+        artifact: {
+          path: `captures/${sampleName}`,
+          sha256: createHash("sha256").update(sampleBuffer).digest("hex"),
+          channels: ["primary", "shape", "detail", "hit"]
+        },
+        metrics: sampleMetrics
+      },
+      nativeStages
+    });
+  }
+
+  const repeatMask = stageRecords.find(({ progress }) => progress === 0.06);
+  expect(repeatMask).toBeDefined();
+  const repeatCloudMaskPng = frames.get(`${candidateId}:0.06:cloud-only-mask`)!;
+  const repeatMaskPixels = await decodeScreenshot(repeatCloudMaskPng);
+  const repeatMaskValues = Uint8Array.from(
+    { length: repeatMaskPixels.width * repeatMaskPixels.height },
+    (_, index) => repeatMaskPixels.pixels[index * 4] === 255 ? 1 : 0
+  );
+  const repeatNoiseFloor: Array<{
+    diagnostic: "full" | "cloud-raw" | "bsm-off";
+    repeatIndex: number;
+    screenshotSha256: string;
+    difference: ReturnType<typeof morphologyMetrics.analyzeTakramV3MaskedFrameDifference>;
+    temporalFrame: NonNullable<MorphologyTelemetry["matchedTemporalFrameCapture"]>;
+  }> = [];
+  for (const diagnostic of ["full", "cloud-raw", "bsm-off"] as const) {
+    const referenceDiagnostic = diagnostic === "full" ? "stage-readback" : diagnostic;
+    const reference = await decodeScreenshot(frames.get(
+      `${candidateId}:0.06:${referenceDiagnostic}`
+    )!);
+    for (const repeatIndex of [1, 2]) {
+      await page.goto(
+        `/lubirth-takram-parity-spike?input=v3&view=opening&progress=0.06&diagnostic=${diagnostic}&morphologyView=opening-orbit&morphologyCandidate=${candidateId}`
+      );
+      await waitForNativeMorphology(page);
+      const telemetry = await page.evaluate(() => window.__MiraLithTakramParity);
+      const screenshot = await captureMorphologyFrame(page, diagnostic);
+      const decoded = await decodeScreenshot(screenshot);
+      if (shouldCapture) {
+        writeFileSync(
+          path.join(
+            stageRevalidationCaptureDirectory,
+            `${candidateId}-p0-06-${diagnostic}-repeat-${repeatIndex}.png`
+          ),
+          screenshot
+        );
+      }
+      repeatNoiseFloor.push({
+        diagnostic,
+        repeatIndex,
+        screenshotSha256: createHash("sha256").update(screenshot).digest("hex"),
+        difference: morphologyMetrics.analyzeTakramV3MaskedFrameDifference({
+          width: reference.width,
+          height: reference.height,
+          mask: repeatMaskValues,
+          left: reference.pixels,
+          right: decoded.pixels
+        }),
+        temporalFrame: telemetry!.matchedTemporalFrameCapture!
+      });
+    }
+  }
+
+  const contactSheets: Record<string, { path: string; sha256: string }> = {};
+  for (const diagnostic of [...stageDiagnostics, "cloud-only-mask"] as const) {
+    const contactSheet = await buildOpeningContactSheet({
+      candidates: [candidateId],
+      diagnostic,
+      frames,
+      progresses
+    });
+    const name = `${diagnostic}-contact-sheet.png`;
+    if (shouldCapture) {
+      writeFileSync(path.join(stageRevalidationEvidenceDirectory, name), contactSheet);
+    }
+    contactSheets[diagnostic] = {
+      path: name,
+      sha256: createHash("sha256").update(contactSheet).digest("hex")
+    };
+  }
+
+  expect(records).toHaveLength(progresses.length * stageDiagnostics.length);
+  expect(records.every(({ temporalFrame }) =>
+    temporalFrame.nativeFrameCount === 32 &&
+    temporalFrame.cloudsFrame === 32 &&
+    temporalFrame.resolveFrame === 32 &&
+    temporalFrame.shadowFrame === 32 &&
+    temporalFrame.temporalJitterIndex === 0 &&
+    temporalFrame.stbnSliceIndex === 32 &&
+    temporalFrame.frameLockPass
+  )).toBe(true);
+  expect(repeatNoiseFloor.every(({ temporalFrame }) =>
+    temporalFrame.nativeFrameCount === 32 && temporalFrame.frameLockPass
+  )).toBe(true);
+
+  writeTakramV3FormalEvidence(shouldCapture, () => {
+    writeFileSync(
+      path.join(stageRevalidationEvidenceDirectory, "manifest.json"),
+      `${JSON.stringify({
+        schemaVersion: 1,
+        baseCommit: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
+        generatedAt: new Date().toISOString(),
+        scope: "central-opening-candidate-exact-frame-stage-revalidation",
+        candidateId,
+        progresses,
+        diagnostics: stageDiagnostics,
+        temporalContract: {
+          targetNativeFrame: 32,
+          targetCloudsFrame: 32,
+          targetResolveFrame: 32,
+          targetShadowFrame: 32,
+          targetTemporalJitterIndex: 0,
+          targetStbnSliceIndex: 32,
+          repeatsPerDiagnosticAtProgress006: 2
+        },
+        controlContract: {
+          healthySameCameraControlAvailable: false,
+          finalToRawRole: "attenuation-observation-only"
+        },
+        records,
+        stageRecords,
+        repeatNoiseFloor,
+        contactSheets,
+        checkpoint: {
+          visual: "OPENING_MORPHOLOGY_VISUAL_FAIL",
+          diagnosis: "STAGE_ISOLATION_INCONCLUSIVE_WITH_ATTENUATION_OBSERVED",
+          rootCause: "NOT_YET_ISOLATED",
+          task3To6Locked: true,
+          task0pLocked: true
+        }
+      }, null, 2)}\n`
+    );
+  });
 });
 
 test("near morphology remains diagnostic-only", async ({ page }) => {

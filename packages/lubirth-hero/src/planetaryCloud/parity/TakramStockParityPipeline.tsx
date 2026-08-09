@@ -49,6 +49,7 @@ import {
   type TakramParityInput,
   type TakramParityAltitudeLadderTelemetry,
   type TakramParitySampleCountReadback,
+  type TakramParityStageReadbackCapture,
   type TakramParityTelemetry,
   type TakramParityView
 } from "./TakramParityContract";
@@ -83,6 +84,7 @@ import { useTakramParityAtmospherePrecompute } from "./TakramParityAtmospherePre
 import { resolveTakramParityAdapter } from "./TakramParityV3Adapter";
 import { TAKRAM_PARITY_V3_LAYERS } from "./TakramParityV3Layers";
 import { installTakramSampleCountInstrumentation } from "./TakramSampleCountInstrumentation";
+import { encodeTakramStageReadbackValues } from "./TakramStageReadbackEncoding";
 
 const EARTH_DAY_SRC = "/assets/lubirth/textures/earth-day-nasa-lite-4k.webp";
 const CONTROL_CAMERA_ALTITUDE_M =
@@ -160,6 +162,7 @@ declare global {
     __MiraLithTakramParity?: TakramParityTelemetry;
     __MiraLithTakramHistoryFirstFrame?: TakramParityHistoryFirstFrameCapture;
     __MiraLithTakramMatchedTemporalFrame?: TakramParityMatchedTemporalFrameCapture;
+    __MiraLithTakramStageReadback?: TakramParityStageReadbackCapture;
   }
 }
 
@@ -443,6 +446,7 @@ function resolveDiagnosticState(diagnostic: TakramParityDiagnostic) {
     uvDebug: diagnostic === "uv-debug",
     sceneDepthClamp: diagnostic !== "depth-off",
     sampleCountDebug: diagnostic === "sample-count-debug",
+    stageReadback: diagnostic === "stage-readback",
     historyResetFirstFrame: diagnostic === "history-reset-first"
   };
 }
@@ -482,6 +486,7 @@ export function TakramStockParityPipeline({
   const historyFirstFrameCaptureRef = useRef<TakramParityHistoryFirstFrameCapture | null>(null);
   const matchedTemporalFrameCaptureRef = useRef<TakramParityMatchedTemporalFrameCapture | null>(null);
   const sampleCountReadbackRef = useRef<TakramParitySampleCountReadback | null>(null);
+  const stageReadbackRef = useRef<TakramParityStageReadbackCapture | null>(null);
   const appliedDiagnosticRef = useRef<TakramParityDiagnostic | null>(null);
   const nativeFrameCountRef = useRef(0);
   const ladderCaptureRef = useRef<TakramAltitudeLadderCapture>({
@@ -771,9 +776,11 @@ export function TakramStockParityPipeline({
       historyFirstFrameCaptureRef.current = null;
       matchedTemporalFrameCaptureRef.current = null;
       sampleCountReadbackRef.current = null;
+      stageReadbackRef.current = null;
       if (typeof window !== "undefined") {
         delete window.__MiraLithTakramHistoryFirstFrame;
         delete window.__MiraLithTakramMatchedTemporalFrame;
+        delete window.__MiraLithTakramStageReadback;
       }
       if (clouds) {
         // The upstream effect owns the STBN/Bayer frame counter. Reset it with
@@ -809,8 +816,11 @@ export function TakramStockParityPipeline({
       sampleCountReadbackRef.current !== null;
     const matchedTemporalFrameReady = diagnostic === "history-reset-first" ||
       matchedTemporalFrameCaptureRef.current !== null;
+    const stageReadbackReady = diagnostic !== "stage-readback" ||
+      stageReadbackRef.current !== null;
     const telemetry: TakramParityTelemetry = {
       active: nativePipelineReady && sampleCountReadbackReady && matchedTemporalFrameReady &&
+        stageReadbackReady &&
         ((diagnostic === "history-reset-first" &&
           historyFirstFrameCaptureRef.current !== null) ||
           (temporalConverged && (!isTakramParityAltitudeLadderDiagnostic(diagnostic) ||
@@ -853,6 +863,44 @@ export function TakramStockParityPipeline({
             stbnSliceIndex: matchedTemporalFrameCaptureRef.current.stbnSliceIndex,
             historyEpochHash: matchedTemporalFrameCaptureRef.current.historyEpochHash,
             frameLockPass: matchedTemporalFrameCaptureRef.current.frameLockPass
+          },
+      stageReadback: stageReadbackRef.current === null
+        ? null
+        : {
+            nativeFrameCount: stageReadbackRef.current.nativeFrameCount,
+            temporalFrame: stageReadbackRef.current.temporalFrame,
+            aerialPerspectiveInputSource:
+              stageReadbackRef.current.aerialPerspectiveInputSource,
+            preTemporal: {
+              width: stageReadbackRef.current.preTemporal.width,
+              height: stageReadbackRef.current.preTemporal.height,
+              precision: stageReadbackRef.current.preTemporal.precision,
+              source: stageReadbackRef.current.preTemporal.source,
+              origin: stageReadbackRef.current.preTemporal.origin,
+              encoding: stageReadbackRef.current.preTemporal.encoding,
+              scalar: stageReadbackRef.current.preTemporal.scalar,
+              byteLength: stageReadbackRef.current.preTemporal.byteLength
+            },
+            resolvedHistory: {
+              width: stageReadbackRef.current.resolvedHistory.width,
+              height: stageReadbackRef.current.resolvedHistory.height,
+              precision: stageReadbackRef.current.resolvedHistory.precision,
+              source: stageReadbackRef.current.resolvedHistory.source,
+              origin: stageReadbackRef.current.resolvedHistory.origin,
+              encoding: stageReadbackRef.current.resolvedHistory.encoding,
+              scalar: stageReadbackRef.current.resolvedHistory.scalar,
+              byteLength: stageReadbackRef.current.resolvedHistory.byteLength
+            },
+            finalOutput: {
+              width: stageReadbackRef.current.finalOutput.width,
+              height: stageReadbackRef.current.finalOutput.height,
+              precision: stageReadbackRef.current.finalOutput.precision,
+              source: stageReadbackRef.current.finalOutput.source,
+              origin: stageReadbackRef.current.finalOutput.origin,
+              encoding: stageReadbackRef.current.finalOutput.encoding,
+              scalar: stageReadbackRef.current.finalOutput.scalar,
+              byteLength: stageReadbackRef.current.finalOutput.byteLength
+            }
           },
       progress: clampOpeningProgress(progress),
       rendererFingerprint,
@@ -903,6 +951,7 @@ export function TakramStockParityPipeline({
       ),
       historyFirstFrameCapture: telemetry.historyFirstFrameCapture,
       matchedTemporalFrameCapture: telemetry.matchedTemporalFrameCapture,
+      stageReadback: telemetry.stageReadback,
       temporalConverged: telemetry.temporalConverged,
       transformFallback: telemetry.transformFallback,
       morphologyCandidate: telemetry.morphologyCandidate,
@@ -960,6 +1009,78 @@ export function TakramStockParityPipeline({
     matchedTemporalFrameCaptureRef.current = capture;
     if (typeof window !== "undefined") {
       window.__MiraLithTakramMatchedTemporalFrame = capture;
+    }
+  }, 2);
+
+  // Read each native stage from the same exact frame as the immutable PNG.
+  // This route is capture-only and intentionally publishes the large buffers
+  // on a separate window field rather than through the React telemetry state.
+  useFrame(() => {
+    if (diagnostic !== "stage-readback" ||
+      stageReadbackRef.current !== null ||
+      nativeFrameCountRef.current !== TEMPORAL_CONVERGENCE_FRAME_COUNT) {
+      return;
+    }
+    const clouds = cloudsRef.current;
+    const temporalFrame = matchedTemporalFrameCaptureRef.current;
+    if (!clouds || !temporalFrame) return;
+    const pass = clouds.cloudsPass as unknown as {
+      currentRenderTarget?: Parameters<typeof readTakramAltitudeLadderRenderTarget>[1];
+      historyRenderTarget?: Parameters<typeof readTakramAltitudeLadderRenderTarget>[1];
+    };
+    const preTemporal = pass.currentRenderTarget
+      ? readTakramAltitudeLadderRenderTarget(gl, pass.currentRenderTarget)
+      : null;
+    const resolvedHistory = pass.historyRenderTarget
+      ? readTakramAltitudeLadderRenderTarget(gl, pass.historyRenderTarget)
+      : null;
+    const finalOutput = readTakramAltitudeLadderDefaultFramebuffer(gl);
+    if (!preTemporal || !resolvedHistory || !finalOutput) return;
+    const temporalMetadata = {
+      nativeFrameCount: temporalFrame.nativeFrameCount,
+      cloudsFrame: temporalFrame.cloudsFrame,
+      resolveFrame: temporalFrame.resolveFrame,
+      shadowFrame: temporalFrame.shadowFrame,
+      temporalJitterIndex: temporalFrame.temporalJitterIndex,
+      stbnSliceIndex: temporalFrame.stbnSliceIndex,
+      historyEpochHash: temporalFrame.historyEpochHash,
+      frameLockPass: temporalFrame.frameLockPass
+    };
+    const capture: TakramParityStageReadbackCapture = {
+      nativeFrameCount: TEMPORAL_CONVERGENCE_FRAME_COUNT,
+      temporalFrame: temporalMetadata,
+      aerialPerspectiveInputSource: "native-cloud-resolved-history-render-target",
+      preTemporal: {
+        width: preTemporal.width,
+        height: preTemporal.height,
+        precision: preTemporal.precision,
+        source: "native-cloud-current-render-target",
+        origin: "bottom-left",
+        encoding: "linear-rgba",
+        ...encodeTakramStageReadbackValues(preTemporal.values, preTemporal.precision)
+      },
+      resolvedHistory: {
+        width: resolvedHistory.width,
+        height: resolvedHistory.height,
+        precision: resolvedHistory.precision,
+        source: "native-cloud-resolved-history-render-target",
+        origin: "bottom-left",
+        encoding: "linear-rgba",
+        ...encodeTakramStageReadbackValues(resolvedHistory.values, resolvedHistory.precision)
+      },
+      finalOutput: {
+        width: finalOutput.width,
+        height: finalOutput.height,
+        precision: finalOutput.precision,
+        source: "default-framebuffer-after-aerial-perspective",
+        origin: "bottom-left",
+        encoding: "srgb-output-rgba",
+        ...encodeTakramStageReadbackValues(finalOutput.values, finalOutput.precision)
+      }
+    };
+    stageReadbackRef.current = capture;
+    if (typeof window !== "undefined") {
+      window.__MiraLithTakramStageReadback = capture;
     }
   }, 2);
 

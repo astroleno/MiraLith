@@ -19,7 +19,7 @@ interface TakramParityContractModule {
     | {
       ok: true;
       value: {
-        diagnostic: "altitude-ladder" | "altitude-ladder-cloud-off" | "aerial-final" | "bsm-off" | "cloud-raw" | "cloud-raw-off" | "depth-off" | "density-debug" | "full" | "history-reset-first" | "sample-count-debug" | "uv-debug";
+        diagnostic: "altitude-ladder" | "altitude-ladder-cloud-off" | "aerial-final" | "bsm-off" | "cloud-raw" | "cloud-raw-off" | "depth-off" | "density-debug" | "full" | "history-reset-first" | "sample-count-debug" | "stage-readback" | "uv-debug";
         input: "stock" | "v3";
         progress: number;
         view: "control" | "opening";
@@ -290,6 +290,19 @@ test("pins the official stock Takram contract to auditable local assets", async 
   ))).toEqual({
     ok: true,
     value: { diagnostic: "uv-debug", input: "v3", progress: 0, view: "opening" }
+  });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=v3&view=opening&diagnostic=stage-readback&morphologyView=opening-orbit&morphologyCandidate=opening-shape-260-detail-40"
+  ))).toEqual({
+    ok: true,
+    value: {
+      diagnostic: "stage-readback",
+      input: "v3",
+      morphologyCandidate: "opening-shape-260-detail-40",
+      morphologyView: "opening-orbit",
+      progress: 0,
+      view: "opening"
+    }
   });
   expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
     "input=stock&view=opening&diagnostic=bsm-off"
