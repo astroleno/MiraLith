@@ -470,3 +470,48 @@ test("writes only the sanitized snapshot without reading the source proxy again"
   expect(readChapterReturnSnapshot(storage, key, context)?.revision).toBe(1);
   expect(getTrapCalls).toBe(0);
 });
+
+test("round-trips an allowlisted prototype-sensitive route-state field", () => {
+  const key = "chapter-return:/artbreeze";
+  const storage = memoryStorage();
+  const prototypeSensitiveManifest = {
+    ...manifest,
+    routeState: {
+      ...manifest.routeState,
+      ["__proto__"]: { kind: "enum", values: ["preserved"] }
+    }
+  } as const satisfies ChapterRouteStateManifest;
+  const prototypeSensitiveContext = {
+    ...context,
+    manifest: prototypeSensitiveManifest
+  };
+  const source = semanticSnapshot();
+  if (source.semantic.kind !== "semantic") {
+    throw new Error("semantic fixture drifted");
+  }
+  const candidate: ChapterReturnSnapshot = {
+    ...source,
+    semantic: {
+      ...source.semantic,
+      routeState: {
+        ...source.semantic.routeState,
+        ["__proto__"]: "preserved"
+      }
+    }
+  };
+  const parsed = parseChapterReturnSnapshot(candidate, prototypeSensitiveContext);
+
+  expect(parsed).not.toBeNull();
+  if (!parsed || parsed.semantic.kind !== "semantic") {
+    throw new Error("prototype-sensitive snapshot did not parse as semantic");
+  }
+  expect(Object.hasOwn(parsed.semantic.routeState, "__proto__")).toBe(true);
+  expect(writeChapterReturnSnapshot(
+    storage,
+    key,
+    candidate,
+    prototypeSensitiveContext,
+    { revision: 20, resetStorage: false }
+  )).toBe("written");
+  expect(readChapterReturnSnapshot(storage, key, prototypeSensitiveContext)).toEqual(parsed);
+});

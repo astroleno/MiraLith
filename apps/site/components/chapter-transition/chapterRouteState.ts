@@ -210,7 +210,7 @@ function parseRouteState(
   if (!record || !hasExactKeys(record, Object.keys(descriptors))) {
     return null;
   }
-  const result: Record<string, string | number | boolean | null> = {};
+  const result = Object.create(null) as Record<string, string | number | boolean | null>;
   for (const [key, rawDescriptor] of Object.entries(descriptors)) {
     const descriptor = snapshotDataRecord(rawDescriptor);
     const fieldValue = record[key];
@@ -249,7 +249,7 @@ function parseRouteState(
     }
     result[key] = fieldValue as string | number | boolean | null;
   }
-  return result;
+  return Object.freeze(result);
 }
 
 function parseActiveMedia(
