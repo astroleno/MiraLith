@@ -1165,6 +1165,7 @@ test("central candidate exact-frame stage revalidation", async ({ page }) => {
   const records: Array<{
     progress: number;
     diagnostic: typeof stageDiagnostics[number];
+    screenshotPath: string;
     screenshotSha256: string;
     temporalFrame: NonNullable<MorphologyTelemetry["matchedTemporalFrameCapture"]>;
     rendererFingerprintHash: string | null;
@@ -1185,7 +1186,23 @@ test("central candidate exact-frame stage revalidation", async ({ page }) => {
       scalar: "float32-le" | "uint8";
       metadata: StageReadbackBufferMetadata;
     }>;
+    runtimeContract: {
+      adapter: MorphologyTelemetry["adapter"];
+      assetGeneration: number;
+      atmosphereGeneration: number;
+      ecefSunDirection: [number, number, number] | null;
+      rendererFingerprintHash: string | null;
+      coverage: number | null;
+      shapeRepeat: number | null;
+      shapeDetailRepeat: number | null;
+    };
   }> = [];
+  let gpu: {
+    vendor: string;
+    renderer: string;
+    unmaskedVendor: string | null;
+    unmaskedRenderer: string | null;
+  } | null = null;
 
   writeTakramV3FormalEvidence(shouldCapture, () => {
     mkdirSync(stageRevalidationCaptureDirectory, { recursive: true });
@@ -1198,6 +1215,7 @@ test("central candidate exact-frame stage revalidation", async ({ page }) => {
     >();
     let sampleReadback: NonNullable<MorphologyTelemetry["sampleCountReadback"]> | null = null;
     let nativeStages: (typeof stageRecords)[number]["nativeStages"] = [];
+    let stageTelemetry: MorphologyTelemetry | null = null;
     for (const diagnostic of stageDiagnostics) {
       await page.goto(
         `/lubirth-takram-parity-spike?input=v3&view=opening&progress=${progress}&diagnostic=${diagnostic}&morphologyView=opening-orbit&morphologyCandidate=${candidateId}`
@@ -1222,13 +1240,15 @@ test("central candidate exact-frame stage revalidation", async ({ page }) => {
       });
       const screenshot = await captureMorphologyFrame(page, diagnostic);
       const screenshotSha256 = createHash("sha256").update(screenshot).digest("hex");
+      const screenshotName =
+        `${candidateId}-p${progress.toFixed(2).replace(".", "-")}-${diagnostic}.png`;
       frames.set(`${candidateId}:${progress}:${diagnostic}`, screenshot);
       decodedFrames.set(diagnostic, await decodeScreenshot(screenshot));
       if (shouldCapture) {
         writeFileSync(
           path.join(
             stageRevalidationCaptureDirectory,
-            `${candidateId}-p${progress.toFixed(2).replace(".", "-")}-${diagnostic}.png`
+            screenshotName
           ),
           screenshot
         );
@@ -1241,6 +1261,25 @@ test("central candidate exact-frame stage revalidation", async ({ page }) => {
         });
       }
       if (diagnostic === "stage-readback") {
+        stageTelemetry = telemetry!;
+        if (gpu === null) {
+          gpu = await page.evaluate(() => {
+            const canvas = document.querySelector("canvas");
+            const gl = canvas?.getContext("webgl2");
+            if (!gl) return null;
+            const debug = gl.getExtension("WEBGL_debug_renderer_info");
+            return {
+              vendor: String(gl.getParameter(gl.VENDOR)),
+              renderer: String(gl.getParameter(gl.RENDERER)),
+              unmaskedVendor: debug
+                ? String(gl.getParameter(debug.UNMASKED_VENDOR_WEBGL))
+                : null,
+              unmaskedRenderer: debug
+                ? String(gl.getParameter(debug.UNMASKED_RENDERER_WEBGL))
+                : null
+            };
+          });
+        }
         const stageReadback = await page.evaluate(() => window.__MiraLithTakramStageReadback ?? null);
         expect(stageReadback).toMatchObject({
           nativeFrameCount: 32,
@@ -1309,6 +1348,7 @@ test("central candidate exact-frame stage revalidation", async ({ page }) => {
       records.push({
         progress,
         diagnostic,
+        screenshotPath: `captures/${screenshotName}`,
         screenshotSha256,
         temporalFrame: telemetry!.matchedTemporalFrameCapture!,
         rendererFingerprintHash: telemetry!.rendererFingerprintHash
@@ -1369,6 +1409,7 @@ test("central candidate exact-frame stage revalidation", async ({ page }) => {
       );
     }
     expect(nativeStages).toHaveLength(3);
+    expect(stageTelemetry).not.toBeNull();
     stageRecords.push({
       progress,
       cloudMask: {
@@ -1384,7 +1425,17 @@ test("central candidate exact-frame stage revalidation", async ({ page }) => {
         },
         metrics: sampleMetrics
       },
-      nativeStages
+      nativeStages,
+      runtimeContract: {
+        adapter: stageTelemetry!.adapter,
+        assetGeneration: stageTelemetry!.assetGeneration,
+        atmosphereGeneration: stageTelemetry!.atmosphereGeneration,
+        ecefSunDirection: stageTelemetry!.ecefSunDirection,
+        rendererFingerprintHash: stageTelemetry!.rendererFingerprintHash,
+        coverage: stageTelemetry!.coverage,
+        shapeRepeat: stageTelemetry!.shapeRepeat,
+        shapeDetailRepeat: stageTelemetry!.shapeDetailRepeat
+      }
     });
   }
 
@@ -1399,6 +1450,7 @@ test("central candidate exact-frame stage revalidation", async ({ page }) => {
   const repeatNoiseFloor: Array<{
     diagnostic: "full" | "cloud-raw" | "bsm-off";
     repeatIndex: number;
+    screenshotPath: string;
     screenshotSha256: string;
     difference: ReturnType<typeof morphologyMetrics.analyzeTakramV3MaskedFrameDifference>;
     temporalFrame: NonNullable<MorphologyTelemetry["matchedTemporalFrameCapture"]>;
@@ -1416,11 +1468,13 @@ test("central candidate exact-frame stage revalidation", async ({ page }) => {
       const telemetry = await page.evaluate(() => window.__MiraLithTakramParity);
       const screenshot = await captureMorphologyFrame(page, diagnostic);
       const decoded = await decodeScreenshot(screenshot);
+      const screenshotName =
+        `${candidateId}-p0-06-${diagnostic}-repeat-${repeatIndex}.png`;
       if (shouldCapture) {
         writeFileSync(
           path.join(
             stageRevalidationCaptureDirectory,
-            `${candidateId}-p0-06-${diagnostic}-repeat-${repeatIndex}.png`
+            screenshotName
           ),
           screenshot
         );
@@ -1428,6 +1482,7 @@ test("central candidate exact-frame stage revalidation", async ({ page }) => {
       repeatNoiseFloor.push({
         diagnostic,
         repeatIndex,
+        screenshotPath: `captures/${screenshotName}`,
         screenshotSha256: createHash("sha256").update(screenshot).digest("hex"),
         difference: morphologyMetrics.analyzeTakramV3MaskedFrameDifference({
           width: reference.width,
@@ -1481,6 +1536,13 @@ test("central candidate exact-frame stage revalidation", async ({ page }) => {
         baseCommit: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
         generatedAt: new Date().toISOString(),
         scope: "central-opening-candidate-exact-frame-stage-revalidation",
+        browserExecutable: systemChromeExecutable,
+        browserVersion: execFileSync(systemChromeExecutable, ["--version"], {
+          encoding: "utf8"
+        }).trim(),
+        gpu,
+        viewport: { width: 1440, height: 960, dpr: 1 },
+        reproductionCommand: "MIRALITH_TAKRAM_V3_MORPHOLOGY_CAPTURE=1 pnpm exec playwright test -c playwright.takram-parity-system-chrome.config.ts tests/e2e/lubirth-takram-v3-morphology.spec.ts --project=desktop-system-chrome --grep 'central candidate exact-frame stage revalidation'",
         candidateId,
         progresses,
         diagnostics: stageDiagnostics,
@@ -1496,6 +1558,17 @@ test("central candidate exact-frame stage revalidation", async ({ page }) => {
         controlContract: {
           healthySameCameraControlAvailable: false,
           finalToRawRole: "attenuation-observation-only"
+        },
+        artifactCounts: {
+          sourcePng: records.length,
+          cloudMaskPng: stageRecords.length,
+          nativeSampleCount: stageRecords.length,
+          nativeStageBuffer: stageRecords.reduce(
+            (count, record) => count + record.nativeStages.length,
+            0
+          ),
+          repeatPng: repeatNoiseFloor.length,
+          contactSheetPng: Object.keys(contactSheets).length
         },
         records,
         stageRecords,
