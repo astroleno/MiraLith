@@ -63,6 +63,7 @@ export function ChapterTransitionLayer({
         data-chapter-transition-layer
         data-state={snapshot.state}
         data-kind={snapshot.kind ?? undefined}
+        data-handoff-kind={snapshot.handoff?.kind}
         data-source={snapshot.sourceHref ?? undefined}
         data-target={snapshot.targetHref ?? undefined}
         data-transition-id={snapshot.id ?? undefined}

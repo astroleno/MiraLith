@@ -581,6 +581,11 @@ test("terminal scrolling follows the published 01 → 02 → 03 sequence", async
 
   await crossTerminalThreshold(page);
   await expect(page.locator("html")).toHaveAttribute("data-chapter-transition-kind", "arrival-to-signal");
+  await expect(page.locator("[data-chapter-transition-layer]")).not.toHaveAttribute(
+    "data-handoff-kind",
+    /.+/
+  );
+  await expect(page.locator("[data-chapter-handoff]")).toHaveCount(0);
   await expect(page).toHaveURL(/\/radio-gaga$/);
   await page.screenshot({ path: "test-results/chapter-transition-arrival-covered.png" });
   await expect(page.locator("html")).toHaveAttribute("data-chapter-transition-state", "revealing");

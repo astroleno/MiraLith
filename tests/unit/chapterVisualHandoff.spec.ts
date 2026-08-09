@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
 import {
   chapterVisualHandoffCssVariables,
-  parseChapterVisualHandoff
+  parseChapterVisualHandoff,
+  resolveChapterTransitionHandoff
 } from "../../apps/site/components/chapter-transition/chapterVisualHandoff";
 
 const liveRing = {
@@ -150,6 +151,19 @@ test("snapshots active proxy descriptors without invoking their get traps", () =
   expect(parseChapterVisualHandoff(activeProxy, "/coscroll", "/artbreeze")).toEqual(liveRing);
   expect(rootGetTrapCalls).toBe(0);
   expect(pointGetTrapCalls).toBe(0);
+});
+
+test("uses only a sanitized handoff as the visual variant and degrades invalid input", () => {
+  const untrusted = { ...liveRing, center: { ...liveRing.center } };
+  const valid = resolveChapterTransitionHandoff(untrusted, "/coscroll", "/artbreeze");
+
+  expect(valid).toMatchObject({ kind: "coscroll-ring", handoff: liveRing });
+  expect(valid.handoff).not.toBe(untrusted);
+  expect(resolveChapterTransitionHandoff(
+    { ...liveRing, kind: "cosmic-water" },
+    "/coscroll",
+    "/artbreeze"
+  )).toEqual({ kind: "direct", handoff: null });
 });
 
 test("rejects symbol and non-enumerable own keys", () => {

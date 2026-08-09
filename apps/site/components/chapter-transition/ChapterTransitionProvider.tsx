@@ -25,6 +25,7 @@ import {
   revalidateChapterPreviewSession,
   type ChapterPreviewSessionState
 } from "./chapterPreviewSession";
+import { resolveChapterTransitionHandoff } from "./chapterVisualHandoff";
 import type {
   ChapterDestinationControls,
   ChapterDestinationSignal,
@@ -33,6 +34,7 @@ import type {
   ChapterTransitionKind,
   ChapterTransitionSnapshot,
   ChapterTransitionState,
+  ChapterVisualHandoff,
   ResolvedChapterTransitionEndpoint
 } from "./chapterTransitionTypes";
 
@@ -50,6 +52,7 @@ const idleSnapshot: ChapterTransitionSnapshot = {
   sourceEndpoint: null,
   targetEndpoint: null,
   kind: null,
+  handoff: null,
   initiator: null,
   destinationAttempt: null,
   inputEnabled: true,
@@ -76,6 +79,7 @@ interface HistoryTraversalRecord {
 }
 
 interface StartRuntimeOptions {
+  handoff?: unknown;
   historyTraversalDelta?: HistoryTraversalDelta | null;
   sourceEntryKey?: string | null;
   allowSamePathHistoryTraversal?: boolean;
@@ -90,6 +94,7 @@ interface ActiveChapterTransition {
   sourceEndpoint: ResolvedChapterTransitionEndpoint;
   targetEndpoint: ResolvedChapterTransitionEndpoint;
   kind: ChapterTransitionKind;
+  handoff: ChapterVisualHandoff | null;
   initiator: ChapterTransitionInitiator;
   destinationAttempt: number;
   destinationController: AbortController | null;
@@ -119,7 +124,11 @@ interface ChapterTransitionContextValue {
   scope: string | null;
   resolveChapterAccess: (href: string) => MiraLithAccessResolution;
   getNextAccessibleChapter: (href: string) => MiraLithKnownChapter | undefined;
-  beginTransition: (targetHref: string, initiator: Exclude<ChapterTransitionInitiator, "history">) => string | null;
+  beginTransition: (
+    targetHref: string,
+    initiator: Exclude<ChapterTransitionInitiator, "history">,
+    handoff?: ChapterVisualHandoff | null
+  ) => string | null;
   registerDestination: (pathname: string, controls: ChapterDestinationControls) => () => void;
   reportDestination: (signal: ChapterDestinationSignal) => void;
 }
@@ -170,6 +179,7 @@ function transitionSnapshot(runtime: ActiveChapterTransition): ChapterTransition
     sourceEndpoint: runtime.sourceEndpoint,
     targetEndpoint: runtime.targetEndpoint,
     kind: runtime.kind,
+    handoff: runtime.handoff,
     initiator: runtime.initiator,
     destinationAttempt: runtime.destinationAttempt,
     inputEnabled: false,
@@ -667,6 +677,7 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
         transitionId: runtime.id,
         pathname: runtime.targetHref,
         initiator: resetInitiator,
+        handoff: runtime.handoff,
         returnSnapshot,
         destinationAttempt,
         signal: destinationController.signal
@@ -714,6 +725,7 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
     options: StartRuntimeOptions = {}
   ) => {
     const {
+      handoff: requestedHandoff,
       historyTraversalDelta = null,
       sourceEntryKey = readNavigationEntryKey(),
       allowSamePathHistoryTraversal = false,
@@ -741,6 +753,11 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
       originalScrollRestorationRef.current = window.history.scrollRestoration;
       window.history.scrollRestoration = "manual";
     }
+    const resolvedHandoff = initiator === "history"
+      ? { kind: "direct" as const, handoff: null }
+      : requestedHandoff === undefined
+        ? { kind: transitionKindForPair(normalizedSource, normalizedTarget), handoff: null }
+        : resolveChapterTransitionHandoff(requestedHandoff, normalizedSource, normalizedTarget);
     const runtime: ActiveChapterTransition = {
       id: `chapter-${Date.now().toString(36)}-${++transitionSequenceRef.current}`,
       state: "covering",
@@ -748,7 +765,8 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
       targetHref: normalizedTarget,
       sourceEndpoint,
       targetEndpoint,
-      kind: initiator === "history" ? "direct" : transitionKindForPair(normalizedSource, normalizedTarget),
+      kind: resolvedHandoff.kind,
+      handoff: resolvedHandoff.handoff,
       initiator,
       destinationAttempt: 1,
       destinationController: null,
@@ -780,9 +798,10 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
 
   const beginTransition = useCallback((
     targetHref: string,
-    initiator: Exclude<ChapterTransitionInitiator, "history">
+    initiator: Exclude<ChapterTransitionInitiator, "history">,
+    handoff?: ChapterVisualHandoff | null
   ) => {
-    const transitionId = startRuntime(currentPathRef.current, targetHref, initiator);
+    const transitionId = startRuntime(currentPathRef.current, targetHref, initiator, { handoff });
     const activePreview = previewSessionRef.current;
     if (transitionId && activePreview.previewActive && activePreview.scope) {
       pendingPreviewMarkerRef.current = {

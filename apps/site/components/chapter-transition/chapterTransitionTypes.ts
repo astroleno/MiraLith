@@ -71,7 +71,11 @@ export type ChapterTransitionState =
   | "waiting-ready"
   | "revealing";
 
-export type ChapterTransitionKind = "arrival-to-signal" | "signal-to-sutra" | "direct";
+export type ChapterTransitionKind =
+  | "arrival-to-signal"
+  | "signal-to-sutra"
+  | "direct"
+  | ChapterVisualHandoff["kind"];
 export type ChapterTransitionInitiator = "link" | "scroll" | "history";
 export type ChapterDestinationSignalPhase = "mount" | "visual-pending" | "visual-ready" | "fallback-ready";
 
@@ -87,6 +91,7 @@ export interface ChapterDestinationResetContext {
   transitionId: string;
   pathname: string;
   initiator: ChapterTransitionInitiator;
+  handoff: ChapterVisualHandoff | null;
   returnSnapshot: ChapterReturnSnapshot | null;
   destinationAttempt: number;
   signal: AbortSignal;
@@ -118,6 +123,7 @@ export interface ChapterTransitionSnapshot {
   sourceEndpoint: ResolvedChapterTransitionEndpoint | null;
   targetEndpoint: ResolvedChapterTransitionEndpoint | null;
   kind: ChapterTransitionKind | null;
+  handoff: ChapterVisualHandoff | null;
   initiator: ChapterTransitionInitiator | null;
   destinationAttempt: number | null;
   inputEnabled: boolean;

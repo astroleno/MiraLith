@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { chapterVisualHandoffCssVariables } from "./chapterVisualHandoff";
 import type { ChapterTransitionSnapshot } from "./chapterTransitionTypes";
 
 interface ChapterTransitionVisualProps {
@@ -15,6 +16,12 @@ export function ChapterTransitionVisual({ snapshot }: ChapterTransitionVisualPro
     <div className="chapter-transition-visual" data-variant={snapshot.kind ?? "direct"}>
       <div className="chapter-transition-visual__grain" />
       <div className="chapter-transition-visual__vignette" />
+      <div
+        className="chapter-transition-visual__handoff-contract"
+        data-chapter-handoff={snapshot.handoff?.kind}
+        style={snapshot.handoff ? chapterVisualHandoffCssVariables(snapshot.handoff) : undefined}
+        aria-hidden="true"
+      />
 
       <div className="chapter-transition-visual__signal" aria-hidden="true">
         <span className="chapter-transition-visual__signal-line" />

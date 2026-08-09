@@ -286,6 +286,20 @@ export function parseChapterVisualHandoff(
   }
 }
 
+export function resolveChapterTransitionHandoff(
+  value: unknown,
+  sourceHref: string,
+  targetHref: string
+): {
+  kind: "direct" | ChapterVisualHandoff["kind"];
+  handoff: ChapterVisualHandoff | null;
+} {
+  const handoff = parseChapterVisualHandoff(value, sourceHref, targetHref);
+  return handoff
+    ? { kind: handoff.kind, handoff }
+    : { kind: "direct", handoff: null };
+}
+
 function percentage(value: number): string {
   return `${Number((value * 100).toFixed(12))}%`;
 }
