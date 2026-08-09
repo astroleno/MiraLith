@@ -54,9 +54,11 @@ ORIGINAL_TASK_0_TO_8_LOCKED
 
 ### 0.4 执行结果（2026-08-09）
 
-Task 0–2 已在 commit `087563e`、headed System Chrome、production build、`1440×960 / DPR 1` 下重新执行。review target 现在按球面 arc 构造，三个近景审计点均位于画面中心，目标 ECEF altitude 与沿地表距离也由单测锁定。纠正后的 baseline 投影为：near `409.52 / 17.06 px`、aerial `180.51 / 7.52 px`、near-orbit `52.93 / 2.21 px`、opening `3.87 / 0.16 px`（shape/detail）。三个近景的 shape 与 detail 共同 repeat 区间均为空。
+Task 0–2 已在 commit `1063909`、headed System Chrome、production build、`1440×960 / DPR 1` 下重新执行。四个视角的 review target 都锁定在同一个 V3 spherical UV；三个近景相机从该目标反向沿球面 arc 求解，审计点均位于画面中心，目标 ECEF altitude 与沿地表距离也由单测锁定。尺度审计保留 east/north 两轴，不再使用 RMS 代替二维投影。
 
-Task 2 已从三个近景的物理范围生成并回放 10 个候选；每个候选都采集 raw/raw-off、full/cloud-off、first/converged populations，并自动计算 connected area、碎片率、edge density、clear-air leakage 和 luma delta。没有候选在三个近景同时通过，且所有候选的主要 cloud mask 都退化为约 `0.9997–1.0` 的单一连通区域。因此当前 checkpoint 由实测数据计算为：
+纠正后的 baseline east/north 投影为：near shape `42.67 / 577.58 px`、detail `1.78 / 24.07 px`；aerial shape `50.32 / 250.27 px`、detail `2.10 / 10.43 px`；near-orbit shape `18.06 / 72.65 px`、detail `0.75 / 3.03 px`；opening shape `2.85 / 4.67 px`、detail `0.12 / 0.19 px`。三个近景的 shape repeat 交集为 `[0.0003008209, 0.0000282150]`，detail 为 `[0.0014439402, 0.0001504800]`，均为空。
+
+Task 2 为可追溯性重放原 10 个 RMS-derived candidate ID，但 `axisEligibleCandidates=[]`，没有候选在三个近景的 east/north 两轴同时进入目标区间。`largestConnectedAreaFraction` 已降为诊断项：单一大连通区不能证明没有内部 billow。新增 internal luma stddev、multi-scale variation、gradient energy 与 local-peak density；这些指标不得替代人工体积视觉门。所有 raw-off、cloud-off 与 exact history-reset frame 都已持久化，首帧由 `nativeFrameCount=1` 的 immutable capture 绑定。因此当前 checkpoint 只由双轴尺度证据计算为：
 
 ```text
 HORIZONTAL_MORPHOLOGY_SCALE_FAIL
@@ -65,7 +67,7 @@ TASK_0P_LOCKED
 ORIGINAL_TASK_0_TO_8_LOCKED
 ```
 
-Task 3–6 与 Task 0P 继续锁定。按本计划的停止条件，下一步若要继续，必须先 amendment 允许显式 near/aerial presentation LOD；不得继续共享 repeat 调参，也不得进入 vertical profile、temporal、lighting 或 GPU cost。
+Task 3–6 与 Task 0P 继续锁定。单纯 near/aerial scalar LOD 无法修复单一视角内部的 east/north 投影跨度。下一步若要继续，必须先 amendment 明确修改 view-space acceptance contract，或授权 anisotropic ENU morphology representation；不得继续共享 scalar repeat 调参，也不得进入 vertical profile、temporal、lighting 或 GPU cost。
 
 ## 1. 目标文件结构
 
@@ -237,7 +239,7 @@ test(lubirth): freeze V3 morphology review views
 - resolved shape/detail wavelength meters
 - per-view east/north/up pixels-per-meter
 - per-layer base/top altitude、height、projected thickness
-- shape/detail projected pixels
+- shape/detail east/north projected pixels（两轴分别保留并分别判定）
 - native primary sample-count statistics
 
 **Step 4: 生成 baseline scale audit**
@@ -281,7 +283,8 @@ feat(lubirth): audit V3 cloud scale in projected pixels
 ```text
 shape target pixels  = 16, 32, 48
 detail target pixels = 4, 6, 8
-repeat               = projectedPixelsPerMeter / targetPixels
+repeat interval      = intersect(eastPixelsPerMeter / targetBand,
+                                 northPixelsPerMeter / targetBand)
 ```
 
 物理波长只允许落在：
@@ -291,7 +294,7 @@ repeat               = projectedPixelsPerMeter / targetPixels
 - `near-orbit`: shape `30–160 km`，detail `4–20 km`
 - `opening-orbit`: shape `80–320 km`，detail `8–40 km`
 
-将四个 view 解出的数值合并、去重为一组世界尺度候选；**每个候选都必须原样运行全部四个 view**，不得为每张截图临时套用不同 repeat。候选矩阵先使用当前 layer tuple、shapeAmount、shapeDetailAmount、densityScale 和 `coverage=.55`。禁止同帧改变其他参数。
+只有 east 与 north 两轴都进入目标 band 的组合才是 axis-eligible candidate。将四个 view 解出的有效数值合并、去重为一组世界尺度候选；**每个候选都必须原样运行全部四个 view**，不得为每张截图临时套用不同 repeat。历史 RMS-derived ID 可以作为 replay diagnostic 保留，但不得进入 winner 集合。候选矩阵先使用当前 layer tuple、shapeAmount、shapeDetailAmount、densityScale 和 `coverage=.55`。禁止同帧改变其他参数。
 
 **Step 2: 先写 candidate-resolution tests**
 
@@ -312,8 +315,8 @@ repeat               = projectedPixelsPerMeter / targetPixels
 选择顺序：
 
 1. 先淘汰亚像素 detail 和大量碎片。
-2. 再淘汰覆盖区变成单块平板的候选。
-3. 最后在保留 V3 footprint 的候选中选择 billow 层级最清楚的一组。
+2. connected area 只用于检测碎裂/缺失，不得因最大连通区接近 `1.0` 自动判 flat。
+3. 使用 internal luma variation、gradient/curvature 与 local peaks 辅助诊断，最后仍由人工视觉门选择 billow 层级最清楚的一组。
 
 不得按“最亮”或“覆盖最多”选择。
 
