@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "baseCommit": "078d729ccce95e4f79316808557f6c623a415152",
-  "generatedAt": "2026-08-08T17:55:44.001Z",
+  "baseCommit": "087563e64d8c7719c9cd98bbd4bc77fe467a4883",
+  "generatedAt": "2026-08-09T03:43:50.796Z",
   "candidate": {
     "id": "baseline",
     "coverage": 0.55,
@@ -13,21 +13,21 @@
       "view": "near-oblique",
       "cameraHeightMeters": 2499.9999999990687,
       "cameraMatrixWorld": [
-        -0.5875061325599824,
-        -0.3063303190735289,
+        -0.5875061325599797,
         -0.7489981841237814,
+        0.3063303190735339,
         0,
-        -0.6942873192918799,
-        -0.28465524029221667,
-        0.6610117339689784,
+        -0.691635089617261,
+        0.6612868399045297,
+        0.29041456261558946,
         0,
-        -0.41569419345825276,
-        0.9083683888106687,
-        -0.04544455671037384,
+        -0.42009218870926224,
+        -0.04124846116352464,
+        -0.9065435000247379,
         0,
-        -0.6644017042121055,
-        -0.34642427502407785,
-        0.6628324940355409,
+        -0.6644017042121054,
+        0.6628324940355408,
+        0.3464242750240779,
         1
       ],
       "earthMatrixWorld": [
@@ -53,75 +53,75 @@
         "shapeWavelengthMeters": 40000,
         "detailWavelengthMeters": 1666.6666666666667,
         "pixelsPerMeter": {
-          "east": 0.00018852908245912614,
-          "north": 0.00012929619638535163,
-          "up": 0.00018773451964696085
+          "east": 0.0010668689493688816,
+          "north": 0.014439402353937794,
+          "up": 0.014385538226008862
         },
-        "horizontalPixelsPerMeter": 0.00016164888080744542,
-        "shapeProjectedPixels": 6.465955232297817,
-        "detailProjectedPixels": 0.26941480134574236,
-        "shapeStatus": "fragment-risk",
-        "detailStatus": "subpixel-risk",
+        "horizontalPixelsPerMeter": 0.010238030809047992,
+        "shapeProjectedPixels": 409.5212323619197,
+        "detailProjectedPixels": 17.063384681746655,
+        "shapeStatus": "flat-risk",
+        "detailStatus": "flat-risk",
         "layers": [
           {
             "channel": "r",
             "altitude": 8000,
             "height": 26000,
             "topAltitude": 34000,
-            "projectedThicknessPixels": 4.881097510820982,
-            "status": "fragment-risk"
+            "projectedThicknessPixels": 374.0239938762304,
+            "status": "target"
           },
           {
             "channel": "g",
             "altitude": 10000,
             "height": 50000,
             "topAltitude": 60000,
-            "projectedThicknessPixels": 9.386725982348043,
-            "status": "fragment-risk"
+            "projectedThicknessPixels": 719.2769113004431,
+            "status": "target"
           },
           {
             "channel": "b",
             "altitude": 8000,
             "height": 36000,
             "topAltitude": 44000,
-            "projectedThicknessPixels": 6.758442707290591,
-            "status": "fragment-risk"
+            "projectedThicknessPixels": 517.879376136319,
+            "status": "target"
           },
           {
             "channel": "a",
             "altitude": 18000,
             "height": 20000,
             "topAltitude": 38000,
-            "projectedThicknessPixels": 3.7546903929392172,
-            "status": "fragment-risk"
+            "projectedThicknessPixels": 287.71076452017724,
+            "status": "target"
           }
         ],
         "originScreenPixels": [
-          809.8296176749052,
-          -136.785209149117
+          720.0000000000009,
+          480
         ],
         "segmentMeters": 1000
       }
     },
     {
       "view": "aerial-oblique",
-      "cameraHeightMeters": 50000,
+      "cameraHeightMeters": 49999.99999999907,
       "cameraMatrixWorld": [
-        -0.5875061325599815,
-        -0.30633031907353125,
+        -0.58750613255998,
         -0.7489981841237815,
+        0.3063303190735338,
         0,
-        -0.5480309350977298,
-        -0.5303953982414011,
-        0.6467942607199397,
+        -0.5401588461680368,
+        0.6448494663460314,
+        0.5407380018637988,
         0,
-        -0.5953978824116873,
-        0.7904697699094216,
-        0.14373205793776345,
+        -0.6025487242628851,
+        0.15221986050616512,
+        -0.7834310109745803,
         0,
-        -0.669361874106027,
-        -0.3490105466254364,
-        0.667780948804372,
+        -0.6693618741060269,
+        0.6677809488043719,
+        0.3490105466254364,
         1
       ],
       "earthMatrixWorld": [
@@ -147,30 +147,30 @@
         "shapeWavelengthMeters": 40000,
         "detailWavelengthMeters": 1666.6666666666667,
         "pixelsPerMeter": {
-          "east": 0.00023402967069214312,
-          "north": 0.00019163919436173007,
-          "up": 0.00029060863771132584
+          "east": 0.0012578755385649174,
+          "north": 0.006256699750256757,
+          "up": 0.006134276017783407
         },
-        "horizontalPixelsPerMeter": 0.00021388719875191915,
-        "shapeProjectedPixels": 8.555487950076765,
-        "detailProjectedPixels": 0.35647866458653193,
-        "shapeStatus": "fragment-risk",
-        "detailStatus": "subpixel-risk",
+        "horizontalPixelsPerMeter": 0.004512678951320542,
+        "shapeProjectedPixels": 180.5071580528217,
+        "detailProjectedPixels": 7.5211315855342376,
+        "shapeStatus": "flat-risk",
+        "detailStatus": "target",
         "layers": [
           {
             "channel": "r",
             "altitude": 8000,
             "height": 26000,
             "topAltitude": 34000,
-            "projectedThicknessPixels": 7.5558245804944715,
-            "status": "fragment-risk"
+            "projectedThicknessPixels": 159.49117646236857,
+            "status": "target"
           },
           {
             "channel": "g",
             "altitude": 10000,
             "height": 50000,
             "topAltitude": 60000,
-            "projectedThicknessPixels": 14.530431885566292,
+            "projectedThicknessPixels": 306.71380088917033,
             "status": "target"
           },
           {
@@ -178,44 +178,44 @@
             "altitude": 8000,
             "height": 36000,
             "topAltitude": 44000,
-            "projectedThicknessPixels": 10.46191095760773,
-            "status": "fragment-risk"
+            "projectedThicknessPixels": 220.83393664020264,
+            "status": "target"
           },
           {
             "channel": "a",
             "altitude": 18000,
             "height": 20000,
             "topAltitude": 38000,
-            "projectedThicknessPixels": 5.812172754226517,
-            "status": "fragment-risk"
+            "projectedThicknessPixels": 122.68552035566813,
+            "status": "target"
           }
         ],
         "originScreenPixels": [
-          831.37956222864,
-          -671.3262790416225
+          720.0000000000016,
+          479.99999999999267
         ],
         "segmentMeters": 1000
       }
     },
     {
       "view": "near-orbit",
-      "cameraHeightMeters": 200000,
+      "cameraHeightMeters": 199999.99999999907,
       "cameraMatrixWorld": [
-        -0.587506132559982,
-        -0.3063303190735305,
-        -0.7489981841237815,
+        -0.5875061325599822,
+        -0.7489981841237814,
+        0.30633031907352926,
         0,
-        -0.49552049987000535,
-        -0.5955709373560869,
-        0.6322615699102486,
+        -0.4680386911418315,
+        0.6233237229091981,
+        0.6264242332899155,
         0,
-        -0.6397624390451452,
-        0.7426015043030153,
-        0.19810862523854378,
+        -0.6601335681501536,
+        0.22465363704577615,
+        -0.7167666395441761,
         0,
-        -0.6850255685078841,
-        -0.35717772010341076,
-        0.6834076480743652,
+        -0.685025568507884,
+        0.683407648074365,
+        0.3571777201034107,
         1
       ],
       "earthMatrixWorld": [
@@ -241,14 +241,14 @@
         "shapeWavelengthMeters": 40000,
         "detailWavelengthMeters": 1666.6666666666667,
         "pixelsPerMeter": {
-          "east": 0.0002593279100183211,
-          "north": 0.00022863984640212042,
-          "up": 0.0003646956698559806
+          "east": 0.0004514400946841306,
+          "north": 0.0018162346542980004,
+          "up": 0.0017597462651445994
         },
-        "horizontalPixelsPerMeter": 0.00024446589156491307,
-        "shapeProjectedPixels": 9.778635662596523,
-        "detailProjectedPixels": 0.4074431526081885,
-        "shapeStatus": "fragment-risk",
+        "horizontalPixelsPerMeter": 0.0013233492506820326,
+        "shapeProjectedPixels": 52.933970027281305,
+        "detailProjectedPixels": 2.205582084470054,
+        "shapeStatus": "flat-risk",
         "detailStatus": "subpixel-risk",
         "layers": [
           {
@@ -256,15 +256,15 @@
             "altitude": 8000,
             "height": 26000,
             "topAltitude": 34000,
-            "projectedThicknessPixels": 9.482087416255496,
-            "status": "fragment-risk"
+            "projectedThicknessPixels": 45.753402893759585,
+            "status": "target"
           },
           {
             "channel": "g",
             "altitude": 10000,
             "height": 50000,
             "topAltitude": 60000,
-            "projectedThicknessPixels": 18.23478349279903,
+            "projectedThicknessPixels": 87.98731325722997,
             "status": "target"
           },
           {
@@ -272,7 +272,7 @@
             "altitude": 8000,
             "height": 36000,
             "topAltitude": 44000,
-            "projectedThicknessPixels": 13.1290441148153,
+            "projectedThicknessPixels": 63.35086554520558,
             "status": "target"
           },
           {
@@ -280,13 +280,13 @@
             "altitude": 18000,
             "height": 20000,
             "topAltitude": 38000,
-            "projectedThicknessPixels": 7.293913397119612,
-            "status": "fragment-risk"
+            "projectedThicknessPixels": 35.19492530289199,
+            "status": "target"
           }
         ],
         "originScreenPixels": [
-          843.3688861653411,
-          -937.4933616760022
+          719.9999999999994,
+          480
         ],
         "segmentMeters": 1000
       }
@@ -335,13 +335,13 @@
         "shapeWavelengthMeters": 40000,
         "detailWavelengthMeters": 1666.6666666666667,
         "pixelsPerMeter": {
-          "east": 0.00007128152378871779,
-          "north": 0.00011679377365159035,
-          "up": 0.00009418299075967309
+          "east": 0.00007128152378893605,
+          "north": 0.00011679377365167455,
+          "up": 0.00009418299075955383
         },
-        "horizontalPixelsPerMeter": 0.00009675185062163012,
-        "shapeProjectedPixels": 3.870074024865205,
-        "detailProjectedPixels": 0.16125308436938354,
+        "horizontalPixelsPerMeter": 0.00009675185062176135,
+        "shapeProjectedPixels": 3.870074024870454,
+        "detailProjectedPixels": 0.16125308436960226,
         "shapeStatus": "fragment-risk",
         "detailStatus": "subpixel-risk",
         "layers": [
@@ -350,31 +350,31 @@
             "altitude": 8000,
             "height": 26000,
             "topAltitude": 34000,
-            "projectedThicknessPixels": 2.4487577597515005,
-            "status": "fragment-risk"
+            "projectedThicknessPixels": 2.4487577597483994,
+            "status": "target"
           },
           {
             "channel": "g",
             "altitude": 10000,
             "height": 50000,
             "topAltitude": 60000,
-            "projectedThicknessPixels": 4.709149537983654,
-            "status": "fragment-risk"
+            "projectedThicknessPixels": 4.709149537977691,
+            "status": "target"
           },
           {
             "channel": "b",
             "altitude": 8000,
             "height": 36000,
             "topAltitude": 44000,
-            "projectedThicknessPixels": 3.3905876673482314,
-            "status": "fragment-risk"
+            "projectedThicknessPixels": 3.390587667343938,
+            "status": "target"
           },
           {
             "channel": "a",
             "altitude": 18000,
             "height": 20000,
             "topAltitude": 38000,
-            "projectedThicknessPixels": 1.8836598151934618,
+            "projectedThicknessPixels": 1.8836598151910766,
             "status": "fragment-risk"
           }
         ],

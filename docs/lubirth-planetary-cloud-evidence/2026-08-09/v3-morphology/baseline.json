@@ -1,7 +1,15 @@
 {
   "schemaVersion": 1,
-  "baseCommit": "dc792e3808c73a48a5c05a60910739d607f5e43b",
-  "generatedAt": "2026-08-08T17:49:34.460Z",
+  "baseCommit": "087563e64d8c7719c9cd98bbd4bc77fe467a4883",
+  "generatedAt": "2026-08-09T03:43:37.371Z",
+  "browserExecutable": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "gpu": {
+    "vendor": "WebKit",
+    "renderer": "WebKit WebGL",
+    "unmaskedVendor": "Google Inc. (Apple)",
+    "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)"
+  },
+  "reproductionCommand": "MIRALITH_TAKRAM_V3_MORPHOLOGY_CAPTURE=1 pnpm exec playwright test -c playwright.takram-parity-system-chrome.config.ts tests/e2e/lubirth-takram-v3-morphology.spec.ts --project=desktop-system-chrome --grep 'morphology baseline'",
   "viewport": {
     "width": 1440,
     "height": 960,
@@ -31,6 +39,7 @@
     {
       "view": "near-oblique",
       "diagnostic": "full",
+      "screenshotSha256": "d66fe05e1bf183f28fd1580fdb1a621b6cdb12b4c2be038557983ee8335ee26d",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -99,27 +108,27 @@
         "atmosphereReady": true,
         "cameraHeightMeters": 2499.9999999990687,
         "cameraMatrixWorld": [
-          -0.5875061325599824,
-          -0.3063303190735289,
+          -0.5875061325599797,
           -0.7489981841237814,
+          0.3063303190735339,
           0,
-          -0.6942873192918799,
-          -0.28465524029221667,
-          0.6610117339689784,
+          -0.691635089617261,
+          0.6612868399045297,
+          0.29041456261558946,
           0,
-          -0.41569419345825276,
-          0.9083683888106687,
-          -0.04544455671037384,
+          -0.42009218870926224,
+          -0.04124846116352464,
+          -0.9065435000247379,
           0,
-          -0.6644017042121055,
-          -0.34642427502407785,
-          0.6628324940355409,
+          -0.6644017042121054,
+          0.6628324940355408,
+          0.3464242750240779,
           1
         ],
         "cameraPosition": [
-          -0.6644017042121055,
-          -0.34642427502407785,
-          0.6628324940355409
+          -0.6644017042121054,
+          0.6628324940355408,
+          0.3464242750240779
         ],
         "coordinateMode": "lubirth-bridge",
         "control": null,
@@ -492,12 +501,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "near-oblique",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.0010668689493688816,
+            "north": 0.014439402353937794,
+            "up": 0.014385538226008862
+          },
+          "horizontalPixelsPerMeter": 0.010238030809047992,
+          "shapeProjectedPixels": 409.5212323619197,
+          "detailProjectedPixels": 17.063384681746655,
+          "shapeStatus": "flat-risk",
+          "detailStatus": "flat-risk",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 374.0239938762304,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 719.2769113004431,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 517.879376136319,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 287.71076452017724,
+              "status": "target"
+            }
+          ],
+          "originScreenPixels": [
+            720.0000000000009,
+            480
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "near-oblique",
       "diagnostic": "cloud-raw",
+      "screenshotSha256": "1639a947620156ad04c52b76fbee54613e0473f02d2e4904af4ac56df99182f4",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -566,27 +629,27 @@
         "atmosphereReady": true,
         "cameraHeightMeters": 2499.9999999990687,
         "cameraMatrixWorld": [
-          -0.5875061325599824,
-          -0.3063303190735289,
+          -0.5875061325599797,
           -0.7489981841237814,
+          0.3063303190735339,
           0,
-          -0.6942873192918799,
-          -0.28465524029221667,
-          0.6610117339689784,
+          -0.691635089617261,
+          0.6612868399045297,
+          0.29041456261558946,
           0,
-          -0.41569419345825276,
-          0.9083683888106687,
-          -0.04544455671037384,
+          -0.42009218870926224,
+          -0.04124846116352464,
+          -0.9065435000247379,
           0,
-          -0.6644017042121055,
-          -0.34642427502407785,
-          0.6628324940355409,
+          -0.6644017042121054,
+          0.6628324940355408,
+          0.3464242750240779,
           1
         ],
         "cameraPosition": [
-          -0.6644017042121055,
-          -0.34642427502407785,
-          0.6628324940355409
+          -0.6644017042121054,
+          0.6628324940355408,
+          0.3464242750240779
         ],
         "coordinateMode": "lubirth-bridge",
         "control": null,
@@ -959,12 +1022,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "near-oblique",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.0010668689493688816,
+            "north": 0.014439402353937794,
+            "up": 0.014385538226008862
+          },
+          "horizontalPixelsPerMeter": 0.010238030809047992,
+          "shapeProjectedPixels": 409.5212323619197,
+          "detailProjectedPixels": 17.063384681746655,
+          "shapeStatus": "flat-risk",
+          "detailStatus": "flat-risk",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 374.0239938762304,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 719.2769113004431,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 517.879376136319,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 287.71076452017724,
+              "status": "target"
+            }
+          ],
+          "originScreenPixels": [
+            720.0000000000009,
+            480
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "near-oblique",
       "diagnostic": "history-reset-first",
+      "screenshotSha256": "5245790983bdf30acc90ea7a70b24acb47d4b19808ba4f30025df6bae35c9002",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -1033,27 +1150,27 @@
         "atmosphereReady": true,
         "cameraHeightMeters": 2499.9999999990687,
         "cameraMatrixWorld": [
-          -0.5875061325599824,
-          -0.3063303190735289,
+          -0.5875061325599797,
           -0.7489981841237814,
+          0.3063303190735339,
           0,
-          -0.6942873192918799,
-          -0.28465524029221667,
-          0.6610117339689784,
+          -0.691635089617261,
+          0.6612868399045297,
+          0.29041456261558946,
           0,
-          -0.41569419345825276,
-          0.9083683888106687,
-          -0.04544455671037384,
+          -0.42009218870926224,
+          -0.04124846116352464,
+          -0.9065435000247379,
           0,
-          -0.6644017042121055,
-          -0.34642427502407785,
-          0.6628324940355409,
+          -0.6644017042121054,
+          0.6628324940355408,
+          0.3464242750240779,
           1
         ],
         "cameraPosition": [
-          -0.6644017042121055,
-          -0.34642427502407785,
-          0.6628324940355409
+          -0.6644017042121054,
+          0.6628324940355408,
+          0.3464242750240779
         ],
         "coordinateMode": "lubirth-bridge",
         "control": null,
@@ -1106,7 +1223,7 @@
           "temporalUpscale": true,
           "turbulence": true
         },
-        "nativeFrameCount": 32,
+        "nativeFrameCount": 13,
         "progress": 0.06,
         "rendererFingerprint": {
           "schemaVersion": 3,
@@ -1426,12 +1543,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "near-oblique",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.0010668689493688816,
+            "north": 0.014439402353937794,
+            "up": 0.014385538226008862
+          },
+          "horizontalPixelsPerMeter": 0.010238030809047992,
+          "shapeProjectedPixels": 409.5212323619197,
+          "detailProjectedPixels": 17.063384681746655,
+          "shapeStatus": "flat-risk",
+          "detailStatus": "flat-risk",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 374.0239938762304,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 719.2769113004431,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 517.879376136319,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 287.71076452017724,
+              "status": "target"
+            }
+          ],
+          "originScreenPixels": [
+            720.0000000000009,
+            480
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "near-oblique",
       "diagnostic": "bsm-off",
+      "screenshotSha256": "a78eca008c2da25aa64e53469b49e40d5c1914c9e2343f87707ff4cc90561a56",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -1500,27 +1671,27 @@
         "atmosphereReady": true,
         "cameraHeightMeters": 2499.9999999990687,
         "cameraMatrixWorld": [
-          -0.5875061325599824,
-          -0.3063303190735289,
+          -0.5875061325599797,
           -0.7489981841237814,
+          0.3063303190735339,
           0,
-          -0.6942873192918799,
-          -0.28465524029221667,
-          0.6610117339689784,
+          -0.691635089617261,
+          0.6612868399045297,
+          0.29041456261558946,
           0,
-          -0.41569419345825276,
-          0.9083683888106687,
-          -0.04544455671037384,
+          -0.42009218870926224,
+          -0.04124846116352464,
+          -0.9065435000247379,
           0,
-          -0.6644017042121055,
-          -0.34642427502407785,
-          0.6628324940355409,
+          -0.6644017042121054,
+          0.6628324940355408,
+          0.3464242750240779,
           1
         ],
         "cameraPosition": [
-          -0.6644017042121055,
-          -0.34642427502407785,
-          0.6628324940355409
+          -0.6644017042121054,
+          0.6628324940355408,
+          0.3464242750240779
         ],
         "coordinateMode": "lubirth-bridge",
         "control": null,
@@ -1893,12 +2064,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "near-oblique",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.0010668689493688816,
+            "north": 0.014439402353937794,
+            "up": 0.014385538226008862
+          },
+          "horizontalPixelsPerMeter": 0.010238030809047992,
+          "shapeProjectedPixels": 409.5212323619197,
+          "detailProjectedPixels": 17.063384681746655,
+          "shapeStatus": "flat-risk",
+          "detailStatus": "flat-risk",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 374.0239938762304,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 719.2769113004431,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 517.879376136319,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 287.71076452017724,
+              "status": "target"
+            }
+          ],
+          "originScreenPixels": [
+            720.0000000000009,
+            480
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "near-oblique",
       "diagnostic": "aerial-final",
+      "screenshotSha256": "74410804614a874169bfb9e043a2f9f120ca750c97ceccabc82360fbee237ded",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -1967,27 +2192,27 @@
         "atmosphereReady": true,
         "cameraHeightMeters": 2499.9999999990687,
         "cameraMatrixWorld": [
-          -0.5875061325599824,
-          -0.3063303190735289,
+          -0.5875061325599797,
           -0.7489981841237814,
+          0.3063303190735339,
           0,
-          -0.6942873192918799,
-          -0.28465524029221667,
-          0.6610117339689784,
+          -0.691635089617261,
+          0.6612868399045297,
+          0.29041456261558946,
           0,
-          -0.41569419345825276,
-          0.9083683888106687,
-          -0.04544455671037384,
+          -0.42009218870926224,
+          -0.04124846116352464,
+          -0.9065435000247379,
           0,
-          -0.6644017042121055,
-          -0.34642427502407785,
-          0.6628324940355409,
+          -0.6644017042121054,
+          0.6628324940355408,
+          0.3464242750240779,
           1
         ],
         "cameraPosition": [
-          -0.6644017042121055,
-          -0.34642427502407785,
-          0.6628324940355409
+          -0.6644017042121054,
+          0.6628324940355408,
+          0.3464242750240779
         ],
         "coordinateMode": "lubirth-bridge",
         "control": null,
@@ -1995,7 +2220,7 @@
         "diagnosticApplied": true,
         "diagnosticState": {
           "altitudeLadder": false,
-          "cloudOff": false,
+          "cloudOff": true,
           "aerialPerspectiveComposite": true,
           "beerShadowOcclusion": true,
           "cloudRawOutput": false,
@@ -2359,12 +2584,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "near-oblique",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.0010668689493688816,
+            "north": 0.014439402353937794,
+            "up": 0.014385538226008862
+          },
+          "horizontalPixelsPerMeter": 0.010238030809047992,
+          "shapeProjectedPixels": 409.5212323619197,
+          "detailProjectedPixels": 17.063384681746655,
+          "shapeStatus": "flat-risk",
+          "detailStatus": "flat-risk",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 374.0239938762304,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 719.2769113004431,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 517.879376136319,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 287.71076452017724,
+              "status": "target"
+            }
+          ],
+          "originScreenPixels": [
+            720.0000000000009,
+            480
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "near-oblique",
       "diagnostic": "sample-count-debug",
+      "screenshotSha256": "52e89131052ce2d6ea31b7aa32abec4a06f68d100df4020fb6ef74dc9b5dbdc9",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -2433,27 +2712,27 @@
         "atmosphereReady": true,
         "cameraHeightMeters": 2499.9999999990687,
         "cameraMatrixWorld": [
-          -0.5875061325599824,
-          -0.3063303190735289,
+          -0.5875061325599797,
           -0.7489981841237814,
+          0.3063303190735339,
           0,
-          -0.6942873192918799,
-          -0.28465524029221667,
-          0.6610117339689784,
+          -0.691635089617261,
+          0.6612868399045297,
+          0.29041456261558946,
           0,
-          -0.41569419345825276,
-          0.9083683888106687,
-          -0.04544455671037384,
+          -0.42009218870926224,
+          -0.04124846116352464,
+          -0.9065435000247379,
           0,
-          -0.6644017042121055,
-          -0.34642427502407785,
-          0.6628324940355409,
+          -0.6644017042121054,
+          0.6628324940355408,
+          0.3464242750240779,
           1
         ],
         "cameraPosition": [
-          -0.6644017042121055,
-          -0.34642427502407785,
-          0.6628324940355409
+          -0.6644017042121054,
+          0.6628324940355408,
+          0.3464242750240779
         ],
         "coordinateMode": "lubirth-bridge",
         "control": null,
@@ -2827,12 +3106,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "near-oblique",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.0010668689493688816,
+            "north": 0.014439402353937794,
+            "up": 0.014385538226008862
+          },
+          "horizontalPixelsPerMeter": 0.010238030809047992,
+          "shapeProjectedPixels": 409.5212323619197,
+          "detailProjectedPixels": 17.063384681746655,
+          "shapeStatus": "flat-risk",
+          "detailStatus": "flat-risk",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 374.0239938762304,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 719.2769113004431,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 517.879376136319,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 287.71076452017724,
+              "status": "target"
+            }
+          ],
+          "originScreenPixels": [
+            720.0000000000009,
+            480
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "aerial-oblique",
       "diagnostic": "full",
+      "screenshotSha256": "63dc76fafb3d90906c68ccbb2ee073cef48a84f0b510a350b9348fbac59b9ac7",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -2899,29 +3232,29 @@
         "assetsReady": true,
         "atmosphereGeneration": 0,
         "atmosphereReady": true,
-        "cameraHeightMeters": 50000,
+        "cameraHeightMeters": 49999.99999999907,
         "cameraMatrixWorld": [
-          -0.5875061325599815,
-          -0.30633031907353125,
+          -0.58750613255998,
           -0.7489981841237815,
+          0.3063303190735338,
           0,
-          -0.5480309350977298,
-          -0.5303953982414011,
-          0.6467942607199397,
+          -0.5401588461680368,
+          0.6448494663460314,
+          0.5407380018637988,
           0,
-          -0.5953978824116873,
-          0.7904697699094216,
-          0.14373205793776345,
+          -0.6025487242628851,
+          0.15221986050616512,
+          -0.7834310109745803,
           0,
-          -0.669361874106027,
-          -0.3490105466254364,
-          0.667780948804372,
+          -0.6693618741060269,
+          0.6677809488043719,
+          0.3490105466254364,
           1
         ],
         "cameraPosition": [
-          -0.669361874106027,
-          -0.3490105466254364,
-          0.667780948804372
+          -0.6693618741060269,
+          0.6677809488043719,
+          0.3490105466254364
         ],
         "coordinateMode": "lubirth-bridge",
         "control": null,
@@ -3294,12 +3627,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "aerial-oblique",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.0012578755385649174,
+            "north": 0.006256699750256757,
+            "up": 0.006134276017783407
+          },
+          "horizontalPixelsPerMeter": 0.004512678951320542,
+          "shapeProjectedPixels": 180.5071580528217,
+          "detailProjectedPixels": 7.5211315855342376,
+          "shapeStatus": "flat-risk",
+          "detailStatus": "target",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 159.49117646236857,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 306.71380088917033,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 220.83393664020264,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 122.68552035566813,
+              "status": "target"
+            }
+          ],
+          "originScreenPixels": [
+            720.0000000000016,
+            479.99999999999267
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "aerial-oblique",
       "diagnostic": "cloud-raw",
+      "screenshotSha256": "2bdd8da2959968d230645adb42cb7bfff30a95c243b97eb312ea744ce8079bdb",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -3366,29 +3753,29 @@
         "assetsReady": true,
         "atmosphereGeneration": 0,
         "atmosphereReady": true,
-        "cameraHeightMeters": 50000,
+        "cameraHeightMeters": 49999.99999999907,
         "cameraMatrixWorld": [
-          -0.5875061325599815,
-          -0.30633031907353125,
+          -0.58750613255998,
           -0.7489981841237815,
+          0.3063303190735338,
           0,
-          -0.5480309350977298,
-          -0.5303953982414011,
-          0.6467942607199397,
+          -0.5401588461680368,
+          0.6448494663460314,
+          0.5407380018637988,
           0,
-          -0.5953978824116873,
-          0.7904697699094216,
-          0.14373205793776345,
+          -0.6025487242628851,
+          0.15221986050616512,
+          -0.7834310109745803,
           0,
-          -0.669361874106027,
-          -0.3490105466254364,
-          0.667780948804372,
+          -0.6693618741060269,
+          0.6677809488043719,
+          0.3490105466254364,
           1
         ],
         "cameraPosition": [
-          -0.669361874106027,
-          -0.3490105466254364,
-          0.667780948804372
+          -0.6693618741060269,
+          0.6677809488043719,
+          0.3490105466254364
         ],
         "coordinateMode": "lubirth-bridge",
         "control": null,
@@ -3761,12 +4148,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "aerial-oblique",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.0012578755385649174,
+            "north": 0.006256699750256757,
+            "up": 0.006134276017783407
+          },
+          "horizontalPixelsPerMeter": 0.004512678951320542,
+          "shapeProjectedPixels": 180.5071580528217,
+          "detailProjectedPixels": 7.5211315855342376,
+          "shapeStatus": "flat-risk",
+          "detailStatus": "target",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 159.49117646236857,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 306.71380088917033,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 220.83393664020264,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 122.68552035566813,
+              "status": "target"
+            }
+          ],
+          "originScreenPixels": [
+            720.0000000000016,
+            479.99999999999267
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "aerial-oblique",
       "diagnostic": "history-reset-first",
+      "screenshotSha256": "e00ee1f4dbb8d9b40a7c09e109bc3588bf796724363dc0160bc23e57fc6b62a0",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -3833,29 +4274,29 @@
         "assetsReady": true,
         "atmosphereGeneration": 0,
         "atmosphereReady": true,
-        "cameraHeightMeters": 50000,
+        "cameraHeightMeters": 49999.99999999907,
         "cameraMatrixWorld": [
-          -0.5875061325599815,
-          -0.30633031907353125,
+          -0.58750613255998,
           -0.7489981841237815,
+          0.3063303190735338,
           0,
-          -0.5480309350977298,
-          -0.5303953982414011,
-          0.6467942607199397,
+          -0.5401588461680368,
+          0.6448494663460314,
+          0.5407380018637988,
           0,
-          -0.5953978824116873,
-          0.7904697699094216,
-          0.14373205793776345,
+          -0.6025487242628851,
+          0.15221986050616512,
+          -0.7834310109745803,
           0,
-          -0.669361874106027,
-          -0.3490105466254364,
-          0.667780948804372,
+          -0.6693618741060269,
+          0.6677809488043719,
+          0.3490105466254364,
           1
         ],
         "cameraPosition": [
-          -0.669361874106027,
-          -0.3490105466254364,
-          0.667780948804372
+          -0.6693618741060269,
+          0.6677809488043719,
+          0.3490105466254364
         ],
         "coordinateMode": "lubirth-bridge",
         "control": null,
@@ -3908,7 +4349,7 @@
           "temporalUpscale": true,
           "turbulence": true
         },
-        "nativeFrameCount": 30,
+        "nativeFrameCount": 9,
         "progress": 0.06,
         "rendererFingerprint": {
           "schemaVersion": 3,
@@ -4228,12 +4669,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "aerial-oblique",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.0012578755385649174,
+            "north": 0.006256699750256757,
+            "up": 0.006134276017783407
+          },
+          "horizontalPixelsPerMeter": 0.004512678951320542,
+          "shapeProjectedPixels": 180.5071580528217,
+          "detailProjectedPixels": 7.5211315855342376,
+          "shapeStatus": "flat-risk",
+          "detailStatus": "target",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 159.49117646236857,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 306.71380088917033,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 220.83393664020264,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 122.68552035566813,
+              "status": "target"
+            }
+          ],
+          "originScreenPixels": [
+            720.0000000000016,
+            479.99999999999267
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "aerial-oblique",
       "diagnostic": "bsm-off",
+      "screenshotSha256": "53419bc8d79e9035a8a06e6d26ea5dba4c68d253c1e44b42f1991778d7a59789",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -4300,29 +4795,29 @@
         "assetsReady": true,
         "atmosphereGeneration": 0,
         "atmosphereReady": true,
-        "cameraHeightMeters": 50000,
+        "cameraHeightMeters": 49999.99999999907,
         "cameraMatrixWorld": [
-          -0.5875061325599815,
-          -0.30633031907353125,
+          -0.58750613255998,
           -0.7489981841237815,
+          0.3063303190735338,
           0,
-          -0.5480309350977298,
-          -0.5303953982414011,
-          0.6467942607199397,
+          -0.5401588461680368,
+          0.6448494663460314,
+          0.5407380018637988,
           0,
-          -0.5953978824116873,
-          0.7904697699094216,
-          0.14373205793776345,
+          -0.6025487242628851,
+          0.15221986050616512,
+          -0.7834310109745803,
           0,
-          -0.669361874106027,
-          -0.3490105466254364,
-          0.667780948804372,
+          -0.6693618741060269,
+          0.6677809488043719,
+          0.3490105466254364,
           1
         ],
         "cameraPosition": [
-          -0.669361874106027,
-          -0.3490105466254364,
-          0.667780948804372
+          -0.6693618741060269,
+          0.6677809488043719,
+          0.3490105466254364
         ],
         "coordinateMode": "lubirth-bridge",
         "control": null,
@@ -4695,12 +5190,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "aerial-oblique",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.0012578755385649174,
+            "north": 0.006256699750256757,
+            "up": 0.006134276017783407
+          },
+          "horizontalPixelsPerMeter": 0.004512678951320542,
+          "shapeProjectedPixels": 180.5071580528217,
+          "detailProjectedPixels": 7.5211315855342376,
+          "shapeStatus": "flat-risk",
+          "detailStatus": "target",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 159.49117646236857,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 306.71380088917033,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 220.83393664020264,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 122.68552035566813,
+              "status": "target"
+            }
+          ],
+          "originScreenPixels": [
+            720.0000000000016,
+            479.99999999999267
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "aerial-oblique",
       "diagnostic": "aerial-final",
+      "screenshotSha256": "bb3b7858646cbafc2ab5816da14ad79ed12072421b6d3868793bad1d13c2b958",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -4767,29 +5316,29 @@
         "assetsReady": true,
         "atmosphereGeneration": 0,
         "atmosphereReady": true,
-        "cameraHeightMeters": 50000,
+        "cameraHeightMeters": 49999.99999999907,
         "cameraMatrixWorld": [
-          -0.5875061325599815,
-          -0.30633031907353125,
+          -0.58750613255998,
           -0.7489981841237815,
+          0.3063303190735338,
           0,
-          -0.5480309350977298,
-          -0.5303953982414011,
-          0.6467942607199397,
+          -0.5401588461680368,
+          0.6448494663460314,
+          0.5407380018637988,
           0,
-          -0.5953978824116873,
-          0.7904697699094216,
-          0.14373205793776345,
+          -0.6025487242628851,
+          0.15221986050616512,
+          -0.7834310109745803,
           0,
-          -0.669361874106027,
-          -0.3490105466254364,
-          0.667780948804372,
+          -0.6693618741060269,
+          0.6677809488043719,
+          0.3490105466254364,
           1
         ],
         "cameraPosition": [
-          -0.669361874106027,
-          -0.3490105466254364,
-          0.667780948804372
+          -0.6693618741060269,
+          0.6677809488043719,
+          0.3490105466254364
         ],
         "coordinateMode": "lubirth-bridge",
         "control": null,
@@ -4797,7 +5346,7 @@
         "diagnosticApplied": true,
         "diagnosticState": {
           "altitudeLadder": false,
-          "cloudOff": false,
+          "cloudOff": true,
           "aerialPerspectiveComposite": true,
           "beerShadowOcclusion": true,
           "cloudRawOutput": false,
@@ -5161,12 +5710,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "aerial-oblique",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.0012578755385649174,
+            "north": 0.006256699750256757,
+            "up": 0.006134276017783407
+          },
+          "horizontalPixelsPerMeter": 0.004512678951320542,
+          "shapeProjectedPixels": 180.5071580528217,
+          "detailProjectedPixels": 7.5211315855342376,
+          "shapeStatus": "flat-risk",
+          "detailStatus": "target",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 159.49117646236857,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 306.71380088917033,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 220.83393664020264,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 122.68552035566813,
+              "status": "target"
+            }
+          ],
+          "originScreenPixels": [
+            720.0000000000016,
+            479.99999999999267
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "aerial-oblique",
       "diagnostic": "sample-count-debug",
+      "screenshotSha256": "93545557b1030f4baf36f1bddeeae5ee41b8a3db74ad9ae32f5190ff013a5626",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -5233,29 +5836,29 @@
         "assetsReady": true,
         "atmosphereGeneration": 0,
         "atmosphereReady": true,
-        "cameraHeightMeters": 50000,
+        "cameraHeightMeters": 49999.99999999907,
         "cameraMatrixWorld": [
-          -0.5875061325599815,
-          -0.30633031907353125,
+          -0.58750613255998,
           -0.7489981841237815,
+          0.3063303190735338,
           0,
-          -0.5480309350977298,
-          -0.5303953982414011,
-          0.6467942607199397,
+          -0.5401588461680368,
+          0.6448494663460314,
+          0.5407380018637988,
           0,
-          -0.5953978824116873,
-          0.7904697699094216,
-          0.14373205793776345,
+          -0.6025487242628851,
+          0.15221986050616512,
+          -0.7834310109745803,
           0,
-          -0.669361874106027,
-          -0.3490105466254364,
-          0.667780948804372,
+          -0.6693618741060269,
+          0.6677809488043719,
+          0.3490105466254364,
           1
         ],
         "cameraPosition": [
-          -0.669361874106027,
-          -0.3490105466254364,
-          0.667780948804372
+          -0.6693618741060269,
+          0.6677809488043719,
+          0.3490105466254364
         ],
         "coordinateMode": "lubirth-bridge",
         "control": null,
@@ -5629,12 +6232,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "aerial-oblique",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.0012578755385649174,
+            "north": 0.006256699750256757,
+            "up": 0.006134276017783407
+          },
+          "horizontalPixelsPerMeter": 0.004512678951320542,
+          "shapeProjectedPixels": 180.5071580528217,
+          "detailProjectedPixels": 7.5211315855342376,
+          "shapeStatus": "flat-risk",
+          "detailStatus": "target",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 159.49117646236857,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 306.71380088917033,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 220.83393664020264,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 122.68552035566813,
+              "status": "target"
+            }
+          ],
+          "originScreenPixels": [
+            720.0000000000016,
+            479.99999999999267
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "near-orbit",
       "diagnostic": "full",
+      "screenshotSha256": "5a4e37963e511e460c0e7add7724bbfbf4a37b45cd517b94901e3e9ad9833df0",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -5701,29 +6358,29 @@
         "assetsReady": true,
         "atmosphereGeneration": 0,
         "atmosphereReady": true,
-        "cameraHeightMeters": 200000,
+        "cameraHeightMeters": 199999.99999999907,
         "cameraMatrixWorld": [
-          -0.587506132559982,
-          -0.3063303190735305,
-          -0.7489981841237815,
+          -0.5875061325599822,
+          -0.7489981841237814,
+          0.30633031907352926,
           0,
-          -0.49552049987000535,
-          -0.5955709373560869,
-          0.6322615699102486,
+          -0.4680386911418315,
+          0.6233237229091981,
+          0.6264242332899155,
           0,
-          -0.6397624390451452,
-          0.7426015043030153,
-          0.19810862523854378,
+          -0.6601335681501536,
+          0.22465363704577615,
+          -0.7167666395441761,
           0,
-          -0.6850255685078841,
-          -0.35717772010341076,
-          0.6834076480743652,
+          -0.685025568507884,
+          0.683407648074365,
+          0.3571777201034107,
           1
         ],
         "cameraPosition": [
-          -0.6850255685078841,
-          -0.35717772010341076,
-          0.6834076480743652
+          -0.685025568507884,
+          0.683407648074365,
+          0.3571777201034107
         ],
         "coordinateMode": "lubirth-bridge",
         "control": null,
@@ -6096,12 +6753,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "near-orbit",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.0004514400946841306,
+            "north": 0.0018162346542980004,
+            "up": 0.0017597462651445994
+          },
+          "horizontalPixelsPerMeter": 0.0013233492506820326,
+          "shapeProjectedPixels": 52.933970027281305,
+          "detailProjectedPixels": 2.205582084470054,
+          "shapeStatus": "flat-risk",
+          "detailStatus": "subpixel-risk",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 45.753402893759585,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 87.98731325722997,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 63.35086554520558,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 35.19492530289199,
+              "status": "target"
+            }
+          ],
+          "originScreenPixels": [
+            719.9999999999994,
+            480
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "near-orbit",
       "diagnostic": "cloud-raw",
+      "screenshotSha256": "a1abe12b758f814c7173b767376dac404b179f61c0da072e046dec9be54ac95e",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -6168,29 +6879,29 @@
         "assetsReady": true,
         "atmosphereGeneration": 0,
         "atmosphereReady": true,
-        "cameraHeightMeters": 200000,
+        "cameraHeightMeters": 199999.99999999907,
         "cameraMatrixWorld": [
-          -0.587506132559982,
-          -0.3063303190735305,
-          -0.7489981841237815,
+          -0.5875061325599822,
+          -0.7489981841237814,
+          0.30633031907352926,
           0,
-          -0.49552049987000535,
-          -0.5955709373560869,
-          0.6322615699102486,
+          -0.4680386911418315,
+          0.6233237229091981,
+          0.6264242332899155,
           0,
-          -0.6397624390451452,
-          0.7426015043030153,
-          0.19810862523854378,
+          -0.6601335681501536,
+          0.22465363704577615,
+          -0.7167666395441761,
           0,
-          -0.6850255685078841,
-          -0.35717772010341076,
-          0.6834076480743652,
+          -0.685025568507884,
+          0.683407648074365,
+          0.3571777201034107,
           1
         ],
         "cameraPosition": [
-          -0.6850255685078841,
-          -0.35717772010341076,
-          0.6834076480743652
+          -0.685025568507884,
+          0.683407648074365,
+          0.3571777201034107
         ],
         "coordinateMode": "lubirth-bridge",
         "control": null,
@@ -6563,12 +7274,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "near-orbit",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.0004514400946841306,
+            "north": 0.0018162346542980004,
+            "up": 0.0017597462651445994
+          },
+          "horizontalPixelsPerMeter": 0.0013233492506820326,
+          "shapeProjectedPixels": 52.933970027281305,
+          "detailProjectedPixels": 2.205582084470054,
+          "shapeStatus": "flat-risk",
+          "detailStatus": "subpixel-risk",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 45.753402893759585,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 87.98731325722997,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 63.35086554520558,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 35.19492530289199,
+              "status": "target"
+            }
+          ],
+          "originScreenPixels": [
+            719.9999999999994,
+            480
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "near-orbit",
       "diagnostic": "history-reset-first",
+      "screenshotSha256": "826957e341276e7389f001c50ceebd328d63481da88358da285acf8ed574bf59",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -6635,29 +7400,29 @@
         "assetsReady": true,
         "atmosphereGeneration": 0,
         "atmosphereReady": true,
-        "cameraHeightMeters": 200000,
+        "cameraHeightMeters": 199999.99999999907,
         "cameraMatrixWorld": [
-          -0.587506132559982,
-          -0.3063303190735305,
-          -0.7489981841237815,
+          -0.5875061325599822,
+          -0.7489981841237814,
+          0.30633031907352926,
           0,
-          -0.49552049987000535,
-          -0.5955709373560869,
-          0.6322615699102486,
+          -0.4680386911418315,
+          0.6233237229091981,
+          0.6264242332899155,
           0,
-          -0.6397624390451452,
-          0.7426015043030153,
-          0.19810862523854378,
+          -0.6601335681501536,
+          0.22465363704577615,
+          -0.7167666395441761,
           0,
-          -0.6850255685078841,
-          -0.35717772010341076,
-          0.6834076480743652,
+          -0.685025568507884,
+          0.683407648074365,
+          0.3571777201034107,
           1
         ],
         "cameraPosition": [
-          -0.6850255685078841,
-          -0.35717772010341076,
-          0.6834076480743652
+          -0.685025568507884,
+          0.683407648074365,
+          0.3571777201034107
         ],
         "coordinateMode": "lubirth-bridge",
         "control": null,
@@ -6710,7 +7475,7 @@
           "temporalUpscale": true,
           "turbulence": true
         },
-        "nativeFrameCount": 32,
+        "nativeFrameCount": 13,
         "progress": 0.06,
         "rendererFingerprint": {
           "schemaVersion": 3,
@@ -7030,12 +7795,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "near-orbit",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.0004514400946841306,
+            "north": 0.0018162346542980004,
+            "up": 0.0017597462651445994
+          },
+          "horizontalPixelsPerMeter": 0.0013233492506820326,
+          "shapeProjectedPixels": 52.933970027281305,
+          "detailProjectedPixels": 2.205582084470054,
+          "shapeStatus": "flat-risk",
+          "detailStatus": "subpixel-risk",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 45.753402893759585,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 87.98731325722997,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 63.35086554520558,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 35.19492530289199,
+              "status": "target"
+            }
+          ],
+          "originScreenPixels": [
+            719.9999999999994,
+            480
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "near-orbit",
       "diagnostic": "bsm-off",
+      "screenshotSha256": "a1f6f94ff7fb296335231e901254fa3f3ba991fdc2b8bba5aa1507070fcef114",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -7102,29 +7921,29 @@
         "assetsReady": true,
         "atmosphereGeneration": 0,
         "atmosphereReady": true,
-        "cameraHeightMeters": 200000,
+        "cameraHeightMeters": 199999.99999999907,
         "cameraMatrixWorld": [
-          -0.587506132559982,
-          -0.3063303190735305,
-          -0.7489981841237815,
+          -0.5875061325599822,
+          -0.7489981841237814,
+          0.30633031907352926,
           0,
-          -0.49552049987000535,
-          -0.5955709373560869,
-          0.6322615699102486,
+          -0.4680386911418315,
+          0.6233237229091981,
+          0.6264242332899155,
           0,
-          -0.6397624390451452,
-          0.7426015043030153,
-          0.19810862523854378,
+          -0.6601335681501536,
+          0.22465363704577615,
+          -0.7167666395441761,
           0,
-          -0.6850255685078841,
-          -0.35717772010341076,
-          0.6834076480743652,
+          -0.685025568507884,
+          0.683407648074365,
+          0.3571777201034107,
           1
         ],
         "cameraPosition": [
-          -0.6850255685078841,
-          -0.35717772010341076,
-          0.6834076480743652
+          -0.685025568507884,
+          0.683407648074365,
+          0.3571777201034107
         ],
         "coordinateMode": "lubirth-bridge",
         "control": null,
@@ -7497,12 +8316,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "near-orbit",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.0004514400946841306,
+            "north": 0.0018162346542980004,
+            "up": 0.0017597462651445994
+          },
+          "horizontalPixelsPerMeter": 0.0013233492506820326,
+          "shapeProjectedPixels": 52.933970027281305,
+          "detailProjectedPixels": 2.205582084470054,
+          "shapeStatus": "flat-risk",
+          "detailStatus": "subpixel-risk",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 45.753402893759585,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 87.98731325722997,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 63.35086554520558,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 35.19492530289199,
+              "status": "target"
+            }
+          ],
+          "originScreenPixels": [
+            719.9999999999994,
+            480
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "near-orbit",
       "diagnostic": "aerial-final",
+      "screenshotSha256": "112dae1153c363d5d93fca9e51cd69752ee5cf167143879f6b0de4003d365e20",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -7569,29 +8442,29 @@
         "assetsReady": true,
         "atmosphereGeneration": 0,
         "atmosphereReady": true,
-        "cameraHeightMeters": 200000,
+        "cameraHeightMeters": 199999.99999999907,
         "cameraMatrixWorld": [
-          -0.587506132559982,
-          -0.3063303190735305,
-          -0.7489981841237815,
+          -0.5875061325599822,
+          -0.7489981841237814,
+          0.30633031907352926,
           0,
-          -0.49552049987000535,
-          -0.5955709373560869,
-          0.6322615699102486,
+          -0.4680386911418315,
+          0.6233237229091981,
+          0.6264242332899155,
           0,
-          -0.6397624390451452,
-          0.7426015043030153,
-          0.19810862523854378,
+          -0.6601335681501536,
+          0.22465363704577615,
+          -0.7167666395441761,
           0,
-          -0.6850255685078841,
-          -0.35717772010341076,
-          0.6834076480743652,
+          -0.685025568507884,
+          0.683407648074365,
+          0.3571777201034107,
           1
         ],
         "cameraPosition": [
-          -0.6850255685078841,
-          -0.35717772010341076,
-          0.6834076480743652
+          -0.685025568507884,
+          0.683407648074365,
+          0.3571777201034107
         ],
         "coordinateMode": "lubirth-bridge",
         "control": null,
@@ -7599,7 +8472,7 @@
         "diagnosticApplied": true,
         "diagnosticState": {
           "altitudeLadder": false,
-          "cloudOff": false,
+          "cloudOff": true,
           "aerialPerspectiveComposite": true,
           "beerShadowOcclusion": true,
           "cloudRawOutput": false,
@@ -7963,12 +8836,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "near-orbit",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.0004514400946841306,
+            "north": 0.0018162346542980004,
+            "up": 0.0017597462651445994
+          },
+          "horizontalPixelsPerMeter": 0.0013233492506820326,
+          "shapeProjectedPixels": 52.933970027281305,
+          "detailProjectedPixels": 2.205582084470054,
+          "shapeStatus": "flat-risk",
+          "detailStatus": "subpixel-risk",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 45.753402893759585,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 87.98731325722997,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 63.35086554520558,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 35.19492530289199,
+              "status": "target"
+            }
+          ],
+          "originScreenPixels": [
+            719.9999999999994,
+            480
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "near-orbit",
       "diagnostic": "sample-count-debug",
+      "screenshotSha256": "d4a91047f8dd8f866fc099340280fab6aab880a2a14083782f46e470167500af",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -8035,29 +8962,29 @@
         "assetsReady": true,
         "atmosphereGeneration": 0,
         "atmosphereReady": true,
-        "cameraHeightMeters": 200000,
+        "cameraHeightMeters": 199999.99999999907,
         "cameraMatrixWorld": [
-          -0.587506132559982,
-          -0.3063303190735305,
-          -0.7489981841237815,
+          -0.5875061325599822,
+          -0.7489981841237814,
+          0.30633031907352926,
           0,
-          -0.49552049987000535,
-          -0.5955709373560869,
-          0.6322615699102486,
+          -0.4680386911418315,
+          0.6233237229091981,
+          0.6264242332899155,
           0,
-          -0.6397624390451452,
-          0.7426015043030153,
-          0.19810862523854378,
+          -0.6601335681501536,
+          0.22465363704577615,
+          -0.7167666395441761,
           0,
-          -0.6850255685078841,
-          -0.35717772010341076,
-          0.6834076480743652,
+          -0.685025568507884,
+          0.683407648074365,
+          0.3571777201034107,
           1
         ],
         "cameraPosition": [
-          -0.6850255685078841,
-          -0.35717772010341076,
-          0.6834076480743652
+          -0.685025568507884,
+          0.683407648074365,
+          0.3571777201034107
         ],
         "coordinateMode": "lubirth-bridge",
         "control": null,
@@ -8431,12 +9358,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "near-orbit",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.0004514400946841306,
+            "north": 0.0018162346542980004,
+            "up": 0.0017597462651445994
+          },
+          "horizontalPixelsPerMeter": 0.0013233492506820326,
+          "shapeProjectedPixels": 52.933970027281305,
+          "detailProjectedPixels": 2.205582084470054,
+          "shapeStatus": "flat-risk",
+          "detailStatus": "subpixel-risk",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 45.753402893759585,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 87.98731325722997,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 63.35086554520558,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 35.19492530289199,
+              "status": "target"
+            }
+          ],
+          "originScreenPixels": [
+            719.9999999999994,
+            480
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "opening-orbit",
       "diagnostic": "full",
+      "screenshotSha256": "91e2b438bb9f48dbed9f8ee8dc5b96584d0889ce44f7b187a8d77a2b874b5bbe",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -8898,12 +9879,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "opening-orbit",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.00007128152378893605,
+            "north": 0.00011679377365167455,
+            "up": 0.00009418299075955383
+          },
+          "horizontalPixelsPerMeter": 0.00009675185062176135,
+          "shapeProjectedPixels": 3.870074024870454,
+          "detailProjectedPixels": 0.16125308436960226,
+          "shapeStatus": "fragment-risk",
+          "detailStatus": "subpixel-risk",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 2.4487577597483994,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 4.709149537977691,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 3.390587667343938,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 1.8836598151910766,
+              "status": "fragment-risk"
+            }
+          ],
+          "originScreenPixels": [
+            1175.5645867781054,
+            837.8870486361263
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "opening-orbit",
       "diagnostic": "cloud-raw",
+      "screenshotSha256": "747fb49f3ec4bb380d39ea9e479c7472236ae5c3cb3333f66c6e188e62cf887a",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -9365,12 +10400,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "opening-orbit",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.00007128152378893605,
+            "north": 0.00011679377365167455,
+            "up": 0.00009418299075955383
+          },
+          "horizontalPixelsPerMeter": 0.00009675185062176135,
+          "shapeProjectedPixels": 3.870074024870454,
+          "detailProjectedPixels": 0.16125308436960226,
+          "shapeStatus": "fragment-risk",
+          "detailStatus": "subpixel-risk",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 2.4487577597483994,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 4.709149537977691,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 3.390587667343938,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 1.8836598151910766,
+              "status": "fragment-risk"
+            }
+          ],
+          "originScreenPixels": [
+            1175.5645867781054,
+            837.8870486361263
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "opening-orbit",
       "diagnostic": "history-reset-first",
+      "screenshotSha256": "31f6565d8ff0c2887525257ea45ac6661c76ce75122df175497ed546e21cbdbe",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -9512,7 +10601,7 @@
           "temporalUpscale": true,
           "turbulence": true
         },
-        "nativeFrameCount": 28,
+        "nativeFrameCount": 4,
         "progress": 0.06,
         "rendererFingerprint": {
           "schemaVersion": 3,
@@ -9654,7 +10743,6 @@
               "HAS_NORMALS": "1",
               "HAS_OVERLAY": "1",
               "HAS_SHADOW": "1",
-              "HAS_SHADOW_LENGTH": "1",
               "INSCATTER": "1",
               "IRRADIANCE_TEXTURE_HEIGHT": "16",
               "IRRADIANCE_TEXTURE_WIDTH": "64",
@@ -9820,7 +10908,7 @@
             "turbulence": "ec2b1b0af4a6a6104102b21e58beb300b0a3d334c0281d84fde8c91d322910f9"
           }
         },
-        "rendererFingerprintHash": "fnv1a-64:b6657a30c5d0def2",
+        "rendererFingerprintHash": "fnv1a-64:33a089afd0ac9e73",
         "presentationPreset": "v3-opening-coarse",
         "coverage": 0.55,
         "sceneDepthScale": 652463.8418681555,
@@ -9832,12 +10920,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "opening-orbit",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.00007128152378893605,
+            "north": 0.00011679377365167455,
+            "up": 0.00009418299075955383
+          },
+          "horizontalPixelsPerMeter": 0.00009675185062176135,
+          "shapeProjectedPixels": 3.870074024870454,
+          "detailProjectedPixels": 0.16125308436960226,
+          "shapeStatus": "fragment-risk",
+          "detailStatus": "subpixel-risk",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 2.4487577597483994,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 4.709149537977691,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 3.390587667343938,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 1.8836598151910766,
+              "status": "fragment-risk"
+            }
+          ],
+          "originScreenPixels": [
+            1175.5645867781054,
+            837.8870486361263
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "opening-orbit",
       "diagnostic": "bsm-off",
+      "screenshotSha256": "2dd4fd548809f240c4f72d2dac139056151221ebad7918adf87d401e1f0c0e70",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -10299,12 +11441,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "opening-orbit",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.00007128152378893605,
+            "north": 0.00011679377365167455,
+            "up": 0.00009418299075955383
+          },
+          "horizontalPixelsPerMeter": 0.00009675185062176135,
+          "shapeProjectedPixels": 3.870074024870454,
+          "detailProjectedPixels": 0.16125308436960226,
+          "shapeStatus": "fragment-risk",
+          "detailStatus": "subpixel-risk",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 2.4487577597483994,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 4.709149537977691,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 3.390587667343938,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 1.8836598151910766,
+              "status": "fragment-risk"
+            }
+          ],
+          "originScreenPixels": [
+            1175.5645867781054,
+            837.8870486361263
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "opening-orbit",
       "diagnostic": "aerial-final",
+      "screenshotSha256": "a5faf614e645df19c97fbbe3b8cd7cc619b1c04d85228dafdb0e51cd5e2a62dd",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -10401,7 +11597,7 @@
         "diagnosticApplied": true,
         "diagnosticState": {
           "altitudeLadder": false,
-          "cloudOff": false,
+          "cloudOff": true,
           "aerialPerspectiveComposite": true,
           "beerShadowOcclusion": true,
           "cloudRawOutput": false,
@@ -10765,12 +11961,66 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "opening-orbit",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.00007128152378893605,
+            "north": 0.00011679377365167455,
+            "up": 0.00009418299075955383
+          },
+          "horizontalPixelsPerMeter": 0.00009675185062176135,
+          "shapeProjectedPixels": 3.870074024870454,
+          "detailProjectedPixels": 0.16125308436960226,
+          "shapeStatus": "fragment-risk",
+          "detailStatus": "subpixel-risk",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 2.4487577597483994,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 4.709149537977691,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 3.390587667343938,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 1.8836598151910766,
+              "status": "fragment-risk"
+            }
+          ],
+          "originScreenPixels": [
+            1175.5645867781054,
+            837.8870486361263
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     },
     {
       "view": "opening-orbit",
       "diagnostic": "sample-count-debug",
+      "screenshotSha256": "dcbd4184ca6faeb1959a32cc04bc35ecb6b3808e22a4147039f0300a7d8a0f19",
       "telemetry": {
         "active": true,
         "adapter": {
@@ -11233,6 +12483,59 @@
         "view": "opening",
         "morphologyCandidate": "baseline",
         "morphologyView": "opening-orbit",
+        "morphologyScaleAudit": {
+          "shapeWavelengthMeters": 40000,
+          "detailWavelengthMeters": 1666.6666666666667,
+          "pixelsPerMeter": {
+            "east": 0.00007128152378893605,
+            "north": 0.00011679377365167455,
+            "up": 0.00009418299075955383
+          },
+          "horizontalPixelsPerMeter": 0.00009675185062176135,
+          "shapeProjectedPixels": 3.870074024870454,
+          "detailProjectedPixels": 0.16125308436960226,
+          "shapeStatus": "fragment-risk",
+          "detailStatus": "subpixel-risk",
+          "layers": [
+            {
+              "channel": "r",
+              "altitude": 8000,
+              "height": 26000,
+              "topAltitude": 34000,
+              "projectedThicknessPixels": 2.4487577597483994,
+              "status": "target"
+            },
+            {
+              "channel": "g",
+              "altitude": 10000,
+              "height": 50000,
+              "topAltitude": 60000,
+              "projectedThicknessPixels": 4.709149537977691,
+              "status": "target"
+            },
+            {
+              "channel": "b",
+              "altitude": 8000,
+              "height": 36000,
+              "topAltitude": 44000,
+              "projectedThicknessPixels": 3.390587667343938,
+              "status": "target"
+            },
+            {
+              "channel": "a",
+              "altitude": 18000,
+              "height": 20000,
+              "topAltitude": 38000,
+              "projectedThicknessPixels": 1.8836598151910766,
+              "status": "fragment-risk"
+            }
+          ],
+          "originScreenPixels": [
+            1175.5645867781054,
+            837.8870486361263
+          ],
+          "segmentMeters": 1000
+        },
         "altitudeLadder": null
       }
     }

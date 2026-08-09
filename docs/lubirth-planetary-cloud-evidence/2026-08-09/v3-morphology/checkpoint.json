@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 1,
-  "baseCommit": "fe8ba8df992cbac2df8770850c438a4ee3a3bd36",
+  "schemaVersion": 2,
+  "baseCommit": "087563e64d8c7719c9cd98bbd4bc77fe467a4883",
   "checkpoint": "HORIZONTAL_MORPHOLOGY_SCALE_FAIL",
   "status": "stopped",
   "evidence": {
@@ -18,29 +18,38 @@
     "weather": "v3"
   },
   "finding": {
+    "auditOriginsOnScreen": true,
     "nearOblique": {
-      "shapePixelsBaseline": 6.4659552323,
-      "detailPixelsBaseline": 0.2694148013
+      "shapePixelsBaseline": 409.5212323619,
+      "detailPixelsBaseline": 17.0633846817
     },
     "aerialOblique": {
-      "shapePixelsBaseline": 8.5554879501,
-      "detailPixelsBaseline": 0.3564786646
+      "shapePixelsBaseline": 180.5071580528,
+      "detailPixelsBaseline": 7.5211315855
     },
     "nearOrbit": {
-      "shapePixelsBaseline": 9.7786356626,
-      "detailPixelsBaseline": 0.4074431526
+      "shapePixelsBaseline": 52.9339700273,
+      "detailPixelsBaseline": 2.2055820845
     },
     "openingOrbit": {
       "shapePixelsBaseline": 3.8700740249,
       "detailPixelsBaseline": 0.1612530844
     },
-    "physicalRangeCandidates": {
-      "near-oblique": 0,
-      "aerial-oblique": 0,
-      "near-orbit": 2,
-      "opening-orbit": 0
+    "commonRepeatIntervals": {
+      "shape": {
+        "feasible": false,
+        "minimum": 0.00021329230852183318,
+        "maximum": 0.00008270932816762704
+      },
+      "detail": {
+        "feasible": false,
+        "minimum": 0.0010238030809047991,
+        "maximum": 0.00044111641689401087
+      }
     },
-    "reason": "No single repeat pair reaches shape 16–48 px and detail 3–10 px in all three near views while staying inside the per-view physical wavelength ranges."
+    "candidateCount": 10,
+    "passingMetricCandidates": 0,
+    "reason": "The corrected on-screen projections have no shared shape or detail repeat interval across the three near views. All ten physical-range candidates also resolve into a near-single connected cloud mask instead of a bounded billow hierarchy."
   },
   "unlock": {
     "task3": false,
@@ -50,5 +59,5 @@
     "task0p": false,
     "originalTask0To8": false
   },
-  "nextAction": "Amend the camera/physical-scale contract or accept a new morphology plan; do not tune vertical profile, temporal, lighting or cost while the horizontal scale has no common candidate."
+  "nextAction": "Do not tune vertical profile or run Task 0P. Amend the presentation-scale contract to permit an explicit near/aerial LOD before resuming morphology work."
 }

@@ -54,7 +54,9 @@ ORIGINAL_TASK_0_TO_8_LOCKED
 
 ### 0.4 执行结果（2026-08-09）
 
-Task 0–2 已在 headed System Chrome、production build、`1440×960 / DPR 1` 下执行并推送。四个 review view × 六种诊断的 baseline 可复现；米制尺度审计确认 baseline `40 km / 1.667 km` 在近地到 opening 都低于形态目标，detail 为亚像素风险。两个由实测 near-orbit projection 生成的 horizontal candidate 已原样回放四个 view，但按每个 view 冻结的物理波长范围，只有 near-orbit 有候选，near-oblique、aerial-oblique、opening-orbit 均无候选。因此当前 checkpoint 为：
+Task 0–2 已在 commit `087563e`、headed System Chrome、production build、`1440×960 / DPR 1` 下重新执行。review target 现在按球面 arc 构造，三个近景审计点均位于画面中心，目标 ECEF altitude 与沿地表距离也由单测锁定。纠正后的 baseline 投影为：near `409.52 / 17.06 px`、aerial `180.51 / 7.52 px`、near-orbit `52.93 / 2.21 px`、opening `3.87 / 0.16 px`（shape/detail）。三个近景的 shape 与 detail 共同 repeat 区间均为空。
+
+Task 2 已从三个近景的物理范围生成并回放 10 个候选；每个候选都采集 raw/raw-off、full/cloud-off、first/converged populations，并自动计算 connected area、碎片率、edge density、clear-air leakage 和 luma delta。没有候选在三个近景同时通过，且所有候选的主要 cloud mask 都退化为约 `0.9997–1.0` 的单一连通区域。因此当前 checkpoint 由实测数据计算为：
 
 ```text
 HORIZONTAL_MORPHOLOGY_SCALE_FAIL
@@ -63,7 +65,7 @@ TASK_0P_LOCKED
 ORIGINAL_TASK_0_TO_8_LOCKED
 ```
 
-证据位于 `docs/lubirth-planetary-cloud-evidence/2026-08-09/v3-morphology/`。在 camera/physical-scale contract 被 amendment 前，不得继续调 vertical profile、temporal、lighting 或 GPU cost。
+Task 3–6 与 Task 0P 继续锁定。按本计划的停止条件，下一步若要继续，必须先 amendment 允许显式 near/aerial presentation LOD；不得继续共享 repeat 调参，也不得进入 vertical profile、temporal、lighting 或 GPU cost。
 
 ## 1. 目标文件结构
 
