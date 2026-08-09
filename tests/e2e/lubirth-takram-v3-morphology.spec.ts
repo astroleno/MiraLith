@@ -40,12 +40,27 @@ const systemChromeExecutable = process.env.MIRALITH_SYSTEM_CHROME_EXECUTABLE ??
 type MorphologyTelemetry = {
   active: boolean;
   adapter: {
+    cloudLayers: Array<{
+      altitude: number;
+      channel: "r" | "g" | "b" | "a";
+      coverageFilterWidth: number;
+      densityScale: number;
+      height: number;
+      shadow: boolean;
+      shapeAmount: number;
+      shapeDetailAmount: number;
+      weatherExponent: number;
+    }>;
+    disableDefaultLayers: boolean;
+    globalWeatherMapping: boolean;
     localWeatherHash: string | null;
     localWeatherOffset: [number, number] | null;
     localWeatherRepeat: [number, number] | null;
     localWeatherSource: "stock" | "v3" | null;
   };
+  assetGeneration: number;
   assetsReady: boolean;
+  atmosphereGeneration: number;
   atmosphereReady: boolean;
   cameraHeightMeters: number | null;
   cameraMatrixWorld: number[];
@@ -53,6 +68,14 @@ type MorphologyTelemetry = {
   coverage: number | null;
   diagnostic: string;
   diagnosticApplied: boolean;
+  diagnosticState: {
+    cloudOff: boolean;
+    aerialPerspectiveComposite: boolean;
+    beerShadowOcclusion: boolean;
+    cloudRawOutput: boolean;
+    sampleCountDebug: boolean;
+  };
+  ecefSunDirection: [number, number, number] | null;
   input: "stock" | "v3";
   morphologyCandidate: string | null;
   morphologyView: string | null;
@@ -173,6 +196,21 @@ async function decodeScreenshot(buffer: Buffer) {
     height: info.height,
     pixels: new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
   };
+}
+
+async function encodeCloudOnlyMask(mask: Uint8Array, width: number, height: number) {
+  const pixels = new Uint8Array(width * height * 4);
+  for (let index = 0; index < mask.length; index += 1) {
+    const value = mask[index] === 1 ? 255 : 0;
+    const offset = index * 4;
+    pixels[offset] = value;
+    pixels[offset + 1] = value;
+    pixels[offset + 2] = value;
+    pixels[offset + 3] = 255;
+  }
+  return sharp(pixels, {
+    raw: { width, height, channels: 4 }
+  }).png().toBuffer();
 }
 
 async function captureMorphologyFrame(
@@ -488,12 +526,38 @@ test("opening-only morphology matrix covers every production review frame", asyn
   const morphologyContract = await import(
     "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramV3MorphologyContract"
   );
+  const morphologyMetrics = await import(
+    "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramV3MorphologyMetrics"
+  );
   const candidates = Object.keys(
     morphologyContract.TAKRAM_V3_OPENING_MORPHOLOGY_CANDIDATES
   );
   const progresses = morphologyContract.TAKRAM_V3_OPENING_MORPHOLOGY_PROGRESS_VALUES;
   const openingDiagnostics = morphologyContract.TAKRAM_V3_OPENING_MORPHOLOGY_DIAGNOSTICS;
   const frames = new Map<string, Buffer>();
+  const comparisonFrames = new Map<string, {
+    cloudMask: Uint8Array;
+    cloudRaw: Uint8Array;
+    full: Uint8Array;
+    width: number;
+    height: number;
+  }>();
+  const stageIsolationRecords: Array<{
+    candidateId: string;
+    progress: number;
+    cloudMaskPath: string;
+    cloudMaskSha256: string;
+    metrics: ReturnType<typeof morphologyMetrics.analyzeTakramV3OpeningStageIsolation>["metrics"];
+    runtimeContract: {
+      adapter: MorphologyTelemetry["adapter"];
+      assetGeneration: number;
+      atmosphereGeneration: number;
+      ecefSunDirection: [number, number, number] | null;
+      rendererFingerprintHash: string | null;
+      shapeRepeat: number | null;
+      shapeDetailRepeat: number | null;
+    };
+  }> = [];
   let gpu: {
     vendor: string;
     renderer: string;
@@ -512,6 +576,11 @@ test("opening-only morphology matrix covers every production review frame", asyn
     const candidate = morphologyContract.resolveTakramV3MorphologyCandidate(candidateId);
     expect(candidate).not.toBeNull();
     for (const progress of progresses) {
+      const decodedFrames = new Map<
+        (typeof openingDiagnostics)[number],
+        Awaited<ReturnType<typeof decodeScreenshot>>
+      >();
+      let fullTelemetry: MorphologyTelemetry | null = null;
       for (const diagnostic of openingDiagnostics) {
         await page.goto(
           `/lubirth-takram-parity-spike?input=v3&view=opening&progress=${progress}&diagnostic=${diagnostic}&morphologyView=opening-orbit&morphologyCandidate=${candidateId}`
@@ -536,6 +605,11 @@ test("opening-only morphology matrix covers every production review frame", asyn
         expect(telemetry?.cameraHeightMeters).toBeGreaterThan(3_000_000);
         expect(telemetry?.shapeRepeat).toBeCloseTo(candidate!.shapeRepeat, 12);
         expect(telemetry?.shapeDetailRepeat).toBeCloseTo(candidate!.shapeDetailRepeat, 12);
+        expect(telemetry?.adapter.cloudLayers).toHaveLength(4);
+        expect(telemetry?.adapter.localWeatherHash).not.toBeNull();
+        expect(telemetry?.adapter.localWeatherRepeat).not.toBeNull();
+        expect(telemetry?.adapter.localWeatherOffset).not.toBeNull();
+        expect(telemetry?.ecefSunDirection).toHaveLength(3);
         if (gpu === null) {
           gpu = await page.evaluate(() => {
             const canvas = document.querySelector("canvas");
@@ -556,6 +630,8 @@ test("opening-only morphology matrix covers every production review frame", asyn
         }
         const screenshot = await page.screenshot({ scale: "css" });
         frames.set(`${candidateId}:${progress}:${diagnostic}`, screenshot);
+        decodedFrames.set(diagnostic, await decodeScreenshot(screenshot));
+        if (diagnostic === "full") fullTelemetry = telemetry!;
         if (shouldCapture) {
           mkdirSync(openingCaptureDirectory, { recursive: true });
           writeFileSync(
@@ -574,8 +650,132 @@ test("opening-only morphology matrix covers every production review frame", asyn
           telemetry: telemetry!
         });
       }
+      const requireFrame = (diagnostic: (typeof openingDiagnostics)[number]) => {
+        const frame = decodedFrames.get(diagnostic);
+        expect(frame).toBeDefined();
+        return frame!;
+      };
+      const full = requireFrame("full");
+      const cloudRaw = requireFrame("cloud-raw");
+      const cloudRawOff = requireFrame("cloud-raw-off");
+      const bsmOff = requireFrame("bsm-off");
+      const aerialFinal = requireFrame("aerial-final");
+      const sampleCountDebug = requireFrame("sample-count-debug");
+      for (const frame of [cloudRaw, cloudRawOff, bsmOff, aerialFinal, sampleCountDebug]) {
+        expect(frame.width).toBe(full.width);
+        expect(frame.height).toBe(full.height);
+      }
+      expect(fullTelemetry).not.toBeNull();
+      const stageIsolation = morphologyMetrics.analyzeTakramV3OpeningStageIsolation({
+        width: full.width,
+        height: full.height,
+        cloudRaw: cloudRaw.pixels,
+        cloudRawOff: cloudRawOff.pixels,
+        full: full.pixels,
+        aerialFinal: aerialFinal.pixels,
+        bsmOff: bsmOff.pixels,
+        sampleCountDebug: sampleCountDebug.pixels
+      });
+      const cloudMask = await encodeCloudOnlyMask(
+        stageIsolation.cloudMask,
+        full.width,
+        full.height
+      );
+      const progressLabel = progress.toFixed(2).replace(".", "-");
+      const cloudMaskName = `${candidateId}-p${progressLabel}-cloud-only-mask.png`;
+      frames.set(`${candidateId}:${progress}:cloud-only-mask`, cloudMask);
+      if (shouldCapture) {
+        writeFileSync(path.join(openingCaptureDirectory, cloudMaskName), cloudMask);
+      }
+      comparisonFrames.set(`${candidateId}:${progress}`, {
+        cloudMask: stageIsolation.cloudMask,
+        cloudRaw: cloudRaw.pixels,
+        full: full.pixels,
+        width: full.width,
+        height: full.height
+      });
+      stageIsolationRecords.push({
+        candidateId,
+        progress,
+        cloudMaskPath: `captures/${cloudMaskName}`,
+        cloudMaskSha256: createHash("sha256").update(cloudMask).digest("hex"),
+        metrics: stageIsolation.metrics,
+        runtimeContract: {
+          adapter: fullTelemetry!.adapter,
+          assetGeneration: fullTelemetry!.assetGeneration,
+          atmosphereGeneration: fullTelemetry!.atmosphereGeneration,
+          ecefSunDirection: fullTelemetry!.ecefSunDirection,
+          rendererFingerprintHash: fullTelemetry!.rendererFingerprintHash,
+          shapeRepeat: fullTelemetry!.shapeRepeat,
+          shapeDetailRepeat: fullTelemetry!.shapeDetailRepeat
+        }
+      });
     }
   }
+
+  const referenceCandidateId = candidates[0]!;
+  const candidateDifferenceRecords: Array<{
+    candidateId: string;
+    referenceCandidateId: string;
+    progress: number;
+    rawDifference: ReturnType<typeof morphologyMetrics.analyzeTakramV3MaskedFrameDifference>;
+    fullDifference: ReturnType<typeof morphologyMetrics.analyzeTakramV3MaskedFrameDifference>;
+  }> = [];
+  for (const progress of progresses) {
+    const reference = comparisonFrames.get(`${referenceCandidateId}:${progress}`)!;
+    for (const candidateId of candidates) {
+      const candidateFrame = comparisonFrames.get(`${candidateId}:${progress}`)!;
+      expect(candidateFrame.width).toBe(reference.width);
+      expect(candidateFrame.height).toBe(reference.height);
+      const unionMask = reference.cloudMask.map((value, index) =>
+        value === 1 || candidateFrame.cloudMask[index] === 1 ? 1 : 0
+      );
+      candidateDifferenceRecords.push({
+        candidateId,
+        referenceCandidateId,
+        progress,
+        rawDifference: morphologyMetrics.analyzeTakramV3MaskedFrameDifference({
+          width: reference.width,
+          height: reference.height,
+          mask: unionMask,
+          left: reference.cloudRaw,
+          right: candidateFrame.cloudRaw
+        }),
+        fullDifference: morphologyMetrics.analyzeTakramV3MaskedFrameDifference({
+          width: reference.width,
+          height: reference.height,
+          mask: unionMask,
+          left: reference.full,
+          right: candidateFrame.full
+        })
+      });
+    }
+  }
+  const scaleQualification = candidates.map((candidateId) => {
+    const fullRecords = records.filter((record) =>
+      record.candidateId === candidateId && record.diagnostic === "full"
+    );
+    return {
+      candidateId,
+      shapeTargetReachedAtEveryProgress: fullRecords.every((record) =>
+        record.telemetry.morphologyScaleAudit?.shapeStatus === "target"
+      ),
+      detailTargetReachedAtEveryProgress: fullRecords.every((record) =>
+        record.telemetry.morphologyScaleAudit?.detailStatus === "target"
+      ),
+      detailStatuses: Array.from(new Set(fullRecords.map((record) =>
+        record.telemetry.morphologyScaleAudit?.detailStatus ?? "missing"
+      )))
+    };
+  });
+  const frozenAdapter = JSON.stringify(stageIsolationRecords[0]!.runtimeContract.adapter);
+  expect(stageIsolationRecords.every((record) =>
+    JSON.stringify(record.runtimeContract.adapter) === frozenAdapter
+  )).toBe(true);
+  expect(stageIsolationRecords.every((record) =>
+    record.runtimeContract.adapter.localWeatherHash ===
+      stageIsolationRecords[0]!.runtimeContract.adapter.localWeatherHash
+  )).toBe(true);
 
   const checkpointRecords = candidates.flatMap((candidateId) =>
     progresses.map((progress) => ({
@@ -599,7 +799,11 @@ test("opening-only morphology matrix covers every production review frame", asyn
 
   mkdirSync(openingEvidenceDirectory, { recursive: true });
   const contactSheets: Record<string, { path: string; sha256: string }> = {};
-  for (const diagnostic of openingDiagnostics) {
+  const contactSheetDiagnostics = [
+    ...openingDiagnostics,
+    "cloud-only-mask"
+  ] as const;
+  for (const diagnostic of contactSheetDiagnostics) {
     const contactSheet = await buildOpeningContactSheet({
       candidates,
       diagnostic,
@@ -618,7 +822,7 @@ test("opening-only morphology matrix covers every production review frame", asyn
   writeFileSync(
     path.join(openingEvidenceDirectory, "candidate-matrix.json"),
     `${JSON.stringify({
-      schemaVersion: 1,
+      schemaVersion: 2,
       baseCommit: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
       generatedAt: new Date().toISOString(),
       scope: "opening-only-production-contract",
@@ -633,6 +837,8 @@ test("opening-only morphology matrix covers every production review frame", asyn
         coverage: 0.55,
         progresses,
         diagnostics: openingDiagnostics,
+        derivedDiagnostics: ["cloud-only-mask"],
+        orbitalVisualGates: morphologyContract.TAKRAM_V3_OPENING_ORBITAL_VISUAL_GATES,
         viewport: { width: 1440, height: 960, dpr: 1 },
         renderer: "stock-takram-0.7.6",
         weather: "v3"
@@ -653,9 +859,13 @@ test("opening-only morphology matrix covers every production review frame", asyn
         diagnostic,
         screenshotSha256,
         cameraHeightMeters: telemetry.cameraHeightMeters,
+        diagnosticState: telemetry.diagnosticState,
         rendererFingerprintHash: telemetry.rendererFingerprintHash,
         morphologyScaleAudit: telemetry.morphologyScaleAudit
       })),
+      scaleQualification,
+      stageIsolationRecords,
+      candidateDifferenceRecords,
       contactSheets,
       checkpoint
     }, null, 2)}\n`

@@ -24,6 +24,56 @@ export interface TakramV3MorphologyImageMetricInput {
   differenceThreshold?: number;
 }
 
+export interface TakramV3MaskedFrameDifference {
+  normalizedMae: number;
+  maxDifference: number;
+  p50Difference: number;
+  p95Difference: number;
+  changedPixelFraction: number;
+}
+
+export interface TakramV3SampleCountStatistics {
+  min: number;
+  mean: number;
+  p50: number;
+  p95: number;
+  max: number;
+}
+
+export interface TakramV3OpeningStageIsolationMetrics {
+  cloudPixelCount: number;
+  cloudPixelFraction: number;
+  rawCloudSignal: TakramV3MaskedFrameDifference;
+  finalCloudSignal: TakramV3MaskedFrameDifference;
+  bsmDifference: TakramV3MaskedFrameDifference;
+  finalToRawMeanSignalRatio: number;
+  fragmentation: {
+    connectedComponentCount: number;
+    largestConnectedAreaFraction: number;
+    singlePixelFragmentFraction: number;
+    smallFragmentFraction: number;
+    edgeDensity: number;
+  };
+  sampleCount: {
+    encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5";
+    primary: TakramV3SampleCountStatistics;
+    shape: TakramV3SampleCountStatistics;
+    detail: TakramV3SampleCountStatistics;
+  };
+}
+
+export interface TakramV3OpeningStageIsolationInput {
+  width: number;
+  height: number;
+  cloudRaw: Uint8Array | Uint8ClampedArray;
+  cloudRawOff: Uint8Array | Uint8ClampedArray;
+  full: Uint8Array | Uint8ClampedArray;
+  aerialFinal: Uint8Array | Uint8ClampedArray;
+  bsmOff: Uint8Array | Uint8ClampedArray;
+  sampleCountDebug: Uint8Array | Uint8ClampedArray;
+  differenceThreshold?: number;
+}
+
 export const TAKRAM_V3_MORPHOLOGY_METRIC_THRESHOLDS = Object.freeze({
   minimumCloudPixelFraction: 0.002,
   minimumLargestConnectedAreaFraction: 0.25,
@@ -50,6 +100,189 @@ function pixelDifference(
     Math.abs(left[offset + 1]! - right[offset + 1]!),
     Math.abs(left[offset + 2]! - right[offset + 2]!)
   ) / 255;
+}
+
+function quantile(sortedValues: readonly number[], percentile: number) {
+  if (sortedValues.length === 0) return 0;
+  const position = Math.max(0, Math.min(1, percentile)) * (sortedValues.length - 1);
+  const lowerIndex = Math.floor(position);
+  const upperIndex = Math.ceil(position);
+  const mix = position - lowerIndex;
+  return sortedValues[lowerIndex]! * (1 - mix) + sortedValues[upperIndex]! * mix;
+}
+
+function validateRgbaFrames(
+  width: number,
+  height: number,
+  frames: readonly (Uint8Array | Uint8ClampedArray)[]
+) {
+  const expectedLength = width * height * 4;
+  if (!Number.isInteger(width) || width <= 0 ||
+    !Number.isInteger(height) || height <= 0 ||
+    frames.some((pixels) => pixels.length !== expectedLength)) {
+    throw new Error("Morphology metric frames must be equally sized RGBA images.");
+  }
+}
+
+function resolveMaskedFrameDifference(input: {
+  mask: Uint8Array;
+  left: Uint8Array | Uint8ClampedArray;
+  right: Uint8Array | Uint8ClampedArray;
+  differenceThreshold: number;
+}): TakramV3MaskedFrameDifference {
+  const differences: number[] = [];
+  let sum = 0;
+  let maxDifference = 0;
+  let changedPixelCount = 0;
+  for (let index = 0; index < input.mask.length; index += 1) {
+    if (input.mask[index] === 0) continue;
+    const difference = pixelDifference(input.left, input.right, index);
+    differences.push(difference);
+    sum += difference;
+    maxDifference = Math.max(maxDifference, difference);
+    if (difference > input.differenceThreshold) changedPixelCount += 1;
+  }
+  differences.sort((left, right) => left - right);
+  const count = differences.length;
+  return {
+    normalizedMae: count > 0 ? sum / count : 0,
+    maxDifference,
+    p50Difference: quantile(differences, 0.5),
+    p95Difference: quantile(differences, 0.95),
+    changedPixelFraction: count > 0 ? changedPixelCount / count : 0
+  };
+}
+
+export function analyzeTakramV3MaskedFrameDifference(input: {
+  width: number;
+  height: number;
+  mask: Uint8Array;
+  left: Uint8Array | Uint8ClampedArray;
+  right: Uint8Array | Uint8ClampedArray;
+  differenceThreshold?: number;
+}) {
+  validateRgbaFrames(input.width, input.height, [input.left, input.right]);
+  if (input.mask.length !== input.width * input.height) {
+    throw new Error("Cloud mask dimensions must match the compared RGBA frames.");
+  }
+  return resolveMaskedFrameDifference({
+    mask: input.mask,
+    left: input.left,
+    right: input.right,
+    differenceThreshold: input.differenceThreshold ?? DEFAULT_DIFFERENCE_THRESHOLD
+  });
+}
+
+function srgbByteToLinear(value: number) {
+  const normalized = value / 255;
+  return normalized <= 0.04045
+    ? normalized / 12.92
+    : Math.pow((normalized + 0.055) / 1.055, 2.4);
+}
+
+function resolveSampleCountStatistics(values: number[]): TakramV3SampleCountStatistics {
+  values.sort((left, right) => left - right);
+  return {
+    min: values[0] ?? 0,
+    mean: values.length > 0
+      ? values.reduce((sum, value) => sum + value, 0) / values.length
+      : 0,
+    p50: quantile(values, 0.5),
+    p95: quantile(values, 0.95),
+    max: values.at(-1) ?? 0
+  };
+}
+
+export function analyzeTakramV3OpeningStageIsolation(
+  input: TakramV3OpeningStageIsolationInput
+): { cloudMask: Uint8Array; metrics: TakramV3OpeningStageIsolationMetrics } {
+  validateRgbaFrames(input.width, input.height, [
+    input.cloudRaw,
+    input.cloudRawOff,
+    input.full,
+    input.aerialFinal,
+    input.bsmOff,
+    input.sampleCountDebug
+  ]);
+  const pixelCount = input.width * input.height;
+  const threshold = input.differenceThreshold ?? DEFAULT_DIFFERENCE_THRESHOLD;
+  const cloudMask = new Uint8Array(pixelCount);
+  let cloudPixelCount = 0;
+  for (let index = 0; index < pixelCount; index += 1) {
+    if (pixelDifference(input.cloudRaw, input.cloudRawOff, index) > threshold) {
+      cloudMask[index] = 1;
+      cloudPixelCount += 1;
+    }
+  }
+  const rawCloudSignal = resolveMaskedFrameDifference({
+    mask: cloudMask,
+    left: input.cloudRaw,
+    right: input.cloudRawOff,
+    differenceThreshold: threshold
+  });
+  const finalCloudSignal = resolveMaskedFrameDifference({
+    mask: cloudMask,
+    left: input.full,
+    right: input.aerialFinal,
+    differenceThreshold: threshold
+  });
+  const bsmDifference = resolveMaskedFrameDifference({
+    mask: cloudMask,
+    left: input.full,
+    right: input.bsmOff,
+    differenceThreshold: threshold
+  });
+  const componentSizes = resolveComponentSizes(cloudMask, input.width, input.height);
+  const largestComponent = componentSizes.length > 0 ? Math.max(...componentSizes) : 0;
+  const singlePixelCount = componentSizes.filter((size) => size === 1).length;
+  const smallFragmentPixelCount = componentSizes
+    .filter((size) => size <= 3)
+    .reduce((sum, size) => sum + size, 0);
+  let edgePixelCount = 0;
+  const sampleCounts = {
+    primary: [] as number[],
+    shape: [] as number[],
+    detail: [] as number[]
+  };
+  for (let index = 0; index < pixelCount; index += 1) {
+    if (cloudMask[index] === 0) continue;
+    if (neighbors4(index, input.width, input.height).some((neighbor) =>
+      cloudMask[neighbor] === 0
+    ) || neighbors4(index, input.width, input.height).length < 4) {
+      edgePixelCount += 1;
+    }
+    const offset = index * 4;
+    sampleCounts.primary.push(srgbByteToLinear(input.sampleCountDebug[offset]!) * 500);
+    sampleCounts.shape.push(srgbByteToLinear(input.sampleCountDebug[offset + 1]!) * 5);
+    sampleCounts.detail.push(srgbByteToLinear(input.sampleCountDebug[offset + 2]!) * 5);
+  }
+  const safeCloudPixelCount = Math.max(cloudPixelCount, 1);
+  return {
+    cloudMask,
+    metrics: {
+      cloudPixelCount,
+      cloudPixelFraction: cloudPixelCount / pixelCount,
+      rawCloudSignal,
+      finalCloudSignal,
+      bsmDifference,
+      finalToRawMeanSignalRatio: rawCloudSignal.normalizedMae > 0
+        ? finalCloudSignal.normalizedMae / rawCloudSignal.normalizedMae
+        : 0,
+      fragmentation: {
+        connectedComponentCount: componentSizes.length,
+        largestConnectedAreaFraction: largestComponent / safeCloudPixelCount,
+        singlePixelFragmentFraction: singlePixelCount / safeCloudPixelCount,
+        smallFragmentFraction: smallFragmentPixelCount / safeCloudPixelCount,
+        edgeDensity: edgePixelCount / safeCloudPixelCount
+      },
+      sampleCount: {
+        encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5",
+        primary: resolveSampleCountStatistics(sampleCounts.primary),
+        shape: resolveSampleCountStatistics(sampleCounts.shape),
+        detail: resolveSampleCountStatistics(sampleCounts.detail)
+      }
+    }
+  };
 }
 
 function luma(pixels: Uint8Array | Uint8ClampedArray, pixelIndex: number) {

@@ -172,9 +172,24 @@ export const TAKRAM_V3_OPENING_MORPHOLOGY_PROGRESS_VALUES = Object.freeze([
 export const TAKRAM_V3_OPENING_MORPHOLOGY_DIAGNOSTICS = Object.freeze([
   "full",
   "cloud-raw",
+  "cloud-raw-off",
   "bsm-off",
+  "aerial-final",
   "sample-count-debug"
 ] as const);
+
+/** Product-facing visual criteria for the current 3,500+ km opening cameras. */
+export const TAKRAM_V3_OPENING_ORBITAL_VISUAL_GATES = Object.freeze({
+  required: Object.freeze([
+    "macro-cloud-contour",
+    "cloud-ground-separation-or-limb-elevation",
+    "soft-transparency-layering",
+    "lit-backlit-response",
+    "local-bsm-response",
+    "salt-and-pepper-absence"
+  ] as const),
+  diagnosticOnly: Object.freeze(["base-core-top"] as const)
+});
 
 function openingCandidate(
   id: Extract<TakramV3MorphologyCandidateId, `opening-${string}`>,

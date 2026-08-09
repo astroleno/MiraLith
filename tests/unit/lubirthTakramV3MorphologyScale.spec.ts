@@ -26,9 +26,15 @@ type MorphologyContractModule = {
   TAKRAM_V3_OPENING_MORPHOLOGY_DIAGNOSTICS: readonly [
     "full",
     "cloud-raw",
+    "cloud-raw-off",
     "bsm-off",
+    "aerial-final",
     "sample-count-debug"
   ];
+  TAKRAM_V3_OPENING_ORBITAL_VISUAL_GATES: {
+    required: readonly string[];
+    diagnosticOnly: readonly string[];
+  };
   TAKRAM_V3_OPENING_MORPHOLOGY_CANDIDATES: Readonly<Record<string, {
     id: string;
     coverage: number;
@@ -513,9 +519,22 @@ test("gates morphology on the four production opening progresses only", async ()
   expect(contract.TAKRAM_V3_OPENING_MORPHOLOGY_DIAGNOSTICS).toEqual([
     "full",
     "cloud-raw",
+    "cloud-raw-off",
     "bsm-off",
+    "aerial-final",
     "sample-count-debug"
   ]);
+  expect(contract.TAKRAM_V3_OPENING_ORBITAL_VISUAL_GATES).toEqual({
+    required: [
+      "macro-cloud-contour",
+      "cloud-ground-separation-or-limb-elevation",
+      "soft-transparency-layering",
+      "lit-backlit-response",
+      "local-bsm-response",
+      "salt-and-pepper-absence"
+    ],
+    diagnosticOnly: ["base-core-top"]
+  });
   const candidates = Object.values(contract.TAKRAM_V3_OPENING_MORPHOLOGY_CANDIDATES);
   expect(candidates).toHaveLength(6);
   expect(candidates.map((candidate) => [
