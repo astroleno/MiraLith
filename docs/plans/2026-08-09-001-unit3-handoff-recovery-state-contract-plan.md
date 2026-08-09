@@ -39,6 +39,7 @@ Unit 3 explicitly excludes:
 | `apps/site/components/chapter-transition/chapterRouteState.ts` | Snapshot creation, untrusted parsing, legacy normalization, revision protection, and storage failure containment. |
 | `apps/site/components/chapter-transition/ChapterTransitionProvider.tsx` | Transport validated handoff, register route adapters, capture before navigation/pagehide, and pass normalized return state to reset. |
 | `apps/site/components/chapter-transition/ChapterTransitionVisual.tsx` | Expose validated handoff kind and normalized variables without implementing final visuals. |
+| `apps/site/app/artbreeze/page.tsx` | Supply the complete resolved ArtBreeze media-id allowlist to the route-state adapter without changing visible sequencing. |
 | `apps/site/components/post-coscroll/narrativeControllerState.ts` | Pure legal-transition table and derived single input owner. |
 | `apps/site/components/post-coscroll/mediaPlaybackAttempt.ts` | Monotonic attempt ownership and stale continuation invalidation. |
 | `apps/site/components/post-coscroll/PostCoScrollRouteShell.tsx` | Minimal semantic capture/restore adapter for current poster/video shell. |
@@ -357,11 +358,13 @@ Cover these facts:
 - `activeMedia.playbackState = "playing"` normalizes to `paused-ready` on restore;
 - one snapshot can restore at least two simultaneous results (for example completed first-sequence + cycle and skipped answer) plus a distinct active media item without replaying any result;
 - completed/skipped IDs are unique, disjoint, manifest-allowlisted, and cannot also be the active media ID;
+- a Replay snapshot is valid only after the replayed media ID has been removed from both outcome arrays; `gateReleased` remains `true` while that media is active/paused-ready;
 - active media time clamps to the supplied tail time while completed/skipped results remain independent of that single active position;
 - a lower revision cannot overwrite a newer stored snapshot;
-- a valid stored revision `20` initializes the Provider's next write at `21` after refresh;
+- pure `nextRevisionFromValidatedSnapshot(validRevision20)` returns `{ revision: 21, resetStorage: false }` without importing the Provider;
+- a validated snapshot at the saturation boundary returns `{ revision: 1, resetStorage: true }`;
 - a malformed/over-limit stored revision is rejected as untrusted input and cannot make a new valid revision-`1` write stale;
-- storage get/set exceptions return a deterministic miss/result instead of throwing;
+- storage get/set/remove exceptions return a deterministic miss/result instead of throwing, and failed removal never falls through to `setItem`;
 - the legacy 01–03 object normalizes to `semantic.kind: "legacy-progress"` while preserving `routeProgress`, `terminalState`, and `scrollY`.
 
 Run the focused test and verify it fails because `chapterRouteState.ts` is absent.
@@ -394,6 +397,7 @@ export interface ChapterSemanticRouteState {
   completedMediaIds: readonly string[];
   skippedMediaIds: readonly string[];
   activeMedia: ChapterActiveMediaState | null;
+  gateReleased: boolean;
   mutePreference: boolean;
   routeState: Readonly<Record<string, string | number | boolean | null>>;
 }
@@ -433,9 +437,14 @@ export interface ChapterRouteStateAdapter {
   manifest: ChapterRouteStateManifest;
   capture: () => ChapterSemanticRouteState;
 }
+
+export interface ChapterReturnRevisionPlan {
+  revision: number;
+  resetStorage: boolean;
+}
 ```
 
-The retained flat legacy fields allow existing 01–03 reset code to remain unchanged during Unit 3. `segmentProgress` and `narrativeProgress` are finite normalized scalars in `[0, 1]`; neither is inferred from `scrollY`. The three media fields are independent: completed/skipped are durable outcomes for any number of manifest media IDs, while `activeMedia` describes at most one currently resumable item. A completed/skipped ID never appears in `activeMedia`.
+The retained flat legacy fields allow existing 01–03 reset code to remain unchanged during Unit 3. `segmentProgress` and `narrativeProgress` are finite normalized scalars in `[0, 1]`; neither is inferred from `scrollY`. The media fields are independent: completed/skipped are the latest durable outcomes for any number of manifest media IDs, while `activeMedia` describes at most one currently resumable item. A completed/skipped ID never appears in `activeMedia`. `gateReleased` is a separate sticky property for the current semantic gate: Replay never sets it back to `false`, so downstream document flow stays released even while the old outcome is temporarily cleared and the replayed media becomes active.
 
 - [ ] **Step 3: Implement the codec and injected storage boundary**
 
@@ -448,10 +457,11 @@ export function parseChapterReturnSnapshot(
 ): ChapterReturnSnapshot | null;
 
 export function writeChapterReturnSnapshot(
-  storage: Pick<Storage, "getItem" | "setItem">,
+  storage: Pick<Storage, "getItem" | "setItem" | "removeItem">,
   key: string,
   snapshot: ChapterReturnSnapshot,
-  context: { pathname: string; buildScope: string; manifest?: ChapterRouteStateManifest }
+  context: { pathname: string; buildScope: string; manifest?: ChapterRouteStateManifest },
+  revisionPlan: ChapterReturnRevisionPlan
 ): "written" | "stale" | "unavailable";
 
 export function readChapterReturnSnapshot(
@@ -459,11 +469,15 @@ export function readChapterReturnSnapshot(
   key: string,
   context: { pathname: string; buildScope: string; manifest?: ChapterRouteStateManifest }
 ): ChapterReturnSnapshot | null;
+
+export function nextRevisionFromValidatedSnapshot(
+  snapshot: ChapterReturnSnapshot | null
+): ChapterReturnRevisionPlan;
 ```
 
 Reject non-plain objects and unknown keys at every level. A semantic snapshot without the destination's registered manifest is rejected; only the restricted 01–03 legacy adapter may parse without one. Route-state values must satisfy their manifest field descriptor; strings are accepted only as explicit enum members, so an allowlisted key cannot smuggle an arbitrary URL. Require the build scope to be 64 lowercase hex characters. Finite active-media time is clamped to `[0, mediaTailSeconds[id]]` when a tail is declared. Restore normalization changes `playing` to `paused-ready`; completed/skipped items remain tail/poster outcomes and it never restores audible playing.
 
-Revision is a bounded positive safe integer in `[1, MAX_CHAPTER_RETURN_REVISION)`; the exclusive limit is `1_000_000_000`, well below `Number.MAX_SAFE_INTEGER`. `readChapterReturnSnapshot()` fully validates the stored snapshot before its revision participates in ordering. `writeChapterReturnSnapshot()` compares only against a stored snapshot that parses under the supplied path/build/manifest context; malformed JSON, an unsafe/over-limit revision, or any otherwise invalid snapshot is treated as absent and can be replaced by revision `1`. The Provider initializes each pathname counter from `validatedStored.revision + 1` on mount/refresh and never blindly starts from `1`; if incrementing would reach the exclusive limit it removes that saturated entry through the guarded storage boundary before restarting at `1`. A queued write receives its revision when scheduled and cannot overwrite a later immediate semantic write.
+Revision is a bounded positive safe integer in `[1, MAX_CHAPTER_RETURN_REVISION)`; the exclusive limit is `1_000_000_000`, well below `Number.MAX_SAFE_INTEGER`. `readChapterReturnSnapshot()` fully validates the stored snapshot before its revision participates in ordering. `writeChapterReturnSnapshot()` compares only against a stored snapshot that parses under the supplied path/build/manifest context; malformed JSON, an unsafe/over-limit revision, or any otherwise invalid snapshot is treated as absent and can be replaced by revision `1`. `nextRevisionFromValidatedSnapshot()` is the pure Task 3 contract: null returns revision `1`; a normal validated snapshot returns `revision + 1`; a revision whose increment would reach the exclusive limit returns revision `1` with `resetStorage: true`. The writer requires that `snapshot.revision === revisionPlan.revision`. When `resetStorage` is true it calls `removeItem` before `setItem`; if removal throws, it returns `unavailable` and must not call `setItem`. A normal plan never removes the entry and retains stale-write comparison.
 
 The legacy unversioned reader is restricted to `/`, `/radio-gaga`, and `/coscroll`; a legacy object for any 04–07 pathname is rejected. If `NEXT_PUBLIC_MIRALITH_CHAPTER_PREVIEW_SCOPE` is absent or malformed, semantic persistence fails closed and the destination uses its deterministic entry state.
 
@@ -495,11 +509,14 @@ Using the local-preview runner, add tests that:
 2. assert ArtBreeze restores the same media id and a position no more than two seconds behind, but the video is paused/ready and never audibly playing;
 3. mark the media completed, navigate away/back, and assert the tail state is restored without replay;
 4. restore a snapshot containing two completed media IDs, one skipped media ID, and a fourth active media item; assert all outcomes survive back/forward and a later mute/time capture without replaying completed/skipped items;
-5. replace the stored build scope or media id with an invalid value and assert the deterministic entry poster is used;
-6. seed a valid revision `20`, refresh, change mute/semantic state immediately, and assert the next stored revision is `21`;
-7. seed an unsafe/over-limit revision, refresh, change semantic state, and assert the malformed value is replaced by a valid revision-`1` snapshot rather than blocking the write as stale;
-8. make sessionStorage throw and assert navigation/reveal still reaches idle;
-9. verify the existing 01–03 route-progress history tests remain green.
+5. seed a codec-valid Replay literal (`gateReleased=true`, replayed id absent from both outcomes, same id active), hard refresh, and assert downstream remains released while playback restores paused-ready without sound; Task 5 must later produce this identical shape without being imported by Task 4;
+6. replace the stored build scope or media id with an invalid value and assert the deterministic entry poster is used;
+7. seed a valid revision `20`, refresh, change mute/semantic state immediately, and assert the Provider writes revision `21`;
+8. seed a saturated valid revision while an older throttled media-time callback is pending; assert the Provider cancels that callback, removes the entry, increments its revision epoch, writes revision `1`, and the old callback cannot overwrite it;
+9. seed an unsafe/over-limit revision, refresh, change semantic state, and assert the malformed value is replaced by a valid revision-`1` snapshot rather than blocking the write as stale;
+10. make sessionStorage get/set/remove throw independently and assert navigation/reveal still reaches idle;
+11. while playback has a pending throttled time write, advance to a newer time, dispatch `pagehide`, wait beyond the throttle window, hard reload, and assert the synchronous pagehide snapshot retains the newest time/revision and the old callback never overwrites it;
+12. verify the existing 01–03 route-progress history tests remain green.
 
 Run the new spec and verify RED: the current shell always resets video state to zero and the stored snapshot lacks schema/semantic data.
 
@@ -519,14 +536,14 @@ captureRouteState: (pathname: string, reason: "semantic" | "media-time" | "pageh
 
 `ChapterRouteStateAdapter` is imported from the leaf `chapterRouteStateTypes.ts`; it is not redeclared in the Provider module. `useChapterTransitionDestination()` returns a pathname-bound `captureRouteState(reason)` callback. The Provider constructs schema/build/pathname/revision/timestamp/scroll fields; a route adapter supplies only its validated semantic state.
 
-The Provider owns revisions per pathname. On registration/refresh it first reads and fully validates the stored snapshot for that pathname/build/manifest, then initializes the next counter to `storedRevision + 1`; absent or invalid storage initializes it to `1`. No raw stored number may seed or block the counter. It captures synchronously:
+The Provider owns revisions per pathname. On registration/refresh it first reads and fully validates the stored snapshot for that pathname/build/manifest, then calls `nextRevisionFromValidatedSnapshot()`; absent or invalid storage initializes it to `1`. No raw stored number may seed or block the counter. Each pathname also owns a runtime-only `revisionEpoch`. If the helper requests a saturation reset, the Provider first cancels the pending media-time timer, increments `revisionEpoch`, removes the old entry through the guarded storage boundary, and only then writes revision `1`. Every throttled closure captures both its assigned revision and epoch and aborts unless both still match, so a pre-reset high-revision callback cannot overwrite the restarted sequence. It captures synchronously:
 
 - immediately for semantic stop, media outcome, mute, skip, ended, pause, and seeked;
 - at most once per two seconds for active playback time;
 - on `pagehide`;
 - immediately before starting a coordinator transition.
 
-Any queued media-time write records its source revision and is discarded if a newer immediate capture exists.
+Any queued media-time write records its source revision and epoch and is discarded if a newer immediate capture or epoch reset exists. `pagehide` first cancels the timer, invalidates its closure, reads the adapter's current media time synchronously, and writes the final snapshot before returning; it does not await React effects, media events, or a Promise.
 
 - [ ] **Step 3: Preserve the legacy adapter**
 
@@ -540,15 +557,17 @@ Capture rules:
 
 - no video: `entry` or `poster-ready`, `activeMedia` is `null` or ready for the selected item;
 - active video: stop `playing`, current media id/time and `playbackState` `playing` or `paused-ready`;
-- ended: stop `media-tail`, move the id into `completedMediaIds` and clear `activeMedia`;
-- explicit skip when added by later units: move the id into `skippedMediaIds` and clear `activeMedia`;
+- initial ended: stop `media-tail`, remove the id from skipped, add it to completed, clear `activeMedia`, and set sticky `gateReleased=true`;
+- initial skip: remove the id from completed, add it to skipped, clear `activeMedia`, and set sticky `gateReleased=true`;
+- Replay begin: preserve `gateReleased=true`, remove the replayed id from both outcome arrays, and make it the sole `activeMedia` before capture;
+- Replay ended/skip: clear `activeMedia` and write only the latest outcome, removing the id from the opposite array;
 - restored completed/skipped sets remain independent and are carried forward unchanged by later active-media time or mute captures.
 
 Effects call `captureRouteState(pathname, "semantic")` after stop/outcome/mute changes and `captureRouteState(pathname, "media-time")` from `timeupdate`; the Provider, not the component, enforces the two-second throttle and revision check.
 
 Restore rules:
 
-- active `playing`/`paused-ready`: select that manifest media id, mount the verified local video, seek after metadata, keep paused, and restore mute preference;
+- active `playing`/`paused-ready`: select that manifest media id, mount the verified local video, seek after metadata, keep paused, restore mute preference, and keep downstream expanded when `gateReleased=true` (Replay recovery);
 - every completed/skipped id: preserve the tail/poster outcome without calling `play()`; skipped also exposes the deterministic summary marker expected by later UI;
 - invalid/missing snapshot: current deterministic entry behavior.
 
@@ -589,32 +608,32 @@ The reducer has one exhaustive phase × event table. Any cell not listed is reje
 | --- | --- | --- |
 | `scrub` | `reach-await` | `await-send`, or preserved `manual-ready` when re-entering a previously interrupted gate |
 | `scrub` | `reverse-completed` | `reverse-after-complete`; completed/skipped sets are retained |
-| `await-send` | `attempt-began(generation)` | `answer-starting` |
-| `await-send` | `skip(mediaId)` | `released-hold`, `freshInputArmed=false` |
+| `await-send` | `attempt-began(mediaId, generation)` | `answer-starting`; active media is set and any stale outcome for that id is removed |
+| `await-send` | `skip(mediaId)` | `released-hold`, latest outcome skipped, `gateReleased=true`, `freshInputArmed=false` |
 | `await-send` | `reverse` | `reverse-before-complete`, resume phase `await-send` |
 | `answer-starting` | matching `play-accepted(generation)` | `autoplay` |
 | `answer-starting` | matching `play-rejected(generation)` | `manual-ready` |
 | `answer-starting` | `cancel` | `manual-ready`; active attempt is cleared |
-| `answer-starting` | `skip(mediaId)` | `released-hold`, `freshInputArmed=false` |
+| `answer-starting` | `skip(mediaId)` | `released-hold`, latest outcome skipped; arm immediately only when the gate was already released by a Replay |
 | `answer-starting` | `reverse` | `reverse-before-complete`, resume phase `manual-ready` |
-| `manual-ready` | `attempt-began(generation)` | `answer-starting` |
-| `manual-ready` | `skip(mediaId)` | `released-hold`, `freshInputArmed=false` |
+| `manual-ready` | `attempt-began(mediaId, generation)` | `answer-starting`; active media is set and any stale outcome for that id is removed |
+| `manual-ready` | `skip(mediaId)` | `released-hold`, latest outcome skipped; arm immediately only when the gate was already released by a Replay |
 | `manual-ready` | `reverse` | `reverse-before-complete`, resume phase `manual-ready` |
-| `autoplay` | `ended(mediaId)` | `released-hold`, add completed, `freshInputArmed=false` |
-| `autoplay` | `skip(mediaId)` | `released-hold`, add skipped, `freshInputArmed=false` |
+| `autoplay` | `ended(mediaId)` | `released-hold`, remove skipped/add completed/clear active; set `gateReleased=true`; arm immediately only for Replay |
+| `autoplay` | `skip(mediaId)` | `released-hold`, remove completed/add skipped/clear active; set `gateReleased=true`; arm immediately only for Replay |
 | `autoplay` | `reverse` | `reverse-before-complete`, resume phase `manual-ready` |
 | `reverse-before-complete` | `settled` | `scrub`; outcome is not completed/skipped and preserved resume phase controls later re-entry |
 | `released-hold` | `inertia-settled` | remains `released-hold`, sets `freshInputArmed=true` |
 | `released-hold` | `fresh-forward-input(nextSegmentId)` | `scrub` only when armed; this exact event is the new physical input after inertia, not the tail of the releasing gesture |
 | `released-hold` | `reverse` | `reverse-after-complete`; completed/skipped sets are retained |
-| `released-hold` | `attempt-began(generation)` | `answer-starting` only for an explicit Replay control |
+| `released-hold` | `attempt-began(mediaId, generation)` | `answer-starting` only for explicit Replay; keep `gateReleased=true`, remove media id from both outcome arrays, set it active |
 | `reverse-after-complete` | `settled(previousSegmentId)` | `scrub` at the prior semantic stop without clearing outcomes |
 | `reverse-after-complete` | `return-to-tail` | `released-hold`, armed, without replay |
-| `reverse-after-complete` | `attempt-began(generation)` | `answer-starting` only for an explicit Replay control |
+| `reverse-after-complete` | `attempt-began(mediaId, generation)` | `answer-starting` only for explicit Replay; keep `gateReleased=true`, remove media id from both outcome arrays, set it active |
 | every non-`transitioning` phase | `route-transition` | `transitioning`; active attempt is cleared |
 | `transitioning` | `reset(segmentId)` | `scrub` |
 
-`skip` is therefore legal from every incomplete gate phase: `await-send`, `answer-starting`, `manual-ready`, and `autoplay`. `answer-starting` also has explicit cancel and reverse; `manual-ready` has reverse. Releasing never jumps directly to the next segment: completion/skip first enters unarmed `released-hold`, the existing inertia must settle, and only a separately observed `fresh-forward-input` may progress. Each accepted result exposes exactly one derived owner. Rejected transitions return `{ accepted: false, state: originalState }` and cannot mutate the original object. Mismatched/stale generations and unarmed fresh-input attempts are explicit rejected variants in the Cartesian tests.
+`skip` is therefore legal from every incomplete gate phase: `await-send`, `answer-starting`, `manual-ready`, and `autoplay`. `answer-starting` also has explicit cancel and reverse; `manual-ready` has reverse. `gateReleased` is independent and sticky for the current segment. Initial completion/skip changes it from false to true and enters unarmed `released-hold`; the existing inertia must settle before fresh input can progress. Replay never relocks it: Replay begin first removes that media id from both outcome sets, Replay refresh persists `gateReleased=true + activeMedia`, and Replay ended/skip writes exactly one latest outcome. A Replay result returns armed because the document flow was already released. Only `fresh-forward-input(nextSegmentId)` or route reset starts the next segment with `gateReleased=false`. Each accepted result exposes exactly one derived owner. Rejected transitions return `{ accepted: false, state: originalState }` and cannot mutate the original object. Mismatched/stale generations and unarmed fresh-input attempts are explicit rejected variants in the Cartesian tests.
 
 - [ ] **Step 2: Run RED**
 
@@ -651,9 +670,9 @@ export function reduceNarrativeControllerState(
 ): { accepted: true; state: NarrativeControllerState } | { accepted: false; state: NarrativeControllerState };
 ```
 
-State carries only route-agnostic `segmentId`, `phase`, `progress`, `attemptGeneration`, `completedMediaIds`, `skippedMediaIds`, the interrupted gate's resume phase, and `freshInputArmed`. It does not contain ArtBreeze shot ids, DOM selectors, ScrollTrigger instances, media URLs, or transition animation parameters.
+State carries only route-agnostic `segmentId`, `phase`, `progress`, `activeMediaId`, `attemptGeneration`, `completedMediaIds`, `skippedMediaIds`, sticky `gateReleased`, the interrupted gate's resume phase, and `freshInputArmed`. It does not contain ArtBreeze shot ids, DOM selectors, ScrollTrigger instances, media URLs, or transition animation parameters.
 
-`attemptGeneration` is a receipt, not a counter: the reducer never creates, increments, or guesses it. The playback-attempt controller is the canonical generation owner. A caller first obtains a token from `attemptController.begin(...)`, then dispatches `attempt-began(token.generation)`; accepted state must expose that exact number. Every play continuation includes its token generation and is rejected unless it equals the state's active receipt. Skip, cancel, reverse, route transition, and reset clear the receipt after the caller synchronously invalidates the attempt controller.
+`attemptGeneration` is a receipt, not a counter: the reducer never creates, increments, or guesses it. The playback-attempt controller is the canonical generation owner. A caller first obtains a token from `attemptController.begin(...)`, then dispatches `attempt-began(mediaId, token.generation)`; accepted state must expose that exact number. Every play continuation includes its token generation and is rejected unless it equals the state's active receipt. Skip, cancel, reverse, play rejection, route transition, and reset clear the receipt after the caller synchronously invalidates the attempt controller. Reducer tests cover completed→Replay, skipped→Replay, Replay→ended, and Replay→skip; the Task 4 browser contract covers Replay refresh. Together they assert `activeMediaId` never overlaps either outcome set and completed/skipped never overlap each other.
 
 - [ ] **Step 4: Run GREEN and commit**
 
@@ -682,10 +701,11 @@ Use deferred promises and a fake media element for unit tests. Prove:
 - generations increase monotonically;
 - `begin()` pauses and invalidates the prior element;
 - ownership includes generation, segment id, element identity, and transition id;
-- skip, reverse, new attempt, navigation, visibility hidden, and unmount invalidate the token;
+- skip, cancel, reverse, pause, ended, new attempt, play rejection, coordinator route transition, direct/history navigation, reset, visibility hidden, and unmount each invalidate the token;
 - delayed fulfill/reject/playing/ended callbacks cannot write state or outcome;
-- a delayed fulfill that starts the underlying element after invalidation causes another `pause()`.
-- the controller alone allocates generations; after `begin()` the reducer accepts `attempt-began(token.generation)`, and fixture/controller state report the same active generation until invalidation.
+- a delayed fulfill that starts the underlying element after invalidation causes another `pause()`;
+- the controller alone allocates generations; after `begin()` the reducer accepts `attempt-began(mediaId, token.generation)`, and fixture/controller state report the same active generation until invalidation;
+- synchronous `play()` throw and rejected `play()` Promise both call `invalidate("rejected")` before reporting rejected; a later `playing` or `ended` event from that element remains stale.
 
 Run RED before creating the implementation.
 
@@ -705,14 +725,27 @@ export interface MediaPlaybackAttemptController {
   begin(input: Omit<MediaPlaybackAttemptToken, "generation">): MediaPlaybackAttemptToken;
   isCurrent(token: MediaPlaybackAttemptToken): boolean;
   guard(token: MediaPlaybackAttemptToken, continuation: () => void): boolean;
-  invalidate(reason: "skip" | "reverse" | "new-attempt" | "navigation" | "hidden" | "unmount"): void;
+  invalidate(reason:
+    | "skip"
+    | "cancel"
+    | "reverse"
+    | "pause"
+    | "ended"
+    | "new-attempt"
+    | "rejected"
+    | "route-transition"
+    | "navigation"
+    | "reset"
+    | "hidden"
+    | "unmount"
+  ): void;
   requestPlay(token: MediaPlaybackAttemptToken): Promise<"playing" | "rejected" | "stale">;
 }
 
 export function createMediaPlaybackAttemptController(): MediaPlaybackAttemptController;
 ```
 
-`begin()` is the only operation that increments the generation. `requestPlay()` calls `token.element.play()` synchronously before its first await. The reducer receives the returned generation only through `attempt-began(generation)` and never allocates one itself. A stale resolution/rejection returns `stale`; if the element is no longer paused, it pauses again.
+The attempt controller is the only generation owner. `begin()` is the only operation that returns a token, and both `begin()` and `invalidate()` advance the same monotonic internal counter; invalidation clears the current token, so the next begin may contain a deliberate generation gap. `requestPlay()` calls `token.element.play()` synchronously before its first await. The reducer receives the returned generation only through `attempt-began(mediaId, generation)` and never allocates one itself. A synchronous throw or current Promise rejection first invalidates with `rejected`, then returns `rejected`; stale rejection returns `stale`. Any delayed resolution/event checks `isCurrent()` before state writes, and if the stale element is no longer paused it pauses again.
 
 - [ ] **Step 3: Add the gated real-video fixture**
 
@@ -735,8 +768,9 @@ The browser test must assert:
 - clicking Send calls `video.play()` in the same click task before any readiness continuation and records `navigator.userActivation.isActive === true` at the exact intercepted call;
 - focusing Send and pressing Enter uses the same direct handler, calls `play()` synchronously, records active user activation, and creates exactly one new generation;
 - rejection enters `manual-ready` and a second explicit click creates a higher generation;
+- after rejection, dispatch delayed `playing` and `ended` from the rejected element and assert neither leaves `manual-ready`, marks completion, nor restores the rejected generation;
 - resolving the first promise after the second attempt cannot set playing;
-- skip/reverse/navigation/unmount followed by delayed resolution leaves the fixture released/unmounted and increments pause count;
+- skip/cancel/reverse/pause/ended/route-transition/navigation/reset/hidden/unmount followed by delayed resolution leaves the fixture in its new state and increments pause count where an element could still be playing;
 - an `ended` event from a stale element cannot mark the current segment completed.
 
 The interception records `{ trigger, generation, isActive }` synchronously inside the replaced `play()` before returning its controlled Promise. Merely observing that a Promise was created is insufficient evidence of the browser activation chain.
@@ -824,9 +858,12 @@ The JSON records:
 - handoff schema `chapter-visual-handoff-v1`;
 - return schema `chapter-return-v2` and preview/build scope algorithm `chapter-preview-scope-v1`;
 - the exact bounded revision rule, refresh continuation result, and malformed-high-revision recovery result;
+- the saturation reset result, guarded `removeItem` result, revision-epoch change, and proof that a pre-reset throttled write stayed stale;
 - the multi-media snapshot fixture and its simultaneous completed/skipped/active restore result;
+- the completed→Replay, skipped→Replay, Replay-refresh, Replay-ended, and Replay-skipped outcome-normalization results including sticky `gateReleased`;
 - the exact legal controller transition table and owner map;
-- the canonical playback-generation owner and token/reducer synchronization result;
+- the canonical playback-generation owner, complete invalidation-reason matrix, rejection-race result, and token/reducer synchronization result;
+- the synchronous pagehide final-write result and proof that the older throttled callback did not overwrite it;
 - click and Enter activation records including `navigator.userActivation.isActive` at `play()` invocation;
 - the production fixture-route 404 result;
 - test commands/results;
@@ -859,8 +896,8 @@ git commit -m "docs(post-coscroll): submit CP1.3 contract evidence"
 
 ## Self-review
 
-- Spec coverage: frozen live/fallback ring, seeded stars, bounded water geometry, multi-media semantic recovery, legacy recovery, manifest validation, storage containment, refresh-safe revision continuation, the complete phase × event matrix, sticky release, playback generation ownership, activation-chain proof, and Unit 4/5 exclusions each have a dedicated task and test gate.
+- Spec coverage: frozen live/fallback ring, seeded stars, bounded water geometry, multi-media semantic recovery, Replay outcome normalization, legacy recovery, manifest validation, storage containment, refresh/saturation-safe revision continuation, synchronous pagehide capture, the complete phase × event matrix, sticky release, playback generation/invalidation ownership, activation-chain proof, and Unit 4/5 exclusions each have a dedicated task and test gate.
 - Placeholder scan: the plan contains no deferred implementation slot; future Units are explicit exclusions rather than unfinished Unit 3 work.
 - Type consistency: `ChapterVisualHandoff`, `ChapterReturnSnapshot`, `ChapterRouteStateAdapter`, `NarrativeControllerState`, and `MediaPlaybackAttemptToken` retain the same names and ownership boundaries across tasks; only the attempt controller allocates generations.
 - Dependency direction: snapshot, manifest, and adapter data live in `chapterRouteStateTypes.ts`, which imports no runtime module; pure codecs/reducers do not import React or the Provider; the Provider and route shell consume them, and fixtures consume public contracts rather than private runtime refs.
-- Safety: all untrusted objects fail closed, storage exceptions cannot deadlock a transition, audible playing is never restored, and stale async media work cannot revive an invalidated attempt.
+- Safety: all untrusted objects fail closed, storage exceptions cannot deadlock a transition, Replay cannot create an active/outcome overlap, audible playing is never restored, and stale storage/media work cannot revive an invalidated revision or attempt.
