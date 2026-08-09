@@ -350,6 +350,11 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
     "aerial-final",
     "sample-count-debug"
   ] as const;
+  const persistedAtlasDiagnostics = [
+    "full",
+    "cloud-raw",
+    "sample-count-debug"
+  ] as const;
   const atlas: Array<{
     candidate: string;
     view: string;
@@ -389,7 +394,7 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
           `${candidate}:${morphologyView}:${diagnostic}`,
           await decodeScreenshot(screenshotBuffer)
         );
-        if (shouldCapture) {
+        if (shouldCapture && (persistedAtlasDiagnostics as readonly string[]).includes(diagnostic)) {
           mkdirSync(captureDirectory, { recursive: true });
           writeFileSync(
             path.join(captureDirectory, `${candidate}-${morphologyView}-${diagnostic}.png`),
@@ -479,6 +484,7 @@ test("horizontal morphology atlas replays each candidate across all views", asyn
         renderer: "stock-takram-0.7.6",
         candidateCount: candidates.length,
         metricThresholds: morphologyMetrics.TAKRAM_V3_MORPHOLOGY_METRIC_THRESHOLDS,
+        persistedDiagnostics: persistedAtlasDiagnostics,
         replayViews: reviewViews
       },
       generatedCandidates: morphologyContract.buildTakramV3MorphologyCandidates(
