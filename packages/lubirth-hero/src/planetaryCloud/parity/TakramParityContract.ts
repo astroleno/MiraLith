@@ -588,6 +588,16 @@ export interface TakramParityDiagnosticState {
   historyResetFirstFrame: boolean;
 }
 
+export interface TakramParitySampleCountReadback {
+  width: number;
+  height: number;
+  precision: "half-float" | "unorm8";
+  source: "native-cloud-current-render-target-v1";
+  encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5";
+  /** Packed normalized RGB copied from the native pre-temporal cloud target. */
+  values: number[];
+}
+
 export interface TakramParityTelemetry {
   active: boolean;
   adapter: TakramParityAdapterTelemetry;
@@ -612,6 +622,7 @@ export interface TakramParityTelemetry {
   morphologyCandidate: TakramV3MorphologyCandidateId | null;
   morphologyView: TakramV3MorphologyViewId | null;
   morphologyScaleAudit: TakramV3MorphologyScaleAudit | null;
+  sampleCountReadback: TakramParitySampleCountReadback | null;
   progress: number;
   rendererFingerprint: TakramParityRendererFingerprint | null;
   rendererFingerprintHash: string | null;

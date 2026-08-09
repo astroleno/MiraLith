@@ -54,12 +54,6 @@ export interface TakramV3OpeningStageIsolationMetrics {
     smallFragmentFraction: number;
     edgeDensity: number;
   };
-  sampleCount: {
-    encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5";
-    primary: TakramV3SampleCountStatistics;
-    shape: TakramV3SampleCountStatistics;
-    detail: TakramV3SampleCountStatistics;
-  };
 }
 
 export interface TakramV3OpeningStageIsolationInput {
@@ -70,8 +64,34 @@ export interface TakramV3OpeningStageIsolationInput {
   full: Uint8Array | Uint8ClampedArray;
   aerialFinal: Uint8Array | Uint8ClampedArray;
   bsmOff: Uint8Array | Uint8ClampedArray;
-  sampleCountDebug: Uint8Array | Uint8ClampedArray;
   differenceThreshold?: number;
+}
+
+export interface TakramV3NativeSampleCountReadback {
+  width: number;
+  height: number;
+  precision: "half-float" | "unorm8";
+  source: "native-cloud-current-render-target-v1";
+  encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5";
+  /** Packed normalized RGB values read directly from CloudsPass.currentRenderTarget. */
+  values: ArrayLike<number>;
+}
+
+export interface TakramV3NativeSampleCountMetrics {
+  source: TakramV3NativeSampleCountReadback["source"];
+  encoding: TakramV3NativeSampleCountReadback["encoding"];
+  precision: TakramV3NativeSampleCountReadback["precision"];
+  nativeWidth: number;
+  nativeHeight: number;
+  maskMapping: "full-resolution-cloud-mask-cell-coverage-v1";
+  minimumMaskCoverage: number;
+  maskedNativePixelCount: number;
+  invariantViolationCount: number;
+  invariantViolationFraction: number;
+  invariantPass: boolean;
+  primary: TakramV3SampleCountStatistics;
+  shape: TakramV3SampleCountStatistics;
+  detail: TakramV3SampleCountStatistics;
 }
 
 export const TAKRAM_V3_MORPHOLOGY_METRIC_THRESHOLDS = Object.freeze({
@@ -173,13 +193,6 @@ export function analyzeTakramV3MaskedFrameDifference(input: {
   });
 }
 
-function srgbByteToLinear(value: number) {
-  const normalized = value / 255;
-  return normalized <= 0.04045
-    ? normalized / 12.92
-    : Math.pow((normalized + 0.055) / 1.055, 2.4);
-}
-
 function resolveSampleCountStatistics(values: number[]): TakramV3SampleCountStatistics {
   values.sort((left, right) => left - right);
   return {
@@ -193,6 +206,88 @@ function resolveSampleCountStatistics(values: number[]): TakramV3SampleCountStat
   };
 }
 
+export function analyzeTakramV3NativeSampleCountReadback(input: {
+  cloudMask: Uint8Array;
+  cloudMaskWidth: number;
+  cloudMaskHeight: number;
+  readback: TakramV3NativeSampleCountReadback;
+  minimumMaskCoverage?: number;
+}): TakramV3NativeSampleCountMetrics {
+  if (!Number.isInteger(input.cloudMaskWidth) || input.cloudMaskWidth <= 0 ||
+    !Number.isInteger(input.cloudMaskHeight) || input.cloudMaskHeight <= 0 ||
+    input.cloudMask.length !== input.cloudMaskWidth * input.cloudMaskHeight) {
+    throw new Error("Cloud mask dimensions must match its pixel buffer.");
+  }
+  const { readback } = input;
+  if (!Number.isInteger(readback.width) || readback.width <= 0 ||
+    !Number.isInteger(readback.height) || readback.height <= 0 ||
+    readback.values.length !== readback.width * readback.height * 3) {
+    throw new Error("Native sample-count readback must be packed normalized RGB.");
+  }
+  const minimumMaskCoverage = input.minimumMaskCoverage ?? 0.25;
+  if (!(minimumMaskCoverage > 0 && minimumMaskCoverage <= 1)) {
+    throw new Error("Native sample-count mask coverage must be in (0, 1].");
+  }
+
+  const counts = {
+    primary: [] as number[],
+    shape: [] as number[],
+    detail: [] as number[]
+  };
+  let invariantViolationCount = 0;
+  for (let nativeY = 0; nativeY < readback.height; nativeY += 1) {
+    const maskY0 = Math.floor(nativeY * input.cloudMaskHeight / readback.height);
+    const maskY1 = Math.max(maskY0 + 1,
+      Math.floor((nativeY + 1) * input.cloudMaskHeight / readback.height));
+    for (let nativeX = 0; nativeX < readback.width; nativeX += 1) {
+      const maskX0 = Math.floor(nativeX * input.cloudMaskWidth / readback.width);
+      const maskX1 = Math.max(maskX0 + 1,
+        Math.floor((nativeX + 1) * input.cloudMaskWidth / readback.width));
+      let maskedPixelCount = 0;
+      let cellPixelCount = 0;
+      for (let maskY = maskY0; maskY < Math.min(maskY1, input.cloudMaskHeight); maskY += 1) {
+        for (let maskX = maskX0; maskX < Math.min(maskX1, input.cloudMaskWidth); maskX += 1) {
+          cellPixelCount += 1;
+          maskedPixelCount += input.cloudMask[maskY * input.cloudMaskWidth + maskX] === 1 ? 1 : 0;
+        }
+      }
+      if (cellPixelCount === 0 || maskedPixelCount / cellPixelCount < minimumMaskCoverage) {
+        continue;
+      }
+      const offset = (nativeY * readback.width + nativeX) * 3;
+      const primary = Math.max(0, Math.round(Number(readback.values[offset] ?? 0) * 500));
+      const shape = Math.max(0, Math.round(Number(readback.values[offset + 1] ?? 0) * 5));
+      const detail = Math.max(0, Math.round(Number(readback.values[offset + 2] ?? 0) * 5));
+      if (!Number.isFinite(primary) || !Number.isFinite(shape) || !Number.isFinite(detail) ||
+        primary < shape || shape < detail) {
+        invariantViolationCount += 1;
+      }
+      counts.primary.push(primary);
+      counts.shape.push(shape);
+      counts.detail.push(detail);
+    }
+  }
+  const maskedNativePixelCount = counts.primary.length;
+  return {
+    source: readback.source,
+    encoding: readback.encoding,
+    precision: readback.precision,
+    nativeWidth: readback.width,
+    nativeHeight: readback.height,
+    maskMapping: "full-resolution-cloud-mask-cell-coverage-v1",
+    minimumMaskCoverage,
+    maskedNativePixelCount,
+    invariantViolationCount,
+    invariantViolationFraction: maskedNativePixelCount > 0
+      ? invariantViolationCount / maskedNativePixelCount
+      : 0,
+    invariantPass: maskedNativePixelCount > 0 && invariantViolationCount === 0,
+    primary: resolveSampleCountStatistics(counts.primary),
+    shape: resolveSampleCountStatistics(counts.shape),
+    detail: resolveSampleCountStatistics(counts.detail)
+  };
+}
+
 export function analyzeTakramV3OpeningStageIsolation(
   input: TakramV3OpeningStageIsolationInput
 ): { cloudMask: Uint8Array; metrics: TakramV3OpeningStageIsolationMetrics } {
@@ -201,8 +296,7 @@ export function analyzeTakramV3OpeningStageIsolation(
     input.cloudRawOff,
     input.full,
     input.aerialFinal,
-    input.bsmOff,
-    input.sampleCountDebug
+    input.bsmOff
   ]);
   const pixelCount = input.width * input.height;
   const threshold = input.differenceThreshold ?? DEFAULT_DIFFERENCE_THRESHOLD;
@@ -239,11 +333,6 @@ export function analyzeTakramV3OpeningStageIsolation(
     .filter((size) => size <= 3)
     .reduce((sum, size) => sum + size, 0);
   let edgePixelCount = 0;
-  const sampleCounts = {
-    primary: [] as number[],
-    shape: [] as number[],
-    detail: [] as number[]
-  };
   for (let index = 0; index < pixelCount; index += 1) {
     if (cloudMask[index] === 0) continue;
     if (neighbors4(index, input.width, input.height).some((neighbor) =>
@@ -251,10 +340,6 @@ export function analyzeTakramV3OpeningStageIsolation(
     ) || neighbors4(index, input.width, input.height).length < 4) {
       edgePixelCount += 1;
     }
-    const offset = index * 4;
-    sampleCounts.primary.push(srgbByteToLinear(input.sampleCountDebug[offset]!) * 500);
-    sampleCounts.shape.push(srgbByteToLinear(input.sampleCountDebug[offset + 1]!) * 5);
-    sampleCounts.detail.push(srgbByteToLinear(input.sampleCountDebug[offset + 2]!) * 5);
   }
   const safeCloudPixelCount = Math.max(cloudPixelCount, 1);
   return {
@@ -274,12 +359,6 @@ export function analyzeTakramV3OpeningStageIsolation(
         singlePixelFragmentFraction: singlePixelCount / safeCloudPixelCount,
         smallFragmentFraction: smallFragmentPixelCount / safeCloudPixelCount,
         edgeDensity: edgePixelCount / safeCloudPixelCount
-      },
-      sampleCount: {
-        encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5",
-        primary: resolveSampleCountStatistics(sampleCounts.primary),
-        shape: resolveSampleCountStatistics(sampleCounts.shape),
-        detail: resolveSampleCountStatistics(sampleCounts.detail)
       }
     }
   };

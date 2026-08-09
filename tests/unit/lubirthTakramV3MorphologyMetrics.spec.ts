@@ -205,7 +205,7 @@ test("keeps connected-area diagnostic while measuring internal billow structure"
     .not.toContain("largest-connected-area");
 });
 
-test("isolates opening stages and sample counts inside the cloud-only mask", async () => {
+test("isolates opening stages inside the cloud-only mask", async () => {
   const metrics = await import(metricsModulePath);
   const width = 6;
   const height = 4;
@@ -214,7 +214,6 @@ test("isolates opening stages and sample counts inside the cloud-only mask", asy
   const aerialFinal = createFrame(width, height);
   const full = createFrame(width, height);
   const bsmOff = createFrame(width, height);
-  const sampleCountDebug = createFrame(width, height);
   for (const frame of [cloudRawOff, cloudRaw, aerialFinal, full, bsmOff]) {
     for (let y = 0; y < height; y += 1) {
       for (let x = 0; x < width; x += 1) {
@@ -222,25 +221,11 @@ test("isolates opening stages and sample counts inside the cloud-only mask", asy
       }
     }
   }
-  const linearToSrgbByte = (value: number) => Math.round(255 * (
-    value <= 0.0031308
-      ? value * 12.92
-      : 1.055 * Math.pow(value, 1 / 2.4) - 0.055
-  ));
-  const cloudPixels = [
-    { x: 1, primary: 50, shape: 1, detail: 1 },
-    { x: 2, primary: 100, shape: 2, detail: 2 },
-    { x: 3, primary: 200, shape: 3, detail: 3 },
-    { x: 4, primary: 400, shape: 4, detail: 4 }
-  ];
+  const cloudPixels = [{ x: 1 }, { x: 2 }, { x: 3 }, { x: 4 }];
   for (const pixel of cloudPixels) {
     setPixel(cloudRaw, width, pixel.x, 2, 200);
     setPixel(full, width, pixel.x, 2, 140);
     setPixel(bsmOff, width, pixel.x, 2, 170);
-    const offset = (2 * width + pixel.x) * 4;
-    sampleCountDebug[offset] = linearToSrgbByte(pixel.primary / 500);
-    sampleCountDebug[offset + 1] = linearToSrgbByte(pixel.shape / 5);
-    sampleCountDebug[offset + 2] = linearToSrgbByte(pixel.detail / 5);
   }
 
   const result = metrics.analyzeTakramV3OpeningStageIsolation({
@@ -250,8 +235,7 @@ test("isolates opening stages and sample counts inside the cloud-only mask", asy
     cloudRawOff,
     full,
     aerialFinal,
-    bsmOff,
-    sampleCountDebug
+    bsmOff
   });
   expect(Array.from(result.cloudMask).reduce((sum, value) => sum + value, 0)).toBe(4);
   expect(result.metrics.cloudPixelFraction).toBeCloseTo(4 / 24, 12);
@@ -260,11 +244,6 @@ test("isolates opening stages and sample counts inside the cloud-only mask", asy
   expect(result.metrics.bsmDifference.changedPixelFraction).toBe(1);
   expect(result.metrics.fragmentation.connectedComponentCount).toBe(1);
   expect(result.metrics.fragmentation.smallFragmentFraction).toBe(0);
-  expect(result.metrics.sampleCount.primary.min).toBeCloseTo(50, 0);
-  expect(result.metrics.sampleCount.primary.max).toBeCloseTo(400, 0);
-  expect(result.metrics.sampleCount.shape.max).toBeCloseTo(4, 1);
-  expect(result.metrics.sampleCount.detail.max).toBeCloseTo(4, 1);
-
   const outsideOnlyDifference = full.slice();
   setPixel(outsideOnlyDifference, width, 0, 0, 255);
   expect(metrics.analyzeTakramV3MaskedFrameDifference({
@@ -276,5 +255,42 @@ test("isolates opening stages and sample counts inside the cloud-only mask", asy
   })).toMatchObject({
     changedPixelFraction: 0,
     normalizedMae: 0
+  });
+});
+
+test("decodes native cloud-target sample counts only where the full-resolution cloud mask is present", async () => {
+  const metrics = await import(metricsModulePath);
+  const cloudMask = new Uint8Array([
+    1, 1, 0, 0,
+    1, 1, 0, 0
+  ]);
+  const readbackValues = new Float32Array([
+    20 / 500, 2 / 5, 1 / 5,
+    10 / 500, 1 / 5, 1 / 5
+  ]);
+
+  const result = metrics.analyzeTakramV3NativeSampleCountReadback({
+    cloudMask,
+    cloudMaskWidth: 4,
+    cloudMaskHeight: 2,
+    readback: {
+      width: 2,
+      height: 1,
+      precision: "half-float",
+      source: "native-cloud-current-render-target-v1",
+      encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5",
+      values: readbackValues
+    }
+  });
+
+  expect(result).toMatchObject({
+    maskMapping: "full-resolution-cloud-mask-cell-coverage-v1",
+    minimumMaskCoverage: 0.25,
+    maskedNativePixelCount: 1,
+    invariantViolationCount: 0,
+    invariantPass: true,
+    primary: { min: 20, mean: 20, p50: 20, p95: 20, max: 20 },
+    shape: { min: 2, mean: 2, p50: 2, p95: 2, max: 2 },
+    detail: { min: 1, mean: 1, p50: 1, p95: 1, max: 1 }
   });
 });

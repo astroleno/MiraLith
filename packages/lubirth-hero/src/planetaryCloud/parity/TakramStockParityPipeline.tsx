@@ -45,6 +45,7 @@ import {
   type TakramParityHistoryFirstFrameCapture,
   type TakramParityInput,
   type TakramParityAltitudeLadderTelemetry,
+  type TakramParitySampleCountReadback,
   type TakramParityTelemetry,
   type TakramParityView
 } from "./TakramParityContract";
@@ -474,6 +475,7 @@ export function TakramStockParityPipeline({
   const transformFallbackRef = useRef<TakramParityTelemetry["transformFallback"]>(null);
   const historyEpochRef = useRef("");
   const historyFirstFrameCaptureRef = useRef<TakramParityHistoryFirstFrameCapture | null>(null);
+  const sampleCountReadbackRef = useRef<TakramParitySampleCountReadback | null>(null);
   const appliedDiagnosticRef = useRef<TakramParityDiagnostic | null>(null);
   const nativeFrameCountRef = useRef(0);
   const ladderCaptureRef = useRef<TakramAltitudeLadderCapture>({
@@ -756,6 +758,7 @@ export function TakramStockParityPipeline({
       historyEpochRef.current = historyEpoch;
       nativeFrameCountRef.current = 0;
       historyFirstFrameCaptureRef.current = null;
+      sampleCountReadbackRef.current = null;
       if (typeof window !== "undefined") {
         delete window.__MiraLithTakramHistoryFirstFrame;
       }
@@ -785,8 +788,10 @@ export function TakramStockParityPipeline({
         { width: gl.domElement.width, height: gl.domElement.height }
       )
       : null;
+    const sampleCountReadbackReady = diagnostic !== "sample-count-debug" ||
+      sampleCountReadbackRef.current !== null;
     const telemetry: TakramParityTelemetry = {
-      active: nativePipelineReady &&
+      active: nativePipelineReady && sampleCountReadbackReady &&
         ((diagnostic === "history-reset-first" &&
           historyFirstFrameCaptureRef.current !== null) ||
           (temporalConverged && (!isTakramParityAltitudeLadderDiagnostic(diagnostic) ||
@@ -833,6 +838,7 @@ export function TakramStockParityPipeline({
       morphologyCandidate: resolvedMorphologyCandidate?.id ?? null,
       morphologyView: morphologyView ?? null,
       morphologyScaleAudit,
+      sampleCountReadback: sampleCountReadbackRef.current,
       altitudeLadder: isTakramParityAltitudeLadderDiagnostic(diagnostic)
         ? ladderCaptureRef.current.telemetry
         : null
@@ -900,6 +906,43 @@ export function TakramStockParityPipeline({
     if (typeof window !== "undefined") {
       window.__MiraLithTakramHistoryFirstFrame = capture;
     }
+  }, 2);
+
+  // Screenshot colors pass through temporal resolve, scene composition and
+  // output transfer, so they cannot be decoded back into exact sample counts.
+  // Capture the native pre-temporal half-float target after the composer has
+  // rendered and publish packed linear RGB once per immutable history epoch.
+  useFrame(() => {
+    if (diagnostic !== "sample-count-debug" ||
+      sampleCountReadbackRef.current !== null ||
+      nativeFrameCountRef.current < TEMPORAL_CONVERGENCE_FRAME_COUNT) {
+      return;
+    }
+    const clouds = cloudsRef.current;
+    if (!clouds) return;
+    const pass = clouds.cloudsPass as unknown as {
+      currentRenderTarget?: Parameters<typeof readTakramAltitudeLadderRenderTarget>[1];
+    };
+    const readback = pass.currentRenderTarget
+      ? readTakramAltitudeLadderRenderTarget(gl, pass.currentRenderTarget)
+      : null;
+    if (!readback) return;
+    const values = new Array<number>(readback.width * readback.height * 3);
+    for (let pixel = 0; pixel < readback.width * readback.height; pixel += 1) {
+      const sourceOffset = pixel * 4;
+      const targetOffset = pixel * 3;
+      values[targetOffset] = readback.values[sourceOffset] ?? 0;
+      values[targetOffset + 1] = readback.values[sourceOffset + 1] ?? 0;
+      values[targetOffset + 2] = readback.values[sourceOffset + 2] ?? 0;
+    }
+    sampleCountReadbackRef.current = {
+      width: readback.width,
+      height: readback.height,
+      precision: readback.precision,
+      source: "native-cloud-current-render-target-v1",
+      encoding: "linear-rgb-primary-over-500-shape-over-5-detail-over-5",
+      values
+    };
   }, 2);
 
   // Read the native cloud targets only for the altitude ladder. The first
