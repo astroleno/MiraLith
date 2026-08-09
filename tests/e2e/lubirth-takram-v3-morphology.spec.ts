@@ -304,6 +304,19 @@ function encodeStageReadbackBuffer(readback: StageReadbackBuffer) {
   };
 }
 
+function decodeStageReadbackValues(readback: StageReadbackBuffer) {
+  const bytes = Buffer.from(readback.dataBase64, "base64");
+  expect(bytes.byteLength).toBe(readback.byteLength);
+  if (readback.scalar === "uint8") {
+    return Float32Array.from(bytes, (value) => value / 255);
+  }
+  const values = new Float32Array(bytes.byteLength / 4);
+  for (let index = 0; index < values.length; index += 1) {
+    values[index] = bytes.readFloatLE(index * 4);
+  }
+  return values;
+}
+
 async function captureMorphologyFrame(
   page: import("@playwright/test").Page,
   diagnostic: string
@@ -1185,6 +1198,7 @@ test("central candidate exact-frame stage revalidation", async ({ page }) => {
       compression: "gzip";
       scalar: "float32-le" | "uint8";
       metadata: StageReadbackBufferMetadata;
+      summary: ReturnType<typeof morphologyMetrics.analyzeTakramV3StageReadback>;
     }>;
     runtimeContract: {
       adapter: MorphologyTelemetry["adapter"];
@@ -1341,7 +1355,12 @@ test("central candidate exact-frame stage revalidation", async ({ page }) => {
             sha256: createHash("sha256").update(encoded.buffer).digest("hex"),
             compression: encoded.compression,
             scalar: encoded.scalar,
-            metadata
+            metadata,
+            summary: morphologyMetrics.analyzeTakramV3StageReadback({
+              width: readback.width,
+              height: readback.height,
+              values: decodeStageReadbackValues(readback)
+            })
           };
         });
       }

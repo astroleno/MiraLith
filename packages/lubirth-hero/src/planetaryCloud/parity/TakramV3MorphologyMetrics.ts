@@ -40,6 +40,18 @@ export interface TakramV3SampleCountStatistics {
   max: number;
 }
 
+export interface TakramV3StageReadbackSummary {
+  finitePixelFraction: number;
+  signalPixelFraction: number;
+  meanOpacity: number;
+  p50Opacity: number;
+  p95Opacity: number;
+  peakOpacity: number;
+  meanLuma: number;
+  signalMeanLuma: number;
+  peakLuma: number;
+}
+
 export interface TakramV3MaskCoverageSensitivityPopulation {
   minimumMaskCoverage: number;
   selectedNativePixelCount: number;
@@ -144,6 +156,55 @@ function quantile(sortedValues: readonly number[], percentile: number) {
   const upperIndex = Math.ceil(position);
   const mix = position - lowerIndex;
   return sortedValues[lowerIndex]! * (1 - mix) + sortedValues[upperIndex]! * mix;
+}
+
+export function analyzeTakramV3StageReadback(input: {
+  width: number;
+  height: number;
+  values: ArrayLike<number>;
+}): TakramV3StageReadbackSummary {
+  const pixelCount = input.width * input.height;
+  if (!Number.isInteger(input.width) || input.width <= 0 ||
+    !Number.isInteger(input.height) || input.height <= 0 ||
+    input.values.length !== pixelCount * 4) {
+    throw new Error("Stage readback must be a positive packed RGBA buffer.");
+  }
+  const opacities: number[] = [];
+  let finitePixelCount = 0;
+  let signalPixelCount = 0;
+  let lumaSum = 0;
+  let signalLumaSum = 0;
+  let peakLuma = 0;
+  for (let pixel = 0; pixel < pixelCount; pixel += 1) {
+    const offset = pixel * 4;
+    const red = Number(input.values[offset]);
+    const green = Number(input.values[offset + 1]);
+    const blue = Number(input.values[offset + 2]);
+    const opacity = Number(input.values[offset + 3]);
+    if (![red, green, blue, opacity].every(Number.isFinite)) continue;
+    const lumaValue = red * LUMA_R + green * LUMA_G + blue * LUMA_B;
+    finitePixelCount += 1;
+    lumaSum += lumaValue;
+    peakLuma = Math.max(peakLuma, lumaValue);
+    opacities.push(opacity);
+    if (opacity > 1 / 255) {
+      signalPixelCount += 1;
+      signalLumaSum += lumaValue;
+    }
+  }
+  opacities.sort((left, right) => left - right);
+  const opacitySum = opacities.reduce((sum, value) => sum + value, 0);
+  return {
+    finitePixelFraction: finitePixelCount / pixelCount,
+    signalPixelFraction: signalPixelCount / pixelCount,
+    meanOpacity: finitePixelCount > 0 ? opacitySum / finitePixelCount : 0,
+    p50Opacity: quantile(opacities, 0.5),
+    p95Opacity: quantile(opacities, 0.95),
+    peakOpacity: opacities.at(-1) ?? 0,
+    meanLuma: finitePixelCount > 0 ? lumaSum / finitePixelCount : 0,
+    signalMeanLuma: signalPixelCount > 0 ? signalLumaSum / signalPixelCount : 0,
+    peakLuma
+  };
 }
 
 function validateRgbaFrames(

@@ -374,3 +374,27 @@ test("reports weighted 25/50/75/100 percent post-temporal mask sensitivity", asy
     }
   ]);
 });
+
+test("summarizes native stage radiance and opacity without screen-space masks", async () => {
+  const metrics = await import(metricsModulePath);
+  const result = metrics.analyzeTakramV3StageReadback({
+    width: 2,
+    height: 1,
+    values: new Float32Array([
+      1, 0, 0, 0.5,
+      0, 1, 0, 0
+    ])
+  });
+
+  expect(result).toMatchObject({
+    finitePixelFraction: 1,
+    signalPixelFraction: 0.5,
+    meanOpacity: 0.25,
+    p50Opacity: 0.25,
+    p95Opacity: 0.475,
+    peakOpacity: 0.5,
+    meanLuma: 0.4639,
+    signalMeanLuma: 0.2126,
+    peakLuma: 0.7152
+  });
+});
