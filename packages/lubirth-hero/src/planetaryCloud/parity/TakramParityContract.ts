@@ -781,6 +781,7 @@ export interface TakramParityTelemetry {
   input: TakramParityInput;
   native: TakramParityNativeFeatures;
   nativeFrameCount: number;
+  historyEpochHash: string;
   historyFirstFrameCapture: Omit<TakramParityHistoryFirstFrameCapture, "dataUrl"> | null;
   matchedTemporalFrameCapture: Omit<TakramParityMatchedTemporalFrameCapture, "dataUrl"> | null;
   stageReadback: Omit<TakramParityStageReadbackCapture, "preTemporal" | "resolvedHistory" | "finalOutput"> & {

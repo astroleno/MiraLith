@@ -49,6 +49,7 @@ import {
   TAKRAM_PARITY_V3_OPENING_PRESET,
   buildTakramParityHistoryEpoch,
   buildTakramParityRendererFingerprint,
+  hashTakramParityHistoryEpoch,
   hashTakramParityRendererFingerprint,
   isTakramParityAltitudeLadderDiagnostic,
   shouldCaptureTakramHistoryFirstFrame,
@@ -939,6 +940,7 @@ export function TakramStockParityPipeline({
       input,
       native: resolvedNative,
       nativeFrameCount,
+      historyEpochHash: hashTakramParityHistoryEpoch(historyEpoch),
       historyFirstFrameCapture: historyFirstFrameCaptureRef.current === null
         ? null
         : {
@@ -1037,6 +1039,7 @@ export function TakramStockParityPipeline({
       diagnosticState: telemetry.diagnosticState,
       adapter: telemetry.adapter,
       native: telemetry.native,
+      historyEpochHash: telemetry.historyEpochHash,
       rendererFingerprintHash: telemetry.rendererFingerprintHash,
       presentationPreset: telemetry.presentationPreset,
       coverage: telemetry.coverage,
