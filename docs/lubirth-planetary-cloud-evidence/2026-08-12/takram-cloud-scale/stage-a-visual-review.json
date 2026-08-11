@@ -1,0 +1,62 @@
+{
+  "decision": "PUBLIC_PARAMETER_SIMILARITY_VISUAL_FAIL_MIP_UNPROVEN",
+  "reviewBasis": {
+    "contactSheet": "stage-a-stock-contact-sheet.png",
+    "fullSizeSourceFramesReviewed": [
+      "captures/stage-a-stock-s80-p006-full.png",
+      "captures/stage-a-stock-s120-p006-full.png",
+      "captures/stage-a-stock-s160-p006-full.png"
+    ],
+    "progresses": [0, 0.06, 0.12, 0.18],
+    "scales": [80, 120, 160]
+  },
+  "results": [
+    {
+      "scale": 80,
+      "decision": "FAIL",
+      "coherentMacroMasses": false,
+      "cloudGroundSeparationOrLimbElevation": false,
+      "softOpacityLayering": false,
+      "litBacklitVariationAndLocalBsmModulation": false,
+      "stableMotionIdentity": false,
+      "saltAndPepperFragmentation": "not-evaluable-no-readable-cloud-signal",
+      "observation": "Earth and atmosphere are visible, but no readable stock cloud mass appears in any opening frame."
+    },
+    {
+      "scale": 120,
+      "decision": "FAIL",
+      "coherentMacroMasses": false,
+      "cloudGroundSeparationOrLimbElevation": false,
+      "softOpacityLayering": false,
+      "litBacklitVariationAndLocalBsmModulation": false,
+      "stableMotionIdentity": false,
+      "saltAndPepperFragmentation": "not-evaluable-no-readable-cloud-signal",
+      "observation": "Earth and atmosphere are visible, but no readable stock cloud mass appears in any opening frame."
+    },
+    {
+      "scale": 160,
+      "decision": "FAIL",
+      "coherentMacroMasses": false,
+      "cloudGroundSeparationOrLimbElevation": false,
+      "softOpacityLayering": false,
+      "litBacklitVariationAndLocalBsmModulation": false,
+      "stableMotionIdentity": false,
+      "saltAndPepperFragmentation": "not-evaluable-no-readable-cloud-signal",
+      "observation": "Earth and atmosphere are visible, but no readable stock cloud mass appears in any opening frame."
+    }
+  ],
+  "stockPassingScales": [],
+  "causalityBoundary": {
+    "mipFailureProven": false,
+    "v3Classified": false,
+    "takramRejected": false,
+    "broaderScaleDirectionRejected": false
+  },
+  "downstream": {
+    "mipDistancePatchAuthorized": false,
+    "stageBRun": false,
+    "stageCRun": false,
+    "task0PLocked": true,
+    "originalTask0To8Locked": true
+  }
+}

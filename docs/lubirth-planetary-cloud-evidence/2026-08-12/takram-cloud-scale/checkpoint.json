@@ -1,0 +1,10 @@
+{
+  "decision": "PUBLIC_PARAMETER_SIMILARITY_VISUAL_FAIL_MIP_UNPROVEN",
+  "mipDistancePatchAuthorized": false,
+  "originalTask0To8Locked": true,
+  "stageBRun": false,
+  "stageCRun": false,
+  "stockPassingScales": [],
+  "task0PLocked": true,
+  "visualReview": "stage-a-visual-review.json"
+}
