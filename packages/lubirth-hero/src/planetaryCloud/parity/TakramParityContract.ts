@@ -3,8 +3,14 @@ import {
   parseTakramCloudCoverageMode,
   parseTakramCloudScale,
   type TakramCloudCoverageMode,
-  type TakramCloudScale
+  type TakramCloudScale,
+  type TakramCloudScaleAtmosphereDomain,
+  type TakramCloudScaleContract
 } from "./TakramCloudScaleContract";
+import type {
+  TakramCloudScaleRuntimeDrift,
+  TakramCloudScaleRuntimeReadback
+} from "./TakramCloudScaleRuntime";
 import {
   TAKRAM_V3_MORPHOLOGY_BASELINE,
   TAKRAM_V3_MORPHOLOGY_SPHERICAL_UV,
@@ -363,10 +369,10 @@ export const TAKRAM_PARITY_V3_OPENING_PRESET = Object.freeze({
 export const TAKRAM_PARITY_V3_LADDER_SPHERICAL_UV = TAKRAM_V3_MORPHOLOGY_SPHERICAL_UV;
 
 export interface TakramParityRendererFingerprint {
-  // Version 3 includes resolved coverage and native shape scales in the
-  // cloud uniform fingerprint. Stock/V3 presentation differences are now
-  // explicit instead of disappearing behind a same-value hash assertion.
-  schemaVersion: 3;
+  // Version 3 remains byte-compatible for historical unscaled evidence.
+  // Version 4 adds the complete runtime-read cloud-scale contract.
+  schemaVersion: 3 | 4;
+  cloudScale?: TakramCloudScaleRuntimeReadback;
   packageVersions: typeof TAKRAM_PARITY_NPM_PACKAGES;
   composer: {
     order: readonly ["CloudsEffect", "AerialPerspectiveEffect"];
@@ -547,6 +553,7 @@ function readCloudsRenderTargets(cloudsPass: RuntimeObject) {
 export interface TakramParityRendererRuntimeInputs {
   clouds: RuntimeObject;
   aerialPerspective: RuntimeObject;
+  cloudScaleRuntime?: TakramCloudScaleRuntimeReadback;
   sharedAssets: Record<"shape" | "shapeDetail" | "stbn" | "turbulence", string>;
 }
 
@@ -559,13 +566,14 @@ export interface TakramParityRendererRuntimeInputs {
 export function buildTakramParityRendererFingerprint({
   clouds,
   aerialPerspective,
+  cloudScaleRuntime,
   sharedAssets
 }: TakramParityRendererRuntimeInputs): TakramParityRendererFingerprint {
   const cloudsMaterial = clouds.cloudsPass.currentMaterial as RuntimeObject;
   const shadowMaterial = clouds.shadowPass.currentMaterial as RuntimeObject;
   const cloudsPass = clouds.cloudsPass as RuntimeObject;
   const shadowPass = clouds.shadowPass as RuntimeObject;
-  return {
+  const fingerprint: TakramParityRendererFingerprint = {
     schemaVersion: 3,
     packageVersions: TAKRAM_PARITY_NPM_PACKAGES,
     composer: {
@@ -622,6 +630,13 @@ export function buildTakramParityRendererFingerprint({
     renderTargets: readCloudsRenderTargets(cloudsPass),
     sharedAssets: { ...sharedAssets }
   };
+  return cloudScaleRuntime === undefined
+    ? fingerprint
+    : {
+        ...fingerprint,
+        cloudScale: cloudScaleRuntime,
+        schemaVersion: 4
+      };
 }
 
 function stableStringify(value: unknown): string {
@@ -652,7 +667,17 @@ export interface TakramParityNativeFeatures {
   turbulence: boolean;
 }
 
-export type TakramParityPresentationPreset = "official-stock" | "v3-opening-coarse";
+export type TakramParityPresentationPreset =
+  | "cloud-scale-similarity"
+  | "official-stock"
+  | "v3-opening-coarse";
+
+export interface TakramParityCloudScaleTelemetry {
+  atmosphereDomain: TakramCloudScaleAtmosphereDomain;
+  drift: readonly TakramCloudScaleRuntimeDrift[];
+  readback: TakramCloudScaleRuntimeReadback;
+  requested: TakramCloudScaleContract;
+}
 
 export interface TakramParityResolvedCloudLayer {
   altitude: number;
@@ -745,6 +770,7 @@ export interface TakramParityTelemetry {
   cameraMatrixWorld: number[];
   cameraHeightMeters: number | null;
   cameraPosition: [number, number, number];
+  cloudScale: TakramParityCloudScaleTelemetry | null;
   coordinateMode: TakramParityCoordinateMode;
   control: typeof TAKRAM_PARITY_CONTROL | null;
   diagnostic: TakramParityDiagnostic;

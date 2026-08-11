@@ -12,7 +12,7 @@ import type { AerialPerspectiveEffect } from "@takram/three-atmosphere";
 import { CloudLayer as TakramCloudLayer, Clouds } from "@takram/three-clouds/r3f";
 import type { CloudsEffect } from "@takram/three-clouds";
 import type { ExpandNestedProps } from "@takram/three-geospatial/r3f";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { mapOpeningProgress } from "@miralith/visual-core";
 import {
   Euler,
@@ -29,10 +29,16 @@ import {
 import { DEFAULT_LUBIRTH_SUN_DIRECTION } from "../../constants";
 import { buildLuBirthWorldToEcef } from "../planetaryCloudMath";
 import {
+  resolveTakramCloudScaleAtmosphereDomain,
   resolveTakramCloudScaleContract,
   type TakramCloudCoverageMode,
   type TakramCloudScale
 } from "./TakramCloudScaleContract";
+import {
+  applyTakramCloudScaleRuntime,
+  diffTakramCloudScaleRuntime,
+  readTakramCloudScaleRuntime
+} from "./TakramCloudScaleRuntime";
 import {
   TAKRAM_PARITY_BOTTOM_RADIUS_M,
   TAKRAM_PARITY_CONTROL,
@@ -402,10 +408,40 @@ function nativeFeatures(clouds: CloudsEffect | null, aerialPerspective: AerialPe
   };
 }
 
+function readAtmosphereRadii(aerialPerspective: AerialPerspectiveEffect) {
+  const uniforms = aerialPerspective.uniforms as unknown as Map<
+    string,
+    { value?: unknown }
+  >;
+  const bottomRadius = Number(uniforms.get("bottomRadius")?.value);
+  const atmosphere = uniforms.get("ATMOSPHERE")?.value as {
+    bottom_radius?: number;
+    top_radius?: number;
+  } | undefined;
+  const bottomLengthUnit = Number(atmosphere?.bottom_radius);
+  const topLengthUnit = Number(atmosphere?.top_radius);
+  const lengthUnitToMeters = Number.isFinite(bottomRadius) &&
+    Number.isFinite(bottomLengthUnit) && bottomLengthUnit > 0
+    ? bottomRadius / bottomLengthUnit
+    : 1_000;
+  const topRadius = Number.isFinite(topLengthUnit)
+    ? topLengthUnit * lengthUnitToMeters
+    : bottomRadius + 60_000;
+  return {
+    bottomRadius: Number.isFinite(bottomRadius)
+      ? bottomRadius
+      : TAKRAM_PARITY_BOTTOM_RADIUS_M,
+    topRadius: Number.isFinite(topRadius)
+      ? topRadius
+      : TAKRAM_PARITY_BOTTOM_RADIUS_M + 60_000
+  };
+}
+
 function resolveAdapterTelemetry(
   clouds: CloudsEffect | null,
   assets: TakramParityRuntimeAssets | null,
-  input: TakramParityInput
+  input: TakramParityInput,
+  disableDefaultLayers: boolean
 ): TakramParityTelemetry["adapter"] {
   const adapter = resolveTakramParityAdapter(input);
   return {
@@ -422,7 +458,7 @@ function resolveAdapterTelemetry(
         shapeDetailAmount: layer.shapeDetailAmount,
         weatherExponent: layer.weatherExponent
       })),
-    disableDefaultLayers: adapter.disableDefaultLayers,
+    disableDefaultLayers,
     globalWeatherMapping: clouds?.globalWeatherMapping ?? adapter.globalWeatherMapping,
     localWeatherHash: assets?.localWeatherSha256 ?? null,
     localWeatherOffset: clouds === null
@@ -478,9 +514,12 @@ export function TakramStockParityPipeline({
   const { gl, camera } = useThree();
   const earthTexture = useLoader(TextureLoader, EARTH_DAY_SRC);
   const adapter = resolveTakramParityAdapter(input);
-  const cloudScaleContract = cloudScale !== undefined && cloudCoverageMode !== undefined
-    ? resolveTakramCloudScaleContract({ coverageMode: cloudCoverageMode, scale: cloudScale })
-    : null;
+  const cloudScaleContract = useMemo(
+    () => cloudScale !== undefined && cloudCoverageMode !== undefined
+      ? resolveTakramCloudScaleContract({ coverageMode: cloudCoverageMode, scale: cloudScale })
+      : null,
+    [cloudCoverageMode, cloudScale]
+  );
   const resolvedMorphologyCandidate = input === "v3" && morphologyView
     ? resolveTakramV3MorphologyCandidate(morphologyCandidate ?? "baseline")
     : null;
@@ -531,6 +570,9 @@ export function TakramStockParityPipeline({
         ? shapeDetailRepeat
         : OFFICIAL_SHAPE_DETAIL_REPEAT
     );
+    if (cloudScaleContract !== null) {
+      applyTakramCloudScaleRuntime(clouds, cloudScaleContract);
+    }
     if (isTakramParityAltitudeLadderDiagnostic(diagnostic)) {
       installTakramAltitudeLadderInstrumentation(
         clouds.cloudsPass.currentMaterial as unknown as TakramAltitudeLadderMaterial
@@ -540,7 +582,7 @@ export function TakramStockParityPipeline({
         TAKRAM_ALTITUDE_LADDER_SHADER_MODES.normal
       );
     }
-  }, [adapter, altitudeMeters, diagnostic, input, morphologyCandidate, morphologyView, resolvedMorphologyCandidate, view]);
+  }, [adapter, altitudeMeters, cloudScaleContract, diagnostic, input, morphologyCandidate, morphologyView, resolvedMorphologyCandidate, view]);
 
   useEffect(() => {
     ladderCaptureRef.current = {
@@ -653,7 +695,7 @@ export function TakramStockParityPipeline({
         clouds.cloudsPass.currentMaterial.needsUpdate = true;
       }
     };
-  }, [assetsState.ready, atmosphereState.ready, bridgeReady, diagnostic]);
+  }, [assetsState.ready, atmosphereState.ready, bridgeReady, cloudScaleContract, diagnostic]);
 
   // `skipRendering` only disables the CloudsEffect composite; the native
   // cloud buffer is still exposed to AerialPerspective through the atmosphere
@@ -758,13 +800,37 @@ export function TakramStockParityPipeline({
       // instead of allowing a non-unit matrix scale to silently clip clouds.
       clouds.cloudsPass.currentMaterial.uniforms.sceneDepthScale.value = sceneDepthScale;
     }
+    const cloudScaleReadback = clouds !== null && cloudScaleContract !== null
+      ? readTakramCloudScaleRuntime(clouds, cloudScaleContract)
+      : null;
+    const cloudScaleDrift = cloudScaleReadback !== null && cloudScaleContract !== null
+      ? diffTakramCloudScaleRuntime(cloudScaleContract, cloudScaleReadback)
+      : [];
+    const blockingCloudScaleDrift = cloudScaleDrift.filter((entry) =>
+      diagnostic !== "bsm-off" || !/^layers\.\d+\.shadow$/.test(entry.path)
+    );
+    const atmosphereRadii = aerialPerspective !== null
+      ? readAtmosphereRadii(aerialPerspective)
+      : null;
+    const cloudScaleAtmosphereDomain = cloudScaleContract !== null && atmosphereRadii !== null
+      ? resolveTakramCloudScaleAtmosphereDomain({
+          contract: cloudScaleContract,
+          ...atmosphereRadii
+        })
+      : null;
+    const cloudScaleRuntimeReady = cloudScaleContract === null ||
+      (cloudScaleReadback !== null && blockingCloudScaleDrift.length === 0 &&
+        cloudScaleAtmosphereDomain !== null);
     const nativePipelineReady = assetsState.ready && atmosphereState.ready &&
       bridgeReadyRef.current && clouds !== null && aerialPerspective !== null &&
-      appliedDiagnosticRef.current === diagnostic;
+      appliedDiagnosticRef.current === diagnostic && cloudScaleRuntimeReady;
     const rendererFingerprint = clouds && aerialPerspective
       ? buildTakramParityRendererFingerprint({
         clouds,
         aerialPerspective,
+        ...(cloudScaleReadback === null
+          ? {}
+          : { cloudScaleRuntime: cloudScaleReadback }),
         sharedAssets: TAKRAM_PARITY_SHARED_ASSET_HASHES
       })
       : null;
@@ -841,7 +907,12 @@ export function TakramStockParityPipeline({
           historyFirstFrameCaptureRef.current !== null) ||
           (temporalConverged && (!isTakramParityAltitudeLadderDiagnostic(diagnostic) ||
             ladderCaptureRef.current.phase === "complete"))),
-      adapter: resolveAdapterTelemetry(clouds, assetsState.assets, input),
+      adapter: resolveAdapterTelemetry(
+        clouds,
+        assetsState.assets,
+        input,
+        cloudScaleContract !== null || adapter.disableDefaultLayers
+      ),
       assetGeneration: assetsState.assetGeneration,
       assetsReady: assetsState.ready,
       atmosphereGeneration: atmosphereState.atmosphereGeneration,
@@ -849,6 +920,15 @@ export function TakramStockParityPipeline({
       cameraHeightMeters,
       cameraMatrixWorld: camera.matrixWorld.toArray(),
       cameraPosition: [camera.position.x, camera.position.y, camera.position.z],
+      cloudScale: cloudScaleContract !== null && cloudScaleReadback !== null &&
+        cloudScaleAtmosphereDomain !== null
+        ? {
+            atmosphereDomain: cloudScaleAtmosphereDomain,
+            drift: cloudScaleDrift,
+            readback: cloudScaleReadback,
+            requested: cloudScaleContract
+          }
+        : null,
       coordinateMode,
       control: view === "control" ? TAKRAM_PARITY_CONTROL : null,
       diagnostic,
@@ -921,9 +1001,11 @@ export function TakramStockParityPipeline({
       progress: clampOpeningProgress(progress),
       rendererFingerprint,
       rendererFingerprintHash,
-      presentationPreset: input === "v3" && view === "opening"
-        ? "v3-opening-coarse"
-        : "official-stock",
+      presentationPreset: cloudScaleContract !== null
+        ? "cloud-scale-similarity"
+        : input === "v3" && view === "opening"
+          ? "v3-opening-coarse"
+          : "official-stock",
       coverage: clouds?.coverage ?? null,
       sceneDepthScale,
       sceneDepthContract: "world-depth-to-ecef-v1",
@@ -947,6 +1029,7 @@ export function TakramStockParityPipeline({
       atmosphereGeneration: telemetry.atmosphereGeneration,
       atmosphereReady: telemetry.atmosphereReady,
       cameraHeightMeters: telemetry.cameraHeightMeters,
+      cloudScale: telemetry.cloudScale,
       coordinateMode: telemetry.coordinateMode,
       control: telemetry.control,
       diagnostic: telemetry.diagnostic,
@@ -1396,13 +1479,15 @@ export function TakramStockParityPipeline({
           <EffectComposer enableNormalPass>
             <Clouds
               ref={setCloudsRef}
-              {...(view === "control"
+              {...(cloudScaleContract !== null
+                ? { coverage: cloudScaleContract.coverage }
+                : view === "control"
                 ? { coverage: TAKRAM_PARITY_CONTROL.coverage }
                 : input === "v3"
                   ? { coverage: TAKRAM_PARITY_V3_OPENING_PRESET.coverage }
                   : {})}
-              disableDefaultLayers={adapter.disableDefaultLayers}
-              globalWeatherMapping={input === "v3"}
+              disableDefaultLayers={cloudScaleContract !== null || adapter.disableDefaultLayers}
+              globalWeatherMapping={adapter.globalWeatherMapping}
               localWeatherTexture={runtimeAssets.localWeather}
               qualityPreset={TAKRAM_PARITY_DEFAULTS.qualityPreset}
               shapeDetailTexture={runtimeAssets.shapeDetail}
@@ -1410,13 +1495,14 @@ export function TakramStockParityPipeline({
               stbnTexture={runtimeAssets.stbn}
               turbulenceTexture={runtimeAssets.turbulence}
             >
-              {input === "v3" ? TAKRAM_PARITY_V3_LAYERS.map((layer, index) => (
+              {(cloudScaleContract?.layers ??
+                (input === "v3" ? TAKRAM_PARITY_V3_LAYERS : [])).map((layer, index) => (
                 <TakramCloudLayer
                   key={layer.channel}
                   index={index}
                   {...layer}
                 />
-              )) : null}
+              ))}
             </Clouds>
             <AerialPerspective
               ref={aerialPerspectiveRef}

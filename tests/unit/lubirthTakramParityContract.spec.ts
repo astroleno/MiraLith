@@ -85,6 +85,7 @@ interface TakramParityContractModule {
   buildTakramParityRendererFingerprint(input: {
     clouds: Record<string, unknown>;
     aerialPerspective: Record<string, unknown>;
+    cloudScaleRuntime?: Record<string, unknown>;
     sharedAssets: Record<string, string>;
   }): Record<string, unknown>;
   hashTakramParityRendererFingerprint(fingerprint: Record<string, unknown>): string;
@@ -722,6 +723,7 @@ test("fingerprints resolved native state and rejects non-adapter drift", async (
 
   const first = contract!.buildTakramParityRendererFingerprint(runtime);
   const firstHash = contract!.hashTakramParityRendererFingerprint(first);
+  expect(first).toMatchObject({ schemaVersion: 3 });
   expect(firstHash).toMatch(/^fnv1a-64:[0-9a-f]{16}$/);
   expect((first.clouds as Record<string, unknown>).defines).not.toHaveProperty(
     "GLOBAL_WEATHER_MAPPING"
@@ -740,5 +742,31 @@ test("fingerprints resolved native state and rejects non-adapter drift", async (
   const presentationVariant = contract!.buildTakramParityRendererFingerprint(runtime);
   expect(contract!.hashTakramParityRendererFingerprint(presentationVariant)).not.toBe(
     contract!.hashTakramParityRendererFingerprint(second)
+  );
+
+  const cloudScaleRuntime = {
+    classification: "PUBLIC_PARAMETER_SIMILARITY",
+    coverage: 0.55,
+    layers: [{ channel: "r", height: 52_000, densityScale: 0.0025 }],
+    scale: 80,
+    turbulenceDisplacement: 28_000
+  };
+  const scaledFingerprint = contract!.buildTakramParityRendererFingerprint({
+    ...runtime,
+    cloudScaleRuntime
+  });
+  expect(scaledFingerprint).toMatchObject({
+    cloudScale: cloudScaleRuntime,
+    schemaVersion: 4
+  });
+  expect(contract!.hashTakramParityRendererFingerprint(scaledFingerprint)).not.toBe(
+    contract!.hashTakramParityRendererFingerprint(presentationVariant)
+  );
+  const changedScaleFingerprint = contract!.buildTakramParityRendererFingerprint({
+    ...runtime,
+    cloudScaleRuntime: { ...cloudScaleRuntime, turbulenceDisplacement: 28_001 }
+  });
+  expect(contract!.hashTakramParityRendererFingerprint(changedScaleFingerprint)).not.toBe(
+    contract!.hashTakramParityRendererFingerprint(scaledFingerprint)
   );
 });
