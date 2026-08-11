@@ -61,6 +61,8 @@ export function LuBirthTakramParitySpikeClient() {
   return (
     <main
       className="lubirth-takram-parity-spike"
+      data-cloud-coverage={query?.cloudCoverageMode ?? "none"}
+      data-cloud-scale={query?.cloudScale ?? "none"}
       data-diagnostic={query?.diagnostic ?? "pending"}
       data-input={query?.input ?? "pending"}
       data-morphology-candidate={query?.morphologyCandidate ?? "none"}
@@ -85,6 +87,8 @@ export function LuBirthTakramParitySpikeClient() {
           ) : (
             <LuBirthTakramParityScene
               altitudeMeters={query.altitudeMeters}
+              cloudCoverageMode={query.cloudCoverageMode}
+              cloudScale={query.cloudScale}
               diagnostic={query.diagnostic}
               input={query.input}
               morphologyCandidate={query.morphologyCandidate}

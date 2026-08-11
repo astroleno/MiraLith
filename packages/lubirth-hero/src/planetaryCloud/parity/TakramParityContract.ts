@@ -1,5 +1,11 @@
 import { Ellipsoid } from "@takram/three-geospatial";
 import {
+  parseTakramCloudCoverageMode,
+  parseTakramCloudScale,
+  type TakramCloudCoverageMode,
+  type TakramCloudScale
+} from "./TakramCloudScaleContract";
+import {
   TAKRAM_V3_MORPHOLOGY_BASELINE,
   TAKRAM_V3_MORPHOLOGY_SPHERICAL_UV,
   resolveTakramV3MorphologyCandidate,
@@ -51,6 +57,8 @@ export const TAKRAM_PARITY_CONTROL = Object.freeze({
 });
 
 export type TakramParityRouteQuery = {
+  cloudCoverageMode?: TakramCloudCoverageMode;
+  cloudScale?: TakramCloudScale;
   diagnostic: TakramParityDiagnostic;
   input: TakramParityInput;
   progress: number;
@@ -89,10 +97,14 @@ export function shouldCaptureTakramMatchedTemporalFrame(input: {
 export interface TakramParityHistoryEpochInput {
   assetGeneration: number;
   atmosphereGeneration: number;
+  cloudCoverage: number | null;
+  cloudCoverageMode: string | null;
+  cloudScale: number | null;
   coordinateMode: string;
   diagnostic: string;
   input: string;
   localWeatherHash: string | null;
+  mipDistancePatchActive: boolean;
   morphologyCandidate: string | null;
   morphologyView: string | null;
   rendererConfigurationHash: string | null;
@@ -102,10 +114,14 @@ export function buildTakramParityHistoryEpoch(input: TakramParityHistoryEpochInp
   return JSON.stringify([
     input.assetGeneration,
     input.atmosphereGeneration,
+    input.cloudScale,
+    input.cloudCoverageMode,
+    input.cloudCoverage,
     input.coordinateMode,
     input.diagnostic,
     input.input,
     input.localWeatherHash,
+    input.mipDistancePatchActive,
     input.morphologyCandidate,
     input.morphologyView,
     input.rendererConfigurationHash
@@ -178,8 +194,14 @@ export type TakramParityRouteQueryResult =
     ok: false;
     reason:
       | "control-requires-stock"
+      | "cloud-coverage-requires-scale"
+      | "cloud-scale-requires-coverage-mode"
+      | "cloud-scale-requires-opening"
+      | "conflicting-scale-contracts"
       | "morphology-candidate-requires-view"
       | "morphology-requires-v3"
+      | "unknown-cloud-coverage-mode"
+      | "unknown-cloud-scale"
       | "unknown-morphology-candidate"
       | "unknown-morphology-view";
   };
@@ -190,6 +212,8 @@ export function resolveTakramParityRouteQuery(
   const requestedInput = input.get("input");
   const requestedView = input.get("view");
   const requestedDiagnostic = input.get("diagnostic");
+  const requestedCloudScale = input.get("cloudScale");
+  const requestedCloudCoverage = input.get("cloudCoverage");
   const requestedMorphologyCandidate = input.get("morphologyCandidate");
   const requestedMorphologyView = input.get("morphologyView");
   const parsedProgress = Number.parseFloat(input.get("progress") ?? "0");
@@ -217,6 +241,32 @@ export function resolveTakramParityRouteQuery(
 
   const hasMorphologyQuery = requestedMorphologyView !== null ||
     requestedMorphologyCandidate !== null;
+  const hasCloudScaleQuery = requestedCloudScale !== null ||
+    requestedCloudCoverage !== null;
+  if (hasCloudScaleQuery && value.view !== "opening") {
+    return { ok: false, reason: "cloud-scale-requires-opening" };
+  }
+  if (requestedCloudScale === null && requestedCloudCoverage !== null) {
+    return { ok: false, reason: "cloud-coverage-requires-scale" };
+  }
+  const cloudScale = parseTakramCloudScale(requestedCloudScale);
+  if (requestedCloudScale !== null && cloudScale === null) {
+    return { ok: false, reason: "unknown-cloud-scale" };
+  }
+  if (cloudScale !== null && requestedCloudCoverage === null) {
+    return { ok: false, reason: "cloud-scale-requires-coverage-mode" };
+  }
+  const cloudCoverageMode = parseTakramCloudCoverageMode(requestedCloudCoverage);
+  if (requestedCloudCoverage !== null && cloudCoverageMode === null) {
+    return { ok: false, reason: "unknown-cloud-coverage-mode" };
+  }
+  if (hasCloudScaleQuery && hasMorphologyQuery) {
+    return { ok: false, reason: "conflicting-scale-contracts" };
+  }
+  if (cloudScale !== null && cloudCoverageMode !== null) {
+    value.cloudScale = cloudScale;
+    value.cloudCoverageMode = cloudCoverageMode;
+  }
   if (hasMorphologyQuery && value.input !== "v3") {
     return { ok: false, reason: "morphology-requires-v3" };
   }
@@ -255,9 +305,11 @@ export function resolveTakramParityRouteQuery(
   // BSM/history/Aerial probes are deliberately not exposed in this path.
   const morphologyDiagnostic = value.morphologyView !== undefined &&
     ["full", "cloud-raw", "cloud-raw-off", "history-reset-first", "bsm-off", "aerial-final", "sample-count-debug", "stage-readback"].includes(value.diagnostic);
+  const cloudScaleDiagnostic = value.cloudScale !== undefined &&
+    ["full", "cloud-raw", "cloud-raw-off", "history-reset-first", "bsm-off", "aerial-final", "sample-count-debug", "stage-readback"].includes(value.diagnostic);
   return {
     ok: true,
-    value: value.view === "opening" && !morphologyDiagnostic &&
+    value: value.view === "opening" && !morphologyDiagnostic && !cloudScaleDiagnostic &&
       !["altitude-ladder", "altitude-ladder-cloud-off", "cloud-raw", "cloud-raw-off", "depth-off", "density-debug", "uv-debug", "sample-count-debug", "stage-readback"].includes(value.diagnostic)
       ? { ...value, diagnostic: "full" }
       : value

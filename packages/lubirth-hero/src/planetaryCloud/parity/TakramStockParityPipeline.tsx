@@ -29,6 +29,11 @@ import {
 import { DEFAULT_LUBIRTH_SUN_DIRECTION } from "../../constants";
 import { buildLuBirthWorldToEcef } from "../planetaryCloudMath";
 import {
+  resolveTakramCloudScaleContract,
+  type TakramCloudCoverageMode,
+  type TakramCloudScale
+} from "./TakramCloudScaleContract";
+import {
   TAKRAM_PARITY_BOTTOM_RADIUS_M,
   TAKRAM_PARITY_CONTROL,
   TAKRAM_PARITY_DEFAULTS,
@@ -168,6 +173,8 @@ declare global {
 
 export interface TakramStockParityPipelineProps {
   altitudeMeters?: number;
+  cloudCoverageMode?: TakramCloudCoverageMode;
+  cloudScale?: TakramCloudScale;
   diagnostic?: TakramParityDiagnostic;
   input: TakramParityInput;
   morphologyCandidate?: TakramV3MorphologyCandidateId;
@@ -458,6 +465,8 @@ function resolveDiagnosticState(diagnostic: TakramParityDiagnostic) {
  */
 export function TakramStockParityPipeline({
   altitudeMeters,
+  cloudCoverageMode,
+  cloudScale,
   diagnostic = "full",
   input,
   morphologyCandidate,
@@ -469,6 +478,9 @@ export function TakramStockParityPipeline({
   const { gl, camera } = useThree();
   const earthTexture = useLoader(TextureLoader, EARTH_DAY_SRC);
   const adapter = resolveTakramParityAdapter(input);
+  const cloudScaleContract = cloudScale !== undefined && cloudCoverageMode !== undefined
+    ? resolveTakramCloudScaleContract({ coverageMode: cloudCoverageMode, scale: cloudScale })
+    : null;
   const resolvedMorphologyCandidate = input === "v3" && morphologyView
     ? resolveTakramV3MorphologyCandidate(morphologyCandidate ?? "baseline")
     : null;
@@ -762,10 +774,14 @@ export function TakramStockParityPipeline({
     const historyEpoch = buildTakramParityHistoryEpoch({
       assetGeneration: assetsState.assetGeneration,
       atmosphereGeneration: atmosphereState.atmosphereGeneration,
+      cloudCoverage: cloudScaleContract?.coverage ?? null,
+      cloudCoverageMode: cloudScaleContract?.coverageMode ?? null,
+      cloudScale: cloudScaleContract?.scale ?? null,
       coordinateMode,
       diagnostic,
       input,
       localWeatherHash: assetsState.assets?.localWeatherSha256 ?? null,
+      mipDistancePatchActive: cloudScaleContract?.mipDistancePatch.active ?? false,
       morphologyCandidate: resolvedMorphologyCandidate?.id ?? null,
       morphologyView: morphologyView ?? null,
       rendererConfigurationHash: rendererFingerprintHash

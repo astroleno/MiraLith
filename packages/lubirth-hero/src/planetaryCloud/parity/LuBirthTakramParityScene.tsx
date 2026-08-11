@@ -1,6 +1,10 @@
 "use client";
 
 import type {
+  TakramCloudCoverageMode,
+  TakramCloudScale
+} from "./TakramCloudScaleContract";
+import type {
   TakramParityDiagnostic,
   TakramParityInput,
   TakramParityTelemetry
@@ -13,6 +17,8 @@ import { TakramStockParityPipeline } from "./TakramStockParityPipeline";
 
 export interface LuBirthTakramParitySceneProps {
   altitudeMeters?: number;
+  cloudCoverageMode?: TakramCloudCoverageMode;
+  cloudScale?: TakramCloudScale;
   diagnostic?: TakramParityDiagnostic;
   input: TakramParityInput;
   morphologyCandidate?: TakramV3MorphologyCandidateId;
@@ -27,6 +33,8 @@ export interface LuBirthTakramParitySceneProps {
  */
 export function LuBirthTakramParityScene({
   altitudeMeters,
+  cloudCoverageMode,
+  cloudScale,
   diagnostic,
   input,
   morphologyCandidate,
@@ -37,6 +45,8 @@ export function LuBirthTakramParityScene({
   return (
     <TakramStockParityPipeline
       altitudeMeters={altitudeMeters}
+      cloudCoverageMode={cloudCoverageMode}
+      cloudScale={cloudScale}
       diagnostic={diagnostic}
       input={input}
       morphologyCandidate={morphologyCandidate}
