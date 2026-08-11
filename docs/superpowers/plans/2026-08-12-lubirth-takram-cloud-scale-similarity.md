@@ -10,6 +10,8 @@
 
 **Design source:** `docs/superpowers/specs/2026-08-12-lubirth-takram-cloud-scale-similarity-design.md`
 
+**Execution status (2026-08-12):** Tasks 1–6 completed through the first valid stop condition. The resolver, route validation, runtime apply/readback, explicit stock/V3 layer parity, schema-4 fingerprint, history reset, atomic capture harness, and clean-HEAD Stage A evidence are complete. `S=80/120/160` all failed the stock visual floor, so the checkpoint is `PUBLIC_PARAMETER_SIMILARITY_VISUAL_FAIL_MIP_UNPROVEN`; Tasks 7–8 and Conditional Task M were not executed. Task 0P and the original Task 0–8 remain locked.
+
 ---
 
 ## Execution boundary
@@ -716,4 +718,3 @@ This implementation plan is complete when either:
 
 1. a stock/V3 presentation winner has passed the winner-only exact-frame revalidation and the checkpoint still explicitly locks Task 0P pending a later amendment; or
 2. the stock-first funnel reaches a correctly evidenced stop state and no unauthorized downstream work has run.
-
