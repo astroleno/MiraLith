@@ -1,9 +1,20 @@
 import { expect, test, type Page } from "@playwright/test";
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import sharp from "../../packages/lubirth-hero/node_modules/sharp";
+import { writeTakramCloudScaleEvidenceAtomically } from "../helpers/takramCloudScaleEvidence";
 
 test.setTimeout(900_000);
 
 type Scale = 80 | 120 | 160;
 type CoverageMode = "parity" | "presentation";
+const captureEnabled = process.env.MIRALITH_TAKRAM_CLOUD_SCALE_CAPTURE === "1";
+const evidenceDirectory = path.resolve(
+  process.cwd(),
+  "docs/lubirth-planetary-cloud-evidence/2026-08-12/takram-cloud-scale"
+);
 
 interface ScaleTelemetry {
   active: boolean;
@@ -46,8 +57,13 @@ interface ScaleTelemetry {
   shapeRepeat: number | null;
 }
 
-function query(input: "stock" | "v3", scale: Scale, coverageMode: CoverageMode) {
-  return `/lubirth-takram-parity-spike?input=${input}&view=opening&progress=0.06` +
+function query(
+  input: "stock" | "v3",
+  scale: Scale,
+  coverageMode: CoverageMode,
+  progress = 0.06
+) {
+  return `/lubirth-takram-parity-spike?input=${input}&view=opening&progress=${progress}` +
     `&cloudScale=${scale}&cloudCoverage=${coverageMode}`;
 }
 
@@ -60,9 +76,12 @@ async function openScaleCandidate(
   input: "stock" | "v3",
   scale: Scale,
   coverageMode: CoverageMode,
-  diagnostic = "full"
+  diagnostic = "full",
+  progress = 0.06
 ) {
-  const response = await page.goto(`${query(input, scale, coverageMode)}&diagnostic=${diagnostic}`);
+  const response = await page.goto(
+    `${query(input, scale, coverageMode, progress)}&diagnostic=${diagnostic}`
+  );
   expect(response?.status()).toBe(200);
   const root = page.locator("[data-takram-parity-route='true']");
   await expect(root).toHaveAttribute("data-cloud-scale", String(scale));
@@ -72,6 +91,89 @@ async function openScaleCandidate(
   const telemetry = await readTelemetry(page);
   expect(telemetry).toBeDefined();
   return telemetry!;
+}
+
+async function readExactMatchedFrame(page: Page) {
+  const capture = await page.evaluate(() =>
+    Reflect.get(window, "__MiraLithTakramMatchedTemporalFrame")
+  ) as {
+    cloudsFrame: number;
+    dataUrl: string;
+    frameLockPass: boolean;
+    height: number;
+    historyEpochHash: string;
+    nativeFrameCount: number;
+    resolveFrame: number;
+    shadowFrame: number;
+    stbnSliceIndex: number;
+    temporalJitterIndex: number;
+    width: number;
+  } | undefined;
+  expect(capture).toMatchObject({
+    cloudsFrame: 32,
+    frameLockPass: true,
+    nativeFrameCount: 32,
+    resolveFrame: 32,
+    shadowFrame: 32
+  });
+  expect(capture?.dataUrl.startsWith("data:image/png;base64,")).toBe(true);
+  return {
+    buffer: Buffer.from(capture!.dataUrl.split(",")[1]!, "base64"),
+    metadata: {
+      cloudsFrame: capture!.cloudsFrame,
+      frameLockPass: capture!.frameLockPass,
+      height: capture!.height,
+      historyEpochHash: capture!.historyEpochHash,
+      nativeFrameCount: capture!.nativeFrameCount,
+      resolveFrame: capture!.resolveFrame,
+      shadowFrame: capture!.shadowFrame,
+      stbnSliceIndex: capture!.stbnSliceIndex,
+      temporalJitterIndex: capture!.temporalJitterIndex,
+      width: capture!.width
+    }
+  };
+}
+
+async function buildStockContactSheet(
+  frames: ReadonlyMap<string, Buffer>,
+  scales: readonly Scale[],
+  progresses: readonly number[]
+) {
+  const cellWidth = 360;
+  const imageHeight = 240;
+  const labelHeight = 32;
+  const composites: Array<sharp.OverlayOptions> = [];
+  for (const [row, scale] of scales.entries()) {
+    for (const [column, progress] of progresses.entries()) {
+      const frame = frames.get(`${scale}:${progress}`);
+      expect(frame).toBeDefined();
+      const left = column * cellWidth;
+      const top = row * (imageHeight + labelHeight);
+      composites.push({
+        input: await sharp(frame).resize(cellWidth, imageHeight, { fit: "fill" }).png().toBuffer(),
+        left,
+        top
+      });
+      composites.push({
+        input: Buffer.from(
+          `<svg width="${cellWidth}" height="${labelHeight}" xmlns="http://www.w3.org/2000/svg">` +
+          `<rect width="100%" height="100%" fill="#10131a"/>` +
+          `<text x="8" y="21" fill="#f4f6fa" font-family="monospace" font-size="13">` +
+          `stock · S=${scale} · p=${progress.toFixed(2)}</text></svg>`
+        ),
+        left,
+        top: top + imageHeight
+      });
+    }
+  }
+  return sharp({
+    create: {
+      background: "#10131a",
+      channels: 4,
+      height: (imageHeight + labelHeight) * scales.length,
+      width: cellWidth * progresses.length
+    }
+  }).composite(composites).png().toBuffer();
 }
 
 test("rejects invalid and conflicting cloud-scale route contracts", async ({ page }) => {
@@ -169,6 +271,150 @@ test("applies the same explicit official renderer contract to stock and V3", asy
       });
     }
   }
+});
+
+test("Stage A captures the stock-only public-parameter visual funnel", async ({
+  browser,
+  page
+}) => {
+  test.skip(!captureEnabled, "formal evidence requires explicit capture mode");
+  const scales = [80, 120, 160] as const;
+  const progresses = [0, 0.06, 0.12, 0.18] as const;
+  const frames = new Map<string, Buffer>();
+  const records: Array<Record<string, unknown>> = [];
+  let gpu: Record<string, string | null> | null = null;
+
+  for (const scale of scales) {
+    for (const progress of progresses) {
+      const telemetry = await openScaleCandidate(
+        page,
+        "stock",
+        scale,
+        "parity",
+        "full",
+        progress
+      );
+      expect(telemetry.cloudScale?.drift).toEqual([]);
+      expect(telemetry.rendererFingerprintHash).toMatch(/^fnv1a-64:[0-9a-f]{16}$/);
+      const capture = await readExactMatchedFrame(page);
+      const fileName = `stage-a-stock-s${scale}-p${Math.round(progress * 100)
+        .toString().padStart(3, "0")}-full.png`;
+      const screenshotSha256 = createHash("sha256")
+        .update(capture.buffer)
+        .digest("hex");
+      frames.set(`${scale}:${progress}`, capture.buffer);
+      records.push({
+        capture: capture.metadata,
+        file: `captures/${fileName}`,
+        input: "stock",
+        progress,
+        query: query("stock", scale, "parity", progress),
+        rendererFingerprintHash: telemetry.rendererFingerprintHash,
+        screenshotSha256,
+        telemetry
+      });
+
+      if (gpu === null) {
+        gpu = await page.evaluate(() => {
+          const canvas = document.querySelector("canvas");
+          const gl = canvas?.getContext("webgl2");
+          if (!gl) return null;
+          const debug = gl.getExtension("WEBGL_debug_renderer_info");
+          return {
+            renderer: String(gl.getParameter(gl.RENDERER)),
+            unmaskedRenderer: debug
+              ? String(gl.getParameter(debug.UNMASKED_RENDERER_WEBGL))
+              : null,
+            unmaskedVendor: debug
+              ? String(gl.getParameter(debug.UNMASKED_VENDOR_WEBGL))
+              : null,
+            vendor: String(gl.getParameter(gl.VENDOR))
+          };
+        });
+      }
+    }
+  }
+
+  const contactSheet = await buildStockContactSheet(frames, scales, progresses);
+  const contactSheetSha256 = createHash("sha256").update(contactSheet).digest("hex");
+  const baseCommit = execFileSync("git", ["rev-parse", "HEAD"], {
+    encoding: "utf8"
+  }).trim();
+  const viewport = page.viewportSize();
+  const manifest = {
+    baseCommit,
+    browser: {
+      executable: process.env.MIRALITH_SYSTEM_CHROME_EXECUTABLE ??
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      version: browser.version()
+    },
+    captureCommand:
+      "MIRALITH_TAKRAM_CLOUD_SCALE_CAPTURE=1 pnpm exec playwright test " +
+      "-c playwright.takram-parity-system-chrome.config.ts " +
+      "lubirth-takram-cloud-scale.spec.ts --headed --grep \"Stage A\"",
+    candidateContract: {
+      coverageMode: "parity",
+      coverage: 0.3,
+      input: "stock",
+      mipDistancePatchActive: false,
+      progresses,
+      scales
+    },
+    contactSheet: {
+      path: "stage-a-stock-contact-sheet.png",
+      sha256: contactSheetSha256
+    },
+    generatedAt: new Date().toISOString(),
+    gpu,
+    records,
+    schemaVersion: 1,
+    viewport: {
+      deviceScaleFactor: 1,
+      height: viewport?.height ?? null,
+      width: viewport?.width ?? null
+    }
+  };
+
+  await writeTakramCloudScaleEvidenceAtomically({
+    build: async (stagingDirectory) => {
+      const captureDirectory = path.join(stagingDirectory, "captures");
+      mkdirSync(captureDirectory, { recursive: true });
+      for (const record of records) {
+        const fileName = path.basename(String(record.file));
+        const scale = Number((record.telemetry as ScaleTelemetry).cloudScale?.requested.scale);
+        const progress = Number(record.progress);
+        writeFileSync(
+          path.join(captureDirectory, fileName),
+          frames.get(`${scale}:${progress}`)!
+        );
+      }
+      writeFileSync(path.join(stagingDirectory, "stage-a-stock-contact-sheet.png"), contactSheet);
+      writeFileSync(
+        path.join(stagingDirectory, "manifest.json"),
+        `${JSON.stringify(manifest, null, 2)}\n`
+      );
+      writeFileSync(
+        path.join(stagingDirectory, "checkpoint.json"),
+        `${JSON.stringify({
+          decision: "STAGE_A_VISUAL_REVIEW_PENDING",
+          mipDistancePatchAuthorized: false,
+          originalTask0To8Locked: true,
+          stockPassingScales: [],
+          task0PLocked: true
+        }, null, 2)}\n`
+      );
+      writeFileSync(
+        path.join(stagingDirectory, "README.md"),
+        `# Takram cloud-scale similarity — Stage A\n\n` +
+        `Stock-only public-parameter control at coverage 0.3. ` +
+        `Visual review is pending; no V3 or performance population has run.\n\n` +
+        `## Reproduce\n\n\`\`\`bash\n${manifest.captureCommand}\n\`\`\`\n\n` +
+        `Task 0P and the original Task 0–8 remain locked.\n`
+      );
+    },
+    enabled: captureEnabled,
+    finalDirectory: evidenceDirectory
+  });
 });
 
 test("resets exact first-frame history when the scale contract changes", async ({ page }) => {
