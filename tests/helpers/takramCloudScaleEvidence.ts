@@ -49,7 +49,6 @@ export async function writeTakramCloudScaleEvidenceAtomically(input: {
   }
   try {
     renameSync(stagingDirectory, input.finalDirectory);
-    rmSync(backupDirectory, { force: true, recursive: true });
   } catch (error) {
     rmSync(input.finalDirectory, { force: true, recursive: true });
     if (hadPreviousEvidence && existsSync(backupDirectory)) {
@@ -58,6 +57,9 @@ export async function writeTakramCloudScaleEvidenceAtomically(input: {
     rmSync(stagingDirectory, { force: true, recursive: true });
     throw error;
   }
+  // Cleanup is intentionally outside the publish rollback. Once staging has
+  // become the final directory, a backup-removal failure must not delete the
+  // newly published evidence.
+  rmSync(backupDirectory, { force: true, recursive: true });
   return true;
 }
-
