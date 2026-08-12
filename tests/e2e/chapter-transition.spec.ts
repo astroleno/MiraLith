@@ -1053,6 +1053,30 @@ test("history forward during covering replaces the active attempt with a gated d
     .toBeGreaterThan(stableHomeSnapshot.scrollY * 0.85);
 });
 
+test("return snapshots ignore terminal markers outside the captured route", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "Route-scoped snapshot capture only needs one browser profile.");
+
+  await enterHomepageRuntime(page);
+  await armHomepageTerminal(page);
+  await page.evaluate(() => {
+    const unrelatedTerminal = document.createElement("div");
+    unrelatedTerminal.dataset.chapterTerminal = "idle";
+    unrelatedTerminal.dataset.testTerminalDecoy = "true";
+    document.body.prepend(unrelatedTerminal);
+  });
+  await crossTerminalThreshold(page);
+  await expect(page).toHaveURL(/\/radio-gaga$/);
+  await waitForIdle(page);
+
+  const snapshot = await readStoredReturnSnapshot(page, "/");
+  expect(snapshot).not.toBeNull();
+  expect(snapshot?.terminalState).toBe(true);
+  expect(snapshot?.semantic).toMatchObject({
+    kind: "legacy-progress",
+    terminalState: true
+  });
+});
+
 test("history interruption during resetting-entry preserves the settled return snapshot", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "Reset snapshot preservation only needs one browser profile.");
 

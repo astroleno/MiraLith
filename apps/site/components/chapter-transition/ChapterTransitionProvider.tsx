@@ -270,6 +270,19 @@ function readRouteProgress(pathname: string) {
   return null;
 }
 
+function readRouteTerminalState(pathname: string) {
+  const routeSelector = pathname === "/"
+    ? ".lubirth-revised[data-chapter-focus-root='true']"
+    : pathname === "/radio-gaga"
+      ? ".radio-gaga-route[data-chapter-focus-root]"
+      : pathname === "/coscroll"
+        ? ".coscroll-section[data-coscroll-progress]"
+        : null;
+  const routeRoot = routeSelector ? document.querySelector<HTMLElement>(routeSelector) : null;
+  return routeRoot?.querySelector<HTMLElement>("[data-chapter-terminal]")
+    ?.dataset.chapterTerminal === "armed";
+}
+
 function returnSnapshotKey(pathname: string) {
   return `${RETURN_SNAPSHOT_PREFIX}${pathname}`;
 }
@@ -405,8 +418,7 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
         terminalState = false;
       } else {
         routeProgress = readRouteProgress(normalizedPathname);
-        terminalState = document.querySelector<HTMLElement>("[data-chapter-terminal]")
-          ?.dataset.chapterTerminal === "armed";
+        terminalState = readRouteTerminalState(normalizedPathname);
         semantic = { kind: "legacy-progress", routeProgress, terminalState };
       }
     } catch {
