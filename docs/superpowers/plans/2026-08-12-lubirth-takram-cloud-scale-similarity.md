@@ -678,7 +678,7 @@ git push
 
 - Modify: `docs/superpowers/plans/2026-08-05-lubirth-planetary-volumetric-cloud-spike.md`
 - Modify: `docs/superpowers/plans/2026-08-09-lubirth-takram-v3-scale-and-morphology.md`
-- Modify: `graphify-out/graph.json` and generated graph report only if `graphify --update` is available and changes are structural
+- Modify: `graphify-out/graph.json` and generated graph report only if `graphify update .` is available and changes are structural
 
 ### Step 1: Update plan status without rewriting history
 
@@ -688,7 +688,7 @@ Link this implementation plan and evidence checkpoint from both older plans. Mar
 
 ```bash
 if command -v graphify >/dev/null 2>&1; then
-  graphify --update
+  graphify update .
 else
   echo "graphify unavailable; generated graph left unchanged"
 fi
