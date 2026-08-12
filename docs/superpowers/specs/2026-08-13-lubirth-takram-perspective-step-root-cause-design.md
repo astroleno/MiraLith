@@ -265,7 +265,15 @@ Two native repeats provide only the bounded same-frame noise estimate used by th
 
 `numericQuantizationFloor` is calculated for the exact scalar expression being compared, not assigned once per framebuffer format. All metric implementations decode finite source values to IEEE-754 binary64, traverse the frozen mask in bottom-left row-major order (`y`, then `x`, then channel), use Neumaier compensated summation, and perform no intermediate decimal rounding. Persisted JSON stores the binary64 result with 17 significant decimal digits plus every floor input. Thresholds use the unrounded binary64 values: `>` is strict, equality does not pass, and `<=` includes equality.
 
-For lossy stored samples, define the conservative per-channel quantization uncertainty `u`:
+Every scalar expression carries a typed numeric descriptor:
+
+```text
+exactLattice(E)       = smallest positive exact grid spacing, or 0
+lossyUncertainty(E)   = conservative absolute encoding uncertainty, or 0
+numericQuantizationFloor(E) = max(exactLattice(E), lossyUncertainty(E))
+```
+
+These two components are propagated separately. An exact lattice spacing is not an uncertainty and must never be added merely because an expression has two operands. For lossy stored samples, define the conservative per-channel uncertainty `u`:
 
 ```text
 UNORM(b):    u = 0.5 / (2^b - 1)
@@ -273,25 +281,38 @@ scaled UNORM(b, scale):
              u = 0.5 * abs(scale) / (2^b - 1)
 binary16:    u = 0.5 * max(abs(x - prev16(x)), abs(next16(x) - x))
 binary32:    u = 0.5 * max(abs(x - prev32(x)), abs(next32(x) - x))
+binary64:    u = 0.5 * max(abs(x - prev64(x)), abs(next64(x) - x))
 ```
 
 `prev`/`next` mean the adjacent finite value of that exact format. At signed zero, use the minimum positive subnormal distance; at the largest finite magnitude, use the sole finite-neighbour distance. Non-finite values fail setup before a floor is computed. UNORM endpoints retain the same conservative half-step. Exact integer counters are not treated as lossy: their integer sum must remain below `2^53`, otherwise setup is blocked.
 
-For a decoded per-pixel linear scalar `s = constant + sum(weight[c] * channel[c])`, including luma, propagate `u(s) = sum(abs(weight[c]) * u(channel[c]))`. Diagnostic luma is frozen as `0.2126 R + 0.7152 G + 0.0722 B` in the stored buffer's declared colour domain; no implicit transfer conversion is allowed. Then compute floors as follows for a fixed population of `N > 0` pixels:
+For a decoded per-pixel linear scalar `s = constant + sum(weight[c] * channel[c])`, including luma, propagate `u(s) = sum(abs(weight[c]) * u(channel[c]))`. Diagnostic luma is frozen as `0.2126 R + 0.7152 G + 0.0722 B` in the stored buffer's declared colour domain; no implicit transfer conversion is allowed.
+
+Exact discrete values carry a reduced rational lattice descriptor. If `E = integerNumerator / d`, then `exactLattice(E)=1/d`. For `A-B` with exact denominators `dA` and `dB`, reduce the result lattice as:
 
 ```text
-exact integer sum/count:                 1
-mean of exact integer per-pixel counts:  1 / N
-pixel fraction:                          1 / N
-mean of lossy scalar s:                  sum(u(s_i)) / N
-peak/max of lossy scalar s:              max(u(s_i))
-mean(abs(on_i - off_i)):                  sum(u(on_i) + u(off_i)) / N
-signed difference A - B:                 floor(A) + floor(B)
+exactLattice(A - B) = gcd(dA, dB) / (dA * dB)
+                    = 1 / lcm(dA, dB)
 ```
 
-The last rule composes recursively. Thus candidate-minus-native and adjacent-candidate monotonic tests use the floor of that signed difference; the absolute cloud on/off gate uses the floor of its paired mean-absolute observation; shadow `all-small - primary-both` uses the sum of both aggregate floors. Integer and fraction numerators are accumulated exactly before division. An implementation may not substitute `Number.EPSILON`, a hard-coded UNORM8 constant, or the smallest floor among mixed encodings.
+Consequently, two integer means or pixel fractions over the same fixed population `N` have a difference lattice of `1/N`, not `2/N`. A population mismatch is already a setup failure and may not be hidden by the general denominator rule.
 
-The manifest persists, for every decision metric, its source encoding and bit depth, scale, fixed-mask `N`, aggregation kind, channel weights, local-ULP summary where applicable, component floors, composed floor, repeat noise, and final `epsilon`. Recomputing these fields from raw buffer bits is a setup gate.
+For a fixed population of `N > 0` pixels, propagate the two descriptor components as follows:
+
+```text
+expression                              exactLattice       lossyUncertainty
+exact integer sum/count                 1                  0
+mean of exact integer per-pixel counts  1 / N              0
+pixel fraction                          1 / N              0
+mean of lossy scalar s                  0                  sum(u(s_i)) / N
+peak/max of lossy scalar s              0                  max(u(s_i))
+mean(abs(on_i - off_i))                  0                  sum(u(on_i) + u(off_i)) / N
+signed difference A - B                 reduced lattice    U(A) + U(B)
+```
+
+The last rule composes the descriptor, not the already combined floor. Thus candidate-minus-native and adjacent-candidate monotonic tests over exact count means retain a `1/N` lattice, while lossy uncertainties from two operands add. The absolute cloud on/off gate uses the uncertainty of its paired mean-absolute observation; shadow `all-small - primary-both` adds the two lossy uncertainties and independently reduces any exact lattice. Integer and fraction numerators are accumulated exactly before division. An implementation may not substitute `Number.EPSILON`, a hard-coded UNORM8 constant, add two exact same-denominator lattice spacings, or use the smallest floor among mixed encodings.
+
+The manifest persists, for every decision metric, its source encoding and bit depth, scale, fixed-mask `N`, aggregation kind, channel weights, reduced exact denominator/lattice, local-ULP summary where applicable, lossy uncertainty, composed floor, repeat noise, and final `epsilon`. Recomputing these fields from raw buffer bits is a setup gate.
 
 The ordered target-band sequence is:
 
@@ -334,18 +355,53 @@ The paired observation is the candidate's complete `mean(abs(cloudRawOn - cloudR
 
 Loop/termination evidence remains a validity gate rather than a recovery-effect threshold. `iterationCapPixelFraction` must be finite, lie in `[0,1]`, and be independently recomputable as `iteration-cap pixels / fixed-mask pixels` from the termination buffer. A value of exactly `0` is valid: the termination histogram may contain no `iteration-cap` entry, which is interpreted as a zero count, not missing evidence. A non-zero fraction requires the same non-zero histogram count; neither zero nor non-zero cap incidence changes candidate eligibility by itself.
 
-Both repeats must reach the same pass/fail classification. For both count and raw effects, the two repeat estimates must also have the same sign and differ by no more than:
+Both repeats must reach the same pass/fail classification. For either `countEffect` or `rawEffect`, first define:
 
 ```text
+effectEpsilon = max(epsilon(effectA), epsilon(effectB))
+zeroEquivalent = abs(effectA) <= effectEpsilon
+              && abs(effectB) <= effectEpsilon
+bothNonZero = abs(effectA) > effectEpsilon
+           && abs(effectB) > effectEpsilon
 repeatConsistencyTolerance(effect) = max(
-  3 × epsilon(effect),
+  3 × effectEpsilon,
   0.25 × min(abs(effectA), abs(effectB))
+)
+repeatEffectConsistent = zeroEquivalent
+                      || (
+                           bothNonZero
+                           && sign(effectA) == sign(effectB)
+                           && sign(effectA) != 0
+                           && abs(effectA - effectB) <= repeatConsistencyTolerance(effect)
+                         )
+```
+
+Apply this independently to `countEffect` and `rawEffect`. Opposite signs inside the common zero-equivalent interval are consistent zero evidence. Outside that interval, a sign mismatch, a zero/non-zero mismatch, or excess distance makes that progress `REPEAT_INCONSISTENT`. A candidate is **isolation-eligible** only when it passes at least three of four progress values, includes `progress=0.06`, has no `REPEAT_INCONSISTENT` progress, and neither `countEffect < -epsilon(countEffect)` nor `rawEffect < -epsilon(rawEffect)` at the remaining progress.
+
+### 6.1.1 Positive-control setup gate
+
+The `S=120` health control has no candidate-minus-native effect and therefore does not reuse `countEffect` or `rawEffect`. At every progress, calculate its own two-repeat noise:
+
+```text
+positiveRepeatNoise(M, p) = abs(M(S120, p, A) - M(S120, p, B))
+positiveStableSignal(M, p) = min(M_A, M_B) > max(
+  5 * positiveRepeatNoise(M, p),
+  numericQuantizationFloor(M_A),
+  numericQuantizationFloor(M_B)
 )
 ```
 
-Apply this independently to `countEffect` and `rawEffect`. A violation makes that progress `REPEAT_INCONSISTENT`. A candidate is **isolation-eligible** only when it passes at least three of four progress values, includes `progress=0.06`, has no `REPEAT_INCONSISTENT` progress, and neither `countEffect < -epsilon(countEffect)` nor `rawEffect < -epsilon(rawEffect)` at the remaining progress.
+Both repeats at every progress must independently provide finite readbacks and satisfy all of:
 
-The positive `S=120` control must independently meet the same finite/non-zero signal floor. The target does not have to match the positive control's magnitude; the control proves only that the capture pipeline is healthy.
+```text
+positiveStableSignal(primarySampleMean, p)
+positiveStableSignal(pairedRawObservation, p)
+min(nonZeroPrimarySamplePixelFraction_A, nonZeroPrimarySamplePixelFraction_B) >= 0.001
+min(nonZeroCloudRawPixelFraction_A, nonZeroCloudRawPixelFraction_B) >= 0.001
+abs(fraction_A - fraction_B) <= max(1/N, 0.25 * min(fraction_A, fraction_B))
+```
+
+Apply the final fraction-consistency line independently to the primary-sample and cloud-raw non-zero fractions. Both repeats must also pass the complete ray/mask identity gate and loop/termination validity gate from Sections 5.1–5.2, including independently recomputable cap fraction where zero remains legal. `positiveRepeatNoise` comes only from the `S=120` A/B pair; thin-layer native noise may not be substituted. A single quantized raw pixel, a single sampled pixel, or repeat disagreement therefore cannot make the setup pass. Any failure returns `DIAGNOSTIC_SETUP_BLOCKED`. The thin-layer target does not have to match the control's magnitude; the control proves only that the capture pipeline is healthy.
 
 If multiple candidates are isolation-eligible, choose the numerically largest `perspectiveStepScale`, which is the coarsest eligible step and therefore a unique deterministic winner. `1.01` is the baseline and cannot be selected. Record all candidate classifications; winner selection may not use final-output appearance or GPU time.
 
@@ -437,7 +493,8 @@ For each later-stage scalar metric `M`, progress `p`, and repeat `r`, define the
 shadowEffect(M, p, r) = M(all-small, p, r) - M(primary-both, p, r)
 shadowEpsilon(M, p) = max(
   repeatNoise(M, p),
-  numericQuantizationFloor(M(all-small) - M(primary-both))
+  numericQuantizationFloor(shadowEffect(M, p, A)),
+  numericQuantizationFloor(shadowEffect(M, p, B))
 )
 shadowRepeatTolerance(M, p) = max(
   3 * shadowEpsilon(M, p),
@@ -445,20 +502,38 @@ shadowRepeatTolerance(M, p) = max(
 )
 ```
 
-A metric has a repeat-consistent shadow effect at one progress only when both repeats have absolute magnitude strictly greater than `3 × shadowEpsilon`, have the same non-zero sign, and differ by no more than `shadowRepeatTolerance`. A later-stage shadow effect exists only when the same metric meets that rule at at least three progress values including `0.06`. Opposite signs, excess repeat-distance, threshold-equality, or a significant effect at fewer than three progress values are unresolved evidence, not a downstream confounder.
+Classify every later-stage metric/progress cell before resolving the shadow finding:
+
+```text
+ZERO_EQUIVALENT:
+  abs(effectA) <= shadowEpsilon && abs(effectB) <= shadowEpsilon
+
+CONSISTENT_SIGNIFICANT:
+  abs(effectA) > 3 * shadowEpsilon
+  && abs(effectB) > 3 * shadowEpsilon
+  && sign(effectA) == sign(effectB)
+  && sign(effectA) != 0
+  && abs(effectA - effectB) <= shadowRepeatTolerance
+
+AMBIGUOUS_OR_INCONSISTENT:
+  every remaining cell
+```
+
+A later-stage shadow effect qualifies only when the same metric is `CONSISTENT_SIGNIFICANT` at at least three progress values including `0.06`. Threshold equality does not qualify.
 
 The shadow resolver is total and uses this precedence:
 
 1. If `rawEquivalent=false`, return `SHADOW_LENGTH_EFFECT_UNRESOLVED`.
-2. If at least one later-stage metric has a repeat-consistent shadow effect at the required three progress values, return `SHADOW_LENGTH_DOWNSTREAM_CONFOUNDER`.
-3. If every signed later-stage effect in both repeats has absolute magnitude at most its `shadowEpsilon`, return `NO_DETECTABLE_SHADOW_LENGTH_EFFECT`.
-4. Return `SHADOW_LENGTH_EFFECT_UNRESOLVED` for every remaining valid pattern.
+2. If any metric/progress cell is `AMBIGUOUS_OR_INCONSISTENT`, return `SHADOW_LENGTH_EFFECT_UNRESOLVED`. This is a global veto: a qualifying final-output metric cannot hide an opposite-sign, excess-distance, zero/significant mismatch, or between-threshold pre-temporal/history cell.
+3. If at least one later-stage metric qualifies at the required three progress values, return `SHADOW_LENGTH_DOWNSTREAM_CONFOUNDER`.
+4. If every metric/progress cell is `ZERO_EQUIVALENT`, return `NO_DETECTABLE_SHADOW_LENGTH_EFFECT`.
+5. Return `SHADOW_LENGTH_EFFECT_UNRESOLVED` for the remaining all-classified patterns, including a consistent effect localized to fewer than three progress values.
 
 | Shadow finding | Required evidence |
 | --- | --- |
-| `SHADOW_LENGTH_DOWNSTREAM_CONFOUNDER` | Raw is equivalent and at least one later-stage metric meets the shadow-effect rule |
+| `SHADOW_LENGTH_DOWNSTREAM_CONFOUNDER` | Raw is equivalent, no metric/progress cell is ambiguous or inconsistent, and at least one later-stage metric meets the shadow-effect rule |
 | `NO_DETECTABLE_SHADOW_LENGTH_EFFECT` | Raw is equivalent and every signed later-stage effect in both repeats has absolute magnitude at most its `shadowEpsilon` |
-| `SHADOW_LENGTH_EFFECT_UNRESOLVED` | Raw is not equivalent; any effect lies between the noise and decision thresholds; repeat signs or magnitudes disagree; or the downstream effect is localized to fewer than three progress values |
+| `SHADOW_LENGTH_EFFECT_UNRESOLVED` | Raw is not equivalent; any winning or non-winning metric is ambiguous/inconsistent; or the downstream effect is localized to fewer than three progress values |
 
 `INITIAL_PRIMARY_OVERSTEP_SUPPORTED` is evidence for the first-sample mechanism, not proof that it is the only rendering defect. BSM, AerialPerspective, and temporal resolve remain separate downstream gates.
 
@@ -480,7 +555,7 @@ All shader work is project-owned, capture-only, and installed at runtime by exac
 
 The runtime fingerprint must include the three split scales and instrumentation hash. A request/readback mismatch is `DIAGNOSTIC_SETUP_BLOCKED`.
 
-Pure tests must cover exact single-site shader replacements, disabled-output parity, unknown/partial query tuples, V3 and product-route rejection, uniform/shader cleanup after unmount, iteration-cap versus early-termination encoding, zero iteration-cap fraction with no histogram entry, raw-buffer metric recomputation, and precision/quantization floors. Quantization golden tests must cover UNORM8 scalar means and paired differences, value-dependent binary16 ULPs including zero/subnormal and maximum-finite boundaries, exact integer count means, pixel fractions, recursive signed-difference propagation, strict threshold equality, and 17-digit persistence/recomputation. Identity tests must prove that two fresh documents with the same numeric allocation generations remain a valid independent pair when their `documentRunId` and mount/runtime identities differ. Mask tests must include a pixel-exact bottom-left-origin golden projection from `360 × 240` to `1440 × 960`, the `×16` population invariant, and fail-closed dimension/origin mismatches. The outcome resolver must cover monotonic recovery, non-monotonic recovery, fine-control-only recovery, one-progress recovery, repeat inconsistency, no bounded effect, setup blocking, and the final unresolved catch-all where signed effects pass but the absolute or non-zero signal floor does not. Shadow tests must cover repeat-consistent positive and negative effects, opposite signs, excess repeat-distance, threshold equality, localized effects, and no detectable effect.
+Pure tests must cover exact single-site shader replacements, disabled-output parity, unknown/partial query tuples, V3 and product-route rejection, uniform/shader cleanup after unmount, iteration-cap versus early-termination encoding, zero iteration-cap fraction with no histogram entry, raw-buffer metric recomputation, and precision/quantization floors. Quantization golden tests must cover UNORM8 scalar means and paired differences, value-dependent binary16 ULPs including zero/subnormal and maximum-finite boundaries, exact integer count means, same-`N` count/fraction signed differences retaining a `1/N` lattice, general reduced rational difference lattices, mixed exact/lossy descriptors, strict threshold equality, and 17-digit persistence/recomputation. Identity tests must prove that two fresh documents with the same numeric allocation generations remain a valid independent pair when their `documentRunId` and mount/runtime identities differ. Mask tests must include a pixel-exact bottom-left-origin golden projection from `360 × 240` to `1440 × 960`, the `×16` population invariant, and fail-closed dimension/origin mismatches. The outcome resolver must cover monotonic recovery, non-monotonic recovery, fine-control-only recovery, one-progress recovery, repeat inconsistency, two opposite-sign sub-epsilon effects classified as consistent zero, no bounded effect, setup blocking, and the final unresolved catch-all where signed effects pass but the absolute or non-zero signal floor does not. Positive-control tests must cover one sampled/raw pixel, stable true signal, both non-zero fraction boundaries, termination validity, and repeat disagreement using `S=120` self-noise. Shadow tests must cover repeat-consistent positive and negative effects, opposite signs, excess repeat-distance, threshold equality, localized effects, no detectable effect, and a qualifying metric vetoed by another metric's opposite sign or excess tolerance.
 
 ## 9. Cost and iteration-limit boundary
 
@@ -544,10 +619,13 @@ The design is ready for implementation planning only when review confirms:
 - fixed frame/STBN identity is repeated on a clean mount;
 - on/off independence is proven by document and mount/runtime identity while allocation generations remain explicitly document-local;
 - zero iteration-cap incidence is accepted when it is independently recomputable from the termination buffer;
-- `S=120` remains a healthy positive control rather than causal proof;
+- `S=120` passes quantified self-repeat sample/raw/fraction/termination gates and remains a health control rather than causal proof;
 - candidate-level count/raw/repeat/progress gates select one deterministic isolation value;
+- exact discrete lattices and lossy uncertainties are propagated separately, including the same-`N` `1/N` difference lattice;
 - quantization floors are derived from the exact encoding, aggregation, and comparison expression with strict boundary rules;
+- opposite-sign sub-epsilon effects are consistent zero while significant repeat disagreement remains fail-closed;
 - both the uniform-sweep and shadow resolvers are total functions with explicit unresolved catch-alls;
+- non-winning shadow metrics have an explicit ambiguity/inconsistency veto;
 - non-monotonic or localized recovery cannot be mislabeled as hypothesis rejection;
 - initial, subsequent, and shadow-length stepping have separate owners in the isolation stage;
 - no result automatically opens Stage C–F or production promotion.
