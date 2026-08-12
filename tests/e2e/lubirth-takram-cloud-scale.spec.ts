@@ -16,6 +16,10 @@ const evidenceDirectory = path.resolve(
   process.cwd(),
   "docs/lubirth-planetary-cloud-evidence/2026-08-12/takram-cloud-scale"
 );
+const stageA1EvidenceDirectory = path.join(
+  evidenceDirectory,
+  "stage-a1-scaled-weather"
+);
 
 interface ScaleTelemetry {
   active: boolean;
@@ -152,7 +156,8 @@ async function readExactMatchedFrame(page: Page) {
 async function buildStockContactSheet(
   frames: ReadonlyMap<string, Buffer>,
   scales: readonly Scale[],
-  progresses: readonly number[]
+  progresses: readonly number[],
+  label = "stock"
 ) {
   const cellWidth = 360;
   const imageHeight = 240;
@@ -174,7 +179,7 @@ async function buildStockContactSheet(
           `<svg width="${cellWidth}" height="${labelHeight}" xmlns="http://www.w3.org/2000/svg">` +
           `<rect width="100%" height="100%" fill="#10131a"/>` +
           `<text x="8" y="21" fill="#f4f6fa" font-family="monospace" font-size="13">` +
-          `stock · S=${scale} · p=${progress.toFixed(2)}</text></svg>`
+          `${label} · S=${scale} · p=${progress.toFixed(2)}</text></svg>`
         ),
         left,
         top: top + imageHeight
@@ -481,6 +486,184 @@ test("Stage A0 captures the unscaled stock-weather historical control", async ({
     },
     enabled: captureEnabled,
     finalDirectory: evidenceDirectory
+  });
+});
+
+test("Stage A1 captures the scaled stock-weather health control", async ({
+  browser,
+  page
+}) => {
+  test.skip(!captureEnabled, "formal evidence requires explicit capture mode");
+  expect(execFileSync("git", ["status", "--porcelain"], { encoding: "utf8" }).trim())
+    .toBe("");
+
+  const scales = [80, 120, 160] as const;
+  const progresses = [0, 0.06, 0.12, 0.18] as const;
+  const frames = new Map<string, Buffer>();
+  const records: Array<Record<string, unknown>> = [];
+  let gpu: Record<string, string | null> | null = null;
+
+  for (const scale of scales) {
+    for (const progress of progresses) {
+      const telemetry = await openScaleCandidate(
+        page,
+        "stock",
+        scale,
+        "parity",
+        "full",
+        progress,
+        "similarity"
+      );
+      expect(telemetry.cloudScale?.drift).toEqual([]);
+      expect(telemetry.cloudScale?.stockWeatherControl).toEqual({
+        classification: "SCALED_STOCK_WEATHER_CONTROL",
+        mode: "similarity",
+        repeat: [100 / scale, 100 / scale],
+        scale,
+        sourceRepeat: [100, 100]
+      });
+      expect(telemetry.adapter.localWeatherRepeat).toEqual([100 / scale, 100 / scale]);
+      expect(telemetry.cloudScale?.readback.mipDistancePatch).toMatchObject({
+        active: false,
+        classification: "native-hardcoded",
+        nativeCoefficientOccurrences: 1,
+        patchedCoefficientOccurrences: 0,
+        scale: 1
+      });
+      expect(telemetry.rendererFingerprintHash).toMatch(/^fnv1a-64:[0-9a-f]{16}$/);
+
+      const capture = await readExactMatchedFrame(page);
+      const fileName = `stage-a1-stock-weather-s${scale}-p${Math.round(progress * 100)
+        .toString().padStart(3, "0")}-full.png`;
+      const screenshotSha256 = createHash("sha256")
+        .update(capture.buffer)
+        .digest("hex");
+      frames.set(`${scale}:${progress}`, capture.buffer);
+      records.push({
+        capture: capture.metadata,
+        file: `captures/${fileName}`,
+        input: "stock",
+        progress,
+        query: query("stock", scale, "parity", progress, "similarity"),
+        rendererFingerprintHash: telemetry.rendererFingerprintHash,
+        screenshotSha256,
+        telemetry
+      });
+
+      if (gpu === null) {
+        gpu = await page.evaluate(() => {
+          const canvas = document.querySelector("canvas");
+          const gl = canvas?.getContext("webgl2");
+          if (!gl) return null;
+          const debug = gl.getExtension("WEBGL_debug_renderer_info");
+          return {
+            renderer: String(gl.getParameter(gl.RENDERER)),
+            unmaskedRenderer: debug
+              ? String(gl.getParameter(debug.UNMASKED_RENDERER_WEBGL))
+              : null,
+            unmaskedVendor: debug
+              ? String(gl.getParameter(debug.UNMASKED_VENDOR_WEBGL))
+              : null,
+            vendor: String(gl.getParameter(gl.VENDOR))
+          };
+        });
+      }
+    }
+  }
+
+  const contactSheet = await buildStockContactSheet(
+    frames,
+    scales,
+    progresses,
+    "stock 100/S"
+  );
+  const contactSheetSha256 = createHash("sha256").update(contactSheet).digest("hex");
+  const baseCommit = execFileSync("git", ["rev-parse", "HEAD"], {
+    encoding: "utf8"
+  }).trim();
+  const viewport = page.viewportSize();
+  const firstTelemetry = records[0]?.telemetry as ScaleTelemetry;
+  const runtimeMipIdentity = firstTelemetry.cloudScale?.readback.mipDistancePatch;
+  const manifest = {
+    baseCommit,
+    browser: {
+      executable: process.env.MIRALITH_SYSTEM_CHROME_EXECUTABLE ??
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      version: browser.version()
+    },
+    captureCommand:
+      "MIRALITH_TAKRAM_CLOUD_SCALE_CAPTURE=1 pnpm exec playwright test " +
+      "-c playwright.takram-parity-system-chrome.config.ts " +
+      "lubirth-takram-cloud-scale.spec.ts --headed --grep \"Stage A1 captures\"",
+    candidateContract: {
+      classification: "SCALED_STOCK_WEATHER_CONTROL",
+      coverage: 0.3,
+      coverageMode: "parity",
+      input: "stock",
+      localWeatherRepeat: "100/S",
+      progresses,
+      scales
+    },
+    contactSheet: {
+      path: "stage-a1-stock-weather-contact-sheet.png",
+      sha256: contactSheetSha256
+    },
+    generatedAt: new Date().toISOString(),
+    gpu,
+    records,
+    runtimeMipIdentity,
+    schemaVersion: 2,
+    viewport: {
+      deviceScaleFactor: 1,
+      height: viewport?.height ?? null,
+      width: viewport?.width ?? null
+    }
+  };
+
+  await writeTakramCloudScaleEvidenceAtomically({
+    build: async (stagingDirectory) => {
+      const captureDirectory = path.join(stagingDirectory, "captures");
+      mkdirSync(captureDirectory, { recursive: true });
+      for (const record of records) {
+        const fileName = path.basename(String(record.file));
+        const scale = Number((record.telemetry as ScaleTelemetry).cloudScale?.requested.scale);
+        const progress = Number(record.progress);
+        writeFileSync(
+          path.join(captureDirectory, fileName),
+          frames.get(`${scale}:${progress}`)!
+        );
+      }
+      writeFileSync(
+        path.join(stagingDirectory, "stage-a1-stock-weather-contact-sheet.png"),
+        contactSheet
+      );
+      writeFileSync(
+        path.join(stagingDirectory, "manifest.json"),
+        `${JSON.stringify(manifest, null, 2)}\n`
+      );
+      writeFileSync(
+        path.join(stagingDirectory, "checkpoint.json"),
+        `${JSON.stringify({
+          decision: "SCALED_STOCK_WEATHER_VISUAL_REVIEW_PENDING",
+          mipDistancePatchAuthorized: false,
+          originalTask0To8Locked: true,
+          stageBRun: false,
+          stageCRun: false,
+          stockPassingScales: [],
+          task0PLocked: true
+        }, null, 2)}\n`
+      );
+      writeFileSync(
+        path.join(stagingDirectory, "README.md"),
+        `# Stage A1 scaled stock-weather health control\n\n` +
+        `Stock coverage 0.3 with localWeatherRepeat=[100/S,100/S]. ` +
+        `Visual review is pending; mip remains unpatched and V3 has not run.\n\n` +
+        `## Reproduce\n\n\`\`\`bash\n${manifest.captureCommand}\n\`\`\`\n\n` +
+        `Task 0P and the original Task 0–8 remain locked.\n`
+      );
+    },
+    enabled: captureEnabled,
+    finalDirectory: stageA1EvidenceDirectory
   });
 });
 
