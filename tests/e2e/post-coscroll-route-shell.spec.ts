@@ -169,3 +169,11 @@ test("expired or forged preview evidence hides the review rail but leaves a dire
   await expect(page.locator("[data-post-coscroll-route='artbreeze']")).toBeVisible();
   await expect(page.locator("[data-chapter-transition-layer]")).toHaveAttribute("data-state", "idle");
 });
+
+test("the controller contract fixture fails closed without its development-only flag", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The fixture isolation contract needs one desktop profile.");
+
+  const response = await page.goto("/spikes/post-coscroll-controller-contract");
+  expect(response?.status()).toBe(404);
+  await expect(page.locator("[data-post-coscroll-controller-contract]")).toHaveCount(0);
+});
