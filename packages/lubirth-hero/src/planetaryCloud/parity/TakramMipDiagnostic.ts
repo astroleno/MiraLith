@@ -29,6 +29,7 @@ export interface TakramMipDiagnosticPopulationSummary {
 }
 
 export type TakramMipDiagnosticDecision =
+  | "MIP_DIAGNOSTIC_INVALID_CANDIDATE_SET"
   | "MIP_DIAGNOSTIC_INCONCLUSIVE_EMPTY_POPULATION"
   | "MIP_DIAGNOSTIC_INVALID_HEALTHY_REFERENCE"
   | "MIP_CAUSAL_HYPOTHESIS_REJECTED"
@@ -134,6 +135,19 @@ export function evaluateTakramMipDiagnostic(input: {
   const healthy = summarizeTakramMipDiagnosticPopulation(input.healthy);
   const candidates = input.candidates.map(summarizeTakramMipDiagnosticPopulation);
   const base = { healthy, candidates, patchAuthorized: false as const };
+  const candidateScales = input.candidates.map((candidate) => candidate.scale);
+  const expectedCandidateScales: readonly TakramMipDiagnosticCandidateScale[] = [80, 120, 160];
+  const candidateSetValid = candidateScales.length === expectedCandidateScales.length &&
+    expectedCandidateScales.every((scale) =>
+      candidateScales.filter((candidateScale) => candidateScale === scale).length === 1
+    );
+  if (!candidateSetValid) {
+    return {
+      ...base,
+      decision: "MIP_DIAGNOSTIC_INVALID_CANDIDATE_SET",
+      qualifyingSecondaryScale: null
+    };
+  }
   if (!healthy.valid || candidates.some((candidate) => !candidate.valid)) {
     return {
       ...base,

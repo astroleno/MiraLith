@@ -1,15 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
-
-const instrumentationPath =
-  "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramMipDiagnosticInstrumentation";
-const diagnosticPath =
-  "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramMipDiagnostic";
-const readbackPath =
-  "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramMipDiagnosticReadback";
+import * as diagnostic from "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramMipDiagnostic";
+import * as instrumentation from "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramMipDiagnosticInstrumentation";
+import * as readback from "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramMipDiagnosticReadback";
 
 test("installs a reversible per-primary-sample mip probe on the pinned shader", async () => {
-  const instrumentation = await import(instrumentationPath);
   const originalShader = readFileSync(
     "packages/lubirth-hero/node_modules/@takram/three-clouds/src/shaders/clouds.frag",
     "utf8"
@@ -111,7 +106,6 @@ function createPopulation({
 }
 
 test("accepts mip causality only for the frozen healthy and scaled thresholds", async () => {
-  const diagnostic = await import(diagnosticPath);
   expect(diagnostic.TAKRAM_MIP_DIAGNOSTIC_TARGET_FRAMES).toEqual([16, 32, 48]);
   expect(diagnostic.TAKRAM_MIP_DIAGNOSTIC_RECORD_STRIDE).toBe(9);
 
@@ -138,7 +132,6 @@ test("accepts mip causality only for the frozen healthy and scaled thresholds", 
 });
 
 test("rejects correlation when scaled mip excess or weather population is insufficient", async () => {
-  const diagnostic = await import(diagnosticPath);
   const result = diagnostic.evaluateTakramMipDiagnostic({
     healthy: createPopulation({ scale: 1, mipExcess: 0, opacity: 0.2 }),
     candidates: [
@@ -153,8 +146,28 @@ test("rejects correlation when scaled mip excess or weather population is insuff
   expect(result.qualifyingSecondaryScale).toBeNull();
 });
 
+test("rejects missing or duplicate candidate scales before evaluating causality", async () => {
+  const healthy = createPopulation({ scale: 1, mipExcess: 0, opacity: 0.2 });
+  const scale80 = createPopulation({ scale: 80, mipExcess: 1.2 });
+  const scale120 = createPopulation({ scale: 120, mipExcess: 1.2 });
+  const scale160 = createPopulation({ scale: 160, mipExcess: 1.2 });
+
+  const missing = diagnostic.evaluateTakramMipDiagnostic({
+    healthy,
+    candidates: [scale80, scale120]
+  });
+  expect(missing.decision).toBe("MIP_DIAGNOSTIC_INVALID_CANDIDATE_SET");
+  expect(missing.patchAuthorized).toBe(false);
+
+  const duplicate = diagnostic.evaluateTakramMipDiagnostic({
+    healthy,
+    candidates: [scale80, scale120, scale160, scale160]
+  });
+  expect(duplicate.decision).toBe("MIP_DIAGNOSTIC_INVALID_CANDIDATE_SET");
+  expect(duplicate.patchAuthorized).toBe(false);
+});
+
 test("stops on an invalid healthy reference or empty candidate population", async () => {
-  const diagnostic = await import(diagnosticPath);
   const invalidHealthy = diagnostic.evaluateTakramMipDiagnostic({
     healthy: createPopulation({ scale: 1, mipExcess: 0, weatherHit: false, opacity: 0.01 }),
     candidates: [
@@ -179,7 +192,6 @@ test("stops on an invalid healthy reference or empty candidate population", asyn
 });
 
 test("packs only valid jointly indexed GPU samples and derives counterfactual mip", async () => {
-  const readback = await import(readbackPath);
   const records = readback.packTakramMipDiagnosticOrdinal({
     scale: 80,
     sampleOrdinal: 3,

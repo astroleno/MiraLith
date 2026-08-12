@@ -11,3 +11,10 @@ The capture compares the official S=1 stock control with stock S=80/120/160 simi
 ```bash
 MIRALITH_TAKRAM_MIP_DIAGNOSTIC_CAPTURE=1 pnpm exec playwright test -c playwright.takram-parity-system-chrome.config.ts lubirth-takram-mip-diagnostic.spec.ts --headed --grep "Conditional Task M"
 ```
+
+Recompute all 12 committed gzip populations, verify compressed and uncompressed
+hashes/lengths, and compare the resulting evaluation with `manifest.json`:
+
+```bash
+pnpm exec playwright test -c playwright.unit.config.ts lubirthTakramMipEvidence.spec.ts
+```
