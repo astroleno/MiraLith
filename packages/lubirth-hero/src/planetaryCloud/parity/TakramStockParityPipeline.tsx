@@ -61,6 +61,8 @@ import {
   type TakramParityDiagnostic,
   type TakramParityHistoryFirstFrameCapture,
   type TakramParityMatchedTemporalFrameCapture,
+  type TakramMipDiagnosticCapture,
+  type TakramMipDiagnosticEncodedFrameCapture,
   type TakramParityInput,
   type TakramParityAltitudeLadderTelemetry,
   type TakramParitySampleCountReadback,
@@ -100,6 +102,20 @@ import { resolveTakramParityAdapter } from "./TakramParityV3Adapter";
 import { TAKRAM_PARITY_V3_LAYERS } from "./TakramParityV3Layers";
 import { installTakramSampleCountInstrumentation } from "./TakramSampleCountInstrumentation";
 import { encodeTakramStageReadbackValues } from "./TakramStageReadbackEncoding";
+import {
+  TAKRAM_MIP_DIAGNOSTIC_RECORD_STRIDE,
+  TAKRAM_MIP_DIAGNOSTIC_TARGET_FRAMES,
+  type TakramMipDiagnosticScale
+} from "./TakramMipDiagnostic";
+import {
+  installTakramMipDiagnosticInstrumentation,
+  readTakramMipDiagnosticShaderIdentity,
+  type TakramMipDiagnosticMaterial
+} from "./TakramMipDiagnosticInstrumentation";
+import {
+  captureTakramMipDiagnosticFrame,
+  type TakramMipDiagnosticPass
+} from "./TakramMipDiagnosticReadback";
 
 const EARTH_DAY_SRC = "/assets/lubirth/textures/earth-day-nasa-lite-4k.webp";
 const CONTROL_CAMERA_ALTITUDE_M =
@@ -178,6 +194,7 @@ declare global {
     __MiraLithTakramHistoryFirstFrame?: TakramParityHistoryFirstFrameCapture;
     __MiraLithTakramMatchedTemporalFrame?: TakramParityMatchedTemporalFrameCapture;
     __MiraLithTakramStageReadback?: TakramParityStageReadbackCapture;
+    __MiraLithTakramMipDiagnostic?: TakramMipDiagnosticCapture;
   }
 }
 
@@ -495,7 +512,8 @@ function resolveDiagnosticState(diagnostic: TakramParityDiagnostic) {
     sceneDepthClamp: diagnostic !== "depth-off",
     sampleCountDebug: diagnostic === "sample-count-debug",
     stageReadback: diagnostic === "stage-readback",
-    historyResetFirstFrame: diagnostic === "history-reset-first"
+    historyResetFirstFrame: diagnostic === "history-reset-first",
+    mipDiagnostic: diagnostic === "mip-diagnostic"
   };
 }
 
@@ -553,6 +571,7 @@ export function TakramStockParityPipeline({
   const matchedTemporalFrameCaptureRef = useRef<TakramParityMatchedTemporalFrameCapture | null>(null);
   const sampleCountReadbackRef = useRef<TakramParitySampleCountReadback | null>(null);
   const stageReadbackRef = useRef<TakramParityStageReadbackCapture | null>(null);
+  const mipDiagnosticCaptureRef = useRef<TakramMipDiagnosticCapture | null>(null);
   const appliedDiagnosticRef = useRef<TakramParityDiagnostic | null>(null);
   const nativeFrameCountRef = useRef(0);
   const ladderCaptureRef = useRef<TakramAltitudeLadderCapture>({
@@ -654,6 +673,7 @@ export function TakramStockParityPipeline({
       (layer) => layer.shadow
     );
     let restoreSampleCountInstrumentation: (() => void) | null = null;
+    let restoreMipDiagnosticInstrumentation: (() => void) | null = null;
     if (diagnostic === "bsm-off") {
       clouds.cloudLayers.forEach((layer) => {
         layer.shadow = false;
@@ -677,6 +697,11 @@ export function TakramStockParityPipeline({
       );
       clouds.cloudsPass.currentMaterial.defines.DEBUG_SHOW_SAMPLE_COUNT = "1";
       clouds.cloudsPass.currentMaterial.needsUpdate = true;
+    }
+    if (diagnostic === "mip-diagnostic") {
+      restoreMipDiagnosticInstrumentation = installTakramMipDiagnosticInstrumentation(
+        clouds.cloudsPass.currentMaterial as unknown as TakramMipDiagnosticMaterial
+      );
     }
     if (diagnostic === "uv-debug") {
       clouds.cloudsPass.currentMaterial.defines.DEBUG_SHOW_UV = "1";
@@ -711,6 +736,7 @@ export function TakramStockParityPipeline({
         delete clouds.cloudsPass.currentMaterial.defines.DEBUG_SHOW_UV;
         clouds.cloudsPass.currentMaterial.needsUpdate = true;
       }
+      restoreMipDiagnosticInstrumentation?.();
     };
   }, [assetsState.ready, atmosphereState.ready, bridgeReady, cloudScaleContract, diagnostic]);
 
@@ -891,10 +917,12 @@ export function TakramStockParityPipeline({
       matchedTemporalFrameCaptureRef.current = null;
       sampleCountReadbackRef.current = null;
       stageReadbackRef.current = null;
+      mipDiagnosticCaptureRef.current = null;
       if (typeof window !== "undefined") {
         delete window.__MiraLithTakramHistoryFirstFrame;
         delete window.__MiraLithTakramMatchedTemporalFrame;
         delete window.__MiraLithTakramStageReadback;
+        delete window.__MiraLithTakramMipDiagnostic;
       }
       if (clouds) {
         // The upstream effect owns the STBN/Bayer frame counter. Reset it with
@@ -932,9 +960,11 @@ export function TakramStockParityPipeline({
       matchedTemporalFrameCaptureRef.current !== null;
     const stageReadbackReady = diagnostic !== "stage-readback" ||
       stageReadbackRef.current !== null;
+    const mipDiagnosticReady = diagnostic !== "mip-diagnostic" ||
+      mipDiagnosticCaptureRef.current?.completed === true;
     const telemetry: TakramParityTelemetry = {
       active: nativePipelineReady && sampleCountReadbackReady && matchedTemporalFrameReady &&
-        stageReadbackReady &&
+        stageReadbackReady && mipDiagnosticReady &&
         ((diagnostic === "history-reset-first" &&
           historyFirstFrameCaptureRef.current !== null) ||
           (temporalConverged && (!isTakramParityAltitudeLadderDiagnostic(diagnostic) ||
@@ -993,6 +1023,16 @@ export function TakramStockParityPipeline({
             stbnSliceIndex: matchedTemporalFrameCaptureRef.current.stbnSliceIndex,
             historyEpochHash: matchedTemporalFrameCaptureRef.current.historyEpochHash,
             frameLockPass: matchedTemporalFrameCaptureRef.current.frameLockPass
+          },
+      mipDiagnostic: mipDiagnosticCaptureRef.current === null
+        ? null
+        : {
+            completed: mipDiagnosticCaptureRef.current.completed,
+            scale: mipDiagnosticCaptureRef.current.scale,
+            targetNativeFrames: mipDiagnosticCaptureRef.current.targetNativeFrames,
+            runtimeFragmentShaderFnv1a64:
+              mipDiagnosticCaptureRef.current.runtimeFragmentShaderFnv1a64,
+            frames: mipDiagnosticCaptureRef.current.frames.map(({ dataBase64: _dataBase64, ...frame }) => frame)
           },
       stageReadback: stageReadbackRef.current === null
         ? null
@@ -1081,10 +1121,13 @@ export function TakramStockParityPipeline({
       altitudeLadder: telemetry.altitudeLadder,
       nativeFrameCount: Math.min(
         telemetry.nativeFrameCount,
-        TEMPORAL_CONVERGENCE_FRAME_COUNT
+        diagnostic === "mip-diagnostic"
+          ? TAKRAM_MIP_DIAGNOSTIC_TARGET_FRAMES[2]
+          : TEMPORAL_CONVERGENCE_FRAME_COUNT
       ),
       historyFirstFrameCapture: telemetry.historyFirstFrameCapture,
       matchedTemporalFrameCapture: telemetry.matchedTemporalFrameCapture,
+      mipDiagnostic: telemetry.mipDiagnostic,
       stageReadback: telemetry.stageReadback,
       temporalConverged: telemetry.temporalConverged,
       transformFallback: telemetry.transformFallback,
@@ -1143,6 +1186,84 @@ export function TakramStockParityPipeline({
     matchedTemporalFrameCaptureRef.current = capture;
     if (typeof window !== "undefined") {
       window.__MiraLithTakramMatchedTemporalFrame = capture;
+    }
+  }, 2);
+
+  // Conditional Task M is a read-only counterfactual probe. At three frozen
+  // native frames, replay only the already-prepared current cloud pass and
+  // read its existing MRT attachments. Resolve/history, shader mip behavior,
+  // and every production renderer parameter remain untouched.
+  useFrame(() => {
+    if (diagnostic !== "mip-diagnostic") return;
+    const targetNativeFrame = TAKRAM_MIP_DIAGNOSTIC_TARGET_FRAMES.find(
+      (frame) => frame === nativeFrameCountRef.current
+    );
+    if (targetNativeFrame === undefined ||
+      mipDiagnosticCaptureRef.current?.frames.some(
+        (frame) => frame.nativeFrame === targetNativeFrame
+      )) {
+      return;
+    }
+    const clouds = cloudsRef.current;
+    if (!clouds) return;
+    const cloudsPass = clouds.cloudsPass as unknown as TakramMipDiagnosticPass & {
+      resolveMaterial: { uniforms: Record<string, { value?: unknown }> };
+    };
+    const shadowPass = clouds.shadowPass as unknown as {
+      currentMaterial: { uniforms: Record<string, { value?: unknown }> };
+    };
+    const cloudsFrame = Number(cloudsPass.currentMaterial.uniforms.frame?.value ?? Number.NaN);
+    const resolveFrame = Number(cloudsPass.resolveMaterial.uniforms.frame?.value ?? Number.NaN);
+    const shadowFrame = Number(shadowPass.currentMaterial.uniforms.frame?.value ?? Number.NaN);
+    const stbnDepth = Number((clouds.stbnTexture?.image as { depth?: number } | undefined)?.depth ?? 1);
+    const temporalFrame = {
+      nativeFrameCount: targetNativeFrame,
+      ...resolveTakramParityTemporalFrameMetadata({
+        cloudsFrame,
+        resolveFrame,
+        shadowFrame,
+        stbnDepth,
+        historyEpoch: historyEpochRef.current
+      })
+    };
+    if (!temporalFrame.frameLockPass || cloudsFrame !== targetNativeFrame) {
+      throw new Error(
+        `Takram mip diagnostic frame lock failed at native frame ${targetNativeFrame}.`
+      );
+    }
+    const scale = (cloudScale ?? 1) as TakramMipDiagnosticScale;
+    const readback = captureTakramMipDiagnosticFrame({
+      renderer: gl,
+      pass: cloudsPass,
+      scale
+    });
+    const encoded = encodeTakramStageReadbackValues(readback.records, "half-float");
+    const encodedFrame: TakramMipDiagnosticEncodedFrameCapture = {
+      nativeFrame: targetNativeFrame,
+      width: readback.width,
+      height: readback.height,
+      recordCount: readback.recordCount,
+      lastSampleOrdinal: readback.lastSampleOrdinal,
+      recordStride: TAKRAM_MIP_DIAGNOSTIC_RECORD_STRIDE,
+      scalar: "float32-le",
+      byteLength: encoded.byteLength,
+      dataBase64: encoded.dataBase64,
+      temporalFrame
+    };
+    const previous = mipDiagnosticCaptureRef.current;
+    const frames = [...(previous?.frames ?? []), encodedFrame]
+      .sort((left, right) => left.nativeFrame - right.nativeFrame);
+    const capture: TakramMipDiagnosticCapture = {
+      completed: frames.length === TAKRAM_MIP_DIAGNOSTIC_TARGET_FRAMES.length,
+      scale,
+      targetNativeFrames: TAKRAM_MIP_DIAGNOSTIC_TARGET_FRAMES,
+      runtimeFragmentShaderFnv1a64: previous?.runtimeFragmentShaderFnv1a64 ??
+        readTakramMipDiagnosticShaderIdentity(cloudsPass.currentMaterial),
+      frames
+    };
+    mipDiagnosticCaptureRef.current = capture;
+    if (typeof window !== "undefined") {
+      window.__MiraLithTakramMipDiagnostic = capture;
     }
   }, 2);
 

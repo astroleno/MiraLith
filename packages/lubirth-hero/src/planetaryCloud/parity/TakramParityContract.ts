@@ -48,7 +48,8 @@ export type TakramParityDiagnostic =
   | "cloud-raw-off"
   | "sample-count-debug"
   | "stage-readback"
-  | "aerial-final";
+  | "aerial-final"
+  | "mip-diagnostic";
 export type UpstreamControlDecision = "PASS" | "UPSTREAM_CONTROL_FAIL";
 export type StockOpeningDecision =
   | "PASS"
@@ -232,6 +233,7 @@ export type TakramParityRouteQueryResult =
       | "conflicting-scale-contracts"
       | "morphology-candidate-requires-view"
       | "morphology-requires-v3"
+      | "mip-diagnostic-requires-stock"
       | "unknown-cloud-coverage-mode"
       | "unknown-cloud-scale"
       | "unknown-stock-weather-mode"
@@ -265,7 +267,8 @@ export function resolveTakramParityRouteQuery(
     requestedDiagnostic === "cloud-raw-off" ||
     requestedDiagnostic === "sample-count-debug" ||
     requestedDiagnostic === "stage-readback" ||
-    requestedDiagnostic === "aerial-final"
+    requestedDiagnostic === "aerial-final" ||
+    requestedDiagnostic === "mip-diagnostic"
     ? requestedDiagnostic
     : "full";
   const value: TakramParityRouteQuery = {
@@ -349,6 +352,9 @@ export function resolveTakramParityRouteQuery(
   if (value.view === "control" && value.input !== "stock") {
     return { ok: false, reason: "control-requires-stock" };
   }
+  if (diagnostic === "mip-diagnostic" && value.input !== "stock") {
+    return { ok: false, reason: "mip-diagnostic-requires-stock" };
+  }
 
   // Opening has one narrow debug readback: stock/V3 review can compare the
   // native cloud buffer with the complete aerial composite. The control-only
@@ -356,11 +362,11 @@ export function resolveTakramParityRouteQuery(
   const morphologyDiagnostic = value.morphologyView !== undefined &&
     ["full", "cloud-raw", "cloud-raw-off", "history-reset-first", "bsm-off", "aerial-final", "sample-count-debug", "stage-readback"].includes(value.diagnostic);
   const cloudScaleDiagnostic = value.cloudScale !== undefined &&
-    ["full", "cloud-raw", "cloud-raw-off", "history-reset-first", "bsm-off", "aerial-final", "sample-count-debug", "stage-readback"].includes(value.diagnostic);
+    ["full", "cloud-raw", "cloud-raw-off", "history-reset-first", "bsm-off", "aerial-final", "sample-count-debug", "stage-readback", "mip-diagnostic"].includes(value.diagnostic);
   return {
     ok: true,
     value: value.view === "opening" && !morphologyDiagnostic && !cloudScaleDiagnostic &&
-      !["altitude-ladder", "altitude-ladder-cloud-off", "cloud-raw", "cloud-raw-off", "depth-off", "density-debug", "uv-debug", "sample-count-debug", "stage-readback"].includes(value.diagnostic)
+      !["altitude-ladder", "altitude-ladder-cloud-off", "cloud-raw", "cloud-raw-off", "depth-off", "density-debug", "uv-debug", "sample-count-debug", "stage-readback", "mip-diagnostic"].includes(value.diagnostic)
       ? { ...value, diagnostic: "full" }
       : value
   };
@@ -769,6 +775,28 @@ export interface TakramParityDiagnosticState {
   sampleCountDebug: boolean;
   stageReadback: boolean;
   historyResetFirstFrame: boolean;
+  mipDiagnostic: boolean;
+}
+
+export interface TakramMipDiagnosticEncodedFrameCapture {
+  nativeFrame: 16 | 32 | 48;
+  width: number;
+  height: number;
+  recordCount: number;
+  lastSampleOrdinal: number;
+  recordStride: 9;
+  scalar: "float32-le";
+  byteLength: number;
+  dataBase64: string;
+  temporalFrame: Omit<TakramParityMatchedTemporalFrameCapture, "dataUrl" | "height" | "width">;
+}
+
+export interface TakramMipDiagnosticCapture {
+  completed: boolean;
+  scale: 1 | 80 | 120 | 160;
+  targetNativeFrames: readonly [16, 32, 48];
+  runtimeFragmentShaderFnv1a64: string;
+  frames: TakramMipDiagnosticEncodedFrameCapture[];
 }
 
 export interface TakramParityStageReadbackBuffer {
@@ -830,6 +858,9 @@ export interface TakramParityTelemetry {
   historyEpochHash: string;
   historyFirstFrameCapture: Omit<TakramParityHistoryFirstFrameCapture, "dataUrl"> | null;
   matchedTemporalFrameCapture: Omit<TakramParityMatchedTemporalFrameCapture, "dataUrl"> | null;
+  mipDiagnostic: null | Omit<TakramMipDiagnosticCapture, "frames"> & {
+    frames: Array<Omit<TakramMipDiagnosticEncodedFrameCapture, "dataBase64">>;
+  };
   stageReadback: Omit<TakramParityStageReadbackCapture, "preTemporal" | "resolvedHistory" | "finalOutput"> & {
     preTemporal: Omit<TakramParityStageReadbackBuffer, "dataBase64">;
     resolvedHistory: Omit<TakramParityStageReadbackBuffer, "dataBase64">;

@@ -22,7 +22,7 @@ interface TakramParityContractModule {
         cloudCoverageMode?: "parity" | "presentation";
         cloudScale?: 80 | 120 | 160;
         stockWeatherMode?: "unscaled" | "similarity";
-        diagnostic: "altitude-ladder" | "altitude-ladder-cloud-off" | "aerial-final" | "bsm-off" | "cloud-raw" | "cloud-raw-off" | "depth-off" | "density-debug" | "full" | "history-reset-first" | "sample-count-debug" | "stage-readback" | "uv-debug";
+        diagnostic: "altitude-ladder" | "altitude-ladder-cloud-off" | "aerial-final" | "bsm-off" | "cloud-raw" | "cloud-raw-off" | "depth-off" | "density-debug" | "full" | "history-reset-first" | "mip-diagnostic" | "sample-count-debug" | "stage-readback" | "uv-debug";
         input: "stock" | "v3";
         progress: number;
         view: "control" | "opening";
@@ -36,6 +36,7 @@ interface TakramParityContractModule {
         | "cloud-scale-requires-opening"
         | "conflicting-scale-contracts"
         | "control-requires-stock"
+        | "mip-diagnostic-requires-stock"
         | "unknown-cloud-coverage-mode"
         | "unknown-cloud-scale"
         | "unknown-stock-weather-mode"
@@ -491,6 +492,34 @@ test("pins the official stock Takram contract to auditable local assets", async 
   expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
     "input=v3&view=control"
   ))).toEqual({ ok: false, reason: "control-requires-stock" });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=stock&view=control&diagnostic=mip-diagnostic"
+  ))).toEqual({
+    ok: true,
+    value: {
+      diagnostic: "mip-diagnostic",
+      input: "stock",
+      progress: 0,
+      view: "control"
+    }
+  });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=stock&view=opening&progress=0.06&cloudScale=120&cloudCoverage=parity&stockWeather=similarity&diagnostic=mip-diagnostic"
+  ))).toEqual({
+    ok: true,
+    value: {
+      cloudCoverageMode: "parity",
+      cloudScale: 120,
+      diagnostic: "mip-diagnostic",
+      input: "stock",
+      progress: 0.06,
+      stockWeatherMode: "similarity",
+      view: "opening"
+    }
+  });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=v3&view=opening&diagnostic=mip-diagnostic"
+  ))).toEqual({ ok: false, reason: "mip-diagnostic-requires-stock" });
   expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
     "input=v3&view=opening&diagnostic=altitude-ladder&altitudeMeters=200000"
   ))).toEqual({
