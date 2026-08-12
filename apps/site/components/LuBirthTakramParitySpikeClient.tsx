@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { lazy, useEffect, useMemo, useState } from "react";
+import { lazy, useCallback, useEffect, useMemo, useState } from "react";
 import {
   resolveTakramParityRouteQuery,
   type TakramParityHistoryFirstFrameCapture,
@@ -37,13 +37,22 @@ export function LuBirthTakramParitySpikeClient() {
     () => resolveTakramParityRouteQuery(searchParams),
     [searchParams]
   );
-  const [telemetry, setTelemetry] = useState<TakramParityTelemetry | null>(null);
+  const queryKey = searchParams.toString();
+  const [telemetryState, setTelemetryState] = useState<{
+    queryKey: string;
+    value: TakramParityTelemetry;
+  } | null>(null);
+  const telemetry = telemetryState?.queryKey === queryKey
+    ? telemetryState.value
+    : null;
+  const handleTelemetry = useCallback((value: TakramParityTelemetry) => {
+    setTelemetryState({ queryKey, value });
+  }, [queryKey]);
 
   useEffect(() => {
-    setTelemetry(null);
     delete window.__MiraLithTakramParity;
     delete window.__MiraLithTakramHistoryFirstFrame;
-  }, [searchParams]);
+  }, [queryKey]);
 
   useEffect(() => {
     if (telemetry) {
@@ -99,7 +108,7 @@ export function LuBirthTakramParitySpikeClient() {
           {query.view === "control" ? (
             <TakramUpstreamControlScene
               diagnostic={query.diagnostic}
-              onTelemetry={setTelemetry}
+              onTelemetry={handleTelemetry}
             />
           ) : (
             <LuBirthTakramParityScene
@@ -111,7 +120,7 @@ export function LuBirthTakramParitySpikeClient() {
               morphologyCandidate={query.morphologyCandidate}
               morphologyView={query.morphologyView}
               orbitalLookdev={orbitalLookdev}
-              onTelemetry={setTelemetry}
+              onTelemetry={handleTelemetry}
               progress={query.progress}
               stockWeatherMode={query.stockWeatherMode}
               weatherAdapterComparison={query.weatherAdapterComparison}
