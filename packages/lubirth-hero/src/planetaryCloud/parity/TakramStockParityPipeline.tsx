@@ -17,6 +17,7 @@ import { mapOpeningProgress } from "@miralith/visual-core";
 import {
   Euler,
   Camera,
+  FramebufferTexture,
   Group,
   Matrix4,
   NoToneMapping,
@@ -140,6 +141,12 @@ import {
   type TakramLookdevDriftAttemptLedger,
   type TakramLookdevSetupState
 } from "./TakramOrbitalLookdevIdentity";
+import {
+  createTakramOrbitalWebGl2TimerProfiler,
+  createUnsupportedTakramOrbitalGpuProfile,
+  type TakramOrbitalGpuProfileSnapshot,
+  type TakramOrbitalWebGl2TimerProfiler
+} from "./TakramOrbitalGpuProfiler";
 
 const EARTH_DAY_SRC = "/assets/lubirth/textures/earth-day-nasa-lite-4k.webp";
 const CONTROL_CAMERA_ALTITUDE_M =
@@ -219,6 +226,16 @@ declare global {
     __MiraLithTakramMatchedTemporalFrame?: TakramParityMatchedTemporalFrameCapture;
     __MiraLithTakramStageReadback?: TakramParityStageReadbackCapture;
     __MiraLithTakramMipDiagnostic?: TakramMipDiagnosticCapture;
+    __MiraLithTakramGpuProfile?: TakramOrbitalGpuProfileSnapshot;
+    __MiraLithStartTakramGpuProfile?: (input: Readonly<{
+      candidateId: string;
+      committedWinnerId: string;
+      lookdevMountKey: string;
+      runtimeEvidenceEpoch: string;
+    }>) => Readonly<{
+      accepted: boolean;
+      reason: string | null;
+    }>;
   }
 }
 
@@ -642,6 +659,9 @@ export function TakramStockParityPipeline({
   const observedLookdevMountKeyRef = useRef<string | null>(null);
   const pendingRecoveryMountKeyRef = useRef<string | null>(null);
   const runtimeEvidenceEpochRef = useRef<string | null>(null);
+  const gpuProfilerRef = useRef<TakramOrbitalWebGl2TimerProfiler | null>(null);
+  const gpuCopyBaselineTextureRef = useRef<FramebufferTexture | null>(null);
+  const gpuQueryActiveRef = useRef(false);
   const ladderCaptureRef = useRef<TakramAltitudeLadderCapture>({
     phase: "normal",
     cloudOnFinalReadback: null,
@@ -749,6 +769,58 @@ export function TakramStockParityPipeline({
     runtimeEvidenceEpochRef.current = null;
   }, [lookdevBaseKey]);
 
+  useEffect(() => {
+    if (typeof window === "undefined" || orbitalLookdevContract === null ||
+      lookdevMountKey === null) {
+      return undefined;
+    }
+    const startProfiler: NonNullable<Window["__MiraLithStartTakramGpuProfile"]> =
+      (request) => {
+        if (request.candidateId !== request.committedWinnerId) {
+          return {
+            accepted: false,
+            reason: "candidate-is-not-committed-stock-winner"
+          };
+        }
+        if (request.lookdevMountKey !== lookdevMountKey ||
+          request.runtimeEvidenceEpoch !== runtimeEvidenceEpochRef.current) {
+          return { accepted: false, reason: "runtime-evidence-epoch-mismatch" };
+        }
+        gpuProfilerRef.current?.dispose();
+        gpuCopyBaselineTextureRef.current?.dispose();
+        gpuQueryActiveRef.current = false;
+        const context = gl.getContext();
+        if (!(context instanceof WebGL2RenderingContext)) {
+          const unsupported = createUnsupportedTakramOrbitalGpuProfile({
+            invalidReason: "webgl2-context-unavailable",
+            timestampBits: 0
+          });
+          window.__MiraLithTakramGpuProfile = unsupported;
+          return { accepted: true, reason: null };
+        }
+        const profiler = createTakramOrbitalWebGl2TimerProfiler(context);
+        gpuProfilerRef.current = profiler;
+        gpuCopyBaselineTextureRef.current = new FramebufferTexture(
+          gl.domElement.width,
+          gl.domElement.height
+        );
+        window.__MiraLithTakramGpuProfile = profiler.snapshot();
+        return { accepted: true, reason: null };
+      };
+    window.__MiraLithStartTakramGpuProfile = startProfiler;
+    return () => {
+      if (window.__MiraLithStartTakramGpuProfile === startProfiler) {
+        delete window.__MiraLithStartTakramGpuProfile;
+      }
+      delete window.__MiraLithTakramGpuProfile;
+      gpuProfilerRef.current?.dispose();
+      gpuProfilerRef.current = null;
+      gpuCopyBaselineTextureRef.current?.dispose();
+      gpuCopyBaselineTextureRef.current = null;
+      gpuQueryActiveRef.current = false;
+    };
+  }, [gl, lookdevMountKey, orbitalLookdevContract]);
+
   useFrame(() => {
     const width = gl.domElement.width;
     const height = gl.domElement.height;
@@ -763,6 +835,28 @@ export function TakramStockParityPipeline({
           width
         });
   }, -3);
+
+  // The total-only timer is deliberately non-nesting. It opens immediately
+  // before the native EffectComposer priority and closes after all native
+  // submissions; the profiler then emits a separate empty-query baseline.
+  useFrame(() => {
+    gpuQueryActiveRef.current = gpuProfilerRef.current?.beginFrame() ?? false;
+  }, 0);
+
+  useFrame(() => {
+    const profiler = gpuProfilerRef.current;
+    if (profiler === null) return;
+    if (gpuQueryActiveRef.current) {
+      profiler.endFrame(() => {
+        const texture = gpuCopyBaselineTextureRef.current;
+        if (texture !== null) gl.copyFramebufferToTexture(texture);
+      });
+      gpuQueryActiveRef.current = false;
+    }
+    if (typeof window !== "undefined") {
+      window.__MiraLithTakramGpuProfile = profiler.poll();
+    }
+  }, 3);
 
   const setCloudsRef = useCallback((clouds: TakramCloudsRef | null) => {
     cloudsRef.current = clouds;

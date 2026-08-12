@@ -7,6 +7,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "contact-sheet:takram-orbital-lookdev": "node scripts/create-takram-orbital-lookdev-contact-sheet.mjs",
     "generate:cloud-deck": "node scripts/generate-cloud-deck-texture.mjs",
     "generate:earth-lights-only": "node scripts/generate-earth-lights-only.mjs",
     "generate:home-cloud-field": "node scripts/generate-home-cloud-field.mjs",
