@@ -1,6 +1,6 @@
 # LuBirth Takram Orbital Sampling Causality A/B Design
 
-**Status:** Draft complete; awaiting written-spec review
+**Status:** Approved; ready for implementation
 
 **Date:** 2026-08-13
 
