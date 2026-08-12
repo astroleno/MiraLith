@@ -1265,6 +1265,13 @@ export function TakramStockParityPipeline({
         adapter.disableDefaultLayers
     );
     const nativePipelineReady = runtimePrerequisitesReady && orbitalRuntimeReady;
+    if (clouds !== null && !nativePipelineReady) {
+      // Assets/materials/diagnostics can settle a few RAFs after the effect is
+      // allocated. Keep those bootstrap submissions at frame 0 so the first
+      // ready frame begins the audited epoch at 1 instead of inheriting an
+      // environment-dependent offset before the 32-frame capture count.
+      (clouds as unknown as { frame: number }).frame = -1;
+    }
     if (nativePipelineReady && orbitalLookdevReadback !== null &&
       rendererFingerprint !== null && lookdevMountKey !== null) {
       runtimeEvidenceEpochRef.current = buildTakramRuntimeEvidenceEpoch({
