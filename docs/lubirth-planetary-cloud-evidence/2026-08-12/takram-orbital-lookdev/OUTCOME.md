@@ -19,3 +19,9 @@ Evidence:
 - `stage-0/checkpoint.json` and `stage-0/manifest.json`
 - `stage-a/review.json`, contact sheets, and capture manifest
 - `stage-b/review.json`, `stage-b/checkpoint.json`, contact sheets, and capture manifest
+
+## 2026-08-13 scope amendment
+
+This outcome completed and validated the bounded evidence funnel, but it did not establish a healthy same-camera orbital cloud baseline or a usable cloud migration. It must not be read as evidence that Takram itself cannot produce orbital clouds.
+
+The subsequent isolated two-arm sampling experiment changed only `perspectiveStepScale` and reached [`ORBITAL_SAMPLING_CAUSALITY_CONFIRMED`](../../2026-08-13/takram-orbital-sampling-causality/OUTCOME.md). It showed that the frozen `1.01` perspective step skipped the thin native layers at orbital distance. The old Stage C–F sequence remains locked; a separate production-step design is required before lookdev resumes.

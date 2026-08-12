@@ -1,0 +1,44 @@
+{
+  "schema": "takram-orbital-sampling-causality-review/v1",
+  "cleanCommit": "b5913b9ca496b20944d6a0d6fe018f85c9ad99f0",
+  "outcome": null,
+  "instructions": "Review cloud-raw structure and stage retention; sample count alone cannot pass.",
+  "frames": [
+    {
+      "downstreamSignalObservable": null,
+      "nativeSamplingIncreased": null,
+      "preTemporalSignalRecovered": null,
+      "progress": 0,
+      "repeatNoiseExceeded": null,
+      "structuredRawSignalRecovered": null,
+      "reviewerNotes": ""
+    },
+    {
+      "downstreamSignalObservable": null,
+      "nativeSamplingIncreased": null,
+      "preTemporalSignalRecovered": null,
+      "progress": 0.06,
+      "repeatNoiseExceeded": null,
+      "structuredRawSignalRecovered": null,
+      "reviewerNotes": ""
+    },
+    {
+      "downstreamSignalObservable": null,
+      "nativeSamplingIncreased": null,
+      "preTemporalSignalRecovered": null,
+      "progress": 0.12,
+      "repeatNoiseExceeded": null,
+      "structuredRawSignalRecovered": null,
+      "reviewerNotes": ""
+    },
+    {
+      "downstreamSignalObservable": null,
+      "nativeSamplingIncreased": null,
+      "preTemporalSignalRecovered": null,
+      "progress": 0.18,
+      "repeatNoiseExceeded": null,
+      "structuredRawSignalRecovered": null,
+      "reviewerNotes": ""
+    }
+  ]
+}

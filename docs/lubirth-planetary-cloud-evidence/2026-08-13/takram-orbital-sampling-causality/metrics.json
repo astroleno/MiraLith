@@ -1,0 +1,3801 @@
+{
+  "schema": "takram-orbital-sampling-causality-metrics/v1",
+  "arms": [
+    {
+      "key": "control:0:base",
+      "metrics": {
+        "mask": {
+          "artifact": {
+            "byteLength": 38346,
+            "kind": "mask",
+            "path": "captures/control-p0-00-cloud-signal-mask.png",
+            "sha256": "b5bd16894accd9aa3a5221186754f436f8750002d534b0d7ba47eb8f9f1d7a8b"
+          },
+          "cloudPixelCount": 5340,
+          "cloudPixelFraction": 0.0038628472222222224,
+          "connectedComponentCount": 4786,
+          "largestConnectedAreaFraction": 0.0024344569288389513,
+          "singlePixelFragmentFraction": 0.8323970037453183,
+          "smallFragmentFraction": 0.9471910112359551,
+          "edgeDensity": 1
+        },
+        "rawSignal": {
+          "normalizedMae": 0.5230638172872129,
+          "maxDifference": 0.9450980392156862,
+          "p50Difference": 0.5725490196078431,
+          "p95Difference": 0.8196078431372549,
+          "changedPixelFraction": 1
+        },
+        "sampleCount": {
+          "artifact": {
+            "byteLength": 4667,
+            "kind": "native-sample-count",
+            "path": "captures/control-p0-00-native-sample-count-rgba-u16le.gz",
+            "sha256": "ad5dd08f9bdc76a70c310eb9f0d5cfe5a244b461746184a7f2b249b13b200eb6"
+          },
+          "metrics": {
+            "source": "native-cloud-current-render-target-v1",
+            "encoding": "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask",
+            "precision": "half-float",
+            "nativeWidth": 360,
+            "nativeHeight": 240,
+            "populationMapping": "native-cloud-hit-alpha-v1",
+            "nativeHitPixelCount": 239,
+            "signalPresent": true,
+            "nonZeroPrimaryPixelFraction": 1,
+            "invariantViolationCount": 0,
+            "invariantViolationFraction": 0,
+            "invariantPass": true,
+            "primary": {
+              "min": 1,
+              "mean": 1.0920502092050208,
+              "p50": 1,
+              "p95": 2,
+              "max": 5
+            },
+            "shape": {
+              "min": 1,
+              "mean": 1,
+              "p50": 1,
+              "p95": 1,
+              "max": 1
+            },
+            "detail": {
+              "min": 0,
+              "mean": 0.8200836820083682,
+              "p50": 1,
+              "p95": 1,
+              "max": 1
+            },
+            "maskCoverageSensitivity": [
+              {
+                "minimumMaskCoverage": 0.25,
+                "selectedNativePixelCount": 81,
+                "coverageWeightSum": 23.5,
+                "primary": {
+                  "min": 0,
+                  "mean": 6.827160493827161,
+                  "p50": 1,
+                  "p95": 19,
+                  "max": 117
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0.7283950617283951,
+                  "p50": 1,
+                  "p95": 1,
+                  "max": 2
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0.13580246913580246,
+                  "p50": 0,
+                  "p95": 1,
+                  "max": 1
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 6.954787234042553,
+                  "p50": 1,
+                  "p95": 22,
+                  "max": 117
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0.7553191489361702,
+                  "p50": 1,
+                  "p95": 1,
+                  "max": 2
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0.13031914893617022,
+                  "p50": 0,
+                  "p95": 1,
+                  "max": 1
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.5,
+                "selectedNativePixelCount": 0,
+                "coverageWeightSum": 0,
+                "primary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.75,
+                "selectedNativePixelCount": 0,
+                "coverageWeightSum": 0,
+                "primary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                }
+              },
+              {
+                "minimumMaskCoverage": 1,
+                "selectedNativePixelCount": 0,
+                "coverageWeightSum": 0,
+                "primary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                }
+              }
+            ]
+          }
+        },
+        "stages": [
+          {
+            "artifact": {
+              "byteLength": 6077,
+              "kind": "stage-buffer",
+              "path": "captures/control-p0-00-pre-temporal-rgba-f32le.gz",
+              "sha256": "c4a15fb84826d5f73ee3ffbaf2d7e989b518a4df37e9621d454e0a6c7269d4e4"
+            },
+            "metadata": {
+              "width": 360,
+              "height": 240,
+              "precision": "half-float",
+              "source": "native-cloud-current-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 1382400
+            },
+            "stage": "pre-temporal",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.0071643518518518514,
+              "meanOpacity": 0.0071574175799334495,
+              "p50Opacity": 0,
+              "p95Opacity": 0,
+              "peakOpacity": 1,
+              "meanLuma": 0.00015369996327451528,
+              "signalMeanLuma": 0.021453435907783716,
+              "peakLuma": 0.29397031249999994
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 68077,
+              "kind": "stage-buffer",
+              "path": "captures/control-p0-00-resolved-history-rgba-f32le.gz",
+              "sha256": "859a54e6c63e10830d9de4d4d25a3c18ffa375a0c1bd8d34ca14d747648dd7ea"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "half-float",
+              "source": "native-cloud-resolved-history-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 22118400
+            },
+            "stage": "resolved-history",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.004370659722222222,
+              "meanOpacity": 0.0036066477276660777,
+              "p50Opacity": 0,
+              "p95Opacity": 0,
+              "peakOpacity": 1,
+              "meanLuma": 0.000012052998259982048,
+              "signalMeanLuma": 0.002757683815045708,
+              "peakLuma": 0.29397031249999994
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 160095,
+              "kind": "stage-buffer",
+              "path": "captures/control-p0-00-final-output-rgba-u8.gz",
+              "sha256": "fea1d82cce66a362b74d162c71990671f5bcd115d1dbcfcf87a03355d0abe504"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "unorm8",
+              "source": "default-framebuffer-after-aerial-perspective",
+              "origin": "bottom-left",
+              "encoding": "srgb-output-rgba",
+              "scalar": "uint8",
+              "byteLength": 5529600
+            },
+            "stage": "final-output",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 1,
+              "meanOpacity": 1,
+              "p50Opacity": 1,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.07329260923496056,
+              "signalMeanLuma": 0.07329260923496056,
+              "peakLuma": 0.5757804174423218
+            }
+          }
+        ],
+        "retention": {
+          "signalPixelFraction": 0.6100565428109854,
+          "signalMeanLuma": 0.12854275776148136
+        }
+      }
+    },
+    {
+      "key": "control:0.06:base",
+      "metrics": {
+        "mask": {
+          "artifact": {
+            "byteLength": 37963,
+            "kind": "mask",
+            "path": "captures/control-p0-06-cloud-signal-mask.png",
+            "sha256": "42ce3c63c39e39dc6966f646cffa29ed5c709e4225e9341159bb9f48186c6baa"
+          },
+          "cloudPixelCount": 5125,
+          "cloudPixelFraction": 0.003707320601851852,
+          "connectedComponentCount": 4606,
+          "largestConnectedAreaFraction": 0.002926829268292683,
+          "singlePixelFragmentFraction": 0.8380487804878048,
+          "smallFragmentFraction": 0.9484878048780487,
+          "edgeDensity": 1
+        },
+        "rawSignal": {
+          "normalizedMae": 0.5148434241989488,
+          "maxDifference": 0.9490196078431372,
+          "p50Difference": 0.5686274509803921,
+          "p95Difference": 0.8196078431372549,
+          "changedPixelFraction": 1
+        },
+        "sampleCount": {
+          "artifact": {
+            "byteLength": 4627,
+            "kind": "native-sample-count",
+            "path": "captures/control-p0-06-native-sample-count-rgba-u16le.gz",
+            "sha256": "a29f50f4239b8807d1f28a9fb132229bd6fd9c77077bbb3ff14cce9c882c1bb7"
+          },
+          "metrics": {
+            "source": "native-cloud-current-render-target-v1",
+            "encoding": "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask",
+            "precision": "half-float",
+            "nativeWidth": 360,
+            "nativeHeight": 240,
+            "populationMapping": "native-cloud-hit-alpha-v1",
+            "nativeHitPixelCount": 220,
+            "signalPresent": true,
+            "nonZeroPrimaryPixelFraction": 1,
+            "invariantViolationCount": 0,
+            "invariantViolationFraction": 0,
+            "invariantPass": true,
+            "primary": {
+              "min": 1,
+              "mean": 1.1681818181818182,
+              "p50": 1,
+              "p95": 2,
+              "max": 10
+            },
+            "shape": {
+              "min": 1,
+              "mean": 1.0136363636363637,
+              "p50": 1,
+              "p95": 1,
+              "max": 2
+            },
+            "detail": {
+              "min": 0,
+              "mean": 0.8545454545454545,
+              "p50": 1,
+              "p95": 1,
+              "max": 1
+            },
+            "maskCoverageSensitivity": [
+              {
+                "minimumMaskCoverage": 0.25,
+                "selectedNativePixelCount": 77,
+                "coverageWeightSum": 21.625,
+                "primary": {
+                  "min": 0,
+                  "mean": 8.974025974025974,
+                  "p50": 1,
+                  "p95": 48.400000000000006,
+                  "max": 119
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0.7792207792207793,
+                  "p50": 1,
+                  "p95": 1.2000000000000028,
+                  "max": 2
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0.18181818181818182,
+                  "p50": 0,
+                  "p95": 1,
+                  "max": 1
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 9.560693641618498,
+                  "p50": 1,
+                  "p95": 50,
+                  "max": 119
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0.8121387283236994,
+                  "p50": 1,
+                  "p95": 2,
+                  "max": 2
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0.17630057803468208,
+                  "p50": 0,
+                  "p95": 1,
+                  "max": 1
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.5,
+                "selectedNativePixelCount": 0,
+                "coverageWeightSum": 0,
+                "primary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.75,
+                "selectedNativePixelCount": 0,
+                "coverageWeightSum": 0,
+                "primary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                }
+              },
+              {
+                "minimumMaskCoverage": 1,
+                "selectedNativePixelCount": 0,
+                "coverageWeightSum": 0,
+                "primary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                }
+              }
+            ]
+          }
+        },
+        "stages": [
+          {
+            "artifact": {
+              "byteLength": 6043,
+              "kind": "stage-buffer",
+              "path": "captures/control-p0-06-pre-temporal-rgba-f32le.gz",
+              "sha256": "515edefc3ea0586f9da3af343324c78353354c87d0f34c5ea7451ef351a85951"
+            },
+            "metadata": {
+              "width": 360,
+              "height": 240,
+              "precision": "half-float",
+              "source": "native-cloud-current-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 1382400
+            },
+            "stage": "pre-temporal",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.006921296296296296,
+              "meanOpacity": 0.0069157918294270836,
+              "p50Opacity": 0,
+              "p95Opacity": 0,
+              "peakOpacity": 1,
+              "meanLuma": 0.00015363329108086983,
+              "signalMeanLuma": 0.022197184530747746,
+              "peakLuma": 0.28270263671875
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 67669,
+              "kind": "stage-buffer",
+              "path": "captures/control-p0-06-resolved-history-rgba-f32le.gz",
+              "sha256": "a55df15db335c01cbd0fefb782ea6385093d559d8f7475c190e6e06fe17369e0"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "half-float",
+              "source": "native-cloud-resolved-history-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 22118400
+            },
+            "stage": "resolved-history",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.004208622685185185,
+              "meanOpacity": 0.0034415656972366076,
+              "p50Opacity": 0,
+              "p95Opacity": 0,
+              "peakOpacity": 1,
+              "meanLuma": 0.000012560501362317183,
+              "signalMeanLuma": 0.002984445115793702,
+              "peakLuma": 0.28270263671875
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 160325,
+              "kind": "stage-buffer",
+              "path": "captures/control-p0-06-final-output-rgba-u8.gz",
+              "sha256": "71ab1bcd0d7dd154c5a1a5b6fba3bfd2075186c54168b409863e09f735fb0589"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "unorm8",
+              "source": "default-framebuffer-after-aerial-perspective",
+              "origin": "bottom-left",
+              "encoding": "srgb-output-rgba",
+              "scalar": "uint8",
+              "byteLength": 5529600
+            },
+            "stage": "final-output",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 1,
+              "meanOpacity": 1,
+              "p50Opacity": 1,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.07387214020321853,
+              "signalMeanLuma": 0.07387214020321853,
+              "peakLuma": 0.5676541434168816
+            }
+          }
+        ],
+        "retention": {
+          "signalPixelFraction": 0.6080685618729097,
+          "signalMeanLuma": 0.13445151621187007
+        }
+      }
+    },
+    {
+      "key": "control:0.06:1",
+      "metrics": {
+        "mask": {
+          "artifact": {
+            "byteLength": 37963,
+            "kind": "mask",
+            "path": "captures/control-p0-06-repeat-1-cloud-signal-mask.png",
+            "sha256": "42ce3c63c39e39dc6966f646cffa29ed5c709e4225e9341159bb9f48186c6baa"
+          },
+          "cloudPixelCount": 5125,
+          "cloudPixelFraction": 0.003707320601851852,
+          "connectedComponentCount": 4606,
+          "largestConnectedAreaFraction": 0.002926829268292683,
+          "singlePixelFragmentFraction": 0.8380487804878048,
+          "smallFragmentFraction": 0.9484878048780487,
+          "edgeDensity": 1
+        },
+        "rawSignal": {
+          "normalizedMae": 0.5148434241989488,
+          "maxDifference": 0.9490196078431372,
+          "p50Difference": 0.5686274509803921,
+          "p95Difference": 0.8196078431372549,
+          "changedPixelFraction": 1
+        },
+        "sampleCount": {
+          "artifact": {
+            "byteLength": 4627,
+            "kind": "native-sample-count",
+            "path": "captures/control-p0-06-repeat-1-native-sample-count-rgba-u16le.gz",
+            "sha256": "a29f50f4239b8807d1f28a9fb132229bd6fd9c77077bbb3ff14cce9c882c1bb7"
+          },
+          "metrics": {
+            "source": "native-cloud-current-render-target-v1",
+            "encoding": "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask",
+            "precision": "half-float",
+            "nativeWidth": 360,
+            "nativeHeight": 240,
+            "populationMapping": "native-cloud-hit-alpha-v1",
+            "nativeHitPixelCount": 220,
+            "signalPresent": true,
+            "nonZeroPrimaryPixelFraction": 1,
+            "invariantViolationCount": 0,
+            "invariantViolationFraction": 0,
+            "invariantPass": true,
+            "primary": {
+              "min": 1,
+              "mean": 1.1681818181818182,
+              "p50": 1,
+              "p95": 2,
+              "max": 10
+            },
+            "shape": {
+              "min": 1,
+              "mean": 1.0136363636363637,
+              "p50": 1,
+              "p95": 1,
+              "max": 2
+            },
+            "detail": {
+              "min": 0,
+              "mean": 0.8545454545454545,
+              "p50": 1,
+              "p95": 1,
+              "max": 1
+            },
+            "maskCoverageSensitivity": [
+              {
+                "minimumMaskCoverage": 0.25,
+                "selectedNativePixelCount": 77,
+                "coverageWeightSum": 21.625,
+                "primary": {
+                  "min": 0,
+                  "mean": 8.974025974025974,
+                  "p50": 1,
+                  "p95": 48.400000000000006,
+                  "max": 119
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0.7792207792207793,
+                  "p50": 1,
+                  "p95": 1.2000000000000028,
+                  "max": 2
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0.18181818181818182,
+                  "p50": 0,
+                  "p95": 1,
+                  "max": 1
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 9.560693641618498,
+                  "p50": 1,
+                  "p95": 50,
+                  "max": 119
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0.8121387283236994,
+                  "p50": 1,
+                  "p95": 2,
+                  "max": 2
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0.17630057803468208,
+                  "p50": 0,
+                  "p95": 1,
+                  "max": 1
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.5,
+                "selectedNativePixelCount": 0,
+                "coverageWeightSum": 0,
+                "primary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.75,
+                "selectedNativePixelCount": 0,
+                "coverageWeightSum": 0,
+                "primary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                }
+              },
+              {
+                "minimumMaskCoverage": 1,
+                "selectedNativePixelCount": 0,
+                "coverageWeightSum": 0,
+                "primary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                }
+              }
+            ]
+          }
+        },
+        "stages": [
+          {
+            "artifact": {
+              "byteLength": 6043,
+              "kind": "stage-buffer",
+              "path": "captures/control-p0-06-repeat-1-pre-temporal-rgba-f32le.gz",
+              "sha256": "515edefc3ea0586f9da3af343324c78353354c87d0f34c5ea7451ef351a85951"
+            },
+            "metadata": {
+              "width": 360,
+              "height": 240,
+              "precision": "half-float",
+              "source": "native-cloud-current-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 1382400
+            },
+            "stage": "pre-temporal",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.006921296296296296,
+              "meanOpacity": 0.0069157918294270836,
+              "p50Opacity": 0,
+              "p95Opacity": 0,
+              "peakOpacity": 1,
+              "meanLuma": 0.00015363329108086983,
+              "signalMeanLuma": 0.022197184530747746,
+              "peakLuma": 0.28270263671875
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 67669,
+              "kind": "stage-buffer",
+              "path": "captures/control-p0-06-repeat-1-resolved-history-rgba-f32le.gz",
+              "sha256": "a55df15db335c01cbd0fefb782ea6385093d559d8f7475c190e6e06fe17369e0"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "half-float",
+              "source": "native-cloud-resolved-history-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 22118400
+            },
+            "stage": "resolved-history",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.004208622685185185,
+              "meanOpacity": 0.0034415656972366076,
+              "p50Opacity": 0,
+              "p95Opacity": 0,
+              "peakOpacity": 1,
+              "meanLuma": 0.000012560501362317183,
+              "signalMeanLuma": 0.002984445115793702,
+              "peakLuma": 0.28270263671875
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 160325,
+              "kind": "stage-buffer",
+              "path": "captures/control-p0-06-repeat-1-final-output-rgba-u8.gz",
+              "sha256": "71ab1bcd0d7dd154c5a1a5b6fba3bfd2075186c54168b409863e09f735fb0589"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "unorm8",
+              "source": "default-framebuffer-after-aerial-perspective",
+              "origin": "bottom-left",
+              "encoding": "srgb-output-rgba",
+              "scalar": "uint8",
+              "byteLength": 5529600
+            },
+            "stage": "final-output",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 1,
+              "meanOpacity": 1,
+              "p50Opacity": 1,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.07387214020321853,
+              "signalMeanLuma": 0.07387214020321853,
+              "peakLuma": 0.5676541434168816
+            }
+          }
+        ],
+        "retention": {
+          "signalPixelFraction": 0.6080685618729097,
+          "signalMeanLuma": 0.13445151621187007
+        }
+      }
+    },
+    {
+      "key": "control:0.12:base",
+      "metrics": {
+        "mask": {
+          "artifact": {
+            "byteLength": 37091,
+            "kind": "mask",
+            "path": "captures/control-p0-12-cloud-signal-mask.png",
+            "sha256": "f922ee9e264d289679d019ef79b7f24ae7ef8e79d4b4eac6155f73ac8e213c9e"
+          },
+          "cloudPixelCount": 4619,
+          "cloudPixelFraction": 0.003341290509259259,
+          "connectedComponentCount": 4097,
+          "largestConnectedAreaFraction": 0.003247456159341849,
+          "singlePixelFragmentFraction": 0.8218229053907772,
+          "smallFragmentFraction": 0.9348343797358736,
+          "edgeDensity": 1
+        },
+        "rawSignal": {
+          "normalizedMae": 0.5148792922668095,
+          "maxDifference": 0.9215686274509803,
+          "p50Difference": 0.5764705882352941,
+          "p95Difference": 0.8196078431372549,
+          "changedPixelFraction": 1
+        },
+        "sampleCount": {
+          "artifact": {
+            "byteLength": 4378,
+            "kind": "native-sample-count",
+            "path": "captures/control-p0-12-native-sample-count-rgba-u16le.gz",
+            "sha256": "f71c752f07cdf1913e918b69cf7d52eddff15731172210faa388df70ea9e9105"
+          },
+          "metrics": {
+            "source": "native-cloud-current-render-target-v1",
+            "encoding": "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask",
+            "precision": "half-float",
+            "nativeWidth": 360,
+            "nativeHeight": 240,
+            "populationMapping": "native-cloud-hit-alpha-v1",
+            "nativeHitPixelCount": 222,
+            "signalPresent": true,
+            "nonZeroPrimaryPixelFraction": 1,
+            "invariantViolationCount": 0,
+            "invariantViolationFraction": 0,
+            "invariantPass": true,
+            "primary": {
+              "min": 1,
+              "mean": 1.162162162162162,
+              "p50": 1,
+              "p95": 1,
+              "max": 14
+            },
+            "shape": {
+              "min": 1,
+              "mean": 1.0225225225225225,
+              "p50": 1,
+              "p95": 1,
+              "max": 2
+            },
+            "detail": {
+              "min": 0,
+              "mean": 0.8108108108108109,
+              "p50": 1,
+              "p95": 1,
+              "max": 1
+            },
+            "maskCoverageSensitivity": [
+              {
+                "minimumMaskCoverage": 0.25,
+                "selectedNativePixelCount": 66,
+                "coverageWeightSum": 19.9375,
+                "primary": {
+                  "min": 0,
+                  "mean": 8.681818181818182,
+                  "p50": 1,
+                  "p95": 36,
+                  "max": 65
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0.8181818181818182,
+                  "p50": 1,
+                  "p95": 1,
+                  "max": 2
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0.15151515151515152,
+                  "p50": 0,
+                  "p95": 1,
+                  "max": 1
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 9.128526645768025,
+                  "p50": 1,
+                  "p95": 36,
+                  "max": 65
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0.8369905956112853,
+                  "p50": 1,
+                  "p95": 1,
+                  "max": 2
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0.12852664576802508,
+                  "p50": 0,
+                  "p95": 1,
+                  "max": 1
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.5,
+                "selectedNativePixelCount": 0,
+                "coverageWeightSum": 0,
+                "primary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.75,
+                "selectedNativePixelCount": 0,
+                "coverageWeightSum": 0,
+                "primary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                }
+              },
+              {
+                "minimumMaskCoverage": 1,
+                "selectedNativePixelCount": 0,
+                "coverageWeightSum": 0,
+                "primary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                }
+              }
+            ]
+          }
+        },
+        "stages": [
+          {
+            "artifact": {
+              "byteLength": 5431,
+              "kind": "stage-buffer",
+              "path": "captures/control-p0-12-pre-temporal-rgba-f32le.gz",
+              "sha256": "2de0e4d0787e9dca1df3654a1025d6ec286230bf5dddadd4eafd54fa5a0c2f3e"
+            },
+            "metadata": {
+              "width": 360,
+              "height": 240,
+              "precision": "half-float",
+              "source": "native-cloud-current-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 1382400
+            },
+            "stage": "pre-temporal",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.006053240740740741,
+              "meanOpacity": 0.006046402542679398,
+              "p50Opacity": 0,
+              "p95Opacity": 0,
+              "peakOpacity": 1,
+              "meanLuma": 0.0001361417493999555,
+              "signalMeanLuma": 0.02249072112458156,
+              "peakLuma": 0.279408349609375
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 63449,
+              "kind": "stage-buffer",
+              "path": "captures/control-p0-12-resolved-history-rgba-f32le.gz",
+              "sha256": "373ee02e8988569e1869b1c54349b406fcb8c8439b8850602dd3ceeca0ea3b7b"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "half-float",
+              "source": "native-cloud-resolved-history-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 22118400
+            },
+            "stage": "resolved-history",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.0037962962962962963,
+              "meanOpacity": 0.00310632642673294,
+              "p50Opacity": 0,
+              "p95Opacity": 0,
+              "peakOpacity": 1,
+              "meanLuma": 0.000011510974012426784,
+              "signalMeanLuma": 0.0030321350358880153,
+              "peakLuma": 0.279408349609375
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 160778,
+              "kind": "stage-buffer",
+              "path": "captures/control-p0-12-final-output-rgba-u8.gz",
+              "sha256": "66f41526f4370e9cd399aa3b31426a6860213f27da4eb0fccbd77e02320ecfcd"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "unorm8",
+              "source": "default-framebuffer-after-aerial-perspective",
+              "origin": "bottom-left",
+              "encoding": "srgb-output-rgba",
+              "scalar": "uint8",
+              "byteLength": 5529600
+            },
+            "stage": "final-output",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 1,
+              "meanOpacity": 1,
+              "p50Opacity": 1,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.07503117606407605,
+              "signalMeanLuma": 0.07503117606407605,
+              "peakLuma": 0.5637325750231743
+            }
+          }
+        ],
+        "retention": {
+          "signalPixelFraction": 0.627151051625239,
+          "signalMeanLuma": 0.13481715499882302
+        }
+      }
+    },
+    {
+      "key": "control:0.18:base",
+      "metrics": {
+        "mask": {
+          "artifact": {
+            "byteLength": 36672,
+            "kind": "mask",
+            "path": "captures/control-p0-18-cloud-signal-mask.png",
+            "sha256": "ad7fab8652b98aa8faee16ebbbba99408c031445862ca1e56d65823688fa9dfb"
+          },
+          "cloudPixelCount": 4292,
+          "cloudPixelFraction": 0.0031047453703703706,
+          "connectedComponentCount": 3845,
+          "largestConnectedAreaFraction": 0.002096924510717614,
+          "singlePixelFragmentFraction": 0.831547064305685,
+          "smallFragmentFraction": 0.9410531220876048,
+          "edgeDensity": 0.9995340167753961
+        },
+        "rawSignal": {
+          "normalizedMae": 0.5239460555890565,
+          "maxDifference": 0.9568627450980393,
+          "p50Difference": 0.5803921568627451,
+          "p95Difference": 0.8235294117647058,
+          "changedPixelFraction": 1
+        },
+        "sampleCount": {
+          "artifact": {
+            "byteLength": 4061,
+            "kind": "native-sample-count",
+            "path": "captures/control-p0-18-native-sample-count-rgba-u16le.gz",
+            "sha256": "e1b88bab10ed212d79ab2ba5f01da21cb33e5a4e6fe5040fe969ec593b795617"
+          },
+          "metrics": {
+            "source": "native-cloud-current-render-target-v1",
+            "encoding": "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask",
+            "precision": "half-float",
+            "nativeWidth": 360,
+            "nativeHeight": 240,
+            "populationMapping": "native-cloud-hit-alpha-v1",
+            "nativeHitPixelCount": 191,
+            "signalPresent": true,
+            "nonZeroPrimaryPixelFraction": 1,
+            "invariantViolationCount": 0,
+            "invariantViolationFraction": 0,
+            "invariantPass": true,
+            "primary": {
+              "min": 1,
+              "mean": 1.1465968586387434,
+              "p50": 1,
+              "p95": 2,
+              "max": 16
+            },
+            "shape": {
+              "min": 1,
+              "mean": 1,
+              "p50": 1,
+              "p95": 1,
+              "max": 1
+            },
+            "detail": {
+              "min": 0,
+              "mean": 0.837696335078534,
+              "p50": 1,
+              "p95": 1,
+              "max": 1
+            },
+            "maskCoverageSensitivity": [
+              {
+                "minimumMaskCoverage": 0.25,
+                "selectedNativePixelCount": 64,
+                "coverageWeightSum": 19.3125,
+                "primary": {
+                  "min": 0,
+                  "mean": 8.65625,
+                  "p50": 1,
+                  "p95": 32.19999999999993,
+                  "max": 134
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0.6875,
+                  "p50": 1,
+                  "p95": 1,
+                  "max": 2
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0.03125,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 1
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 9.475728155339805,
+                  "p50": 1,
+                  "p95": 40,
+                  "max": 134
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0.7411003236245954,
+                  "p50": 1,
+                  "p95": 2,
+                  "max": 2
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0.025889967637540454,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 1
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.5,
+                "selectedNativePixelCount": 2,
+                "coverageWeightSum": 1,
+                "primary": {
+                  "min": 34,
+                  "mean": 37,
+                  "p50": 37,
+                  "p95": 39.7,
+                  "max": 40
+                },
+                "shape": {
+                  "min": 2,
+                  "mean": 2,
+                  "p50": 2,
+                  "p95": 2,
+                  "max": 2
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedPrimary": {
+                  "min": 34,
+                  "mean": 37,
+                  "p50": 34,
+                  "p95": 40,
+                  "max": 40
+                },
+                "weightedShape": {
+                  "min": 2,
+                  "mean": 2,
+                  "p50": 2,
+                  "p95": 2,
+                  "max": 2
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.75,
+                "selectedNativePixelCount": 0,
+                "coverageWeightSum": 0,
+                "primary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                }
+              },
+              {
+                "minimumMaskCoverage": 1,
+                "selectedNativePixelCount": 0,
+                "coverageWeightSum": 0,
+                "primary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 0,
+                  "p50": 0,
+                  "p95": 0,
+                  "max": 0
+                }
+              }
+            ]
+          }
+        },
+        "stages": [
+          {
+            "artifact": {
+              "byteLength": 5218,
+              "kind": "stage-buffer",
+              "path": "captures/control-p0-18-pre-temporal-rgba-f32le.gz",
+              "sha256": "968201a78c0f31a39dafe12f96bd4d0f8fcd8b16fea245f14223a6de70af15be"
+            },
+            "metadata": {
+              "width": 360,
+              "height": 240,
+              "precision": "half-float",
+              "source": "native-cloud-current-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 1382400
+            },
+            "stage": "pre-temporal",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.005613425925925926,
+              "meanOpacity": 0.005603688557942708,
+              "p50Opacity": 0,
+              "p95Opacity": 0,
+              "peakOpacity": 1,
+              "meanLuma": 0.00013662929683440803,
+              "signalMeanLuma": 0.024339734528851242,
+              "peakLuma": 0.2729386962890625
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 59911,
+              "kind": "stage-buffer",
+              "path": "captures/control-p0-18-resolved-history-rgba-f32le.gz",
+              "sha256": "88f67189268882e97271462bdb0e5e4fe09dfa410fab3e0944356d2fd9367928"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "half-float",
+              "source": "native-cloud-resolved-history-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 22118400
+            },
+            "stage": "resolved-history",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.0035163483796296297,
+              "meanOpacity": 0.002921351349990194,
+              "p50Opacity": 0,
+              "p95Opacity": 0,
+              "peakOpacity": 1,
+              "meanLuma": 0.000010441413085855404,
+              "signalMeanLuma": 0.002969365389598129,
+              "peakLuma": 0.2729386962890625
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 162010,
+              "kind": "stage-buffer",
+              "path": "captures/control-p0-18-final-output-rgba-u8.gz",
+              "sha256": "d1d2993cea3a85d73ddc7535e884178d0718eb5ed7a15e0b052050f89085748f"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "unorm8",
+              "source": "default-framebuffer-after-aerial-perspective",
+              "origin": "bottom-left",
+              "encoding": "srgb-output-rgba",
+              "scalar": "uint8",
+              "byteLength": 5529600
+            },
+            "stage": "final-output",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 1,
+              "meanOpacity": 1,
+              "p50Opacity": 1,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.07599091663350743,
+              "signalMeanLuma": 0.07599091663350743,
+              "peakLuma": 0.5589929674625396
+            }
+          }
+        ],
+        "retention": {
+          "signalPixelFraction": 0.6264175257731959,
+          "signalMeanLuma": 0.1219966218644815
+        }
+      }
+    },
+    {
+      "key": "treatment:0:base",
+      "metrics": {
+        "mask": {
+          "artifact": {
+            "byteLength": 36546,
+            "kind": "mask",
+            "path": "captures/treatment-p0-00-cloud-signal-mask.png",
+            "sha256": "a77d8790a12e33b5589f5a35497fa963ed539ef2f177b8e3d5e0026ac7bc66d1"
+          },
+          "cloudPixelCount": 454522,
+          "cloudPixelFraction": 0.3287919560185185,
+          "connectedComponentCount": 396,
+          "largestConnectedAreaFraction": 0.9980727005513484,
+          "singlePixelFragmentFraction": 0.0005302273597317622,
+          "smallFragmentFraction": 0.0010296531301015133,
+          "edgeDensity": 0.04624198608648206
+        },
+        "rawSignal": {
+          "normalizedMae": 0.4350611644502486,
+          "maxDifference": 0.9686274509803922,
+          "p50Difference": 0.42745098039215684,
+          "p95Difference": 0.8,
+          "changedPixelFraction": 1
+        },
+        "sampleCount": {
+          "artifact": {
+            "byteLength": 29296,
+            "kind": "native-sample-count",
+            "path": "captures/treatment-p0-00-native-sample-count-rgba-u16le.gz",
+            "sha256": "edd5393adfd7478e69ec8197df54f8db80faf9e030d8dcc0782316aa7b10a1ac"
+          },
+          "metrics": {
+            "source": "native-cloud-current-render-target-v1",
+            "encoding": "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask",
+            "precision": "half-float",
+            "nativeWidth": 360,
+            "nativeHeight": 240,
+            "populationMapping": "native-cloud-hit-alpha-v1",
+            "nativeHitPixelCount": 28392,
+            "signalPresent": true,
+            "nonZeroPrimaryPixelFraction": 1,
+            "invariantViolationCount": 0,
+            "invariantViolationFraction": 0,
+            "invariantPass": true,
+            "primary": {
+              "min": 1,
+              "mean": 5.458932093547478,
+              "p50": 5,
+              "p95": 9,
+              "max": 128
+            },
+            "shape": {
+              "min": 1,
+              "mean": 3.2662721893491122,
+              "p50": 3,
+              "p95": 5,
+              "max": 59
+            },
+            "detail": {
+              "min": 0,
+              "mean": 3.0279656241194703,
+              "p50": 3,
+              "p95": 5,
+              "max": 15
+            },
+            "maskCoverageSensitivity": [
+              {
+                "minimumMaskCoverage": 0.25,
+                "selectedNativePixelCount": 29102,
+                "coverageWeightSum": 28396.25,
+                "primary": {
+                  "min": 0,
+                  "mean": 5.403271252834856,
+                  "p50": 5,
+                  "p95": 9,
+                  "max": 128
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 3.2246237372001922,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 59
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 3.007971960689987,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 15
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 5.345071972531584,
+                  "p50": 5,
+                  "p95": 9,
+                  "max": 128
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 3.2027468415723908,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 59
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 3.019476603424748,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 15
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.5,
+                "selectedNativePixelCount": 28834,
+                "coverageWeightSum": 28300.0625,
+                "primary": {
+                  "min": 1,
+                  "mean": 5.346188527432892,
+                  "p50": 5,
+                  "p95": 9,
+                  "max": 128
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 3.201636956370951,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 59
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 3.014635499757231,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 15
+                },
+                "weightedPrimary": {
+                  "min": 1,
+                  "mean": 5.326121187894903,
+                  "p50": 5,
+                  "p95": 9,
+                  "max": 128
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 3.195282254235304,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 59
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 3.0217026905859306,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 15
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.75,
+                "selectedNativePixelCount": 28186,
+                "coverageWeightSum": 27910.8125,
+                "primary": {
+                  "min": 1,
+                  "mean": 5.311005463705386,
+                  "p50": 5,
+                  "p95": 9,
+                  "max": 46
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 3.1880720925282056,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 23
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 3.0233804016178243,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 15
+                },
+                "weightedPrimary": {
+                  "min": 1,
+                  "mean": 5.3054976454017595,
+                  "p50": 5,
+                  "p95": 9,
+                  "max": 46
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 3.1877027943919582,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 23
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 3.0270504486388563,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 15
+                }
+              },
+              {
+                "minimumMaskCoverage": 1,
+                "selectedNativePixelCount": 25869,
+                "coverageWeightSum": 25869,
+                "primary": {
+                  "min": 1,
+                  "mean": 5.284781012022111,
+                  "p50": 5,
+                  "p95": 9,
+                  "max": 30
+                },
+                "shape": {
+                  "min": 1,
+                  "mean": 3.1956395685956163,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 18
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 3.054737330395454,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 15
+                },
+                "weightedPrimary": {
+                  "min": 1,
+                  "mean": 5.284781012022111,
+                  "p50": 5,
+                  "p95": 9,
+                  "max": 30
+                },
+                "weightedShape": {
+                  "min": 1,
+                  "mean": 3.1956395685956163,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 18
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 3.054737330395454,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 15
+                }
+              }
+            ]
+          }
+        },
+        "stages": [
+          {
+            "artifact": {
+              "byteLength": 141097,
+              "kind": "stage-buffer",
+              "path": "captures/treatment-p0-00-pre-temporal-rgba-f32le.gz",
+              "sha256": "51fb567238664dbc456ad9d497b1e554eb378e3883551b1197ad455ba30b0310"
+            },
+            "metadata": {
+              "width": 360,
+              "height": 240,
+              "precision": "half-float",
+              "source": "native-cloud-current-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 1382400
+            },
+            "stage": "pre-temporal",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.32861111111111113,
+              "meanOpacity": 0.29677303870519,
+              "p50Opacity": 0,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.005232552900021634,
+              "signalMeanLuma": 0.015923237903700663,
+              "peakLuma": 0.169911083984375
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 2224594,
+              "kind": "stage-buffer",
+              "path": "captures/treatment-p0-00-resolved-history-rgba-f32le.gz",
+              "sha256": "d5d4ed7b2999c5c55efbc0c373dd7b9be6468d06b6c9d532fec53615690dc852"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "half-float",
+              "source": "native-cloud-resolved-history-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 22118400
+            },
+            "stage": "resolved-history",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.3317310474537037,
+              "meanOpacity": 0.297384444363329,
+              "p50Opacity": 0,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.005217515088008431,
+              "signalMeanLuma": 0.01572813981401689,
+              "peakLuma": 0.169911083984375
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 409346,
+              "kind": "stage-buffer",
+              "path": "captures/treatment-p0-00-final-output-rgba-u8.gz",
+              "sha256": "5c29f666d6864c6e3b32ce35b2c1fa43394c4eceba90ab2c020b48dfa9c01e3b"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "unorm8",
+              "source": "default-framebuffer-after-aerial-perspective",
+              "origin": "bottom-left",
+              "encoding": "srgb-output-rgba",
+              "scalar": "uint8",
+              "byteLength": 5529600
+            },
+            "stage": "final-output",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 1,
+              "meanOpacity": 1,
+              "p50Opacity": 1,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.08024512842443103,
+              "signalMeanLuma": 0.08024512842443103,
+              "peakLuma": 0.44886510742306707
+            }
+          }
+        ],
+        "retention": {
+          "signalPixelFraction": 1.0094943117779656,
+          "signalMeanLuma": 0.987747586837321
+        }
+      }
+    },
+    {
+      "key": "treatment:0.06:base",
+      "metrics": {
+        "mask": {
+          "artifact": {
+            "byteLength": 36987,
+            "kind": "mask",
+            "path": "captures/treatment-p0-06-cloud-signal-mask.png",
+            "sha256": "8c59fd0696b78f2d7dc4c2234feb6bf196f740325a9486c3d0110ca432db2c1e"
+          },
+          "cloudPixelCount": 445336,
+          "cloudPixelFraction": 0.32214699074074077,
+          "connectedComponentCount": 441,
+          "largestConnectedAreaFraction": 0.9974783085131227,
+          "singlePixelFragmentFraction": 0.0006130202813156807,
+          "smallFragmentFraction": 0.0011856216429841737,
+          "edgeDensity": 0.048278154023029804
+        },
+        "rawSignal": {
+          "normalizedMae": 0.4318752670378731,
+          "maxDifference": 0.9686274509803922,
+          "p50Difference": 0.4235294117647059,
+          "p95Difference": 0.8,
+          "changedPixelFraction": 1
+        },
+        "sampleCount": {
+          "artifact": {
+            "byteLength": 28795,
+            "kind": "native-sample-count",
+            "path": "captures/treatment-p0-06-native-sample-count-rgba-u16le.gz",
+            "sha256": "d2b67c30bc742c9817d7bb2de7845c9d3f8eb0b6eff4d0387426eabcb4ee42f3"
+          },
+          "metrics": {
+            "source": "native-cloud-current-render-target-v1",
+            "encoding": "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask",
+            "precision": "half-float",
+            "nativeWidth": 360,
+            "nativeHeight": 240,
+            "populationMapping": "native-cloud-hit-alpha-v1",
+            "nativeHitPixelCount": 27746,
+            "signalPresent": true,
+            "nonZeroPrimaryPixelFraction": 1,
+            "invariantViolationCount": 0,
+            "invariantViolationFraction": 0,
+            "invariantPass": true,
+            "primary": {
+              "min": 1,
+              "mean": 5.399192676421826,
+              "p50": 5,
+              "p95": 9,
+              "max": 226
+            },
+            "shape": {
+              "min": 1,
+              "mean": 3.218662149499027,
+              "p50": 3,
+              "p95": 5,
+              "max": 127
+            },
+            "detail": {
+              "min": 0,
+              "mean": 2.975528004036618,
+              "p50": 3,
+              "p95": 5,
+              "max": 17
+            },
+            "maskCoverageSensitivity": [
+              {
+                "minimumMaskCoverage": 0.25,
+                "selectedNativePixelCount": 28550,
+                "coverageWeightSum": 27822.5625,
+                "primary": {
+                  "min": 0,
+                  "mean": 5.341751313485114,
+                  "p50": 5,
+                  "p95": 9,
+                  "max": 226
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 3.1744658493870404,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 127
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 2.9491768826619964,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 16
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 5.28229337251017,
+                  "p50": 5,
+                  "p95": 9,
+                  "max": 226
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 3.151165533368826,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 127
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 2.960877075934325,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 16
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.5,
+                "selectedNativePixelCount": 28262,
+                "coverageWeightSum": 27720,
+                "primary": {
+                  "min": 1,
+                  "mean": 5.282534852452056,
+                  "p50": 5,
+                  "p95": 9,
+                  "max": 226
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 3.148078692236926,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 127
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 2.9570801783313283,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 16
+                },
+                "weightedPrimary": {
+                  "min": 1,
+                  "mean": 5.262051316738817,
+                  "p50": 5,
+                  "p95": 9,
+                  "max": 226
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 3.1419800685425687,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 127
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 2.9636250901875902,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 16
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.75,
+                "selectedNativePixelCount": 27607,
+                "coverageWeightSum": 27323.375,
+                "primary": {
+                  "min": 1,
+                  "mean": 5.2560582460970044,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 226
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 3.1395298293910963,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 127
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 2.9645742021950956,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 16
+                },
+                "weightedPrimary": {
+                  "min": 1,
+                  "mean": 5.24597071189046,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 226
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 3.1371879388984705,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 127
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 2.9682895140150145,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 16
+                }
+              },
+              {
+                "minimumMaskCoverage": 1,
+                "selectedNativePixelCount": 25160,
+                "coverageWeightSum": 25160,
+                "primary": {
+                  "min": 1,
+                  "mean": 5.205484896661368,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 33
+                },
+                "shape": {
+                  "min": 1,
+                  "mean": 3.137639109697933,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 18
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 2.9976947535771066,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 16
+                },
+                "weightedPrimary": {
+                  "min": 1,
+                  "mean": 5.205484896661368,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 33
+                },
+                "weightedShape": {
+                  "min": 1,
+                  "mean": 3.137639109697933,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 18
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 2.9976947535771066,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 16
+                }
+              }
+            ]
+          }
+        },
+        "stages": [
+          {
+            "artifact": {
+              "byteLength": 139405,
+              "kind": "stage-buffer",
+              "path": "captures/treatment-p0-06-pre-temporal-rgba-f32le.gz",
+              "sha256": "257da60d2803f72f482805bcfd9f60309c25f207592f60fcf5246ede2d8a8014"
+            },
+            "metadata": {
+              "width": 360,
+              "height": 240,
+              "precision": "half-float",
+              "source": "native-cloud-current-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 1382400
+            },
+            "stage": "pre-temporal",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.32113425925925926,
+              "meanOpacity": 0.2888264785872565,
+              "p50Opacity": 0,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.005192765117242178,
+              "signalMeanLuma": 0.016170075186683636,
+              "peakLuma": 0.173714453125
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 2211275,
+              "kind": "stage-buffer",
+              "path": "captures/treatment-p0-06-resolved-history-rgba-f32le.gz",
+              "sha256": "df171f715ce7f2cd1379445be1d6e26347771d920c7cd8d97d6dbd6687b3fc02"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "half-float",
+              "source": "native-cloud-resolved-history-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 22118400
+            },
+            "stage": "resolved-history",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.32509910300925926,
+              "meanOpacity": 0.28954969487515175,
+              "p50Opacity": 0,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.005157551082918301,
+              "signalMeanLuma": 0.015864544950414547,
+              "peakLuma": 0.173714453125
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 409008,
+              "kind": "stage-buffer",
+              "path": "captures/treatment-p0-06-final-output-rgba-u8.gz",
+              "sha256": "1f537bff7f1aa8d32ed19abcd81bebc78436e4d6f2fecacb108deb612752697c"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "unorm8",
+              "source": "default-framebuffer-after-aerial-perspective",
+              "origin": "bottom-left",
+              "encoding": "srgb-output-rgba",
+              "scalar": "uint8",
+              "byteLength": 5529600
+            },
+            "stage": "final-output",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 1,
+              "meanOpacity": 1,
+              "p50Opacity": 1,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.08073085197313704,
+              "signalMeanLuma": 0.08073085197313704,
+              "peakLuma": 0.45253491112589833
+            }
+          }
+        ],
+        "retention": {
+          "signalPixelFraction": 1.0123463742521444,
+          "signalMeanLuma": 0.9811052062070373
+        }
+      }
+    },
+    {
+      "key": "treatment:0.06:1",
+      "metrics": {
+        "mask": {
+          "artifact": {
+            "byteLength": 36987,
+            "kind": "mask",
+            "path": "captures/treatment-p0-06-repeat-1-cloud-signal-mask.png",
+            "sha256": "8c59fd0696b78f2d7dc4c2234feb6bf196f740325a9486c3d0110ca432db2c1e"
+          },
+          "cloudPixelCount": 445336,
+          "cloudPixelFraction": 0.32214699074074077,
+          "connectedComponentCount": 441,
+          "largestConnectedAreaFraction": 0.9974783085131227,
+          "singlePixelFragmentFraction": 0.0006130202813156807,
+          "smallFragmentFraction": 0.0011856216429841737,
+          "edgeDensity": 0.048278154023029804
+        },
+        "rawSignal": {
+          "normalizedMae": 0.4318752670378731,
+          "maxDifference": 0.9686274509803922,
+          "p50Difference": 0.4235294117647059,
+          "p95Difference": 0.8,
+          "changedPixelFraction": 1
+        },
+        "sampleCount": {
+          "artifact": {
+            "byteLength": 28795,
+            "kind": "native-sample-count",
+            "path": "captures/treatment-p0-06-repeat-1-native-sample-count-rgba-u16le.gz",
+            "sha256": "d2b67c30bc742c9817d7bb2de7845c9d3f8eb0b6eff4d0387426eabcb4ee42f3"
+          },
+          "metrics": {
+            "source": "native-cloud-current-render-target-v1",
+            "encoding": "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask",
+            "precision": "half-float",
+            "nativeWidth": 360,
+            "nativeHeight": 240,
+            "populationMapping": "native-cloud-hit-alpha-v1",
+            "nativeHitPixelCount": 27746,
+            "signalPresent": true,
+            "nonZeroPrimaryPixelFraction": 1,
+            "invariantViolationCount": 0,
+            "invariantViolationFraction": 0,
+            "invariantPass": true,
+            "primary": {
+              "min": 1,
+              "mean": 5.399192676421826,
+              "p50": 5,
+              "p95": 9,
+              "max": 226
+            },
+            "shape": {
+              "min": 1,
+              "mean": 3.218662149499027,
+              "p50": 3,
+              "p95": 5,
+              "max": 127
+            },
+            "detail": {
+              "min": 0,
+              "mean": 2.975528004036618,
+              "p50": 3,
+              "p95": 5,
+              "max": 17
+            },
+            "maskCoverageSensitivity": [
+              {
+                "minimumMaskCoverage": 0.25,
+                "selectedNativePixelCount": 28550,
+                "coverageWeightSum": 27822.5625,
+                "primary": {
+                  "min": 0,
+                  "mean": 5.341751313485114,
+                  "p50": 5,
+                  "p95": 9,
+                  "max": 226
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 3.1744658493870404,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 127
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 2.9491768826619964,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 16
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 5.28229337251017,
+                  "p50": 5,
+                  "p95": 9,
+                  "max": 226
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 3.151165533368826,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 127
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 2.960877075934325,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 16
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.5,
+                "selectedNativePixelCount": 28262,
+                "coverageWeightSum": 27720,
+                "primary": {
+                  "min": 1,
+                  "mean": 5.282534852452056,
+                  "p50": 5,
+                  "p95": 9,
+                  "max": 226
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 3.148078692236926,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 127
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 2.9570801783313283,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 16
+                },
+                "weightedPrimary": {
+                  "min": 1,
+                  "mean": 5.262051316738817,
+                  "p50": 5,
+                  "p95": 9,
+                  "max": 226
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 3.1419800685425687,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 127
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 2.9636250901875902,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 16
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.75,
+                "selectedNativePixelCount": 27607,
+                "coverageWeightSum": 27323.375,
+                "primary": {
+                  "min": 1,
+                  "mean": 5.2560582460970044,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 226
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 3.1395298293910963,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 127
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 2.9645742021950956,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 16
+                },
+                "weightedPrimary": {
+                  "min": 1,
+                  "mean": 5.24597071189046,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 226
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 3.1371879388984705,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 127
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 2.9682895140150145,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 16
+                }
+              },
+              {
+                "minimumMaskCoverage": 1,
+                "selectedNativePixelCount": 25160,
+                "coverageWeightSum": 25160,
+                "primary": {
+                  "min": 1,
+                  "mean": 5.205484896661368,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 33
+                },
+                "shape": {
+                  "min": 1,
+                  "mean": 3.137639109697933,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 18
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 2.9976947535771066,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 16
+                },
+                "weightedPrimary": {
+                  "min": 1,
+                  "mean": 5.205484896661368,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 33
+                },
+                "weightedShape": {
+                  "min": 1,
+                  "mean": 3.137639109697933,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 18
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 2.9976947535771066,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 16
+                }
+              }
+            ]
+          }
+        },
+        "stages": [
+          {
+            "artifact": {
+              "byteLength": 139405,
+              "kind": "stage-buffer",
+              "path": "captures/treatment-p0-06-repeat-1-pre-temporal-rgba-f32le.gz",
+              "sha256": "257da60d2803f72f482805bcfd9f60309c25f207592f60fcf5246ede2d8a8014"
+            },
+            "metadata": {
+              "width": 360,
+              "height": 240,
+              "precision": "half-float",
+              "source": "native-cloud-current-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 1382400
+            },
+            "stage": "pre-temporal",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.32113425925925926,
+              "meanOpacity": 0.2888264785872565,
+              "p50Opacity": 0,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.005192765117242178,
+              "signalMeanLuma": 0.016170075186683636,
+              "peakLuma": 0.173714453125
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 2211275,
+              "kind": "stage-buffer",
+              "path": "captures/treatment-p0-06-repeat-1-resolved-history-rgba-f32le.gz",
+              "sha256": "df171f715ce7f2cd1379445be1d6e26347771d920c7cd8d97d6dbd6687b3fc02"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "half-float",
+              "source": "native-cloud-resolved-history-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 22118400
+            },
+            "stage": "resolved-history",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.32509910300925926,
+              "meanOpacity": 0.28954969487515175,
+              "p50Opacity": 0,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.005157551082918301,
+              "signalMeanLuma": 0.015864544950414547,
+              "peakLuma": 0.173714453125
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 409008,
+              "kind": "stage-buffer",
+              "path": "captures/treatment-p0-06-repeat-1-final-output-rgba-u8.gz",
+              "sha256": "1f537bff7f1aa8d32ed19abcd81bebc78436e4d6f2fecacb108deb612752697c"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "unorm8",
+              "source": "default-framebuffer-after-aerial-perspective",
+              "origin": "bottom-left",
+              "encoding": "srgb-output-rgba",
+              "scalar": "uint8",
+              "byteLength": 5529600
+            },
+            "stage": "final-output",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 1,
+              "meanOpacity": 1,
+              "p50Opacity": 1,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.08073085197313704,
+              "signalMeanLuma": 0.08073085197313704,
+              "peakLuma": 0.45253491112589833
+            }
+          }
+        ],
+        "retention": {
+          "signalPixelFraction": 1.0123463742521444,
+          "signalMeanLuma": 0.9811052062070373
+        }
+      }
+    },
+    {
+      "key": "treatment:0.12:base",
+      "metrics": {
+        "mask": {
+          "artifact": {
+            "byteLength": 38882,
+            "kind": "mask",
+            "path": "captures/treatment-p0-12-cloud-signal-mask.png",
+            "sha256": "bcaa62d261f2e2ea5c95dfb528a9348956ec95ec727ff6071b0c320ac0450959"
+          },
+          "cloudPixelCount": 425209,
+          "cloudPixelFraction": 0.3075875289351852,
+          "connectedComponentCount": 501,
+          "largestConnectedAreaFraction": 0.997528274330976,
+          "singlePixelFragmentFraction": 0.0007478675192669958,
+          "smallFragmentFraction": 0.0013852011599001903,
+          "edgeDensity": 0.05562441058397165
+        },
+        "rawSignal": {
+          "normalizedMae": 0.4216051446718932,
+          "maxDifference": 0.9725490196078431,
+          "p50Difference": 0.403921568627451,
+          "p95Difference": 0.8,
+          "changedPixelFraction": 1
+        },
+        "sampleCount": {
+          "artifact": {
+            "byteLength": 27802,
+            "kind": "native-sample-count",
+            "path": "captures/treatment-p0-12-native-sample-count-rgba-u16le.gz",
+            "sha256": "d247dd4f228fe3ca7c7d79a32eb797dd5ee243dc59601e1a3b93c877eccfe01c"
+          },
+          "metrics": {
+            "source": "native-cloud-current-render-target-v1",
+            "encoding": "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask",
+            "precision": "half-float",
+            "nativeWidth": 360,
+            "nativeHeight": 240,
+            "populationMapping": "native-cloud-hit-alpha-v1",
+            "nativeHitPixelCount": 26439,
+            "signalPresent": true,
+            "nonZeroPrimaryPixelFraction": 1,
+            "invariantViolationCount": 0,
+            "invariantViolationFraction": 0,
+            "invariantPass": true,
+            "primary": {
+              "min": 1,
+              "mean": 5.2257649684178675,
+              "p50": 5,
+              "p95": 9,
+              "max": 216
+            },
+            "shape": {
+              "min": 1,
+              "mean": 3.092174439275313,
+              "p50": 3,
+              "p95": 5,
+              "max": 84
+            },
+            "detail": {
+              "min": 0,
+              "mean": 2.8528688679602103,
+              "p50": 3,
+              "p95": 5,
+              "max": 18
+            },
+            "maskCoverageSensitivity": [
+              {
+                "minimumMaskCoverage": 0.25,
+                "selectedNativePixelCount": 27356,
+                "coverageWeightSum": 26564,
+                "primary": {
+                  "min": 0,
+                  "mean": 5.159453136423454,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 216
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 3.0385655797631235,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 84
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 2.8193083784178974,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 18
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 5.100911948501731,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 216
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 3.0186648283391055,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 84
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 2.8366962806806204,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 18
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.5,
+                "selectedNativePixelCount": 27024,
+                "coverageWeightSum": 26444.5625,
+                "primary": {
+                  "min": 1,
+                  "mean": 5.095211663706335,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 216
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 3.0135065127294256,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 84
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 2.8298179396092364,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 15
+                },
+                "weightedPrimary": {
+                  "min": 1,
+                  "mean": 5.078692926003219,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 216
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 3.009983148709683,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 84
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 2.840323979646099,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 15
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.75,
+                "selectedNativePixelCount": 26398,
+                "coverageWeightSum": 26068.6875,
+                "primary": {
+                  "min": 1,
+                  "mean": 5.075119327221759,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 216
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 3.007538449882567,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 84
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 2.8433214637472535,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 15
+                },
+                "weightedPrimary": {
+                  "min": 1,
+                  "mean": 5.067432432108444,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 216
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 3.0071206116533484,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 84
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 2.8485083876969255,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 15
+                }
+              },
+              {
+                "minimumMaskCoverage": 1,
+                "selectedNativePixelCount": 23615,
+                "coverageWeightSum": 23615,
+                "primary": {
+                  "min": 1,
+                  "mean": 5.04958712682617,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 32
+                },
+                "shape": {
+                  "min": 1,
+                  "mean": 3.0218081727715433,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 18
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 2.8875714588185475,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 15
+                },
+                "weightedPrimary": {
+                  "min": 1,
+                  "mean": 5.04958712682617,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 32
+                },
+                "weightedShape": {
+                  "min": 1,
+                  "mean": 3.0218081727715433,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 18
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 2.8875714588185475,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 15
+                }
+              }
+            ]
+          }
+        },
+        "stages": [
+          {
+            "artifact": {
+              "byteLength": 136858,
+              "kind": "stage-buffer",
+              "path": "captures/treatment-p0-12-pre-temporal-rgba-f32le.gz",
+              "sha256": "f87fa6b138d68b2ff14e7c624516f3aaad50dad4cb5052eb8a08b221892de9ab"
+            },
+            "metadata": {
+              "width": 360,
+              "height": 240,
+              "precision": "half-float",
+              "source": "native-cloud-current-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 1382400
+            },
+            "stage": "pre-temporal",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.30600694444444443,
+              "meanOpacity": 0.2711993366700632,
+              "p50Opacity": 0,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.005042914216066876,
+              "signalMeanLuma": 0.016479737821709525,
+              "peakLuma": 0.1760121337890625
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 2181873,
+              "kind": "stage-buffer",
+              "path": "captures/treatment-p0-12-resolved-history-rgba-f32le.gz",
+              "sha256": "a52204aa539b80f6b03d9065a8db3cc646adfef23113355b748af6bfed2111cd"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "half-float",
+              "source": "native-cloud-resolved-history-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 22118400
+            },
+            "stage": "resolved-history",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.3109440104166667,
+              "meanOpacity": 0.27151884361084,
+              "p50Opacity": 0,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.005014378457854046,
+              "signalMeanLuma": 0.016126301380979192,
+              "peakLuma": 0.1760121337890625
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 406256,
+              "kind": "stage-buffer",
+              "path": "captures/treatment-p0-12-final-output-rgba-u8.gz",
+              "sha256": "95d455acc8b889418f91c9357443214fe9c0888d1ed76abd90bb177d7da8079c"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "unorm8",
+              "source": "default-framebuffer-after-aerial-perspective",
+              "origin": "bottom-left",
+              "encoding": "srgb-output-rgba",
+              "scalar": "uint8",
+              "byteLength": 5529600
+            },
+            "stage": "final-output",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 1,
+              "meanOpacity": 1,
+              "p50Opacity": 1,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.08162210970548008,
+              "signalMeanLuma": 0.08162210970548008,
+              "peakLuma": 0.45413961691260335
+            }
+          }
+        ],
+        "retention": {
+          "signalPixelFraction": 1.016133836378078,
+          "signalMeanLuma": 0.9785532728400124
+        }
+      }
+    },
+    {
+      "key": "treatment:0.18:base",
+      "metrics": {
+        "mask": {
+          "artifact": {
+            "byteLength": 40147,
+            "kind": "mask",
+            "path": "captures/treatment-p0-18-cloud-signal-mask.png",
+            "sha256": "c962d7a642f8ed0f9c1210b5fb50f55c5da26451723eb9bc1e259b35a6d8a4b4"
+          },
+          "cloudPixelCount": 407961,
+          "cloudPixelFraction": 0.29511067708333333,
+          "connectedComponentCount": 489,
+          "largestConnectedAreaFraction": 0.9972938589718134,
+          "singlePixelFragmentFraction": 0.0007451692686310701,
+          "smallFragmentFraction": 0.0014241557403771438,
+          "edgeDensity": 0.062050048901733254
+        },
+        "rawSignal": {
+          "normalizedMae": 0.41459005284580036,
+          "maxDifference": 0.9725490196078431,
+          "p50Difference": 0.38823529411764707,
+          "p95Difference": 0.8,
+          "changedPixelFraction": 1
+        },
+        "sampleCount": {
+          "artifact": {
+            "byteLength": 26899,
+            "kind": "native-sample-count",
+            "path": "captures/treatment-p0-18-native-sample-count-rgba-u16le.gz",
+            "sha256": "4f321d7dbe1f95329d460173f7964d47dbad807f6eb8532cb60572676af8fcbb"
+          },
+          "metrics": {
+            "source": "native-cloud-current-render-target-v1",
+            "encoding": "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask",
+            "precision": "half-float",
+            "nativeWidth": 360,
+            "nativeHeight": 240,
+            "populationMapping": "native-cloud-hit-alpha-v1",
+            "nativeHitPixelCount": 25305,
+            "signalPresent": true,
+            "nonZeroPrimaryPixelFraction": 1,
+            "invariantViolationCount": 0,
+            "invariantViolationFraction": 0,
+            "invariantPass": true,
+            "primary": {
+              "min": 1,
+              "mean": 5.0774155305275634,
+              "p50": 5,
+              "p95": 8,
+              "max": 175
+            },
+            "shape": {
+              "min": 1,
+              "mean": 2.9863268128828295,
+              "p50": 3,
+              "p95": 5,
+              "max": 66
+            },
+            "detail": {
+              "min": 0,
+              "mean": 2.740051373246394,
+              "p50": 3,
+              "p95": 5,
+              "max": 15
+            },
+            "maskCoverageSensitivity": [
+              {
+                "minimumMaskCoverage": 0.25,
+                "selectedNativePixelCount": 26320,
+                "coverageWeightSum": 25483.6875,
+                "primary": {
+                  "min": 0,
+                  "mean": 4.993806990881459,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 175
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 2.9215045592705167,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 66
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 2.7017477203647418,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 14
+                },
+                "weightedPrimary": {
+                  "min": 0,
+                  "mean": 4.9340435916113,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 175
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 2.9003676371404254,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 66
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 2.7200169716411726,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 14
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.5,
+                "selectedNativePixelCount": 25995,
+                "coverageWeightSum": 25367.5625,
+                "primary": {
+                  "min": 1,
+                  "mean": 4.924523946912868,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 146
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 2.8937487978457397,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 26
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 2.7133679553760337,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 14
+                },
+                "weightedPrimary": {
+                  "min": 1,
+                  "mean": 4.910924630618334,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 146
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 2.8911035500553117,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 26
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 2.7240398047703636,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 14
+                }
+              },
+              {
+                "minimumMaskCoverage": 0.75,
+                "selectedNativePixelCount": 25310,
+                "coverageWeightSum": 24954.375,
+                "primary": {
+                  "min": 1,
+                  "mean": 4.898933227973133,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 53
+                },
+                "shape": {
+                  "min": 0,
+                  "mean": 2.885025681548795,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 26
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 2.726866851047017,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 14
+                },
+                "weightedPrimary": {
+                  "min": 1,
+                  "mean": 4.8957672752773815,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 53
+                },
+                "weightedShape": {
+                  "min": 0,
+                  "mean": 2.8867057379717984,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 26
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 2.732271395296416,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 14
+                }
+              },
+              {
+                "minimumMaskCoverage": 1,
+                "selectedNativePixelCount": 22271,
+                "coverageWeightSum": 22271,
+                "primary": {
+                  "min": 1,
+                  "mean": 4.899779982937452,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 32
+                },
+                "shape": {
+                  "min": 1,
+                  "mean": 2.9154505859638093,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 19
+                },
+                "detail": {
+                  "min": 0,
+                  "mean": 2.776256117821382,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 14
+                },
+                "weightedPrimary": {
+                  "min": 1,
+                  "mean": 4.899779982937452,
+                  "p50": 5,
+                  "p95": 8,
+                  "max": 32
+                },
+                "weightedShape": {
+                  "min": 1,
+                  "mean": 2.9154505859638093,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 19
+                },
+                "weightedDetail": {
+                  "min": 0,
+                  "mean": 2.776256117821382,
+                  "p50": 3,
+                  "p95": 5,
+                  "max": 14
+                }
+              }
+            ]
+          }
+        },
+        "stages": [
+          {
+            "artifact": {
+              "byteLength": 133742,
+              "kind": "stage-buffer",
+              "path": "captures/treatment-p0-18-pre-temporal-rgba-f32le.gz",
+              "sha256": "ba831a00507fca61853e2f99d76a2562ba68ef934468ecb5bdb79941e99ccb95"
+            },
+            "metadata": {
+              "width": 360,
+              "height": 240,
+              "precision": "half-float",
+              "source": "native-cloud-current-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 1382400
+            },
+            "stage": "pre-temporal",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.29288194444444443,
+              "meanOpacity": 0.2567309255511672,
+              "p50Opacity": 0,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.0049099888075067035,
+              "signalMeanLuma": 0.016764395691309195,
+              "peakLuma": 0.183503515625
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 2147218,
+              "kind": "stage-buffer",
+              "path": "captures/treatment-p0-18-resolved-history-rgba-f32le.gz",
+              "sha256": "45d79a0de9d7a5b7e30972b94f78d4a21541b1259dc0e88c042173df28d442fb"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "half-float",
+              "source": "native-cloud-resolved-history-render-target",
+              "origin": "bottom-left",
+              "encoding": "linear-rgba",
+              "scalar": "float32-le",
+              "byteLength": 22118400
+            },
+            "stage": "resolved-history",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 0.2985669849537037,
+              "meanOpacity": 0.256862511461799,
+              "p50Opacity": 0,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.0048769205760961125,
+              "signalMeanLuma": 0.01633442225165551,
+              "peakLuma": 0.183503515625
+            }
+          },
+          {
+            "artifact": {
+              "byteLength": 403388,
+              "kind": "stage-buffer",
+              "path": "captures/treatment-p0-18-final-output-rgba-u8.gz",
+              "sha256": "43e06138a3b2ddc8ce4f9836ff4c236b4c5dc584b232a35926a6a50978c14dad"
+            },
+            "metadata": {
+              "width": 1440,
+              "height": 960,
+              "precision": "unorm8",
+              "source": "default-framebuffer-after-aerial-perspective",
+              "origin": "bottom-left",
+              "encoding": "srgb-output-rgba",
+              "scalar": "uint8",
+              "byteLength": 5529600
+            },
+            "stage": "final-output",
+            "summary": {
+              "finitePixelFraction": 1,
+              "signalPixelFraction": 1,
+              "meanOpacity": 1,
+              "p50Opacity": 1,
+              "p95Opacity": 1,
+              "peakOpacity": 1,
+              "meanLuma": 0.0823510363379363,
+              "signalMeanLuma": 0.0823510363379363,
+              "peakLuma": 0.4625490281760693
+            }
+          }
+        ],
+        "retention": {
+          "signalPixelFraction": 1.0194106895870383,
+          "signalMeanLuma": 0.9743519869388082
+        }
+      }
+    }
+  ],
+  "paired": [
+    {
+      "progress": 0,
+      "cloudRawDifference": {
+        "normalizedMae": 0.42927945544078144,
+        "maxDifference": 0.9686274509803922,
+        "p50Difference": 0.4196078431372549,
+        "p95Difference": 0.8,
+        "changedPixelFraction": 0.9905114948850512
+      },
+      "finalOutputFullFrameDifference": {
+        "normalizedMae": 0.012770561002195337,
+        "maxDifference": 0.3411764705882353,
+        "p50Difference": 0,
+        "p95Difference": 0.12156862745098039,
+        "changedPixelFraction": 0.10130859375
+      }
+    },
+    {
+      "progress": 0.06,
+      "cloudRawDifference": {
+        "normalizedMae": 0.4263136699283285,
+        "maxDifference": 0.9686274509803922,
+        "p50Difference": 0.41568627450980394,
+        "p95Difference": 0.8,
+        "changedPixelFraction": 0.9908433832329279
+      },
+      "finalOutputFullFrameDifference": {
+        "normalizedMae": 0.012585597086073097,
+        "maxDifference": 0.34901960784313724,
+        "p50Difference": 0,
+        "p95Difference": 0.12156862745098039,
+        "changedPixelFraction": 0.10074652777777778
+      }
+    },
+    {
+      "progress": 0.12,
+      "cloudRawDifference": {
+        "normalizedMae": 0.41637943297289143,
+        "maxDifference": 0.9725490196078431,
+        "p50Difference": 0.396078431372549,
+        "p95Difference": 0.8,
+        "changedPixelFraction": 0.9913202568884144
+      },
+      "finalOutputFullFrameDifference": {
+        "normalizedMae": 0.01209353156773518,
+        "maxDifference": 0.34901960784313724,
+        "p50Difference": 0,
+        "p95Difference": 0.11372549019607843,
+        "changedPixelFraction": 0.0992259837962963
+      }
+    },
+    {
+      "progress": 0.18,
+      "cloudRawDifference": {
+        "normalizedMae": 0.40951878246324963,
+        "maxDifference": 0.9725490196078431,
+        "p50Difference": 0.3803921568627451,
+        "p95Difference": 0.8,
+        "changedPixelFraction": 0.9915757326195869
+      },
+      "finalOutputFullFrameDifference": {
+        "normalizedMae": 0.01166799144427732,
+        "maxDifference": 0.34901960784313724,
+        "p50Difference": 0,
+        "p95Difference": 0.10980392156862745,
+        "changedPixelFraction": 0.09783998842592592
+      }
+    }
+  ],
+  "repeatNoise": [
+    {
+      "mode": "control",
+      "cloudRaw": {
+        "normalizedMae": 0,
+        "maxDifference": 0,
+        "p50Difference": 0,
+        "p95Difference": 0,
+        "changedPixelFraction": 0
+      },
+      "finalOutput": {
+        "normalizedMae": 0,
+        "maxDifference": 0,
+        "p50Difference": 0,
+        "p95Difference": 0,
+        "changedPixelFraction": 0
+      }
+    },
+    {
+      "mode": "treatment",
+      "cloudRaw": {
+        "normalizedMae": 0,
+        "maxDifference": 0,
+        "p50Difference": 0,
+        "p95Difference": 0,
+        "changedPixelFraction": 0
+      },
+      "finalOutput": {
+        "normalizedMae": 0,
+        "maxDifference": 0,
+        "p50Difference": 0,
+        "p95Difference": 0,
+        "changedPixelFraction": 0
+      }
+    }
+  ],
+  "setupChecks": [
+    {
+      "cameraParity": true,
+      "diagnostic": "cloud-raw",
+      "fingerprintParity": true,
+      "progress": 0,
+      "requestedParity": true,
+      "runtimeParity": true
+    },
+    {
+      "cameraParity": true,
+      "diagnostic": "cloud-raw-off",
+      "fingerprintParity": true,
+      "progress": 0,
+      "requestedParity": true,
+      "runtimeParity": true
+    },
+    {
+      "cameraParity": true,
+      "diagnostic": "sample-count-debug",
+      "fingerprintParity": true,
+      "progress": 0,
+      "requestedParity": true,
+      "runtimeParity": true
+    },
+    {
+      "cameraParity": true,
+      "diagnostic": "stage-readback",
+      "fingerprintParity": true,
+      "progress": 0,
+      "requestedParity": true,
+      "runtimeParity": true
+    },
+    {
+      "cameraParity": true,
+      "diagnostic": "cloud-raw",
+      "fingerprintParity": true,
+      "progress": 0.06,
+      "requestedParity": true,
+      "runtimeParity": true
+    },
+    {
+      "cameraParity": true,
+      "diagnostic": "cloud-raw-off",
+      "fingerprintParity": true,
+      "progress": 0.06,
+      "requestedParity": true,
+      "runtimeParity": true
+    },
+    {
+      "cameraParity": true,
+      "diagnostic": "sample-count-debug",
+      "fingerprintParity": true,
+      "progress": 0.06,
+      "requestedParity": true,
+      "runtimeParity": true
+    },
+    {
+      "cameraParity": true,
+      "diagnostic": "stage-readback",
+      "fingerprintParity": true,
+      "progress": 0.06,
+      "requestedParity": true,
+      "runtimeParity": true
+    },
+    {
+      "cameraParity": true,
+      "diagnostic": "cloud-raw",
+      "fingerprintParity": true,
+      "progress": 0.12,
+      "requestedParity": true,
+      "runtimeParity": true
+    },
+    {
+      "cameraParity": true,
+      "diagnostic": "cloud-raw-off",
+      "fingerprintParity": true,
+      "progress": 0.12,
+      "requestedParity": true,
+      "runtimeParity": true
+    },
+    {
+      "cameraParity": true,
+      "diagnostic": "sample-count-debug",
+      "fingerprintParity": true,
+      "progress": 0.12,
+      "requestedParity": true,
+      "runtimeParity": true
+    },
+    {
+      "cameraParity": true,
+      "diagnostic": "stage-readback",
+      "fingerprintParity": true,
+      "progress": 0.12,
+      "requestedParity": true,
+      "runtimeParity": true
+    },
+    {
+      "cameraParity": true,
+      "diagnostic": "cloud-raw",
+      "fingerprintParity": true,
+      "progress": 0.18,
+      "requestedParity": true,
+      "runtimeParity": true
+    },
+    {
+      "cameraParity": true,
+      "diagnostic": "cloud-raw-off",
+      "fingerprintParity": true,
+      "progress": 0.18,
+      "requestedParity": true,
+      "runtimeParity": true
+    },
+    {
+      "cameraParity": true,
+      "diagnostic": "sample-count-debug",
+      "fingerprintParity": true,
+      "progress": 0.18,
+      "requestedParity": true,
+      "runtimeParity": true
+    },
+    {
+      "cameraParity": true,
+      "diagnostic": "stage-readback",
+      "fingerprintParity": true,
+      "progress": 0.18,
+      "requestedParity": true,
+      "runtimeParity": true
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "schema": "takram-orbital-sampling-causality-review/v1",
+  "cleanCommit": "b5913b9ca496b20944d6a0d6fe018f85c9ad99f0",
+  "reviewedAt": "2026-08-13T01:30:00+08:00",
+  "setupPass": true,
+  "outcome": "ORBITAL_SAMPLING_CAUSALITY_CONFIRMED",
+  "visualReview": {
+    "cloudRaw": "Treatment restores stable, geographically varying cloud-density bands and clusters at every progress. Control remains isolated stochastic-looking hits.",
+    "preTemporal": "Lossless treatment alpha/radiance buffers contain a continuous structured density field; the signal is not inferred from sample-count color alone.",
+    "resolvedHistory": "The same treatment field remains spatially coherent after temporal resolve with approximately 0.99-1.02 signal-pixel retention.",
+    "finalOutput": "Treatment signal is observable at every progress, but remains dark/rust-colored, visually close to the ground, and is not an approved production lookdev.",
+    "repeat": "Both arms reproduce byte-identical cloud-raw and final-output images at progress 0.06; measured repeat MAE is zero."
+  },
+  "frames": [
+    {
+      "downstreamSignalObservable": true,
+      "nativeSamplingIncreased": true,
+      "preTemporalSignalRecovered": true,
+      "progress": 0,
+      "repeatNoiseExceeded": true,
+      "structuredRawSignalRecovered": true,
+      "reviewerNotes": "Native hits increase 239 -> 28,392; pre-temporal signal fraction increases 0.00716 -> 0.32861 and remains visible in resolved/final output."
+    },
+    {
+      "downstreamSignalObservable": true,
+      "nativeSamplingIncreased": true,
+      "preTemporalSignalRecovered": true,
+      "progress": 0.06,
+      "repeatNoiseExceeded": true,
+      "structuredRawSignalRecovered": true,
+      "reviewerNotes": "Native hits increase 220 -> 27,746; pre-temporal signal fraction increases 0.00692 -> 0.32113. Exact-route repeat noise is zero."
+    },
+    {
+      "downstreamSignalObservable": true,
+      "nativeSamplingIncreased": true,
+      "preTemporalSignalRecovered": true,
+      "progress": 0.12,
+      "repeatNoiseExceeded": true,
+      "structuredRawSignalRecovered": true,
+      "reviewerNotes": "Native hits increase 222 -> 26,439; pre-temporal signal fraction increases 0.00605 -> 0.30601 and resolved retention is 1.016."
+    },
+    {
+      "downstreamSignalObservable": true,
+      "nativeSamplingIncreased": true,
+      "preTemporalSignalRecovered": true,
+      "progress": 0.18,
+      "repeatNoiseExceeded": true,
+      "structuredRawSignalRecovered": true,
+      "reviewerNotes": "Native hits increase 191 -> 25,305; pre-temporal signal fraction increases 0.00561 -> 0.29288 and remains observable in final output."
+    }
+  ]
+}
