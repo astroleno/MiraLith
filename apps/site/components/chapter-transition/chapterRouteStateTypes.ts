@@ -59,6 +59,12 @@ export interface ChapterRouteStateAdapter {
   capture: () => ChapterSemanticRouteState;
 }
 
+export type ChapterRouteStateCaptureReason =
+  | "semantic"
+  | "media-time"
+  | "pagehide"
+  | "transition";
+
 export interface ChapterReturnRevisionPlan {
   revision: number;
   resetStorage: boolean;

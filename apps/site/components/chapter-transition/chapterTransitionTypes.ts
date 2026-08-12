@@ -1,11 +1,17 @@
 import type { MiraLithKnownChapter } from "../../content/miraLithChapters";
+import type {
+  ChapterReturnSnapshot,
+  ChapterRouteStateAdapter
+} from "./chapterRouteStateTypes";
 
 export type {
   ChapterActiveMediaState,
   ChapterLegacyRouteState,
   ChapterPlaybackState,
+  ChapterReturnSnapshot,
   ChapterReturnRevisionPlan,
   ChapterRouteStateAdapter,
+  ChapterRouteStateCaptureReason,
   ChapterRouteStateManifest,
   ChapterSemanticRouteState
 } from "./chapterRouteStateTypes";
@@ -89,14 +95,6 @@ export type ChapterTransitionKind =
 export type ChapterTransitionInitiator = "link" | "scroll" | "history";
 export type ChapterDestinationSignalPhase = "mount" | "visual-pending" | "visual-ready" | "fallback-ready";
 
-export interface ChapterReturnSnapshot {
-  pathname: string;
-  scrollY: number;
-  routeProgress: number | null;
-  terminalState: boolean;
-  timestamp: number;
-}
-
 export interface ChapterDestinationResetContext {
   transitionId: string;
   pathname: string;
@@ -116,6 +114,7 @@ export interface ChapterDestinationFallbackContext {
 export interface ChapterDestinationControls {
   resetEntry: (context: ChapterDestinationResetContext) => void | Promise<void>;
   forceFallback: (context: ChapterDestinationFallbackContext) => void | Promise<void>;
+  routeState?: ChapterRouteStateAdapter;
 }
 
 export interface ChapterDestinationSignal {

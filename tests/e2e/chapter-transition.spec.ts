@@ -206,10 +206,18 @@ async function readStoredReturnSnapshot(page: Page, pathname: string) {
   return page.evaluate((targetPathname) => {
     const value = window.sessionStorage.getItem(`miralith:chapter-return:${targetPathname}`);
     return value ? JSON.parse(value) as {
+      schema: "chapter-return-v2";
+      buildScope: string;
       pathname: string;
+      revision: number;
       scrollY: number;
       routeProgress: number | null;
       terminalState: boolean;
+      semantic: {
+        kind: "legacy-progress";
+        routeProgress: number | null;
+        terminalState: boolean;
+      };
       timestamp: number;
     } : null;
   }, pathname);
@@ -1007,6 +1015,14 @@ test("history forward during covering replaces the active attempt with a gated d
   if (!stableHomeSnapshot) {
     throw new Error("Expected a settled homepage return snapshot");
   }
+  expect(stableHomeSnapshot.schema).toBe("chapter-return-v2");
+  expect(stableHomeSnapshot.buildScope).toMatch(/^[a-f0-9]{64}$/);
+  expect(stableHomeSnapshot.revision).toBeGreaterThanOrEqual(1);
+  expect(stableHomeSnapshot.semantic).toEqual({
+    kind: "legacy-progress",
+    routeProgress: stableHomeSnapshot.routeProgress,
+    terminalState: stableHomeSnapshot.terminalState
+  });
   expect(stableHomeSnapshot.terminalState).toBe(true);
   expect(stableHomeSnapshot.routeProgress).not.toBeNull();
 
@@ -1051,6 +1067,12 @@ test("history interruption during resetting-entry preserves the settled return s
   if (!stableRadioSnapshot) {
     throw new Error("Expected a settled Radio Gaga return snapshot");
   }
+  expect(stableRadioSnapshot.schema).toBe("chapter-return-v2");
+  expect(stableRadioSnapshot.semantic).toEqual({
+    kind: "legacy-progress",
+    routeProgress: stableRadioSnapshot.routeProgress,
+    terminalState: stableRadioSnapshot.terminalState
+  });
   expect(stableRadioSnapshot.routeProgress).toBeCloseTo(1, 2);
   expect(stableRadioSnapshot.terminalState).toBe(true);
   expect(stableRadioSnapshot.scrollY).toBeGreaterThan(radioTerminalScroll * 0.85);

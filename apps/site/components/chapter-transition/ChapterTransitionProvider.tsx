@@ -29,6 +29,19 @@ import {
   resetChapterTransitionVisualForRecovery,
   resolveChapterTransitionHandoff
 } from "./chapterVisualHandoff";
+import {
+  nextRevisionFromValidatedSnapshot,
+  parseChapterReturnSnapshot,
+  readChapterReturnSnapshot,
+  writeChapterReturnSnapshot
+} from "./chapterRouteState";
+import {
+  CHAPTER_RETURN_SNAPSHOT_VERSION,
+  type ChapterReturnRevisionPlan,
+  type ChapterRouteStateCaptureReason,
+  type ChapterRouteStateManifest,
+  type ChapterSemanticRouteState
+} from "./chapterRouteStateTypes";
 import type {
   ChapterDestinationControls,
   ChapterDestinationSignal,
@@ -46,6 +59,8 @@ const DESTINATION_FALLBACK_REQUEST_MS = 2_600;
 const DESTINATION_HARD_DEADLINE_MS = 3_000;
 const DESTINATION_FALLBACK_COMMIT_DEADLINE_MS = 1_000;
 const INPUT_INERTIA_SETTLE_MS = 160;
+const RETURN_MEDIA_TIME_THROTTLE_MS = 2_000;
+const RETURN_BUILD_SCOPE = process.env.NEXT_PUBLIC_MIRALITH_CHAPTER_PREVIEW_SCOPE ?? "";
 
 const idleSnapshot: ChapterTransitionSnapshot = {
   id: null,
@@ -134,6 +149,13 @@ interface ChapterTransitionContextValue {
   ) => string | null;
   registerDestination: (pathname: string, controls: ChapterDestinationControls) => () => void;
   reportDestination: (signal: ChapterDestinationSignal) => void;
+  captureRouteState: (pathname: string, reason: ChapterRouteStateCaptureReason) => void;
+}
+
+interface ChapterReturnRevisionRuntime {
+  plan: ChapterReturnRevisionPlan;
+  epoch: number;
+  mediaTimer: number | null;
 }
 
 const ChapterTransitionContext = createContext<ChapterTransitionContextValue | null>(null);
@@ -248,41 +270,22 @@ function readRouteProgress(pathname: string) {
   return null;
 }
 
-function writeReturnSnapshot(pathname: string) {
-  try {
-    const terminalElement = document.querySelector<HTMLElement>("[data-chapter-terminal]");
-    const snapshot: ChapterReturnSnapshot = {
-      pathname,
-      scrollY: window.scrollY,
-      routeProgress: readRouteProgress(pathname),
-      terminalState: terminalElement?.dataset.chapterTerminal === "armed",
-      timestamp: Date.now()
-    };
-    window.sessionStorage.setItem(`${RETURN_SNAPSHOT_PREFIX}${pathname}`, JSON.stringify(snapshot));
-  } catch {
-    // Storage can be unavailable in hardened browsing modes. The route reset still has a deterministic default.
-  }
+function returnSnapshotKey(pathname: string) {
+  return `${RETURN_SNAPSHOT_PREFIX}${pathname}`;
 }
 
-function readReturnSnapshot(pathname: string): ChapterReturnSnapshot | null {
-  try {
-    const value = window.sessionStorage.getItem(`${RETURN_SNAPSHOT_PREFIX}${pathname}`);
-    if (!value) {
-      return null;
-    }
-    const snapshot = JSON.parse(value) as Partial<ChapterReturnSnapshot>;
-    if (snapshot.pathname !== pathname || typeof snapshot.timestamp !== "number") {
-      return null;
-    }
-    return {
-      pathname,
-      scrollY: typeof snapshot.scrollY === "number" ? snapshot.scrollY : 0,
-      routeProgress: typeof snapshot.routeProgress === "number" ? snapshot.routeProgress : null,
-      terminalState: snapshot.terminalState === true,
-      timestamp: snapshot.timestamp
-    };
-  } catch {
-    return null;
+function returnSnapshotContext(pathname: string, manifest?: ChapterRouteStateManifest) {
+  return {
+    pathname,
+    buildScope: RETURN_BUILD_SCOPE,
+    ...(manifest ? { manifest } : {})
+  };
+}
+
+function clearReturnMediaTimer(runtime: ChapterReturnRevisionRuntime) {
+  if (runtime.mediaTimer !== null) {
+    window.clearTimeout(runtime.mediaTimer);
+    runtime.mediaTimer = null;
   }
 }
 
@@ -313,8 +316,11 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
     targetHref: string;
     scope: string;
   } | null>(null);
+  const pageHiddenRef = useRef(false);
   const currentPathRef = useRef(pathname);
   const destinationControlsRef = useRef(new Map<string, ChapterDestinationControls>());
+  const returnRevisionRef = useRef(new Map<string, ChapterReturnRevisionRuntime>());
+  const directRestoreControllersRef = useRef(new Map<string, AbortController>());
   const transitionSequenceRef = useRef(0);
   const originalScrollRestorationRef = useRef<History["scrollRestoration"] | null>(null);
   const navigationEntryIndexRef = useRef<number | null>(null);
@@ -341,6 +347,141 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
   // navigation consumers rerender when preview access changes.
   const resolveRuntimeChapterAccess = useCallback((href: string) =>
     resolveMiraLithChapterAccess(href, { previewActive: previewSessionRef.current.previewActive }), []);
+
+  const readStoredReturnSnapshot = useCallback((pathnameToRead: string) => {
+    const normalizedPathname = normalizeMiraLithChapterHref(pathnameToRead);
+    const manifest = destinationControlsRef.current.get(normalizedPathname)?.routeState?.manifest;
+    return readChapterReturnSnapshot(
+      window.sessionStorage,
+      returnSnapshotKey(normalizedPathname),
+      returnSnapshotContext(normalizedPathname, manifest)
+    );
+  }, []);
+
+  const ensureReturnRevision = useCallback((pathnameToInitialize: string) => {
+    const normalizedPathname = normalizeMiraLithChapterHref(pathnameToInitialize);
+    const existing = returnRevisionRef.current.get(normalizedPathname);
+    if (existing) {
+      return existing;
+    }
+    const runtime: ChapterReturnRevisionRuntime = {
+      plan: nextRevisionFromValidatedSnapshot(readStoredReturnSnapshot(normalizedPathname)),
+      epoch: 0,
+      mediaTimer: null
+    };
+    returnRevisionRef.current.set(normalizedPathname, runtime);
+    return runtime;
+  }, [readStoredReturnSnapshot]);
+
+  const captureRouteStateNow = useCallback((
+    pathnameToCapture: string,
+    expected?: { revision: number; resetStorage: boolean; epoch: number }
+  ) => {
+    const normalizedPathname = normalizeMiraLithChapterHref(pathnameToCapture);
+    const revisionRuntime = ensureReturnRevision(normalizedPathname);
+    if (
+      expected
+      && (
+        revisionRuntime.epoch !== expected.epoch
+        || revisionRuntime.plan.revision !== expected.revision
+        || revisionRuntime.plan.resetStorage !== expected.resetStorage
+      )
+    ) {
+      return;
+    }
+    const controls = destinationControlsRef.current.get(normalizedPathname);
+    const manifest = controls?.routeState?.manifest;
+    let semantic: ChapterSemanticRouteState | {
+      kind: "legacy-progress";
+      routeProgress: number | null;
+      terminalState: boolean;
+    };
+    let routeProgress: number | null;
+    let terminalState: boolean;
+    try {
+      if (controls?.routeState) {
+        semantic = controls.routeState.capture();
+        routeProgress = null;
+        terminalState = false;
+      } else {
+        routeProgress = readRouteProgress(normalizedPathname);
+        terminalState = document.querySelector<HTMLElement>("[data-chapter-terminal]")
+          ?.dataset.chapterTerminal === "armed";
+        semantic = { kind: "legacy-progress", routeProgress, terminalState };
+      }
+    } catch {
+      return;
+    }
+    const snapshot: ChapterReturnSnapshot = {
+      schema: CHAPTER_RETURN_SNAPSHOT_VERSION,
+      buildScope: RETURN_BUILD_SCOPE,
+      pathname: normalizedPathname,
+      revision: revisionRuntime.plan.revision,
+      scrollY: Math.max(0, window.scrollY),
+      routeProgress,
+      terminalState,
+      semantic,
+      timestamp: Date.now()
+    };
+    const context = returnSnapshotContext(normalizedPathname, manifest);
+    const validated = parseChapterReturnSnapshot(snapshot, context);
+    if (!validated) {
+      return;
+    }
+    if (revisionRuntime.plan.resetStorage) {
+      clearReturnMediaTimer(revisionRuntime);
+      revisionRuntime.epoch += 1;
+    }
+    const result = writeChapterReturnSnapshot(
+      window.sessionStorage,
+      returnSnapshotKey(normalizedPathname),
+      validated,
+      context,
+      revisionRuntime.plan
+    );
+    if (result === "written") {
+      revisionRuntime.plan = nextRevisionFromValidatedSnapshot(validated);
+    } else if (result === "stale") {
+      revisionRuntime.plan = nextRevisionFromValidatedSnapshot(
+        readChapterReturnSnapshot(
+          window.sessionStorage,
+          returnSnapshotKey(normalizedPathname),
+          context
+        )
+      );
+    }
+  }, [ensureReturnRevision]);
+
+  const captureRouteState = useCallback((
+    pathnameToCapture: string,
+    reason: ChapterRouteStateCaptureReason
+  ) => {
+    if (pageHiddenRef.current && reason !== "pagehide") {
+      return;
+    }
+    const normalizedPathname = normalizeMiraLithChapterHref(pathnameToCapture);
+    const revisionRuntime = ensureReturnRevision(normalizedPathname);
+    if (reason === "media-time") {
+      if (activeRef.current) {
+        return;
+      }
+      if (revisionRuntime.mediaTimer !== null) {
+        return;
+      }
+      const expected = {
+        revision: revisionRuntime.plan.revision,
+        resetStorage: revisionRuntime.plan.resetStorage,
+        epoch: revisionRuntime.epoch
+      };
+      revisionRuntime.mediaTimer = window.setTimeout(() => {
+        revisionRuntime.mediaTimer = null;
+        captureRouteStateNow(normalizedPathname, expected);
+      }, RETURN_MEDIA_TIME_THROTTLE_MS);
+      return;
+    }
+    clearReturnMediaTimer(revisionRuntime);
+    captureRouteStateNow(normalizedPathname);
+  }, [captureRouteStateNow, ensureReturnRevision]);
 
   const publish = useCallback((runtime: ActiveChapterTransition, state: ChapterTransitionState, error?: string) => {
     runtime.state = state;
@@ -674,7 +815,9 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
     const destinationAttempt = runtime.destinationAttempt;
     const destinationHref = runtime.targetHref;
     const resetInitiator = runtime.recovering ? "history" : runtime.initiator;
-    const returnSnapshot = resetInitiator === "history" ? readReturnSnapshot(runtime.targetHref) : null;
+    const returnSnapshot = resetInitiator === "history"
+      ? readStoredReturnSnapshot(runtime.targetHref)
+      : null;
     Promise.resolve().then(() =>
       controls.resetEntry({
         transitionId: runtime.id,
@@ -712,7 +855,7 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
         recoverSourceRef.current(runtime, "目标章节入口重置失败");
       }
     });
-  }, [publish]);
+  }, [publish, readStoredReturnSnapshot]);
 
   useEffect(() => {
     recoverSourceRef.current = recoverSource;
@@ -750,7 +893,7 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
     }
 
     if (!skipSourceSnapshot) {
-      writeReturnSnapshot(normalizedSource);
+      captureRouteState(normalizedSource, "transition");
     }
     if (originalScrollRestorationRef.current === null) {
       originalScrollRestorationRef.current = window.history.scrollRestoration;
@@ -797,7 +940,7 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
     setAnnouncement(`正在进入 ${targetEndpoint.chapter.index} ${targetEndpoint.chapter.title}`);
     performanceMark(runtime, "begin");
     return runtime.id;
-  }, [resolveRuntimeChapterAccess]);
+  }, [captureRouteState, resolveRuntimeChapterAccess]);
 
   const beginTransition = useCallback((
     targetHref: string,
@@ -819,6 +962,7 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
   const registerDestination = useCallback((pathnameToRegister: string, controls: ChapterDestinationControls) => {
     const normalizedPathname = normalizeMiraLithChapterHref(pathnameToRegister);
     destinationControlsRef.current.set(normalizedPathname, controls);
+    ensureReturnRevision(normalizedPathname);
     const runtime = activeRef.current;
     if (
       runtime &&
@@ -830,12 +974,41 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
       processDestinationRef.current(runtime);
     }
 
+    if (
+      !runtime
+      && controls.routeState
+      && normalizeMiraLithChapterHref(window.location.pathname) === normalizedPathname
+    ) {
+      directRestoreControllersRef.current.get(normalizedPathname)?.abort();
+      const controller = new AbortController();
+      directRestoreControllersRef.current.set(normalizedPathname, controller);
+      const returnSnapshot = readStoredReturnSnapshot(normalizedPathname);
+      void Promise.resolve(controls.resetEntry({
+        transitionId: `chapter-direct-restore:${normalizedPathname}`,
+        pathname: normalizedPathname,
+        initiator: "history",
+        handoff: null,
+        returnSnapshot,
+        destinationAttempt: 0,
+        signal: controller.signal
+      })).catch(() => undefined).finally(() => {
+        if (directRestoreControllersRef.current.get(normalizedPathname) === controller) {
+          directRestoreControllersRef.current.delete(normalizedPathname);
+        }
+      });
+    }
+
     return () => {
       if (destinationControlsRef.current.get(normalizedPathname) === controls) {
         destinationControlsRef.current.delete(normalizedPathname);
       }
+      const directController = directRestoreControllersRef.current.get(normalizedPathname);
+      if (directController) {
+        directController.abort();
+        directRestoreControllersRef.current.delete(normalizedPathname);
+      }
     };
-  }, []);
+  }, [ensureReturnRevision, readStoredReturnSnapshot]);
 
   const reportDestination = useCallback((signal: ChapterDestinationSignal) => {
     const runtime = activeRef.current;
@@ -979,6 +1152,22 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
   }, []);
 
   useEffect(() => {
+    const handlePageHide = () => {
+      pageHiddenRef.current = true;
+      captureRouteState(currentPathRef.current, "pagehide");
+    };
+    const handlePageShow = () => {
+      pageHiddenRef.current = false;
+    };
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("pageshow", handlePageShow);
+    return () => {
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, [captureRouteState]);
+
+  useEffect(() => {
     const handlePopState = () => {
       updatePreviewSession(revalidateChapterPreviewSession());
       const targetHref = normalizeMiraLithChapterHref(window.location.pathname);
@@ -1103,6 +1292,13 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
       cancelDestinationAttempt(runtime);
       activeRef.current = null;
     }
+    for (const revisionRuntime of returnRevisionRef.current.values()) {
+      clearReturnMediaTimer(revisionRuntime);
+    }
+    for (const controller of directRestoreControllersRef.current.values()) {
+      controller.abort();
+    }
+    directRestoreControllersRef.current.clear();
     pendingPreviewMarkerRef.current = null;
     restoreScrollRestoration();
   }, [restoreScrollRestoration]);
@@ -1115,9 +1311,11 @@ export function ChapterTransitionProvider({ children }: { children: ReactNode })
     getNextAccessibleChapter,
     beginTransition,
     registerDestination,
-    reportDestination
+    reportDestination,
+    captureRouteState
   }), [
     beginTransition,
+    captureRouteState,
     getNextAccessibleChapter,
     previewSession.previewActive,
     previewSession.scope,
@@ -1153,7 +1351,12 @@ export function useChapterTransitionDestination(
   controls: ChapterDestinationControls,
   enabled = true
 ) {
-  const { snapshot, registerDestination, reportDestination } = useChapterTransition();
+  const {
+    snapshot,
+    registerDestination,
+    reportDestination,
+    captureRouteState
+  } = useChapterTransition();
   const normalizedPathname = normalizeMiraLithChapterHref(pathname);
   const stableControls = useMemo(() => controls, [controls]);
   const transitionId =
@@ -1166,7 +1369,13 @@ export function useChapterTransitionDestination(
     if (!enabled) {
       return;
     }
-    const unregister = registerDestination(normalizedPathname, stableControls);
+    return registerDestination(normalizedPathname, stableControls);
+  }, [enabled, normalizedPathname, registerDestination, stableControls]);
+
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
     if (transitionId && destinationAttempt !== null) {
       reportDestination({
         transitionId,
@@ -1175,14 +1384,11 @@ export function useChapterTransitionDestination(
         phase: "mount"
       });
     }
-    return unregister;
   }, [
     destinationAttempt,
     enabled,
     normalizedPathname,
-    registerDestination,
     reportDestination,
-    stableControls,
     transitionId
   ]);
 
@@ -1216,6 +1422,11 @@ export function useChapterTransitionDestination(
       });
     }
   }, [destinationAttempt, normalizedPathname, reportDestination, transitionId]);
+  const captureRegisteredRouteState = useCallback((reason: ChapterRouteStateCaptureReason) => {
+    if (enabled) {
+      captureRouteState(normalizedPathname, reason);
+    }
+  }, [captureRouteState, enabled, normalizedPathname]);
 
   return {
     transitionId,
@@ -1223,6 +1434,7 @@ export function useChapterTransitionDestination(
     isTransitionTarget: transitionId !== null,
     inputEnabled: snapshot.inputEnabled,
     snapshot,
+    captureRouteState: captureRegisteredRouteState,
     reportVisualPending,
     reportVisualReady,
     reportFallbackReady

@@ -20,7 +20,7 @@ export default async function ArtBreezePage() {
     postCoScrollMediaResolverOptionsFromEnvironment(process.cwd())
   );
   const mediaItems = resolved.manifest
-    ? [resolved.manifest.items["artbreeze-first-sequence"]].filter((item): item is NonNullable<typeof item> => Boolean(item))
+    ? Object.values(resolved.manifest.items).filter((item) => item.workId === "artbreeze")
     : [];
 
   return (
