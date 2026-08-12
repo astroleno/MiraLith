@@ -1,12 +1,12 @@
 {
   "kind": "miralith.post-coscroll.cp1.3.playback-scroll-state-model",
-  "schemaVersion": 1,
-  "recordedAt": "2026-08-12",
+  "schemaVersion": 2,
+  "recordedAt": "2026-08-13",
   "checkpoint": {
     "id": "CP1.3",
-    "status": "IN REVIEW",
-    "reviewVerdict": "PENDING — INDEPENDENT CORRECTNESS REVIEW",
-    "nextGate": "Unit 4 remains CLOSED. Only an independent review of this exact implementation candidate may authorize integration or Unit 4."
+    "status": "PASS — TECH / INTEGRATED",
+    "reviewVerdict": "PASS — CP1.3 CANDIDATE AND ROUTE-SCOPED SNAPSHOT FIX",
+    "nextGate": "Unit 4 is OPEN for separately planned and reviewed CoScroll to ArtBreeze visual handoff work. CP1.3 does not itself authorize unplanned production animation changes."
   },
   "baseline": {
     "commit": "eefce7cb889d3b78513e3ea52d347338e5feff59",
@@ -19,6 +19,21 @@
     "implementationBinaryPatchSha256FromOpenCommit": "50c8fa37fa6ad0c692cbd136b628cb96232eda382d7471266c639c0d91e581d2",
     "changedPathCountFromBaseline": 25,
     "implementationOpenCommit": "50bfce3a46d33246f94b552e8bdefe37fe4d304b"
+  },
+  "integration": {
+    "targetBranch": "codex/coscroll-shader4-miralith",
+    "preIntegrationHead": "eefce7cb889d3b78513e3ea52d347338e5feff59",
+    "reviewEvidenceCommit": "b42f5fac85d1a4fbbdbf50316d69399005fd5093",
+    "reviewEvidenceTree": "c1b5aa7a281b55815277f9ddc979824d5babfba2",
+    "reviewEvidencePatchSha256": "48a808f71c6e3142acab5366373161e0df4b647fd16a111e4b9a14b400f67fc7",
+    "runtimeFixCommit": "8f623b7d0566e45bf0e24320da7ca7ae96221d58",
+    "runtimeFixTree": "1c8e54e9204db0ef697140df8738cb74a935387b",
+    "runtimeFixParent": "b42f5fac85d1a4fbbdbf50316d69399005fd5093",
+    "runtimeFixPatchSha256": "02c35f2a9e72e33ebd85c951f83733b9c44e746c949e3167a2ceb93235cf418e",
+    "combinedBinaryPatchSha256FromBaseline": "02b5e86063c362ba88153ff42f236948cc11f3f6bc1e8ac577a8d094a52bf69a",
+    "changedPathCountFromBaseline": 27,
+    "mode": "fast-forward",
+    "userWorkspaceProtection": "Existing package.json, patches/, and downloads/ identities were unchanged across both fast-forward integrations."
   },
   "lineage": {
     "plan": [
@@ -64,6 +79,14 @@
     "task7RuntimeGuard": {
       "commit": "95a4cd3372e31970d29546868a4aa6a4f0e13fa2",
       "patchSha256": "0b459cec223b20e980bb87a1c747fab83ef3e9c76a712105287f2292f3d5d773"
+    },
+    "integrationRouteSnapshotFix": {
+      "commit": "8f623b7d0566e45bf0e24320da7ca7ae96221d58",
+      "tree": "1c8e54e9204db0ef697140df8738cb74a935387b",
+      "reviewedPatchSha256": "02c35f2a9e72e33ebd85c951f83733b9c44e746c949e3167a2ceb93235cf418e",
+      "cause": "Legacy return-state capture queried the first global terminal marker while source and destination routes could coexist during a covering history transition.",
+      "resolution": "Terminal state is resolved inside the pathname-specific 01–03 route root; an unrelated terminal decoy cannot overwrite the captured route state.",
+      "review": "Independent correctness review reported no findings. The remaining selector-to-DOM contract coupling is recorded as a non-blocking maintenance risk."
     }
   },
   "schemas": {
@@ -258,7 +281,7 @@
     "gitPolicy": "Generated preview media remains ignored and is not part of this candidate."
   },
   "verification": {
-    "verifiedAt": "2026-08-12",
+    "verifiedAt": "2026-08-13",
     "static": [
       {
         "command": "pnpm typecheck",
@@ -276,7 +299,7 @@
         "exitCode": 0
       },
       {
-        "command": "git apply --reverse --check <combined candidate binary patch>",
+        "command": "git apply --reverse --check <route-scoped snapshot fix binary patch>",
         "result": "passed",
         "exitCode": 0
       }
@@ -287,30 +310,37 @@
       "exitCode": 0
     },
     "isolatedProduction": {
-      "verificationHead": "95a4cd3372e31970d29546868a4aa6a4f0e13fa2",
-      "verificationTree": "68995972535cb1d9b6e5c46273d24ef5866e4de6",
+      "verificationHead": "8f623b7d0566e45bf0e24320da7ca7ae96221d58",
+      "verificationTree": "1c8e54e9204db0ef697140df8738cb74a935387b",
       "previewMediaRootPresent": false,
       "contractFixtureFlagPresent": false,
-      "command": "CI=1 MIRALITH_PLAYWRIGHT_PORT=3153 pnpm exec playwright test -c playwright.config.ts tests/e2e/chapter-transition.spec.ts tests/e2e/chapter-navigation.spec.ts tests/e2e/post-coscroll-media.spec.ts tests/e2e/post-coscroll-route-shell.spec.ts --project=desktop --workers=1 --grep-invert 'known post-CoScroll routes|preview review rail|CoScroll to ArtBreeze|failed ArtBreeze poster|ArtBreeze explicitly|expired or forged preview'",
-      "result": "61 passed / 3 expected skipped",
+      "command": "CI=1 MIRALITH_PLAYWRIGHT_PORT=3155 pnpm exec playwright test -c playwright.config.ts tests/e2e/chapter-transition.spec.ts tests/e2e/chapter-navigation.spec.ts tests/e2e/post-coscroll-media.spec.ts tests/e2e/post-coscroll-route-shell.spec.ts --project=desktop --workers=1 --grep-invert 'known post-CoScroll routes|preview review rail|CoScroll to ArtBreeze|failed ArtBreeze poster|ArtBreeze explicitly|expired or forged preview'",
+      "result": "62 passed / 3 expected skipped",
       "exitCode": 0,
       "fixtureRoute": "/spikes/post-coscroll-controller-contract",
       "fixtureRouteStatus": 404,
       "fixtureRootCount": 0
     },
     "localPreview": {
-      "verificationHead": "95a4cd3372e31970d29546868a4aa6a4f0e13fa2",
+      "verificationHead": "8f623b7d0566e45bf0e24320da7ca7ae96221d58",
       "runner": "playwright.local-preview.config.ts",
-      "command": "MIRALITH_LOCAL_PREVIEW_PLAYWRIGHT_PORT=3154 pnpm exec playwright test -c playwright.local-preview.config.ts tests/e2e/post-coscroll-route-shell.spec.ts tests/e2e/chapter-route-state.spec.ts --project=desktop --workers=1",
+      "command": "MIRALITH_LOCAL_PREVIEW_PLAYWRIGHT_PORT=3157 pnpm exec playwright test -c playwright.local-preview.config.ts tests/e2e/post-coscroll-route-shell.spec.ts tests/e2e/chapter-route-state.spec.ts --project=desktop --workers=1",
       "result": "17 passed",
       "exitCode": 0
     },
     "controllerFixture": {
-      "verificationHead": "95a4cd3372e31970d29546868a4aa6a4f0e13fa2",
+      "verificationHead": "8f623b7d0566e45bf0e24320da7ca7ae96221d58",
       "runner": "playwright.contract.config.ts",
       "environment": "MIRALITH_CONTRACT_FIXTURES=1 supplied only by this fixed-port next-dev runner",
-      "command": "MIRALITH_CONTRACT_PLAYWRIGHT_PORT=3152 pnpm exec playwright test -c playwright.contract.config.ts tests/e2e/post-coscroll-controller-contract.spec.ts --project=desktop --workers=1",
+      "command": "MIRALITH_CONTRACT_PLAYWRIGHT_PORT=3156 pnpm exec playwright test -c playwright.contract.config.ts tests/e2e/post-coscroll-controller-contract.spec.ts --project=desktop --workers=1",
       "result": "8 passed",
+      "exitCode": 0
+    },
+    "routeScopedSnapshotRegression": {
+      "command": "CI=1 MIRALITH_PLAYWRIGHT_PORT=3155 pnpm exec playwright test -c playwright.config.ts tests/e2e/chapter-transition.spec.ts --project=desktop --workers=1 --repeat-each=3 --grep 'history forward during covering|return snapshots ignore terminal markers'",
+      "redResult": "The deterministic terminal-decoy regression failed before the fix because the homepage snapshot persisted terminalState=false.",
+      "greenResult": "6 passed",
+      "fullSerialResult": "Both the original covering interruption and the new route-scoped regression passed inside the complete production sequence.",
       "exitCode": 0
     }
   },

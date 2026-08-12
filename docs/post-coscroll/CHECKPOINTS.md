@@ -237,18 +237,20 @@ CP1.2 的 access matrix、history、production isolation 与独立 local-preview
 
 ## CP1.3 — Playback / Scroll State Model
 
-状态：`IN REVIEW，2026-08-12`
+状态：`PASS — TECH / INTEGRATED，2026-08-13`
 
 Unit 3 的详细边界、字段、TDD 顺序和验收矩阵记录在 [Unit 3 implementation plan](../plans/2026-08-09-001-unit3-handoff-recovery-state-contract-plan.md)。作者于 2026-08-09 针对提交 `f3b3504143b246451dc3efd650bbea5e489f1716`、计划 SHA-256 `3079232c28a7e07ed9d0db43236ee8c40dabbfdebce68f36bcf74a4389390c3e` 和 patch SHA-256 `17c8a73d5418ce23fc0ce02a47dbe9ef56d68dae17e4cdddf2025fe38d8900bf` 给出 `PASS — PLAN`，因此 Unit 3 implementation 已开放并从 Task 1 RED 开始。Unit 4 仍关闭，不得提前进入正式 CoScroll → ArtBreeze 视觉接力。
 
-Unit 3 implementation candidate 为 [`95a4cd3`](../../commit/95a4cd3372e31970d29546868a4aa6a4f0e13fa2)，tree `68995972535cb1d9b6e5c46273d24ef5866e4de6`，相对 CP1.2 baseline `eefce7c` 的 binary patch SHA-256 为 `cb2cc02412142b10a341734a78cd30e524b21ed703579e4367e009a9269efc09`。Task 1–6 已逐项通过 correctness review；Task 7 额外固定四个 React Three consumer root 的 Fiber、Drei、React 与 React DOM 单例解析。
+Unit 3 implementation candidate 为 [`95a4cd3`](../../commit/95a4cd3372e31970d29546868a4aa6a4f0e13fa2)，tree `68995972535cb1d9b6e5c46273d24ef5866e4de6`。其 review evidence commit 为 [`b42f5fa`](../../commit/b42f5fac85d1a4fbbdbf50316d69399005fd5093)。Task 1–6 已逐项通过 correctness review；Task 7 额外固定四个 React Three consumer root 的 Fiber、Drei、React 与 React DOM 单例解析。
+
+首次集成后的 fresh production suite 暴露了一个 history covering 竞态：01 与 02 短暂共存时，全局首个 `[data-chapter-terminal]` 可能把 RadioGaga 的 `idle` 写进首页 return snapshot。独立修复 [`8f623b7`](../../commit/8f623b7d0566e45bf0e24320da7ca7ae96221d58) 将 terminal 读取限制在 pathname 对应的 01–03 route root；增量 patch SHA-256 为 `02c35f2a9e72e33ebd85c951f83733b9c44e746c949e3167a2ceb93235cf418e`。确定性 decoy 回归先 RED，修复后与原竞态以 `--repeat-each=3` 得到 `6 passed`；独立 correctness review 无 finding。保留的非阻断风险是 selector 与三个页面根节点 class/attribute 契约硬绑定，后续改根标记时必须同步更新。
 
 | 验证层 | 结果 |
 | --- | --- |
 | static | typecheck、lint、`git diff --check` 与反向 binary patch check 全部通过。 |
 | Node contracts | 视觉 handoff、return codec、narrative reducer、playback attempt、runtime singleton、registry 与 preview scope：`64 passed`。 |
-| isolated production | 在无 `public/media/post-coscroll/` 且无 fixture flag 的 detached candidate HEAD：`61 passed / 3 expected skipped`；fixture route 返回 `404`。 |
+| isolated production | 在无 `public/media/post-coscroll/` 且无 fixture flag 的 detached final runtime HEAD：`62 passed / 3 expected skipped`；fixture route 返回 `404`。 |
 | local preview | 真实 catalog 下 route shell + semantic return state：`17 passed`。 |
 | contract fixture | click/Enter activation、generation、replacement/stale race 与 lifecycle phase matrix：`8 passed`。 |
 
-完整提交谱系、schema、revision/epoch/pagehide 证据、多媒体 Replay 规则、9×15 状态矩阵、播放 ownership、命令与媒体身份见 [CP1.3 status evidence](evidence/cp1.3-playback-scroll-state-model-status.json) 与 [checksum index](evidence/cp1.3-playback-scroll-state-model-checksums.sha256)。当前仅提交独立 review；**CP1.3 未标 PASS，Unit 4 继续 CLOSED**。
+最终 runtime HEAD `8f623b7`、tree `1c8e54e9204db0ef697140df8738cb74a935387b` 相对 CP1.2 baseline `eefce7c` 的 27-path binary patch SHA-256 为 `02b5e86063c362ba88153ff42f236948cc11f3f6bc1e8ac577a8d094a52bf69a`。完整提交谱系、schema、revision/epoch/pagehide 证据、多媒体 Replay 规则、9×15 状态矩阵、播放 ownership、命令与媒体身份见 [CP1.3 status evidence](evidence/cp1.3-playback-scroll-state-model-status.json) 与 [checksum index](evidence/cp1.3-playback-scroll-state-model-checksums.sha256)。因此 **CP1.3 于 2026-08-13 标记为 `PASS — TECH / INTEGRATED`；Unit 4 现已开放，但仍需按独立计划与 review 门禁执行正式 CoScroll → ArtBreeze 视觉接力。**
