@@ -164,11 +164,25 @@ The module writes a dedicated native-current diagnostic encoding; it does not in
 min / p05 / p25 / p50 / p75 / p95 / max / mean
 ```
 
-Distributions are calculated over valid shell-intersecting pixels and separately over pixels that later produce at least one rough-weather sample. The evidence stores the raw readback buffer so another implementation can recompute every percentile.
+For each progress, the first native-control repeat produces one immutable geometric shell-intersection mask from `rayNearFar.x/y`. The second native repeat and every step candidate must reproduce the same mask byte-for-byte; otherwise the batch is `DIAGNOSTIC_SETUP_BLOCKED`. This fixed mask is the primary denominator for every cross-candidate count and signal metric at that progress.
+
+Distributions are calculated over the fixed shell-intersection mask. Candidate-specific pixels that later produce a rough-weather sample or media hit are reported only as auxiliary conditional populations; they may not become the denominator of a causal comparison. The evidence stores the mask and raw readback buffer so another implementation can recompute every percentile.
 
 ### 5.2 Native sample-count readback
 
-Use the existing repaired native sample-count path, preserving primary/shape/detail counts and the hit mask. Persist:
+Use the existing repaired native sample-count path to preserve primary/shape/detail counts and the hit mask. Add a separate capture-only loop/termination probe because `sampleCount.x` increments only after the layer-interval skip and therefore is not the primary-loop iteration count.
+
+The loop probe records:
+
+```text
+loopIterationCount
+terminationReason = no-intersection | max-ray-distance | min-transmittance | iteration-cap
+iterationCapReached
+```
+
+`loopIterationCount` increments once on every entered `for` iteration, including iterations that skip an inactive layer interval. `iterationCapReached=true` only when the loop completes all `maxIterationCount` iterations without taking a break. A primary sample count of `500` is neither required nor sufficient for this flag.
+
+Persist over the fixed geometric mask:
 
 ```text
 valid pixel count
@@ -179,7 +193,7 @@ hit-mask fraction
 iteration-cap pixel fraction
 ```
 
-The primary count is the native count accumulated by `marchClouds`; a screenshot colour decoded after composition is not acceptable.
+The primary count is the native rough-weather count accumulated by `marchClouds`; loop count and termination are the new independent probe. A screenshot colour decoded after composition is not acceptable. The raw buffer must permit independent recomputation of the cap fraction and termination histogram.
 
 ### 5.3 Signal-chain readback
 
@@ -187,11 +201,13 @@ Every sweep level, progress, and clean-mount repeat must include:
 
 1. `cloud-raw` plus paired `cloud-raw-off`;
 2. native `sample-count-debug` readback;
-3. native pre-temporal current target;
-4. native resolved-history target;
-5. final output after AerialPerspective and output transfer.
+3. `step-loop-readback` for ray geometry, loop count, and termination;
+4. `stage-readback` with native pre-temporal, resolved-history, and final output;
+5. paired `stage-readback-off` with cloud contribution disabled at the native-current source.
 
-For each signal stage, persist finite/non-finite count, mean and peak luma/alpha where meaningful, non-zero pixel fraction, and paired cloud-on minus cloud-off mean/peak absolute difference. The raw binary buffers, exact-frame PNGs, and decoded metric JSON remain linked by SHA-256.
+`stage-readback-off` is a separate strict diagnostic mode. It preserves the same composer, camera, atmosphere, render targets, history-reset path, and frame schedule, but clears the cloud current target before temporal resolve on every frame of its clean mount. At native frame 32 it reads the cleared pre-temporal current target, the independently converged off-side history target, and the final AerialPerspective/output result. It must not reuse a prior on-side history target or infer off-side values from `cloud-raw-off` screenshots.
+
+For each signal stage, persist finite/non-finite count, mean and peak luma/alpha where meaningful, non-zero pixel fraction, and paired cloud-on minus cloud-off mean/peak absolute difference over the fixed geometric mask. `cloud-raw` pairs with `cloud-raw-off`; every `stage-readback` buffer pairs with the corresponding `stage-readback-off` buffer. The raw binary buffers, exact-frame PNGs, and decoded metric JSON remain linked by SHA-256.
 
 `cloud-raw` is the causal gate. A final-output change without raw recovery does not pass the stepping hypothesis.
 
@@ -208,11 +224,13 @@ the same STBN slice
 two independent clean document mounts
 ```
 
-The manifest records complete requested/readback contracts, camera/projection/Earth matrices, history epoch, mount/runtime identity, all six cloud/shadow allocation generations, shader/build/package/patch hashes, and capture hashes. A mismatch blocks the batch instead of becoming measurement noise.
+Each mount receives a stable `repeatId=A|B`. An on/off pair is valid only when its repeat ID, progress, viewport, camera/projection/Earth matrices, native cloud/resolve/shadow frame, jitter index, STBN slice, source shader hash, renderer fingerprint excluding the declared diagnostic mode, and resource identities match. On-side and off-side use separate history epochs and allocation generations, both beginning from a clean remount; equality of allocation IDs is neither expected nor permitted.
+
+The manifest records complete requested/readback contracts, camera/projection/Earth matrices, history epoch, mount/runtime identity, all six cloud/shadow allocation generations, shader/build/package/patch hashes, and capture hashes. A mismatch blocks the pair instead of becoming measurement noise.
 
 ## 6. Uniform-sweep decision rules
 
-For each scalar metric, repeat noise is the maximum absolute difference between the two clean native-control repeats at the same progress. Define:
+For each scalar metric over the frozen geometric mask, repeat noise is the maximum absolute difference between the two clean native-control repeats at the same progress. Define:
 
 ```text
 epsilon(metric) = max(repeatNoise(metric), numericQuantizationFloor(metric))
@@ -224,36 +242,69 @@ The ordered target-band sequence is:
 1.00027 → 1.00024 → 1.00018 → 1.00012
 ```
 
-As initial step decreases, all of the following must be non-decreasing within `epsilon` in both independent repeats:
+As initial step decreases, these frozen-mask metrics form the monotonic trend audit:
 
 - non-zero primary-sample pixel fraction;
 - primary sample mean;
 - `cloud-raw` non-zero pixel fraction;
 - `cloud-raw` versus `cloud-raw-off` mean absolute difference.
 
-Both endpoint changes must exceed `3 × epsilon`: one for a native sample-count metric and one for a `cloud-raw` metric. Raw recovery additionally requires:
+Monotonicity is supportive evidence, not a prerequisite for candidate-level recovery and not a rejection rule. A sequence is monotonic only when every adjacent value is non-decreasing within `epsilon` in both independent repeats and both endpoint changes exceed `3 × epsilon`: one for primary sample mean and one for `cloud-raw` on/off mean absolute difference.
+
+### 6.1 Candidate-level recovery
+
+Every non-native candidate is evaluated independently against `1.01` at each progress and repeat. A candidate passes one progress only when both repeats independently satisfy all of:
 
 ```text
-cloudRawOnOffMeanAbs > max(5 × repeatNoise, numericQuantizationFloor)
+primarySampleMean(candidate) - primarySampleMean(native) > 3 × epsilon(primarySampleMean)
+cloudRawOnOffMeanAbs(candidate) - cloudRawOnOffMeanAbs(native) > 3 × epsilon(cloudRawOnOffMeanAbs)
+cloudRawOnOffMeanAbs(candidate) > max(5 × repeatNoise, numericQuantizationFloor)
 nonZeroCloudRawPixelFraction >= 0.001
+iterationCapPixelFraction is finite and backed by terminationReason=iteration-cap
 ```
+
+Both repeats must reach the same pass/fail classification. For both count and raw effects, the two repeat estimates must also have the same sign and differ by no more than:
+
+```text
+repeatConsistencyTolerance = max(
+  3 × epsilon(metric),
+  0.25 × min(abs(effectA), abs(effectB))
+)
+```
+
+A violation makes that progress `REPEAT_INCONSISTENT`. A candidate is **isolation-eligible** only when it passes at least three of four progress values, includes `progress=0.06`, has no `REPEAT_INCONSISTENT` progress, and neither count nor raw effect is below `-epsilon` at the remaining progress.
 
 The positive `S=120` control must independently meet the same finite/non-zero signal floor. The target does not have to match the positive control's magnitude; the control proves only that the capture pipeline is healthy.
 
-The uniform sweep produces exactly one of:
+If multiple candidates are isolation-eligible, choose the numerically largest `perspectiveStepScale`, which is the coarsest eligible step and therefore a unique deterministic winner. `1.01` is the baseline and cannot be selected. Record all candidate classifications; winner selection may not use final-output appearance or GPU time.
+
+### 6.2 Uniform-sweep outcomes
+
+The outcome resolver evaluates all seven non-native candidates, including `1.00010` and `1.00005`, using this precedence:
+
+1. Any setup/control/identity failure returns `DIAGNOSTIC_SETUP_BLOCKED`.
+2. If an isolation-eligible candidate exists, return fine-control recovery when every eligible candidate is `1.00010` or `1.00005`; otherwise return monotonic or non-monotonic support according to the target-band trend audit.
+3. With no eligible candidate, any repeat inconsistency returns `PERSPECTIVE_STEPPING_MECHANISM_UNRESOLVED`.
+4. With consistent repeats, any candidate passing only one or two progress values returns `PERSPECTIVE_STEPPING_PROGRESS_LOCALIZED`.
+5. Only when no candidate exceeds both predeclared effect thresholds at any progress does the resolver return the weak bounded no-support result.
+
+The uniform sweep therefore produces exactly one of:
 
 | Result | Meaning | Next action |
 | --- | --- | --- |
 | `DIAGNOSTIC_SETUP_BLOCKED` | Identity, positive control, precision, or target-band coverage failed | Repair evidence setup only |
-| `PERSPECTIVE_STEPPING_CAUSAL_MECHANISM_UNRESOLVED` | Sample count and raw signal recover monotonically | Open mechanism isolation only |
-| `PERSPECTIVE_STEPPING_HYPOTHESIS_REJECTED` | Valid population has no repeatable monotonic native-count/raw recovery | Stop; do not tune step values |
-| `PERSPECTIVE_STEPPING_PROGRESS_LOCALIZED` | Recovery exists at only part of the opening path | Preserve per-progress result; do not generalize |
+| `PERSPECTIVE_STEPPING_CAUSAL_MONOTONIC` | An isolation-eligible candidate exists and the target-band trend audit is monotonic | Open mechanism isolation with the deterministic winner |
+| `PERSPECTIVE_STEPPING_EFFECT_SUPPORTED_NONMONOTONIC` | An isolation-eligible candidate exists but the target-band trend is threshold-shaped or non-monotonic | Open mechanism isolation; do not claim a monotonic mechanism |
+| `PERSPECTIVE_STEPPING_FINE_CONTROL_RECOVERY` | Only `1.00010` and/or `1.00005` is isolation-eligible | Open mechanism isolation, record that the planned `0.5–1.0 km` band was insufficient |
+| `PERSPECTIVE_STEPPING_PROGRESS_LOCALIZED` | One or more candidates pass only one or two progress values | Preserve per-progress evidence; mechanism isolation remains closed |
+| `PERSPECTIVE_STEPPING_NOT_SUPPORTED_BY_BOUNDED_SWEEP` | No non-native candidate exceeds the predeclared count/raw effect thresholds at any progress, and no repeat is inconsistent | Stop with a weak bounded result; do not reject stepping outside this matrix |
+| `PERSPECTIVE_STEPPING_MECHANISM_UNRESOLVED` | Valid candidates show repeat inconsistency or effects that do not satisfy another outcome | Stop and preserve the unresolved pattern |
 
 Pre-temporal, history, and final measurements locate later loss but cannot rescue a failed raw gate. Stage C–F remain closed for every uniform-sweep outcome.
 
 ## 7. Mechanism isolation
 
-Mechanism isolation is authorized only after a committed uniform-sweep result of `PERSPECTIVE_STEPPING_CAUSAL_MECHANISM_UNRESOLVED`.
+Mechanism isolation is authorized only after a committed uniform-sweep result of `PERSPECTIVE_STEPPING_CAUSAL_MONOTONIC`, `PERSPECTIVE_STEPPING_EFFECT_SUPPORTED_NONMONOTONIC`, or `PERSPECTIVE_STEPPING_FINE_CONTROL_RECOVERY` with one deterministic isolation winner.
 
 ### 7.1 Split capture-only controls
 
@@ -278,7 +329,7 @@ shadowLengthStepScale
   -> marchShadowLength step growth
 ```
 
-The chosen small value is the largest uniform-sweep value that passed all raw/count monotonic gates. Selecting the largest passing value avoids silently choosing the most expensive fine-step setting.
+The chosen small value is the deterministic isolation winner from Section 6.1. It passes the candidate-level count/raw/repeat/progress contract; it does not have to belong to a globally monotonic sequence. Selecting the largest eligible value avoids silently choosing the most expensive fine-step setting.
 
 ### 7.2 Isolation matrix
 
@@ -296,13 +347,23 @@ Every case receives the same ray geometry, native sample-count, cloud-raw, pre-t
 
 ### 7.3 Mechanism conclusions
 
-| Result | Required evidence |
+Mechanism isolation reports one primary-mechanism result and one independent shadow finding. Every primary case uses the complete Section 6.1 recovery/repeat/progress thresholds:
+
+| Primary mechanism | Required evidence |
 | --- | --- |
-| `INITIAL_PRIMARY_OVERSTEP_SUPPORTED` | `initial-only` independently restores monotonic native samples and raw signal while `subsequent-only` does not |
-| `SUBSEQUENT_PRIMARY_STEPPING_CAUSAL` | `subsequent-only` restores raw signal without a small initial step |
-| `COUPLED_PRIMARY_STEPPING_CAUSAL` | Neither single factor passes, but `primary-both` does |
-| `SHADOW_LENGTH_DOWNSTREAM_CONFOUNDER` | `primary-both` and `all-small` have equivalent raw signal, but later lighting/final stages materially differ beyond repeat noise |
-| `PERSPECTIVE_STEP_CAUSAL_MECHANISM_UNRESOLVED` | Valid results do not match a stable pattern across repeats/progress |
+| `INITIAL_PRIMARY_OVERSTEP_SUPPORTED` | `initial-only` and `primary-both` are isolation-eligible; `subsequent-only` is not |
+| `SUBSEQUENT_PRIMARY_STEPPING_CAUSAL` | `subsequent-only` and `primary-both` are isolation-eligible; `initial-only` is not |
+| `INDEPENDENT_PRIMARY_FACTORS_CAUSAL` | `initial-only`, `subsequent-only`, and `primary-both` are all isolation-eligible |
+| `COUPLED_PRIMARY_STEPPING_CAUSAL` | Neither single-factor case is isolation-eligible, but `primary-both` is |
+| `PERSPECTIVE_STEP_CAUSAL_MECHANISM_UNRESOLVED` | Repeat consistency fails or the eligibility pattern matches none of the above |
+
+The shadow comparison uses `primary-both` as its baseline. `rawEquivalent=true` only when the absolute difference between `primary-both` and `all-small` cloud-raw effects is at most `epsilon(cloudRawOnOffMeanAbs)` at every progress in both repeats. A later-stage shadow effect exists only when both repeats exceed `3 × epsilon` for the same pre-temporal, resolved-history, or final-output metric at at least three progress values including `0.06`.
+
+| Shadow finding | Required evidence |
+| --- | --- |
+| `SHADOW_LENGTH_DOWNSTREAM_CONFOUNDER` | Raw is equivalent and at least one later-stage metric meets the shadow-effect rule |
+| `NO_DETECTABLE_SHADOW_LENGTH_EFFECT` | Raw is equivalent and no later-stage metric exceeds `epsilon` at any progress |
+| `SHADOW_LENGTH_EFFECT_UNRESOLVED` | Raw is not equivalent, repeats disagree, or the downstream effect is localized to fewer than three progress values |
 
 `INITIAL_PRIMARY_OVERSTEP_SUPPORTED` is evidence for the first-sample mechanism, not proof that it is the only rendering defect. BSM, AerialPerspective, and temporal resolve remain separate downstream gates.
 
@@ -315,12 +376,16 @@ All shader work is project-owned, capture-only, and installed at runtime by exac
 - refuse installation if an expected source fragment is missing or occurs more than once;
 - store and hash both the original and instrumented shader;
 - restore the original source and remove all diagnostic uniforms on cleanup;
+- expose an independent primary-loop counter and explicit termination reason without substituting `sampleCount.x`;
+- expose an executable `stage-readback-off` path whose current/history/final buffers begin from a clean off-side history epoch;
 - key-remount the complete Clouds/AerialPerspective composer when a diagnostic tuple changes;
 - prove disabled output remains inside the same-route repeat noise floor;
 - never edit `node_modules`, the pnpm patch, product defaults, or homepage code;
 - never run outside the explicit parity diagnostic route.
 
 The runtime fingerprint must include the three split scales and instrumentation hash. A request/readback mismatch is `DIAGNOSTIC_SETUP_BLOCKED`.
+
+Pure tests must cover exact single-site shader replacements, disabled-output parity, unknown/partial query tuples, V3 and product-route rejection, uniform/shader cleanup after unmount, iteration-cap versus early-termination encoding, raw-buffer metric recomputation, and precision/quantization floors. The outcome resolver must cover monotonic recovery, non-monotonic recovery, fine-control-only recovery, one-progress recovery, repeat inconsistency, no bounded effect, and setup blocking.
 
 ## 9. Cost and iteration-limit boundary
 
@@ -377,9 +442,12 @@ The design is ready for implementation planning only when review confirms:
 
 - the sweep covers the measured `0.5–1.0 km` target region rather than relying on camera-height estimates;
 - actual per-pixel `rayNearFar.x`, initial step, and jittered first-sample distributions are durable evidence;
-- every level includes raw, native sample-count, pre-temporal, resolved-history, and final evidence;
+- every level includes raw, native sample-count, independent loop/termination, pre-temporal, resolved-history, and final evidence;
+- every signal stage has a clean-frame-aligned executable off-side capture;
+- cross-candidate gates use one frozen geometry mask rather than a treatment-conditioned hit population;
 - fixed frame/STBN identity is repeated on a clean mount;
 - `S=120` remains a healthy positive control rather than causal proof;
-- monotonic sample-count and raw-signal gates precede mechanism claims;
+- candidate-level count/raw/repeat/progress gates select one deterministic isolation value;
+- non-monotonic or localized recovery cannot be mislabeled as hypothesis rejection;
 - initial, subsequent, and shadow-length stepping have separate owners in the isolation stage;
 - no result automatically opens Stage C–F or production promotion.
