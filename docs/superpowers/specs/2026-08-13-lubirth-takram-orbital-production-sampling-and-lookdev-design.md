@@ -25,7 +25,7 @@ The successor work proceeds in this order:
 ```text
 causal evidence lock
   -> bounded public step-policy selection
-  -> primary / BSM / shadow-length / total-cost diagnostics
+  -> primary sampling / BSM stage / shadow-length direction / total-cost diagnostics
   -> healthy stock baseline
   -> fresh morphology / coverage / vertical / optical lookdev
   -> final stock evidence and cost
@@ -47,7 +47,7 @@ The following facts are inputs to this design and are not re-litigated by anothe
 6. The initial-step ranges are estimates based on camera height and a documented `2x camera-height` limb proxy. They are not measured per-pixel `rayNear` distributions.
 7. The treatment is not a production look: it remains dark, rust-coloured, and visually close to the surface.
 8. `perspectiveStepScale` controls both primary step growth and Takram's shadow-length step growth. It does not configure the separate Beer shadow-map pass.
-9. Primary, BSM, shadow-length, and GPU-cost contributions have not yet been isolated sufficiently for production selection.
+9. Primary sampling, BSM submission cost, shadow-length directional cost, and total GPU cost have not yet been separated sufficiently for production selection. Primary execution time is not a separately submitted GPU stage and must not be reported as an absolute primary-only timing.
 
 The causal conclusion remains scoped to the stock opening camera and frozen experiment. It does not establish a general near-ground, in-cloud, or arbitrary-orbit policy.
 
@@ -65,7 +65,7 @@ Adding separate primary and shadow-length scale uniforms would improve control, 
 
 This remains the fallback when the public-scalar funnel produces a specific conflict:
 
-- healthy primary sampling but unacceptable shadow-length cost or quality;
+- healthy primary sampling but a repeatable full-versus-light-shafts-off budget crossing or quality conflict;
 - acceptable quality only at a value that exceeds the GPU budget; or
 - no fixed public scalar remains stable across all four opening progress values.
 
@@ -153,22 +153,42 @@ The installed Takram shader uses `perspectiveStepScale` in two places:
 1. the primary camera-ray march, including the initial distance-dependent step and later geometric growth;
 2. the optional shadow-length march used for atmospheric light shafts.
 
-The BSM pass has its own step fields and does not consume this uniform. The production screen therefore uses route-level diagnostic variants:
+The BSM pass has its own step fields and does not consume this uniform. The production screen therefore uses three exact feature states:
 
-| Variant | Primary march | BSM | Shadow-length march | Purpose |
+| Feature state | Primary march | BSM | Shadow-length march | Purpose |
 | --- | --- | --- | --- | --- |
-| `full` | On | On | On | Authoritative visual and total-cost result |
-| `light-shafts-off` | On | On | Off | Primary + BSM quality/cost without shadow-length work |
-| `bsm-off` | On | Unit-transmittance layer control | On | Existing BSM influence diagnostic |
-| `aerial-final` | Off | No cloud contribution | Off | Existing cloud-off final baseline |
-| `cloud-raw` / `cloud-raw-off` | On / Off | As requested | As requested | Raw cloud-signal isolation |
-| `sample-count-debug` | Instrumented | On | As requested | Native primary sample/hit evidence |
+| `native` | On | Native | On | Authoritative visual and total-cost state |
+| `light-shafts-off` | On | Native | Off | Primary + BSM state without shadow-length work |
+| `bsm-off` | On | Unit-transmittance layer control | On | Existing BSM visual-influence control |
+
+Stage 2 models rendering feature state and captured output as orthogonal exact enums:
+
+```text
+featureState = native | light-shafts-off | bsm-off
+output       = full | cloud-raw | cloud-raw-off | sample-count-debug | stage-readback | aerial-final
+```
+
+`cloud-raw/cloud-raw-off` isolates the raw cloud signal, `sample-count-debug` instruments native primary hits/counts, `stage-readback` publishes lossless stages plus final output, and `aerial-final` is the existing cloud-off final baseline. The route may serialize feature/output pairs into one combined exact diagnostic enum, but it must reject unsupported combinations and free-form values. GPU timing is valid only for `output=full`. Primary-signal invariants compare `sample-count-debug` and lossless `stage-readback` outputs across feature states. `aerial-final` is valid only with `featureState=native`.
 
 `light-shafts-off` is a capture-only exact enum that sets Takram's existing public `lightShafts` feature to `false`. It must restore the immutable high-preset value on remount and may never leak into a normal stock route.
 
-The `bsm-off` diagnostic continues to keep Takram's supported BSM allocation path intact while making the official cloud layers non-shadowing. It demonstrates BSM visual influence but does not equal zero BSM submission cost.
+The `bsm-off` feature state continues to keep Takram's supported BSM allocation path intact while making the official cloud layers non-shadowing. It demonstrates BSM visual influence but does not equal zero BSM submission cost.
 
 Cross-route GPU deltas are directional attribution evidence only. Production viability is decided from the unmodified `full` route's directly measured total population.
+
+GPU timing uses two mutually exclusive modes. No frame may contain a total query and a stage query at the same time:
+
+1. `total-only-time-elapsed` opens one query around the existing full submission interval and records separate no-op and copy-only baselines;
+2. `stage-only-sequential-time-elapsed` opens and closes five sequential, non-nested queries around the existing submissions:
+   - `bsm-current`: `ShadowPass.currentPass.render`;
+   - `bsm-resolve`: `ShadowPass.resolvePass.render`;
+   - `cloud-current`: `CloudsPass.currentPass.render`, including primary, secondary, and optional shadow-length shader work;
+   - `cloud-resolve`: `CloudsPass.resolvePass.render`;
+   - `final-effect`: the combined final `EffectPass` containing Clouds composition and AerialPerspective/final composition.
+
+The stage-only population reports each raw stage sample, same-frame sums, and p95 values derived from same-frame populations. It must never add independent stage p95 values. BSM cost is reported as the p95 of each frame's `bsm-current + bsm-resolve` sum. `cloud-current` must retain that name because its single draw cannot provide an absolute primary-only timing.
+
+The capture runtime may wrap the existing pass `render()` methods or add one instrumentation-only timer hook where a public reference is unavailable. The hook may not change GLSL, defines, uniforms, pass order, render targets, or output. Its source hash enters the renderer fingerprint, and enabled-versus-disabled captures must remain within the applicable same-route repeat floor.
 
 ## 7. Successor stage funnel
 
@@ -180,8 +200,8 @@ Before new captures, verify:
 - the causal clean commit, browser/GPU identity, frozen contract, and final outcome are readable;
 - the current implementation reproduces the causal resolver and exact step values;
 - the current route still passes query/runtime/fingerprint/camera parity;
-- System Chrome exposes a usable `EXT_disjoint_timer_query_webgl2` total-only profiler;
-- an `8`-warmup / `8`-sample profiler smoke run completes without a nested-query error or a permanent disjoint epoch.
+- System Chrome exposes usable `EXT_disjoint_timer_query_webgl2` total-only and stage-only profilers;
+- an `8`-warmup / `8`-sample smoke run completes independently for both modes without a nested-query error, missing stage, duplicate stage, incomplete same-frame stage set, or permanent disjoint epoch.
 
 The smoke run is a capability gate, not a cost verdict. Failure produces:
 
@@ -209,7 +229,7 @@ BSM                  native
 temporal             native
 ```
 
-Repeat every candidate at `progress=0.06`. The control is retained as a negative control and cannot win.
+Repeat the complete capture set for every candidate, including control, at every progress. The control is retained as a negative control and cannot win. Per-progress repeat evidence is required; noise measured at one progress is never applied to another progress.
 
 For every base capture, publish:
 
@@ -221,7 +241,24 @@ For every base capture, publish:
 - recorded camera height and clearly labelled step estimates;
 - artifact hashes and byte lengths.
 
-Quantitative sampling health is computed directly from `metrics.json`. For the frozen `h120 / 0.55 / 1 / 1` screen, a non-control candidate passes an individual progress only when:
+Quantitative sampling health is computed directly from `metrics.json`. All compared buffers must have equal dimensions, channels, precision, and origin; a mismatch is setup-blocked evidence.
+
+The normative metric definitions are:
+
+- `cloudMask[pixel] = 1` when the maximum absolute RGB-channel difference between the 8-bit `cloud-raw` and `cloud-raw-off` pixels is strictly greater than `8`; alpha is ignored;
+- connected components use four-neighbour adjacency; `smallFragmentFraction` is the number of mask pixels belonging to components of size `<=3`, divided by total cloud-mask pixels;
+- a native hit is a native sample-count texel whose decoded alpha is `>=0.5`;
+- `nativeHitPixelFraction = nativeHitPixelCount / (nativeWidth * nativeHeight)` using the sample-count render-target dimensions, not the full-resolution cloud mask;
+- `nativeHitMaskMismatch(A,B) = count(hitA != hitB) / (nativeWidth * nativeHeight)` for equally sized native hit masks;
+- primary/shape/detail counts are reconstructed by rounding normalized RGB values multiplied by `500 / 5 / 5` respectively;
+- `primaryCapHitFraction = count(native-hit texels with primary >= runtime maxIterationCount) / nativeHitPixelCount`;
+- a pre-temporal signal pixel has finite alpha strictly greater than `1/255`; `preTemporalSignalPixelFraction` uses the complete pre-temporal native pixel population as its denominator;
+- `signalRetention = resolvedHistory.signalPixelFraction / preTemporal.signalPixelFraction` and `signalLumaRetention = resolvedHistory.signalMeanLuma / preTemporal.signalMeanLuma`; a zero denominator or non-finite quotient fails the candidate;
+- `opacityMae(A,B)` is the arithmetic mean of `abs(A.alpha - B.alpha)` over every pixel in the two lossless pre-temporal buffers;
+- for candidate `c` and progress `p`, `pairedChange(c,p) = opacityMae(c.base, control.base)` and `repeatNoiseFloor(c,p) = max(opacityMae(c.base,c.repeat), opacityMae(control.base,control.repeat))` from the same progress;
+- `pairedChange` passes only when it is strictly greater than its same-progress repeat floor.
+
+For the frozen `h120 / 0.55 / 1 / 1` screen, a non-control candidate passes an individual progress only when:
 
 ```text
 finite pixel fraction for every lossless stage = 1
@@ -230,9 +267,12 @@ pre-temporal signal pixel fraction            >= 0.20
 small-fragment fraction                       <= 0.10
 resolved/pre-temporal signal retention        within [0.90, 1.10]
 resolved/pre-temporal signal-luma retention   within [0.80, 1.20]
-paired change                                 > measured same-route repeat noise
-sample-count invariants                        pass
+pairedChange                                  > same-progress repeatNoiseFloor
+primary cap-hit fraction                       <= 0.01
+sample-count structural invariants             pass
 ```
+
+The sample-count structural invariants require positive native dimensions, the audited source/encoding/precision, finite reconstructed counts, `primary >= shape >= detail >= 0` for every native hit, `nonZeroPrimaryPixelFraction=1`, and `runtime maxIterationCount=500`. The cap-hit rule is separate: reaching `500` is structurally valid but indicates iteration-budget saturation. A candidate with more than `1%` saturated native-hit texels fails even if all other signal metrics pass.
 
 These absolute floors are valid only for the frozen sampling-policy screen. They are anchored below the confirmed treatment's observed `29.29–32.86%` signal while remaining far above the control's sub-`1%` result. They are not reused to judge later coverage or morphology candidates.
 
@@ -240,34 +280,50 @@ A step candidate is sampling-healthy only when all four progresses pass the quan
 
 ### Stage 2 — feature isolation and GPU policy selection
 
-Only sampling-healthy candidates enter Stage 2. Capture `full`, `light-shafts-off`, `bsm-off`, and `aerial-final` at all four progress values.
+Only sampling-healthy candidates enter Stage 2. At all four progress values, capture `full`, `cloud-raw`, `cloud-raw-off`, `sample-count-debug`, and lossless `stage-readback` under both `native` and `light-shafts-off` feature states. Under `bsm-off`, capture `full`, `sample-count-debug`, and lossless `stage-readback`. Retain the existing `aerial-final` cloud-off control. GPU populations run only for native/full and light-shafts-off/full.
 
 Primary-signal invariants:
 
-- `full` and `light-shafts-off` must retain the same native hit mask and pre-temporal opacity within repeat noise;
-- `full` and `bsm-off` must retain the same native hit mask within repeat noise;
+- for each candidate/progress, the Stage 1 base-versus-repeat `nativeHitMaskMismatch` and `opacityMae` are the only applicable primary-signal noise floors;
+- `full` versus `light-shafts-off`, and `full` versus `bsm-off`, must each have native-hit-mask mismatch and pre-temporal opacity MAE less than or equal to those same-candidate, same-progress floors;
 - lighting variants may change radiance but may not create or remove primary cloud density;
 - any variant change must force a complete composer remount and fresh cloud/shadow/resolve allocation epoch.
 
-For each sampling-healthy candidate and progress, the `full` route runs:
+For each sampling-healthy candidate and progress, run four independent populations:
 
 ```text
-120 warmup frames
-120 valid non-disjoint GPU samples
-total-only TIME_ELAPSED measurement
-separate noop and copy-only baselines
+full total-only:              120 warmup + 120 valid non-disjoint frames
+light-shafts-off total-only:  120 warmup + 120 valid non-disjoint frames
+full stage-only:              120 warmup + 120 valid complete stage frames
+light-shafts-off stage-only:  120 warmup + 120 valid complete stage frames
 ```
 
-The authoritative candidate cost is the maximum `full` p95 across the four progresses:
+Both total-only populations record separate no-op and copy-only baselines. Both stage-only populations record the five raw sequential stage queries and one empty-query baseline per sampled frame; the baseline is preserved but not subtracted from individual samples. A disjoint event invalidates every pending result and every completed result from that epoch. Sampling continues until the population contains `120` valid frames from retained epochs.
+
+The evidence reports:
+
+- direct `full` and `light-shafts-off` total p95 values;
+- direct BSM current, BSM resolve, and same-frame combined BSM p95 values;
+- direct cloud-current, cloud-resolve, and final-effect p95 values;
+- same-frame stage-sum p95 values;
+- directional full-versus-light-shafts-off comparisons for total and cloud-current.
+
+The last comparison is not an exact shadow-length duration: the variants are separate populations, and the cloud-current draw also contains primary and secondary work. It may establish that shadow-length coupling crosses the budget boundary, but it may not be published as a subtracted absolute stage time. `bsm-off` is never used to estimate BSM cost because it preserves the BSM submissions.
+
+The stage-only same-frame sum is diagnostic and is not substituted for the total-only measurement: sequential query boundaries omit or perturb work outside the five wrapped submissions. Only the directly measured native/full total-only population drives the `3 ms` and `4 ms` classifications.
+
+The authoritative candidate cost is the maximum directly measured `full` total-only p95 across the four progresses:
 
 - `p95 <= 3 ms`: production-budget eligible;
 - `3 ms < p95 <= 4 ms`: query-only lookdev viable but not homepage-promotion eligible;
 - `p95 > 4 ms`: over budget.
 
+Any native/full versus light-shafts-off/full comparison that would authorize `NEEDS_DECOUPLING` must be repeated with a second independent `120 + 120` total-only population for both feature states at every progress participating in the threshold crossing. The decoupling condition must reproduce in the confirmation populations; otherwise stop with `ORBITAL_PUBLIC_STEP_POLICY_PERF_BLOCKED` and record the non-reproducible classification boundary.
+
 Select one public step policy using this order:
 
 1. passes Stage 1 at every progress;
-2. has valid Stage 2 total populations at every progress;
+2. has valid native/full and light-shafts-off/full total-only and stage-only populations at every progress;
 3. remains at or below `4 ms` at every progress;
 4. prefer a candidate at or below `3 ms` at every progress;
 5. lowest maximum full-route p95;
@@ -278,13 +334,21 @@ The winner becomes the one `ORBITAL_PUBLIC_STEP_POLICY_WINNER`. It is a query-on
 
 ### Stage 2 fallback boundary
 
-If `confirmed` remains sampling-healthy but every healthy public candidate exceeds `4 ms`, or if disabling light shafts reveals that shadow-length coupling is the dominant blocking cost, stop with:
+If no healthy candidate has `full` p95 `<=4 ms` at every progress, but at least one healthy candidate has `light-shafts-off` p95 `<=4 ms` at every progress and exceeds `4 ms` in `full` at one or more matching progresses, stop with:
 
 ```text
 ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING
 ```
 
-That outcome authorizes a separate focused design for distinct primary and shadow-length controls. It does not authorize density, exposure, weather, or quality-preset compensation.
+This is a directional budget-crossing result, not an absolute shadow-length timing. Together with unchanged primary hit masks and pre-temporal opacity, it authorizes a separate focused design for distinct primary and shadow-length controls. It does not authorize density, exposure, weather, or quality-preset compensation.
+
+If every healthy candidate exceeds `4 ms` in `full` and no candidate satisfies that light-shafts-off budget-crossing rule, stop with:
+
+```text
+ORBITAL_PUBLIC_STEP_POLICY_OVER_BUDGET
+```
+
+This result does not authorize shadow-length decoupling because the captured evidence has not shown that removing the coupled work would recover the budget.
 
 If no non-control candidate remains sampling-healthy, stop with:
 
@@ -333,7 +397,17 @@ h120 / coverage 0.3 / vertical 1 / optical 1
 
 All four progress values are required. The old Stage A contact sheets may be displayed only as historical `1.01` controls; they cannot supply a current decision.
 
-Every candidate is reviewed for macro coherence, fragmentation, cube-face seams, and stable identity. `TOPOLOGY_UNOBSERVABLE` is no longer an automatic coverage-stage pass: with a healthy sampling baseline, insufficient signal at native coverage must be supported by its lossless buffer evidence. A candidate with structurally coherent but low-opacity signal may enter Stage 4B; a candidate containing only isolated fragments may not.
+Stage 4A uses a morphology-only gate. Every lossless stage must be finite, identity/remount/hash checks must pass, `nativeHitPixelCount > 0`, and `preTemporalSignalPixelFraction > 0` at every progress. Human review scores only:
+
+```text
+macro coherence
+opening identity stability
+artifact freedom
+```
+
+Each dimension is scored `0–2`; every dimension must be at least `1` at every progress and no hard artifact may be present. Hard artifacts are non-finite output, confirmed cube-face seam/wrap discontinuity, unstable identity, or loss of captured signal. Cloud/ground separation, depth layering, and lighting/BSM read are recorded as observations but are not Stage 4A pass conditions.
+
+`TOPOLOGY_UNOBSERVABLE` is no longer an automatic coverage-stage pass: with a healthy sampling baseline, insufficient visible opacity at native coverage must be accompanied by coherent lossless cloud-raw/pre-temporal structure to enter Stage 4B. A candidate containing only isolated fragments may not enter.
 
 If no morphology candidate enters Stage 4B, stop with:
 
@@ -351,7 +425,18 @@ vertical = 1
 optical  = 1
 ```
 
-Retain at most one passing coverage per morphology and at most two overall survivors. Reuse the original manual dimensions and deterministic tie-breaks, but use newly captured evidence only.
+Stage 4B uses a coverage-only gate. Setup, finite-output, identity, seam, and signal-presence gates remain mandatory. Human review scores only:
+
+```text
+macro coherence
+coverage usability
+opening identity stability
+artifact freedom
+```
+
+`coverage usability` asks whether occupied and clear regions are both readable without a near-empty result or a planet-wide binary sheet. Every dimension must score at least `1` at every progress. Cloud/ground separation, depth layering, and lighting/BSM read cannot fail a Stage 4B candidate because vertical and optical controls remain frozen.
+
+Retain at most one passing coverage per morphology and at most two overall survivors. Rank already-passing candidates by aggregate Stage 4B score, then aggregate artifact freedom, macro coherence, smallest absolute coverage departure from `0.3`, and smallest `H`. Use newly captured evidence only.
 
 If no coverage candidate survives, stop with:
 
@@ -368,7 +453,17 @@ verticalScale = 1 / 2 / 4
 opticalDepthScale = 1
 ```
 
-Keep the original layer-altitude, height/density, extinction, and atmosphere-top invariants. Select one overall candidate that shows readable limb separation and volumetric layering at every progress.
+Keep the original layer-altitude, height/density, extinction, and atmosphere-top invariants. Stage 4C scores:
+
+```text
+macro coherence
+cloud/ground separation
+depth layering
+opening identity stability
+artifact freedom
+```
+
+Every dimension must score at least `1` at every progress. Lighting/BSM read is recorded but is not a Stage 4C pass condition. Select one overall passing candidate by aggregate score, then depth layering, cloud/ground separation, artifact freedom, smallest vertical departure from `1`, smallest coverage departure from `0.3`, and smallest `H`.
 
 If no vertical candidate passes, stop with:
 
@@ -383,6 +478,19 @@ For the Stage 4C winner, capture:
 ```text
 opticalDepthScale = 0.75 / 1 / 1.5
 ```
+
+Stage 4D applies the final six-dimension visual gate:
+
+```text
+macro coherence
+cloud/ground separation
+depth layering
+lighting/BSM read
+opening identity stability
+artifact freedom
+```
+
+Every dimension must score at least `1` at every progress. Rank already-passing candidates by aggregate score, then lighting/BSM read, depth layering, artifact freedom, smallest optical departure from `1`, smallest vertical departure from `1`, smallest coverage departure from `0.3`, and smallest `H`.
 
 Select one exact value. Do not average candidates or introduce lighting/exposure compensation.
 
@@ -412,7 +520,7 @@ The V2 winner must pass all four opening progress values at native frame `32`. I
 
 The frozen NASA comparison board and Takram upstream image from the old plan retain their current hashes and remain reference inputs. Metrics assist review but cannot independently produce a visual pass.
 
-The visual-review schema contains only judgments that cannot be derived from buffers:
+The final Stage 4D visual-review schema contains only judgments that cannot be derived from buffers:
 
 ```text
 macro coherence
@@ -469,6 +577,8 @@ The outcomes remain:
 
 A V3 failure does not invalidate the stock renderer or winner.
 
+V3 compatibility is mandatory whenever Stage 4D produces `ORBITAL_STOCK_LOOKDEV_V2_WINNER`, irrespective of whether final stock timing later classifies it as `PRODUCTION_ELIGIBLE`, `QUERY_ONLY`, `OVER_BUDGET`, or `PERF_BLOCKED`. It is skipped only when the funnel terminates before a stock V2 visual winner exists.
+
 ## 11. Evidence architecture
 
 Use separate immutable evidence roots:
@@ -510,7 +620,7 @@ The pure resolver consumes raw numeric summaries and the narrow visual review. I
 
 ## 12. Runtime identity and failure handling
 
-The production candidate enum and every diagnostic feature state enter `lookdevBaseKey`. A candidate or diagnostic change must therefore change `lookdevMountKey`, remount the complete composer subtree, and allocate new cloud current/history, shadow current/history, and resolve history resources before the frame-32 convergence count begins.
+The production candidate enum, `featureState`, and `output` enter `lookdevBaseKey`. A candidate, feature-state, or output change must therefore change `lookdevMountKey`, remount the complete composer subtree, and allocate new cloud current/history, shadow current/history, and resolve history resources before the frame-32 convergence count begins.
 
 `runtimeEvidenceEpoch` continues to carry actual shader/build identity, matrices, render-target generations, runtime readback, and the mount key. Persistent drift retains the existing one-remount-then-block behaviour.
 
@@ -530,11 +640,11 @@ The initial public-policy path is expected to extend these existing responsibili
 - `TakramOrbitalSamplingCausality.ts`: retain the completed two-arm historical resolver unchanged;
 - new production-step policy module: exact candidate parsing, values, estimate helpers, and outcome types;
 - `TakramOrbitalLookdevContract.ts`: consume the resolved production candidate and publish it in the immutable contract;
-- `TakramOrbitalLookdevIdentity.ts`: include candidate and diagnostic feature state in pre-mount identity;
+- `TakramOrbitalLookdevIdentity.ts`: include candidate, feature state, and output diagnostic in pre-mount identity;
 - `TakramOrbitalLookdevRuntime.ts`: apply and audit the exact runtime value and capture-only light-shafts state;
 - `TakramStockParityPipeline.tsx`: expose the narrow query/diagnostic path and reuse existing remount, readback, and profiler controls;
 - `TakramOrbitalLookdevEvidence.ts`: add machine-derived production-policy and V2 checkpoint transitions;
-- `TakramOrbitalGpuProfiler.ts`: preserve non-nested total-only measurement as the production authority;
+- `TakramOrbitalGpuProfiler.ts`: preserve total-only measurement as the production authority and implement independent sequential stage-only populations with complete same-frame stage sets;
 - existing E2E publishers: reuse capture and hashing helpers while writing to new evidence roots.
 
 The initial path must not change `@takram/three-clouds` shader source or package patch artifacts.
@@ -557,6 +667,10 @@ If and only if Stage 2 produces `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING`, t
 - GPU winner ranking uses maximum p95 across all four progresses;
 - values between `3` and `4 ms` remain query-only;
 - unsupported/disjoint timer populations cannot produce a winner;
+- full and light-shafts-off total/stage populations remain separate and non-nested;
+- BSM combined p95 is derived from same-frame current-plus-resolve sums;
+- Stage 4A/4B cannot fail on deferred separation, depth, or lighting dimensions;
+- every Stage 4D visual winner, including production-eligible, query-only, over-budget, and performance-blocked stock outcomes, requires a V3 terminal result;
 - old Stage B checkpoint cannot unlock successor stages.
 
 ### System Chrome verification
@@ -565,7 +679,7 @@ If and only if Stage 2 produces `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING`, t
 - candidate changes remount the complete composer and reset all histories;
 - `full`, `light-shafts-off`, and `bsm-off` preserve the primary hit mask within repeat noise;
 - diagnostic teardown restores native high-preset features;
-- total-only queries remain non-nested and complete valid populations;
+- total-only and stage-only queries remain mutually exclusive, non-nested, and complete valid populations;
 - formal capture writes atomically only from a tracked-clean commit;
 - rejected stages cannot invoke lookdev-v2 or homepage work.
 
@@ -583,19 +697,20 @@ If and only if Stage 2 produces `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING`, t
 
 This successor design is complete only when it produces one of:
 
-1. `ORBITAL_STOCK_LOOKDEV_V2_PRODUCTION_ELIGIBLE`, plus a separate V3 adapter result and complete evidence;
-2. `ORBITAL_STOCK_LOOKDEV_V2_QUERY_ONLY`, preserving a valid visual winner while explicitly blocking homepage promotion;
+1. `ORBITAL_STOCK_LOOKDEV_V2_PRODUCTION_ELIGIBLE`, plus a terminal `V3_WEATHER_ADAPTER_PASS/FAIL` result and complete evidence;
+2. `ORBITAL_STOCK_LOOKDEV_V2_QUERY_ONLY`, plus a terminal `V3_WEATHER_ADAPTER_PASS/FAIL` result and complete evidence, preserving a valid stock visual winner while explicitly blocking homepage promotion;
 3. one explicit terminal sampling-policy failure:
    - `ORBITAL_PRODUCTION_SAMPLING_SETUP_BLOCKED`;
    - `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING`;
    - `ORBITAL_PUBLIC_STEP_POLICY_QUALITY_FAIL`;
+   - `ORBITAL_PUBLIC_STEP_POLICY_OVER_BUDGET`;
    - `ORBITAL_PUBLIC_STEP_POLICY_PERF_BLOCKED`;
 4. one explicit terminal lookdev/performance failure:
    - `ORBITAL_LOOKDEV_V2_MORPHOLOGY_FAIL`;
    - `ORBITAL_LOOKDEV_V2_COVERAGE_FAIL`;
    - `ORBITAL_LOOKDEV_V2_VERTICAL_FAIL`;
    - `ORBITAL_LOOKDEV_V2_OPTICAL_FAIL`;
-   - `ORBITAL_STOCK_LOOKDEV_V2_OVER_BUDGET`;
-   - `ORBITAL_STOCK_LOOKDEV_V2_PERF_BLOCKED`;
+   - `ORBITAL_STOCK_LOOKDEV_V2_OVER_BUDGET`, plus a terminal `V3_WEATHER_ADAPTER_PASS/FAIL` result and complete evidence;
+   - `ORBITAL_STOCK_LOOKDEV_V2_PERF_BLOCKED`, plus a terminal `V3_WEATHER_ADAPTER_PASS/FAIL` result and complete evidence;
 
 No outcome in this design directly changes the homepage. Production integration, camera-cut history behaviour, and final rollout remain a separate amendment after a `PRODUCTION_ELIGIBLE` stock winner exists.
