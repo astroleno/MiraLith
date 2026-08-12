@@ -4,7 +4,7 @@
 
 **Date:** 2026-08-13
 
-**Scope:** Query-only Takram parity route and capture-only instrumentation
+**Scope:** Architecture-only successor gate; query-only Takram diagnostic, validation, policy-selection, and lookdev re-entry contracts
 
 **Prerequisite evidence:** `docs/lubirth-planetary-cloud-evidence/2026-08-12/takram-orbital-lookdev/`
 
@@ -33,6 +33,185 @@ shadow-length step growth
 ```
 
 No result from this diagnostic is a production value. A visual or performance promotion requires a later design and checkpoint.
+
+### 1.1 Successor authorization sequence
+
+This design replaces the old one-way Stage A–F funnel with five explicit gates.
+Only Stage 1 is the root-cause diagnostic specified in detail by Sections 3–8;
+Stages 2–4 are frozen downstream contracts that require their own implementation
+plan after this design passes review. Passing an earlier stage authorizes planning
+for the next stage, not production use.
+
+#### Stage 0 — evidence governance and scope
+
+Stage 0 is a document/evidence gate and performs no new rendering:
+
+- the old orbital lookdev is `TERMINATED AFTER STAGE B` with
+  `BOUNDED_ORBITAL_LOOKDEV_FAIL_ROOT_CAUSE_UNRESOLVED`;
+- the two-arm sampling experiment is `CLOSED` with
+  `ORBITAL_SAMPLING_CAUSALITY_CONFIRMED` for stock
+  `h120 / coverage 0.55 / vertical 1 / optical 1` only;
+- commit `0976f7df6f4293d709412b7ab3cc62fb5a547a41` published the
+  causal evidence and `8dc86740024db2f48cd58a0ecd0a3c9739686285`
+  qualified its scope;
+- the result revokes the old Stage A/B captures as authorization evidence
+  because their healthy-sampling assumption is false;
+- revocation is not a claim that h40, h80, or every coverage independently
+  reproduced the h120 mechanism.
+
+Stage 0 passes only when both superseded designs and implementation plans record
+their terminal state and evidence identity. It cannot produce a Stage-B-wide
+mechanism statement or a production sampling baseline.
+
+#### Stage 1 — three-owner mechanism isolation
+
+Stage 1 consists of the uniform sweep and mechanism isolation in Sections 4–7.
+The overloaded Takram value must be separated into three independently owned
+capture-only controls before any production API is designed:
+
+```text
+initialPrimaryStepScale
+subsequentPrimaryStepScale
+shadowLengthStepScale
+```
+
+The original `1.0001` treatment remains an historical treatment/control and one
+possible measured sweep point. It is not a default, a production candidate by
+inheritance, or permission to expose a two-owner `primary/shadow` API. Stage 1
+must select candidates through the Section 6 thresholds, attribute the effect
+through the Section 7 five-case isolation matrix, and record actual primary loop,
+termination, and shadow evidence.
+
+After one mechanism case passes for h120, repeat the winning three-owner case for
+h40 and h80 at `progress=0.00/0.06/0.12/0.18`, both clean repeats, using the same
+candidate-level recovery rules. Until both presets pass, the only permitted
+wording is `h120-local sampling causality`; a failed confirmation is preserved as
+`morphology-preset-localized`, and Stage-B-wide wording remains prohibited.
+
+#### Stage 2 — healthy-sampling stability validation
+
+The initial Stage-2 invocation validates each Stage-1 policy candidate at
+`verticalScale=1 / opticalDepthScale=1` on h40, h80, and h120. A Stage-4
+feedback invocation substitutes the exact proposed vertical/optical tuple and
+holds that geometry fixed while sampling policies vary. In either invocation, a
+candidate is `TEMPORALLY_HEALTHY` only when both rails pass:
+
+1. **Exact-frame rail.** Capture both clean repeats at
+   `progress=0.00/0.06/0.12/0.18`, native frame 32, fixed STBN/jitter identity,
+   with the complete ray geometry, primary/shape/detail sample counts,
+   loop/termination, BSM current/history, cloud current/history, and final-output
+   buffers. Apply the Stage-1 fixed-mask signal, repeat, and cap-validity gates.
+2. **Continuous traversal rail.** In one document and one composer/history epoch,
+   hold `progress=0` for 32 warm-up frames, then advance the authoritative
+   `OPENING_TIMELINE_DURATION=7.2 s` from `progress=0` through `1` in 432 equal
+   60 Hz intervals (433 endpoint-inclusive rendered frames). Do not remount,
+   reset/reallocate cloud or shadow history, reseed STBN, seek independently, or
+   skip a timeline frame. Run two clean traversal repeats with the same initial
+   frame/STBN identity.
+
+The traversal manifest stores every progress value and camera/projection/Earth
+matrix, all cloud/shadow frame counters and allocation generations, and per-frame
+raw/current/history/final/BSM metrics. Any mount, history epoch, allocation,
+resource, viewport, visibility, or context generation change during a traversal
+is `CONTINUOUS_TRAVERSAL_SETUP_BLOCKED`.
+
+Automated traversal analysis derives, from raw buffers rather than review input:
+
+- non-finite, sample/iteration-cap, and signal-drop events;
+- cloud-current to resolved-history retention and residual masks;
+- resolved signal outside the one-pixel-dilated union of current masks as a
+  ghosting population;
+- per-frame second differences of cloud-current, resolved-history, final-output,
+  BSM-current, and BSM-history luma as popping/shimmer populations;
+- repeat differences for every scalar trajectory and flagged frame.
+
+For each trajectory, derive the bounded noise envelope from the two complete
+clean traversals using the larger of numeric quantization floor and per-frame
+repeat difference. A hard automated instability is any non-finite/setup event,
+any sample/signal validity failure inherited from Stage 1, a ghosting population
+above its declared envelope for three consecutive frames, or a popping/shimmer
+second-difference excursion above `median + 8 × MAD` and above `3 ×` its repeat
+envelope in both traversals. The implementation plan must persist the exact
+pixel populations and recomputation inputs; it may not replace these rules with
+a screenshot-only judgment.
+
+Human review receives the full-speed traversal, half-speed traversal, and flagged
+frame strips and may submit only visual scores, hard visual flags
+(`popping/ghosting/BSM-shimmer`), and notes. Both automated rails and the visual
+hard-flag review must pass before the candidate may be called time-stable.
+
+#### Stage 3 — production sampling-policy selection and cost
+
+The initial Stage-3 invocation may compare only Stage-2 `TEMPORALLY_HEALTHY`
+three-owner policies at `vertical=1 / optical=1`. A Stage-4 feedback invocation
+may compare only policies that passed both Stage-2 rails for that exact proposed
+vertical/optical tuple. Stage 3 freezes the existing production-cost protocol
+rather than using an informal GPU check:
+
+```text
+hardware: Apple M4 reference machine
+browser: headed System Chrome, production build
+viewport: 1440 × 960 CSS and physical pixels, DPR 1
+warmup: 120 frames after every policy/morphology mount reaches readiness
+population: 120 valid non-disjoint GPU samples
+total interval: BSM current through the end of the combined final EffectPass
+```
+
+Timestamp queries use same-frame stage boundaries and total. Sequential
+`TIME_ELAPSED` mode uses separate total-only and stage-only populations because
+nested queries are forbidden. Derived totals sum same-frame raw stage samples
+before percentile calculation; stage p95 values are never added. Persist raw
+samples, no-op/copy baselines, invalid/disjoint reasons, timestamp bits, query
+mode, BSM current/resolve, cloud current/resolve, and total intervals.
+
+The deterministic thresholds and selection are:
+
+- total p95 `> 4 ms`: `SAMPLING_POLICY_OVER_BUDGET`;
+- total p95 `(3 ms, 4 ms]`: `SAMPLING_POLICY_SPIKE_VIABLE`, but not eligible for
+  production promotion;
+- total p95 `<= 3 ms`: `SAMPLING_POLICY_PRODUCTION_ELIGIBLE`;
+- if no policy is production-eligible, Stage 3 has no production winner;
+- otherwise sort production-eligible policies by total p95, cloud-current p95,
+  BSM-current p95, then numerically coarser initial scale, coarser subsequent
+  scale, coarser shadow scale, and finally canonical policy ID. The first entry
+  is the unique Stage-3 winner.
+
+GPU timing cannot compensate for a Stage-2 failure, and appearance cannot break
+a cost tie outside this ordering. Stage 3 freezes the winning tuple and its
+actual shader ownership; only then may a production API/patch design be proposed.
+
+#### Stage 4 — vertical/optical lookdev with mandatory feedback
+
+Stage 4 may reopen bounded vertical/optical lookdev only from a Stage-3 healthy
+sampling policy. The old Stage C/D authorization remains terminated. Candidate
+domains remain explicit (`verticalScale=1/2/4`, then
+`opticalDepthScale=0.75/1/1.5`); morphology, coverage, lighting, atmosphere,
+weather, and all unrelated fields remain frozen within each comparison.
+
+Sampling and lookdev are not one-way dependencies. Every proposed vertical or
+optical winner must rerun the complete Stage-2 exact-frame and continuous rails
+and the Stage-3 GPU protocol because layer thickness changes ray residency while
+optical depth changes extinction, early termination, BSM, and cost. A failure
+rejects that combined tuple and returns to Stage-2 candidate validation followed
+by Stage-3 sampling-policy selection for the proposed geometry; it may not keep
+the `vertical=1 / optical=1` policy by assumption. The final candidate is one
+jointly frozen tuple of morphology,
+coverage, vertical, optical, initial-primary, subsequent-primary, and
+shadow-length policy plus its stability and cost evidence.
+
+Stage 4 still does not authorize homepage promotion, V3 substitution, or a new
+weather source. Those require a separate production amendment after the feedback
+loop closes.
+
+#### Single quantitative resolver
+
+Every quantitative boolean, per-progress classification, stage outcome, and
+terminal outcome is generated from raw metrics by versioned pure resolvers.
+`review.json` may contain only human visual scores, hard visual flags, notes, and
+artifact identities. One final pure resolver validates both inputs and emits the
+sole stage decision; hand-entered copies of numeric booleans are rejected. Golden
+tests must change source metrics across every threshold and prove that the
+derived boolean and terminal result change without editing review input.
 
 ## 2. Existing evidence and hypothesis
 
@@ -599,9 +778,20 @@ docs/lubirth-planetary-cloud-evidence/2026-08-13/
 ## 11. Stop rules
 
 - Do not reopen orbital Stage C–F.
+- Do not treat Stage 0's revocation of the old authorization as h40/h80 or
+  Stage-B-wide mechanism confirmation.
 - Do not change coverage, vertical thickness, optical depth, weather, mip, lighting, BSM, temporal, atmosphere, exposure, or output transform during the sweep.
 - Do not claim that a uniform sweep proves first-step overrun.
 - Do not claim that visible `S=120` proves the thin-layer mechanism.
+- Do not open Stage 2 until the three-owner mechanism result and both h40/h80
+  confirmations are committed; do not open Stage 3 until both Stage-2 rails
+  pass; do not open Stage 4 until Stage 3 selects one production-eligible
+  policy.
+- Do not retain a `vertical=1 / optical=1` sampling winner after changing
+  vertical or optical values unless the combined tuple passes the complete
+  Stage-2 stability and Stage-3 cost loop.
+- Do not copy numeric pass/fail booleans into human review input; derive them
+  from raw evidence through the versioned quantitative and final resolvers.
 - Do not evaluate performance before raw signal recovery.
 - Do not edit or promote production parameters from diagnostic evidence.
 - Stop on invalid control, identity drift, non-finite readback, missing raw buffers, frame/STBN mismatch, or failed independent repeat.
@@ -610,6 +800,8 @@ docs/lubirth-planetary-cloud-evidence/2026-08-13/
 
 The design is ready for implementation planning only when review confirms:
 
+- the closed h120 A/B and terminated old lookdev documents carry their terminal
+  outcomes, evidence identities, and non-generalization boundary;
 - the sweep covers the measured `0.5–1.0 km` target region rather than relying on camera-height estimates;
 - actual per-pixel `rayNearFar.x`, initial step, and jittered first-sample distributions are durable evidence;
 - every level includes raw, native sample-count, independent loop/termination, pre-temporal, resolved-history, and final evidence;
@@ -628,4 +820,15 @@ The design is ready for implementation planning only when review confirms:
 - non-winning shadow metrics have an explicit ambiguity/inconsistency veto;
 - non-monotonic or localized recovery cannot be mislabeled as hypothesis rejection;
 - initial, subsequent, and shadow-length stepping have separate owners in the isolation stage;
+- h40 and h80 confirmation is mandatory before Stage-B-wide wording;
+- temporal health requires both the exact-frame matrix and the no-remount full
+  7.2-second opening traversal;
+- production selection uses the frozen Apple M4/Chrome/1440×960/120+120 timing
+  protocol, hard `4 ms` ceiling, `3 ms` promotion ceiling, and deterministic
+  tie-breaking order;
+- every vertical/optical winner feeds back through the complete stability and
+  GPU gates, producing one jointly frozen combined tuple or returning to
+  sampling-policy selection;
+- all quantitative booleans and terminal results come from raw metrics through
+  one versioned final resolver, while human review supplies only visual judgment;
 - no result automatically opens Stage C–F or production promotion.
