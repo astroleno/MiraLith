@@ -185,6 +185,8 @@ No bilinear filtering, area threshold, half-pixel offset, dilation, erosion, edg
 
 The manifest persists the source and target dimensions, bottom-left origins, scale factor, source-mask and projected-mask SHA-256 values, both mask files, and both true-pixel counts. For this `4 × 4` replication, `projectedTruePixelCount` must equal `sourceTruePixelCount × 16`. Distributions are calculated over the fixed mask appropriate to the buffer resolution. Candidate-specific pixels that later produce a rough-weather sample or media hit are reported only as auxiliary conditional populations; they may not become the denominator of a causal comparison. The stored masks and raw readback buffers must let another implementation reproduce every included pixel and percentile without interpreting texture sampling conventions.
 
+Metrics over the projected mask are explicitly fixed-population comparisons. They are not claims of exact per-pixel full-resolution shell coverage at the planetary limb.
+
 ### 5.2 Native sample-count readback
 
 Use the existing repaired native sample-count path to preserve primary/shape/detail counts and the hit mask. Add a separate capture-only loop/termination probe because `sampleCount.x` increments only after the layer-interval skip and therefore is not the primary-loop iteration count.
@@ -249,11 +251,47 @@ The manifest records complete requested/readback contracts, camera/projection/Ea
 
 ## 6. Uniform-sweep decision rules
 
-For each scalar metric over the frozen geometric mask, repeat noise is the maximum absolute difference between the two clean native-control repeats at the same progress. Define:
+For each source metric `M` over the frozen geometric mask, `repeatNoise(M, progress)` is the absolute difference between the two clean native-control repeats at that progress. For every exact scalar comparison expression `E` derived from `M`, define:
 
 ```text
-epsilon(metric) = max(repeatNoise(metric), numericQuantizationFloor(metric))
+epsilon(E) = max(repeatNoise(sourceMetric(E), progress), numericQuantizationFloor(E))
 ```
+
+The rest of this document names the complete expression passed as `E`; an implementation may not silently use the floor of only one operand.
+
+Two native repeats provide only the bounded same-frame noise estimate used by this experiment; they do not estimate stochastic tail risk. Conclusions therefore remain scoped to this fixed-frame, fixed-STBN matrix even when an effect clears the thresholds below.
+
+### 6.0 Numeric quantization contract
+
+`numericQuantizationFloor` is calculated for the exact scalar expression being compared, not assigned once per framebuffer format. All metric implementations decode finite source values to IEEE-754 binary64, traverse the frozen mask in bottom-left row-major order (`y`, then `x`, then channel), use Neumaier compensated summation, and perform no intermediate decimal rounding. Persisted JSON stores the binary64 result with 17 significant decimal digits plus every floor input. Thresholds use the unrounded binary64 values: `>` is strict, equality does not pass, and `<=` includes equality.
+
+For lossy stored samples, define the conservative per-channel quantization uncertainty `u`:
+
+```text
+UNORM(b):    u = 0.5 / (2^b - 1)
+scaled UNORM(b, scale):
+             u = 0.5 * abs(scale) / (2^b - 1)
+binary16:    u = 0.5 * max(abs(x - prev16(x)), abs(next16(x) - x))
+binary32:    u = 0.5 * max(abs(x - prev32(x)), abs(next32(x) - x))
+```
+
+`prev`/`next` mean the adjacent finite value of that exact format. At signed zero, use the minimum positive subnormal distance; at the largest finite magnitude, use the sole finite-neighbour distance. Non-finite values fail setup before a floor is computed. UNORM endpoints retain the same conservative half-step. Exact integer counters are not treated as lossy: their integer sum must remain below `2^53`, otherwise setup is blocked.
+
+For a decoded per-pixel linear scalar `s = constant + sum(weight[c] * channel[c])`, including luma, propagate `u(s) = sum(abs(weight[c]) * u(channel[c]))`. Diagnostic luma is frozen as `0.2126 R + 0.7152 G + 0.0722 B` in the stored buffer's declared colour domain; no implicit transfer conversion is allowed. Then compute floors as follows for a fixed population of `N > 0` pixels:
+
+```text
+exact integer sum/count:                 1
+mean of exact integer per-pixel counts:  1 / N
+pixel fraction:                          1 / N
+mean of lossy scalar s:                  sum(u(s_i)) / N
+peak/max of lossy scalar s:              max(u(s_i))
+mean(abs(on_i - off_i)):                  sum(u(on_i) + u(off_i)) / N
+signed difference A - B:                 floor(A) + floor(B)
+```
+
+The last rule composes recursively. Thus candidate-minus-native and adjacent-candidate monotonic tests use the floor of that signed difference; the absolute cloud on/off gate uses the floor of its paired mean-absolute observation; shadow `all-small - primary-both` uses the sum of both aggregate floors. Integer and fraction numerators are accumulated exactly before division. An implementation may not substitute `Number.EPSILON`, a hard-coded UNORM8 constant, or the smallest floor among mixed encodings.
+
+The manifest persists, for every decision metric, its source encoding and bit depth, scale, fixed-mask `N`, aggregation kind, channel weights, local-ULP summary where applicable, component floors, composed floor, repeat noise, and final `epsilon`. Recomputing these fields from raw buffer bits is a setup gate.
 
 The ordered target-band sequence is:
 
@@ -268,31 +306,44 @@ As initial step decreases, these frozen-mask metrics form the monotonic trend au
 - `cloud-raw` non-zero pixel fraction;
 - `cloud-raw` versus `cloud-raw-off` mean absolute difference.
 
-Monotonicity is supportive evidence, not a prerequisite for candidate-level recovery and not a rejection rule. A sequence is monotonic only when every adjacent value is non-decreasing within `epsilon` in both independent repeats and both endpoint changes exceed `3 × epsilon`: one for primary sample mean and one for `cloud-raw` on/off mean absolute difference.
+Monotonicity is supportive evidence, not a prerequisite for candidate-level recovery and not a rejection rule. A sequence is monotonic only when every adjacent signed difference is non-negative within `epsilon(adjacentCandidate - previousCandidate)` in both independent repeats and both endpoint signed differences exceed their corresponding `3 × epsilon(endpointCandidate - endpointBaseline)`: one for primary sample mean and one for `cloud-raw` on/off mean absolute difference.
 
 ### 6.1 Candidate-level recovery
 
-Every non-native candidate is evaluated independently against `1.01` at each progress and repeat. A candidate passes one progress only when both repeats independently satisfy all of:
+Every non-native candidate is evaluated independently against `1.01` at each progress and repeat. Define the two signed causal effects:
 
 ```text
-primarySampleMean(candidate) - primarySampleMean(native) > 3 × epsilon(primarySampleMean)
-cloudRawOnOffMeanAbs(candidate) - cloudRawOnOffMeanAbs(native) > 3 × epsilon(cloudRawOnOffMeanAbs)
-cloudRawOnOffMeanAbs(candidate) > max(5 × repeatNoise, numericQuantizationFloor)
+countEffect = primarySampleMean(candidate) - primarySampleMean(native)
+rawEffect = cloudRawOnOffMeanAbs(candidate) - cloudRawOnOffMeanAbs(native)
+pairedRawObservation = cloudRawOnOffMeanAbs(candidate)
+```
+
+A candidate passes one progress only when both repeats independently satisfy all of:
+
+```text
+countEffect > 3 × epsilon(countEffect)
+rawEffect > 3 × epsilon(rawEffect)
+pairedRawObservation > max(
+  5 × repeatNoise(sourceMetric(pairedRawObservation), progress),
+  numericQuantizationFloor(pairedRawObservation)
+)
 nonZeroCloudRawPixelFraction >= 0.001
 ```
+
+The paired observation is the candidate's complete `mean(abs(cloudRawOn - cloudRawOff))` expression. The fraction line is evaluated from an exact integer numerator and its `1/N` fraction floor.
 
 Loop/termination evidence remains a validity gate rather than a recovery-effect threshold. `iterationCapPixelFraction` must be finite, lie in `[0,1]`, and be independently recomputable as `iteration-cap pixels / fixed-mask pixels` from the termination buffer. A value of exactly `0` is valid: the termination histogram may contain no `iteration-cap` entry, which is interpreted as a zero count, not missing evidence. A non-zero fraction requires the same non-zero histogram count; neither zero nor non-zero cap incidence changes candidate eligibility by itself.
 
 Both repeats must reach the same pass/fail classification. For both count and raw effects, the two repeat estimates must also have the same sign and differ by no more than:
 
 ```text
-repeatConsistencyTolerance = max(
-  3 × epsilon(metric),
+repeatConsistencyTolerance(effect) = max(
+  3 × epsilon(effect),
   0.25 × min(abs(effectA), abs(effectB))
 )
 ```
 
-A violation makes that progress `REPEAT_INCONSISTENT`. A candidate is **isolation-eligible** only when it passes at least three of four progress values, includes `progress=0.06`, has no `REPEAT_INCONSISTENT` progress, and neither count nor raw effect is below `-epsilon` at the remaining progress.
+Apply this independently to `countEffect` and `rawEffect`. A violation makes that progress `REPEAT_INCONSISTENT`. A candidate is **isolation-eligible** only when it passes at least three of four progress values, includes `progress=0.06`, has no `REPEAT_INCONSISTENT` progress, and neither `countEffect < -epsilon(countEffect)` nor `rawEffect < -epsilon(rawEffect)` at the remaining progress.
 
 The positive `S=120` control must independently meet the same finite/non-zero signal floor. The target does not have to match the positive control's magnitude; the control proves only that the capture pipeline is healthy.
 
@@ -306,7 +357,8 @@ The outcome resolver evaluates all seven non-native candidates, including `1.000
 2. If an isolation-eligible candidate exists, return fine-control recovery when every eligible candidate is `1.00010` or `1.00005`; otherwise return monotonic or non-monotonic support according to the target-band trend audit.
 3. With no eligible candidate, any repeat inconsistency returns `PERSPECTIVE_STEPPING_MECHANISM_UNRESOLVED`.
 4. With consistent repeats, any candidate passing only one or two progress values returns `PERSPECTIVE_STEPPING_PROGRESS_LOCALIZED`.
-5. Only when no candidate exceeds both predeclared effect thresholds at any progress does the resolver return the weak bounded no-support result.
+5. Only when no candidate exceeds both predeclared signed count/raw effect thresholds from the first two lines of Section 6.1 at any progress does the resolver return the weak bounded no-support result.
+6. Every remaining valid pattern returns `PERSPECTIVE_STEPPING_MECHANISM_UNRESOLVED`. This catch-all includes candidates whose count/raw signed effects exceed their thresholds but whose absolute cloud-raw or non-zero-pixel floor fails, plus any other consistent pattern that is neither eligible, localized, nor bounded no-support.
 
 The uniform sweep therefore produces exactly one of:
 
@@ -377,13 +429,36 @@ Mechanism isolation reports one primary-mechanism result and one independent sha
 | `COUPLED_PRIMARY_STEPPING_CAUSAL` | Neither single-factor case is isolation-eligible, but `primary-both` is |
 | `PERSPECTIVE_STEP_CAUSAL_MECHANISM_UNRESOLVED` | Repeat consistency fails or the eligibility pattern matches none of the above |
 
-The shadow comparison uses `primary-both` as its baseline. `rawEquivalent=true` only when the absolute difference between `primary-both` and `all-small` cloud-raw effects is at most `epsilon(cloudRawOnOffMeanAbs)` at every progress in both repeats. A later-stage shadow effect exists only when both repeats exceed `3 × epsilon` for the same pre-temporal, resolved-history, or final-output metric at at least three progress values including `0.06`.
+The shadow comparison uses `primary-both` as its baseline. Define `rawShadowDelta = cloudRawOnOffMeanAbs(all-small) - cloudRawOnOffMeanAbs(primary-both)`. `rawEquivalent=true` only when `abs(rawShadowDelta) <= epsilon(rawShadowDelta)` at every progress in both repeats.
+
+For each later-stage scalar metric `M`, progress `p`, and repeat `r`, define the signed shadow effect and its comparison floor:
+
+```text
+shadowEffect(M, p, r) = M(all-small, p, r) - M(primary-both, p, r)
+shadowEpsilon(M, p) = max(
+  repeatNoise(M, p),
+  numericQuantizationFloor(M(all-small) - M(primary-both))
+)
+shadowRepeatTolerance(M, p) = max(
+  3 * shadowEpsilon(M, p),
+  0.25 * min(abs(shadowEffect(M, p, A)), abs(shadowEffect(M, p, B)))
+)
+```
+
+A metric has a repeat-consistent shadow effect at one progress only when both repeats have absolute magnitude strictly greater than `3 × shadowEpsilon`, have the same non-zero sign, and differ by no more than `shadowRepeatTolerance`. A later-stage shadow effect exists only when the same metric meets that rule at at least three progress values including `0.06`. Opposite signs, excess repeat-distance, threshold-equality, or a significant effect at fewer than three progress values are unresolved evidence, not a downstream confounder.
+
+The shadow resolver is total and uses this precedence:
+
+1. If `rawEquivalent=false`, return `SHADOW_LENGTH_EFFECT_UNRESOLVED`.
+2. If at least one later-stage metric has a repeat-consistent shadow effect at the required three progress values, return `SHADOW_LENGTH_DOWNSTREAM_CONFOUNDER`.
+3. If every signed later-stage effect in both repeats has absolute magnitude at most its `shadowEpsilon`, return `NO_DETECTABLE_SHADOW_LENGTH_EFFECT`.
+4. Return `SHADOW_LENGTH_EFFECT_UNRESOLVED` for every remaining valid pattern.
 
 | Shadow finding | Required evidence |
 | --- | --- |
 | `SHADOW_LENGTH_DOWNSTREAM_CONFOUNDER` | Raw is equivalent and at least one later-stage metric meets the shadow-effect rule |
-| `NO_DETECTABLE_SHADOW_LENGTH_EFFECT` | Raw is equivalent and no later-stage metric exceeds `epsilon` at any progress |
-| `SHADOW_LENGTH_EFFECT_UNRESOLVED` | Raw is not equivalent, repeats disagree, or the downstream effect is localized to fewer than three progress values |
+| `NO_DETECTABLE_SHADOW_LENGTH_EFFECT` | Raw is equivalent and every signed later-stage effect in both repeats has absolute magnitude at most its `shadowEpsilon` |
+| `SHADOW_LENGTH_EFFECT_UNRESOLVED` | Raw is not equivalent; any effect lies between the noise and decision thresholds; repeat signs or magnitudes disagree; or the downstream effect is localized to fewer than three progress values |
 
 `INITIAL_PRIMARY_OVERSTEP_SUPPORTED` is evidence for the first-sample mechanism, not proof that it is the only rendering defect. BSM, AerialPerspective, and temporal resolve remain separate downstream gates.
 
@@ -405,7 +480,7 @@ All shader work is project-owned, capture-only, and installed at runtime by exac
 
 The runtime fingerprint must include the three split scales and instrumentation hash. A request/readback mismatch is `DIAGNOSTIC_SETUP_BLOCKED`.
 
-Pure tests must cover exact single-site shader replacements, disabled-output parity, unknown/partial query tuples, V3 and product-route rejection, uniform/shader cleanup after unmount, iteration-cap versus early-termination encoding, zero iteration-cap fraction with no histogram entry, raw-buffer metric recomputation, and precision/quantization floors. Identity tests must prove that two fresh documents with the same numeric allocation generations remain a valid independent pair when their `documentRunId` and mount/runtime identities differ. Mask tests must include a pixel-exact bottom-left-origin golden projection from `360 × 240` to `1440 × 960`, the `×16` population invariant, and fail-closed dimension/origin mismatches. The outcome resolver must cover monotonic recovery, non-monotonic recovery, fine-control-only recovery, one-progress recovery, repeat inconsistency, no bounded effect, and setup blocking.
+Pure tests must cover exact single-site shader replacements, disabled-output parity, unknown/partial query tuples, V3 and product-route rejection, uniform/shader cleanup after unmount, iteration-cap versus early-termination encoding, zero iteration-cap fraction with no histogram entry, raw-buffer metric recomputation, and precision/quantization floors. Quantization golden tests must cover UNORM8 scalar means and paired differences, value-dependent binary16 ULPs including zero/subnormal and maximum-finite boundaries, exact integer count means, pixel fractions, recursive signed-difference propagation, strict threshold equality, and 17-digit persistence/recomputation. Identity tests must prove that two fresh documents with the same numeric allocation generations remain a valid independent pair when their `documentRunId` and mount/runtime identities differ. Mask tests must include a pixel-exact bottom-left-origin golden projection from `360 × 240` to `1440 × 960`, the `×16` population invariant, and fail-closed dimension/origin mismatches. The outcome resolver must cover monotonic recovery, non-monotonic recovery, fine-control-only recovery, one-progress recovery, repeat inconsistency, no bounded effect, setup blocking, and the final unresolved catch-all where signed effects pass but the absolute or non-zero signal floor does not. Shadow tests must cover repeat-consistent positive and negative effects, opposite signs, excess repeat-distance, threshold equality, localized effects, and no detectable effect.
 
 ## 9. Cost and iteration-limit boundary
 
@@ -471,6 +546,8 @@ The design is ready for implementation planning only when review confirms:
 - zero iteration-cap incidence is accepted when it is independently recomputable from the termination buffer;
 - `S=120` remains a healthy positive control rather than causal proof;
 - candidate-level count/raw/repeat/progress gates select one deterministic isolation value;
+- quantization floors are derived from the exact encoding, aggregation, and comparison expression with strict boundary rules;
+- both the uniform-sweep and shadow resolvers are total functions with explicit unresolved catch-alls;
 - non-monotonic or localized recovery cannot be mislabeled as hypothesis rejection;
 - initial, subsequent, and shadow-length stepping have separate owners in the isolation stage;
 - no result automatically opens Stage C–F or production promotion.
