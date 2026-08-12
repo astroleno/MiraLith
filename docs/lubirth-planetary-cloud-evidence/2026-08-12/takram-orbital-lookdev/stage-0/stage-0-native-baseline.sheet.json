@@ -1,0 +1,22 @@
+{
+  "columns": 2,
+  "output": "stage-0-native-baseline.png",
+  "panels": [
+    {
+      "label": "legacyA · frame 32",
+      "path": "captures/stock-legacyA-p006-full.png"
+    },
+    {
+      "label": "legacyB · frame 32",
+      "path": "captures/stock-legacyB-p006-full.png"
+    },
+    {
+      "label": "lookdevA · frame 32",
+      "path": "captures/stock-lookdevA-p006-full.png"
+    },
+    {
+      "label": "lookdevB · frame 32",
+      "path": "captures/stock-lookdevB-p006-full.png"
+    }
+  ]
+}

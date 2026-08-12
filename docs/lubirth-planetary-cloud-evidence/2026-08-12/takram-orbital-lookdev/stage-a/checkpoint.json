@@ -1,0 +1,9 @@
+{
+  "state": "ORBITAL_STAGE_B_UNLOCKED",
+  "authorizedNextStage": "B",
+  "survivorIds": [
+    "h40-c0.3-v1-o1",
+    "h80-c0.3-v1-o1",
+    "h120-c0.3-v1-o1"
+  ]
+}

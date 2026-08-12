@@ -1,0 +1,198 @@
+{
+  "columns": 4,
+  "output": "stage-b-full.png",
+  "panels": [
+    {
+      "label": "stock · h40-c0.3-v1-o1 · p=0.00",
+      "path": "captures/stock-h40-c0.3-v1-o1-p000-full.png"
+    },
+    {
+      "label": "stock · h40-c0.3-v1-o1 · p=0.06",
+      "path": "captures/stock-h40-c0.3-v1-o1-p006-full.png"
+    },
+    {
+      "label": "stock · h40-c0.3-v1-o1 · p=0.12",
+      "path": "captures/stock-h40-c0.3-v1-o1-p012-full.png"
+    },
+    {
+      "label": "stock · h40-c0.3-v1-o1 · p=0.18",
+      "path": "captures/stock-h40-c0.3-v1-o1-p018-full.png"
+    },
+    {
+      "label": "stock · h40-c0.4-v1-o1 · p=0.00",
+      "path": "captures/stock-h40-c0.4-v1-o1-p000-full.png"
+    },
+    {
+      "label": "stock · h40-c0.4-v1-o1 · p=0.06",
+      "path": "captures/stock-h40-c0.4-v1-o1-p006-full.png"
+    },
+    {
+      "label": "stock · h40-c0.4-v1-o1 · p=0.12",
+      "path": "captures/stock-h40-c0.4-v1-o1-p012-full.png"
+    },
+    {
+      "label": "stock · h40-c0.4-v1-o1 · p=0.18",
+      "path": "captures/stock-h40-c0.4-v1-o1-p018-full.png"
+    },
+    {
+      "label": "stock · h40-c0.45-v1-o1 · p=0.00",
+      "path": "captures/stock-h40-c0.45-v1-o1-p000-full.png"
+    },
+    {
+      "label": "stock · h40-c0.45-v1-o1 · p=0.06",
+      "path": "captures/stock-h40-c0.45-v1-o1-p006-full.png"
+    },
+    {
+      "label": "stock · h40-c0.45-v1-o1 · p=0.12",
+      "path": "captures/stock-h40-c0.45-v1-o1-p012-full.png"
+    },
+    {
+      "label": "stock · h40-c0.45-v1-o1 · p=0.18",
+      "path": "captures/stock-h40-c0.45-v1-o1-p018-full.png"
+    },
+    {
+      "label": "stock · h40-c0.55-v1-o1 · p=0.00",
+      "path": "captures/stock-h40-c0.55-v1-o1-p000-full.png"
+    },
+    {
+      "label": "stock · h40-c0.55-v1-o1 · p=0.06",
+      "path": "captures/stock-h40-c0.55-v1-o1-p006-full.png"
+    },
+    {
+      "label": "stock · h40-c0.55-v1-o1 · p=0.12",
+      "path": "captures/stock-h40-c0.55-v1-o1-p012-full.png"
+    },
+    {
+      "label": "stock · h40-c0.55-v1-o1 · p=0.18",
+      "path": "captures/stock-h40-c0.55-v1-o1-p018-full.png"
+    },
+    {
+      "label": "stock · h80-c0.3-v1-o1 · p=0.00",
+      "path": "captures/stock-h80-c0.3-v1-o1-p000-full.png"
+    },
+    {
+      "label": "stock · h80-c0.3-v1-o1 · p=0.06",
+      "path": "captures/stock-h80-c0.3-v1-o1-p006-full.png"
+    },
+    {
+      "label": "stock · h80-c0.3-v1-o1 · p=0.12",
+      "path": "captures/stock-h80-c0.3-v1-o1-p012-full.png"
+    },
+    {
+      "label": "stock · h80-c0.3-v1-o1 · p=0.18",
+      "path": "captures/stock-h80-c0.3-v1-o1-p018-full.png"
+    },
+    {
+      "label": "stock · h80-c0.4-v1-o1 · p=0.00",
+      "path": "captures/stock-h80-c0.4-v1-o1-p000-full.png"
+    },
+    {
+      "label": "stock · h80-c0.4-v1-o1 · p=0.06",
+      "path": "captures/stock-h80-c0.4-v1-o1-p006-full.png"
+    },
+    {
+      "label": "stock · h80-c0.4-v1-o1 · p=0.12",
+      "path": "captures/stock-h80-c0.4-v1-o1-p012-full.png"
+    },
+    {
+      "label": "stock · h80-c0.4-v1-o1 · p=0.18",
+      "path": "captures/stock-h80-c0.4-v1-o1-p018-full.png"
+    },
+    {
+      "label": "stock · h80-c0.45-v1-o1 · p=0.00",
+      "path": "captures/stock-h80-c0.45-v1-o1-p000-full.png"
+    },
+    {
+      "label": "stock · h80-c0.45-v1-o1 · p=0.06",
+      "path": "captures/stock-h80-c0.45-v1-o1-p006-full.png"
+    },
+    {
+      "label": "stock · h80-c0.45-v1-o1 · p=0.12",
+      "path": "captures/stock-h80-c0.45-v1-o1-p012-full.png"
+    },
+    {
+      "label": "stock · h80-c0.45-v1-o1 · p=0.18",
+      "path": "captures/stock-h80-c0.45-v1-o1-p018-full.png"
+    },
+    {
+      "label": "stock · h80-c0.55-v1-o1 · p=0.00",
+      "path": "captures/stock-h80-c0.55-v1-o1-p000-full.png"
+    },
+    {
+      "label": "stock · h80-c0.55-v1-o1 · p=0.06",
+      "path": "captures/stock-h80-c0.55-v1-o1-p006-full.png"
+    },
+    {
+      "label": "stock · h80-c0.55-v1-o1 · p=0.12",
+      "path": "captures/stock-h80-c0.55-v1-o1-p012-full.png"
+    },
+    {
+      "label": "stock · h80-c0.55-v1-o1 · p=0.18",
+      "path": "captures/stock-h80-c0.55-v1-o1-p018-full.png"
+    },
+    {
+      "label": "stock · h120-c0.3-v1-o1 · p=0.00",
+      "path": "captures/stock-h120-c0.3-v1-o1-p000-full.png"
+    },
+    {
+      "label": "stock · h120-c0.3-v1-o1 · p=0.06",
+      "path": "captures/stock-h120-c0.3-v1-o1-p006-full.png"
+    },
+    {
+      "label": "stock · h120-c0.3-v1-o1 · p=0.12",
+      "path": "captures/stock-h120-c0.3-v1-o1-p012-full.png"
+    },
+    {
+      "label": "stock · h120-c0.3-v1-o1 · p=0.18",
+      "path": "captures/stock-h120-c0.3-v1-o1-p018-full.png"
+    },
+    {
+      "label": "stock · h120-c0.4-v1-o1 · p=0.00",
+      "path": "captures/stock-h120-c0.4-v1-o1-p000-full.png"
+    },
+    {
+      "label": "stock · h120-c0.4-v1-o1 · p=0.06",
+      "path": "captures/stock-h120-c0.4-v1-o1-p006-full.png"
+    },
+    {
+      "label": "stock · h120-c0.4-v1-o1 · p=0.12",
+      "path": "captures/stock-h120-c0.4-v1-o1-p012-full.png"
+    },
+    {
+      "label": "stock · h120-c0.4-v1-o1 · p=0.18",
+      "path": "captures/stock-h120-c0.4-v1-o1-p018-full.png"
+    },
+    {
+      "label": "stock · h120-c0.45-v1-o1 · p=0.00",
+      "path": "captures/stock-h120-c0.45-v1-o1-p000-full.png"
+    },
+    {
+      "label": "stock · h120-c0.45-v1-o1 · p=0.06",
+      "path": "captures/stock-h120-c0.45-v1-o1-p006-full.png"
+    },
+    {
+      "label": "stock · h120-c0.45-v1-o1 · p=0.12",
+      "path": "captures/stock-h120-c0.45-v1-o1-p012-full.png"
+    },
+    {
+      "label": "stock · h120-c0.45-v1-o1 · p=0.18",
+      "path": "captures/stock-h120-c0.45-v1-o1-p018-full.png"
+    },
+    {
+      "label": "stock · h120-c0.55-v1-o1 · p=0.00",
+      "path": "captures/stock-h120-c0.55-v1-o1-p000-full.png"
+    },
+    {
+      "label": "stock · h120-c0.55-v1-o1 · p=0.06",
+      "path": "captures/stock-h120-c0.55-v1-o1-p006-full.png"
+    },
+    {
+      "label": "stock · h120-c0.55-v1-o1 · p=0.12",
+      "path": "captures/stock-h120-c0.55-v1-o1-p012-full.png"
+    },
+    {
+      "label": "stock · h120-c0.55-v1-o1 · p=0.18",
+      "path": "captures/stock-h120-c0.55-v1-o1-p018-full.png"
+    }
+  ]
+}

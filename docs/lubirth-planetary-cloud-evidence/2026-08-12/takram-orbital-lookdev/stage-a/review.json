@@ -1,0 +1,25 @@
+{
+  "schema": "takram-orbital-lookdev-stage-a-review/v1",
+  "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+  "reviewer": "Codex visual evidence review",
+  "candidates": [
+    {
+      "candidateId": "h40-c0.3-v1-o1",
+      "candidate": { "coverage": 0.3, "opticalDepthScale": 1, "preset": "h40", "verticalScale": 1 },
+      "decision": "TOPOLOGY_UNOBSERVABLE",
+      "notes": "The frame-32 full composites do not expose enough cloud signal at coverage 0.3 to judge macro topology. Frame lock, finite output, runtime readback, and identity are valid; no confirmed seam or wrap discontinuity is promoted to a hard artifact."
+    },
+    {
+      "candidateId": "h80-c0.3-v1-o1",
+      "candidate": { "coverage": 0.3, "opticalDepthScale": 1, "preset": "h80", "verticalScale": 1 },
+      "decision": "TOPOLOGY_UNOBSERVABLE",
+      "notes": "The frame-32 full composites do not expose enough cloud signal at coverage 0.3 to judge macro topology. Frame lock, finite output, runtime readback, and identity are valid; no confirmed seam or wrap discontinuity is promoted to a hard artifact."
+    },
+    {
+      "candidateId": "h120-c0.3-v1-o1",
+      "candidate": { "coverage": 0.3, "opticalDepthScale": 1, "preset": "h120", "verticalScale": 1 },
+      "decision": "TOPOLOGY_UNOBSERVABLE",
+      "notes": "The frame-32 full composites do not expose enough cloud signal at coverage 0.3 to judge macro topology. Frame lock, finite output, runtime readback, and identity are valid; no confirmed seam or wrap discontinuity is promoted to a hard artifact."
+    }
+  ]
+}

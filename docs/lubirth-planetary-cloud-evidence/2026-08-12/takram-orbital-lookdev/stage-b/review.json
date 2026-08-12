@@ -1,0 +1,909 @@
+{
+  "schema": "takram-orbital-lookdev-stage-review/v1",
+  "stage": "B",
+  "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+  "reviewer": "Codex visual evidence review",
+  "rationale": "Across every bounded coverage and all four opening frames, the full composites remain visually indistinguishable at review scale: coverage changes affect only about 0.01–0.025% of RGBA channels at p=0.06 (MAE 0.0011–0.0032). No candidate exposes reviewable macro cloud regions, ground separation, internal depth, or BSM lighting, while frame identity and artifact-free output remain stable.",
+  "candidates": [
+    {
+      "candidateId": "h40-c0.3-v1-o1",
+      "candidate": {
+        "coverage": 0.3,
+        "opticalDepthScale": 1,
+        "preset": "h40",
+        "verticalScale": 1
+      },
+      "review": {
+        "schema": "takram-orbital-lookdev-visual-review/v1",
+        "reviewer": "Codex visual evidence review",
+        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "candidateId": "h40-c0.3-v1-o1",
+        "nativeFrame": 32,
+        "viewport": {
+          "width": 1440,
+          "height": 960,
+          "dpr": 1
+        },
+        "referenceHashes": {
+          "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+          "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+        },
+        "frames": [
+          {
+            "progress": 0,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.06,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.12,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.18,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "candidateId": "h40-c0.4-v1-o1",
+      "candidate": {
+        "coverage": 0.4,
+        "opticalDepthScale": 1,
+        "preset": "h40",
+        "verticalScale": 1
+      },
+      "review": {
+        "schema": "takram-orbital-lookdev-visual-review/v1",
+        "reviewer": "Codex visual evidence review",
+        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "candidateId": "h40-c0.4-v1-o1",
+        "nativeFrame": 32,
+        "viewport": {
+          "width": 1440,
+          "height": 960,
+          "dpr": 1
+        },
+        "referenceHashes": {
+          "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+          "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+        },
+        "frames": [
+          {
+            "progress": 0,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.06,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.12,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.18,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "candidateId": "h40-c0.45-v1-o1",
+      "candidate": {
+        "coverage": 0.45,
+        "opticalDepthScale": 1,
+        "preset": "h40",
+        "verticalScale": 1
+      },
+      "review": {
+        "schema": "takram-orbital-lookdev-visual-review/v1",
+        "reviewer": "Codex visual evidence review",
+        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "candidateId": "h40-c0.45-v1-o1",
+        "nativeFrame": 32,
+        "viewport": {
+          "width": 1440,
+          "height": 960,
+          "dpr": 1
+        },
+        "referenceHashes": {
+          "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+          "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+        },
+        "frames": [
+          {
+            "progress": 0,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.06,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.12,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.18,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "candidateId": "h40-c0.55-v1-o1",
+      "candidate": {
+        "coverage": 0.55,
+        "opticalDepthScale": 1,
+        "preset": "h40",
+        "verticalScale": 1
+      },
+      "review": {
+        "schema": "takram-orbital-lookdev-visual-review/v1",
+        "reviewer": "Codex visual evidence review",
+        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "candidateId": "h40-c0.55-v1-o1",
+        "nativeFrame": 32,
+        "viewport": {
+          "width": 1440,
+          "height": 960,
+          "dpr": 1
+        },
+        "referenceHashes": {
+          "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+          "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+        },
+        "frames": [
+          {
+            "progress": 0,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.06,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.12,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.18,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "candidateId": "h80-c0.3-v1-o1",
+      "candidate": {
+        "coverage": 0.3,
+        "opticalDepthScale": 1,
+        "preset": "h80",
+        "verticalScale": 1
+      },
+      "review": {
+        "schema": "takram-orbital-lookdev-visual-review/v1",
+        "reviewer": "Codex visual evidence review",
+        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "candidateId": "h80-c0.3-v1-o1",
+        "nativeFrame": 32,
+        "viewport": {
+          "width": 1440,
+          "height": 960,
+          "dpr": 1
+        },
+        "referenceHashes": {
+          "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+          "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+        },
+        "frames": [
+          {
+            "progress": 0,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.06,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.12,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.18,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "candidateId": "h80-c0.4-v1-o1",
+      "candidate": {
+        "coverage": 0.4,
+        "opticalDepthScale": 1,
+        "preset": "h80",
+        "verticalScale": 1
+      },
+      "review": {
+        "schema": "takram-orbital-lookdev-visual-review/v1",
+        "reviewer": "Codex visual evidence review",
+        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "candidateId": "h80-c0.4-v1-o1",
+        "nativeFrame": 32,
+        "viewport": {
+          "width": 1440,
+          "height": 960,
+          "dpr": 1
+        },
+        "referenceHashes": {
+          "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+          "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+        },
+        "frames": [
+          {
+            "progress": 0,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.06,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.12,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.18,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "candidateId": "h80-c0.45-v1-o1",
+      "candidate": {
+        "coverage": 0.45,
+        "opticalDepthScale": 1,
+        "preset": "h80",
+        "verticalScale": 1
+      },
+      "review": {
+        "schema": "takram-orbital-lookdev-visual-review/v1",
+        "reviewer": "Codex visual evidence review",
+        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "candidateId": "h80-c0.45-v1-o1",
+        "nativeFrame": 32,
+        "viewport": {
+          "width": 1440,
+          "height": 960,
+          "dpr": 1
+        },
+        "referenceHashes": {
+          "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+          "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+        },
+        "frames": [
+          {
+            "progress": 0,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.06,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.12,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.18,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "candidateId": "h80-c0.55-v1-o1",
+      "candidate": {
+        "coverage": 0.55,
+        "opticalDepthScale": 1,
+        "preset": "h80",
+        "verticalScale": 1
+      },
+      "review": {
+        "schema": "takram-orbital-lookdev-visual-review/v1",
+        "reviewer": "Codex visual evidence review",
+        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "candidateId": "h80-c0.55-v1-o1",
+        "nativeFrame": 32,
+        "viewport": {
+          "width": 1440,
+          "height": 960,
+          "dpr": 1
+        },
+        "referenceHashes": {
+          "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+          "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+        },
+        "frames": [
+          {
+            "progress": 0,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.06,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.12,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.18,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "candidateId": "h120-c0.3-v1-o1",
+      "candidate": {
+        "coverage": 0.3,
+        "opticalDepthScale": 1,
+        "preset": "h120",
+        "verticalScale": 1
+      },
+      "review": {
+        "schema": "takram-orbital-lookdev-visual-review/v1",
+        "reviewer": "Codex visual evidence review",
+        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "candidateId": "h120-c0.3-v1-o1",
+        "nativeFrame": 32,
+        "viewport": {
+          "width": 1440,
+          "height": 960,
+          "dpr": 1
+        },
+        "referenceHashes": {
+          "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+          "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+        },
+        "frames": [
+          {
+            "progress": 0,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.06,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.12,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.18,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "candidateId": "h120-c0.4-v1-o1",
+      "candidate": {
+        "coverage": 0.4,
+        "opticalDepthScale": 1,
+        "preset": "h120",
+        "verticalScale": 1
+      },
+      "review": {
+        "schema": "takram-orbital-lookdev-visual-review/v1",
+        "reviewer": "Codex visual evidence review",
+        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "candidateId": "h120-c0.4-v1-o1",
+        "nativeFrame": 32,
+        "viewport": {
+          "width": 1440,
+          "height": 960,
+          "dpr": 1
+        },
+        "referenceHashes": {
+          "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+          "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+        },
+        "frames": [
+          {
+            "progress": 0,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.06,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.12,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.18,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "candidateId": "h120-c0.45-v1-o1",
+      "candidate": {
+        "coverage": 0.45,
+        "opticalDepthScale": 1,
+        "preset": "h120",
+        "verticalScale": 1
+      },
+      "review": {
+        "schema": "takram-orbital-lookdev-visual-review/v1",
+        "reviewer": "Codex visual evidence review",
+        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "candidateId": "h120-c0.45-v1-o1",
+        "nativeFrame": 32,
+        "viewport": {
+          "width": 1440,
+          "height": 960,
+          "dpr": 1
+        },
+        "referenceHashes": {
+          "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+          "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+        },
+        "frames": [
+          {
+            "progress": 0,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.06,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.12,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.18,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "candidateId": "h120-c0.55-v1-o1",
+      "candidate": {
+        "coverage": 0.55,
+        "opticalDepthScale": 1,
+        "preset": "h120",
+        "verticalScale": 1
+      },
+      "review": {
+        "schema": "takram-orbital-lookdev-visual-review/v1",
+        "reviewer": "Codex visual evidence review",
+        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "candidateId": "h120-c0.55-v1-o1",
+        "nativeFrame": 32,
+        "viewport": {
+          "width": 1440,
+          "height": 960,
+          "dpr": 1
+        },
+        "referenceHashes": {
+          "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+          "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+        },
+        "frames": [
+          {
+            "progress": 0,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.06,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.12,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          },
+          {
+            "progress": 0.18,
+            "hardFlags": [],
+            "scores": {
+              "macroCoherence": 0,
+              "cloudGroundSeparation": 0,
+              "depthLayering": 0,
+              "lightingBsmRead": 0,
+              "openingIdentityStability": 2,
+              "artifactFreedom": 2
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
