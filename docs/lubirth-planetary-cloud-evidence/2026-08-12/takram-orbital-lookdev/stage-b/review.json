@@ -1,7 +1,7 @@
 {
   "schema": "takram-orbital-lookdev-stage-review/v1",
   "stage": "B",
-  "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+  "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
   "reviewer": "Codex visual evidence review",
   "rationale": "Across every bounded coverage and all four opening frames, the full composites remain visually indistinguishable at review scale: coverage changes affect only about 0.01–0.025% of RGBA channels at p=0.06 (MAE 0.0011–0.0032). No candidate exposes reviewable macro cloud regions, ground separation, internal depth, or BSM lighting, while frame identity and artifact-free output remain stable.",
   "candidates": [
@@ -16,7 +16,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": "Codex visual evidence review",
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h40-c0.3-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -91,7 +91,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": "Codex visual evidence review",
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h40-c0.4-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -166,7 +166,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": "Codex visual evidence review",
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h40-c0.45-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -241,7 +241,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": "Codex visual evidence review",
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h40-c0.55-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -316,7 +316,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": "Codex visual evidence review",
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h80-c0.3-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -391,7 +391,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": "Codex visual evidence review",
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h80-c0.4-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -466,7 +466,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": "Codex visual evidence review",
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h80-c0.45-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -541,7 +541,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": "Codex visual evidence review",
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h80-c0.55-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -616,7 +616,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": "Codex visual evidence review",
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h120-c0.3-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -691,7 +691,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": "Codex visual evidence review",
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h120-c0.4-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -766,7 +766,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": "Codex visual evidence review",
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h120-c0.45-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -841,7 +841,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": "Codex visual evidence review",
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h120-c0.55-v1-o1",
         "nativeFrame": 32,
         "viewport": {

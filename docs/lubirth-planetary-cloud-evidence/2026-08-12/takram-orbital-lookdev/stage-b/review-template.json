@@ -1,7 +1,7 @@
 {
   "schema": "takram-orbital-lookdev-stage-review/v1",
   "stage": "B",
-  "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+  "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
   "candidates": [
     {
       "candidateId": "h40-c0.3-v1-o1",
@@ -14,7 +14,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": null,
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h40-c0.3-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -89,7 +89,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": null,
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h40-c0.4-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -164,7 +164,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": null,
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h40-c0.45-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -239,7 +239,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": null,
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h40-c0.55-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -314,7 +314,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": null,
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h80-c0.3-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -389,7 +389,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": null,
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h80-c0.4-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -464,7 +464,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": null,
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h80-c0.45-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -539,7 +539,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": null,
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h80-c0.55-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -614,7 +614,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": null,
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h120-c0.3-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -689,7 +689,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": null,
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h120-c0.4-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -764,7 +764,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": null,
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h120-c0.45-v1-o1",
         "nativeFrame": 32,
         "viewport": {
@@ -839,7 +839,7 @@
       "review": {
         "schema": "takram-orbital-lookdev-visual-review/v1",
         "reviewer": null,
-        "cleanCommit": "8699d4c3553745e1f56e2df4a818704e2962bd28",
+        "cleanCommit": "2bb6c767becccc22070d960cdb36067f395deb51",
         "candidateId": "h120-c0.55-v1-o1",
         "nativeFrame": 32,
         "viewport": {
