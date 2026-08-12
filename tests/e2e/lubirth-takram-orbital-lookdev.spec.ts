@@ -402,15 +402,24 @@ async function publishCandidateStage(input: {
   });
 }
 
-const openingQuery = (coverage: 0.3 | 0.4 = 0.3) =>
+const openingQuery = (
+  coverage: 0.3 | 0.4 = 0.3,
+  stepScaleMode: "control" | "treatment" = "control"
+) =>
   "/lubirth-takram-parity-spike?input=stock&view=opening&progress=0.06" +
   `&orbitalPreset=h80&orbitalCoverage=${coverage}` +
+  `&orbitalStepScale=${stepScaleMode}` +
   "&verticalScale=1&opticalDepthScale=1&diagnostic=full&visualTest=pixels";
 
-async function waitForOrbitalReady(page: Page, coverage: 0.3 | 0.4) {
+async function waitForOrbitalReady(
+  page: Page,
+  coverage: 0.3 | 0.4,
+  stepScaleMode: "control" | "treatment" = "control"
+) {
   const root = page.locator("[data-takram-parity-route='true']");
   await expect(root).toHaveAttribute("data-orbital-preset", "h80");
   await expect(root).toHaveAttribute("data-orbital-coverage", String(coverage));
+  await expect(root).toHaveAttribute("data-orbital-step-scale", stepScaleMode);
   await expect(root).toHaveAttribute("data-vertical-scale", "1");
   await expect(root).toHaveAttribute("data-optical-depth-scale", "1");
   await expect(root).toHaveAttribute("data-runtime", "ready", { timeout: 120_000 });
@@ -479,6 +488,31 @@ test("orbital route publishes audited identity and remounts the complete native 
   expect(stable.lookdevBaseKey).toBe(second.lookdevBaseKey);
   expect(stable.lookdevMountKey).toBe(second.lookdevMountKey);
   expect(stable.resetNonce).toBe(0);
+});
+
+test("sampling treatment remounts all six native allocations in the same document", async ({
+  page
+}) => {
+  const response = await page.goto(openingQuery(0.3, "control"));
+  expect(response?.status()).toBe(200);
+  const control = await waitForOrbitalReady(page, 0.3, "control");
+
+  await page.evaluate(
+    (url) => window.history.pushState({}, "", url),
+    openingQuery(0.3, "treatment")
+  );
+  const treatment = await waitForOrbitalReady(page, 0.3, "treatment");
+
+  expect(treatment.lookdevBaseKey).not.toBe(control.lookdevBaseKey);
+  expect(treatment.lookdevMountKey).not.toBe(control.lookdevMountKey);
+  expect(treatment.orbitalLookdev.requested.stepScaleMode).toBe("treatment");
+  expect(treatment.orbitalLookdev.readback.clouds.perspectiveStepScale)
+    .toBe(1.0001);
+  expect(treatment.orbitalLookdev.drift).toEqual([]);
+  expect(didTakramLookdevRemountAllAllocations(
+    control.orbitalLookdev.readback.allocations,
+    treatment.orbitalLookdev.readback.allocations
+  )).toBe(true);
 });
 
 test("Stage 0 baseline transition retains full runtime evidence and changes all allocations", async ({

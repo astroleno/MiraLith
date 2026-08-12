@@ -29,6 +29,10 @@ import type {
   TakramOrbitalLookdevRuntimeDrift,
   TakramOrbitalLookdevRuntimeReadback
 } from "./TakramOrbitalLookdevRuntime";
+import {
+  parseTakramOrbitalStepScaleMode,
+  type TakramOrbitalStepScaleMode
+} from "./TakramOrbitalSamplingCausality";
 import type {
   TakramLookdevSetupState
 } from "./TakramOrbitalLookdevIdentity";
@@ -99,6 +103,7 @@ export type TakramParityRouteQuery = {
   opticalDepthScale?: TakramOrbitalOpticalDepthScale;
   orbitalCoverage?: TakramOrbitalCoverage;
   orbitalPreset?: TakramOrbitalPreset;
+  orbitalStepScale?: TakramOrbitalStepScaleMode;
   verticalScale?: TakramOrbitalVerticalScale;
   weatherAdapterComparison?: TakramWeatherAdapterComparison;
 };
@@ -269,6 +274,7 @@ export type TakramParityRouteQueryResult =
       | "unknown-optical-depth-scale"
       | "unknown-orbital-coverage"
       | "unknown-orbital-preset"
+      | "unknown-orbital-step-scale"
       | "unknown-vertical-scale"
       | "unknown-weather-adapter-comparison"
       | "weather-adapter-comparison-requires-orbital-lookdev"
@@ -289,6 +295,7 @@ export function resolveTakramParityRouteQuery(
   const requestedMorphologyView = input.get("morphologyView");
   const requestedOrbitalPreset = input.get("orbitalPreset");
   const requestedOrbitalCoverage = input.get("orbitalCoverage");
+  const requestedOrbitalStepScale = input.get("orbitalStepScale");
   const requestedVerticalScale = input.get("verticalScale");
   const requestedOpticalDepthScale = input.get("opticalDepthScale");
   const requestedWeatherAdapterComparison = input.get("weatherAdapterComparison");
@@ -322,7 +329,8 @@ export function resolveTakramParityRouteQuery(
     requestedVerticalScale,
     requestedOpticalDepthScale
   ];
-  const hasOrbitalLookdevQuery = orbitalFields.some((entry) => entry !== null);
+  const hasOrbitalLookdevQuery = orbitalFields.some((entry) => entry !== null) ||
+    requestedOrbitalStepScale !== null;
   if (requestedWeatherAdapterComparison !== null &&
     requestedWeatherAdapterComparison !== "explicit") {
     return { ok: false, reason: "unknown-weather-adapter-comparison" };
@@ -352,6 +360,10 @@ export function resolveTakramParityRouteQuery(
     parseTakramOrbitalOpticalDepthScale(requestedOpticalDepthScale) === null) {
     return { ok: false, reason: "unknown-optical-depth-scale" };
   }
+  if (requestedOrbitalStepScale !== null &&
+    parseTakramOrbitalStepScaleMode(requestedOrbitalStepScale) === null) {
+    return { ok: false, reason: "unknown-orbital-step-scale" };
+  }
   if (hasOrbitalLookdevQuery && orbitalFields.some((entry) => entry === null)) {
     return { ok: false, reason: "incomplete-orbital-lookdev" };
   }
@@ -365,6 +377,9 @@ export function resolveTakramParityRouteQuery(
   if (hasOrbitalLookdevQuery) {
     value.orbitalPreset = parseTakramOrbitalPreset(requestedOrbitalPreset)!;
     value.orbitalCoverage = parseTakramOrbitalCoverage(requestedOrbitalCoverage)!;
+    value.orbitalStepScale = requestedOrbitalStepScale === null
+      ? "control"
+      : parseTakramOrbitalStepScaleMode(requestedOrbitalStepScale)!;
     value.verticalScale = parseTakramOrbitalVerticalScale(requestedVerticalScale)!;
     value.opticalDepthScale = parseTakramOrbitalOpticalDepthScale(
       requestedOpticalDepthScale

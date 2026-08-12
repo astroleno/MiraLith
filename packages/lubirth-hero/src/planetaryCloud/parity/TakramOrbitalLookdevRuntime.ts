@@ -259,9 +259,12 @@ export function applyTakramOrbitalLookdevRuntime(
   target.turbulenceRepeat.set(...contract.turbulenceRepeat);
   target.turbulenceDisplacement = contract.turbulenceDisplacement;
 
-  Object.assign(target.clouds, contract.clouds);
   Object.assign(target, contract.lighting, contract.renderer);
   appliedQualityPresets.set(target, contract.renderer.qualityPreset);
+  // Takram's qualityPreset setter reapplies its stock clouds/shadow values.
+  // Apply the resolved experiment contract after that macro setter so bounded
+  // per-field overrides remain authoritative in the materialized runtime.
+  Object.assign(target.clouds, contract.clouds);
   for (const [key, value] of Object.entries(contract.shadow)) {
     if (key !== "mapSize") target.shadow[key] = value as number;
   }

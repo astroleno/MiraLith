@@ -69,7 +69,8 @@ export function LuBirthTakramParitySpikeClient() {
         preset: query.orbitalPreset,
         coverage: query.orbitalCoverage,
         verticalScale: query.verticalScale,
-        opticalDepthScale: query.opticalDepthScale
+        opticalDepthScale: query.opticalDepthScale,
+        stepScaleMode: query.orbitalStepScale ?? "control"
       }
     : undefined;
   const runtime = !routeResult.ok
@@ -90,6 +91,7 @@ export function LuBirthTakramParitySpikeClient() {
       data-optical-depth-scale={query?.opticalDepthScale ?? "none"}
       data-orbital-coverage={query?.orbitalCoverage ?? "none"}
       data-orbital-preset={query?.orbitalPreset ?? "none"}
+      data-orbital-step-scale={query?.orbitalStepScale ?? "none"}
       data-runtime={runtime}
       data-stock-weather={query?.stockWeatherMode ?? "none"}
       data-takram-parity-route="true"

@@ -327,6 +327,7 @@ test("accepts only complete opening orbital lookdev queries and rejects legacy c
       opticalDepthScale: 1.5,
       orbitalCoverage: 0.45,
       orbitalPreset: "h80",
+      orbitalStepScale: "control",
       progress: 0.06,
       verticalScale: 2,
       view: "opening"
@@ -342,6 +343,7 @@ test("accepts only complete opening orbital lookdev queries and rejects legacy c
       opticalDepthScale: 1,
       orbitalCoverage: 0.3,
       orbitalPreset: "h40",
+      orbitalStepScale: "control",
       progress: 0,
       verticalScale: 1,
       view: "opening"
@@ -356,6 +358,12 @@ test("accepts only complete opening orbital lookdev queries and rejects legacy c
   expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
     "input=stock&view=opening&diagnostic=uv-debug&orbitalPreset=h120&orbitalCoverage=0.55&verticalScale=4&opticalDepthScale=0.75"
   ))).toMatchObject({ ok: true, value: { diagnostic: "uv-debug" } });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=stock&view=opening&orbitalPreset=h120&orbitalCoverage=0.55&verticalScale=1&opticalDepthScale=1&orbitalStepScale=treatment"
+  ))).toMatchObject({
+    ok: true,
+    value: { orbitalStepScale: "treatment" }
+  });
 
   const invalidQueries = [
     [
@@ -401,6 +409,14 @@ test("accepts only complete opening orbital lookdev queries and rejects legacy c
     [
       "input=stock&view=opening&orbitalPreset=h80&orbitalCoverage=0.3&verticalScale=1&opticalDepthScale=1&weatherAdapterComparison=implicit",
       "unknown-weather-adapter-comparison"
+    ],
+    [
+      "input=stock&view=opening&orbitalPreset=h120&orbitalCoverage=0.55&verticalScale=1&opticalDepthScale=1&orbitalStepScale=1.0001",
+      "unknown-orbital-step-scale"
+    ],
+    [
+      "input=stock&view=opening&orbitalStepScale=treatment",
+      "incomplete-orbital-lookdev"
     ]
   ] as const;
   for (const [query, reason] of invalidQueries) {

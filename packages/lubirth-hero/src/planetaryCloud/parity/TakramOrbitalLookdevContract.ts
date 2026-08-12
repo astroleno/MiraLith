@@ -4,6 +4,10 @@ import {
   TAKRAM_CLOUD_SCALE_DEFAULTS
 } from "./TakramCloudScaleDefaults";
 import type { TakramCloudScaleLayer } from "./TakramCloudScaleContract";
+import {
+  resolveTakramOrbitalStepScale,
+  type TakramOrbitalStepScaleMode
+} from "./TakramOrbitalSamplingCausality";
 
 export const TAKRAM_ORBITAL_PRESETS = Object.freeze([
   "native",
@@ -40,6 +44,7 @@ export interface TakramOrbitalLookdevInput {
   coverage: TakramOrbitalCoverage;
   opticalDepthScale: TakramOrbitalOpticalDepthScale;
   preset: TakramOrbitalPreset;
+  stepScaleMode?: TakramOrbitalStepScaleMode;
   verticalScale: TakramOrbitalVerticalScale;
 }
 
@@ -124,6 +129,7 @@ export interface TakramOrbitalLookdevContract {
   shapeDetailWavelengthMeters: number;
   shapeRepeat: number;
   shapeWavelengthMeters: number;
+  stepScaleMode: TakramOrbitalStepScaleMode;
   turbulenceDisplacement: number;
   turbulenceRepeat: readonly [20, 20];
   verticalScale: TakramOrbitalVerticalScale;
@@ -229,6 +235,7 @@ export function resolveTakramOrbitalLookdevContract(
   input: TakramOrbitalLookdevInput
 ): DeepReadonly<TakramOrbitalLookdevContract> {
   const morphology = MORPHOLOGY_PRESETS[input.preset];
+  const stepScaleMode = input.stepScaleMode ?? "control";
   const verticalOpticalScale = input.opticalDepthScale / input.verticalScale;
   const layers = TAKRAM_CLOUD_SCALE_DEFAULTS.layers.map((layer) => ({
     ...layer,
@@ -255,7 +262,8 @@ export function resolveTakramOrbitalLookdevContract(
       hazeExponent: 1e-3,
       hazeScatteringCoefficient: 0.9,
       minExtinction: clouds.minExtinction * verticalOpticalScale,
-      multiScatteringOctaves: 8
+      multiScatteringOctaves: 8,
+      perspectiveStepScale: resolveTakramOrbitalStepScale(stepScaleMode)
     },
     coverage: input.coverage,
     effectiveTurbulenceRepeat: [
@@ -280,6 +288,7 @@ export function resolveTakramOrbitalLookdevContract(
     shapeDetailWavelengthMeters: 1 / morphology.shapeDetailRepeat,
     shapeRepeat: morphology.shapeRepeat,
     shapeWavelengthMeters: 1 / morphology.shapeRepeat,
+    stepScaleMode,
     turbulenceDisplacement: TAKRAM_CLOUD_SCALE_DEFAULTS.turbulenceDisplacement,
     turbulenceRepeat,
     verticalScale: input.verticalScale

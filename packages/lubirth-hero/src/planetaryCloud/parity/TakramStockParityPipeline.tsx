@@ -598,6 +598,7 @@ export function TakramStockParityPipeline({
       orbitalLookdev?.coverage,
       orbitalLookdev?.opticalDepthScale,
       orbitalLookdev?.preset,
+      orbitalLookdev?.stepScaleMode,
       orbitalLookdev?.verticalScale
     ]
   );
@@ -704,6 +705,7 @@ export function TakramStockParityPipeline({
             opticalDepthScale: orbitalLookdevContract.opticalDepthScale,
             orbitalCoverage: orbitalLookdevContract.coverage,
             orbitalPreset: orbitalLookdevContract.preset,
+            orbitalStepScale: orbitalLookdevContract.stepScaleMode,
             progress: clampOpeningProgress(progress),
             verticalScale: orbitalLookdevContract.verticalScale,
             view,

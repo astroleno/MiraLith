@@ -103,7 +103,6 @@ test("applies and reads the complete bounded orbital contract without scaling na
     opticalDepthScale: 1.5
   });
   const runtime = createRuntime(resolveTakramOrbitalLookdevContract);
-
   applyTakramOrbitalLookdevRuntime(runtime, contract);
   const readback = readTakramOrbitalLookdevRuntime(runtime, contract);
 
@@ -186,6 +185,49 @@ test("keeps adapter-owned V3 repeat explicit while preserving the renderer contr
     contract.shapeRepeat
   ]);
   expect(diffTakramOrbitalLookdevRuntime(contract, readback, adapter)).toEqual([]);
+});
+
+test("applies the treatment step scale and blocks drift back to the control value", async () => {
+  const { contract: contractModule, runtime: runtimeModule } = await loadModules();
+  const { resolveTakramOrbitalLookdevContract } = contractModule;
+  const {
+    applyTakramOrbitalLookdevRuntime,
+    diffTakramOrbitalLookdevRuntime,
+    readTakramOrbitalLookdevRuntime
+  } = runtimeModule;
+  const contract = resolveTakramOrbitalLookdevContract({
+    preset: "h120",
+    coverage: 0.55,
+    verticalScale: 1,
+    opticalDepthScale: 1,
+    stepScaleMode: "treatment"
+  });
+  const runtime = createRuntime(resolveTakramOrbitalLookdevContract);
+  Object.defineProperty(runtime, "qualityPreset", {
+    configurable: true,
+    set(value: string) {
+      if (value === "high") {
+        runtime.clouds.perspectiveStepScale = 1.01;
+      }
+    }
+  });
+
+  applyTakramOrbitalLookdevRuntime(runtime, contract);
+  expect(runtime.clouds.perspectiveStepScale).toBe(1.0001);
+  expect(diffTakramOrbitalLookdevRuntime(
+    contract,
+    readTakramOrbitalLookdevRuntime(runtime, contract)
+  )).toEqual([]);
+
+  runtime.clouds.perspectiveStepScale = 1.01;
+  expect(diffTakramOrbitalLookdevRuntime(
+    contract,
+    readTakramOrbitalLookdevRuntime(runtime, contract)
+  )).toContainEqual({
+    actual: 1.01,
+    expected: 1.0001,
+    path: "clouds.perspectiveStepScale"
+  });
 });
 
 test("records the applied quality preset when Takram exposes it as a setter-only property", async () => {

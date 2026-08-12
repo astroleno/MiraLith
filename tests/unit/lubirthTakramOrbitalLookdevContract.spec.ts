@@ -170,6 +170,37 @@ test("keeps Stage A ray, step, lighting, turbulence, and layer fields native", a
   ]);
 });
 
+test("changes only the named perspective-step arm in the frozen orbital baseline", async () => {
+  const { resolveTakramOrbitalLookdevContract } = await loadContract();
+  const frozen = {
+    preset: "h120" as const,
+    coverage: 0.55 as const,
+    verticalScale: 1 as const,
+    opticalDepthScale: 1 as const
+  };
+  const control = resolveTakramOrbitalLookdevContract({
+    ...frozen,
+    stepScaleMode: "control"
+  });
+  const treatment = resolveTakramOrbitalLookdevContract({
+    ...frozen,
+    stepScaleMode: "treatment"
+  });
+
+  expect(control.stepScaleMode).toBe("control");
+  expect(control.clouds.perspectiveStepScale).toBe(1.01);
+  expect(treatment.stepScaleMode).toBe("treatment");
+  expect(treatment.clouds.perspectiveStepScale).toBe(1.0001);
+
+  const normalize = (value: typeof control) => {
+    const normalized = structuredClone(value) as any;
+    delete normalized.stepScaleMode;
+    delete normalized.clouds.perspectiveStepScale;
+    return normalized;
+  };
+  expect(normalize(treatment)).toEqual(normalize(control));
+});
+
 test("preserves vertical optical depth before applying the bounded optical finish", async () => {
   const { resolveTakramOrbitalLookdevContract } = await loadContract();
   const native = resolveTakramOrbitalLookdevContract({
