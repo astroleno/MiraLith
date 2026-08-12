@@ -8,6 +8,12 @@
 
 **Prerequisite evidence:** `docs/lubirth-planetary-cloud-evidence/2026-08-12/takram-orbital-lookdev/`
 
+**Review lineage:** rooted at docs-only baseline `c0f62bd`. The earlier two-level
+`TakramOrbitalSamplingCausality` contract (`4bf52a9`) and its runtime wiring
+(`52cc556`) are not ancestors of this review branch, do not conform to this
+eight-level design, and cannot be treated as an implementation of this
+specification.
+
 ## 1. Decision
 
 The bounded orbital lookdev remains stopped after Stage B. Stage C–F, V3 compatibility, GPU promotion, and production parameter changes remain unauthorized.
@@ -164,9 +170,20 @@ The module writes a dedicated native-current diagnostic encoding; it does not in
 min / p05 / p25 / p50 / p75 / p95 / max / mean
 ```
 
-For each progress, the first native-control repeat produces one immutable geometric shell-intersection mask from `rayNearFar.x/y`. The second native repeat and every step candidate must reproduce the same mask byte-for-byte; otherwise the batch is `DIAGNOSTIC_SETUP_BLOCKED`. This fixed mask is the primary denominator for every cross-candidate count and signal metric at that progress.
+For each progress, the first native-control repeat produces one immutable geometric shell-intersection mask from `rayNearFar.x/y`. The source mask is the `360 × 240` native-current grid with origin at the bottom-left. The second native repeat and every step candidate must reproduce the same source mask byte-for-byte; otherwise the batch is `DIAGNOSTIC_SETUP_BLOCKED`. This fixed source mask, or its deterministic full-resolution projection below, is the primary denominator for every cross-candidate count and signal metric at that progress.
 
-Distributions are calculated over the fixed shell-intersection mask. Candidate-specific pixels that later produce a rough-weather sample or media hit are reported only as auxiliary conditional populations; they may not become the denominator of a causal comparison. The evidence stores the mask and raw readback buffer so another implementation can recompute every percentile.
+The `360 × 240` mask is used directly for native-current, pre-temporal, ray, sample-count, and loop/termination buffers. Resolved-history and final-output buffers use a frozen `1440 × 960` projection, also with bottom-left origin. Projection is exact nearest-cell replication with scale factor `4`:
+
+```text
+for each source pixel (sx, sy):
+  target x = 4*sx ... 4*sx+3
+  target y = 4*sy ... 4*sy+3
+  projectedMask[target x, target y] = sourceMask[sx, sy]
+```
+
+No bilinear filtering, area threshold, half-pixel offset, dilation, erosion, edge clipping, or coordinate-origin flip is permitted. Both target dimensions must equal the corresponding source dimension multiplied by the same positive integer scale; for this experiment that scale must be exactly `4`. Any size, origin, or scale mismatch is `DIAGNOSTIC_SETUP_BLOCKED` rather than an invitation to resample differently.
+
+The manifest persists the source and target dimensions, bottom-left origins, scale factor, source-mask and projected-mask SHA-256 values, both mask files, and both true-pixel counts. For this `4 × 4` replication, `projectedTruePixelCount` must equal `sourceTruePixelCount × 16`. Distributions are calculated over the fixed mask appropriate to the buffer resolution. Candidate-specific pixels that later produce a rough-weather sample or media hit are reported only as auxiliary conditional populations; they may not become the denominator of a causal comparison. The stored masks and raw readback buffers must let another implementation reproduce every included pixel and percentile without interpreting texture sampling conventions.
 
 ### 5.2 Native sample-count readback
 
@@ -207,7 +224,7 @@ Every sweep level, progress, and clean-mount repeat must include:
 
 `stage-readback-off` is a separate strict diagnostic mode. It preserves the same composer, camera, atmosphere, render targets, history-reset path, and frame schedule, but clears the cloud current target before temporal resolve on every frame of its clean mount. At native frame 32 it reads the cleared pre-temporal current target, the independently converged off-side history target, and the final AerialPerspective/output result. It must not reuse a prior on-side history target or infer off-side values from `cloud-raw-off` screenshots.
 
-For each signal stage, persist finite/non-finite count, mean and peak luma/alpha where meaningful, non-zero pixel fraction, and paired cloud-on minus cloud-off mean/peak absolute difference over the fixed geometric mask. `cloud-raw` pairs with `cloud-raw-off`; every `stage-readback` buffer pairs with the corresponding `stage-readback-off` buffer. The raw binary buffers, exact-frame PNGs, and decoded metric JSON remain linked by SHA-256.
+For each signal stage, persist finite/non-finite count, mean and peak luma/alpha where meaningful, non-zero pixel fraction, and paired cloud-on minus cloud-off mean/peak absolute difference over the fixed geometric mask at that buffer's resolution. `cloud-raw` pairs with `cloud-raw-off`; every `stage-readback` buffer pairs with the corresponding `stage-readback-off` buffer. The raw binary buffers, exact-frame PNGs, source/projected masks, and decoded metric JSON remain linked by SHA-256.
 
 `cloud-raw` is the causal gate. A final-output change without raw recovery does not pass the stepping hypothesis.
 
@@ -224,9 +241,11 @@ the same STBN slice
 two independent clean document mounts
 ```
 
-Each mount receives a stable `repeatId=A|B`. An on/off pair is valid only when its repeat ID, progress, viewport, camera/projection/Earth matrices, native cloud/resolve/shadow frame, jitter index, STBN slice, source shader hash, renderer fingerprint excluding the declared diagnostic mode, and resource identities match. On-side and off-side use separate history epochs and allocation generations, both beginning from a clean remount; equality of allocation IDs is neither expected nor permitted.
+Each mount receives a stable `repeatId=A|B` and a unique persisted `documentRunId`. An on/off pair is valid only when its repeat ID, progress, viewport, camera/projection/Earth matrices, native cloud/resolve/shadow frame, jitter index, STBN slice, source shader hash, renderer fingerprint excluding the declared diagnostic mode, and logical resource roles match. On-side and off-side begin from separate clean documents, must have distinct `documentRunId` and mount/runtime identities, and use separate history epochs.
 
-The manifest records complete requested/readback contracts, camera/projection/Earth matrices, history epoch, mount/runtime identity, all six cloud/shadow allocation generations, shader/build/package/patch hashes, and capture hashes. A mismatch blocks the pair instead of becoming measurement noise.
+An allocation generation is a document-local diagnostic label. The six cloud/shadow allocation generations must be present and internally consistent within each document, but their numeric values are never compared for equality or inequality across documents. Two clean documents may legitimately restart module state and report the same generation numbers; matching numbers do not invalidate their independence. Pair validity comes from distinct document and mount/runtime identities plus the matching logical resource-role contract, not from cross-document allocation-number uniqueness.
+
+The manifest records complete requested/readback contracts, camera/projection/Earth matrices, `documentRunId`, history epoch, mount/runtime identity, all six document-local cloud/shadow allocation generations, shader/build/package/patch hashes, and capture hashes. A same-document identity mismatch, or reuse of a document/mount/runtime identity across the on/off pair, blocks the pair instead of becoming measurement noise.
 
 ## 6. Uniform-sweep decision rules
 
@@ -260,8 +279,9 @@ primarySampleMean(candidate) - primarySampleMean(native) > 3 × epsilon(primaryS
 cloudRawOnOffMeanAbs(candidate) - cloudRawOnOffMeanAbs(native) > 3 × epsilon(cloudRawOnOffMeanAbs)
 cloudRawOnOffMeanAbs(candidate) > max(5 × repeatNoise, numericQuantizationFloor)
 nonZeroCloudRawPixelFraction >= 0.001
-iterationCapPixelFraction is finite and backed by terminationReason=iteration-cap
 ```
+
+Loop/termination evidence remains a validity gate rather than a recovery-effect threshold. `iterationCapPixelFraction` must be finite, lie in `[0,1]`, and be independently recomputable as `iteration-cap pixels / fixed-mask pixels` from the termination buffer. A value of exactly `0` is valid: the termination histogram may contain no `iteration-cap` entry, which is interpreted as a zero count, not missing evidence. A non-zero fraction requires the same non-zero histogram count; neither zero nor non-zero cap incidence changes candidate eligibility by itself.
 
 Both repeats must reach the same pass/fail classification. For both count and raw effects, the two repeat estimates must also have the same sign and differ by no more than:
 
@@ -385,7 +405,7 @@ All shader work is project-owned, capture-only, and installed at runtime by exac
 
 The runtime fingerprint must include the three split scales and instrumentation hash. A request/readback mismatch is `DIAGNOSTIC_SETUP_BLOCKED`.
 
-Pure tests must cover exact single-site shader replacements, disabled-output parity, unknown/partial query tuples, V3 and product-route rejection, uniform/shader cleanup after unmount, iteration-cap versus early-termination encoding, raw-buffer metric recomputation, and precision/quantization floors. The outcome resolver must cover monotonic recovery, non-monotonic recovery, fine-control-only recovery, one-progress recovery, repeat inconsistency, no bounded effect, and setup blocking.
+Pure tests must cover exact single-site shader replacements, disabled-output parity, unknown/partial query tuples, V3 and product-route rejection, uniform/shader cleanup after unmount, iteration-cap versus early-termination encoding, zero iteration-cap fraction with no histogram entry, raw-buffer metric recomputation, and precision/quantization floors. Identity tests must prove that two fresh documents with the same numeric allocation generations remain a valid independent pair when their `documentRunId` and mount/runtime identities differ. Mask tests must include a pixel-exact bottom-left-origin golden projection from `360 × 240` to `1440 × 960`, the `×16` population invariant, and fail-closed dimension/origin mismatches. The outcome resolver must cover monotonic recovery, non-monotonic recovery, fine-control-only recovery, one-progress recovery, repeat inconsistency, no bounded effect, and setup blocking.
 
 ## 9. Cost and iteration-limit boundary
 
@@ -444,8 +464,11 @@ The design is ready for implementation planning only when review confirms:
 - actual per-pixel `rayNearFar.x`, initial step, and jittered first-sample distributions are durable evidence;
 - every level includes raw, native sample-count, independent loop/termination, pre-temporal, resolved-history, and final evidence;
 - every signal stage has a clean-frame-aligned executable off-side capture;
-- cross-candidate gates use one frozen geometry mask rather than a treatment-conditioned hit population;
+- cross-candidate gates use one frozen source geometry mask and its exact `4 × 4` full-resolution projection rather than a treatment-conditioned hit population;
+- mask origin, source/target dimensions, projection factor, population invariant, files, and hashes are durable evidence;
 - fixed frame/STBN identity is repeated on a clean mount;
+- on/off independence is proven by document and mount/runtime identity while allocation generations remain explicitly document-local;
+- zero iteration-cap incidence is accepted when it is independently recomputable from the termination buffer;
 - `S=120` remains a healthy positive control rather than causal proof;
 - candidate-level count/raw/repeat/progress gates select one deterministic isolation value;
 - non-monotonic or localized recovery cannot be mislabeled as hypothesis rejection;
