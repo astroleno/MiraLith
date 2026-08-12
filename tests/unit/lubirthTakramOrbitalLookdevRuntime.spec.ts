@@ -167,12 +167,18 @@ test("keeps adapter-owned V3 repeat explicit while preserving the renderer contr
     opticalDepthScale: 0.75
   });
   const runtime = createRuntime(resolveTakramOrbitalLookdevContract);
-  const adapter = { localWeatherRepeat: [1, 1] as const };
+  const adapter = {
+    globalWeatherMapping: true,
+    localWeatherOffset: [0.5, 0.25] as const,
+    localWeatherRepeat: [1, 1] as const
+  };
 
   applyTakramOrbitalLookdevRuntime(runtime, contract, adapter);
   const readback = readTakramOrbitalLookdevRuntime(runtime, contract);
 
   expect(readback.localWeatherRepeat).toEqual([1, 1]);
+  expect(readback.globalWeatherMapping).toBe(true);
+  expect(readback.localWeatherOffset).toEqual([0.5, 0.25]);
   expect(readback.effectiveTurbulenceRepeat).toEqual([20, 20]);
   expect(readback.shapeRepeat).toEqual([
     contract.shapeRepeat,
@@ -265,6 +271,8 @@ test("reports canonical drift for every tuned or frozen renderer field", async (
   applyTakramOrbitalLookdevRuntime(runtime, contract);
   runtime.clouds.maxRayDistance += 1;
   runtime.cloudLayers[1].densityScale *= 2;
+  runtime.globalWeatherMapping = true;
+  runtime.localWeatherOffset.x = 0.25;
   runtime.localWeatherRepeat.y *= 2;
   runtime.shapeRepeat.z *= 2;
   runtime.turbulenceRepeat.x = 21;
@@ -278,8 +286,10 @@ test("reports canonical drift for every tuned or frozen renderer field", async (
     "clouds.maxRayDistance",
     "effectiveTurbulenceRepeat.0",
     "effectiveTurbulenceRepeat.1",
+    "globalWeatherMapping",
     "layers.1.densityScale",
     "lighting.skyLightScale",
+    "localWeatherOffset.0",
     "localWeatherRepeat.1",
     "shapeRepeat.2",
     "turbulenceRepeat.0"

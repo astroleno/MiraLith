@@ -989,6 +989,10 @@ test("fingerprints resolved native state and rejects non-adapter drift", async (
     effectiveTurbulenceRepeat: [25, 25],
     layers: [{ channel: "r", height: 1300, densityScale: 0.1 }]
   };
+  const legacyBaselineFingerprint = contract!.buildTakramParityRendererFingerprint({
+    ...runtime,
+    orbitalBaselineRuntime: orbitalLookdevRuntime
+  });
   const orbitalFingerprint = contract!.buildTakramParityRendererFingerprint({
     ...runtime,
     orbitalLookdevRuntime
@@ -997,7 +1001,7 @@ test("fingerprints resolved native state and rejects non-adapter drift", async (
     orbitalLookdevRuntime;
   expect(orbitalFingerprint).toMatchObject({
     schemaVersion: 6,
-    orbitalLookdev: stableOrbitalLookdevRuntime,
+    orbitalBaseline: stableOrbitalLookdevRuntime,
     orbitalRenderTargets: {
       clouds: {
         clouds: { present: true },
@@ -1011,6 +1015,7 @@ test("fingerprints resolved native state and rejects non-adapter drift", async (
       }
     }
   });
+  expect(legacyBaselineFingerprint).toEqual(orbitalFingerprint);
   const changedOrbitalFingerprint = contract!.buildTakramParityRendererFingerprint({
     ...runtime,
     orbitalLookdevRuntime: {
@@ -1020,6 +1025,23 @@ test("fingerprints resolved native state and rejects non-adapter drift", async (
   });
   expect(contract!.hashTakramParityRendererFingerprint(changedOrbitalFingerprint))
     .not.toBe(contract!.hashTakramParityRendererFingerprint(orbitalFingerprint));
+  const changedLayerFingerprint = contract!.buildTakramParityRendererFingerprint({
+    ...runtime,
+    orbitalBaselineRuntime: {
+      ...orbitalLookdevRuntime,
+      layers: [{ ...orbitalLookdevRuntime.layers[0], densityScale: 0.11 }]
+    }
+  });
+  expect(contract!.hashTakramParityRendererFingerprint(changedLayerFingerprint))
+    .not.toBe(contract!.hashTakramParityRendererFingerprint(legacyBaselineFingerprint));
+  runtime.clouds.shadowPass.historyRenderTarget.width = 256;
+  const changedShadowTargetFingerprint = contract!.buildTakramParityRendererFingerprint({
+    ...runtime,
+    orbitalBaselineRuntime: orbitalLookdevRuntime
+  });
+  expect(contract!.hashTakramParityRendererFingerprint(changedShadowTargetFingerprint))
+    .not.toBe(contract!.hashTakramParityRendererFingerprint(legacyBaselineFingerprint));
+  runtime.clouds.shadowPass.historyRenderTarget.width = 512;
   const swappedHistoryAllocations = contract!.buildTakramParityRendererFingerprint({
     ...runtime,
     orbitalLookdevRuntime: {

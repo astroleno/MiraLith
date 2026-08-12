@@ -60,7 +60,19 @@ interface TakramOrbitalRuntimeTarget {
 }
 
 export interface TakramOrbitalRuntimeAdapterExpectation {
+  readonly globalWeatherMapping: boolean;
+  readonly localWeatherOffset: readonly [number, number];
   readonly localWeatherRepeat: readonly [number, number];
+}
+
+function nativeAdapterExpectation(
+  contract: TakramOrbitalLookdevContract
+): TakramOrbitalRuntimeAdapterExpectation {
+  return {
+    globalWeatherMapping: false,
+    localWeatherOffset: [0, 0],
+    localWeatherRepeat: contract.localWeatherRepeat
+  };
 }
 
 export interface TakramOrbitalAllocationGenerations {
@@ -235,12 +247,12 @@ export function readTakramOrbitalAllocationGenerations(
 export function applyTakramOrbitalLookdevRuntime(
   clouds: CloudsEffect | TakramOrbitalRuntimeTarget,
   contract: TakramOrbitalLookdevContract,
-  adapter: TakramOrbitalRuntimeAdapterExpectation = {
-    localWeatherRepeat: contract.localWeatherRepeat
-  }
+  adapter: TakramOrbitalRuntimeAdapterExpectation = nativeAdapterExpectation(contract)
 ): void {
   const target = asRuntimeTarget(clouds);
   target.coverage = contract.coverage;
+  target.globalWeatherMapping = adapter.globalWeatherMapping;
+  target.localWeatherOffset.set(...adapter.localWeatherOffset);
   target.localWeatherRepeat.set(...adapter.localWeatherRepeat);
   target.shapeRepeat.setScalar(contract.shapeRepeat);
   target.shapeDetailRepeat.setScalar(contract.shapeDetailRepeat);
@@ -362,9 +374,7 @@ function collectDrift(
 export function diffTakramOrbitalLookdevRuntime(
   contract: TakramOrbitalLookdevContract,
   readback: TakramOrbitalLookdevRuntimeReadback,
-  adapter: TakramOrbitalRuntimeAdapterExpectation = {
-    localWeatherRepeat: contract.localWeatherRepeat
-  }
+  adapter: TakramOrbitalRuntimeAdapterExpectation = nativeAdapterExpectation(contract)
 ): DeepReadonly<readonly TakramOrbitalLookdevRuntimeDrift[]> {
   const expected = {
     classification: contract.classification,
@@ -374,8 +384,10 @@ export function diffTakramOrbitalLookdevRuntime(
       adapter.localWeatherRepeat[0] * contract.turbulenceRepeat[0],
       adapter.localWeatherRepeat[1] * contract.turbulenceRepeat[1]
     ],
+    globalWeatherMapping: adapter.globalWeatherMapping,
     layers: contract.layers,
     lighting: contract.lighting,
+    localWeatherOffset: adapter.localWeatherOffset,
     localWeatherRepeat: adapter.localWeatherRepeat,
     mipDistancePatch: {
       active: false,

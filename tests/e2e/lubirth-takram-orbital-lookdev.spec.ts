@@ -18,6 +18,8 @@ import {
   resolveTakramOrbitalRepeatNoiseFloor,
   resolveTakramOrbitalStage0
 } from "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalLookdevEvidence";
+import { didTakramLookdevRemountAllAllocations } from
+  "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalLookdevIdentity";
 import { writeTakramOrbitalLookdevEvidenceAtomically } from
   "../helpers/takramOrbitalLookdevEvidence";
 
@@ -137,9 +139,21 @@ function legacyRoute(progress: number, diagnostic = "full") {
     `&diagnostic=${diagnostic}&visualTest=pixels`;
 }
 
-async function openReadyRoute(page: Page, route: string) {
-  const response = await page.goto(route);
-  expect(response?.status()).toBe(200);
+async function openReadyRoute(
+  page: Page,
+  route: string,
+  navigation: "document" | "same-document" = "document"
+) {
+  if (navigation === "document") {
+    const response = await page.goto(route);
+    expect(response?.status()).toBe(200);
+  } else {
+    await page.evaluate((url) => window.history.pushState({}, "", url), route);
+    const expectedPreset = new URL(route, "http://localhost").searchParams
+      .get("orbitalPreset") ?? "none";
+    await expect(page.locator("[data-takram-parity-route='true']"))
+      .toHaveAttribute("data-orbital-preset", expectedPreset);
+  }
   await expect(page.locator("[data-takram-parity-route='true']"))
     .toHaveAttribute("data-runtime", "ready", { timeout: 180_000 });
   await expect(page.locator("canvas")).toHaveCount(1);
@@ -178,8 +192,13 @@ async function captureRoute(input: {
   page: Page;
   progress: number;
   route: string;
+  navigation?: "document" | "same-document";
 }): Promise<{ frame: Buffer; record: CaptureRecord }> {
-  const telemetry = await openReadyRoute(input.page, input.route);
+  const telemetry = await openReadyRoute(
+    input.page,
+    input.route,
+    input.navigation
+  );
   const capture = await readExactCapture(input.page);
   const file = `${input.input ?? "stock"}-${input.candidateId}-p${Math.round(input.progress * 100)
     .toString().padStart(3, "0")}-${input.diagnostic}.png`;
@@ -239,11 +258,6 @@ function baselineFingerprint(telemetry: any, kind: "legacy" | "orbital") {
   const rendererFingerprint = structuredClone(telemetry.rendererFingerprint);
   const schemaVersion = rendererFingerprint.schemaVersion;
   delete rendererFingerprint.schemaVersion;
-  // These are the orbital resolver's redundant declaration/readback wrappers.
-  // Their materialized renderer, layers, adapter, and target formats remain in
-  // the common projection and are compared below.
-  delete rendererFingerprint.orbitalLookdev;
-  delete rendererFingerprint.orbitalRenderTargets;
   return {
     classification: kind === "legacy"
       ? "legacy-unscaled-stock"
@@ -467,6 +481,53 @@ test("orbital route publishes audited identity and remounts the complete native 
   expect(stable.resetNonce).toBe(0);
 });
 
+test("Stage 0 baseline transition retains full runtime evidence and changes all allocations", async ({
+  page
+}) => {
+  const legacy = await openReadyRoute(page, legacyRoute(0.06));
+  expect(legacy.rendererFingerprint).toMatchObject({
+    schemaVersion: 6,
+    orbitalBaseline: {
+      layers: expect.arrayContaining([
+        expect.objectContaining({
+          channel: "r",
+          densityProfile: expect.any(Object),
+          shapeAlteringBias: expect.any(Number)
+        })
+      ])
+    },
+    orbitalRenderTargets: {
+      clouds: { history: expect.objectContaining({ present: true }) },
+      shadow: { history: expect.objectContaining({ present: true }) }
+    }
+  });
+  const previous = Object.values(legacy.orbitalBaselineReadback.allocations.clouds)
+    .concat(Object.values(legacy.orbitalBaselineReadback.allocations.shadow));
+
+  const native: OrbitalCandidate = {
+    coverage: 0.3,
+    opticalDepthScale: 1,
+    preset: "native",
+    verticalScale: 1
+  };
+  const nextRoute = orbitalRoute(native, 0.06);
+  await page.evaluate((url) => window.history.pushState({}, "", url), nextRoute);
+  await expect(page.locator("[data-takram-parity-route='true']"))
+    .toHaveAttribute("data-orbital-preset", "native");
+  await expect(page.locator("[data-takram-parity-route='true']"))
+    .toHaveAttribute("data-runtime", "ready", { timeout: 120_000 });
+  const lookdev = await page.evaluate(() => Reflect.get(
+    window,
+    "__MiraLithTakramParity"
+  )) as any;
+  const next = Object.values(lookdev.orbitalBaselineReadback.allocations.clouds)
+    .concat(Object.values(lookdev.orbitalBaselineReadback.allocations.shadow));
+  expect(next).toHaveLength(6);
+  expect(next.every((value) => !previous.includes(value))).toBe(true);
+  expect(lookdev.rendererFingerprint.orbitalBaseline)
+    .toEqual(legacy.rendererFingerprint.orbitalBaseline);
+});
+
 test("winner-only profiler collects a non-nested total population or explicit unsupported state", async ({
   page
 }) => {
@@ -550,38 +611,72 @@ test("Stage 0 captures and authorizes the explicit native orbital baseline", asy
   } as const;
   const frames = new Map<string, Buffer>();
   const records: CaptureRecord[] = [];
-  for (const [id, route] of Object.entries(routes)) {
-    const capture = await captureRoute({
-      candidateId: id,
+  const remountComparisons: Array<{
+    next: any;
+    pair: "A" | "B";
+    pass: boolean;
+    previous: any;
+  }> = [];
+  for (const pair of ["A", "B"] as const) {
+    const legacyId = `legacy${pair}` as "legacyA" | "legacyB";
+    const lookdevId = `lookdev${pair}` as "lookdevA" | "lookdevB";
+    const legacyCapture = await captureRoute({
+      candidateId: legacyId,
       diagnostic: "full",
       page,
       progress: 0.06,
-      route
+      route: routes[legacyId]
     });
-    frames.set(id, capture.frame);
-    records.push(capture.record);
+    frames.set(legacyId, legacyCapture.frame);
+    records.push(legacyCapture.record);
+    const lookdevCapture = await captureRoute({
+      candidateId: lookdevId,
+      diagnostic: "full",
+      navigation: "same-document",
+      page,
+      progress: 0.06,
+      route: routes[lookdevId]
+    });
+    frames.set(lookdevId, lookdevCapture.frame);
+    records.push(lookdevCapture.record);
+    const previous = legacyCapture.record.telemetry.orbitalBaselineReadback
+      .allocations;
+    const next = lookdevCapture.record.telemetry.orbitalBaselineReadback
+      .allocations;
+    remountComparisons.push({
+      next,
+      pair,
+      pass: didTakramLookdevRemountAllAllocations(previous, next),
+      previous
+    });
   }
 
-  const legacyTelemetry = records.find(({ candidateId: id }) => id === "legacyA")!
-    .telemetry;
-  const lookdevTelemetry = records.find(({ candidateId: id }) => id === "lookdevA")!
-    .telemetry;
-  const normalizedLegacy = normalizeTakramOrbitalBaselineFingerprint(
-    baselineFingerprint(legacyTelemetry, "legacy")
-  );
-  const normalizedLookdev = normalizeTakramOrbitalBaselineFingerprint(
-    baselineFingerprint(lookdevTelemetry, "orbital")
-  );
-  expect(normalizedLookdev).toEqual(normalizedLegacy);
-  expect(lookdevTelemetry).toMatchObject({
-    driftAttemptLedgerOutcome: "none",
-    driftSignature: null,
-    lookdevSetupState: "ORBITAL_LOOKDEV_RUNTIME_READY",
-    orbitalLookdev: { drift: [] },
-    resetNonce: 0
+  const baselinePairs = (["A", "B"] as const).map((pair) => {
+    const legacyTelemetry = records.find(
+      ({ candidateId }) => candidateId === `legacy${pair}`
+    )!.telemetry;
+    const lookdevTelemetry = records.find(
+      ({ candidateId }) => candidateId === `lookdev${pair}`
+    )!.telemetry;
+    const normalizedLegacy = normalizeTakramOrbitalBaselineFingerprint(
+      baselineFingerprint(legacyTelemetry, "legacy")
+    );
+    const normalizedLookdev = normalizeTakramOrbitalBaselineFingerprint(
+      baselineFingerprint(lookdevTelemetry, "orbital")
+    );
+    expect(normalizedLookdev).toEqual(normalizedLegacy);
+    expect(lookdevTelemetry).toMatchObject({
+      driftAttemptLedgerOutcome: "none",
+      driftSignature: null,
+      lookdevSetupState: "ORBITAL_LOOKDEV_RUNTIME_READY",
+      orbitalLookdev: { drift: [] },
+      resetNonce: 0
+    });
+    expect(lookdevTelemetry.orbitalLookdev.readback.layers)
+      .toEqual(lookdevTelemetry.orbitalLookdev.requested.layers);
+    return { normalizedLookdev, lookdevTelemetry };
   });
-  expect(lookdevTelemetry.orbitalLookdev.readback.layers)
-    .toEqual(lookdevTelemetry.orbitalLookdev.requested.layers);
+  const [{ normalizedLookdev, lookdevTelemetry }] = baselinePairs;
 
   const decoded = Object.fromEntries(await Promise.all(
     Array.from(frames, async ([id, frame]) => [id, await decodeRgba(frame)] as const)
@@ -601,11 +696,8 @@ test("Stage 0 captures and authorizes the explicit native orbital baseline", asy
     coordinateHdrReady: lookdevTelemetry.coordinateMode === "lubirth-bridge" &&
       lookdevTelemetry.transformFallback === null,
     fingerprintParity: true,
-    fullComposerRemount: Object.values(
-      lookdevTelemetry.orbitalLookdev.readback.allocations.clouds
-    ).every(Number.isInteger) && Object.values(
-      lookdevTelemetry.orbitalLookdev.readback.allocations.shadow
-    ).every(Number.isInteger),
+    fullComposerRemount: remountComparisons.length === 2 &&
+      remountComparisons.every(({ pass }) => pass),
     nativeFrameLock: records.every(({ capture }) =>
       capture.frameLockPass && capture.nativeFrameCount === 32 &&
       capture.cloudsFrame === 32 && capture.resolveFrame === 32 &&
@@ -613,7 +705,9 @@ test("Stage 0 captures and authorizes the explicit native orbital baseline", asy
     ),
     referencesValid: true,
     repeatNoiseFloorPass: repeatNoiseFloor.pass,
-    runtimeReadbackMatch: lookdevTelemetry.orbitalLookdev.drift.length === 0
+    runtimeReadbackMatch: baselinePairs.every(({ lookdevTelemetry: telemetry }) =>
+      telemetry.orbitalLookdev.drift.length === 0
+    )
   });
   expect(checkpoint.state).toBe("ORBITAL_STAGE_A_UNLOCKED");
 
@@ -653,6 +747,7 @@ test("Stage 0 captures and authorizes the explicit native orbital baseline", asy
     winnerId: null,
     browser: { version: browser.version() },
     normalizedBaselineFingerprint: normalizedLookdev,
+    remountComparisons,
     repeatNoiseFloor,
     records
   });

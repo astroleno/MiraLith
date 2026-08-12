@@ -523,7 +523,7 @@ export interface TakramParityRendererFingerprint {
   // runtime shader identity and mip state.
   schemaVersion: 3 | 4 | 5 | 6;
   cloudScale?: TakramCloudScaleRuntimeReadback;
-  orbitalLookdev?: Omit<TakramOrbitalLookdevRuntimeReadback, "allocations">;
+  orbitalBaseline?: Omit<TakramOrbitalLookdevRuntimeReadback, "allocations">;
   orbitalRenderTargets?: {
     clouds: {
       clouds: Record<string, unknown>;
@@ -717,6 +717,7 @@ export interface TakramParityRendererRuntimeInputs {
   clouds: RuntimeObject;
   aerialPerspective: RuntimeObject;
   cloudScaleRuntime?: TakramCloudScaleRuntimeReadback;
+  orbitalBaselineRuntime?: TakramOrbitalLookdevRuntimeReadback;
   orbitalLookdevRuntime?: TakramOrbitalLookdevRuntimeReadback;
   sharedAssets: Record<"shape" | "shapeDetail" | "stbn" | "turbulence", string>;
 }
@@ -731,6 +732,7 @@ export function buildTakramParityRendererFingerprint({
   clouds,
   aerialPerspective,
   cloudScaleRuntime,
+  orbitalBaselineRuntime,
   orbitalLookdevRuntime,
   sharedAssets
 }: TakramParityRendererRuntimeInputs): TakramParityRendererFingerprint {
@@ -795,14 +797,32 @@ export function buildTakramParityRendererFingerprint({
     renderTargets: readCloudsRenderTargets(cloudsPass),
     sharedAssets: { ...sharedAssets }
   };
-  if (orbitalLookdevRuntime !== undefined) {
+  const baselineRuntime = orbitalBaselineRuntime ?? orbitalLookdevRuntime;
+  if (baselineRuntime !== undefined) {
     const {
       allocations: _allocationGenerations,
       ...stableOrbitalLookdevRuntime
-    } = orbitalLookdevRuntime;
+    } = baselineRuntime;
+    const materializedRenderer = stableOrbitalLookdevRuntime.renderer;
     return {
       ...fingerprint,
-      orbitalLookdev: stableOrbitalLookdevRuntime,
+      orbitalBaseline: {
+        ...stableOrbitalLookdevRuntime,
+        renderer: {
+          ...materializedRenderer,
+          // These upstream properties are setter-only or material macros on a
+          // freshly constructed legacy effect. Canonicalize them from the
+          // audited material state so legacy and explicit-native compare the
+          // same submitted renderer rather than JS setter provenance.
+          accuratePhaseFunction:
+            fingerprint.clouds.properties.accuratePhaseFunction as false,
+          accurateSunSkyLight:
+            fingerprint.clouds.properties.accurateSunSkyLight as true,
+          multiScatteringOctaves:
+            fingerprint.clouds.properties.multiScatteringOctaves as 8,
+          qualityPreset: TAKRAM_PARITY_DEFAULTS.qualityPreset
+        }
+      },
       orbitalRenderTargets: {
         clouds: readCloudsRenderTargets(cloudsPass),
         shadow: readCloudsRenderTargets(shadowPass)
@@ -996,6 +1016,7 @@ export interface TakramParityTelemetry {
   lookdevSetupState: TakramLookdevSetupState | null;
   native: TakramParityNativeFeatures;
   nativeFrameCount: number;
+  orbitalBaselineReadback: TakramOrbitalLookdevRuntimeReadback | null;
   orbitalLookdev: TakramParityOrbitalLookdevTelemetry | null;
   historyEpochHash: string;
   historyFirstFrameCapture: Omit<TakramParityHistoryFirstFrameCapture, "dataUrl"> | null;

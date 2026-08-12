@@ -172,6 +172,12 @@ const scratchLadderRadial = new Vector3();
 const scratchMorphologyTarget = new Vector3();
 const scratchViewProjection = new Matrix4();
 const scratchEcefToWorld = new Matrix4();
+const TAKRAM_ORBITAL_NATIVE_BASELINE_CONTRACT = resolveTakramOrbitalLookdevContract({
+  coverage: 0.3,
+  opticalDepthScale: 1,
+  preset: "native",
+  verticalScale: 1
+});
 
 type TakramCloudsRef = CloudsEffect &
   ExpandNestedProps<CloudsEffect, "clouds"> &
@@ -599,17 +605,24 @@ export function TakramStockParityPipeline({
     () => orbitalLookdevContract === null
       ? null
       : {
+          globalWeatherMapping: adapter.globalWeatherMapping,
+          localWeatherOffset: adapter.localWeatherOffset,
           localWeatherRepeat: input === "v3"
             ? adapter.localWeatherRepeat
             : orbitalLookdevContract.localWeatherRepeat
         },
-    [adapter.localWeatherRepeat, input, orbitalLookdevContract]
+    [adapter, input, orbitalLookdevContract]
   );
   const cloudScaleContract = useMemo(
     () => cloudScale !== undefined && cloudCoverageMode !== undefined
       ? resolveTakramCloudScaleContract({ coverageMode: cloudCoverageMode, scale: cloudScale })
       : null,
     [cloudCoverageMode, cloudScale]
+  );
+  const orbitalBaselineContract = orbitalLookdevContract ?? (
+    input === "stock" && view === "opening" && cloudScaleContract === null
+      ? TAKRAM_ORBITAL_NATIVE_BASELINE_CONTRACT
+      : null
   );
   const stockWeatherControl = useMemo(
     () => input === "stock" && cloudScale !== undefined
@@ -1155,9 +1168,12 @@ export function TakramStockParityPipeline({
     const cloudScaleRuntimeReady = cloudScaleContract === null ||
       (cloudScaleReadback !== null && blockingCloudScaleDrift.length === 0 &&
         cloudScaleAtmosphereDomain !== null);
-    const orbitalLookdevReadback = clouds !== null &&
-      orbitalLookdevContract !== null
-      ? readTakramOrbitalLookdevRuntime(clouds, orbitalLookdevContract)
+    const orbitalBaselineReadback = clouds !== null &&
+      orbitalBaselineContract !== null
+      ? readTakramOrbitalLookdevRuntime(clouds, orbitalBaselineContract)
+      : null;
+    const orbitalLookdevReadback = orbitalLookdevContract !== null
+      ? orbitalBaselineReadback
       : null;
     const orbitalLookdevDrift = orbitalLookdevReadback !== null &&
       orbitalLookdevContract !== null && orbitalAdapterExpectation !== null
@@ -1252,9 +1268,9 @@ export function TakramStockParityPipeline({
         ...(cloudScaleReadback === null
           ? {}
           : { cloudScaleRuntime: cloudScaleReadback }),
-        ...(orbitalLookdevReadback === null
+        ...(orbitalBaselineReadback === null
           ? {}
-          : { orbitalLookdevRuntime: orbitalLookdevReadback }),
+          : { orbitalBaselineRuntime: orbitalBaselineReadback }),
         sharedAssets: TAKRAM_PARITY_SHARED_ASSET_HASHES
       })
       : null;
@@ -1416,6 +1432,7 @@ export function TakramStockParityPipeline({
       lookdevSetupState: lookdevSetupStateRef.current,
       native: resolvedNative,
       nativeFrameCount,
+      orbitalBaselineReadback,
       orbitalLookdev: orbitalLookdevContract !== null &&
         orbitalLookdevReadback !== null
         ? {
