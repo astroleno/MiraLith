@@ -1,6 +1,6 @@
 # LuBirth Takram Orbital Lookdev Parameter Tuning Design
 
-**Status:** Review complete; ready for implementation planning
+**Status:** Executed through terminal Stage B; sampling assumptions amended by the 2026-08-13 causal A/B design
 
 **Date:** 2026-08-12
 
@@ -134,7 +134,7 @@ Layer base altitudes remain unchanged. `verticalScale=1/2/4` keeps all active cl
 | 2 | `2.05 km` | `3.4 km` | `8.5 km` |
 | 4 | `3.35 km` | `5.8 km` | `9.5 km` |
 
-Cloud and Shadow `minExtinction` use the same scale. Step sizes and ray distances remain native because the maximum shell remains well inside the existing `200 km` ray limit.
+Cloud and Shadow `minExtinction` use the same scale. The original decision to keep step sizes native based only on the `200 km` ray limit is superseded by `2026-08-13-lubirth-takram-orbital-sampling-causality-design.md`: it did not account for the distance-dependent initial step at the orbital camera.
 
 ### 4.4 Optical depth
 
