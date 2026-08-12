@@ -678,7 +678,7 @@ git push
 
 - Modify: `docs/superpowers/plans/2026-08-05-lubirth-planetary-volumetric-cloud-spike.md`
 - Modify: `docs/superpowers/plans/2026-08-09-lubirth-takram-v3-scale-and-morphology.md`
-- Modify: `graphify-out/graph.json` and generated graph report only if `/graphify --update` is available and changes are structural
+- Modify: `graphify-out/graph.json` and generated graph report only if `graphify --update` is available and changes are structural
 
 ### Step 1: Update plan status without rewriting history
 
@@ -687,10 +687,14 @@ Link this implementation plan and evidence checkpoint from both older plans. Mar
 ### Step 2: Update graph if available
 
 ```bash
-/graphify --update
+if command -v graphify >/dev/null 2>&1; then
+  graphify --update
+else
+  echo "graphify unavailable; generated graph left unchanged"
+fi
 ```
 
-If `/graphify` is unavailable in the worktree environment, record that fact; do not delete or hand-edit generated graph data.
+Resolve `graphify` from `PATH`; do not assume an installation at the filesystem root. If it is unavailable in the worktree environment, record that fact and do not delete or hand-edit generated graph data.
 
 ### Step 3: Commit and push
 
@@ -706,12 +710,45 @@ git push
 
 **Do not execute unless Stage A1 records all three scaled-weather stock scales failing and the user authorizes continuation into the diagnostic.**
 
-1. Build a read-only, exact-frame diagnostic matrix with four jointly indexed outputs: rough-weather hit, primary sample/hit, actual primary-march mip, and pre-temporal opacity.
-2. Record the same camera, light, scaled stock weather, coverage, scale, native frame, jitter, STBN slice, history epoch, and renderer/shader identities for all four outputs.
-3. Stop as `MIP_DIAGNOSTIC_INCONCLUSIVE_EMPTY_POPULATION` when rough-weather or primary-hit population is empty; do not infer mip causality from that population.
-4. Prove or disprove premature mip escalation only inside the non-empty joint population. If disproved, leave state `SCALED_STOCK_WEATHER_CONTROL_FAIL_MIP_UNPROVEN` and stop.
-5. If proved, write a failing package-patch test, introduce only `mipDistanceScale`, replace the one primary-march `rayDistance * 1e-5` coefficient, resolve it as `1e-5 / S`, and fingerprint the patch separately.
-6. Re-run scaled-weather stock Stage A1. Only after this A/B may the state become `PUBLIC_PARAMETER_SIMILARITY_VISUAL_FAIL_AFTER_MIP_CORRECTION` or `PUBLIC_PARAMETER_SIMILARITY_STOCK_PASS`.
+### Frozen diagnostic populations
+
+- Candidate population: stock input, `stockWeather=similarity`, parity coverage `0.3`, `S=80/120/160`, opening progress `0.06`, and exact native frames `16/32/48`. Camera, light, layers, weather asset, renderer, viewport, jitter index, STBN slice, history epoch, and shader identity are immutable within each baseline/counterfactual pair.
+- Healthy instrumentation reference: the already-passing official upstream control at `S=1`, official stock weather and renderer parameters, captured with the same diagnostic shader at exact native frames `16/32/48`. This reference is only an instrumentation/feature-floor control; its low-altitude opacity distribution must not be treated as an orbital opacity target.
+- A reference or candidate population is usable only when it contains at least `512` distinct cloud-render-target pixels and `4096` valid primary-march samples across the three frames. A valid sample is jointly keyed by `(scale, frame, pixel, primarySampleOrdinal)` and must have a finite ray distance, a rough-weather evaluation, and a primary-sample result. Otherwise stop as `MIP_DIAGNOSTIC_INCONCLUSIVE_EMPTY_POPULATION`.
+- The healthy reference must additionally have at least `25%` rough-weather-hit samples and pre-temporal cloud opacity p75 `>= 0.05`. Failure stops as `MIP_DIAGNOSTIC_INVALID_HEALTHY_REFERENCE`; it does not authorize a patch.
+
+### Per-sample read-only contract
+
+For every valid primary sample, persist the jointly indexed values below before changing the shader coefficient:
+
+```text
+rayDistanceMeters
+rayStartTexelsPerPixel
+actualMip = log2(max(1, rayStartTexelsPerPixel + rayDistanceMeters * 1e-5))
+expectedSimilarityMip = log2(max(1, rayStartTexelsPerPixel + (rayDistanceMeters / S) * 1e-5))
+counterfactualMip = expectedSimilarityMip
+roughWeatherDensity + roughWeatherHit
+primaryHit
+preTemporalOpacity = 1 - transmittance (keyed to the same pixel/frame)
+```
+
+The diagnostic implementation may replay a frozen frame once per primary-sample ordinal when WebGL2 MRT capacity cannot retain every loop sample in one pass, but every replay must hold the frame, jitter, STBN slice, history epoch, and all renderer inputs fixed. Aggregating only a final mip average is insufficient.
+
+### Pre-authorized falsification thresholds
+
+1. First prove a non-empty weather/sample population using the limits above. Empty or invalid populations are inconclusive.
+2. Define per-sample mip excess as `actualMip - counterfactualMip`. Premature distance-mip escalation is eligible for a temporary patch A/B only when `S=120` and at least one of `S=80/160` each have:
+   - at least `75%` of valid samples with mip excess `>= 1.0` full LOD;
+   - mip-excess p50 `>= 1.0`; and
+   - at least `25%` rough-weather-hit samples, so the result is not inferred from empty-space marching.
+3. If any required threshold fails, record `MIP_CAUSAL_HYPOTHESIS_REJECTED` and retain `SCALED_STOCK_WEATHER_CONTROL_FAIL_MIP_UNPROVEN`. High mip and low opacity by themselves are correlation and do not authorize a patch.
+4. If all thresholds pass, authorization is limited to an experimental A/B patch. Write a failing package-patch test, introduce only `mipDistanceScale`, replace the one primary-march `rayDistance * 1e-5` coefficient, resolve it as `1 / S`, and fingerprint the patch separately. No other shader or parameter may change.
+5. Evaluate patched and unpatched runs on the baseline-defined pixel cohort and the same three exact frames. The patch is causally accepted only when `S=120` and the same second scale used above each satisfy all of:
+   - at least `99%` of patched valid samples have `abs(actualMip - counterfactualMip) <= 0.05`;
+   - baseline-defined cohort pre-temporal opacity p50 increases by both `>= 0.02` absolute and `>= 25%` relative;
+   - rough-weather-hit pixel coverage does not fall by more than `5` percentage points; and
+   - the Stage A1 orbital visual floor improves without a new seam, salt-noise, or flattened-mask regression.
+6. If the coefficient changes mip as predicted but the opacity thresholds fail, record `MIP_PATCH_NO_OPTICAL_CAUSAL_EFFECT`, revert the experimental patch, and stop. If the thresholds pass, re-run the complete scaled-weather stock Stage A1. Only after this A/B may the state become `PUBLIC_PARAMETER_SIMILARITY_VISUAL_FAIL_AFTER_MIP_CORRECTION` or `PUBLIC_PARAMETER_SIMILARITY_STOCK_PASS`.
 
 The conditional patch may not change layers, weather, shape/detail repeats, turbulence, density, sampling budgets, light, BSM, temporal, atmosphere, exposure, or output transform.
 
