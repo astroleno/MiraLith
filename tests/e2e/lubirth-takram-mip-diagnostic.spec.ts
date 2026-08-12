@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { gzipSync } from "node:zlib";
 import {
   evaluateTakramMipDiagnostic,
   TAKRAM_MIP_DIAGNOSTIC_MIN_DISTINCT_PIXELS,
@@ -210,8 +211,9 @@ test("Conditional Task M records the frozen mip causality populations", async ({
       expect(decoded.bytes.byteLength).toBe(frame.byteLength);
       expect(decoded.values.length)
         .toBe(frame.recordCount * TAKRAM_MIP_DIAGNOSTIC_RECORD_STRIDE);
+      const compressed = gzipSync(decoded.bytes, { level: 9 });
       const file = `raw/population-s${populationQuery.scale}-frame${String(frame.nativeFrame)
-        .padStart(3, "0")}.f32le`;
+        .padStart(3, "0")}.f32le.gz`;
       return {
         metadata: {
           nativeFrame: frame.nativeFrame,
@@ -221,13 +223,18 @@ test("Conditional Task M records the frozen mip causality populations", async ({
           lastSampleOrdinal: frame.lastSampleOrdinal,
           recordStride: frame.recordStride,
           scalar: "float32-le",
-          byteLength: frame.byteLength,
-          sha256: createHash("sha256").update(decoded.bytes).digest("hex"),
+          compression: "gzip",
+          byteLength: compressed.byteLength,
+          sha256: createHash("sha256").update(compressed).digest("hex"),
+          uncompressedByteLength: frame.byteLength,
+          uncompressedSha256: createHash("sha256")
+            .update(decoded.bytes)
+            .digest("hex"),
           temporalFrame: frame.temporalFrame,
           file
         },
         population: { nativeFrame: frame.nativeFrame, records: decoded.values },
-        raw: { file, bytes: decoded.bytes }
+        raw: { file, bytes: compressed }
       };
     });
     populations.push({
@@ -365,7 +372,8 @@ test("Conditional Task M records the frozen mip causality populations", async ({
         `The capture compares the official S=1 stock control with stock ` +
         `S=80/120/160 similarity populations at opening progress 0.06 and ` +
         `native frames 16/32/48. Raw float32 joint records are persisted under ` +
-        `\`raw/\`. The mip shader coefficient was not changed. V3, Task 0P, ` +
+        `\`raw/\` with lossless gzip compression. The mip shader coefficient ` +
+        `was not changed. V3, Task 0P, ` +
         `Task 3–6, and the original Task 0–8 did not run and remain locked.\n\n` +
         `## Reproduce\n\n\`\`\`bash\n${captureCommand}\n\`\`\`\n`
       );
