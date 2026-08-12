@@ -10,7 +10,7 @@
 
 **Design source:** `docs/superpowers/specs/2026-08-12-lubirth-takram-cloud-scale-similarity-design.md`
 
-**Execution status (2026-08-12 Stage A1):** Tasks 1–6 are complete through the corrected stock stop condition. Stage A0 remains `UNSCALED_STOCK_WEATHER_CONTROL`; clean-HEAD Stage A1 used `localWeatherRepeat=[100/S,100/S]`, actual runtime shader/uniform mip readback, and audited installed build/cloud-fragment/package-patch identities. All three scales now expose stock weather signal, proving A0 was confounded, but none passes the orbital visual floor; `S=120` is strongest yet still lacks clear limb elevation, soft opacity depth, and legible local BSM modulation. The checkpoint is `SCALED_STOCK_WEATHER_CONTROL_FAIL_MIP_UNPROVEN`, `stockPassingScales=[]`. Tasks 7–8, Task 0P, and the original Task 0–8 remain locked. Conditional Task M is only eligible with explicit user authorization and does not authorize the mip patch.
+**Execution status (2026-08-12 Task M):** Tasks 1–6 and the user-authorized read-only portion of Conditional Task M are complete. Stage A0 remains `UNSCALED_STOCK_WEATHER_CONTROL`; Stage A1 remains `SCALED_STOCK_WEATHER_CONTROL_FAIL_MIP_UNPROVEN`, `stockPassingScales=[]`. Clean-HEAD Task M compared the healthy official `S=1` control with stock `S=80/120/160` similarity populations at exact native frames `16/32/48`, persisted every joint sample, and left the native `rayDistance * 1e-5` coefficient unchanged. Every population passed the `512` distinct-pixel / `4096` valid-sample floor, and the healthy control passed its weather/opacity floor. `S=160` passed the premature-mip threshold, but required central candidate `S=120` reached only `71.4794%` of samples with mip excess `>=1.0`, below the frozen `75%` threshold; the result is therefore `MIP_CAUSAL_HYPOTHESIS_REJECTED`, not inconclusive. The mip patch is not authorized or implemented. Tasks 7–8, V3, Task 0P, morphology Task 3–6, and the original Task 0–8 remain locked. Any vertical-form, optical-density, or atmosphere-composition change requires a new plan. Evidence: `docs/lubirth-planetary-cloud-evidence/2026-08-12/takram-cloud-scale/task-m-mip-diagnostic/`.
 
 ---
 
@@ -709,6 +709,8 @@ git push
 ## Conditional Task M: Diagnose and narrowly patch primary-march mip distance
 
 **Do not execute unless Stage A1 records all three scaled-weather stock scales failing and the user authorizes continuation into the diagnostic.**
+
+> **2026-08-12 execution result:** The authorized read-only diagnostic is complete at commit `fba1d6a`. All four populations are valid and the healthy `S=1` control passes. `S=80/120/160` mip-excess `>=1.0` fractions are `58.8618% / 71.4794% / 76.0338%`; because `S=120` misses the frozen `75%` gate, the checkpoint is `MIP_CAUSAL_HYPOTHESIS_REJECTED`. Stop this mip direction. Steps 4–6 below remain an unexecuted historical counterfactual contract and do not authorize a shader patch.
 
 ### Frozen diagnostic populations
 

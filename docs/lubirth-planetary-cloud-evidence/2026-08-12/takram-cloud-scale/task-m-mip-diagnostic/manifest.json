@@ -1,0 +1,3907 @@
+{
+  "schemaVersion": 1,
+  "baseCommit": "fba1d6a7b4bc6c2dc470e30f83dd872cdd722a63",
+  "generatedAt": "2026-08-12T09:00:54.486Z",
+  "browser": {
+    "executable": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "version": "151.0.7922.137"
+  },
+  "captureCommand": "MIRALITH_TAKRAM_MIP_DIAGNOSTIC_CAPTURE=1 pnpm exec playwright test -c playwright.takram-parity-system-chrome.config.ts lubirth-takram-mip-diagnostic.spec.ts --headed --grep \"Conditional Task M\"",
+  "gpu": {
+    "renderer": "WebKit WebGL",
+    "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+    "unmaskedVendor": "Google Inc. (Apple)",
+    "vendor": "WebKit"
+  },
+  "viewport": {
+    "width": 1440,
+    "height": 960
+  },
+  "scope": {
+    "diagnostic": "READ_ONLY_MIP_CAUSALITY",
+    "input": "stock",
+    "mipShaderModified": false,
+    "v3Run": false,
+    "task0PRun": false,
+    "originalTask0To8Run": false,
+    "openingProgress": 0.06,
+    "targetNativeFrames": [
+      16,
+      32,
+      48
+    ]
+  },
+  "thresholds": {
+    "minimumDistinctPixels": 512,
+    "minimumValidSamples": 4096,
+    "healthyRoughWeatherHitFraction": 0.25,
+    "healthyPreTemporalOpacityP75": 0.05,
+    "candidateMipExcessAtLeastOneFraction": 0.75,
+    "candidateMipExcessP50": 1,
+    "candidateRoughWeatherHitFraction": 0.25,
+    "requiredScales": "S=120 and at least one of S=80/S=160"
+  },
+  "runtimeFragmentShaderFnv1a64": "fnv1a-64:7608be466862b813",
+  "populations": [
+    {
+      "scale": 1,
+      "query": "/lubirth-takram-parity-spike?input=stock&view=control&diagnostic=mip-diagnostic",
+      "runtimeFragmentShaderFnv1a64": "fnv1a-64:7608be466862b813",
+      "telemetry": {
+        "active": true,
+        "adapter": {
+          "cloudLayers": [
+            {
+              "altitude": 750,
+              "channel": "r",
+              "coverageFilterWidth": 0.6,
+              "densityScale": 0.2,
+              "height": 650,
+              "shadow": true,
+              "shapeAmount": 1,
+              "shapeDetailAmount": 1,
+              "weatherExponent": 1
+            },
+            {
+              "altitude": 1000,
+              "channel": "g",
+              "coverageFilterWidth": 0.6,
+              "densityScale": 0.2,
+              "height": 1200,
+              "shadow": true,
+              "shapeAmount": 1,
+              "shapeDetailAmount": 1,
+              "weatherExponent": 1
+            },
+            {
+              "altitude": 7500,
+              "channel": "b",
+              "coverageFilterWidth": 0.5,
+              "densityScale": 0.003,
+              "height": 500,
+              "shadow": false,
+              "shapeAmount": 0.4,
+              "shapeDetailAmount": 0,
+              "weatherExponent": 1
+            },
+            {
+              "altitude": 0,
+              "channel": "a",
+              "coverageFilterWidth": 0.6,
+              "densityScale": 0.2,
+              "height": 0,
+              "shadow": false,
+              "shapeAmount": 1,
+              "shapeDetailAmount": 1,
+              "weatherExponent": 1
+            }
+          ],
+          "disableDefaultLayers": false,
+          "globalWeatherMapping": false,
+          "localWeatherHash": "b84daef855dc5eebcc9b174fe832ba75a98e44b846dde201bce354417cc08031",
+          "localWeatherOffset": [
+            0,
+            0
+          ],
+          "localWeatherRepeat": [
+            100,
+            100
+          ],
+          "localWeatherSource": "stock"
+        },
+        "assetGeneration": 0,
+        "assetsReady": true,
+        "atmosphereGeneration": 0,
+        "atmosphereReady": true,
+        "cameraHeightMeters": 5747.685754819773,
+        "cameraMatrixWorld": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0.13917310070745414,
+          0.9902680687770725,
+          0,
+          0,
+          -0.9902680687770725,
+          0.13917310070745414,
+          0,
+          0,
+          0,
+          6362500,
+          1
+        ],
+        "cameraPosition": [
+          0,
+          0,
+          6362500
+        ],
+        "cloudScale": null,
+        "coordinateMode": "upstream-ecef",
+        "control": {
+          "altitudeMeters": 2500,
+          "coverage": 0.4,
+          "fovDegrees": 50,
+          "pitchDegrees": -8,
+          "sunAzimuthDegrees": 135,
+          "sunElevationDegrees": 25
+        },
+        "diagnostic": "mip-diagnostic",
+        "diagnosticApplied": true,
+        "diagnosticState": {
+          "altitudeLadder": false,
+          "cloudOff": false,
+          "aerialPerspectiveComposite": true,
+          "beerShadowOcclusion": true,
+          "cloudRawOutput": false,
+          "densityDebug": false,
+          "uvDebug": false,
+          "sceneDepthClamp": true,
+          "sampleCountDebug": false,
+          "stageReadback": false,
+          "historyResetFirstFrame": false,
+          "mipDiagnostic": true
+        },
+        "earthMatrixWorld": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "ecefSunDirection": [
+          0.6408563820557887,
+          0.6408563820557885,
+          0.42261826174069955
+        ],
+        "input": "stock",
+        "native": {
+          "aerialPerspective": true,
+          "beerShadowMaps": true,
+          "haze": true,
+          "lightShafts": true,
+          "qualityPreset": "high",
+          "resolutionScale": 1,
+          "shapeDetail": true,
+          "temporalUpscale": true,
+          "turbulence": true
+        },
+        "nativeFrameCount": 49,
+        "historyEpochHash": "fnv1a-64:0bb5f015e2cc066d",
+        "historyFirstFrameCapture": null,
+        "matchedTemporalFrameCapture": {
+          "height": 960,
+          "nativeFrameCount": 32,
+          "width": 1440,
+          "cloudsFrame": 32,
+          "resolveFrame": 32,
+          "shadowFrame": 32,
+          "temporalJitterIndex": 0,
+          "stbnSliceIndex": 32,
+          "historyEpochHash": "fnv1a-64:0bb5f015e2cc066d",
+          "frameLockPass": true
+        },
+        "mipDiagnostic": {
+          "completed": true,
+          "scale": 1,
+          "targetNativeFrames": [
+            16,
+            32,
+            48
+          ],
+          "runtimeFragmentShaderFnv1a64": "fnv1a-64:7608be466862b813",
+          "frames": [
+            {
+              "nativeFrame": 16,
+              "width": 360,
+              "height": 240,
+              "recordCount": 3010890,
+              "lastSampleOrdinal": 224,
+              "recordStride": 9,
+              "scalar": "float32-le",
+              "byteLength": 108392040,
+              "temporalFrame": {
+                "nativeFrameCount": 16,
+                "cloudsFrame": 16,
+                "resolveFrame": 16,
+                "shadowFrame": 16,
+                "temporalJitterIndex": 0,
+                "stbnSliceIndex": 16,
+                "historyEpochHash": "fnv1a-64:0bb5f015e2cc066d",
+                "frameLockPass": true
+              }
+            },
+            {
+              "nativeFrame": 32,
+              "width": 360,
+              "height": 240,
+              "recordCount": 3011600,
+              "lastSampleOrdinal": 227,
+              "recordStride": 9,
+              "scalar": "float32-le",
+              "byteLength": 108417600,
+              "temporalFrame": {
+                "nativeFrameCount": 32,
+                "cloudsFrame": 32,
+                "resolveFrame": 32,
+                "shadowFrame": 32,
+                "temporalJitterIndex": 0,
+                "stbnSliceIndex": 32,
+                "historyEpochHash": "fnv1a-64:0bb5f015e2cc066d",
+                "frameLockPass": true
+              }
+            },
+            {
+              "nativeFrame": 48,
+              "width": 360,
+              "height": 240,
+              "recordCount": 3010789,
+              "lastSampleOrdinal": 223,
+              "recordStride": 9,
+              "scalar": "float32-le",
+              "byteLength": 108388404,
+              "temporalFrame": {
+                "nativeFrameCount": 48,
+                "cloudsFrame": 48,
+                "resolveFrame": 48,
+                "shadowFrame": 48,
+                "temporalJitterIndex": 0,
+                "stbnSliceIndex": 48,
+                "historyEpochHash": "fnv1a-64:0bb5f015e2cc066d",
+                "frameLockPass": true
+              }
+            }
+          ]
+        },
+        "stageReadback": null,
+        "progress": 0,
+        "rendererFingerprint": {
+          "schemaVersion": 3,
+          "packageVersions": {
+            "@react-three/postprocessing": "3.0.4",
+            "@takram/three-atmosphere": "0.19.1",
+            "@takram/three-clouds": "0.7.6",
+            "@takram/three-geospatial": "0.9.1",
+            "postprocessing": "6.39.1"
+          },
+          "composer": {
+            "order": [
+              "CloudsEffect",
+              "AerialPerspectiveEffect"
+            ],
+            "normalPass": true
+          },
+          "clouds": {
+            "defines": {
+              "ACCURATE_SUN_SKY_LIGHT": "1",
+              "COMBINED_SCATTERING_TEXTURES": "1",
+              "DEPTH_PACKING": "3200",
+              "FRAMEBUFFER_PRECISION_HIGH": "1",
+              "GROUND_BOUNCE": "1",
+              "HAS_HIGHER_ORDER_SCATTERING_TEXTURE": "1",
+              "HAZE": "1",
+              "IRRADIANCE_TEXTURE_HEIGHT": "16",
+              "IRRADIANCE_TEXTURE_WIDTH": "64",
+              "LOCAL_WEATHER_CHANNELS": "rgba",
+              "METER_TO_LENGTH_UNIT": "0.0010000",
+              "MULTI_SCATTERING_OCTAVES": "8",
+              "PERSPECTIVE_CAMERA": "1",
+              "PI": "3.141592653589793",
+              "POWDER": "1",
+              "SCATTER_ANISOTROPY_1": "0.7000000",
+              "SCATTER_ANISOTROPY_2": "-0.2000000",
+              "SCATTER_ANISOTROPY_MIX": "0.5000000",
+              "SCATTERING_TEXTURE_MU_S_SIZE": "32",
+              "SCATTERING_TEXTURE_MU_SIZE": "128",
+              "SCATTERING_TEXTURE_NU_SIZE": "8",
+              "SCATTERING_TEXTURE_R_SIZE": "32",
+              "SHADOW_CASCADE_COUNT": "3",
+              "SHADOW_LENGTH": "1",
+              "SHADOW_SAMPLE_COUNT": "8",
+              "SHAPE_DETAIL": "1",
+              "TRANSMITTANCE_TEXTURE_HEIGHT": "64",
+              "TRANSMITTANCE_TEXTURE_WIDTH": "256",
+              "TURBULENCE": "1"
+            },
+            "properties": {
+              "temporalUpscale": true,
+              "shapeDetail": true,
+              "turbulence": true,
+              "shadowLength": true,
+              "haze": true,
+              "multiScatteringOctaves": 8,
+              "accurateSunSkyLight": true,
+              "accuratePhaseFunction": false,
+              "shadowCascadeCount": 3,
+              "shadowSampleCount": 8,
+              "scatterAnisotropy1": 0.7,
+              "scatterAnisotropy2": -0.2,
+              "scatterAnisotropyMix": 0.5
+            },
+            "uniforms": {
+              "maxIterationCount": 500,
+              "minStepSize": 50,
+              "maxStepSize": 1000,
+              "maxRayDistance": 200000,
+              "perspectiveStepScale": 1.01,
+              "minDensity": 0.00001,
+              "minExtinction": 0.00001,
+              "minTransmittance": 0.01,
+              "maxIterationCountToSun": 2,
+              "maxIterationCountToGround": 3,
+              "minSecondaryStepSize": 100,
+              "secondaryStepScale": 2,
+              "maxShadowFilterRadius": 6,
+              "maxShadowLengthIterationCount": 500,
+              "minShadowLengthStepSize": 50,
+              "maxShadowLengthRayDistance": 200000,
+              "hazeDensityScale": 0.00003,
+              "hazeExponent": 0.001,
+              "hazeScatteringCoefficient": 0.9,
+              "hazeAbsorptionCoefficient": 0.5,
+              "skyLightScale": 1,
+              "groundBounceScale": 1,
+              "powderScale": 0.8,
+              "powderExponent": 150,
+              "scatteringCoefficient": 1,
+              "absorptionCoefficient": 0,
+              "coverage": 0.4,
+              "shapeRepeat": {
+                "x": 0.0003,
+                "y": 0.0003,
+                "z": 0.0003
+              },
+              "shapeDetailRepeat": {
+                "x": 0.006,
+                "y": 0.006,
+                "z": 0.006
+              }
+            }
+          },
+          "shadow": {
+            "defines": {
+              "CASCADE_COUNT": "3",
+              "FRAMEBUFFER_PRECISION_HIGH": "1",
+              "LOCAL_WEATHER_CHANNELS": "rgba",
+              "SHADOW": "1",
+              "SHAPE_DETAIL": "1",
+              "TEMPORAL_JITTER": "1",
+              "TEMPORAL_PASS": "1",
+              "TURBULENCE": "1"
+            },
+            "properties": {
+              "temporalPass": true,
+              "temporalJitter": true,
+              "shapeDetail": true,
+              "turbulence": true,
+              "cascadeCount": 3
+            },
+            "uniforms": {
+              "maxIterationCount": 50,
+              "minStepSize": 100,
+              "maxStepSize": 1000,
+              "minDensity": 0.00001,
+              "minExtinction": 0.00001,
+              "minTransmittance": 0.0001,
+              "opticalDepthTailScale": 2
+            }
+          },
+          "aerialPerspective": {
+            "defines": {
+              "COMBINED_SCATTERING_TEXTURES": "1",
+              "CORRECT_GEOMETRIC_ERROR": "1",
+              "GROUND": "1",
+              "HAS_HIGHER_ORDER_SCATTERING_TEXTURE": "1",
+              "HAS_NORMALS": "1",
+              "HAS_OVERLAY": "1",
+              "HAS_SHADOW": "1",
+              "HAS_SHADOW_LENGTH": "1",
+              "INSCATTER": "1",
+              "IRRADIANCE_TEXTURE_HEIGHT": "16",
+              "IRRADIANCE_TEXTURE_WIDTH": "64",
+              "METER_TO_LENGTH_UNIT": "0.0010000",
+              "MOON": "1",
+              "SCATTERING_TEXTURE_MU_S_SIZE": "32",
+              "SCATTERING_TEXTURE_MU_SIZE": "128",
+              "SCATTERING_TEXTURE_NU_SIZE": "8",
+              "SCATTERING_TEXTURE_R_SIZE": "32",
+              "SHADOW_CASCADE_COUNT": "3",
+              "SHADOW_SAMPLE_COUNT": "8",
+              "SKY": "1",
+              "SKY_LIGHT": "1",
+              "SUN": "1",
+              "SUN_LIGHT": "1",
+              "TRANSMITTANCE": "1",
+              "TRANSMITTANCE_TEXTURE_HEIGHT": "64",
+              "TRANSMITTANCE_TEXTURE_WIDTH": "256"
+            },
+            "properties": {
+              "correctGeometricError": true,
+              "sunLight": true,
+              "skyLight": true,
+              "transmittance": true,
+              "inscatter": true,
+              "sky": true,
+              "sun": true,
+              "moon": true,
+              "ground": true,
+              "octEncodedNormal": false,
+              "reconstructNormal": false
+            },
+            "uniforms": {
+              "albedoScale": 1,
+              "geometricErrorCorrectionAmount": 0,
+              "shadowRadius": 3,
+              "lunarRadianceScale": 1
+            }
+          },
+          "renderTargets": {
+            "clouds": {
+              "present": true,
+              "width": 360,
+              "height": 240,
+              "depthBuffer": false,
+              "stencilBuffer": false,
+              "attachments": [
+                {
+                  "colorSpace": "",
+                  "format": 1023,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                },
+                {
+                  "colorSpace": "",
+                  "format": 1023,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                },
+                {
+                  "colorSpace": "",
+                  "format": 1028,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                }
+              ],
+              "texture": {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              }
+            },
+            "resolve": {
+              "present": true,
+              "width": 1440,
+              "height": 960,
+              "depthBuffer": false,
+              "stencilBuffer": false,
+              "attachments": [
+                {
+                  "colorSpace": "",
+                  "format": 1023,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                },
+                {
+                  "colorSpace": "",
+                  "format": 1028,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                }
+              ],
+              "texture": {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              }
+            },
+            "history": {
+              "present": true,
+              "width": 1440,
+              "height": 960,
+              "depthBuffer": false,
+              "stencilBuffer": false,
+              "attachments": [
+                {
+                  "colorSpace": "",
+                  "format": 1023,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                },
+                {
+                  "colorSpace": "",
+                  "format": 1028,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                }
+              ],
+              "texture": {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              }
+            }
+          },
+          "sharedAssets": {
+            "shape": "ef65cf6156894720c00bf572c49e3e254f8899c4b5158246e5a35a1922e2519c",
+            "shapeDetail": "c09112199c6e0281b74ff5283c11c2943ae082650b9b67978cf5d59ed2956e4f",
+            "stbn": "51f52f21e5578384585050390821a0a486dcb81e11a716fa7b92fbb6515ba852",
+            "turbulence": "ec2b1b0af4a6a6104102b21e58beb300b0a3d334c0281d84fde8c91d322910f9"
+          }
+        },
+        "rendererFingerprintHash": "fnv1a-64:a9749e225bf6a797",
+        "presentationPreset": "official-stock",
+        "coverage": 0.4,
+        "sceneDepthScale": 1,
+        "sceneDepthContract": "world-depth-to-ecef-v1",
+        "shapeRepeat": 0.0003,
+        "shapeDetailRepeat": 0.006,
+        "temporalConverged": true,
+        "transformFallback": null,
+        "view": "control",
+        "morphologyCandidate": null,
+        "morphologyView": null,
+        "morphologyScaleAudit": null,
+        "sampleCountReadback": null,
+        "altitudeLadder": null
+      },
+      "frames": [
+        {
+          "nativeFrame": 16,
+          "width": 360,
+          "height": 240,
+          "recordCount": 3010890,
+          "lastSampleOrdinal": 224,
+          "recordStride": 9,
+          "scalar": "float32-le",
+          "compression": "gzip",
+          "byteLength": 25899618,
+          "sha256": "e296f4238a6da52c201ade487cd99da62b507fbb5b3d4ce74b474761311917d9",
+          "uncompressedByteLength": 108392040,
+          "uncompressedSha256": "cc29adfee724220ceca42d2ab0f191bf1c63a43ebf758dce5a82e05cb410b095",
+          "temporalFrame": {
+            "nativeFrameCount": 16,
+            "cloudsFrame": 16,
+            "resolveFrame": 16,
+            "shadowFrame": 16,
+            "temporalJitterIndex": 0,
+            "stbnSliceIndex": 16,
+            "historyEpochHash": "fnv1a-64:0bb5f015e2cc066d",
+            "frameLockPass": true
+          },
+          "file": "raw/population-s1-frame016.f32le.gz"
+        },
+        {
+          "nativeFrame": 32,
+          "width": 360,
+          "height": 240,
+          "recordCount": 3011600,
+          "lastSampleOrdinal": 227,
+          "recordStride": 9,
+          "scalar": "float32-le",
+          "compression": "gzip",
+          "byteLength": 25924722,
+          "sha256": "a898a6365f446979e51c084e6668d876d837c7270d3ccb2fc8e4a5d822ba8185",
+          "uncompressedByteLength": 108417600,
+          "uncompressedSha256": "ba5555003a5533b3e64bf9bdb2be991224150d57b83b649c571d3252bb006521",
+          "temporalFrame": {
+            "nativeFrameCount": 32,
+            "cloudsFrame": 32,
+            "resolveFrame": 32,
+            "shadowFrame": 32,
+            "temporalJitterIndex": 0,
+            "stbnSliceIndex": 32,
+            "historyEpochHash": "fnv1a-64:0bb5f015e2cc066d",
+            "frameLockPass": true
+          },
+          "file": "raw/population-s1-frame032.f32le.gz"
+        },
+        {
+          "nativeFrame": 48,
+          "width": 360,
+          "height": 240,
+          "recordCount": 3010789,
+          "lastSampleOrdinal": 223,
+          "recordStride": 9,
+          "scalar": "float32-le",
+          "compression": "gzip",
+          "byteLength": 25903171,
+          "sha256": "f2be129bff365d1c7123254791794e535306eb2f578434b2fef36af1337cfadd",
+          "uncompressedByteLength": 108388404,
+          "uncompressedSha256": "0f3101953c52f72968eda10ff60399323d1d22b70bf316b74c46f74679750755",
+          "temporalFrame": {
+            "nativeFrameCount": 48,
+            "cloudsFrame": 48,
+            "resolveFrame": 48,
+            "shadowFrame": 48,
+            "temporalJitterIndex": 0,
+            "stbnSliceIndex": 48,
+            "historyEpochHash": "fnv1a-64:0bb5f015e2cc066d",
+            "frameLockPass": true
+          },
+          "file": "raw/population-s1-frame048.f32le.gz"
+        }
+      ]
+    },
+    {
+      "scale": 80,
+      "query": "/lubirth-takram-parity-spike?input=stock&view=opening&progress=0.06&cloudScale=80&cloudCoverage=parity&stockWeather=similarity&diagnostic=mip-diagnostic",
+      "runtimeFragmentShaderFnv1a64": "fnv1a-64:7608be466862b813",
+      "telemetry": {
+        "active": true,
+        "adapter": {
+          "cloudLayers": [
+            {
+              "altitude": 750,
+              "channel": "r",
+              "coverageFilterWidth": 0.6,
+              "densityScale": 0.0025,
+              "height": 52000,
+              "shadow": true,
+              "shapeAmount": 1,
+              "shapeDetailAmount": 1,
+              "weatherExponent": 1
+            },
+            {
+              "altitude": 1000,
+              "channel": "g",
+              "coverageFilterWidth": 0.6,
+              "densityScale": 0.0025,
+              "height": 96000,
+              "shadow": true,
+              "shapeAmount": 1,
+              "shapeDetailAmount": 1,
+              "weatherExponent": 1
+            },
+            {
+              "altitude": 7500,
+              "channel": "b",
+              "coverageFilterWidth": 0.5,
+              "densityScale": 0.000037500000000000003,
+              "height": 40000,
+              "shadow": false,
+              "shapeAmount": 0.4,
+              "shapeDetailAmount": 0,
+              "weatherExponent": 1
+            },
+            {
+              "altitude": 0,
+              "channel": "a",
+              "coverageFilterWidth": 0.6,
+              "densityScale": 0.0025,
+              "height": 0,
+              "shadow": false,
+              "shapeAmount": 1,
+              "shapeDetailAmount": 1,
+              "weatherExponent": 1
+            }
+          ],
+          "disableDefaultLayers": true,
+          "globalWeatherMapping": false,
+          "localWeatherHash": "b84daef855dc5eebcc9b174fe832ba75a98e44b846dde201bce354417cc08031",
+          "localWeatherOffset": [
+            0,
+            0
+          ],
+          "localWeatherRepeat": [
+            1.25,
+            1.25
+          ],
+          "localWeatherSource": "stock"
+        },
+        "assetGeneration": 0,
+        "assetsReady": true,
+        "atmosphereGeneration": 0,
+        "atmosphereReady": true,
+        "cameraHeightMeters": 3578429.408265641,
+        "cameraMatrixWorld": [
+          0.03239014777291893,
+          5.551115123125783e-17,
+          -0.9994753015093711,
+          0,
+          0.8030186005282589,
+          0.5953855072786084,
+          0.02602354565063658,
+          0,
+          0.5950731094015971,
+          -0.8034401643698142,
+          0.019284624562608377,
+          0,
+          14.99212952264057,
+          -4.189560537415987,
+          0.48585221659378586,
+          1
+        ],
+        "cameraPosition": [
+          14.99212952264057,
+          -4.189560537415987,
+          0.48585221659378586
+        ],
+        "cloudScale": {
+          "atmosphereDomain": {
+            "atmosphereHeight": 60000,
+            "layersExceedingAtmosphere": [
+              "g"
+            ],
+            "physicalAerialPerspectiveParityClaim": false,
+            "presentationDomain": "artistic-orbital"
+          },
+          "drift": [],
+          "readback": {
+            "classification": "PUBLIC_PARAMETER_SIMILARITY",
+            "clouds": {
+              "maxIterationCount": 500,
+              "minStepSize": 4000,
+              "maxStepSize": 80000,
+              "maxRayDistance": 16000000,
+              "perspectiveStepScale": 1.01,
+              "minDensity": 0.00001,
+              "minExtinction": 1.2500000000000002e-7,
+              "minTransmittance": 0.01,
+              "maxIterationCountToGround": 3,
+              "maxIterationCountToSun": 2,
+              "minSecondaryStepSize": 8000,
+              "secondaryStepScale": 2,
+              "maxShadowFilterRadius": 6,
+              "maxShadowLengthIterationCount": 500,
+              "minShadowLengthStepSize": 4000,
+              "maxShadowLengthRayDistance": 16000000
+            },
+            "coverage": 0.3,
+            "coverageMode": "parity",
+            "layers": [
+              {
+                "altitude": 750,
+                "channel": "r",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.0025,
+                "height": 52000,
+                "shadow": true,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 1000,
+                "channel": "g",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.0025,
+                "height": 96000,
+                "shadow": true,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 7500,
+                "channel": "b",
+                "coverageFilterWidth": 0.5,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.000037500000000000003,
+                "height": 40000,
+                "shadow": false,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 0.4,
+                "shapeDetailAmount": 0,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 0,
+                "channel": "a",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.0025,
+                "height": 0,
+                "shadow": false,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              }
+            ],
+            "mipDistancePatch": {
+              "active": false,
+              "auditedArtifacts": {
+                "installedBuildSharedSha256": "c2115702324e01760429187faf6203c2a118812c508429edbebe37e2e1d7c018",
+                "installedCloudsFragmentSha256": "b29eeac1f5edc205cc578edf2a711aa2ffc8b50e1ea835e8b1abb50de68b77ff",
+                "packagePatchSha256": "2bfa2dd78d4e9ac82c82eddba1273f9d2f95e932b7021584ce840f497b4f745c"
+              },
+              "classification": "native-hardcoded",
+              "nativeCoefficientOccurrences": 1,
+              "patchedCoefficientOccurrences": 0,
+              "runtimeFragmentShaderFnv1a64": "fnv1a-64:7608be466862b813",
+              "scale": 1
+            },
+            "scale": 80,
+            "schemaVersion": 1,
+            "shadow": {
+              "cascadeCount": 3,
+              "maxIterationCount": 50,
+              "minStepSize": 8000,
+              "maxStepSize": 80000,
+              "minDensity": 0.00001,
+              "minExtinction": 1.2500000000000002e-7,
+              "minTransmittance": 0.0001,
+              "mapSize": [
+                512,
+                512
+              ]
+            },
+            "shapeDetailRepeat": [
+              0.00007500000000000001,
+              0.00007500000000000001,
+              0.00007500000000000001
+            ],
+            "shapeRepeat": [
+              0.0000037499999999999997,
+              0.0000037499999999999997,
+              0.0000037499999999999997
+            ],
+            "turbulenceDisplacement": 28000
+          },
+          "requested": {
+            "classification": "PUBLIC_PARAMETER_SIMILARITY",
+            "clouds": {
+              "maxIterationCount": 500,
+              "minStepSize": 4000,
+              "maxStepSize": 80000,
+              "maxRayDistance": 16000000,
+              "perspectiveStepScale": 1.01,
+              "minDensity": 0.00001,
+              "minExtinction": 1.2500000000000002e-7,
+              "minTransmittance": 0.01,
+              "maxIterationCountToGround": 3,
+              "maxIterationCountToSun": 2,
+              "minSecondaryStepSize": 8000,
+              "secondaryStepScale": 2,
+              "maxShadowFilterRadius": 6,
+              "maxShadowLengthIterationCount": 500,
+              "minShadowLengthStepSize": 4000,
+              "maxShadowLengthRayDistance": 16000000
+            },
+            "coverage": 0.3,
+            "coverageMode": "parity",
+            "layers": [
+              {
+                "altitude": 750,
+                "channel": "r",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.0025,
+                "height": 52000,
+                "shadow": true,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 1000,
+                "channel": "g",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.0025,
+                "height": 96000,
+                "shadow": true,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 7500,
+                "channel": "b",
+                "coverageFilterWidth": 0.5,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.000037500000000000003,
+                "height": 40000,
+                "shadow": false,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 0.4,
+                "shapeDetailAmount": 0,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 0,
+                "channel": "a",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.0025,
+                "height": 0,
+                "shadow": false,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              }
+            ],
+            "mipDistancePatch": {
+              "active": false,
+              "scale": 1
+            },
+            "scale": 80,
+            "schemaVersion": 1,
+            "shadow": {
+              "cascadeCount": 3,
+              "mapSize": [
+                512,
+                512
+              ],
+              "maxIterationCount": 50,
+              "minStepSize": 8000,
+              "maxStepSize": 80000,
+              "minDensity": 0.00001,
+              "minExtinction": 1.2500000000000002e-7,
+              "minTransmittance": 0.0001
+            },
+            "shapeDetailRepeat": 0.00007500000000000001,
+            "shapeRepeat": 0.0000037499999999999997,
+            "turbulenceDisplacement": 28000
+          },
+          "stockWeatherControl": {
+            "classification": "SCALED_STOCK_WEATHER_CONTROL",
+            "mode": "similarity",
+            "repeat": [
+              1.25,
+              1.25
+            ],
+            "scale": 80,
+            "sourceRepeat": [
+              100,
+              100
+            ]
+          }
+        },
+        "coordinateMode": "lubirth-bridge",
+        "control": null,
+        "diagnostic": "mip-diagnostic",
+        "diagnosticApplied": true,
+        "diagnosticState": {
+          "altitudeLadder": false,
+          "cloudOff": false,
+          "aerialPerspectiveComposite": true,
+          "beerShadowOcclusion": true,
+          "cloudRawOutput": false,
+          "densityDebug": false,
+          "uvDebug": false,
+          "sceneDepthClamp": true,
+          "sampleCountDebug": false,
+          "stageReadback": false,
+          "historyResetFirstFrame": false,
+          "mipDiagnostic": true
+        },
+        "earthMatrixWorld": [
+          -2.4029573607949466,
+          2.7055209743112583e-16,
+          9.446840746740142,
+          0,
+          4.4698995876729715,
+          8.587447354149838,
+          1.1369915513733513,
+          0,
+          -8.322427396522652,
+          4.6122393814473,
+          -2.1169445646743403,
+          0,
+          0,
+          -1.5403151765589782,
+          0,
+          1
+        ],
+        "ecefSunDirection": [
+          -0.6815105548928592,
+          -0.6609005727282063,
+          0.3142511679169324
+        ],
+        "input": "stock",
+        "native": {
+          "aerialPerspective": true,
+          "beerShadowMaps": true,
+          "haze": true,
+          "lightShafts": true,
+          "qualityPreset": "high",
+          "resolutionScale": 1,
+          "shapeDetail": true,
+          "temporalUpscale": true,
+          "turbulence": true
+        },
+        "nativeFrameCount": 49,
+        "historyEpochHash": "fnv1a-64:16c12be169a0f46f",
+        "historyFirstFrameCapture": null,
+        "matchedTemporalFrameCapture": {
+          "height": 960,
+          "nativeFrameCount": 32,
+          "width": 1440,
+          "cloudsFrame": 32,
+          "resolveFrame": 32,
+          "shadowFrame": 32,
+          "temporalJitterIndex": 0,
+          "stbnSliceIndex": 32,
+          "historyEpochHash": "fnv1a-64:16c12be169a0f46f",
+          "frameLockPass": true
+        },
+        "mipDiagnostic": {
+          "completed": true,
+          "scale": 80,
+          "targetNativeFrames": [
+            16,
+            32,
+            48
+          ],
+          "runtimeFragmentShaderFnv1a64": "fnv1a-64:7608be466862b813",
+          "frames": [
+            {
+              "nativeFrame": 16,
+              "width": 360,
+              "height": 240,
+              "recordCount": 108056,
+              "lastSampleOrdinal": 27,
+              "recordStride": 9,
+              "scalar": "float32-le",
+              "byteLength": 3890016,
+              "temporalFrame": {
+                "nativeFrameCount": 16,
+                "cloudsFrame": 16,
+                "resolveFrame": 16,
+                "shadowFrame": 16,
+                "temporalJitterIndex": 0,
+                "stbnSliceIndex": 16,
+                "historyEpochHash": "fnv1a-64:16c12be169a0f46f",
+                "frameLockPass": true
+              }
+            },
+            {
+              "nativeFrame": 32,
+              "width": 360,
+              "height": 240,
+              "recordCount": 108141,
+              "lastSampleOrdinal": 27,
+              "recordStride": 9,
+              "scalar": "float32-le",
+              "byteLength": 3893076,
+              "temporalFrame": {
+                "nativeFrameCount": 32,
+                "cloudsFrame": 32,
+                "resolveFrame": 32,
+                "shadowFrame": 32,
+                "temporalJitterIndex": 0,
+                "stbnSliceIndex": 32,
+                "historyEpochHash": "fnv1a-64:16c12be169a0f46f",
+                "frameLockPass": true
+              }
+            },
+            {
+              "nativeFrame": 48,
+              "width": 360,
+              "height": 240,
+              "recordCount": 108083,
+              "lastSampleOrdinal": 27,
+              "recordStride": 9,
+              "scalar": "float32-le",
+              "byteLength": 3890988,
+              "temporalFrame": {
+                "nativeFrameCount": 48,
+                "cloudsFrame": 48,
+                "resolveFrame": 48,
+                "shadowFrame": 48,
+                "temporalJitterIndex": 0,
+                "stbnSliceIndex": 48,
+                "historyEpochHash": "fnv1a-64:16c12be169a0f46f",
+                "frameLockPass": true
+              }
+            }
+          ]
+        },
+        "stageReadback": null,
+        "progress": 0.06,
+        "rendererFingerprint": {
+          "schemaVersion": 5,
+          "packageVersions": {
+            "@react-three/postprocessing": "3.0.4",
+            "@takram/three-atmosphere": "0.19.1",
+            "@takram/three-clouds": "0.7.6",
+            "@takram/three-geospatial": "0.9.1",
+            "postprocessing": "6.39.1"
+          },
+          "composer": {
+            "order": [
+              "CloudsEffect",
+              "AerialPerspectiveEffect"
+            ],
+            "normalPass": true
+          },
+          "clouds": {
+            "defines": {
+              "ACCURATE_SUN_SKY_LIGHT": "1",
+              "COMBINED_SCATTERING_TEXTURES": "1",
+              "DEPTH_PACKING": "3200",
+              "FRAMEBUFFER_PRECISION_HIGH": "1",
+              "GROUND_BOUNCE": "1",
+              "HAS_HIGHER_ORDER_SCATTERING_TEXTURE": "1",
+              "HAZE": "1",
+              "IRRADIANCE_TEXTURE_HEIGHT": "16",
+              "IRRADIANCE_TEXTURE_WIDTH": "64",
+              "LOCAL_WEATHER_CHANNELS": "rgba",
+              "METER_TO_LENGTH_UNIT": "0.0010000",
+              "MULTI_SCATTERING_OCTAVES": "8",
+              "PERSPECTIVE_CAMERA": "1",
+              "PI": "3.141592653589793",
+              "POWDER": "1",
+              "SCATTER_ANISOTROPY_1": "0.7000000",
+              "SCATTER_ANISOTROPY_2": "-0.2000000",
+              "SCATTER_ANISOTROPY_MIX": "0.5000000",
+              "SCATTERING_TEXTURE_MU_S_SIZE": "32",
+              "SCATTERING_TEXTURE_MU_SIZE": "128",
+              "SCATTERING_TEXTURE_NU_SIZE": "8",
+              "SCATTERING_TEXTURE_R_SIZE": "32",
+              "SHADOW_CASCADE_COUNT": "3",
+              "SHADOW_LENGTH": "1",
+              "SHADOW_SAMPLE_COUNT": "8",
+              "SHAPE_DETAIL": "1",
+              "TRANSMITTANCE_TEXTURE_HEIGHT": "64",
+              "TRANSMITTANCE_TEXTURE_WIDTH": "256",
+              "TURBULENCE": "1"
+            },
+            "properties": {
+              "temporalUpscale": true,
+              "shapeDetail": true,
+              "turbulence": true,
+              "shadowLength": true,
+              "haze": true,
+              "multiScatteringOctaves": 8,
+              "accurateSunSkyLight": true,
+              "accuratePhaseFunction": false,
+              "shadowCascadeCount": 3,
+              "shadowSampleCount": 8,
+              "scatterAnisotropy1": 0.7,
+              "scatterAnisotropy2": -0.2,
+              "scatterAnisotropyMix": 0.5
+            },
+            "uniforms": {
+              "maxIterationCount": 500,
+              "minStepSize": 4000,
+              "maxStepSize": 80000,
+              "maxRayDistance": 16000000,
+              "perspectiveStepScale": 1.01,
+              "minDensity": 0.00001,
+              "minExtinction": 1.2500000000000002e-7,
+              "minTransmittance": 0.01,
+              "maxIterationCountToSun": 2,
+              "maxIterationCountToGround": 3,
+              "minSecondaryStepSize": 8000,
+              "secondaryStepScale": 2,
+              "maxShadowFilterRadius": 6,
+              "maxShadowLengthIterationCount": 500,
+              "minShadowLengthStepSize": 4000,
+              "maxShadowLengthRayDistance": 16000000,
+              "hazeDensityScale": 0.00003,
+              "hazeExponent": 0.001,
+              "hazeScatteringCoefficient": 0.9,
+              "hazeAbsorptionCoefficient": 0.5,
+              "skyLightScale": 1,
+              "groundBounceScale": 1,
+              "powderScale": 0.8,
+              "powderExponent": 150,
+              "scatteringCoefficient": 1,
+              "absorptionCoefficient": 0,
+              "coverage": 0.3,
+              "shapeRepeat": {
+                "x": 0.0000037499999999999997,
+                "y": 0.0000037499999999999997,
+                "z": 0.0000037499999999999997
+              },
+              "shapeDetailRepeat": {
+                "x": 0.00007500000000000001,
+                "y": 0.00007500000000000001,
+                "z": 0.00007500000000000001
+              }
+            }
+          },
+          "shadow": {
+            "defines": {
+              "CASCADE_COUNT": "3",
+              "FRAMEBUFFER_PRECISION_HIGH": "1",
+              "LOCAL_WEATHER_CHANNELS": "rgba",
+              "SHADOW": "1",
+              "SHAPE_DETAIL": "1",
+              "TEMPORAL_JITTER": "1",
+              "TEMPORAL_PASS": "1",
+              "TURBULENCE": "1"
+            },
+            "properties": {
+              "temporalPass": true,
+              "temporalJitter": true,
+              "shapeDetail": true,
+              "turbulence": true,
+              "cascadeCount": 3
+            },
+            "uniforms": {
+              "maxIterationCount": 50,
+              "minStepSize": 8000,
+              "maxStepSize": 80000,
+              "minDensity": 0.00001,
+              "minExtinction": 1.2500000000000002e-7,
+              "minTransmittance": 0.0001,
+              "opticalDepthTailScale": 2
+            }
+          },
+          "aerialPerspective": {
+            "defines": {
+              "COMBINED_SCATTERING_TEXTURES": "1",
+              "CORRECT_GEOMETRIC_ERROR": "1",
+              "GROUND": "1",
+              "HAS_HIGHER_ORDER_SCATTERING_TEXTURE": "1",
+              "HAS_NORMALS": "1",
+              "HAS_OVERLAY": "1",
+              "HAS_SHADOW": "1",
+              "HAS_SHADOW_LENGTH": "1",
+              "INSCATTER": "1",
+              "IRRADIANCE_TEXTURE_HEIGHT": "16",
+              "IRRADIANCE_TEXTURE_WIDTH": "64",
+              "METER_TO_LENGTH_UNIT": "0.0010000",
+              "MOON": "1",
+              "SCATTERING_TEXTURE_MU_S_SIZE": "32",
+              "SCATTERING_TEXTURE_MU_SIZE": "128",
+              "SCATTERING_TEXTURE_NU_SIZE": "8",
+              "SCATTERING_TEXTURE_R_SIZE": "32",
+              "SHADOW_CASCADE_COUNT": "3",
+              "SHADOW_SAMPLE_COUNT": "8",
+              "SKY": "1",
+              "SKY_LIGHT": "1",
+              "SUN": "1",
+              "SUN_LIGHT": "1",
+              "TRANSMITTANCE": "1",
+              "TRANSMITTANCE_TEXTURE_HEIGHT": "64",
+              "TRANSMITTANCE_TEXTURE_WIDTH": "256"
+            },
+            "properties": {
+              "correctGeometricError": true,
+              "sunLight": true,
+              "skyLight": true,
+              "transmittance": true,
+              "inscatter": true,
+              "sky": true,
+              "sun": true,
+              "moon": true,
+              "ground": true,
+              "octEncodedNormal": false,
+              "reconstructNormal": false
+            },
+            "uniforms": {
+              "albedoScale": 1,
+              "geometricErrorCorrectionAmount": 1,
+              "shadowRadius": 3,
+              "lunarRadianceScale": 1
+            }
+          },
+          "renderTargets": {
+            "clouds": {
+              "present": true,
+              "width": 360,
+              "height": 240,
+              "depthBuffer": false,
+              "stencilBuffer": false,
+              "attachments": [
+                {
+                  "colorSpace": "",
+                  "format": 1023,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                },
+                {
+                  "colorSpace": "",
+                  "format": 1023,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                },
+                {
+                  "colorSpace": "",
+                  "format": 1028,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                }
+              ],
+              "texture": {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              }
+            },
+            "resolve": {
+              "present": true,
+              "width": 1440,
+              "height": 960,
+              "depthBuffer": false,
+              "stencilBuffer": false,
+              "attachments": [
+                {
+                  "colorSpace": "",
+                  "format": 1023,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                },
+                {
+                  "colorSpace": "",
+                  "format": 1028,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                }
+              ],
+              "texture": {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              }
+            },
+            "history": {
+              "present": true,
+              "width": 1440,
+              "height": 960,
+              "depthBuffer": false,
+              "stencilBuffer": false,
+              "attachments": [
+                {
+                  "colorSpace": "",
+                  "format": 1023,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                },
+                {
+                  "colorSpace": "",
+                  "format": 1028,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                }
+              ],
+              "texture": {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              }
+            }
+          },
+          "sharedAssets": {
+            "shape": "ef65cf6156894720c00bf572c49e3e254f8899c4b5158246e5a35a1922e2519c",
+            "shapeDetail": "c09112199c6e0281b74ff5283c11c2943ae082650b9b67978cf5d59ed2956e4f",
+            "stbn": "51f52f21e5578384585050390821a0a486dcb81e11a716fa7b92fbb6515ba852",
+            "turbulence": "ec2b1b0af4a6a6104102b21e58beb300b0a3d334c0281d84fde8c91d322910f9"
+          },
+          "cloudScale": {
+            "classification": "PUBLIC_PARAMETER_SIMILARITY",
+            "clouds": {
+              "maxIterationCount": 500,
+              "minStepSize": 4000,
+              "maxStepSize": 80000,
+              "maxRayDistance": 16000000,
+              "perspectiveStepScale": 1.01,
+              "minDensity": 0.00001,
+              "minExtinction": 1.2500000000000002e-7,
+              "minTransmittance": 0.01,
+              "maxIterationCountToGround": 3,
+              "maxIterationCountToSun": 2,
+              "minSecondaryStepSize": 8000,
+              "secondaryStepScale": 2,
+              "maxShadowFilterRadius": 6,
+              "maxShadowLengthIterationCount": 500,
+              "minShadowLengthStepSize": 4000,
+              "maxShadowLengthRayDistance": 16000000
+            },
+            "coverage": 0.3,
+            "coverageMode": "parity",
+            "layers": [
+              {
+                "altitude": 750,
+                "channel": "r",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.0025,
+                "height": 52000,
+                "shadow": true,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 1000,
+                "channel": "g",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.0025,
+                "height": 96000,
+                "shadow": true,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 7500,
+                "channel": "b",
+                "coverageFilterWidth": 0.5,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.000037500000000000003,
+                "height": 40000,
+                "shadow": false,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 0.4,
+                "shapeDetailAmount": 0,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 0,
+                "channel": "a",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.0025,
+                "height": 0,
+                "shadow": false,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              }
+            ],
+            "mipDistancePatch": {
+              "active": false,
+              "auditedArtifacts": {
+                "installedBuildSharedSha256": "c2115702324e01760429187faf6203c2a118812c508429edbebe37e2e1d7c018",
+                "installedCloudsFragmentSha256": "b29eeac1f5edc205cc578edf2a711aa2ffc8b50e1ea835e8b1abb50de68b77ff",
+                "packagePatchSha256": "2bfa2dd78d4e9ac82c82eddba1273f9d2f95e932b7021584ce840f497b4f745c"
+              },
+              "classification": "native-hardcoded",
+              "nativeCoefficientOccurrences": 1,
+              "patchedCoefficientOccurrences": 0,
+              "runtimeFragmentShaderFnv1a64": "fnv1a-64:7608be466862b813",
+              "scale": 1
+            },
+            "scale": 80,
+            "schemaVersion": 1,
+            "shadow": {
+              "cascadeCount": 3,
+              "maxIterationCount": 50,
+              "minStepSize": 8000,
+              "maxStepSize": 80000,
+              "minDensity": 0.00001,
+              "minExtinction": 1.2500000000000002e-7,
+              "minTransmittance": 0.0001,
+              "mapSize": [
+                512,
+                512
+              ]
+            },
+            "shapeDetailRepeat": [
+              0.00007500000000000001,
+              0.00007500000000000001,
+              0.00007500000000000001
+            ],
+            "shapeRepeat": [
+              0.0000037499999999999997,
+              0.0000037499999999999997,
+              0.0000037499999999999997
+            ],
+            "turbulenceDisplacement": 28000
+          }
+        },
+        "rendererFingerprintHash": "fnv1a-64:eec36ed4d6131bfb",
+        "presentationPreset": "cloud-scale-similarity",
+        "coverage": 0.3,
+        "sceneDepthScale": 652463.8418681555,
+        "sceneDepthContract": "world-depth-to-ecef-v1",
+        "shapeRepeat": 0.0000037499999999999997,
+        "shapeDetailRepeat": 0.00007500000000000001,
+        "temporalConverged": true,
+        "transformFallback": null,
+        "view": "opening",
+        "morphologyCandidate": null,
+        "morphologyView": null,
+        "morphologyScaleAudit": null,
+        "sampleCountReadback": null,
+        "altitudeLadder": null
+      },
+      "frames": [
+        {
+          "nativeFrame": 16,
+          "width": 360,
+          "height": 240,
+          "recordCount": 108056,
+          "lastSampleOrdinal": 27,
+          "recordStride": 9,
+          "scalar": "float32-le",
+          "compression": "gzip",
+          "byteLength": 1705438,
+          "sha256": "d4b4f86feeaf48985f71cbed95d7804819740a1737517b3087e4f1572ddb4368",
+          "uncompressedByteLength": 3890016,
+          "uncompressedSha256": "cceb19af41e2d783a87d3dedb31e18a870fabdae45df2808058b15857e243fb7",
+          "temporalFrame": {
+            "nativeFrameCount": 16,
+            "cloudsFrame": 16,
+            "resolveFrame": 16,
+            "shadowFrame": 16,
+            "temporalJitterIndex": 0,
+            "stbnSliceIndex": 16,
+            "historyEpochHash": "fnv1a-64:16c12be169a0f46f",
+            "frameLockPass": true
+          },
+          "file": "raw/population-s80-frame016.f32le.gz"
+        },
+        {
+          "nativeFrame": 32,
+          "width": 360,
+          "height": 240,
+          "recordCount": 108141,
+          "lastSampleOrdinal": 27,
+          "recordStride": 9,
+          "scalar": "float32-le",
+          "compression": "gzip",
+          "byteLength": 1708158,
+          "sha256": "f433b4eaaa43d00c57b9783e2415e0e1fa0792d4c94e1f3ff5ddd5f48827ba08",
+          "uncompressedByteLength": 3893076,
+          "uncompressedSha256": "05e21b2688b40cd21550da3f52256054d199e7c0d4183b8bed53ce35256dcc6a",
+          "temporalFrame": {
+            "nativeFrameCount": 32,
+            "cloudsFrame": 32,
+            "resolveFrame": 32,
+            "shadowFrame": 32,
+            "temporalJitterIndex": 0,
+            "stbnSliceIndex": 32,
+            "historyEpochHash": "fnv1a-64:16c12be169a0f46f",
+            "frameLockPass": true
+          },
+          "file": "raw/population-s80-frame032.f32le.gz"
+        },
+        {
+          "nativeFrame": 48,
+          "width": 360,
+          "height": 240,
+          "recordCount": 108083,
+          "lastSampleOrdinal": 27,
+          "recordStride": 9,
+          "scalar": "float32-le",
+          "compression": "gzip",
+          "byteLength": 1706028,
+          "sha256": "5b889eb07c68faab888397cb6b38363a9b5b041ac14b291006f3c804f48752ed",
+          "uncompressedByteLength": 3890988,
+          "uncompressedSha256": "bd400c1e5ba3dc7d36f3eff0e1819dcb8bb785f42b801954a29d2031f1ba7842",
+          "temporalFrame": {
+            "nativeFrameCount": 48,
+            "cloudsFrame": 48,
+            "resolveFrame": 48,
+            "shadowFrame": 48,
+            "temporalJitterIndex": 0,
+            "stbnSliceIndex": 48,
+            "historyEpochHash": "fnv1a-64:16c12be169a0f46f",
+            "frameLockPass": true
+          },
+          "file": "raw/population-s80-frame048.f32le.gz"
+        }
+      ]
+    },
+    {
+      "scale": 120,
+      "query": "/lubirth-takram-parity-spike?input=stock&view=opening&progress=0.06&cloudScale=120&cloudCoverage=parity&stockWeather=similarity&diagnostic=mip-diagnostic",
+      "runtimeFragmentShaderFnv1a64": "fnv1a-64:7608be466862b813",
+      "telemetry": {
+        "active": true,
+        "adapter": {
+          "cloudLayers": [
+            {
+              "altitude": 750,
+              "channel": "r",
+              "coverageFilterWidth": 0.6,
+              "densityScale": 0.0016666666666666668,
+              "height": 78000,
+              "shadow": true,
+              "shapeAmount": 1,
+              "shapeDetailAmount": 1,
+              "weatherExponent": 1
+            },
+            {
+              "altitude": 1000,
+              "channel": "g",
+              "coverageFilterWidth": 0.6,
+              "densityScale": 0.0016666666666666668,
+              "height": 144000,
+              "shadow": true,
+              "shapeAmount": 1,
+              "shapeDetailAmount": 1,
+              "weatherExponent": 1
+            },
+            {
+              "altitude": 7500,
+              "channel": "b",
+              "coverageFilterWidth": 0.5,
+              "densityScale": 0.000025,
+              "height": 60000,
+              "shadow": false,
+              "shapeAmount": 0.4,
+              "shapeDetailAmount": 0,
+              "weatherExponent": 1
+            },
+            {
+              "altitude": 0,
+              "channel": "a",
+              "coverageFilterWidth": 0.6,
+              "densityScale": 0.0016666666666666668,
+              "height": 0,
+              "shadow": false,
+              "shapeAmount": 1,
+              "shapeDetailAmount": 1,
+              "weatherExponent": 1
+            }
+          ],
+          "disableDefaultLayers": true,
+          "globalWeatherMapping": false,
+          "localWeatherHash": "b84daef855dc5eebcc9b174fe832ba75a98e44b846dde201bce354417cc08031",
+          "localWeatherOffset": [
+            0,
+            0
+          ],
+          "localWeatherRepeat": [
+            0.8333333333333334,
+            0.8333333333333334
+          ],
+          "localWeatherSource": "stock"
+        },
+        "assetGeneration": 0,
+        "assetsReady": true,
+        "atmosphereGeneration": 0,
+        "atmosphereReady": true,
+        "cameraHeightMeters": 3578429.408265641,
+        "cameraMatrixWorld": [
+          0.03239014777291893,
+          5.551115123125783e-17,
+          -0.9994753015093711,
+          0,
+          0.8030186005282589,
+          0.5953855072786084,
+          0.02602354565063658,
+          0,
+          0.5950731094015971,
+          -0.8034401643698142,
+          0.019284624562608377,
+          0,
+          14.99212952264057,
+          -4.189560537415987,
+          0.48585221659378586,
+          1
+        ],
+        "cameraPosition": [
+          14.99212952264057,
+          -4.189560537415987,
+          0.48585221659378586
+        ],
+        "cloudScale": {
+          "atmosphereDomain": {
+            "atmosphereHeight": 60000,
+            "layersExceedingAtmosphere": [
+              "r",
+              "g",
+              "b"
+            ],
+            "physicalAerialPerspectiveParityClaim": false,
+            "presentationDomain": "artistic-orbital"
+          },
+          "drift": [],
+          "readback": {
+            "classification": "PUBLIC_PARAMETER_SIMILARITY",
+            "clouds": {
+              "maxIterationCount": 500,
+              "minStepSize": 6000,
+              "maxStepSize": 120000,
+              "maxRayDistance": 24000000,
+              "perspectiveStepScale": 1.01,
+              "minDensity": 0.00001,
+              "minExtinction": 8.333333333333334e-8,
+              "minTransmittance": 0.01,
+              "maxIterationCountToGround": 3,
+              "maxIterationCountToSun": 2,
+              "minSecondaryStepSize": 12000,
+              "secondaryStepScale": 2,
+              "maxShadowFilterRadius": 6,
+              "maxShadowLengthIterationCount": 500,
+              "minShadowLengthStepSize": 6000,
+              "maxShadowLengthRayDistance": 24000000
+            },
+            "coverage": 0.3,
+            "coverageMode": "parity",
+            "layers": [
+              {
+                "altitude": 750,
+                "channel": "r",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.0016666666666666668,
+                "height": 78000,
+                "shadow": true,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 1000,
+                "channel": "g",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.0016666666666666668,
+                "height": 144000,
+                "shadow": true,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 7500,
+                "channel": "b",
+                "coverageFilterWidth": 0.5,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.000025,
+                "height": 60000,
+                "shadow": false,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 0.4,
+                "shapeDetailAmount": 0,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 0,
+                "channel": "a",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.0016666666666666668,
+                "height": 0,
+                "shadow": false,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              }
+            ],
+            "mipDistancePatch": {
+              "active": false,
+              "auditedArtifacts": {
+                "installedBuildSharedSha256": "c2115702324e01760429187faf6203c2a118812c508429edbebe37e2e1d7c018",
+                "installedCloudsFragmentSha256": "b29eeac1f5edc205cc578edf2a711aa2ffc8b50e1ea835e8b1abb50de68b77ff",
+                "packagePatchSha256": "2bfa2dd78d4e9ac82c82eddba1273f9d2f95e932b7021584ce840f497b4f745c"
+              },
+              "classification": "native-hardcoded",
+              "nativeCoefficientOccurrences": 1,
+              "patchedCoefficientOccurrences": 0,
+              "runtimeFragmentShaderFnv1a64": "fnv1a-64:7608be466862b813",
+              "scale": 1
+            },
+            "scale": 120,
+            "schemaVersion": 1,
+            "shadow": {
+              "cascadeCount": 3,
+              "maxIterationCount": 50,
+              "minStepSize": 12000,
+              "maxStepSize": 120000,
+              "minDensity": 0.00001,
+              "minExtinction": 8.333333333333334e-8,
+              "minTransmittance": 0.0001,
+              "mapSize": [
+                512,
+                512
+              ]
+            },
+            "shapeDetailRepeat": [
+              0.00005,
+              0.00005,
+              0.00005
+            ],
+            "shapeRepeat": [
+              0.0000024999999999999998,
+              0.0000024999999999999998,
+              0.0000024999999999999998
+            ],
+            "turbulenceDisplacement": 42000
+          },
+          "requested": {
+            "classification": "PUBLIC_PARAMETER_SIMILARITY",
+            "clouds": {
+              "maxIterationCount": 500,
+              "minStepSize": 6000,
+              "maxStepSize": 120000,
+              "maxRayDistance": 24000000,
+              "perspectiveStepScale": 1.01,
+              "minDensity": 0.00001,
+              "minExtinction": 8.333333333333334e-8,
+              "minTransmittance": 0.01,
+              "maxIterationCountToGround": 3,
+              "maxIterationCountToSun": 2,
+              "minSecondaryStepSize": 12000,
+              "secondaryStepScale": 2,
+              "maxShadowFilterRadius": 6,
+              "maxShadowLengthIterationCount": 500,
+              "minShadowLengthStepSize": 6000,
+              "maxShadowLengthRayDistance": 24000000
+            },
+            "coverage": 0.3,
+            "coverageMode": "parity",
+            "layers": [
+              {
+                "altitude": 750,
+                "channel": "r",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.0016666666666666668,
+                "height": 78000,
+                "shadow": true,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 1000,
+                "channel": "g",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.0016666666666666668,
+                "height": 144000,
+                "shadow": true,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 7500,
+                "channel": "b",
+                "coverageFilterWidth": 0.5,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.000025,
+                "height": 60000,
+                "shadow": false,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 0.4,
+                "shapeDetailAmount": 0,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 0,
+                "channel": "a",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.0016666666666666668,
+                "height": 0,
+                "shadow": false,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              }
+            ],
+            "mipDistancePatch": {
+              "active": false,
+              "scale": 1
+            },
+            "scale": 120,
+            "schemaVersion": 1,
+            "shadow": {
+              "cascadeCount": 3,
+              "mapSize": [
+                512,
+                512
+              ],
+              "maxIterationCount": 50,
+              "minStepSize": 12000,
+              "maxStepSize": 120000,
+              "minDensity": 0.00001,
+              "minExtinction": 8.333333333333334e-8,
+              "minTransmittance": 0.0001
+            },
+            "shapeDetailRepeat": 0.00005,
+            "shapeRepeat": 0.0000024999999999999998,
+            "turbulenceDisplacement": 42000
+          },
+          "stockWeatherControl": {
+            "classification": "SCALED_STOCK_WEATHER_CONTROL",
+            "mode": "similarity",
+            "repeat": [
+              0.8333333333333334,
+              0.8333333333333334
+            ],
+            "scale": 120,
+            "sourceRepeat": [
+              100,
+              100
+            ]
+          }
+        },
+        "coordinateMode": "lubirth-bridge",
+        "control": null,
+        "diagnostic": "mip-diagnostic",
+        "diagnosticApplied": true,
+        "diagnosticState": {
+          "altitudeLadder": false,
+          "cloudOff": false,
+          "aerialPerspectiveComposite": true,
+          "beerShadowOcclusion": true,
+          "cloudRawOutput": false,
+          "densityDebug": false,
+          "uvDebug": false,
+          "sceneDepthClamp": true,
+          "sampleCountDebug": false,
+          "stageReadback": false,
+          "historyResetFirstFrame": false,
+          "mipDiagnostic": true
+        },
+        "earthMatrixWorld": [
+          -2.4029573607949466,
+          2.7055209743112583e-16,
+          9.446840746740142,
+          0,
+          4.4698995876729715,
+          8.587447354149838,
+          1.1369915513733513,
+          0,
+          -8.322427396522652,
+          4.6122393814473,
+          -2.1169445646743403,
+          0,
+          0,
+          -1.5403151765589782,
+          0,
+          1
+        ],
+        "ecefSunDirection": [
+          -0.6815105548928592,
+          -0.6609005727282063,
+          0.3142511679169324
+        ],
+        "input": "stock",
+        "native": {
+          "aerialPerspective": true,
+          "beerShadowMaps": true,
+          "haze": true,
+          "lightShafts": true,
+          "qualityPreset": "high",
+          "resolutionScale": 1,
+          "shapeDetail": true,
+          "temporalUpscale": true,
+          "turbulence": true
+        },
+        "nativeFrameCount": 49,
+        "historyEpochHash": "fnv1a-64:59a0cbabe460618d",
+        "historyFirstFrameCapture": null,
+        "matchedTemporalFrameCapture": {
+          "height": 960,
+          "nativeFrameCount": 32,
+          "width": 1440,
+          "cloudsFrame": 32,
+          "resolveFrame": 32,
+          "shadowFrame": 32,
+          "temporalJitterIndex": 0,
+          "stbnSliceIndex": 32,
+          "historyEpochHash": "fnv1a-64:59a0cbabe460618d",
+          "frameLockPass": true
+        },
+        "mipDiagnostic": {
+          "completed": true,
+          "scale": 120,
+          "targetNativeFrames": [
+            16,
+            32,
+            48
+          ],
+          "runtimeFragmentShaderFnv1a64": "fnv1a-64:7608be466862b813",
+          "frames": [
+            {
+              "nativeFrame": 16,
+              "width": 360,
+              "height": 240,
+              "recordCount": 133853,
+              "lastSampleOrdinal": 29,
+              "recordStride": 9,
+              "scalar": "float32-le",
+              "byteLength": 4818708,
+              "temporalFrame": {
+                "nativeFrameCount": 16,
+                "cloudsFrame": 16,
+                "resolveFrame": 16,
+                "shadowFrame": 16,
+                "temporalJitterIndex": 0,
+                "stbnSliceIndex": 16,
+                "historyEpochHash": "fnv1a-64:59a0cbabe460618d",
+                "frameLockPass": true
+              }
+            },
+            {
+              "nativeFrame": 32,
+              "width": 360,
+              "height": 240,
+              "recordCount": 133814,
+              "lastSampleOrdinal": 28,
+              "recordStride": 9,
+              "scalar": "float32-le",
+              "byteLength": 4817304,
+              "temporalFrame": {
+                "nativeFrameCount": 32,
+                "cloudsFrame": 32,
+                "resolveFrame": 32,
+                "shadowFrame": 32,
+                "temporalJitterIndex": 0,
+                "stbnSliceIndex": 32,
+                "historyEpochHash": "fnv1a-64:59a0cbabe460618d",
+                "frameLockPass": true
+              }
+            },
+            {
+              "nativeFrame": 48,
+              "width": 360,
+              "height": 240,
+              "recordCount": 133889,
+              "lastSampleOrdinal": 29,
+              "recordStride": 9,
+              "scalar": "float32-le",
+              "byteLength": 4820004,
+              "temporalFrame": {
+                "nativeFrameCount": 48,
+                "cloudsFrame": 48,
+                "resolveFrame": 48,
+                "shadowFrame": 48,
+                "temporalJitterIndex": 0,
+                "stbnSliceIndex": 48,
+                "historyEpochHash": "fnv1a-64:59a0cbabe460618d",
+                "frameLockPass": true
+              }
+            }
+          ]
+        },
+        "stageReadback": null,
+        "progress": 0.06,
+        "rendererFingerprint": {
+          "schemaVersion": 5,
+          "packageVersions": {
+            "@react-three/postprocessing": "3.0.4",
+            "@takram/three-atmosphere": "0.19.1",
+            "@takram/three-clouds": "0.7.6",
+            "@takram/three-geospatial": "0.9.1",
+            "postprocessing": "6.39.1"
+          },
+          "composer": {
+            "order": [
+              "CloudsEffect",
+              "AerialPerspectiveEffect"
+            ],
+            "normalPass": true
+          },
+          "clouds": {
+            "defines": {
+              "ACCURATE_SUN_SKY_LIGHT": "1",
+              "COMBINED_SCATTERING_TEXTURES": "1",
+              "DEPTH_PACKING": "3200",
+              "FRAMEBUFFER_PRECISION_HIGH": "1",
+              "GROUND_BOUNCE": "1",
+              "HAS_HIGHER_ORDER_SCATTERING_TEXTURE": "1",
+              "HAZE": "1",
+              "IRRADIANCE_TEXTURE_HEIGHT": "16",
+              "IRRADIANCE_TEXTURE_WIDTH": "64",
+              "LOCAL_WEATHER_CHANNELS": "rgba",
+              "METER_TO_LENGTH_UNIT": "0.0010000",
+              "MULTI_SCATTERING_OCTAVES": "8",
+              "PERSPECTIVE_CAMERA": "1",
+              "PI": "3.141592653589793",
+              "POWDER": "1",
+              "SCATTER_ANISOTROPY_1": "0.7000000",
+              "SCATTER_ANISOTROPY_2": "-0.2000000",
+              "SCATTER_ANISOTROPY_MIX": "0.5000000",
+              "SCATTERING_TEXTURE_MU_S_SIZE": "32",
+              "SCATTERING_TEXTURE_MU_SIZE": "128",
+              "SCATTERING_TEXTURE_NU_SIZE": "8",
+              "SCATTERING_TEXTURE_R_SIZE": "32",
+              "SHADOW_CASCADE_COUNT": "3",
+              "SHADOW_LENGTH": "1",
+              "SHADOW_SAMPLE_COUNT": "8",
+              "SHAPE_DETAIL": "1",
+              "TRANSMITTANCE_TEXTURE_HEIGHT": "64",
+              "TRANSMITTANCE_TEXTURE_WIDTH": "256",
+              "TURBULENCE": "1"
+            },
+            "properties": {
+              "temporalUpscale": true,
+              "shapeDetail": true,
+              "turbulence": true,
+              "shadowLength": true,
+              "haze": true,
+              "multiScatteringOctaves": 8,
+              "accurateSunSkyLight": true,
+              "accuratePhaseFunction": false,
+              "shadowCascadeCount": 3,
+              "shadowSampleCount": 8,
+              "scatterAnisotropy1": 0.7,
+              "scatterAnisotropy2": -0.2,
+              "scatterAnisotropyMix": 0.5
+            },
+            "uniforms": {
+              "maxIterationCount": 500,
+              "minStepSize": 6000,
+              "maxStepSize": 120000,
+              "maxRayDistance": 24000000,
+              "perspectiveStepScale": 1.01,
+              "minDensity": 0.00001,
+              "minExtinction": 8.333333333333334e-8,
+              "minTransmittance": 0.01,
+              "maxIterationCountToSun": 2,
+              "maxIterationCountToGround": 3,
+              "minSecondaryStepSize": 12000,
+              "secondaryStepScale": 2,
+              "maxShadowFilterRadius": 6,
+              "maxShadowLengthIterationCount": 500,
+              "minShadowLengthStepSize": 6000,
+              "maxShadowLengthRayDistance": 24000000,
+              "hazeDensityScale": 0.00003,
+              "hazeExponent": 0.001,
+              "hazeScatteringCoefficient": 0.9,
+              "hazeAbsorptionCoefficient": 0.5,
+              "skyLightScale": 1,
+              "groundBounceScale": 1,
+              "powderScale": 0.8,
+              "powderExponent": 150,
+              "scatteringCoefficient": 1,
+              "absorptionCoefficient": 0,
+              "coverage": 0.3,
+              "shapeRepeat": {
+                "x": 0.0000024999999999999998,
+                "y": 0.0000024999999999999998,
+                "z": 0.0000024999999999999998
+              },
+              "shapeDetailRepeat": {
+                "x": 0.00005,
+                "y": 0.00005,
+                "z": 0.00005
+              }
+            }
+          },
+          "shadow": {
+            "defines": {
+              "CASCADE_COUNT": "3",
+              "FRAMEBUFFER_PRECISION_HIGH": "1",
+              "LOCAL_WEATHER_CHANNELS": "rgba",
+              "SHADOW": "1",
+              "SHAPE_DETAIL": "1",
+              "TEMPORAL_JITTER": "1",
+              "TEMPORAL_PASS": "1",
+              "TURBULENCE": "1"
+            },
+            "properties": {
+              "temporalPass": true,
+              "temporalJitter": true,
+              "shapeDetail": true,
+              "turbulence": true,
+              "cascadeCount": 3
+            },
+            "uniforms": {
+              "maxIterationCount": 50,
+              "minStepSize": 12000,
+              "maxStepSize": 120000,
+              "minDensity": 0.00001,
+              "minExtinction": 8.333333333333334e-8,
+              "minTransmittance": 0.0001,
+              "opticalDepthTailScale": 2
+            }
+          },
+          "aerialPerspective": {
+            "defines": {
+              "COMBINED_SCATTERING_TEXTURES": "1",
+              "CORRECT_GEOMETRIC_ERROR": "1",
+              "GROUND": "1",
+              "HAS_HIGHER_ORDER_SCATTERING_TEXTURE": "1",
+              "HAS_NORMALS": "1",
+              "HAS_OVERLAY": "1",
+              "HAS_SHADOW": "1",
+              "HAS_SHADOW_LENGTH": "1",
+              "INSCATTER": "1",
+              "IRRADIANCE_TEXTURE_HEIGHT": "16",
+              "IRRADIANCE_TEXTURE_WIDTH": "64",
+              "METER_TO_LENGTH_UNIT": "0.0010000",
+              "MOON": "1",
+              "SCATTERING_TEXTURE_MU_S_SIZE": "32",
+              "SCATTERING_TEXTURE_MU_SIZE": "128",
+              "SCATTERING_TEXTURE_NU_SIZE": "8",
+              "SCATTERING_TEXTURE_R_SIZE": "32",
+              "SHADOW_CASCADE_COUNT": "3",
+              "SHADOW_SAMPLE_COUNT": "8",
+              "SKY": "1",
+              "SKY_LIGHT": "1",
+              "SUN": "1",
+              "SUN_LIGHT": "1",
+              "TRANSMITTANCE": "1",
+              "TRANSMITTANCE_TEXTURE_HEIGHT": "64",
+              "TRANSMITTANCE_TEXTURE_WIDTH": "256"
+            },
+            "properties": {
+              "correctGeometricError": true,
+              "sunLight": true,
+              "skyLight": true,
+              "transmittance": true,
+              "inscatter": true,
+              "sky": true,
+              "sun": true,
+              "moon": true,
+              "ground": true,
+              "octEncodedNormal": false,
+              "reconstructNormal": false
+            },
+            "uniforms": {
+              "albedoScale": 1,
+              "geometricErrorCorrectionAmount": 1,
+              "shadowRadius": 3,
+              "lunarRadianceScale": 1
+            }
+          },
+          "renderTargets": {
+            "clouds": {
+              "present": true,
+              "width": 360,
+              "height": 240,
+              "depthBuffer": false,
+              "stencilBuffer": false,
+              "attachments": [
+                {
+                  "colorSpace": "",
+                  "format": 1023,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                },
+                {
+                  "colorSpace": "",
+                  "format": 1023,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                },
+                {
+                  "colorSpace": "",
+                  "format": 1028,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                }
+              ],
+              "texture": {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              }
+            },
+            "resolve": {
+              "present": true,
+              "width": 1440,
+              "height": 960,
+              "depthBuffer": false,
+              "stencilBuffer": false,
+              "attachments": [
+                {
+                  "colorSpace": "",
+                  "format": 1023,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                },
+                {
+                  "colorSpace": "",
+                  "format": 1028,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                }
+              ],
+              "texture": {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              }
+            },
+            "history": {
+              "present": true,
+              "width": 1440,
+              "height": 960,
+              "depthBuffer": false,
+              "stencilBuffer": false,
+              "attachments": [
+                {
+                  "colorSpace": "",
+                  "format": 1023,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                },
+                {
+                  "colorSpace": "",
+                  "format": 1028,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                }
+              ],
+              "texture": {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              }
+            }
+          },
+          "sharedAssets": {
+            "shape": "ef65cf6156894720c00bf572c49e3e254f8899c4b5158246e5a35a1922e2519c",
+            "shapeDetail": "c09112199c6e0281b74ff5283c11c2943ae082650b9b67978cf5d59ed2956e4f",
+            "stbn": "51f52f21e5578384585050390821a0a486dcb81e11a716fa7b92fbb6515ba852",
+            "turbulence": "ec2b1b0af4a6a6104102b21e58beb300b0a3d334c0281d84fde8c91d322910f9"
+          },
+          "cloudScale": {
+            "classification": "PUBLIC_PARAMETER_SIMILARITY",
+            "clouds": {
+              "maxIterationCount": 500,
+              "minStepSize": 6000,
+              "maxStepSize": 120000,
+              "maxRayDistance": 24000000,
+              "perspectiveStepScale": 1.01,
+              "minDensity": 0.00001,
+              "minExtinction": 8.333333333333334e-8,
+              "minTransmittance": 0.01,
+              "maxIterationCountToGround": 3,
+              "maxIterationCountToSun": 2,
+              "minSecondaryStepSize": 12000,
+              "secondaryStepScale": 2,
+              "maxShadowFilterRadius": 6,
+              "maxShadowLengthIterationCount": 500,
+              "minShadowLengthStepSize": 6000,
+              "maxShadowLengthRayDistance": 24000000
+            },
+            "coverage": 0.3,
+            "coverageMode": "parity",
+            "layers": [
+              {
+                "altitude": 750,
+                "channel": "r",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.0016666666666666668,
+                "height": 78000,
+                "shadow": true,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 1000,
+                "channel": "g",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.0016666666666666668,
+                "height": 144000,
+                "shadow": true,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 7500,
+                "channel": "b",
+                "coverageFilterWidth": 0.5,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.000025,
+                "height": 60000,
+                "shadow": false,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 0.4,
+                "shapeDetailAmount": 0,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 0,
+                "channel": "a",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.0016666666666666668,
+                "height": 0,
+                "shadow": false,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              }
+            ],
+            "mipDistancePatch": {
+              "active": false,
+              "auditedArtifacts": {
+                "installedBuildSharedSha256": "c2115702324e01760429187faf6203c2a118812c508429edbebe37e2e1d7c018",
+                "installedCloudsFragmentSha256": "b29eeac1f5edc205cc578edf2a711aa2ffc8b50e1ea835e8b1abb50de68b77ff",
+                "packagePatchSha256": "2bfa2dd78d4e9ac82c82eddba1273f9d2f95e932b7021584ce840f497b4f745c"
+              },
+              "classification": "native-hardcoded",
+              "nativeCoefficientOccurrences": 1,
+              "patchedCoefficientOccurrences": 0,
+              "runtimeFragmentShaderFnv1a64": "fnv1a-64:7608be466862b813",
+              "scale": 1
+            },
+            "scale": 120,
+            "schemaVersion": 1,
+            "shadow": {
+              "cascadeCount": 3,
+              "maxIterationCount": 50,
+              "minStepSize": 12000,
+              "maxStepSize": 120000,
+              "minDensity": 0.00001,
+              "minExtinction": 8.333333333333334e-8,
+              "minTransmittance": 0.0001,
+              "mapSize": [
+                512,
+                512
+              ]
+            },
+            "shapeDetailRepeat": [
+              0.00005,
+              0.00005,
+              0.00005
+            ],
+            "shapeRepeat": [
+              0.0000024999999999999998,
+              0.0000024999999999999998,
+              0.0000024999999999999998
+            ],
+            "turbulenceDisplacement": 42000
+          }
+        },
+        "rendererFingerprintHash": "fnv1a-64:7a805dd259ddd8bd",
+        "presentationPreset": "cloud-scale-similarity",
+        "coverage": 0.3,
+        "sceneDepthScale": 652463.8418681555,
+        "sceneDepthContract": "world-depth-to-ecef-v1",
+        "shapeRepeat": 0.0000024999999999999998,
+        "shapeDetailRepeat": 0.00005,
+        "temporalConverged": true,
+        "transformFallback": null,
+        "view": "opening",
+        "morphologyCandidate": null,
+        "morphologyView": null,
+        "morphologyScaleAudit": null,
+        "sampleCountReadback": null,
+        "altitudeLadder": null
+      },
+      "frames": [
+        {
+          "nativeFrame": 16,
+          "width": 360,
+          "height": 240,
+          "recordCount": 133853,
+          "lastSampleOrdinal": 29,
+          "recordStride": 9,
+          "scalar": "float32-le",
+          "compression": "gzip",
+          "byteLength": 2049388,
+          "sha256": "a5d2f24b659ec8d00a3627e72bbe9f0279c1123e284d870ec9aa9b922db1a994",
+          "uncompressedByteLength": 4818708,
+          "uncompressedSha256": "4116677d1e5265b38a2fbedd496944b9cf7dd03157338ac76eb9c1d3ce7639b3",
+          "temporalFrame": {
+            "nativeFrameCount": 16,
+            "cloudsFrame": 16,
+            "resolveFrame": 16,
+            "shadowFrame": 16,
+            "temporalJitterIndex": 0,
+            "stbnSliceIndex": 16,
+            "historyEpochHash": "fnv1a-64:59a0cbabe460618d",
+            "frameLockPass": true
+          },
+          "file": "raw/population-s120-frame016.f32le.gz"
+        },
+        {
+          "nativeFrame": 32,
+          "width": 360,
+          "height": 240,
+          "recordCount": 133814,
+          "lastSampleOrdinal": 28,
+          "recordStride": 9,
+          "scalar": "float32-le",
+          "compression": "gzip",
+          "byteLength": 2050485,
+          "sha256": "e84fe78d419cc9554cfefaa8dcc6ef1719e06cbd9b5a7803abdbe956cfa1f203",
+          "uncompressedByteLength": 4817304,
+          "uncompressedSha256": "32fb454081281e1763a12255a4bcf95a47102fe07c5ae229e3172faf18f94276",
+          "temporalFrame": {
+            "nativeFrameCount": 32,
+            "cloudsFrame": 32,
+            "resolveFrame": 32,
+            "shadowFrame": 32,
+            "temporalJitterIndex": 0,
+            "stbnSliceIndex": 32,
+            "historyEpochHash": "fnv1a-64:59a0cbabe460618d",
+            "frameLockPass": true
+          },
+          "file": "raw/population-s120-frame032.f32le.gz"
+        },
+        {
+          "nativeFrame": 48,
+          "width": 360,
+          "height": 240,
+          "recordCount": 133889,
+          "lastSampleOrdinal": 29,
+          "recordStride": 9,
+          "scalar": "float32-le",
+          "compression": "gzip",
+          "byteLength": 2049942,
+          "sha256": "8dfbb8eb0b2450f4c350ac0d3c6e1986dc16dfd483217c7b0977dd27beeb5653",
+          "uncompressedByteLength": 4820004,
+          "uncompressedSha256": "ecb45d79f2afeced94772ae01dbfd3fbf7189b7123d81d8b8a61d380ee0aee07",
+          "temporalFrame": {
+            "nativeFrameCount": 48,
+            "cloudsFrame": 48,
+            "resolveFrame": 48,
+            "shadowFrame": 48,
+            "temporalJitterIndex": 0,
+            "stbnSliceIndex": 48,
+            "historyEpochHash": "fnv1a-64:59a0cbabe460618d",
+            "frameLockPass": true
+          },
+          "file": "raw/population-s120-frame048.f32le.gz"
+        }
+      ]
+    },
+    {
+      "scale": 160,
+      "query": "/lubirth-takram-parity-spike?input=stock&view=opening&progress=0.06&cloudScale=160&cloudCoverage=parity&stockWeather=similarity&diagnostic=mip-diagnostic",
+      "runtimeFragmentShaderFnv1a64": "fnv1a-64:7608be466862b813",
+      "telemetry": {
+        "active": true,
+        "adapter": {
+          "cloudLayers": [
+            {
+              "altitude": 750,
+              "channel": "r",
+              "coverageFilterWidth": 0.6,
+              "densityScale": 0.00125,
+              "height": 104000,
+              "shadow": true,
+              "shapeAmount": 1,
+              "shapeDetailAmount": 1,
+              "weatherExponent": 1
+            },
+            {
+              "altitude": 1000,
+              "channel": "g",
+              "coverageFilterWidth": 0.6,
+              "densityScale": 0.00125,
+              "height": 192000,
+              "shadow": true,
+              "shapeAmount": 1,
+              "shapeDetailAmount": 1,
+              "weatherExponent": 1
+            },
+            {
+              "altitude": 7500,
+              "channel": "b",
+              "coverageFilterWidth": 0.5,
+              "densityScale": 0.000018750000000000002,
+              "height": 80000,
+              "shadow": false,
+              "shapeAmount": 0.4,
+              "shapeDetailAmount": 0,
+              "weatherExponent": 1
+            },
+            {
+              "altitude": 0,
+              "channel": "a",
+              "coverageFilterWidth": 0.6,
+              "densityScale": 0.00125,
+              "height": 0,
+              "shadow": false,
+              "shapeAmount": 1,
+              "shapeDetailAmount": 1,
+              "weatherExponent": 1
+            }
+          ],
+          "disableDefaultLayers": true,
+          "globalWeatherMapping": false,
+          "localWeatherHash": "b84daef855dc5eebcc9b174fe832ba75a98e44b846dde201bce354417cc08031",
+          "localWeatherOffset": [
+            0,
+            0
+          ],
+          "localWeatherRepeat": [
+            0.625,
+            0.625
+          ],
+          "localWeatherSource": "stock"
+        },
+        "assetGeneration": 0,
+        "assetsReady": true,
+        "atmosphereGeneration": 0,
+        "atmosphereReady": true,
+        "cameraHeightMeters": 3578429.408265641,
+        "cameraMatrixWorld": [
+          0.03239014777291893,
+          5.551115123125783e-17,
+          -0.9994753015093711,
+          0,
+          0.8030186005282589,
+          0.5953855072786084,
+          0.02602354565063658,
+          0,
+          0.5950731094015971,
+          -0.8034401643698142,
+          0.019284624562608377,
+          0,
+          14.99212952264057,
+          -4.189560537415987,
+          0.48585221659378586,
+          1
+        ],
+        "cameraPosition": [
+          14.99212952264057,
+          -4.189560537415987,
+          0.48585221659378586
+        ],
+        "cloudScale": {
+          "atmosphereDomain": {
+            "atmosphereHeight": 60000,
+            "layersExceedingAtmosphere": [
+              "r",
+              "g",
+              "b"
+            ],
+            "physicalAerialPerspectiveParityClaim": false,
+            "presentationDomain": "artistic-orbital"
+          },
+          "drift": [],
+          "readback": {
+            "classification": "PUBLIC_PARAMETER_SIMILARITY",
+            "clouds": {
+              "maxIterationCount": 500,
+              "minStepSize": 8000,
+              "maxStepSize": 160000,
+              "maxRayDistance": 32000000,
+              "perspectiveStepScale": 1.01,
+              "minDensity": 0.00001,
+              "minExtinction": 6.250000000000001e-8,
+              "minTransmittance": 0.01,
+              "maxIterationCountToGround": 3,
+              "maxIterationCountToSun": 2,
+              "minSecondaryStepSize": 16000,
+              "secondaryStepScale": 2,
+              "maxShadowFilterRadius": 6,
+              "maxShadowLengthIterationCount": 500,
+              "minShadowLengthStepSize": 8000,
+              "maxShadowLengthRayDistance": 32000000
+            },
+            "coverage": 0.3,
+            "coverageMode": "parity",
+            "layers": [
+              {
+                "altitude": 750,
+                "channel": "r",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.00125,
+                "height": 104000,
+                "shadow": true,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 1000,
+                "channel": "g",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.00125,
+                "height": 192000,
+                "shadow": true,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 7500,
+                "channel": "b",
+                "coverageFilterWidth": 0.5,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.000018750000000000002,
+                "height": 80000,
+                "shadow": false,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 0.4,
+                "shapeDetailAmount": 0,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 0,
+                "channel": "a",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.00125,
+                "height": 0,
+                "shadow": false,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              }
+            ],
+            "mipDistancePatch": {
+              "active": false,
+              "auditedArtifacts": {
+                "installedBuildSharedSha256": "c2115702324e01760429187faf6203c2a118812c508429edbebe37e2e1d7c018",
+                "installedCloudsFragmentSha256": "b29eeac1f5edc205cc578edf2a711aa2ffc8b50e1ea835e8b1abb50de68b77ff",
+                "packagePatchSha256": "2bfa2dd78d4e9ac82c82eddba1273f9d2f95e932b7021584ce840f497b4f745c"
+              },
+              "classification": "native-hardcoded",
+              "nativeCoefficientOccurrences": 1,
+              "patchedCoefficientOccurrences": 0,
+              "runtimeFragmentShaderFnv1a64": "fnv1a-64:7608be466862b813",
+              "scale": 1
+            },
+            "scale": 160,
+            "schemaVersion": 1,
+            "shadow": {
+              "cascadeCount": 3,
+              "maxIterationCount": 50,
+              "minStepSize": 16000,
+              "maxStepSize": 160000,
+              "minDensity": 0.00001,
+              "minExtinction": 6.250000000000001e-8,
+              "minTransmittance": 0.0001,
+              "mapSize": [
+                512,
+                512
+              ]
+            },
+            "shapeDetailRepeat": [
+              0.000037500000000000003,
+              0.000037500000000000003,
+              0.000037500000000000003
+            ],
+            "shapeRepeat": [
+              0.0000018749999999999998,
+              0.0000018749999999999998,
+              0.0000018749999999999998
+            ],
+            "turbulenceDisplacement": 56000
+          },
+          "requested": {
+            "classification": "PUBLIC_PARAMETER_SIMILARITY",
+            "clouds": {
+              "maxIterationCount": 500,
+              "minStepSize": 8000,
+              "maxStepSize": 160000,
+              "maxRayDistance": 32000000,
+              "perspectiveStepScale": 1.01,
+              "minDensity": 0.00001,
+              "minExtinction": 6.250000000000001e-8,
+              "minTransmittance": 0.01,
+              "maxIterationCountToGround": 3,
+              "maxIterationCountToSun": 2,
+              "minSecondaryStepSize": 16000,
+              "secondaryStepScale": 2,
+              "maxShadowFilterRadius": 6,
+              "maxShadowLengthIterationCount": 500,
+              "minShadowLengthStepSize": 8000,
+              "maxShadowLengthRayDistance": 32000000
+            },
+            "coverage": 0.3,
+            "coverageMode": "parity",
+            "layers": [
+              {
+                "altitude": 750,
+                "channel": "r",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.00125,
+                "height": 104000,
+                "shadow": true,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 1000,
+                "channel": "g",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.00125,
+                "height": 192000,
+                "shadow": true,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 7500,
+                "channel": "b",
+                "coverageFilterWidth": 0.5,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.000018750000000000002,
+                "height": 80000,
+                "shadow": false,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 0.4,
+                "shapeDetailAmount": 0,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 0,
+                "channel": "a",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.00125,
+                "height": 0,
+                "shadow": false,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              }
+            ],
+            "mipDistancePatch": {
+              "active": false,
+              "scale": 1
+            },
+            "scale": 160,
+            "schemaVersion": 1,
+            "shadow": {
+              "cascadeCount": 3,
+              "mapSize": [
+                512,
+                512
+              ],
+              "maxIterationCount": 50,
+              "minStepSize": 16000,
+              "maxStepSize": 160000,
+              "minDensity": 0.00001,
+              "minExtinction": 6.250000000000001e-8,
+              "minTransmittance": 0.0001
+            },
+            "shapeDetailRepeat": 0.000037500000000000003,
+            "shapeRepeat": 0.0000018749999999999998,
+            "turbulenceDisplacement": 56000
+          },
+          "stockWeatherControl": {
+            "classification": "SCALED_STOCK_WEATHER_CONTROL",
+            "mode": "similarity",
+            "repeat": [
+              0.625,
+              0.625
+            ],
+            "scale": 160,
+            "sourceRepeat": [
+              100,
+              100
+            ]
+          }
+        },
+        "coordinateMode": "lubirth-bridge",
+        "control": null,
+        "diagnostic": "mip-diagnostic",
+        "diagnosticApplied": true,
+        "diagnosticState": {
+          "altitudeLadder": false,
+          "cloudOff": false,
+          "aerialPerspectiveComposite": true,
+          "beerShadowOcclusion": true,
+          "cloudRawOutput": false,
+          "densityDebug": false,
+          "uvDebug": false,
+          "sceneDepthClamp": true,
+          "sampleCountDebug": false,
+          "stageReadback": false,
+          "historyResetFirstFrame": false,
+          "mipDiagnostic": true
+        },
+        "earthMatrixWorld": [
+          -2.4029573607949466,
+          2.7055209743112583e-16,
+          9.446840746740142,
+          0,
+          4.4698995876729715,
+          8.587447354149838,
+          1.1369915513733513,
+          0,
+          -8.322427396522652,
+          4.6122393814473,
+          -2.1169445646743403,
+          0,
+          0,
+          -1.5403151765589782,
+          0,
+          1
+        ],
+        "ecefSunDirection": [
+          -0.6815105548928592,
+          -0.6609005727282063,
+          0.3142511679169324
+        ],
+        "input": "stock",
+        "native": {
+          "aerialPerspective": true,
+          "beerShadowMaps": true,
+          "haze": true,
+          "lightShafts": true,
+          "qualityPreset": "high",
+          "resolutionScale": 1,
+          "shapeDetail": true,
+          "temporalUpscale": true,
+          "turbulence": true
+        },
+        "nativeFrameCount": 49,
+        "historyEpochHash": "fnv1a-64:a3bdf36aa406e182",
+        "historyFirstFrameCapture": null,
+        "matchedTemporalFrameCapture": {
+          "height": 960,
+          "nativeFrameCount": 32,
+          "width": 1440,
+          "cloudsFrame": 32,
+          "resolveFrame": 32,
+          "shadowFrame": 32,
+          "temporalJitterIndex": 0,
+          "stbnSliceIndex": 32,
+          "historyEpochHash": "fnv1a-64:a3bdf36aa406e182",
+          "frameLockPass": true
+        },
+        "mipDiagnostic": {
+          "completed": true,
+          "scale": 160,
+          "targetNativeFrames": [
+            16,
+            32,
+            48
+          ],
+          "runtimeFragmentShaderFnv1a64": "fnv1a-64:7608be466862b813",
+          "frames": [
+            {
+              "nativeFrame": 16,
+              "width": 360,
+              "height": 240,
+              "recordCount": 145979,
+              "lastSampleOrdinal": 31,
+              "recordStride": 9,
+              "scalar": "float32-le",
+              "byteLength": 5255244,
+              "temporalFrame": {
+                "nativeFrameCount": 16,
+                "cloudsFrame": 16,
+                "resolveFrame": 16,
+                "shadowFrame": 16,
+                "temporalJitterIndex": 0,
+                "stbnSliceIndex": 16,
+                "historyEpochHash": "fnv1a-64:a3bdf36aa406e182",
+                "frameLockPass": true
+              }
+            },
+            {
+              "nativeFrame": 32,
+              "width": 360,
+              "height": 240,
+              "recordCount": 145920,
+              "lastSampleOrdinal": 30,
+              "recordStride": 9,
+              "scalar": "float32-le",
+              "byteLength": 5253120,
+              "temporalFrame": {
+                "nativeFrameCount": 32,
+                "cloudsFrame": 32,
+                "resolveFrame": 32,
+                "shadowFrame": 32,
+                "temporalJitterIndex": 0,
+                "stbnSliceIndex": 32,
+                "historyEpochHash": "fnv1a-64:a3bdf36aa406e182",
+                "frameLockPass": true
+              }
+            },
+            {
+              "nativeFrame": 48,
+              "width": 360,
+              "height": 240,
+              "recordCount": 145971,
+              "lastSampleOrdinal": 30,
+              "recordStride": 9,
+              "scalar": "float32-le",
+              "byteLength": 5254956,
+              "temporalFrame": {
+                "nativeFrameCount": 48,
+                "cloudsFrame": 48,
+                "resolveFrame": 48,
+                "shadowFrame": 48,
+                "temporalJitterIndex": 0,
+                "stbnSliceIndex": 48,
+                "historyEpochHash": "fnv1a-64:a3bdf36aa406e182",
+                "frameLockPass": true
+              }
+            }
+          ]
+        },
+        "stageReadback": null,
+        "progress": 0.06,
+        "rendererFingerprint": {
+          "schemaVersion": 5,
+          "packageVersions": {
+            "@react-three/postprocessing": "3.0.4",
+            "@takram/three-atmosphere": "0.19.1",
+            "@takram/three-clouds": "0.7.6",
+            "@takram/three-geospatial": "0.9.1",
+            "postprocessing": "6.39.1"
+          },
+          "composer": {
+            "order": [
+              "CloudsEffect",
+              "AerialPerspectiveEffect"
+            ],
+            "normalPass": true
+          },
+          "clouds": {
+            "defines": {
+              "ACCURATE_SUN_SKY_LIGHT": "1",
+              "COMBINED_SCATTERING_TEXTURES": "1",
+              "DEPTH_PACKING": "3200",
+              "FRAMEBUFFER_PRECISION_HIGH": "1",
+              "GROUND_BOUNCE": "1",
+              "HAS_HIGHER_ORDER_SCATTERING_TEXTURE": "1",
+              "HAZE": "1",
+              "IRRADIANCE_TEXTURE_HEIGHT": "16",
+              "IRRADIANCE_TEXTURE_WIDTH": "64",
+              "LOCAL_WEATHER_CHANNELS": "rgba",
+              "METER_TO_LENGTH_UNIT": "0.0010000",
+              "MULTI_SCATTERING_OCTAVES": "8",
+              "PERSPECTIVE_CAMERA": "1",
+              "PI": "3.141592653589793",
+              "POWDER": "1",
+              "SCATTER_ANISOTROPY_1": "0.7000000",
+              "SCATTER_ANISOTROPY_2": "-0.2000000",
+              "SCATTER_ANISOTROPY_MIX": "0.5000000",
+              "SCATTERING_TEXTURE_MU_S_SIZE": "32",
+              "SCATTERING_TEXTURE_MU_SIZE": "128",
+              "SCATTERING_TEXTURE_NU_SIZE": "8",
+              "SCATTERING_TEXTURE_R_SIZE": "32",
+              "SHADOW_CASCADE_COUNT": "3",
+              "SHADOW_LENGTH": "1",
+              "SHADOW_SAMPLE_COUNT": "8",
+              "SHAPE_DETAIL": "1",
+              "TRANSMITTANCE_TEXTURE_HEIGHT": "64",
+              "TRANSMITTANCE_TEXTURE_WIDTH": "256",
+              "TURBULENCE": "1"
+            },
+            "properties": {
+              "temporalUpscale": true,
+              "shapeDetail": true,
+              "turbulence": true,
+              "shadowLength": true,
+              "haze": true,
+              "multiScatteringOctaves": 8,
+              "accurateSunSkyLight": true,
+              "accuratePhaseFunction": false,
+              "shadowCascadeCount": 3,
+              "shadowSampleCount": 8,
+              "scatterAnisotropy1": 0.7,
+              "scatterAnisotropy2": -0.2,
+              "scatterAnisotropyMix": 0.5
+            },
+            "uniforms": {
+              "maxIterationCount": 500,
+              "minStepSize": 8000,
+              "maxStepSize": 160000,
+              "maxRayDistance": 32000000,
+              "perspectiveStepScale": 1.01,
+              "minDensity": 0.00001,
+              "minExtinction": 6.250000000000001e-8,
+              "minTransmittance": 0.01,
+              "maxIterationCountToSun": 2,
+              "maxIterationCountToGround": 3,
+              "minSecondaryStepSize": 16000,
+              "secondaryStepScale": 2,
+              "maxShadowFilterRadius": 6,
+              "maxShadowLengthIterationCount": 500,
+              "minShadowLengthStepSize": 8000,
+              "maxShadowLengthRayDistance": 32000000,
+              "hazeDensityScale": 0.00003,
+              "hazeExponent": 0.001,
+              "hazeScatteringCoefficient": 0.9,
+              "hazeAbsorptionCoefficient": 0.5,
+              "skyLightScale": 1,
+              "groundBounceScale": 1,
+              "powderScale": 0.8,
+              "powderExponent": 150,
+              "scatteringCoefficient": 1,
+              "absorptionCoefficient": 0,
+              "coverage": 0.3,
+              "shapeRepeat": {
+                "x": 0.0000018749999999999998,
+                "y": 0.0000018749999999999998,
+                "z": 0.0000018749999999999998
+              },
+              "shapeDetailRepeat": {
+                "x": 0.000037500000000000003,
+                "y": 0.000037500000000000003,
+                "z": 0.000037500000000000003
+              }
+            }
+          },
+          "shadow": {
+            "defines": {
+              "CASCADE_COUNT": "3",
+              "FRAMEBUFFER_PRECISION_HIGH": "1",
+              "LOCAL_WEATHER_CHANNELS": "rgba",
+              "SHADOW": "1",
+              "SHAPE_DETAIL": "1",
+              "TEMPORAL_JITTER": "1",
+              "TEMPORAL_PASS": "1",
+              "TURBULENCE": "1"
+            },
+            "properties": {
+              "temporalPass": true,
+              "temporalJitter": true,
+              "shapeDetail": true,
+              "turbulence": true,
+              "cascadeCount": 3
+            },
+            "uniforms": {
+              "maxIterationCount": 50,
+              "minStepSize": 16000,
+              "maxStepSize": 160000,
+              "minDensity": 0.00001,
+              "minExtinction": 6.250000000000001e-8,
+              "minTransmittance": 0.0001,
+              "opticalDepthTailScale": 2
+            }
+          },
+          "aerialPerspective": {
+            "defines": {
+              "COMBINED_SCATTERING_TEXTURES": "1",
+              "CORRECT_GEOMETRIC_ERROR": "1",
+              "GROUND": "1",
+              "HAS_HIGHER_ORDER_SCATTERING_TEXTURE": "1",
+              "HAS_NORMALS": "1",
+              "HAS_OVERLAY": "1",
+              "HAS_SHADOW": "1",
+              "HAS_SHADOW_LENGTH": "1",
+              "INSCATTER": "1",
+              "IRRADIANCE_TEXTURE_HEIGHT": "16",
+              "IRRADIANCE_TEXTURE_WIDTH": "64",
+              "METER_TO_LENGTH_UNIT": "0.0010000",
+              "MOON": "1",
+              "SCATTERING_TEXTURE_MU_S_SIZE": "32",
+              "SCATTERING_TEXTURE_MU_SIZE": "128",
+              "SCATTERING_TEXTURE_NU_SIZE": "8",
+              "SCATTERING_TEXTURE_R_SIZE": "32",
+              "SHADOW_CASCADE_COUNT": "3",
+              "SHADOW_SAMPLE_COUNT": "8",
+              "SKY": "1",
+              "SKY_LIGHT": "1",
+              "SUN": "1",
+              "SUN_LIGHT": "1",
+              "TRANSMITTANCE": "1",
+              "TRANSMITTANCE_TEXTURE_HEIGHT": "64",
+              "TRANSMITTANCE_TEXTURE_WIDTH": "256"
+            },
+            "properties": {
+              "correctGeometricError": true,
+              "sunLight": true,
+              "skyLight": true,
+              "transmittance": true,
+              "inscatter": true,
+              "sky": true,
+              "sun": true,
+              "moon": true,
+              "ground": true,
+              "octEncodedNormal": false,
+              "reconstructNormal": false
+            },
+            "uniforms": {
+              "albedoScale": 1,
+              "geometricErrorCorrectionAmount": 1,
+              "shadowRadius": 3,
+              "lunarRadianceScale": 1
+            }
+          },
+          "renderTargets": {
+            "clouds": {
+              "present": true,
+              "width": 360,
+              "height": 240,
+              "depthBuffer": false,
+              "stencilBuffer": false,
+              "attachments": [
+                {
+                  "colorSpace": "",
+                  "format": 1023,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                },
+                {
+                  "colorSpace": "",
+                  "format": 1023,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                },
+                {
+                  "colorSpace": "",
+                  "format": 1028,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                }
+              ],
+              "texture": {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              }
+            },
+            "resolve": {
+              "present": true,
+              "width": 1440,
+              "height": 960,
+              "depthBuffer": false,
+              "stencilBuffer": false,
+              "attachments": [
+                {
+                  "colorSpace": "",
+                  "format": 1023,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                },
+                {
+                  "colorSpace": "",
+                  "format": 1028,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                }
+              ],
+              "texture": {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              }
+            },
+            "history": {
+              "present": true,
+              "width": 1440,
+              "height": 960,
+              "depthBuffer": false,
+              "stencilBuffer": false,
+              "attachments": [
+                {
+                  "colorSpace": "",
+                  "format": 1023,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                },
+                {
+                  "colorSpace": "",
+                  "format": 1028,
+                  "isRenderTargetTexture": true,
+                  "isTexture": true,
+                  "magFilter": 1006,
+                  "minFilter": 1006,
+                  "type": 1016
+                }
+              ],
+              "texture": {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              }
+            }
+          },
+          "sharedAssets": {
+            "shape": "ef65cf6156894720c00bf572c49e3e254f8899c4b5158246e5a35a1922e2519c",
+            "shapeDetail": "c09112199c6e0281b74ff5283c11c2943ae082650b9b67978cf5d59ed2956e4f",
+            "stbn": "51f52f21e5578384585050390821a0a486dcb81e11a716fa7b92fbb6515ba852",
+            "turbulence": "ec2b1b0af4a6a6104102b21e58beb300b0a3d334c0281d84fde8c91d322910f9"
+          },
+          "cloudScale": {
+            "classification": "PUBLIC_PARAMETER_SIMILARITY",
+            "clouds": {
+              "maxIterationCount": 500,
+              "minStepSize": 8000,
+              "maxStepSize": 160000,
+              "maxRayDistance": 32000000,
+              "perspectiveStepScale": 1.01,
+              "minDensity": 0.00001,
+              "minExtinction": 6.250000000000001e-8,
+              "minTransmittance": 0.01,
+              "maxIterationCountToGround": 3,
+              "maxIterationCountToSun": 2,
+              "minSecondaryStepSize": 16000,
+              "secondaryStepScale": 2,
+              "maxShadowFilterRadius": 6,
+              "maxShadowLengthIterationCount": 500,
+              "minShadowLengthStepSize": 8000,
+              "maxShadowLengthRayDistance": 32000000
+            },
+            "coverage": 0.3,
+            "coverageMode": "parity",
+            "layers": [
+              {
+                "altitude": 750,
+                "channel": "r",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.00125,
+                "height": 104000,
+                "shadow": true,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 1000,
+                "channel": "g",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.00125,
+                "height": 192000,
+                "shadow": true,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 7500,
+                "channel": "b",
+                "coverageFilterWidth": 0.5,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.000018750000000000002,
+                "height": 80000,
+                "shadow": false,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 0.4,
+                "shapeDetailAmount": 0,
+                "weatherExponent": 1
+              },
+              {
+                "altitude": 0,
+                "channel": "a",
+                "coverageFilterWidth": 0.6,
+                "densityProfile": {
+                  "constantTerm": 0.25,
+                  "exponent": 0,
+                  "expTerm": 0,
+                  "linearTerm": 0.75
+                },
+                "densityScale": 0.00125,
+                "height": 0,
+                "shadow": false,
+                "shapeAlteringBias": 0.35,
+                "shapeAmount": 1,
+                "shapeDetailAmount": 1,
+                "weatherExponent": 1
+              }
+            ],
+            "mipDistancePatch": {
+              "active": false,
+              "auditedArtifacts": {
+                "installedBuildSharedSha256": "c2115702324e01760429187faf6203c2a118812c508429edbebe37e2e1d7c018",
+                "installedCloudsFragmentSha256": "b29eeac1f5edc205cc578edf2a711aa2ffc8b50e1ea835e8b1abb50de68b77ff",
+                "packagePatchSha256": "2bfa2dd78d4e9ac82c82eddba1273f9d2f95e932b7021584ce840f497b4f745c"
+              },
+              "classification": "native-hardcoded",
+              "nativeCoefficientOccurrences": 1,
+              "patchedCoefficientOccurrences": 0,
+              "runtimeFragmentShaderFnv1a64": "fnv1a-64:7608be466862b813",
+              "scale": 1
+            },
+            "scale": 160,
+            "schemaVersion": 1,
+            "shadow": {
+              "cascadeCount": 3,
+              "maxIterationCount": 50,
+              "minStepSize": 16000,
+              "maxStepSize": 160000,
+              "minDensity": 0.00001,
+              "minExtinction": 6.250000000000001e-8,
+              "minTransmittance": 0.0001,
+              "mapSize": [
+                512,
+                512
+              ]
+            },
+            "shapeDetailRepeat": [
+              0.000037500000000000003,
+              0.000037500000000000003,
+              0.000037500000000000003
+            ],
+            "shapeRepeat": [
+              0.0000018749999999999998,
+              0.0000018749999999999998,
+              0.0000018749999999999998
+            ],
+            "turbulenceDisplacement": 56000
+          }
+        },
+        "rendererFingerprintHash": "fnv1a-64:92b58da9fc4eae00",
+        "presentationPreset": "cloud-scale-similarity",
+        "coverage": 0.3,
+        "sceneDepthScale": 652463.8418681555,
+        "sceneDepthContract": "world-depth-to-ecef-v1",
+        "shapeRepeat": 0.0000018749999999999998,
+        "shapeDetailRepeat": 0.000037500000000000003,
+        "temporalConverged": true,
+        "transformFallback": null,
+        "view": "opening",
+        "morphologyCandidate": null,
+        "morphologyView": null,
+        "morphologyScaleAudit": null,
+        "sampleCountReadback": null,
+        "altitudeLadder": null
+      },
+      "frames": [
+        {
+          "nativeFrame": 16,
+          "width": 360,
+          "height": 240,
+          "recordCount": 145979,
+          "lastSampleOrdinal": 31,
+          "recordStride": 9,
+          "scalar": "float32-le",
+          "compression": "gzip",
+          "byteLength": 2077679,
+          "sha256": "a273df28b10bd89616aa970ef8c8511e04c3b1ef57a00b6a757854f9431bfbea",
+          "uncompressedByteLength": 5255244,
+          "uncompressedSha256": "92b428b4a3137889c9f92b807b24a379e5aab843f0ed47402d4f55d7fca6fef2",
+          "temporalFrame": {
+            "nativeFrameCount": 16,
+            "cloudsFrame": 16,
+            "resolveFrame": 16,
+            "shadowFrame": 16,
+            "temporalJitterIndex": 0,
+            "stbnSliceIndex": 16,
+            "historyEpochHash": "fnv1a-64:a3bdf36aa406e182",
+            "frameLockPass": true
+          },
+          "file": "raw/population-s160-frame016.f32le.gz"
+        },
+        {
+          "nativeFrame": 32,
+          "width": 360,
+          "height": 240,
+          "recordCount": 145920,
+          "lastSampleOrdinal": 30,
+          "recordStride": 9,
+          "scalar": "float32-le",
+          "compression": "gzip",
+          "byteLength": 2078855,
+          "sha256": "00bd433b7470720ffe1f3edf27dcd3bc03b84cc64e10e327e723568a52cc16c2",
+          "uncompressedByteLength": 5253120,
+          "uncompressedSha256": "e022ade327c9e56bd38258e72000975a25545874bd970d3de2c6e8e6149e6781",
+          "temporalFrame": {
+            "nativeFrameCount": 32,
+            "cloudsFrame": 32,
+            "resolveFrame": 32,
+            "shadowFrame": 32,
+            "temporalJitterIndex": 0,
+            "stbnSliceIndex": 32,
+            "historyEpochHash": "fnv1a-64:a3bdf36aa406e182",
+            "frameLockPass": true
+          },
+          "file": "raw/population-s160-frame032.f32le.gz"
+        },
+        {
+          "nativeFrame": 48,
+          "width": 360,
+          "height": 240,
+          "recordCount": 145971,
+          "lastSampleOrdinal": 30,
+          "recordStride": 9,
+          "scalar": "float32-le",
+          "compression": "gzip",
+          "byteLength": 2077286,
+          "sha256": "b9c3ca3c1d6cf9b3c996cf9a56d367d450c1101e7b187f9aeed7dcf6b998a3cb",
+          "uncompressedByteLength": 5254956,
+          "uncompressedSha256": "f40842d5a600eb0010fc9a8fc5f5c701237add1c0acbf64d003537df93681c71",
+          "temporalFrame": {
+            "nativeFrameCount": 48,
+            "cloudsFrame": 48,
+            "resolveFrame": 48,
+            "shadowFrame": 48,
+            "temporalJitterIndex": 0,
+            "stbnSliceIndex": 48,
+            "historyEpochHash": "fnv1a-64:a3bdf36aa406e182",
+            "frameLockPass": true
+          },
+          "file": "raw/population-s160-frame048.f32le.gz"
+        }
+      ]
+    }
+  ],
+  "evaluation": {
+    "healthy": {
+      "scale": 1,
+      "valid": true,
+      "distinctPixelCount": 259200,
+      "validSampleCount": 9033279,
+      "roughWeatherHitFraction": 0.36610493266066507,
+      "primaryHitFraction": 0.1034001053216667,
+      "preTemporalOpacityP75": 0.99755859375,
+      "mipExcessP50": -0.0000010505318641662598,
+      "mipExcessAtLeastOneFraction": 0,
+      "actualMipFormulaErrorP95": 0.0001870839954987158,
+      "prematureMipThresholdPass": false
+    },
+    "candidates": [
+      {
+        "scale": 80,
+        "valid": true,
+        "distinctPixelCount": 90119,
+        "validSampleCount": 324280,
+        "roughWeatherHitFraction": 0.2735722215369434,
+        "primaryHitFraction": 0.11973603059084742,
+        "preTemporalOpacityP75": 0.125732421875,
+        "mipExcessP50": 1.167351245880127,
+        "mipExcessAtLeastOneFraction": 0.5886178611076848,
+        "actualMipFormulaErrorP95": 0.0012863545028003465,
+        "prematureMipThresholdPass": false
+      },
+      {
+        "scale": 120,
+        "valid": true,
+        "distinctPixelCount": 92410,
+        "validSampleCount": 401556,
+        "roughWeatherHitFraction": 0.3260915040492484,
+        "primaryHitFraction": 0.1492992260108179,
+        "preTemporalOpacityP75": 0.2076416015625,
+        "mipExcessP50": 1.5573114212602377,
+        "mipExcessAtLeastOneFraction": 0.7147944495910906,
+        "actualMipFormulaErrorP95": 0.001487698746015731,
+        "prematureMipThresholdPass": false
+      },
+      {
+        "scale": 160,
+        "valid": true,
+        "distinctPixelCount": 94768,
+        "validSampleCount": 437870,
+        "roughWeatherHitFraction": 0.2612807454267248,
+        "primaryHitFraction": 0.13098408203348025,
+        "preTemporalOpacityP75": 0.061859130859375,
+        "mipExcessP50": 1.8883673381060362,
+        "mipExcessAtLeastOneFraction": 0.7603375431064014,
+        "actualMipFormulaErrorP95": 0.001721115085284719,
+        "prematureMipThresholdPass": true
+      }
+    ],
+    "patchAuthorized": false,
+    "decision": "MIP_CAUSAL_HYPOTHESIS_REJECTED",
+    "qualifyingSecondaryScale": null
+  }
+}

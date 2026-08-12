@@ -1,0 +1,11 @@
+{
+  "decision": "MIP_CAUSAL_HYPOTHESIS_REJECTED",
+  "decisionMeaning": "Mip causality failed the frozen threshold; stop the mip direction and plan changes to vertical form, optical density, or atmosphere composition.",
+  "mipDistancePatchAuthorized": false,
+  "mipDistancePatchImplemented": false,
+  "v3Locked": true,
+  "task0PLocked": true,
+  "task3To6Locked": true,
+  "originalTask0To8Locked": true,
+  "nextAction": "STOP_MIP_DIRECTION_AND_WRITE_NEW_REPRESENTATION_PLAN"
+}
