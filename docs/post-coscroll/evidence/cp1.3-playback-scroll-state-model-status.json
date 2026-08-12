@@ -1,0 +1,337 @@
+{
+  "kind": "miralith.post-coscroll.cp1.3.playback-scroll-state-model",
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-12",
+  "checkpoint": {
+    "id": "CP1.3",
+    "status": "IN REVIEW",
+    "reviewVerdict": "PENDING — INDEPENDENT CORRECTNESS REVIEW",
+    "nextGate": "Unit 4 remains CLOSED. Only an independent review of this exact implementation candidate may authorize integration or Unit 4."
+  },
+  "baseline": {
+    "commit": "eefce7cb889d3b78513e3ea52d347338e5feff59",
+    "branch": "codex/coscroll-shader4-miralith"
+  },
+  "implementationCandidate": {
+    "commit": "95a4cd3372e31970d29546868a4aa6a4f0e13fa2",
+    "tree": "68995972535cb1d9b6e5c46273d24ef5866e4de6",
+    "combinedBinaryPatchSha256FromBaseline": "cb2cc02412142b10a341734a78cd30e524b21ed703579e4367e009a9269efc09",
+    "implementationBinaryPatchSha256FromOpenCommit": "50c8fa37fa6ad0c692cbd136b628cb96232eda382d7471266c639c0d91e581d2",
+    "changedPathCountFromBaseline": 25,
+    "implementationOpenCommit": "50bfce3a46d33246f94b552e8bdefe37fe4d304b"
+  },
+  "lineage": {
+    "plan": [
+      "ee17d73eccbd2b5aa75f289c378afb18d920251a",
+      "cf41e2e22322214c1597e53d0a495640c14977c3",
+      "f3b3504143b246451dc3efd650bbea5e489f1716",
+      "50bfce3a46d33246f94b552e8bdefe37fe4d304b"
+    ],
+    "task1VisualHandoff": {
+      "commits": [
+        "359a0c23b4cd4d5c7bb1c4d7930f2e99a87fd7e0",
+        "fa0b7fcf6714ca1b7284a47d042675b545c1d273",
+        "c01b0bf877fb6ff36ef6e1741ab79e4f83574d1d"
+      ],
+      "reviewedCumulativePatchSha256": "d461844928ce0568de26839eb7a1ee092b9f3fb44514df3e4e716be21eaedbc0"
+    },
+    "task2ProviderHandoff": {
+      "commits": [
+        "5e019774b74d04a9b6496d17bf57f7305afdf265",
+        "e894cd26cd750ca9c38ab4f926e4c9e869b2a2c9"
+      ],
+      "reviewedCumulativePatchSha256": "0aeb5692455c5c9a6d3be587f5ede95fbb24a17deeb65aad524bc7577e810806"
+    },
+    "task3ReturnCodec": {
+      "commits": [
+        "69cb990aa5923740d0859ea751f539b3915a4388",
+        "67dc2b0bdb3e0c32584ef39272c2411cb06799c7"
+      ],
+      "reviewedCumulativePatchSha256": "0a341297f32e7e6fb9af282408516c445a53333a05b77f22b061c712f9699fe9"
+    },
+    "task4ProviderRecovery": {
+      "commit": "6aae1f4ca9a2d6ff84adedb651c8f23277618c66",
+      "reviewedPatchSha256": "2aac5ff1cee0a6fe13005c9d4483bef2a0cef6e699683171aa0468193a32a2b0"
+    },
+    "task5NarrativeReducer": {
+      "commit": "5dea20ea28f93ad5656bc0d570e0ce3e211d850c",
+      "reviewedPatchSha256": "8000076926d070a6a4e323c6c14e3b42edc9ff43a7e70808764bbe4f6f089d4f"
+    },
+    "task6PlaybackAttempt": {
+      "commit": "e84c77b69de92cebc20d66f3fbf66eb64092717a",
+      "reviewedPatchSha256": "377650205fc1e4081ee765dec13858e81ee5e8b419d52b6b1c70398999e2b2ff"
+    },
+    "task7RuntimeGuard": {
+      "commit": "95a4cd3372e31970d29546868a4aa6a4f0e13fa2",
+      "patchSha256": "0b459cec223b20e980bb87a1c747fab83ef3e9c76a712105287f2292f3d5d773"
+    }
+  },
+  "schemas": {
+    "visualHandoff": "chapter-visual-handoff-v1",
+    "returnSnapshot": "chapter-return-v2",
+    "previewScopeAlgorithm": "chapter-preview-scope-v1"
+  },
+  "visualHandoffContract": {
+    "acceptedEdges": [
+      "/coscroll -> /artbreeze: live or fallback ring",
+      "/artbreeze -> /constellation: seeded stars",
+      "/client-works -> /now-building: bounded water"
+    ],
+    "inputBoundary": "Unknown input is descriptor-snapshotted once, strictly key-checked, range-checked, copied, and frozen. Accessors, symbols, non-enumerable extensions, hostile proxies, URL-like fields, and edge/schema drift fail closed.",
+    "transportBoundary": "Only the sanitized runtime handoff reaches snapshots, reset context, inert marker, and allowlisted CSS variables. Handoff is not written to sessionStorage or history state; source recovery atomically changes to direct + null."
+  },
+  "returnStateContract": {
+    "revisionRange": "Integer revisions satisfy 1 <= revision < 1000000000.",
+    "refreshContinuation": "A validated stored revision 20 initializes the next semantic write at revision 21.",
+    "malformedHighRevision": "A malformed or out-of-range stored revision is not a stale-write authority; the next valid write starts at revision 1.",
+    "saturation": {
+      "trigger": "A validated stored revision of 999999999 plans revision 1 with resetStorage=true.",
+      "storageBoundary": "removeItem, getItem, and setItem are guarded. A failed operation returns unavailable and cannot trap the coordinator.",
+      "epochRule": "Before a saturation reset write, the pending media timer is cleared and the per-path epoch increments. A pre-reset 2000ms callback carries the old epoch/revision receipt and cannot overwrite revision 1.",
+      "browserResult": "After waiting beyond the old throttle, persisted revision remained 1."
+    },
+    "pagehide": {
+      "result": "With stored revision 10, a pending timeupdate at 3s, and pagehide after setting 7s, the synchronous final write persisted revision 11 and time >= 6.5s.",
+      "staleTimerResult": "After 2200ms the earlier throttled callback did not overwrite the pagehide write; reload restored the same tail time paused."
+    },
+    "storageAndUrlContainment": "The codec restores media only by manifest-allowlisted media id. A URL-shaped active media id is rejected and no video URL is accepted from storage, history, or handoff payload data."
+  },
+  "multiMediaRecovery": {
+    "fixture": {
+      "completedMediaIds": [
+        "artbreeze-first-sequence",
+        "artbreeze-cycle"
+      ],
+      "skippedMediaIds": [
+        "artbreeze-answer"
+      ],
+      "activeMedia": {
+        "id": "artbreeze-prompt",
+        "playbackState": "playing",
+        "timeSeconds": 3
+      },
+      "gateReleased": true
+    },
+    "result": "Refresh and history preserve both completed ids, the independent skipped id, and the distinct active id. Audible playing is never restored: the video is paused and muted.",
+    "replayRules": [
+      "completed -> Replay clears the replayed completed outcome while active",
+      "skipped -> Replay clears the replayed skipped outcome while active",
+      "Replay refresh remains encodable because active media is disjoint from both outcome sets",
+      "Replay ended writes the latest completed outcome and removes skipped",
+      "Replay skip writes the latest skipped outcome and removes completed",
+      "gateReleased remains sticky through Replay and its next outcome"
+    ]
+  },
+  "narrativeController": {
+    "owners": {
+      "scrub": "scroll-timeline",
+      "await-send": "await-send",
+      "answer-starting": "autoplay-controls",
+      "manual-ready": "autoplay-controls",
+      "autoplay": "autoplay-controls",
+      "reverse-before-complete": "scroll-timeline",
+      "released-hold": "release-gate",
+      "reverse-after-complete": "scroll-timeline",
+      "transitioning": "route-transition"
+    },
+    "acceptedEvents": {
+      "scrub": [
+        "reach-await",
+        "reverse-completed",
+        "route-transition"
+      ],
+      "await-send": [
+        "attempt-began",
+        "skip",
+        "reverse",
+        "route-transition"
+      ],
+      "answer-starting": [
+        "play-accepted",
+        "play-rejected",
+        "cancel",
+        "skip",
+        "reverse",
+        "route-transition"
+      ],
+      "manual-ready": [
+        "attempt-began",
+        "skip",
+        "reverse",
+        "route-transition"
+      ],
+      "autoplay": [
+        "ended",
+        "skip",
+        "reverse",
+        "route-transition"
+      ],
+      "reverse-before-complete": [
+        "settled",
+        "route-transition"
+      ],
+      "released-hold": [
+        "attempt-began",
+        "reverse",
+        "inertia-settled",
+        "fresh-forward-input",
+        "route-transition"
+      ],
+      "reverse-after-complete": [
+        "attempt-began",
+        "settled",
+        "return-to-tail",
+        "route-transition"
+      ],
+      "transitioning": [
+        "reset"
+      ]
+    },
+    "matrixProof": "All 9 phases x 15 public event kinds are evaluated. Rejected events preserve the identical state object. Generation-bearing play and ended continuations, and segment-bearing settled continuations, reject stale or mismatched receipts.",
+    "stickyRelease": "released-hold always has gateReleased=true; inertia plus a distinct fresh forward input advances, while reverse-to-tail restores the completed segment rather than reopening its gate."
+  },
+  "playbackAttempt": {
+    "canonicalGenerationOwner": "MediaPlaybackAttemptController",
+    "reducerReceipt": "attempt-began(mediaId, token.generation)",
+    "invalidationReasons": [
+      "skip",
+      "cancel",
+      "reverse",
+      "pause",
+      "ended",
+      "new-attempt",
+      "rejected",
+      "route-transition",
+      "navigation",
+      "reset",
+      "hidden",
+      "unmount"
+    ],
+    "raceResults": [
+      "A stale fulfill/reject/playing/ended continuation cannot write reducer state or outcomes.",
+      "A stale attempt does not pause a replacement that owns the same element.",
+      "A replacement generation is recorded by controller and reducer before its play Promise settles.",
+      "Lifecycle UI actions use the reducer phase matrix and fail closed before controller invalidation.",
+      "navigation, hidden, pagehide, and unmount remain unconditional ownership invalidations."
+    ],
+    "activationRecords": {
+      "click": {
+        "trigger": "click",
+        "navigatorUserActivationIsActiveAtPlay": true,
+        "generationSynchronized": true
+      },
+      "enter": {
+        "trigger": "enter",
+        "navigatorUserActivationIsActiveAtPlay": true,
+        "generationSynchronized": true,
+        "generationGreaterThanRejectedClickAttempt": true
+      }
+    }
+  },
+  "reactThreeRuntimeSingleton": {
+    "consumerRoots": [
+      "apps/site/package.json",
+      "packages/radio-gaga-scene/package.json",
+      "packages/coscroll-scene/package.json",
+      "packages/lubirth-hero/package.json"
+    ],
+    "resolvedRuntimes": [
+      "@react-three/fiber",
+      "@react-three/drei",
+      "react",
+      "react-dom"
+    ],
+    "method": "createRequire from each consumer package.json, require.resolve each runtime, normalize with realpathSync, require one physical path per runtime.",
+    "result": "4 passed; all four consumer roots resolve one physical file for every checked runtime.",
+    "retainedRisk": "@theatre/r3f 0.7.2 still declares a peer range for R3F 8 while the repository intentionally resolves R3F 9.6.0. Current typecheck, build, production suite, and singleton guard show no regression; dependency compatibility remains a non-blocking follow-up."
+  },
+  "localPreviewCatalog": {
+    "manifestRelativePath": "apps/site/public/media/post-coscroll/manifest.preview.json",
+    "manifestSha256": "435def54a450ca514dcbafb667b268eebca9ce004b0187feab88d74cf4a23713",
+    "manifestBytes": 32071,
+    "generatedFileCount": 39,
+    "generatedBytes": 101244074,
+    "readyItemCount": 13,
+    "pendingItemCount": 2,
+    "sourceSpecSha256": "0abfd288738e0197ccea9ec6808d3a23064e177c7a4d72e287cc4a3599b0ebbd",
+    "editorialFreezeSha256": "d906937cc0b885b12fc942f91ce50e9af919878142cead5c0b36d8bd648140a1",
+    "gitPolicy": "Generated preview media remains ignored and is not part of this candidate."
+  },
+  "verification": {
+    "verifiedAt": "2026-08-12",
+    "static": [
+      {
+        "command": "pnpm typecheck",
+        "result": "passed",
+        "exitCode": 0
+      },
+      {
+        "command": "pnpm lint",
+        "result": "passed",
+        "exitCode": 0
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed",
+        "exitCode": 0
+      },
+      {
+        "command": "git apply --reverse --check <combined candidate binary patch>",
+        "result": "passed",
+        "exitCode": 0
+      }
+    ],
+    "nodeContracts": {
+      "command": "pnpm exec playwright test -c playwright.unit.config.ts tests/unit/chapterVisualHandoff.spec.ts tests/unit/chapterRouteState.spec.ts tests/unit/narrativeControllerState.spec.ts tests/unit/mediaPlaybackAttempt.spec.ts tests/unit/reactThreeRuntimeResolution.spec.ts tests/unit/miraLithChapters.spec.ts tests/unit/resolveChapterPreviewScope.spec.ts --workers=1",
+      "result": "64 passed",
+      "exitCode": 0
+    },
+    "isolatedProduction": {
+      "verificationHead": "95a4cd3372e31970d29546868a4aa6a4f0e13fa2",
+      "verificationTree": "68995972535cb1d9b6e5c46273d24ef5866e4de6",
+      "previewMediaRootPresent": false,
+      "contractFixtureFlagPresent": false,
+      "command": "CI=1 MIRALITH_PLAYWRIGHT_PORT=3153 pnpm exec playwright test -c playwright.config.ts tests/e2e/chapter-transition.spec.ts tests/e2e/chapter-navigation.spec.ts tests/e2e/post-coscroll-media.spec.ts tests/e2e/post-coscroll-route-shell.spec.ts --project=desktop --workers=1 --grep-invert 'known post-CoScroll routes|preview review rail|CoScroll to ArtBreeze|failed ArtBreeze poster|ArtBreeze explicitly|expired or forged preview'",
+      "result": "61 passed / 3 expected skipped",
+      "exitCode": 0,
+      "fixtureRoute": "/spikes/post-coscroll-controller-contract",
+      "fixtureRouteStatus": 404,
+      "fixtureRootCount": 0
+    },
+    "localPreview": {
+      "verificationHead": "95a4cd3372e31970d29546868a4aa6a4f0e13fa2",
+      "runner": "playwright.local-preview.config.ts",
+      "command": "MIRALITH_LOCAL_PREVIEW_PLAYWRIGHT_PORT=3154 pnpm exec playwright test -c playwright.local-preview.config.ts tests/e2e/post-coscroll-route-shell.spec.ts tests/e2e/chapter-route-state.spec.ts --project=desktop --workers=1",
+      "result": "17 passed",
+      "exitCode": 0
+    },
+    "controllerFixture": {
+      "verificationHead": "95a4cd3372e31970d29546868a4aa6a4f0e13fa2",
+      "runner": "playwright.contract.config.ts",
+      "environment": "MIRALITH_CONTRACT_FIXTURES=1 supplied only by this fixed-port next-dev runner",
+      "command": "MIRALITH_CONTRACT_PLAYWRIGHT_PORT=3152 pnpm exec playwright test -c playwright.contract.config.ts tests/e2e/post-coscroll-controller-contract.spec.ts --project=desktop --workers=1",
+      "result": "8 passed",
+      "exitCode": 0
+    }
+  },
+  "scope": {
+    "included": [
+      "strict typed visual handoff payloads and sanitized Provider propagation",
+      "semantic multi-media return snapshots and manifest-bound restoration",
+      "revision, storage, throttle epoch, and synchronous pagehide persistence",
+      "pure narrative playback/scroll reducer and complete phase-event matrix",
+      "single-owner playback attempt generation and user-activation fixture",
+      "four-consumer React Three runtime singleton guard"
+    ],
+    "explicitlyExcluded": [
+      "CoScroll terminal enablement",
+      "formal CoScroll to ArtBreeze visual handoff",
+      "ScrollTrigger or production scroll timeline",
+      "particleization, residue, Canvas afterimage, or shader transition work",
+      "production media manifest or CDN publication",
+      "Unit 4 or Unit 5 implementation"
+    ],
+    "forbiddenImplementationScan": "No forbidden implementation term matched the non-doc baseline-to-candidate diff."
+  },
+  "checksumVerificationCommand": "shasum -a 256 -c docs/post-coscroll/evidence/cp1.3-playback-scroll-state-model-checksums.sha256"
+}
