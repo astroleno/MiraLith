@@ -239,7 +239,7 @@ CP1.2 的 access matrix、history、production isolation 与独立 local-preview
 
 状态：`PASS — TECH / INTEGRATED，2026-08-13`
 
-Unit 3 的详细边界、字段、TDD 顺序和验收矩阵记录在 [Unit 3 implementation plan](../plans/2026-08-09-001-unit3-handoff-recovery-state-contract-plan.md)。作者于 2026-08-09 针对提交 `f3b3504143b246451dc3efd650bbea5e489f1716`、计划 SHA-256 `3079232c28a7e07ed9d0db43236ee8c40dabbfdebce68f36bcf74a4389390c3e` 和 patch SHA-256 `17c8a73d5418ce23fc0ce02a47dbe9ef56d68dae17e4cdddf2025fe38d8900bf` 给出 `PASS — PLAN`，因此 Unit 3 implementation 已开放并从 Task 1 RED 开始。Unit 4 仍关闭，不得提前进入正式 CoScroll → ArtBreeze 视觉接力。
+Unit 3 的详细边界、字段、TDD 顺序和验收矩阵记录在 [Unit 3 implementation plan](../plans/2026-08-09-001-unit3-handoff-recovery-state-contract-plan.md)。作者于 2026-08-09 针对提交 `f3b3504143b246451dc3efd650bbea5e489f1716`、计划 SHA-256 `3079232c28a7e07ed9d0db43236ee8c40dabbfdebce68f36bcf74a4389390c3e` 和 patch SHA-256 `17c8a73d5418ce23fc0ce02a47dbe9ef56d68dae17e4cdddf2025fe38d8900bf` 给出 `PASS — PLAN`，因此 Unit 3 implementation 当时已开放并从 Task 1 RED 开始；在该实施与复核阶段，Unit 4 仍保持关闭，不得提前进入正式 CoScroll → ArtBreeze 视觉接力。
 
 Unit 3 implementation candidate 为 [`95a4cd3`](../../commit/95a4cd3372e31970d29546868a4aa6a4f0e13fa2)，tree `68995972535cb1d9b6e5c46273d24ef5866e4de6`。其 review evidence commit 为 [`b42f5fa`](../../commit/b42f5fac85d1a4fbbdbf50316d69399005fd5093)。Task 1–6 已逐项通过 correctness review；Task 7 额外固定四个 React Three consumer root 的 Fiber、Drei、React 与 React DOM 单例解析。
 
