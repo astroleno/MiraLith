@@ -1,6 +1,6 @@
 # LuBirth Takram Orbital Lookdev Parameter Tuning Design
 
-**Status:** Revised after document review; awaiting written-spec approval
+**Status:** Revised after second document review; awaiting written-spec approval
 
 **Date:** 2026-08-12
 
@@ -52,7 +52,7 @@ This spike must:
 - start with the committed Takram stock weather and shared shape/detail/turbulence/STBN assets;
 - preserve the native `CloudsEffect → temporal resolve → AerialPerspectiveEffect` order;
 - preserve the existing Earth radius, camera path, scene-depth bridge, HDR/output transform, BSM implementation, temporal implementation, and render-target formats;
-- publish requested values, runtime readback, renderer fingerprint, and history epoch for every candidate.
+- publish requested values, runtime readback, renderer fingerprint, `lookdevMountKey`, and `runtimeEvidenceEpoch` for every candidate.
 
 This spike must not:
 
@@ -161,7 +161,7 @@ verticalScale=1
 opticalDepthScale=1
 ```
 
-This confirms that the new contract reproduces the current unscaled stock opening, which currently omits the coverage prop and therefore receives Takram's native `0.3`. The runtime layer array and normalized renderer fingerprint must match exactly; the frame-32 image difference must remain at or below the same-route repeat noise floor measured in the same clean run. `coverage=0.4` is not a native opening baseline.
+This confirms that the new contract reproduces the current unscaled stock opening, which currently omits the coverage prop and therefore receives Takram's native `0.3`. The runtime layer array and the normalized baseline fingerprint described in Section 7.1 must match exactly; the frame-32 image difference must satisfy the concrete repeat-noise-floor contract in Section 7.1. `coverage=0.4` is not a native opening baseline.
 
 Stage 0 also proves reference hashes, full composer remount, runtime readback, coordinates, HDR/output, and native frame lock. Failure of any setup contract is `ORBITAL_LOOKDEV_SETUP_BLOCKED`, not a candidate visual result; Stage A cannot begin until Stage 0 passes.
 
@@ -194,7 +194,7 @@ Do not proceed to coverage, vertical, optical, V3, stage readback, or GPU timing
 
 ### Stage B — coverage selection
 
-For each Stage A survivor, capture `coverage=0.3/0.4/0.45/0.55` while keeping morphology preset, vertical scale `1`, and optical depth `1` fixed. The set deliberately retains the native Stage A baseline. Select exactly one coverage per morphology preset.
+For each Stage A survivor, capture `coverage=0.3/0.4/0.45/0.55` while keeping morphology preset, vertical scale `1`, and optical depth `1` fixed. The set deliberately retains the native Stage A baseline. Retain at most one passing coverage per morphology preset; a preset whose four coverage candidates all fail contributes no survivor.
 
 Keep at most two survivors using the fixed scoring and tie-break rules in Section 6. If none passes, stop with `BOUNDED_ORBITAL_LOOKDEV_FAIL_ROOT_CAUSE_UNRESOLVED`; coverage exhaustion alone does not prove a weather-source failure.
 
@@ -202,15 +202,15 @@ Keep at most two survivors using the fixed scoring and tie-break rules in Sectio
 
 For each Stage B survivor, capture `verticalScale=1/2/4` with optical depth invariant and all morphology/coverage fields frozen. This stage asks only whether the cloud deck gains readable limb elevation and soft internal layering.
 
-Keep one overall winner. If macro morphology passes but all three vertical values remain flat, stop with `ORBITAL_VERTICAL_PROFILE_FAIL`.
+Keep one overall passing winner. If no Stage C candidate passes across all four opening frames, stop with `ORBITAL_VERTICAL_PROFILE_FAIL`; the evidence records whether the failure was flatness, lost separation, crushed lighting, instability, or another rubric dimension.
 
 ### Stage D — optical-depth finish
 
-For the single Stage C winner, capture `opticalDepthScale=0.75/1/1.5`. Select the value with readable bright tops, non-crushed shaded cores, and stable cloud/ground separation across all four frames.
+For the single Stage C winner, capture `opticalDepthScale=0.75/1/1.5`. Retain at most one passing value using the Section 6 ranking. If all three fail any required frame, stop with `ORBITAL_OPTICAL_DEPTH_FAIL`.
 
-The result is the sole `ORBITAL_LOOKDEV_WINNER`. Do not average parameters between candidates after review.
+A passing result is the sole `ORBITAL_LOOKDEV_WINNER`. Do not average parameters between candidates after review.
 
-### Stage E — V3 weather swap
+### Stage E — V3 weather-adapter compatibility
 
 Only after a stock winner exists, apply the exact same Takram renderer contract and the stock winner's complete explicit official R/G/B/A layer array to the V3 texture. Set `disableDefaultLayers=true` for both inputs. Stock and V3 may differ only in these enumerated weather-adapter fields:
 
@@ -219,10 +219,10 @@ Only after a stock winner exists, apply the exact same Takram renderer contract 
 - repeat and offset;
 - S/T wrap and channel transform required to interpret the texture.
 
-The existing `TAKRAM_PARITY_V3_LAYERS` 8–60 km semantic layer tuple is not used in Stage E. Stage E is a weather-texture compatibility test, not a test of the prior V3 semantic-layer representation. Reintroducing those semantic layers requires a separate experiment because doing so would destroy the same-renderer/same-layer comparison.
+The existing `TAKRAM_PARITY_V3_LAYERS` 8–60 km semantic layer tuple is not used in Stage E. Because adapter-owned `localWeatherRepeat` also changes Takram's effective `localWeatherRepeat × turbulenceRepeat` sampling domain, Stage E is a weather-adapter compatibility test, not an isolated texture test and not a test of the prior V3 semantic-layer representation. Both the raw repeats and effective turbulence repeat are recorded for stock and V3. This experiment must not compensate by changing `turbulenceRepeat`, because that would introduce an additional renderer-parameter difference. Reintroducing V3 semantic layers or isolating turbulence requires a separate experiment.
 
-- Stock pass + V3 pass: `V3_ORBITAL_WEATHER_PASS`.
-- Stock pass + V3 fail: `V3_WEATHER_INPUT_FAIL`; retain the Takram stock winner and treat a new global weather source as a separate asset task.
+- Stock pass + V3 pass: `V3_WEATHER_ADAPTER_PASS`.
+- Stock pass + V3 fail: `V3_WEATHER_ADAPTER_FAIL`; retain the Takram stock winner and record the failing adapter-domain evidence without assigning the failure to texture content alone.
 
 V3 failure must not invalidate the Takram renderer or restart parameter tuning.
 
@@ -276,13 +276,15 @@ Every winning frame must show:
 
 The review compares the candidate with both frozen references. Non-zero signal, projected wavelength, sample count, or connected-component area cannot independently produce a pass.
 
-Each manual review writes schema `takram-orbital-lookdev-visual-review/v1` with reviewer identity, clean commit, candidate ID, native frame, viewport/DPR, reference hashes, per-frame hard flags, and six integer scores from `0` (fail) to `2` (clear pass): macro coherence, cloud/ground separation, depth layering, lighting/BSM read, temporal identity, and artifact freedom. Any hard flag rejects the candidate regardless of total.
+Each manual review writes schema `takram-orbital-lookdev-visual-review/v1` with reviewer identity, clean commit, candidate ID, native frame, viewport/DPR, reference hashes, per-frame hard flags, and six integer scores from `0` (fail) to `2` (clear pass): macro coherence, cloud/ground separation, depth layering, lighting/BSM read, opening identity stability, and artifact freedom. The identity score for each frame is judged against its adjacent opening-progress frame; endpoints use their one neighbour.
+
+A frame passes only when it has no hard flag and every required dimension scores at least `1`. A candidate passes only when all four progress frames pass. Total score is used only to rank already-passing candidates; it can never convert a failing frame into a pass.
 
 When Stage B has more than two passing candidates, rank by:
 
-1. highest six-score total;
-2. highest artifact-freedom score;
-3. highest depth-layering score;
+1. highest aggregate total across the four frames' six scores;
+2. highest aggregate artifact-freedom score;
+3. highest aggregate depth-layering score;
 4. smallest absolute coverage departure from native `0.3`;
 5. smallest `H`.
 
@@ -300,11 +302,43 @@ The route adds explicit `orbitalPreset`, `orbitalCoverage`, `verticalScale`, and
 
 Historical stock/V3 routes remain replayable. Stage authorization is enforced by the evidence runner and checkpoint manifest, not by disabling existing query combinations globally; the runner must refuse an orbital V3 capture until its Stage D input names the committed stock winner.
 
-The renderer fingerprint and `lookdevIdentity` include all four new parameters, the complete layer array, weather adapter identity, normalized progress/view/diagnostic, camera/Earth transform contract, runtime shader identity, resources, and existing render configuration.
+Identity is split into two one-way layers.
 
-Changing identity must `key`-remount the complete `<EffectComposer><Clouds/><AerialPerspective/></EffectComposer>` subtree. Toggling only `clouds.temporalUpscale` is not a valid reset because it rebuilds CloudsPass history but leaves ShadowPass history intact. Capture readiness must prove that cloud current/resolve/history and shadow current/resolve/history allocation generations all changed, and that cloud, resolve, and shadow frame metadata begin from the same new epoch before the 32-frame convergence count starts. Resource load, resize, context restore, visibility loss, or runtime drift discards the current epoch and remounts/rewarms it.
+`lookdevMountKey` is computed before mounting and contains only:
+
+- normalized query and the pure resolved lookdev contract;
+- adapter manifest ID;
+- normalized progress/view/diagnostic;
+- asset, atmosphere, WebGL-context, viewport/resize generations;
+- an explicit `resetNonce`.
+
+`runtimeEvidenceEpoch` is computed after mount and records actual shader/build identity, complete renderer fingerprint, camera/projection/Earth matrices, render-target allocation generations, adapter runtime values, and the `lookdevMountKey` that created them. It is first published only after assets, atmosphere, material compilation, runtime readback, and coordinate/HDR gates are stable; pre-ready changes do not count as drift. Runtime evidence never feeds its fingerprint or matrix values directly back into `lookdevMountKey`.
+
+Changing `lookdevMountKey` must `key`-remount the complete `<EffectComposer><Clouds/><AerialPerspective/></EffectComposer>` subtree. Toggling only `clouds.temporalUpscale` is not a valid reset because it rebuilds CloudsPass history but leaves ShadowPass history intact. Capture readiness must prove that cloud current/resolve/history and shadow current/resolve/history allocation generations all changed, and that cloud, resolve, and shadow frame metadata begin from the same new epoch before the 32-frame convergence count starts.
+
+Runtime drift invalidates the current `runtimeEvidenceEpoch` and increments `resetNonce` at most once for each `(lookdevMountKey, driftSignature)` pair. If the same drift persists after the remount, the route stops with `ORBITAL_LOOKDEV_SETUP_BLOCKED`; it must not increment the nonce again or enter a remount loop. Resource load, resize, context restore, or visibility loss changes its pre-mount generation, discards the current epoch, and remounts/rewarms it.
 
 This remount policy is for deterministic fixed-query lookdev captures. A continuously animated production camera requires a separate camera-cut/history-invalidation contract.
+
+### 7.1 Native baseline normalization and noise floor
+
+Add the pure function:
+
+```ts
+normalizeTakramOrbitalBaselineFingerprint(fingerprint)
+```
+
+Stage 0 captures the legacy unscaled query and explicit native-lookdev query through the same current runtime evidence builder, so both contain the same audited shader/build fields before normalization. The function removes only schema version, classification, and the legacy-versus-lookdev resolver wrapper. The normalized projection retains composer order, Clouds/Shadow/AerialPerspective properties and uniforms, the complete runtime layer array, adapter mapping/repeat/offset/channel values, shader/build identity, render-target formats and dimensions, and all shared asset identities. Stage 0 requires deep equality of this projection; no renderer or adapter field may be dropped merely to obtain parity.
+
+The pixel comparison uses the existing exact-frame difference path at native frame `32`:
+
+1. capture the legacy unscaled stock query twice as `legacyA/legacyB`;
+2. capture the explicit native-lookdev query twice as `lookdevA/lookdevB`;
+3. calculate 8-bit RGBA full-frame MAE with the existing masked-frame difference implementation using a full-frame mask;
+4. set `repeatNoiseFloor = max(MAE(legacyA, legacyB), MAE(lookdevA, lookdevB))`;
+5. require both cross-route values `MAE(legacyA, lookdevA)` and `MAE(legacyB, lookdevB)` to be `≤ repeatNoiseFloor`.
+
+The current deterministic evidence has repeat MAE `0`, so the expected Stage 0 result is exact pixel equality. A higher measured floor must be preserved as evidence and investigated; it may not be rounded up or replaced by a hand-selected tolerance.
 
 ## 8. Test and evidence strategy
 
@@ -317,20 +351,25 @@ This remount policy is for deterministic fixed-query lookdev captures. A continu
 - correct extinction scaling for vertical and optical-depth changes;
 - all active cloud tops remain below atmosphere top;
 - invalid combinations fail without legacy fallback;
-- every lookdev parameter changes the history epoch;
+- every pre-mount lookdev parameter/generation changes `lookdevMountKey`;
+- runtime fingerprint or matrix data changes `runtimeEvidenceEpoch` without directly changing the mount key;
+- persistent drift performs one nonce remount and then blocks without looping;
 - identity remount changes all cloud and shadow render-target allocation generations;
-- runtime fingerprint/readback includes every tuned field.
+- runtime fingerprint/readback includes every tuned field;
+- baseline normalization removes only wrapper fields and detects drift in uniforms, layers, adapters, shaders, RT formats, or assets;
+- repeat-noise-floor comparison uses four frame-32 captures and same-route MAE.
 
 ### Browser verification
 
 - native `coverage=0.3` control reproduces the existing unscaled opening fingerprint;
-- sequential changes to preset, coverage, vertical scale, optical depth, progress, resource generation, resize, visibility, and context restoration each remount the composer subtree and restart cloud/shadow history in one epoch;
+- sequential changes to preset, coverage, vertical scale, optical depth, progress, resource generation, resize, visibility, and context restoration each change `lookdevMountKey`, remount the composer subtree, and restart cloud/shadow history in one epoch;
+- post-mount runtime evidence publication does not trigger a second bootstrap remount;
 - one deterministic System Chrome capture generates the bounded funnel contact sheets;
 - rejected stages cannot invoke later capture or GPU tasks.
 
 ### Evidence manifest
 
-Record the clean commit, query, requested contract, runtime readback, renderer fingerprint, history epoch, package/shader/patch hashes, screenshot hashes, reviewer decision, and exact stop/unlock state. Raw diagnostic populations are generated only for the final winner.
+Record the clean commit, query, requested contract, runtime readback, renderer fingerprint, `lookdevMountKey`, `runtimeEvidenceEpoch`, package/shader/patch hashes, screenshot hashes, reviewer decision, and exact stop/unlock state. Raw diagnostic populations are generated only for the final winner.
 
 Setup failures, missing references, runtime drift, incomplete history reset, unsupported timer queries, and invalid/disjoint populations remain explicit evidence states. They may block the affected stage but may not be converted into a visual or performance failure.
 
@@ -338,7 +377,7 @@ Setup failures, missing references, runtime drift, incomplete history reset, uns
 
 This design is complete when the query-only funnel produces either:
 
-1. one stock `ORBITAL_LOOKDEV_WINNER`, its V3 weather-texture classification, and formal cost evidence; or
-2. `BOUNDED_ORBITAL_LOOKDEV_FAIL_ROOT_CAUSE_UNRESOLVED`, proving only that this bounded parameter contract did not reach the target.
+1. one stock `ORBITAL_LOOKDEV_WINNER`, its `V3_WEATHER_ADAPTER_PASS/FAIL` classification, and formal cost evidence; or
+2. one explicit terminal failure: `BOUNDED_ORBITAL_LOOKDEV_FAIL_ROOT_CAUSE_UNRESOLVED`, `ORBITAL_VERTICAL_PROFILE_FAIL`, or `ORBITAL_OPTICAL_DEPTH_FAIL`.
 
-The second result ends repeated unbounded parameter sweeps. It does not automatically authorize or blame a replacement weather asset, renderer, mip patch, or semantic-layer design; any next direction must cite the captured failure stage in a separate amendment.
+The terminal failures end repeated unbounded parameter sweeps at their observed stage. They do not automatically authorize or blame a replacement weather asset, renderer, mip patch, or semantic-layer design; any next direction must cite the captured failure stage in a separate amendment. `ORBITAL_LOOKDEV_SETUP_BLOCKED` and unavailable valid GPU timing remain incomplete evidence states, not visual terminal results.
