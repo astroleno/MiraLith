@@ -1,5 +1,7 @@
 # Takram cloud-scale similarity — Stage A0 historical control
 
+> **Latest checkpoint:** Stage A1 is complete and records `SCALED_STOCK_WEATHER_CONTROL_FAIL_MIP_UNPROVEN`. See [stage-a1-scaled-weather/README.md](stage-a1-scaled-weather/README.md). This page retains the historical A0 evidence below.
+
 Clean-HEAD stock-only public-parameter control at coverage `0.3`, using `S=80/120/160` and opening progress `0.00/0.06/0.12/0.18`.
 
 ## Decision after correctness review
@@ -37,7 +39,7 @@ The frames genuinely show no readable stock cloud mass, but this result does **n
 ## Reproduce
 
 ```bash
-MIRALITH_TAKRAM_CLOUD_SCALE_CAPTURE=1 pnpm exec playwright test -c playwright.takram-parity-system-chrome.config.ts lubirth-takram-cloud-scale.spec.ts --headed --grep "Stage A"
+MIRALITH_TAKRAM_CLOUD_SCALE_CAPTURE=1 pnpm exec playwright test -c playwright.takram-parity-system-chrome.config.ts lubirth-takram-cloud-scale.spec.ts --headed --grep "Stage A0"
 ```
 
 The detailed per-scale review is in `stage-a-visual-review.json`; complete runtime contracts, frame/jitter/STBN metadata, GPU identity, and every artifact hash are in `manifest.json`.

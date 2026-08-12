@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript、React Three Fiber、Three.js、`@takram/three-clouds@0.7.6`、Vitest、headed System Chrome E2E、现有 Takram parity query route。
 
-> **2026-08-12 superseded status:** 本计划的独立 `220–300 km / 30–40 km` 候选和后续 sample-budget A/B 已由 `docs/superpowers/specs/2026-08-12-lubirth-takram-cloud-scale-similarity-design.md` 与 `docs/superpowers/plans/2026-08-12-lubirth-takram-cloud-scale-similarity.md` 取代。统一 public-parameter resolver 已完成；首个 clean-HEAD stock matrix 因仍使用 `localWeatherRepeat=[100,100]` 而被 correctness review 降级为 `UNSCALED_STOCK_WEATHER_CONTROL`，不再作为统一缩放或 mip 的健康对照。当前下一步是独立 Stage A1 `[100/S,100/S]` stock weather A/B 与实际 shader/patch identity readback；在其完成前没有 stock passing scale，Stage B/C、V3 分类、Conditional Task M、本计划 Task 3–6、Task 0P 和原 Task 0–8 均继续锁定。历史证据：`docs/lubirth-planetary-cloud-evidence/2026-08-12/takram-cloud-scale/`。
+> **2026-08-12 superseded status:** 本计划的独立 `220–300 km / 30–40 km` 候选和后续 sample-budget A/B 已由 `docs/superpowers/specs/2026-08-12-lubirth-takram-cloud-scale-similarity-design.md` 与 `docs/superpowers/plans/2026-08-12-lubirth-takram-cloud-scale-similarity.md` 取代。首个 stock matrix 已降级为 `UNSCALED_STOCK_WEATHER_CONTROL`；clean-HEAD Stage A1 已完成 `[100/S,100/S]` stock health control 与实际 shader/patch identity readback。三档均恢复 weather signal，但都未达到轨道视觉门，当前状态为 `SCALED_STOCK_WEATHER_CONTROL_FAIL_MIP_UNPROVEN`、`stockPassingScales=[]`。Stage B/C、V3 分类、本计划 Task 3–6、Task 0P 和原 Task 0–8 继续锁定；Conditional Task M 只有在用户另行授权时才可执行同帧 weather-hit / primary-hit / actual-mip / pre-temporal-opacity 只读诊断。权威证据：`docs/lubirth-planetary-cloud-evidence/2026-08-12/takram-cloud-scale/stage-a1-scaled-weather/`。
 
 ---
 

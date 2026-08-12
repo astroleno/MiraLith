@@ -6,7 +6,6 @@
   "stageBRun": false,
   "stageCRun": false,
   "stockPassingScales": [],
-  "latestEvidence": "stage-a1-scaled-weather/checkpoint.json",
   "task0PLocked": true,
-  "visualReview": "stage-a1-scaled-weather/stage-a1-visual-review.json"
+  "visualReview": "stage-a1-visual-review.json"
 }

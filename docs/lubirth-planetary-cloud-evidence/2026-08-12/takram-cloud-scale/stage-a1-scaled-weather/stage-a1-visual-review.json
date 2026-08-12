@@ -1,0 +1,68 @@
+{
+  "decision": "SCALED_STOCK_WEATHER_CONTROL_FAIL_MIP_UNPROVEN",
+  "reviewBasis": {
+    "contactSheet": "stage-a1-stock-weather-contact-sheet.png",
+    "fullSizeSourceFramesReviewed": [
+      "captures/stage-a1-stock-weather-s80-p006-full.png",
+      "captures/stage-a1-stock-weather-s120-p000-full.png",
+      "captures/stage-a1-stock-weather-s120-p006-full.png",
+      "captures/stage-a1-stock-weather-s120-p012-full.png",
+      "captures/stage-a1-stock-weather-s120-p018-full.png",
+      "captures/stage-a1-stock-weather-s160-p006-full.png"
+    ],
+    "progresses": [0, 0.06, 0.12, 0.18],
+    "scales": [80, 120, 160]
+  },
+  "results": [
+    {
+      "scale": 80,
+      "decision": "FAIL",
+      "coherentMacroMasses": false,
+      "cloudGroundSeparationOrLimbElevation": false,
+      "softOpacityLayering": false,
+      "litBacklitVariationAndLocalBsmModulation": false,
+      "stableMotionIdentity": true,
+      "saltAndPepperFragmentation": "prominent",
+      "observation": "The scaled weather exposes a stable stock footprint, but it remains a field of small surface-like flecks without readable elevation or internal lighting."
+    },
+    {
+      "scale": 120,
+      "decision": "FAIL",
+      "coherentMacroMasses": true,
+      "cloudGroundSeparationOrLimbElevation": false,
+      "softOpacityLayering": false,
+      "litBacklitVariationAndLocalBsmModulation": false,
+      "stableMotionIdentity": true,
+      "saltAndPepperFragmentation": "visible-at-edges-and-dark-side",
+      "observation": "This is the strongest candidate and produces several coherent light masses, but they still read as grey surface patches; limb elevation, soft volumetric layering, and local BSM modulation are not legible."
+    },
+    {
+      "scale": 160,
+      "decision": "FAIL",
+      "coherentMacroMasses": false,
+      "cloudGroundSeparationOrLimbElevation": false,
+      "softOpacityLayering": false,
+      "litBacklitVariationAndLocalBsmModulation": false,
+      "stableMotionIdentity": true,
+      "saltAndPepperFragmentation": "visible",
+      "observation": "The weather footprint is visible but sparse and flattened; increasing S does not recover the required orbital volumetric cues."
+    }
+  ],
+  "stockPassingScales": [],
+  "causalityBoundary": {
+    "scaledStockWeatherPopulationValid": true,
+    "stockWeatherWasRootCauseOfA0NoSignal": true,
+    "mipFailureProven": false,
+    "v3Classified": false,
+    "takramRejected": false,
+    "broaderScaleDirectionRejected": false
+  },
+  "downstream": {
+    "conditionalTaskMEligibleWithUserAuthorization": true,
+    "mipDistancePatchAuthorized": false,
+    "stageBRun": false,
+    "stageCRun": false,
+    "task0PLocked": true,
+    "originalTask0To8Locked": true
+  }
+}

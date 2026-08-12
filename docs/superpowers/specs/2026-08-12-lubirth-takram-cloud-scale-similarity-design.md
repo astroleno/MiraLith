@@ -1,6 +1,6 @@
 # LuBirth Takram Cloud Scale Similarity Design
 
-**Status:** Approved architecture; Stage A0 reclassified after stock-weather control review
+**Status:** Approved architecture; Stage A1 complete with no stock visual pass
 
 **Date:** 2026-08-12
 

@@ -10,7 +10,7 @@
 
 **Design source:** `docs/superpowers/specs/2026-08-12-lubirth-takram-cloud-scale-similarity-design.md`
 
-**Execution status (2026-08-12 review amendment):** Tasks 1–5 remain valid. The first 12-frame stock matrix is retained but reclassified as `UNSCALED_STOCK_WEATHER_CONTROL`: it kept `localWeatherRepeat=[100,100]` while scaling morphology, so it is not the healthy stock control required to classify public similarity or authorize mip work. Task 6 now adds a clean-HEAD Stage A1 A/B with `localWeatherRepeat=[100/S,100/S]`, actual runtime shader/patch identity, and a separate evidence population. Tasks 7–8, Conditional Task M, Task 0P, and the original Task 0–8 remain locked.
+**Execution status (2026-08-12 Stage A1):** Tasks 1–6 are complete through the corrected stock stop condition. Stage A0 remains `UNSCALED_STOCK_WEATHER_CONTROL`; clean-HEAD Stage A1 used `localWeatherRepeat=[100/S,100/S]`, actual runtime shader/uniform mip readback, and audited installed build/cloud-fragment/package-patch identities. All three scales now expose stock weather signal, proving A0 was confounded, but none passes the orbital visual floor; `S=120` is strongest yet still lacks clear limb elevation, soft opacity depth, and legible local BSM modulation. The checkpoint is `SCALED_STOCK_WEATHER_CONTROL_FAIL_MIP_UNPROVEN`, `stockPassingScales=[]`. Tasks 7–8, Task 0P, and the original Task 0–8 remain locked. Conditional Task M is only eligible with explicit user authorization and does not authorize the mip patch.
 
 ---
 
