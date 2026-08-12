@@ -10,6 +10,7 @@ test.setTimeout(900_000);
 
 type Scale = 80 | 120 | 160;
 type CoverageMode = "parity" | "presentation";
+type StockWeatherMode = "unscaled" | "similarity";
 const captureEnabled = process.env.MIRALITH_TAKRAM_CLOUD_SCALE_CAPTURE === "1";
 const evidenceDirectory = path.resolve(
   process.cwd(),
@@ -43,6 +44,13 @@ interface ScaleTelemetry {
     drift: Array<{ actual: unknown; expected: unknown; path: string }>;
     readback: Record<string, any>;
     requested: Record<string, any>;
+    stockWeatherControl: {
+      classification: string;
+      mode: StockWeatherMode;
+      repeat: [number, number];
+      scale: Scale;
+      sourceRepeat: [100, 100];
+    } | null;
   } | null;
   coverage: number | null;
   historyEpochHash: string;
@@ -61,10 +69,12 @@ function query(
   input: "stock" | "v3",
   scale: Scale,
   coverageMode: CoverageMode,
-  progress = 0.06
+  progress = 0.06,
+  stockWeatherMode?: StockWeatherMode
 ) {
   return `/lubirth-takram-parity-spike?input=${input}&view=opening&progress=${progress}` +
-    `&cloudScale=${scale}&cloudCoverage=${coverageMode}`;
+    `&cloudScale=${scale}&cloudCoverage=${coverageMode}` +
+    (stockWeatherMode === undefined ? "" : `&stockWeather=${stockWeatherMode}`);
 }
 
 async function readTelemetry(page: Page): Promise<ScaleTelemetry | undefined> {
@@ -77,15 +87,20 @@ async function openScaleCandidate(
   scale: Scale,
   coverageMode: CoverageMode,
   diagnostic = "full",
-  progress = 0.06
+  progress = 0.06,
+  stockWeatherMode?: StockWeatherMode
 ) {
   const response = await page.goto(
-    `${query(input, scale, coverageMode, progress)}&diagnostic=${diagnostic}`
+    `${query(input, scale, coverageMode, progress, stockWeatherMode)}&diagnostic=${diagnostic}`
   );
   expect(response?.status()).toBe(200);
   const root = page.locator("[data-takram-parity-route='true']");
   await expect(root).toHaveAttribute("data-cloud-scale", String(scale));
   await expect(root).toHaveAttribute("data-cloud-coverage", coverageMode);
+  await expect(root).toHaveAttribute(
+    "data-stock-weather",
+    input === "stock" ? stockWeatherMode ?? "unscaled" : "none"
+  );
   await expect(root).toHaveAttribute("data-runtime", "ready", { timeout: 120_000 });
   await expect(page.locator("canvas")).toHaveCount(1);
   const telemetry = await readTelemetry(page);
@@ -183,7 +198,10 @@ test("rejects invalid and conflicting cloud-scale route contracts", async ({ pag
     "input=stock&view=opening&cloudScale=80",
     "input=stock&view=opening&cloudCoverage=parity",
     "input=stock&view=opening&cloudScale=80&cloudCoverage=legacy",
-    "input=v3&view=opening&cloudScale=80&cloudCoverage=parity&morphologyView=opening-orbit"
+    "input=v3&view=opening&cloudScale=80&cloudCoverage=parity&morphologyView=opening-orbit",
+    "input=v3&view=opening&cloudScale=80&cloudCoverage=parity&stockWeather=similarity",
+    "input=stock&view=opening&stockWeather=similarity",
+    "input=stock&view=opening&cloudScale=80&cloudCoverage=parity&stockWeather=scaled"
   ];
 
   for (const invalidQuery of invalidQueries) {
@@ -230,7 +248,7 @@ test("applies the same explicit official renderer contract to stock and V3", asy
           coverage: expectedCoverage,
           presentationPreset: "cloud-scale-similarity",
           rendererFingerprint: {
-            schemaVersion: 4
+            schemaVersion: 5
           },
           shapeDetailRepeat: 0.006 / scale,
           shapeRepeat: 0.0003 / scale
@@ -247,6 +265,20 @@ test("applies the same explicit official renderer contract to stock and V3", asy
         });
         expect(telemetry.cloudScale?.readback.layers)
           .toEqual(telemetry.cloudScale?.requested.layers);
+        expect(telemetry.cloudScale?.readback.mipDistancePatch).toMatchObject({
+          active: false,
+          classification: "native-hardcoded",
+          nativeCoefficientOccurrences: 1,
+          patchedCoefficientOccurrences: 0,
+          scale: 1,
+          auditedArtifacts: {
+            installedBuildSharedSha256: "c2115702324e01760429187faf6203c2a118812c508429edbebe37e2e1d7c018",
+            installedCloudsFragmentSha256: "b29eeac1f5edc205cc578edf2a711aa2ffc8b50e1ea835e8b1abb50de68b77ff",
+            packagePatchSha256: "2bfa2dd78d4e9ac82c82eddba1273f9d2f95e932b7021584ce840f497b4f745c"
+          }
+        });
+        expect(telemetry.cloudScale?.readback.mipDistancePatch.runtimeFragmentShaderFnv1a64)
+          .toMatch(/^fnv1a-64:[0-9a-f]{16}$/);
         expect(telemetry.rendererFingerprint?.cloudScale)
           .toEqual(telemetry.cloudScale?.readback);
       }
@@ -262,6 +294,14 @@ test("applies the same explicit official renderer contract to stock and V3", asy
         localWeatherRepeat: [100, 100],
         localWeatherSource: "stock"
       });
+      expect(stock.cloudScale?.stockWeatherControl).toEqual({
+        classification: "UNSCALED_STOCK_WEATHER_CONTROL",
+        mode: "unscaled",
+        repeat: [100, 100],
+        scale,
+        sourceRepeat: [100, 100]
+      });
+      expect(v3.cloudScale?.stockWeatherControl).toBeNull();
       expect(v3.adapter).toMatchObject({
         disableDefaultLayers: true,
         globalWeatherMapping: true,
@@ -273,7 +313,31 @@ test("applies the same explicit official renderer contract to stock and V3", asy
   }
 });
 
-test("Stage A captures the stock-only public-parameter visual funnel", async ({
+test("scales the stock weather repeat without changing the renderer fingerprint", async ({
+  page
+}) => {
+  for (const scale of [80, 120, 160] as const) {
+    const unscaled = await openScaleCandidate(
+      page, "stock", scale, "parity", "full", 0.06, "unscaled"
+    );
+    const similarity = await openScaleCandidate(
+      page, "stock", scale, "parity", "full", 0.06, "similarity"
+    );
+
+    expect(similarity.adapter.localWeatherRepeat).toEqual([100 / scale, 100 / scale]);
+    expect(similarity.cloudScale?.stockWeatherControl).toEqual({
+      classification: "SCALED_STOCK_WEATHER_CONTROL",
+      mode: "similarity",
+      repeat: [100 / scale, 100 / scale],
+      scale,
+      sourceRepeat: [100, 100]
+    });
+    expect(similarity.rendererFingerprintHash).toBe(unscaled.rendererFingerprintHash);
+    expect(similarity.historyEpochHash).not.toBe(unscaled.historyEpochHash);
+  }
+});
+
+test("Stage A0 captures the unscaled stock-weather historical control", async ({
   browser,
   page
 }) => {
@@ -351,12 +415,14 @@ test("Stage A captures the stock-only public-parameter visual funnel", async ({
     captureCommand:
       "MIRALITH_TAKRAM_CLOUD_SCALE_CAPTURE=1 pnpm exec playwright test " +
       "-c playwright.takram-parity-system-chrome.config.ts " +
-      "lubirth-takram-cloud-scale.spec.ts --headed --grep \"Stage A\"",
+      "lubirth-takram-cloud-scale.spec.ts --headed --grep \"Stage A0\"",
     candidateContract: {
+      classification: "UNSCALED_STOCK_WEATHER_CONTROL",
       coverageMode: "parity",
       coverage: 0.3,
       input: "stock",
       mipDistancePatchActive: false,
+      localWeatherRepeat: [100, 100],
       progresses,
       scales
     },
@@ -396,7 +462,8 @@ test("Stage A captures the stock-only public-parameter visual funnel", async ({
       writeFileSync(
         path.join(stagingDirectory, "checkpoint.json"),
         `${JSON.stringify({
-          decision: "STAGE_A_VISUAL_REVIEW_PENDING",
+          conditionalTaskMEligible: false,
+          decision: "UNSCALED_STOCK_WEATHER_CONTROL",
           mipDistancePatchAuthorized: false,
           originalTask0To8Locked: true,
           stockPassingScales: [],
@@ -405,9 +472,9 @@ test("Stage A captures the stock-only public-parameter visual funnel", async ({
       );
       writeFileSync(
         path.join(stagingDirectory, "README.md"),
-        `# Takram cloud-scale similarity — Stage A\n\n` +
-        `Stock-only public-parameter control at coverage 0.3. ` +
-        `Visual review is pending; no V3 or performance population has run.\n\n` +
+        `# Takram cloud-scale similarity — Stage A0 historical control\n\n` +
+        `Stock-only public-parameter control at coverage 0.3 with unscaled ` +
+        `localWeatherRepeat=[100,100]. It is diagnostic-only and cannot authorize mip work.\n\n` +
         `## Reproduce\n\n\`\`\`bash\n${manifest.captureCommand}\n\`\`\`\n\n` +
         `Task 0P and the original Task 0–8 remain locked.\n`
       );
@@ -420,11 +487,17 @@ test("Stage A captures the stock-only public-parameter visual funnel", async ({
 test("resets exact first-frame history when the scale contract changes", async ({ page }) => {
   const first = await openScaleCandidate(page, "stock", 80, "parity", "history-reset-first");
   const second = await openScaleCandidate(page, "stock", 120, "parity", "history-reset-first");
+  const weatherScaled = await openScaleCandidate(
+    page, "stock", 120, "parity", "history-reset-first", 0.06, "similarity"
+  );
 
   expect(first.historyFirstFrameCapture?.nativeFrameCount).toBe(1);
   expect(second.historyFirstFrameCapture?.nativeFrameCount).toBe(1);
+  expect(weatherScaled.historyFirstFrameCapture?.nativeFrameCount).toBe(1);
   expect(first.historyEpochHash).toMatch(/^fnv1a-64:[0-9a-f]{16}$/);
   expect(second.historyEpochHash).toMatch(/^fnv1a-64:[0-9a-f]{16}$/);
   expect(first.historyEpochHash).not.toBe(second.historyEpochHash);
   expect(first.rendererFingerprintHash).not.toBe(second.rendererFingerprintHash);
+  expect(weatherScaled.rendererFingerprintHash).toBe(second.rendererFingerprintHash);
+  expect(weatherScaled.historyEpochHash).not.toBe(second.historyEpochHash);
 });

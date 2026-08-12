@@ -68,6 +68,7 @@ export function LuBirthTakramParitySpikeClient() {
       data-morphology-candidate={query?.morphologyCandidate ?? "none"}
       data-morphology-view={query?.morphologyView ?? "none"}
       data-runtime={runtime}
+      data-stock-weather={query?.stockWeatherMode ?? "none"}
       data-takram-parity-route="true"
       data-view={query?.view ?? "pending"}
     >
@@ -95,6 +96,7 @@ export function LuBirthTakramParitySpikeClient() {
               morphologyView={query.morphologyView}
               onTelemetry={setTelemetry}
               progress={query.progress}
+              stockWeatherMode={query.stockWeatherMode}
             />
           )}
         </VisualCanvas>

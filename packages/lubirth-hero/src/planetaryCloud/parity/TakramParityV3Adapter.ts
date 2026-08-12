@@ -23,6 +23,11 @@ export const TAKRAM_PARITY_V3_ADAPTER = Object.freeze({
  * the source used to regenerate the patch; R3F remains byte-for-byte upstream.
  */
 export const TAKRAM_PARITY_V3_PATCH_AUDIT = Object.freeze({
+  installedIdentity: Object.freeze({
+    installedBuildSharedSha256: "c2115702324e01760429187faf6203c2a118812c508429edbebe37e2e1d7c018",
+    installedCloudsFragmentSha256: "b29eeac1f5edc205cc578edf2a711aa2ffc8b50e1ea835e8b1abb50de68b77ff",
+    packagePatchSha256: "2bfa2dd78d4e9ac82c82eddba1273f9d2f95e932b7021584ce840f497b4f745c"
+  }),
   patchedSourceHashes: Object.freeze({
     "build/shared.cjs": "b099d176aa70e9c938b0599fece0180aeb33af4b3b81936f40092c9ae89ed602",
     "build/shared.js": "c2115702324e01760429187faf6203c2a118812c508429edbebe37e2e1d7c018",

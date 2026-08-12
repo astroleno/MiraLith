@@ -2,10 +2,13 @@ import { Ellipsoid } from "@takram/three-geospatial";
 import {
   parseTakramCloudCoverageMode,
   parseTakramCloudScale,
+  parseTakramStockWeatherControlMode,
   type TakramCloudCoverageMode,
   type TakramCloudScale,
   type TakramCloudScaleAtmosphereDomain,
-  type TakramCloudScaleContract
+  type TakramCloudScaleContract,
+  type TakramStockWeatherControlContract,
+  type TakramStockWeatherControlMode
 } from "./TakramCloudScaleContract";
 import type {
   TakramCloudScaleRuntimeDrift,
@@ -65,6 +68,7 @@ export const TAKRAM_PARITY_CONTROL = Object.freeze({
 export type TakramParityRouteQuery = {
   cloudCoverageMode?: TakramCloudCoverageMode;
   cloudScale?: TakramCloudScale;
+  stockWeatherMode?: TakramStockWeatherControlMode;
   diagnostic: TakramParityDiagnostic;
   input: TakramParityInput;
   progress: number;
@@ -110,10 +114,12 @@ export interface TakramParityHistoryEpochInput {
   diagnostic: string;
   input: string;
   localWeatherHash: string | null;
-  mipDistancePatchActive: boolean;
+  mipDistancePatchActive: boolean | null;
+  mipDistanceRuntimeIdentity: string | null;
   morphologyCandidate: string | null;
   morphologyView: string | null;
   rendererConfigurationHash: string | null;
+  stockWeatherMode: string | null;
 }
 
 export function buildTakramParityHistoryEpoch(input: TakramParityHistoryEpochInput) {
@@ -128,9 +134,11 @@ export function buildTakramParityHistoryEpoch(input: TakramParityHistoryEpochInp
     input.input,
     input.localWeatherHash,
     input.mipDistancePatchActive,
+    input.mipDistanceRuntimeIdentity,
     input.morphologyCandidate,
     input.morphologyView,
-    input.rendererConfigurationHash
+    input.rendererConfigurationHash,
+    input.stockWeatherMode
   ]);
 }
 
@@ -208,6 +216,9 @@ export type TakramParityRouteQueryResult =
       | "morphology-requires-v3"
       | "unknown-cloud-coverage-mode"
       | "unknown-cloud-scale"
+      | "unknown-stock-weather-mode"
+      | "stock-weather-mode-requires-scale"
+      | "stock-weather-mode-requires-stock"
       | "unknown-morphology-candidate"
       | "unknown-morphology-view";
   };
@@ -220,6 +231,7 @@ export function resolveTakramParityRouteQuery(
   const requestedDiagnostic = input.get("diagnostic");
   const requestedCloudScale = input.get("cloudScale");
   const requestedCloudCoverage = input.get("cloudCoverage");
+  const requestedStockWeather = input.get("stockWeather");
   const requestedMorphologyCandidate = input.get("morphologyCandidate");
   const requestedMorphologyView = input.get("morphologyView");
   const parsedProgress = Number.parseFloat(input.get("progress") ?? "0");
@@ -244,6 +256,17 @@ export function resolveTakramParityRouteQuery(
     progress: Number.isFinite(parsedProgress) ? Math.max(0, Math.min(0.18, parsedProgress)) : 0,
     view: requestedView === "control" ? "control" : "opening"
   };
+
+  const stockWeatherMode = parseTakramStockWeatherControlMode(requestedStockWeather);
+  if (requestedStockWeather !== null && stockWeatherMode === null) {
+    return { ok: false, reason: "unknown-stock-weather-mode" };
+  }
+  if (requestedStockWeather !== null && value.input !== "stock") {
+    return { ok: false, reason: "stock-weather-mode-requires-stock" };
+  }
+  if (requestedStockWeather !== null && requestedCloudScale === null) {
+    return { ok: false, reason: "stock-weather-mode-requires-scale" };
+  }
 
   const hasMorphologyQuery = requestedMorphologyView !== null ||
     requestedMorphologyCandidate !== null;
@@ -272,6 +295,9 @@ export function resolveTakramParityRouteQuery(
   if (cloudScale !== null && cloudCoverageMode !== null) {
     value.cloudScale = cloudScale;
     value.cloudCoverageMode = cloudCoverageMode;
+    if (value.input === "stock") {
+      value.stockWeatherMode = stockWeatherMode ?? "unscaled";
+    }
   }
   if (hasMorphologyQuery && value.input !== "v3") {
     return { ok: false, reason: "morphology-requires-v3" };
@@ -370,8 +396,9 @@ export const TAKRAM_PARITY_V3_LADDER_SPHERICAL_UV = TAKRAM_V3_MORPHOLOGY_SPHERIC
 
 export interface TakramParityRendererFingerprint {
   // Version 3 remains byte-compatible for historical unscaled evidence.
-  // Version 4 adds the complete runtime-read cloud-scale contract.
-  schemaVersion: 3 | 4;
+  // Version 4 added declared cloud-scale readback; version 5 proves actual
+  // runtime shader identity and mip state.
+  schemaVersion: 3 | 4 | 5;
   cloudScale?: TakramCloudScaleRuntimeReadback;
   packageVersions: typeof TAKRAM_PARITY_NPM_PACKAGES;
   composer: {
@@ -635,7 +662,7 @@ export function buildTakramParityRendererFingerprint({
     : {
         ...fingerprint,
         cloudScale: cloudScaleRuntime,
-        schemaVersion: 4
+        schemaVersion: 5
       };
 }
 
@@ -677,6 +704,7 @@ export interface TakramParityCloudScaleTelemetry {
   drift: readonly TakramCloudScaleRuntimeDrift[];
   readback: TakramCloudScaleRuntimeReadback;
   requested: TakramCloudScaleContract;
+  stockWeatherControl: TakramStockWeatherControlContract | null;
 }
 
 export interface TakramParityResolvedCloudLayer {

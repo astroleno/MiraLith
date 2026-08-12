@@ -5,6 +5,7 @@ import type {
   TakramCloudScaleDensityProfile,
   TakramCloudScaleLayer
 } from "./TakramCloudScaleContract";
+import { TAKRAM_PARITY_V3_PATCH_AUDIT } from "./TakramParityV3Adapter";
 
 interface RuntimeVector3 {
   setScalar(value: number): void;
@@ -32,6 +33,12 @@ type RuntimeNumericRecord = Record<string, number | undefined>;
 interface TakramCloudScaleRuntimeTarget {
   cloudLayers: RuntimeLayer[];
   clouds: RuntimeNumericRecord;
+  cloudsPass?: {
+    currentMaterial?: {
+      fragmentShader?: string;
+      uniforms?: Record<string, { value?: unknown } | undefined>;
+    };
+  };
   coverage: number;
   shadow: RuntimeNumericRecord & {
     mapSize?: RuntimeVector2 | readonly [number, number];
@@ -47,7 +54,15 @@ export interface TakramCloudScaleRuntimeReadback {
   readonly coverage: number;
   readonly coverageMode: TakramCloudScaleContract["coverageMode"];
   readonly layers: readonly TakramCloudScaleLayer[];
-  readonly mipDistancePatch: TakramCloudScaleContract["mipDistancePatch"];
+  readonly mipDistancePatch: Readonly<{
+    active: boolean | null;
+    auditedArtifacts: typeof TAKRAM_PARITY_V3_PATCH_AUDIT.installedIdentity;
+    classification: "native-hardcoded" | "uniform-patched" | "unknown";
+    nativeCoefficientOccurrences: number;
+    patchedCoefficientOccurrences: number;
+    runtimeFragmentShaderFnv1a64: string;
+    scale: number | null;
+  }>;
   readonly scale: TakramCloudScaleContract["scale"];
   readonly schemaVersion: TakramCloudScaleContract["schemaVersion"];
   readonly shadow: Readonly<Record<string, number | readonly [number, number] | undefined>>;
@@ -145,6 +160,64 @@ function readNumericRecord(
   return Object.fromEntries(keys.map((key) => [key, target[key]]));
 }
 
+function hashFnv1a64(value: string) {
+  let hash = 14695981039346656037n;
+  for (const byte of new TextEncoder().encode(value)) {
+    hash ^= BigInt(byte);
+    hash = BigInt.asUintN(64, hash * 1099511628211n);
+  }
+  return `fnv1a-64:${hash.toString(16).padStart(16, "0")}`;
+}
+
+function countMatches(value: string, expression: RegExp) {
+  return Array.from(value.matchAll(expression)).length;
+}
+
+function readMipDistanceRuntime(target: TakramCloudScaleRuntimeTarget) {
+  const material = target.cloudsPass?.currentMaterial;
+  const fragmentShader = material?.fragmentShader ?? "";
+  const nativeCoefficientOccurrences = countMatches(
+    fragmentShader,
+    /rayDistance\s*\*\s*1e-5/g
+  );
+  const patchedCoefficientOccurrences = countMatches(
+    fragmentShader,
+    /rayDistance\s*\*\s*1e-5\s*\*\s*mipDistanceScale/g
+  );
+  const declaresPatchUniform = /uniform\s+float\s+mipDistanceScale\s*;/.test(
+    fragmentShader
+  );
+  const uniformValue = material?.uniforms?.mipDistanceScale?.value;
+  const hasNumericPatchUniform = typeof uniformValue === "number" &&
+    Number.isFinite(uniformValue);
+
+  let active: boolean | null = null;
+  let classification: "native-hardcoded" | "uniform-patched" | "unknown" =
+    "unknown";
+  let scale: number | null = null;
+  if (declaresPatchUniform && hasNumericPatchUniform &&
+    patchedCoefficientOccurrences === 1 && nativeCoefficientOccurrences === 1) {
+    active = true;
+    classification = "uniform-patched";
+    scale = uniformValue;
+  } else if (!declaresPatchUniform && patchedCoefficientOccurrences === 0 &&
+    nativeCoefficientOccurrences === 1) {
+    active = false;
+    classification = "native-hardcoded";
+    scale = 1;
+  }
+
+  return {
+    active,
+    auditedArtifacts: TAKRAM_PARITY_V3_PATCH_AUDIT.installedIdentity,
+    classification,
+    nativeCoefficientOccurrences,
+    patchedCoefficientOccurrences,
+    runtimeFragmentShaderFnv1a64: hashFnv1a64(fragmentShader),
+    scale
+  };
+}
+
 /** Read actual native state; missing fields remain visible as undefined. */
 export function readTakramCloudScaleRuntime(
   clouds: CloudsEffect | TakramCloudScaleRuntimeTarget,
@@ -164,7 +237,7 @@ export function readTakramCloudScaleRuntime(
     coverage: target.coverage,
     coverageMode: contract.coverageMode,
     layers: contract.layers.map((_, index) => readLayer(target.cloudLayers[index])),
-    mipDistancePatch: { ...contract.mipDistancePatch },
+    mipDistancePatch: readMipDistanceRuntime(target),
     scale: contract.scale,
     schemaVersion: contract.schemaVersion,
     shadow: {
@@ -188,11 +261,13 @@ export function readTakramCloudScaleRuntime(
   });
 }
 
-function expectedRuntimeReadback(
-  contract: TakramCloudScaleContract
-): Readonly<TakramCloudScaleRuntimeReadback> {
+function expectedRuntimeReadback(contract: TakramCloudScaleContract) {
   return deepFreeze({
     ...contract,
+    mipDistancePatch: {
+      ...contract.mipDistancePatch,
+      classification: "native-hardcoded"
+    },
     shapeDetailRepeat: [
       contract.shapeDetailRepeat,
       contract.shapeDetailRepeat,
@@ -237,6 +312,14 @@ export function diffTakramCloudScaleRuntime(
   actual: TakramCloudScaleRuntimeReadback
 ): readonly TakramCloudScaleRuntimeDrift[] {
   const result: TakramCloudScaleRuntimeDrift[] = [];
-  collectDrift(expectedRuntimeReadback(expected), actual, "", result);
+  const comparableActual = {
+    ...actual,
+    mipDistancePatch: {
+      active: actual.mipDistancePatch.active,
+      classification: actual.mipDistancePatch.classification,
+      scale: actual.mipDistancePatch.scale
+    }
+  };
+  collectDrift(expectedRuntimeReadback(expected), comparableActual, "", result);
   return deepFreeze(result);
 }

@@ -56,6 +56,7 @@ interface CloudScaleContractModule {
   };
   parseTakramCloudCoverageMode(value: string | null): CoverageMode | null;
   parseTakramCloudScale(value: string | null): CloudScale | null;
+  parseTakramStockWeatherControlMode(value: string | null): "unscaled" | "similarity" | null;
   resolveTakramCloudScaleAtmosphereDomain(input: {
     bottomRadius: number;
     contract: CloudScaleContract;
@@ -70,6 +71,16 @@ interface CloudScaleContractModule {
     coverageMode: CoverageMode;
     scale: CloudScale;
   }): CloudScaleContract;
+  resolveTakramStockWeatherControl(input: {
+    mode: "unscaled" | "similarity";
+    scale: CloudScale;
+  }): {
+    classification: "UNSCALED_STOCK_WEATHER_CONTROL" | "SCALED_STOCK_WEATHER_CONTROL";
+    mode: "unscaled" | "similarity";
+    repeat: readonly [number, number];
+    scale: CloudScale;
+    sourceRepeat: readonly [100, 100];
+  };
 }
 
 const contractModulePath =
@@ -195,6 +206,34 @@ test("parses only the approved scales and coverage modes", async () => {
   expect(module!.parseTakramCloudCoverageMode("presentation")).toBe("presentation");
   expect(module!.parseTakramCloudCoverageMode("legacy")).toBeNull();
   expect(module!.parseTakramCloudCoverageMode(null)).toBeNull();
+  expect(module!.parseTakramStockWeatherControlMode("unscaled")).toBe("unscaled");
+  expect(module!.parseTakramStockWeatherControlMode("similarity")).toBe("similarity");
+  expect(module!.parseTakramStockWeatherControlMode("scaled")).toBeNull();
+  expect(module!.parseTakramStockWeatherControlMode(null)).toBeNull();
+});
+
+test("scales only the stock local weather repeat for the Stage A1 health control", async () => {
+  const module = await loadContract();
+
+  expect(module).not.toBeNull();
+  for (const scale of [80, 120, 160] as const) {
+    expect(module!.resolveTakramStockWeatherControl({ mode: "unscaled", scale }))
+      .toEqual({
+        classification: "UNSCALED_STOCK_WEATHER_CONTROL",
+        mode: "unscaled",
+        repeat: [100, 100],
+        scale,
+        sourceRepeat: [100, 100]
+      });
+    expect(module!.resolveTakramStockWeatherControl({ mode: "similarity", scale }))
+      .toEqual({
+        classification: "SCALED_STOCK_WEATHER_CONTROL",
+        mode: "similarity",
+        repeat: [100 / scale, 100 / scale],
+        scale,
+        sourceRepeat: [100, 100]
+      });
+  }
 });
 
 test("resolves every dimensional and fixed field from one public scale", async () => {

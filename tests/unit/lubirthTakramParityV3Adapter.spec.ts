@@ -31,6 +31,11 @@ interface TakramParityV3AdapterModule {
     runtimeUrl: string;
   };
   TAKRAM_PARITY_V3_PATCH_AUDIT: {
+    installedIdentity: {
+      installedBuildSharedSha256: string;
+      installedCloudsFragmentSha256: string;
+      packagePatchSha256: string;
+    };
     patchedSourceHashes: Record<string, string>;
     upstreamSourceHashes: Record<string, string>;
   };
@@ -103,15 +108,22 @@ test("keeps stock cube-sphere UVs while the narrow V3 patch enables spherical UV
   const adapter = await importAdapter();
   expect(adapter).not.toBeNull();
 
-  const [sourceCloudsEffect, sourceR3fClouds, sourceCloudsGlsl, bundledShader, bundledCjsShader, patch] =
+  const [sourceCloudsEffect, sourceR3fClouds, sourceCloudsGlsl, sourceCloudsFragment, bundledShader, bundledCjsShader, patch] =
     await Promise.all([
       readFile(path.join(cloudsRoot, "src/CloudsEffect.ts"), "utf8"),
       readFile(path.join(cloudsRoot, "src/r3f/Clouds.tsx"), "utf8"),
       readFile(path.join(cloudsRoot, "src/shaders/clouds.glsl"), "utf8"),
+      readFile(path.join(cloudsRoot, "src/shaders/clouds.frag"), "utf8"),
       readFile(path.join(cloudsRoot, "build/shared.js"), "utf8"),
       readFile(path.join(cloudsRoot, "build/shared.cjs"), "utf8"),
       readFile(patchPath, "utf8")
     ]);
+
+  expect(adapter?.TAKRAM_PARITY_V3_PATCH_AUDIT.installedIdentity).toEqual({
+    installedBuildSharedSha256: sha256(bundledShader),
+    installedCloudsFragmentSha256: sha256(sourceCloudsFragment),
+    packagePatchSha256: sha256(patch)
+  });
 
   expect(adapter?.TAKRAM_PARITY_V3_PATCH_AUDIT.upstreamSourceHashes).toEqual({
     "build/shared.js": "cb1b4ec2400f873c1fe8cac6a00331a3972c9b7cdbc6349496e3c2de06886804",

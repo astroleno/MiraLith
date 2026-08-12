@@ -41,6 +41,13 @@ function createRuntime(defaults: any) {
       }
     })),
     clouds: { ...defaults.clouds },
+    cloudsPass: {
+      currentMaterial: {
+        fragmentShader:
+          "float mipLevel = log2(max(1.0, rayStartTexelsPerPixel + rayDistance * 1e-5));",
+        uniforms: {}
+      }
+    },
     coverage: 0.3,
     shadow: {
       ...defaults.shadow,
@@ -70,7 +77,19 @@ test("applies and reads back the complete public-parameter similarity contract",
     coverage: 0.55,
     coverageMode: "presentation",
     layers: contract.layers,
-    mipDistancePatch: { active: false, scale: 1 },
+    mipDistancePatch: {
+      active: false,
+      classification: "native-hardcoded",
+      scale: 1,
+      nativeCoefficientOccurrences: 1,
+      patchedCoefficientOccurrences: 0,
+      runtimeFragmentShaderFnv1a64: expect.stringMatching(/^fnv1a-64:[0-9a-f]{16}$/),
+      auditedArtifacts: {
+        installedBuildSharedSha256: "c2115702324e01760429187faf6203c2a118812c508429edbebe37e2e1d7c018",
+        installedCloudsFragmentSha256: "b29eeac1f5edc205cc578edf2a711aa2ffc8b50e1ea835e8b1abb50de68b77ff",
+        packagePatchSha256: "2bfa2dd78d4e9ac82c82eddba1273f9d2f95e932b7021584ce840f497b4f745c"
+      }
+    },
     scale: 120,
     schemaVersion: 1,
     shadow: contract.shadow,
@@ -81,6 +100,50 @@ test("applies and reads back the complete public-parameter similarity contract",
   expect(runtimeModule.diffTakramCloudScaleRuntime(contract, readback)).toEqual([]);
   expect(Object.isFrozen(readback)).toBe(true);
   expect(Object.isFrozen(readback.layers)).toBe(true);
+});
+
+test("derives mip patch state from the actual runtime shader and uniform", async () => {
+  const contractModule = await import(contractModulePath);
+  const runtimeModule = await import(runtimeModulePath);
+  const contract = contractModule.resolveTakramCloudScaleContract({
+    coverageMode: "parity",
+    scale: 80
+  });
+  const runtime = createRuntime(contractModule.TAKRAM_CLOUD_SCALE_DEFAULTS);
+  runtimeModule.applyTakramCloudScaleRuntime(runtime, contract);
+
+  runtime.cloudsPass.currentMaterial.fragmentShader = [
+    "uniform float mipDistanceScale;",
+    "float mipLevel = log2(max(1.0, rayStartTexelsPerPixel +",
+    "  rayDistance * 1e-5 * mipDistanceScale));"
+  ].join("\n");
+  runtime.cloudsPass.currentMaterial.uniforms.mipDistanceScale = { value: 1 / 80 };
+  const patched = runtimeModule.readTakramCloudScaleRuntime(runtime, contract);
+  expect(patched.mipDistancePatch).toMatchObject({
+    active: true,
+    classification: "uniform-patched",
+    nativeCoefficientOccurrences: 1,
+    patchedCoefficientOccurrences: 1,
+    scale: 1 / 80
+  });
+  expect(runtimeModule.diffTakramCloudScaleRuntime(contract, patched).map(
+    (entry: { path: string }) => entry.path
+  )).toEqual([
+    "mipDistancePatch.active",
+    "mipDistancePatch.classification",
+    "mipDistancePatch.scale"
+  ]);
+
+  runtime.cloudsPass.currentMaterial.fragmentShader = "void main() {}";
+  delete runtime.cloudsPass.currentMaterial.uniforms.mipDistanceScale;
+  const unknown = runtimeModule.readTakramCloudScaleRuntime(runtime, contract);
+  expect(unknown.mipDistancePatch).toMatchObject({
+    active: null,
+    classification: "unknown",
+    nativeCoefficientOccurrences: 0,
+    patchedCoefficientOccurrences: 0,
+    scale: null
+  });
 });
 
 test("applies both extinction thresholds while preserving fixed density and iteration fields", async () => {

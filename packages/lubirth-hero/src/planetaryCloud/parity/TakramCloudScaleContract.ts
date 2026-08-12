@@ -15,6 +15,18 @@ export type TakramCloudScale = (typeof TAKRAM_CLOUD_SCALE_VALUES)[number];
 export type TakramCloudCoverageMode = keyof typeof TAKRAM_CLOUD_SCALE_COVERAGE;
 export type TakramCloudScaleClassification = "PUBLIC_PARAMETER_SIMILARITY";
 export type TakramCloudScaleChannel = "r" | "g" | "b" | "a";
+export type TakramStockWeatherControlMode = "unscaled" | "similarity";
+export type TakramStockWeatherControlClassification =
+  | "UNSCALED_STOCK_WEATHER_CONTROL"
+  | "SCALED_STOCK_WEATHER_CONTROL";
+
+export interface TakramStockWeatherControlContract {
+  readonly classification: TakramStockWeatherControlClassification;
+  readonly mode: TakramStockWeatherControlMode;
+  readonly repeat: readonly [number, number];
+  readonly scale: TakramCloudScale;
+  readonly sourceRepeat: readonly [100, 100];
+}
 
 export interface TakramCloudScaleDensityProfile {
   readonly constantTerm: number;
@@ -104,6 +116,28 @@ export function parseTakramCloudCoverageMode(
   return value === "parity" || value === "presentation" ? value : null;
 }
 
+export function parseTakramStockWeatherControlMode(
+  value: string | null
+): TakramStockWeatherControlMode | null {
+  return value === "unscaled" || value === "similarity" ? value : null;
+}
+
+export function resolveTakramStockWeatherControl(input: {
+  mode: TakramStockWeatherControlMode;
+  scale: TakramCloudScale;
+}): Readonly<TakramStockWeatherControlContract> {
+  const repeat = input.mode === "similarity" ? 100 / input.scale : 100;
+  return deepFreeze({
+    classification: input.mode === "similarity"
+      ? "SCALED_STOCK_WEATHER_CONTROL"
+      : "UNSCALED_STOCK_WEATHER_CONTROL",
+    mode: input.mode,
+    repeat: [repeat, repeat] as [number, number],
+    scale: input.scale,
+    sourceRepeat: [100, 100] as [100, 100]
+  });
+}
+
 export function resolveTakramCloudScaleContract(input: {
   coverageMode: TakramCloudCoverageMode;
   scale: TakramCloudScale;
@@ -169,4 +203,3 @@ export function resolveTakramCloudScaleAtmosphereDomain(input: {
     presentationDomain: "artistic-orbital"
   });
 }
-

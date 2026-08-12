@@ -31,8 +31,10 @@ import { buildLuBirthWorldToEcef } from "../planetaryCloudMath";
 import {
   resolveTakramCloudScaleAtmosphereDomain,
   resolveTakramCloudScaleContract,
+  resolveTakramStockWeatherControl,
   type TakramCloudCoverageMode,
-  type TakramCloudScale
+  type TakramCloudScale,
+  type TakramStockWeatherControlMode
 } from "./TakramCloudScaleContract";
 import {
   applyTakramCloudScaleRuntime,
@@ -182,6 +184,7 @@ export interface TakramStockParityPipelineProps {
   altitudeMeters?: number;
   cloudCoverageMode?: TakramCloudCoverageMode;
   cloudScale?: TakramCloudScale;
+  stockWeatherMode?: TakramStockWeatherControlMode;
   diagnostic?: TakramParityDiagnostic;
   input: TakramParityInput;
   morphologyCandidate?: TakramV3MorphologyCandidateId;
@@ -510,6 +513,7 @@ export function TakramStockParityPipeline({
   morphologyView,
   onTelemetry,
   progress,
+  stockWeatherMode,
   view
 }: TakramStockParityPipelineProps) {
   const { gl, camera } = useThree();
@@ -520,6 +524,15 @@ export function TakramStockParityPipeline({
       ? resolveTakramCloudScaleContract({ coverageMode: cloudCoverageMode, scale: cloudScale })
       : null,
     [cloudCoverageMode, cloudScale]
+  );
+  const stockWeatherControl = useMemo(
+    () => input === "stock" && cloudScale !== undefined
+      ? resolveTakramStockWeatherControl({
+          mode: stockWeatherMode ?? "unscaled",
+          scale: cloudScale
+        })
+      : null,
+    [cloudScale, input, stockWeatherMode]
   );
   const resolvedMorphologyCandidate = input === "v3" && morphologyView
     ? resolveTakramV3MorphologyCandidate(morphologyCandidate ?? "baseline")
@@ -553,7 +566,9 @@ export function TakramStockParityPipeline({
     if (clouds === null) {
       return;
     }
-    clouds.localWeatherRepeat.set(...adapter.localWeatherRepeat);
+    clouds.localWeatherRepeat.set(...(
+      stockWeatherControl?.repeat ?? adapter.localWeatherRepeat
+    ));
     clouds.localWeatherOffset.set(...adapter.localWeatherOffset);
     clouds.localWeatherVelocity.set(0, 0);
     const useV3OpeningPreset = input === "v3" && view === "opening";
@@ -583,7 +598,7 @@ export function TakramStockParityPipeline({
         TAKRAM_ALTITUDE_LADDER_SHADER_MODES.normal
       );
     }
-  }, [adapter, altitudeMeters, cloudScaleContract, diagnostic, input, morphologyCandidate, morphologyView, resolvedMorphologyCandidate, view]);
+  }, [adapter, altitudeMeters, cloudScaleContract, diagnostic, input, morphologyCandidate, morphologyView, resolvedMorphologyCandidate, stockWeatherControl, view]);
 
   useEffect(() => {
     ladderCaptureRef.current = {
@@ -848,10 +863,16 @@ export function TakramStockParityPipeline({
       diagnostic,
       input,
       localWeatherHash: assetsState.assets?.localWeatherSha256 ?? null,
-      mipDistancePatchActive: cloudScaleContract?.mipDistancePatch.active ?? false,
+      mipDistancePatchActive: cloudScaleReadback === null
+        ? false
+        : cloudScaleReadback.mipDistancePatch.active,
+      mipDistanceRuntimeIdentity: cloudScaleReadback === null
+        ? null
+        : JSON.stringify(cloudScaleReadback.mipDistancePatch),
       morphologyCandidate: resolvedMorphologyCandidate?.id ?? null,
       morphologyView: morphologyView ?? null,
-      rendererConfigurationHash: rendererFingerprintHash
+      rendererConfigurationHash: rendererFingerprintHash,
+      stockWeatherMode: stockWeatherControl?.mode ?? null
     });
     if (historyEpochRef.current !== historyEpoch) {
       historyEpochRef.current = historyEpoch;
@@ -927,7 +948,8 @@ export function TakramStockParityPipeline({
             atmosphereDomain: cloudScaleAtmosphereDomain,
             drift: cloudScaleDrift,
             readback: cloudScaleReadback,
-            requested: cloudScaleContract
+            requested: cloudScaleContract,
+            stockWeatherControl
           }
         : null,
       coordinateMode,

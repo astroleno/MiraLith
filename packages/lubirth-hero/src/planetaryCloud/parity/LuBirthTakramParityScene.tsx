@@ -2,7 +2,8 @@
 
 import type {
   TakramCloudCoverageMode,
-  TakramCloudScale
+  TakramCloudScale,
+  TakramStockWeatherControlMode
 } from "./TakramCloudScaleContract";
 import type {
   TakramParityDiagnostic,
@@ -19,6 +20,7 @@ export interface LuBirthTakramParitySceneProps {
   altitudeMeters?: number;
   cloudCoverageMode?: TakramCloudCoverageMode;
   cloudScale?: TakramCloudScale;
+  stockWeatherMode?: TakramStockWeatherControlMode;
   diagnostic?: TakramParityDiagnostic;
   input: TakramParityInput;
   morphologyCandidate?: TakramV3MorphologyCandidateId;
@@ -40,7 +42,8 @@ export function LuBirthTakramParityScene({
   morphologyCandidate,
   morphologyView,
   onTelemetry,
-  progress
+  progress,
+  stockWeatherMode
 }: LuBirthTakramParitySceneProps) {
   return (
     <TakramStockParityPipeline
@@ -53,6 +56,7 @@ export function LuBirthTakramParityScene({
       morphologyView={morphologyView}
       onTelemetry={onTelemetry}
       progress={progress}
+      stockWeatherMode={stockWeatherMode}
       view="opening"
     />
   );

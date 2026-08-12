@@ -21,6 +21,7 @@ interface TakramParityContractModule {
       value: {
         cloudCoverageMode?: "parity" | "presentation";
         cloudScale?: 80 | 120 | 160;
+        stockWeatherMode?: "unscaled" | "similarity";
         diagnostic: "altitude-ladder" | "altitude-ladder-cloud-off" | "aerial-final" | "bsm-off" | "cloud-raw" | "cloud-raw-off" | "depth-off" | "density-debug" | "full" | "history-reset-first" | "sample-count-debug" | "stage-readback" | "uv-debug";
         input: "stock" | "v3";
         progress: number;
@@ -36,7 +37,10 @@ interface TakramParityContractModule {
         | "conflicting-scale-contracts"
         | "control-requires-stock"
         | "unknown-cloud-coverage-mode"
-        | "unknown-cloud-scale";
+        | "unknown-cloud-scale"
+        | "unknown-stock-weather-mode"
+        | "stock-weather-mode-requires-scale"
+        | "stock-weather-mode-requires-stock";
     };
   TAKRAM_PARITY_BOTTOM_RADIUS_M: number;
   TAKRAM_PARITY_CONTROL: {
@@ -100,9 +104,11 @@ interface TakramParityContractModule {
     input: string;
     localWeatherHash: string | null;
     mipDistancePatchActive: boolean;
+    mipDistanceRuntimeIdentity: string | null;
     morphologyCandidate: string | null;
     morphologyView: string | null;
     rendererConfigurationHash: string | null;
+    stockWeatherMode: string | null;
   }): string;
   hashTakramParityHistoryEpoch(epoch: string): string;
   shouldCaptureTakramMatchedTemporalFrame(input: {
@@ -179,9 +185,11 @@ test("captures one immutable matched temporal frame and hashes its epoch", async
     input: "stock",
     localWeatherHash: "stock-weather",
     mipDistancePatchActive: false,
+    mipDistanceRuntimeIdentity: "native-shader",
     morphologyCandidate: null,
     morphologyView: null,
-    rendererConfigurationHash: "renderer"
+    rendererConfigurationHash: "renderer",
+    stockWeatherMode: "unscaled"
   };
   const historyEpoch = contract!.buildTakramParityHistoryEpoch(historyInput);
   expect(contract!.buildTakramParityHistoryEpoch({ ...historyInput, cloudScale: 120 }))
@@ -195,6 +203,14 @@ test("captures one immutable matched temporal frame and hashes its epoch", async
   expect(contract!.buildTakramParityHistoryEpoch({
     ...historyInput,
     mipDistancePatchActive: true
+  })).not.toBe(historyEpoch);
+  expect(contract!.buildTakramParityHistoryEpoch({
+    ...historyInput,
+    stockWeatherMode: "similarity"
+  })).not.toBe(historyEpoch);
+  expect(contract!.buildTakramParityHistoryEpoch({
+    ...historyInput,
+    mipDistanceRuntimeIdentity: "patched-shader"
   })).not.toBe(historyEpoch);
 });
 
@@ -327,6 +343,7 @@ test("pins the official stock Takram contract to auditable local assets", async 
       diagnostic: "full",
       input: "stock",
       progress: 0.06,
+      stockWeatherMode: "unscaled",
       view: "opening"
     }
   });
@@ -343,6 +360,29 @@ test("pins the official stock Takram contract to auditable local assets", async 
       view: "opening"
     }
   });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=stock&view=opening&progress=0.06&cloudScale=80&cloudCoverage=parity&stockWeather=similarity"
+  ))).toEqual({
+    ok: true,
+    value: {
+      cloudCoverageMode: "parity",
+      cloudScale: 80,
+      diagnostic: "full",
+      input: "stock",
+      progress: 0.06,
+      stockWeatherMode: "similarity",
+      view: "opening"
+    }
+  });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=v3&view=opening&cloudScale=80&cloudCoverage=parity&stockWeather=similarity"
+  ))).toEqual({ ok: false, reason: "stock-weather-mode-requires-stock" });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=stock&view=opening&stockWeather=similarity"
+  ))).toEqual({ ok: false, reason: "stock-weather-mode-requires-scale" });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=stock&view=opening&cloudScale=80&cloudCoverage=parity&stockWeather=scaled"
+  ))).toEqual({ ok: false, reason: "unknown-stock-weather-mode" });
   expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
     "input=stock&view=control&cloudScale=80&cloudCoverage=parity"
   ))).toEqual({ ok: false, reason: "cloud-scale-requires-opening" });
@@ -757,7 +797,7 @@ test("fingerprints resolved native state and rejects non-adapter drift", async (
   });
   expect(scaledFingerprint).toMatchObject({
     cloudScale: cloudScaleRuntime,
-    schemaVersion: 4
+    schemaVersion: 5
   });
   expect(contract!.hashTakramParityRendererFingerprint(scaledFingerprint)).not.toBe(
     contract!.hashTakramParityRendererFingerprint(presentationVariant)
