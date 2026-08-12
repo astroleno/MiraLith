@@ -2,7 +2,7 @@
 
 **State:** `ORBITAL_SAMPLING_CAUSALITY_CONFIRMED`
 
-The clean, two-arm exact-frame capture confirms that the inherited orbital `perspectiveStepScale=1.01` is the primary cause of the current no-cloud result. This is a causal sampling verdict, not approval of the treatment as production lookdev.
+The clean, two-arm exact-frame capture confirms that the inherited orbital `perspectiveStepScale=1.01` policy is too coarse for this frozen thin-layer setup and causes the current cloud-sampling signal loss. This is a causal parameter-domain verdict, not a per-ray measurement or approval of the treatment as production lookdev.
 
 ## Frozen experiment
 
@@ -16,7 +16,7 @@ The clean, two-arm exact-frame capture confirms that the inherited orbital `pers
 
 All 16 paired query/runtime/fingerprint/camera setup comparisons passed after removing only the named step value and expected allocation identities. Both progress-0.06 repeats were byte-identical for cloud raw and final output. All 93 artifact hashes and byte lengths match `manifest.json`.
 
-The measured initial step changes from approximately `35.83–71.62 km` to `0.408–0.766 km`, bringing it into the same order of magnitude as the `0.5–1.2 km` stock cloud layers.
+The estimated initial-step range changes from approximately `35.83–71.62 km` to `0.408–0.766 km`, bringing it into the same order of magnitude as the `0.5–1.2 km` stock cloud layers. The estimate uses the recorded camera height as a near-nadir proxy and twice that distance as the documented limb bound; it is not a sampled per-pixel `rayNear` distribution.
 
 | Progress | Native hits control → treatment | Pre-temporal signal control → treatment | Treatment resolved retention | Final full-frame changed pixels |
 |---:|---:|---:|---:|---:|
@@ -27,7 +27,7 @@ The measured initial step changes from approximately `35.83–71.62 km` to `0.40
 
 Visual review of the PNGs and the lossless pre-temporal/resolved buffers confirms that treatment restores stable cloud-density bands and clusters at every progress; control remains isolated hits. The structured treatment field survives temporal resolve and remains observable in final output. Therefore all four progress decisions satisfy the pure causal resolver and produce `ORBITAL_SAMPLING_CAUSALITY_CONFIRMED`.
 
-The treatment frame is still dark/rust-colored, visually close to the ground, and lacks an approved orbital cloud finish. This outcome authorizes a separate production-step policy design and a healthy-baseline lookdev pass. It does not promote `1.0001`, unlock the old Stage C–F funnel, or authorize homepage changes.
+The treatment frame is still dark/rust-colored, visually close to the ground, and lacks an approved orbital cloud finish. Because `perspectiveStepScale` affects both the primary march and Takram's shadow-length march, this experiment does not separate primary quality, BSM quality, or GPU cost. This outcome authorizes a separate production-step policy design and a healthy-baseline lookdev pass. It does not promote `1.0001`, unlock the old Stage C–F funnel, or authorize homepage changes.
 
 Authoritative evidence:
 
