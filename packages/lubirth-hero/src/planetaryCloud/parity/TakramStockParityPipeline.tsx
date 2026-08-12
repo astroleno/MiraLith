@@ -51,6 +51,7 @@ import {
   TAKRAM_PARITY_V3_OPENING_PRESET,
   buildTakramParityHistoryEpoch,
   buildTakramParityRendererFingerprint,
+  hashTakramParityCameraEarthTransform,
   hashTakramParityHistoryEpoch,
   hashTakramParityRendererFingerprint,
   isTakramParityAltitudeLadderDiagnostic,
@@ -853,9 +854,16 @@ export function TakramStockParityPipeline({
     const rendererFingerprintHash = rendererFingerprint
       ? hashTakramParityRendererFingerprint(rendererFingerprint)
       : null;
+    const normalizedProgress = clampOpeningProgress(progress);
+    const cameraEarthTransformHash = hashTakramParityCameraEarthTransform({
+      cameraMatrixWorld: camera.matrixWorld.toArray(),
+      cameraProjectionMatrix: camera.projectionMatrix.toArray(),
+      earthMatrixWorld: scratchEarthMatrix.toArray()
+    });
     const historyEpoch = buildTakramParityHistoryEpoch({
       assetGeneration: assetsState.assetGeneration,
       atmosphereGeneration: atmosphereState.atmosphereGeneration,
+      cameraEarthTransformHash,
       cloudCoverage: cloudScaleContract?.coverage ?? null,
       cloudCoverageMode: cloudScaleContract?.coverageMode ?? null,
       cloudScale: cloudScaleContract?.scale ?? null,
@@ -871,8 +879,10 @@ export function TakramStockParityPipeline({
         : JSON.stringify(cloudScaleReadback.mipDistancePatch),
       morphologyCandidate: resolvedMorphologyCandidate?.id ?? null,
       morphologyView: morphologyView ?? null,
+      progress: normalizedProgress,
       rendererConfigurationHash: rendererFingerprintHash,
-      stockWeatherMode: stockWeatherControl?.mode ?? null
+      stockWeatherMode: stockWeatherControl?.mode ?? null,
+      view
     });
     if (historyEpochRef.current !== historyEpoch) {
       historyEpochRef.current = historyEpoch;

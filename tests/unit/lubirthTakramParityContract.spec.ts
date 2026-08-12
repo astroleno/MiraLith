@@ -93,9 +93,15 @@ interface TakramParityContractModule {
     sharedAssets: Record<string, string>;
   }): Record<string, unknown>;
   hashTakramParityRendererFingerprint(fingerprint: Record<string, unknown>): string;
+  hashTakramParityCameraEarthTransform(input: {
+    cameraMatrixWorld: readonly number[];
+    cameraProjectionMatrix: readonly number[];
+    earthMatrixWorld: readonly number[];
+  }): string;
   buildTakramParityHistoryEpoch(input: {
     assetGeneration: number;
     atmosphereGeneration: number;
+    cameraEarthTransformHash: string;
     cloudCoverage: number | null;
     cloudCoverageMode: string | null;
     cloudScale: number | null;
@@ -107,8 +113,10 @@ interface TakramParityContractModule {
     mipDistanceRuntimeIdentity: string | null;
     morphologyCandidate: string | null;
     morphologyView: string | null;
+    progress: number;
     rendererConfigurationHash: string | null;
     stockWeatherMode: string | null;
+    view: string;
   }): string;
   hashTakramParityHistoryEpoch(epoch: string): string;
   shouldCaptureTakramMatchedTemporalFrame(input: {
@@ -174,9 +182,28 @@ test("captures one immutable matched temporal frame and hashes its epoch", async
     frameLockPass: true
   });
 
+  const identityMatrix = [
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+  ];
+  const cameraEarthTransformHash = contract!.hashTakramParityCameraEarthTransform({
+    cameraMatrixWorld: identityMatrix,
+    cameraProjectionMatrix: identityMatrix,
+    earthMatrixWorld: identityMatrix
+  });
+  expect(cameraEarthTransformHash).toMatch(/^fnv1a-64:[0-9a-f]{16}$/);
+  expect(contract!.hashTakramParityCameraEarthTransform({
+    cameraMatrixWorld: [...identityMatrix.slice(0, 12), 2, 0, 0, 1],
+    cameraProjectionMatrix: identityMatrix,
+    earthMatrixWorld: identityMatrix
+  })).not.toBe(cameraEarthTransformHash);
+
   const historyInput = {
     assetGeneration: 1,
     atmosphereGeneration: 2,
+    cameraEarthTransformHash,
     cloudCoverage: 0.3,
     cloudCoverageMode: "parity",
     cloudScale: 80,
@@ -188,8 +215,10 @@ test("captures one immutable matched temporal frame and hashes its epoch", async
     mipDistanceRuntimeIdentity: "native-shader",
     morphologyCandidate: null,
     morphologyView: null,
+    progress: 0.06,
     rendererConfigurationHash: "renderer",
-    stockWeatherMode: "unscaled"
+    stockWeatherMode: "unscaled",
+    view: "opening"
   };
   const historyEpoch = contract!.buildTakramParityHistoryEpoch(historyInput);
   expect(contract!.buildTakramParityHistoryEpoch({ ...historyInput, cloudScale: 120 }))
@@ -211,6 +240,14 @@ test("captures one immutable matched temporal frame and hashes its epoch", async
   expect(contract!.buildTakramParityHistoryEpoch({
     ...historyInput,
     mipDistanceRuntimeIdentity: "patched-shader"
+  })).not.toBe(historyEpoch);
+  expect(contract!.buildTakramParityHistoryEpoch({ ...historyInput, progress: 0.12 }))
+    .not.toBe(historyEpoch);
+  expect(contract!.buildTakramParityHistoryEpoch({ ...historyInput, view: "control" }))
+    .not.toBe(historyEpoch);
+  expect(contract!.buildTakramParityHistoryEpoch({
+    ...historyInput,
+    cameraEarthTransformHash: "fnv1a-64:0000000000000000"
   })).not.toBe(historyEpoch);
 });
 

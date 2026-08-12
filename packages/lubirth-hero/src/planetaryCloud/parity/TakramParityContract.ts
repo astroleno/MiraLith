@@ -107,6 +107,7 @@ export function shouldCaptureTakramMatchedTemporalFrame(input: {
 export interface TakramParityHistoryEpochInput {
   assetGeneration: number;
   atmosphereGeneration: number;
+  cameraEarthTransformHash: string;
   cloudCoverage: number | null;
   cloudCoverageMode: string | null;
   cloudScale: number | null;
@@ -118,14 +119,17 @@ export interface TakramParityHistoryEpochInput {
   mipDistanceRuntimeIdentity: string | null;
   morphologyCandidate: string | null;
   morphologyView: string | null;
+  progress: number;
   rendererConfigurationHash: string | null;
   stockWeatherMode: string | null;
+  view: string;
 }
 
 export function buildTakramParityHistoryEpoch(input: TakramParityHistoryEpochInput) {
   return JSON.stringify([
     input.assetGeneration,
     input.atmosphereGeneration,
+    input.cameraEarthTransformHash,
     input.cloudScale,
     input.cloudCoverageMode,
     input.cloudCoverage,
@@ -137,8 +141,10 @@ export function buildTakramParityHistoryEpoch(input: TakramParityHistoryEpochInp
     input.mipDistanceRuntimeIdentity,
     input.morphologyCandidate,
     input.morphologyView,
+    input.progress,
     input.rendererConfigurationHash,
-    input.stockWeatherMode
+    input.stockWeatherMode,
+    input.view
   ]);
 }
 
@@ -149,6 +155,18 @@ function hashFnv1a64(value: string) {
     hash = BigInt.asUintN(64, hash * 1099511628211n);
   }
   return `fnv1a-64:${hash.toString(16).padStart(16, "0")}`;
+}
+
+export function hashTakramParityCameraEarthTransform(input: {
+  cameraMatrixWorld: readonly number[];
+  cameraProjectionMatrix: readonly number[];
+  earthMatrixWorld: readonly number[];
+}) {
+  return hashFnv1a64(JSON.stringify([
+    input.cameraMatrixWorld,
+    input.cameraProjectionMatrix,
+    input.earthMatrixWorld
+  ]));
 }
 
 export function hashTakramParityHistoryEpoch(epoch: string) {

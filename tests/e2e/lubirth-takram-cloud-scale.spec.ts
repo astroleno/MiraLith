@@ -62,7 +62,9 @@ interface ScaleTelemetry {
     nativeFrameCount: 1;
   } | null;
   input: "stock" | "v3";
+  nativeFrameCount: number;
   presentationPreset: string;
+  progress: number;
   rendererFingerprint: Record<string, any> | null;
   rendererFingerprintHash: string | null;
   shapeDetailRepeat: number | null;
@@ -683,4 +685,77 @@ test("resets exact first-frame history when the scale contract changes", async (
   expect(first.rendererFingerprintHash).not.toBe(second.rendererFingerprintHash);
   expect(weatherScaled.rendererFingerprintHash).toBe(second.rendererFingerprintHash);
   expect(weatherScaled.historyEpochHash).not.toBe(second.historyEpochHash);
+});
+
+test("resets the temporal epoch and exact-frame capture on same-page query changes", async ({
+  page
+}) => {
+  const initial = await openScaleCandidate(
+    page, "stock", 80, "parity", "full", 0, "unscaled"
+  );
+  let previousCapture = await readExactMatchedFrame(page);
+  expect(previousCapture.metadata.historyEpochHash).toBe(initial.historyEpochHash);
+
+  const changes = [
+    {
+      expected: { coverageMode: "parity", progress: 0.06, scale: 80, weather: "unscaled" },
+      query: { progress: "0.06" }
+    },
+    {
+      expected: { coverageMode: "parity", progress: 0.06, scale: 120, weather: "unscaled" },
+      query: { cloudScale: "120" }
+    },
+    {
+      expected: {
+        coverageMode: "presentation",
+        progress: 0.06,
+        scale: 120,
+        weather: "unscaled"
+      },
+      query: { cloudCoverage: "presentation" }
+    },
+    {
+      expected: {
+        coverageMode: "presentation",
+        progress: 0.06,
+        scale: 120,
+        weather: "similarity"
+      },
+      query: { stockWeather: "similarity" }
+    }
+  ] as const;
+
+  for (const change of changes) {
+    const previousEpochHash = previousCapture.metadata.historyEpochHash;
+    await page.evaluate((query) => {
+      const nextUrl = new URL(window.location.href);
+      for (const [key, value] of Object.entries(query)) {
+        nextUrl.searchParams.set(key, value);
+      }
+      window.history.pushState(null, "", nextUrl);
+    }, change.query);
+    await page.waitForFunction(({ expected, previousEpochHash }) => {
+      const telemetry = Reflect.get(window, "__MiraLithTakramParity") as
+        | ScaleTelemetry
+        | undefined;
+      const capture = Reflect.get(window, "__MiraLithTakramMatchedTemporalFrame") as
+        | { historyEpochHash?: string; nativeFrameCount?: number }
+        | undefined;
+      return telemetry?.active === true &&
+        telemetry.historyEpochHash !== previousEpochHash &&
+        telemetry.historyEpochHash === capture?.historyEpochHash &&
+        telemetry.nativeFrameCount >= 32 &&
+        capture?.nativeFrameCount === 32 &&
+        telemetry.progress === expected.progress &&
+        telemetry.cloudScale?.requested.scale === expected.scale &&
+        telemetry.cloudScale?.requested.coverageMode === expected.coverageMode &&
+        telemetry.cloudScale?.stockWeatherControl?.mode === expected.weather;
+    }, { expected: change.expected, previousEpochHash }, { timeout: 120_000 });
+
+    const telemetry = await readTelemetry(page);
+    expect(telemetry?.historyFirstFrameCapture).toBeNull();
+    previousCapture = await readExactMatchedFrame(page);
+    expect(previousCapture.metadata.historyEpochHash).toBe(telemetry?.historyEpochHash);
+    expect(previousCapture.metadata.historyEpochHash).not.toBe(previousEpochHash);
+  }
 });
