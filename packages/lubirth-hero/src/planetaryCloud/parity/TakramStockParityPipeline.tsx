@@ -98,7 +98,10 @@ import {
   type TakramParityRuntimeAssets
 } from "./TakramParityAssetLoader";
 import { useTakramParityAtmospherePrecompute } from "./TakramParityAtmospherePrecompute";
-import { resolveTakramParityAdapter } from "./TakramParityV3Adapter";
+import {
+  resolveTakramParityAdapter,
+  TAKRAM_PARITY_V3_ADAPTER
+} from "./TakramParityV3Adapter";
 import { TAKRAM_PARITY_V3_LAYERS } from "./TakramParityV3Layers";
 import { installTakramSampleCountInstrumentation } from "./TakramSampleCountInstrumentation";
 import { encodeTakramStageReadbackValues } from "./TakramStageReadbackEncoding";
@@ -116,7 +119,27 @@ import {
   captureTakramMipDiagnosticFrame,
   type TakramMipDiagnosticPass
 } from "./TakramMipDiagnosticReadback";
-import type { TakramOrbitalLookdevInput } from "./TakramOrbitalLookdevContract";
+import {
+  resolveTakramOrbitalLookdevContract,
+  type TakramOrbitalLookdevInput
+} from "./TakramOrbitalLookdevContract";
+import {
+  applyTakramOrbitalLookdevRuntime,
+  diffTakramOrbitalLookdevRuntime,
+  readTakramOrbitalLookdevRuntime,
+  type TakramOrbitalAllocationGenerations
+} from "./TakramOrbitalLookdevRuntime";
+import {
+  buildTakramLookdevBaseKey,
+  buildTakramLookdevMountKey,
+  buildTakramRuntimeEvidenceEpoch,
+  didTakramLookdevRemountAllAllocations,
+  initializeTakramLookdevMountState,
+  isTakramLookdevHistoryEpochReady,
+  resolveTakramLookdevDriftRecovery,
+  type TakramLookdevDriftAttemptLedger,
+  type TakramLookdevSetupState
+} from "./TakramOrbitalLookdevIdentity";
 
 const EARTH_DAY_SRC = "/assets/lubirth/textures/earth-day-nasa-lite-4k.webp";
 const CONTROL_CAMERA_ALTITUDE_M =
@@ -532,6 +555,7 @@ export function TakramStockParityPipeline({
   input,
   morphologyCandidate,
   morphologyView,
+  orbitalLookdev,
   onTelemetry,
   progress,
   stockWeatherMode,
@@ -540,6 +564,27 @@ export function TakramStockParityPipeline({
   const { gl, camera } = useThree();
   const earthTexture = useLoader(TextureLoader, EARTH_DAY_SRC);
   const adapter = resolveTakramParityAdapter(input);
+  const orbitalLookdevContract = useMemo(
+    () => orbitalLookdev === undefined
+      ? null
+      : resolveTakramOrbitalLookdevContract(orbitalLookdev),
+    [
+      orbitalLookdev?.coverage,
+      orbitalLookdev?.opticalDepthScale,
+      orbitalLookdev?.preset,
+      orbitalLookdev?.verticalScale
+    ]
+  );
+  const orbitalAdapterExpectation = useMemo(
+    () => orbitalLookdevContract === null
+      ? null
+      : {
+          localWeatherRepeat: input === "v3"
+            ? adapter.localWeatherRepeat
+            : orbitalLookdevContract.localWeatherRepeat
+        },
+    [adapter.localWeatherRepeat, input, orbitalLookdevContract]
+  );
   const cloudScaleContract = useMemo(
     () => cloudScale !== undefined && cloudCoverageMode !== undefined
       ? resolveTakramCloudScaleContract({ coverageMode: cloudCoverageMode, scale: cloudScale })
@@ -560,6 +605,18 @@ export function TakramStockParityPipeline({
     : null;
   const assetsState = useTakramParityRuntimeAssets(gl.domElement, input);
   const atmosphereState = useTakramParityAtmospherePrecompute(gl, gl.domElement);
+  const [contextGeneration, setContextGeneration] = useState(0);
+  const [visibilityGeneration, setVisibilityGeneration] = useState(0);
+  const [viewportState, setViewportState] = useState(() => ({
+    dpr: gl.getPixelRatio(),
+    generation: 0,
+    height: gl.domElement.height,
+    width: gl.domElement.width
+  }));
+  const [lookdevMountState, setLookdevMountState] = useState<{
+    lookdevBaseKey: string | null;
+    resetNonce: number;
+  }>({ lookdevBaseKey: null, resetNonce: 0 });
   const atmosphereRef = useRef<AtmosphereApi>(null);
   const cloudsRef = useRef<TakramCloudsRef>(null);
   const aerialPerspectiveRef = useRef<AerialPerspectiveEffect>(null);
@@ -576,24 +633,150 @@ export function TakramStockParityPipeline({
   const mipDiagnosticCaptureRef = useRef<TakramMipDiagnosticCapture | null>(null);
   const appliedDiagnosticRef = useRef<TakramParityDiagnostic | null>(null);
   const nativeFrameCountRef = useRef(0);
+  const driftAttemptLedgerRef = useRef<TakramLookdevDriftAttemptLedger>({});
+  const driftAttemptLedgerOutcomeRef = useRef<"none" | "remount" | "blocked">("none");
+  const driftSignatureRef = useRef<string | null>(null);
+  const lastAllocationsRef = useRef<TakramOrbitalAllocationGenerations | null>(null);
+  const lookdevSetupStateRef = useRef<TakramLookdevSetupState | null>(null);
+  const mountAllocationsChangedRef = useRef(false);
+  const observedLookdevMountKeyRef = useRef<string | null>(null);
+  const pendingRecoveryMountKeyRef = useRef<string | null>(null);
+  const runtimeEvidenceEpochRef = useRef<string | null>(null);
   const ladderCaptureRef = useRef<TakramAltitudeLadderCapture>({
     phase: "normal",
     cloudOnFinalReadback: null,
     telemetry: createEmptyAltitudeLadderTelemetry(altitudeMeters ?? 2_500)
   });
   const [bridgeReady, setBridgeReady] = useState(false);
+  const orbitalAdapterManifestId = input === "v3"
+    ? `v3:${TAKRAM_PARITY_V3_ADAPTER.localWeatherSha256}`
+    : `stock:${TAKRAM_PARITY_STOCK_ASSETS.find(
+        (asset) => asset.id === "localWeather"
+      )!.sha256}`;
+  const lookdevBaseKey = useMemo(
+    () => orbitalLookdevContract === null
+      ? null
+      : buildTakramLookdevBaseKey({
+          adapterManifestId: orbitalAdapterManifestId,
+          assetGeneration: assetsState.assetGeneration,
+          atmosphereGeneration: atmosphereState.atmosphereGeneration,
+          contextGeneration,
+          diagnostic,
+          normalizedQuery: {
+            diagnostic,
+            input,
+            opticalDepthScale: orbitalLookdevContract.opticalDepthScale,
+            orbitalCoverage: orbitalLookdevContract.coverage,
+            orbitalPreset: orbitalLookdevContract.preset,
+            progress: clampOpeningProgress(progress),
+            verticalScale: orbitalLookdevContract.verticalScale,
+            view
+          },
+          progress: clampOpeningProgress(progress),
+          resolvedContract: orbitalLookdevContract,
+          view,
+          viewport: {
+            dpr: viewportState.dpr,
+            height: viewportState.height,
+            width: viewportState.width
+          },
+          viewportGeneration: viewportState.generation,
+          visibilityGeneration
+        }),
+    [
+      assetsState.assetGeneration,
+      atmosphereState.atmosphereGeneration,
+      contextGeneration,
+      diagnostic,
+      input,
+      orbitalAdapterManifestId,
+      orbitalLookdevContract,
+      progress,
+      view,
+      viewportState,
+      visibilityGeneration
+    ]
+  );
+  const resetNonce = lookdevBaseKey !== null &&
+    lookdevMountState.lookdevBaseKey === lookdevBaseKey
+    ? lookdevMountState.resetNonce
+    : 0;
+  const lookdevMountKey = lookdevBaseKey === null
+    ? null
+    : buildTakramLookdevMountKey(lookdevBaseKey, resetNonce);
   onTelemetryRef.current = onTelemetry;
+
+  useEffect(() => {
+    const canvas = gl.domElement;
+    let previousVisibility = document.visibilityState;
+    const onContextRestored = () => {
+      setContextGeneration((current) => current + 1);
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === previousVisibility) return;
+      previousVisibility = document.visibilityState;
+      setVisibilityGeneration((current) => current + 1);
+    };
+    canvas.addEventListener("webglcontextrestored", onContextRestored);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      canvas.removeEventListener("webglcontextrestored", onContextRestored);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [gl]);
+
+  useEffect(() => {
+    setLookdevMountState((current) => {
+      if (lookdevBaseKey === null) {
+        return current.lookdevBaseKey === null && current.resetNonce === 0
+          ? current
+          : { lookdevBaseKey: null, resetNonce: 0 };
+      }
+      const next = initializeTakramLookdevMountState({
+        previousBaseKey: current.lookdevBaseKey,
+        nextBaseKey: lookdevBaseKey,
+        resetNonce: current.resetNonce
+      });
+      return next.lookdevBaseKey === current.lookdevBaseKey &&
+        next.resetNonce === current.resetNonce
+        ? current
+        : next;
+    });
+    pendingRecoveryMountKeyRef.current = null;
+    driftAttemptLedgerOutcomeRef.current = "none";
+    driftSignatureRef.current = null;
+    lookdevSetupStateRef.current = null;
+    runtimeEvidenceEpochRef.current = null;
+  }, [lookdevBaseKey]);
+
+  useFrame(() => {
+    const width = gl.domElement.width;
+    const height = gl.domElement.height;
+    const dpr = gl.getPixelRatio();
+    setViewportState((current) => current.width === width &&
+      current.height === height && current.dpr === dpr
+      ? current
+      : {
+          dpr,
+          generation: current.generation + 1,
+          height,
+          width
+        });
+  }, -3);
+
   const setCloudsRef = useCallback((clouds: TakramCloudsRef | null) => {
     cloudsRef.current = clouds;
     if (clouds === null) {
       return;
     }
     clouds.localWeatherRepeat.set(...(
+      orbitalAdapterExpectation?.localWeatherRepeat ??
       stockWeatherControl?.repeat ?? adapter.localWeatherRepeat
     ));
     clouds.localWeatherOffset.set(...adapter.localWeatherOffset);
     clouds.localWeatherVelocity.set(0, 0);
-    const useV3OpeningPreset = input === "v3" && view === "opening";
+    const useV3OpeningPreset = orbitalLookdevContract === null &&
+      input === "v3" && view === "opening";
     const shapeRepeat = resolvedMorphologyCandidate?.shapeRepeat ??
       TAKRAM_PARITY_V3_OPENING_PRESET.shapeRepeat;
     const shapeDetailRepeat = resolvedMorphologyCandidate?.shapeDetailRepeat ??
@@ -611,6 +794,13 @@ export function TakramStockParityPipeline({
     if (cloudScaleContract !== null) {
       applyTakramCloudScaleRuntime(clouds, cloudScaleContract);
     }
+    if (orbitalLookdevContract !== null && orbitalAdapterExpectation !== null) {
+      applyTakramOrbitalLookdevRuntime(
+        clouds,
+        orbitalLookdevContract,
+        orbitalAdapterExpectation
+      );
+    }
     if (isTakramParityAltitudeLadderDiagnostic(diagnostic)) {
       installTakramAltitudeLadderInstrumentation(
         clouds.cloudsPass.currentMaterial as unknown as TakramAltitudeLadderMaterial
@@ -620,7 +810,7 @@ export function TakramStockParityPipeline({
         TAKRAM_ALTITUDE_LADDER_SHADER_MODES.normal
       );
     }
-  }, [adapter, altitudeMeters, cloudScaleContract, diagnostic, input, morphologyCandidate, morphologyView, resolvedMorphologyCandidate, stockWeatherControl, view]);
+  }, [adapter, altitudeMeters, cloudScaleContract, diagnostic, input, morphologyCandidate, morphologyView, orbitalAdapterExpectation, orbitalLookdevContract, resolvedMorphologyCandidate, stockWeatherControl, view]);
 
   useEffect(() => {
     ladderCaptureRef.current = {
@@ -740,7 +930,7 @@ export function TakramStockParityPipeline({
       }
       restoreMipDiagnosticInstrumentation?.();
     };
-  }, [assetsState.ready, atmosphereState.ready, bridgeReady, cloudScaleContract, diagnostic]);
+  }, [assetsState.ready, atmosphereState.ready, bridgeReady, cloudScaleContract, diagnostic, lookdevMountKey, orbitalLookdevContract]);
 
   // `skipRendering` only disables the CloudsEffect composite; the native
   // cloud buffer is still exposed to AerialPerspective through the atmosphere
@@ -866,9 +1056,96 @@ export function TakramStockParityPipeline({
     const cloudScaleRuntimeReady = cloudScaleContract === null ||
       (cloudScaleReadback !== null && blockingCloudScaleDrift.length === 0 &&
         cloudScaleAtmosphereDomain !== null);
-    const nativePipelineReady = assetsState.ready && atmosphereState.ready &&
+    const orbitalLookdevReadback = clouds !== null &&
+      orbitalLookdevContract !== null
+      ? readTakramOrbitalLookdevRuntime(clouds, orbitalLookdevContract)
+      : null;
+    const orbitalLookdevDrift = orbitalLookdevReadback !== null &&
+      orbitalLookdevContract !== null && orbitalAdapterExpectation !== null
+      ? diffTakramOrbitalLookdevRuntime(
+          orbitalLookdevContract,
+          orbitalLookdevReadback,
+          orbitalAdapterExpectation
+        )
+      : [];
+    const blockingOrbitalLookdevDrift = orbitalLookdevDrift.filter((entry) =>
+      diagnostic !== "bsm-off" || !/^layers\.\d+\.shadow$/.test(entry.path)
+    );
+    let orbitalHistoryEpochReady = orbitalLookdevContract === null;
+    if (orbitalLookdevReadback !== null && lookdevMountKey !== null) {
+      if (observedLookdevMountKeyRef.current !== lookdevMountKey) {
+        mountAllocationsChangedRef.current =
+          didTakramLookdevRemountAllAllocations(
+            lastAllocationsRef.current,
+            orbitalLookdevReadback.allocations
+          );
+        observedLookdevMountKeyRef.current = lookdevMountKey;
+        nativeFrameCountRef.current = 0;
+        runtimeEvidenceEpochRef.current = null;
+      }
+      lastAllocationsRef.current = orbitalLookdevReadback.allocations;
+      const cloudsPass = clouds?.cloudsPass as unknown as {
+        currentMaterial?: { uniforms?: Record<string, { value?: unknown }> };
+        resolveMaterial?: { uniforms?: Record<string, { value?: unknown }> };
+      };
+      const shadowPass = clouds?.shadowPass as unknown as {
+        currentMaterial?: { uniforms?: Record<string, { value?: unknown }> };
+      };
+      orbitalHistoryEpochReady = isTakramLookdevHistoryEpochReady({
+        allocationsChanged: mountAllocationsChangedRef.current,
+        cloudsFrame: Number(
+          cloudsPass.currentMaterial?.uniforms?.frame?.value ?? Number.NaN
+        ),
+        resolveFrame: Number(
+          cloudsPass.resolveMaterial?.uniforms?.frame?.value ?? Number.NaN
+        ),
+        shadowFrame: Number(
+          shadowPass.currentMaterial?.uniforms?.frame?.value ?? Number.NaN
+        )
+      });
+    }
+    const runtimePrerequisitesReady = assetsState.ready && atmosphereState.ready &&
       bridgeReadyRef.current && clouds !== null && aerialPerspective !== null &&
       appliedDiagnosticRef.current === diagnostic && cloudScaleRuntimeReady;
+    let orbitalRuntimeReady = orbitalLookdevContract === null;
+    if (orbitalLookdevContract !== null && orbitalLookdevReadback !== null &&
+      lookdevBaseKey !== null && lookdevMountKey !== null &&
+      runtimePrerequisitesReady) {
+      if (pendingRecoveryMountKeyRef.current !== null &&
+        pendingRecoveryMountKeyRef.current !== lookdevMountKey) {
+        lookdevSetupStateRef.current = "ORBITAL_LOOKDEV_RECOVERY_REMOUNT";
+      } else {
+        if (pendingRecoveryMountKeyRef.current === lookdevMountKey) {
+          pendingRecoveryMountKeyRef.current = null;
+        }
+        const recovery = resolveTakramLookdevDriftRecovery({
+          attemptedLedger: driftAttemptLedgerRef.current,
+          drift: blockingOrbitalLookdevDrift,
+          lookdevBaseKey,
+          resetNonce
+        });
+        driftAttemptLedgerRef.current = recovery.attemptedLedger;
+        driftSignatureRef.current = recovery.driftSignature;
+        lookdevSetupStateRef.current = recovery.setupState;
+        if (recovery.action === "remount") {
+          driftAttemptLedgerOutcomeRef.current = "remount";
+          const nextMountKey = buildTakramLookdevMountKey(
+            lookdevBaseKey,
+            recovery.nextResetNonce
+          );
+          pendingRecoveryMountKeyRef.current = nextMountKey;
+          setLookdevMountState((current) =>
+            current.lookdevBaseKey === lookdevBaseKey
+              ? { ...current, resetNonce: recovery.nextResetNonce }
+              : current
+          );
+        } else if (recovery.action === "block") {
+          driftAttemptLedgerOutcomeRef.current = "blocked";
+        }
+      }
+      orbitalRuntimeReady = orbitalHistoryEpochReady &&
+        lookdevSetupStateRef.current === "ORBITAL_LOOKDEV_RUNTIME_READY";
+    }
     const rendererFingerprint = clouds && aerialPerspective
       ? buildTakramParityRendererFingerprint({
         clouds,
@@ -876,6 +1153,9 @@ export function TakramStockParityPipeline({
         ...(cloudScaleReadback === null
           ? {}
           : { cloudScaleRuntime: cloudScaleReadback }),
+        ...(orbitalLookdevReadback === null
+          ? {}
+          : { orbitalLookdevRuntime: orbitalLookdevReadback }),
         sharedAssets: TAKRAM_PARITY_SHARED_ASSET_HASHES
       })
       : null;
@@ -883,6 +1163,28 @@ export function TakramStockParityPipeline({
       ? hashTakramParityRendererFingerprint(rendererFingerprint)
       : null;
     const normalizedProgress = clampOpeningProgress(progress);
+    const resolvedAdapterTelemetry = resolveAdapterTelemetry(
+      clouds,
+      assetsState.assets,
+      input,
+      cloudScaleContract !== null || orbitalLookdevContract !== null ||
+        adapter.disableDefaultLayers
+    );
+    const nativePipelineReady = runtimePrerequisitesReady && orbitalRuntimeReady;
+    if (nativePipelineReady && orbitalLookdevReadback !== null &&
+      rendererFingerprint !== null && lookdevMountKey !== null) {
+      runtimeEvidenceEpochRef.current = buildTakramRuntimeEvidenceEpoch({
+        adapterRuntime: resolvedAdapterTelemetry,
+        allocations: orbitalLookdevReadback.allocations,
+        cameraMatrixWorld: camera.matrixWorld.toArray(),
+        cameraProjectionMatrix: camera.projectionMatrix.toArray(),
+        earthMatrixWorld: scratchEarthMatrix.toArray(),
+        lookdevMountKey,
+        rendererFingerprint
+      });
+    } else if (orbitalLookdevContract !== null) {
+      runtimeEvidenceEpochRef.current = null;
+    }
     const cameraEarthTransformHash = hashTakramParityCameraEarthTransform({
       cameraMatrixWorld: camera.matrixWorld.toArray(),
       cameraProjectionMatrix: camera.projectionMatrix.toArray(),
@@ -908,7 +1210,9 @@ export function TakramStockParityPipeline({
       morphologyCandidate: resolvedMorphologyCandidate?.id ?? null,
       morphologyView: morphologyView ?? null,
       progress: normalizedProgress,
-      rendererConfigurationHash: rendererFingerprintHash,
+      rendererConfigurationHash: orbitalLookdevContract === null
+        ? rendererFingerprintHash
+        : JSON.stringify([rendererFingerprintHash, lookdevMountKey]),
       stockWeatherMode: stockWeatherControl?.mode ?? null,
       view
     });
@@ -926,7 +1230,7 @@ export function TakramStockParityPipeline({
         delete window.__MiraLithTakramStageReadback;
         delete window.__MiraLithTakramMipDiagnostic;
       }
-      if (clouds) {
+      if (clouds && orbitalLookdevContract === null) {
         // The upstream effect owns the STBN/Bayer frame counter. Reset it with
         // every immutable history epoch so separate diagnostic routes capture
         // the same temporal phase instead of inheriting asset-load timing.
@@ -971,12 +1275,7 @@ export function TakramStockParityPipeline({
           historyFirstFrameCaptureRef.current !== null) ||
           (temporalConverged && (!isTakramParityAltitudeLadderDiagnostic(diagnostic) ||
             ladderCaptureRef.current.phase === "complete"))),
-      adapter: resolveAdapterTelemetry(
-        clouds,
-        assetsState.assets,
-        input,
-        cloudScaleContract !== null || adapter.disableDefaultLayers
-      ),
+      adapter: resolvedAdapterTelemetry,
       assetGeneration: assetsState.assetGeneration,
       assetsReady: assetsState.ready,
       atmosphereGeneration: atmosphereState.atmosphereGeneration,
@@ -994,6 +1293,8 @@ export function TakramStockParityPipeline({
             stockWeatherControl
           }
         : null,
+      driftAttemptLedgerOutcome: driftAttemptLedgerOutcomeRef.current,
+      driftSignature: driftSignatureRef.current,
       coordinateMode,
       control: view === "control" ? TAKRAM_PARITY_CONTROL : null,
       diagnostic,
@@ -1002,8 +1303,19 @@ export function TakramStockParityPipeline({
       earthMatrixWorld: scratchEarthMatrix.toArray(),
       ecefSunDirection,
       input,
+      lookdevBaseKey,
+      lookdevMountKey,
+      lookdevSetupState: lookdevSetupStateRef.current,
       native: resolvedNative,
       nativeFrameCount,
+      orbitalLookdev: orbitalLookdevContract !== null &&
+        orbitalLookdevReadback !== null
+        ? {
+            drift: orbitalLookdevDrift,
+            readback: orbitalLookdevReadback,
+            requested: orbitalLookdevContract
+          }
+        : null,
       historyEpochHash: hashTakramParityHistoryEpoch(historyEpoch),
       historyFirstFrameCapture: historyFirstFrameCaptureRef.current === null
         ? null
@@ -1075,9 +1387,13 @@ export function TakramStockParityPipeline({
             }
           },
       progress: clampOpeningProgress(progress),
+      resetNonce,
       rendererFingerprint,
       rendererFingerprintHash,
-      presentationPreset: cloudScaleContract !== null
+      runtimeEvidenceEpoch: runtimeEvidenceEpochRef.current,
+      presentationPreset: orbitalLookdevContract !== null
+        ? "orbital-parameter-lookdev"
+        : cloudScaleContract !== null
         ? "cloud-scale-similarity"
         : input === "v3" && view === "opening"
           ? "v3-opening-coarse"
@@ -1106,6 +1422,14 @@ export function TakramStockParityPipeline({
       atmosphereReady: telemetry.atmosphereReady,
       cameraHeightMeters: telemetry.cameraHeightMeters,
       cloudScale: telemetry.cloudScale,
+      orbitalLookdev: telemetry.orbitalLookdev,
+      lookdevBaseKey: telemetry.lookdevBaseKey,
+      lookdevMountKey: telemetry.lookdevMountKey,
+      lookdevSetupState: telemetry.lookdevSetupState,
+      resetNonce: telemetry.resetNonce,
+      runtimeEvidenceEpoch: telemetry.runtimeEvidenceEpoch,
+      driftAttemptLedgerOutcome: telemetry.driftAttemptLedgerOutcome,
+      driftSignature: telemetry.driftSignature,
       coordinateMode: telemetry.coordinateMode,
       control: telemetry.control,
       diagnostic: telemetry.diagnostic,
@@ -1634,17 +1958,23 @@ export function TakramStockParityPipeline({
           ground
           textures={atmosphereTextures}
         >
-          <EffectComposer enableNormalPass>
+          <EffectComposer
+            key={lookdevMountKey ?? "legacy-parity-composer"}
+            enableNormalPass
+          >
             <Clouds
               ref={setCloudsRef}
-              {...(cloudScaleContract !== null
+              {...(orbitalLookdevContract !== null
+                ? { coverage: orbitalLookdevContract.coverage }
+                : cloudScaleContract !== null
                 ? { coverage: cloudScaleContract.coverage }
                 : view === "control"
                 ? { coverage: TAKRAM_PARITY_CONTROL.coverage }
                 : input === "v3"
                   ? { coverage: TAKRAM_PARITY_V3_OPENING_PRESET.coverage }
                   : {})}
-              disableDefaultLayers={cloudScaleContract !== null || adapter.disableDefaultLayers}
+              disableDefaultLayers={orbitalLookdevContract !== null ||
+                cloudScaleContract !== null || adapter.disableDefaultLayers}
               globalWeatherMapping={adapter.globalWeatherMapping}
               localWeatherTexture={runtimeAssets.localWeather}
               qualityPreset={TAKRAM_PARITY_DEFAULTS.qualityPreset}
@@ -1653,7 +1983,7 @@ export function TakramStockParityPipeline({
               stbnTexture={runtimeAssets.stbn}
               turbulenceTexture={runtimeAssets.turbulence}
             >
-              {(cloudScaleContract?.layers ??
+              {(orbitalLookdevContract?.layers ?? cloudScaleContract?.layers ??
                 (input === "v3" ? TAKRAM_PARITY_V3_LAYERS : [])).map((layer, index) => (
                 <TakramCloudLayer
                   key={layer.channel}

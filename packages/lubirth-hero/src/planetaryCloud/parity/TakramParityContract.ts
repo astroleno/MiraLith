@@ -22,9 +22,16 @@ import {
   type TakramOrbitalCoverage,
   type TakramOrbitalOpticalDepthScale,
   type TakramOrbitalPreset,
+  type TakramOrbitalLookdevContract,
   type TakramOrbitalVerticalScale
 } from "./TakramOrbitalLookdevContract";
-import type { TakramOrbitalLookdevRuntimeReadback } from "./TakramOrbitalLookdevRuntime";
+import type {
+  TakramOrbitalLookdevRuntimeDrift,
+  TakramOrbitalLookdevRuntimeReadback
+} from "./TakramOrbitalLookdevRuntime";
+import type {
+  TakramLookdevSetupState
+} from "./TakramOrbitalLookdevIdentity";
 import {
   TAKRAM_V3_MORPHOLOGY_BASELINE,
   TAKRAM_V3_MORPHOLOGY_SPHERICAL_UV,
@@ -498,7 +505,7 @@ export interface TakramParityRendererFingerprint {
   // runtime shader identity and mip state.
   schemaVersion: 3 | 4 | 5 | 6;
   cloudScale?: TakramCloudScaleRuntimeReadback;
-  orbitalLookdev?: TakramOrbitalLookdevRuntimeReadback;
+  orbitalLookdev?: Omit<TakramOrbitalLookdevRuntimeReadback, "allocations">;
   orbitalRenderTargets?: {
     clouds: {
       clouds: Record<string, unknown>;
@@ -771,9 +778,13 @@ export function buildTakramParityRendererFingerprint({
     sharedAssets: { ...sharedAssets }
   };
   if (orbitalLookdevRuntime !== undefined) {
+    const {
+      allocations: _allocationGenerations,
+      ...stableOrbitalLookdevRuntime
+    } = orbitalLookdevRuntime;
     return {
       ...fingerprint,
-      orbitalLookdev: orbitalLookdevRuntime,
+      orbitalLookdev: stableOrbitalLookdevRuntime,
       orbitalRenderTargets: {
         clouds: readCloudsRenderTargets(cloudsPass),
         shadow: readCloudsRenderTargets(shadowPass)
@@ -820,6 +831,7 @@ export interface TakramParityNativeFeatures {
 
 export type TakramParityPresentationPreset =
   | "cloud-scale-similarity"
+  | "orbital-parameter-lookdev"
   | "official-stock"
   | "v3-opening-coarse";
 
@@ -829,6 +841,12 @@ export interface TakramParityCloudScaleTelemetry {
   readback: TakramCloudScaleRuntimeReadback;
   requested: TakramCloudScaleContract;
   stockWeatherControl: TakramStockWeatherControlContract | null;
+}
+
+export interface TakramParityOrbitalLookdevTelemetry {
+  drift: readonly TakramOrbitalLookdevRuntimeDrift[];
+  readback: TakramOrbitalLookdevRuntimeReadback;
+  requested: Readonly<TakramOrbitalLookdevContract>;
 }
 
 export interface TakramParityResolvedCloudLayer {
@@ -945,6 +963,8 @@ export interface TakramParityTelemetry {
   cameraHeightMeters: number | null;
   cameraPosition: [number, number, number];
   cloudScale: TakramParityCloudScaleTelemetry | null;
+  driftAttemptLedgerOutcome: "none" | "remount" | "blocked";
+  driftSignature: string | null;
   coordinateMode: TakramParityCoordinateMode;
   control: typeof TAKRAM_PARITY_CONTROL | null;
   diagnostic: TakramParityDiagnostic;
@@ -953,8 +973,12 @@ export interface TakramParityTelemetry {
   earthMatrixWorld: number[];
   ecefSunDirection: [number, number, number] | null;
   input: TakramParityInput;
+  lookdevBaseKey: string | null;
+  lookdevMountKey: string | null;
+  lookdevSetupState: TakramLookdevSetupState | null;
   native: TakramParityNativeFeatures;
   nativeFrameCount: number;
+  orbitalLookdev: TakramParityOrbitalLookdevTelemetry | null;
   historyEpochHash: string;
   historyFirstFrameCapture: Omit<TakramParityHistoryFirstFrameCapture, "dataUrl"> | null;
   matchedTemporalFrameCapture: Omit<TakramParityMatchedTemporalFrameCapture, "dataUrl"> | null;
@@ -971,8 +995,10 @@ export interface TakramParityTelemetry {
   morphologyScaleAudit: TakramV3MorphologyScaleAudit | null;
   sampleCountReadback: TakramParitySampleCountReadback | null;
   progress: number;
+  resetNonce: number;
   rendererFingerprint: TakramParityRendererFingerprint | null;
   rendererFingerprintHash: string | null;
+  runtimeEvidenceEpoch: string | null;
   presentationPreset: TakramParityPresentationPreset;
   coverage: number | null;
   sceneDepthContract: "world-depth-to-ecef-v1";

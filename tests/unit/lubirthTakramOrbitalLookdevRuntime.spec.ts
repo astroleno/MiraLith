@@ -182,6 +182,38 @@ test("keeps adapter-owned V3 repeat explicit while preserving the renderer contr
   expect(diffTakramOrbitalLookdevRuntime(contract, readback, adapter)).toEqual([]);
 });
 
+test("records the applied quality preset when Takram exposes it as a setter-only property", async () => {
+  const { contract: contractModule, runtime: runtimeModule } = await loadModules();
+  const { resolveTakramOrbitalLookdevContract } = contractModule;
+  const {
+    applyTakramOrbitalLookdevRuntime,
+    diffTakramOrbitalLookdevRuntime,
+    readTakramOrbitalLookdevRuntime
+  } = runtimeModule;
+  const contract = resolveTakramOrbitalLookdevContract({
+    preset: "native",
+    coverage: 0.3,
+    verticalScale: 1,
+    opticalDepthScale: 1
+  });
+  const runtime = createRuntime(resolveTakramOrbitalLookdevContract);
+  let appliedQualityPreset: string | null = null;
+  delete runtime.qualityPreset;
+  Object.defineProperty(runtime, "qualityPreset", {
+    configurable: true,
+    set(value: string) {
+      appliedQualityPreset = value;
+    }
+  });
+
+  applyTakramOrbitalLookdevRuntime(runtime, contract);
+  const readback = readTakramOrbitalLookdevRuntime(runtime, contract);
+
+  expect(appliedQualityPreset).toBe("high");
+  expect(readback.renderer.qualityPreset).toBe("high");
+  expect(diffTakramOrbitalLookdevRuntime(contract, readback)).toEqual([]);
+});
+
 test("assigns stable allocation generations and changes all six for a fresh composer", async () => {
   const { contract: contractModule, runtime: runtimeModule } = await loadModules();
   const { resolveTakramOrbitalLookdevContract } = contractModule;

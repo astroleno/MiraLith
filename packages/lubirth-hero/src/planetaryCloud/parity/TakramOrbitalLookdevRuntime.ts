@@ -110,6 +110,10 @@ export interface TakramOrbitalLookdevRuntimeDrift {
 }
 
 const allocationGenerations = new WeakMap<object, number>();
+const appliedQualityPresets = new WeakMap<
+  object,
+  TakramOrbitalRendererContract["qualityPreset"]
+>();
 let nextAllocationGeneration = 1;
 
 function allocationGeneration(target: RenderTargetRecord) {
@@ -199,14 +203,17 @@ function readRenderer(target: TakramOrbitalRuntimeTarget) {
     "haze",
     "lightShafts",
     "multiScatteringOctaves",
-    "qualityPreset",
     "resolutionScale",
     "shapeDetail",
     "temporalUpscale",
     "turbulence"
   ] as const;
-  return Object.fromEntries(keys.map((key) => [key, values[key]])) as unknown as
-    TakramOrbitalRendererContract;
+  return {
+    ...Object.fromEntries(keys.map((key) => [key, values[key]])),
+    // Takram exposes qualityPreset as a setter-only macro. Record its applied
+    // provenance while the materialized fields remain the drift authority.
+    qualityPreset: values.qualityPreset ?? appliedQualityPresets.get(target)
+  } as unknown as TakramOrbitalRendererContract;
 }
 
 export function readTakramOrbitalAllocationGenerations(
@@ -242,6 +249,7 @@ export function applyTakramOrbitalLookdevRuntime(
 
   Object.assign(target.clouds, contract.clouds);
   Object.assign(target, contract.lighting, contract.renderer);
+  appliedQualityPresets.set(target, contract.renderer.qualityPreset);
   for (const [key, value] of Object.entries(contract.shadow)) {
     if (key !== "mapSize") target.shadow[key] = value as number;
   }

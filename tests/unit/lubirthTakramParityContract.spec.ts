@@ -963,6 +963,10 @@ test("fingerprints resolved native state and rejects non-adapter drift", async (
   );
 
   const orbitalLookdevRuntime = {
+    allocations: {
+      clouds: { current: 1, resolve: 2, history: 3 },
+      shadow: { current: 4, resolve: 5, history: 6 }
+    },
     classification: "TAKRAM_ORBITAL_PARAMETER_LOOKDEV",
     preset: "h80",
     coverage: 0.45,
@@ -975,9 +979,11 @@ test("fingerprints resolved native state and rejects non-adapter drift", async (
     ...runtime,
     orbitalLookdevRuntime
   });
+  const { allocations: _allocations, ...stableOrbitalLookdevRuntime } =
+    orbitalLookdevRuntime;
   expect(orbitalFingerprint).toMatchObject({
     schemaVersion: 6,
-    orbitalLookdev: orbitalLookdevRuntime,
+    orbitalLookdev: stableOrbitalLookdevRuntime,
     orbitalRenderTargets: {
       clouds: {
         clouds: { present: true },
@@ -1000,4 +1006,16 @@ test("fingerprints resolved native state and rejects non-adapter drift", async (
   });
   expect(contract!.hashTakramParityRendererFingerprint(changedOrbitalFingerprint))
     .not.toBe(contract!.hashTakramParityRendererFingerprint(orbitalFingerprint));
+  const swappedHistoryAllocations = contract!.buildTakramParityRendererFingerprint({
+    ...runtime,
+    orbitalLookdevRuntime: {
+      ...orbitalLookdevRuntime,
+      allocations: {
+        clouds: { current: 1, resolve: 3, history: 2 },
+        shadow: { current: 4, resolve: 6, history: 5 }
+      }
+    }
+  });
+  expect(contract!.hashTakramParityRendererFingerprint(swappedHistoryAllocations))
+    .toBe(contract!.hashTakramParityRendererFingerprint(orbitalFingerprint));
 });
