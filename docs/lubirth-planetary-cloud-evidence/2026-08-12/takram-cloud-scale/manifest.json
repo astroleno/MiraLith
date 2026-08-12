@@ -6,10 +6,16 @@
   },
   "captureCommand": "MIRALITH_TAKRAM_CLOUD_SCALE_CAPTURE=1 pnpm exec playwright test -c playwright.takram-parity-system-chrome.config.ts lubirth-takram-cloud-scale.spec.ts --headed --grep \"Stage A\"",
   "candidateContract": {
+    "classification": "UNSCALED_STOCK_WEATHER_CONTROL",
     "coverageMode": "parity",
     "coverage": 0.3,
     "input": "stock",
     "mipDistancePatchActive": false,
+    "mipRuntimeReadbackCaptured": false,
+    "localWeatherRepeat": [
+      100,
+      100
+    ],
     "progresses": [
       0,
       0.06,

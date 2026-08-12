@@ -10,7 +10,7 @@
 
 **Design source:** `docs/superpowers/specs/2026-08-12-lubirth-takram-cloud-scale-similarity-design.md`
 
-**Execution status (2026-08-12):** Tasks 1–6 completed through the first valid stop condition. The resolver, route validation, runtime apply/readback, explicit stock/V3 layer parity, schema-4 fingerprint, history reset, atomic capture harness, and clean-HEAD Stage A evidence are complete. `S=80/120/160` all failed the stock visual floor, so the checkpoint is `PUBLIC_PARAMETER_SIMILARITY_VISUAL_FAIL_MIP_UNPROVEN`; Tasks 7–8 and Conditional Task M were not executed. Task 0P and the original Task 0–8 remain locked.
+**Execution status (2026-08-12 review amendment):** Tasks 1–5 remain valid. The first 12-frame stock matrix is retained but reclassified as `UNSCALED_STOCK_WEATHER_CONTROL`: it kept `localWeatherRepeat=[100,100]` while scaling morphology, so it is not the healthy stock control required to classify public similarity or authorize mip work. Task 6 now adds a clean-HEAD Stage A1 A/B with `localWeatherRepeat=[100/S,100/S]`, actual runtime shader/patch identity, and a separate evidence population. Tasks 7–8, Conditional Task M, Task 0P, and the original Task 0–8 remain locked.
 
 ---
 
@@ -19,7 +19,7 @@
 - Work only in `codex/lubirth-planetary-cloud-microbench`.
 - Preserve the native `CloudsEffect → temporal resolve → AerialPerspectiveEffect` path.
 - Do not edit homepage/product routes, replace the renderer, or silently fall back to legacy `260/40 km` candidates.
-- Do not implement `mipDistanceScale` during the public-parameter run. It is a separately authorized conditional task only after all stock candidates fail and native mip evidence proves the trigger.
+- Do not implement `mipDistanceScale` during the public-parameter run. It is a separately authorized conditional task only after all scaled-weather stock candidates fail and the same-frame weather-hit/sample/mip/pre-temporal matrix proves the trigger.
 - Do not run the paused sample-budget A/B, Task 0P, Task 3–6, or original Task 0–8.
 - Commit and push after each coherent task group.
 
@@ -485,7 +485,7 @@ git commit -m "test(lubirth): verify Takram cloud scale runtime"
 git push
 ```
 
-## Task 6: Run Stage A stock visual funnel
+## Task 6: Run Stage A0/A1 stock visual funnel
 
 **Files:**
 
@@ -506,17 +506,21 @@ MIRALITH_TAKRAM_CLOUD_SCALE_CAPTURE=1
 
 Normal regressions must use the Playwright output directory or in-memory assertions. Write PNGs, manifest, hashes, contact sheets, and checkpoint through one staging directory and rename only after every artifact validates.
 
-### Step 2: Capture the 12-frame minimal stock matrix
+### Step 2: Preserve and reclassify Stage A0
 
-Run stock, coverage `0.3`, full output:
+The existing `localWeatherRepeat=[100,100]` matrix remains reproducible and hash-audited. Relabel it `UNSCALED_STOCK_WEATHER_CONTROL`; do not use it to populate `stockPassingScales`, classify mip causality, or reject public-parameter similarity.
+
+### Step 3: Capture the 12-frame Stage A1 health-control matrix
+
+Run stock, coverage `0.3`, `stockWeather=similarity`, full output:
 
 ```text
 S=80,120,160 × progress=0.00,0.06,0.12,0.18
 ```
 
-Each record includes query, commit, browser executable/version, GPU vendor/renderer, viewport/DPR, exact native frame/jitter/STBN/history epoch, asset hashes, complete requested/readback contract, runtime drift, atmosphere radii/overflow, screenshot hash, and reproducible command.
+The stock adapter resolves `localWeatherRepeat=[100/S,100/S]`. Each record includes query, commit, browser executable/version, GPU vendor/renderer, viewport/DPR, exact native frame/jitter/STBN/history epoch, actual weather repeat, asset hashes, installed build/cloud-shader/package-patch SHA-256, actual runtime mip inspection, complete requested/readback contract, runtime drift, atmosphere radii/overflow, screenshot hash, and reproducible command.
 
-### Step 3: Perform visual review
+### Step 4: Perform visual review
 
 Review full-size source frames, not only contact sheets. For each scale and progress, record:
 
@@ -529,25 +533,25 @@ Review full-size source frames, not only contact sheets. For each scale and prog
 
 Projected size, signal presence, or automated metrics cannot mark PASS.
 
-### Step 4: Write the Stage A checkpoint
+### Step 5: Write the Stage A checkpoint
 
 Allowed states:
 
 ```text
-PUBLIC_PARAMETER_SIMILARITY_STOCK_PASS
-PUBLIC_PARAMETER_SIMILARITY_VISUAL_FAIL_MIP_UNPROVEN
+SCALED_STOCK_WEATHER_CONTROL_PASS
+SCALED_STOCK_WEATHER_CONTROL_FAIL_MIP_UNPROVEN
 ```
 
 If at least one scale passes, list it in `stockPassingScales` and continue to Task 7.
 
-If all fail, stop before V3 and do not implement the mip patch. Record `PUBLIC_PARAMETER_SIMILARITY_VISUAL_FAIL_MIP_UNPROVEN`; only Task M becomes eligible for a separate diagnostic execution.
+If all fail, stop before V3 and do not implement the mip patch. Record `SCALED_STOCK_WEATHER_CONTROL_FAIL_MIP_UNPROVEN`; Conditional Task M still requires explicit user authorization and must first prove the required same-frame populations.
 
-### Step 5: Verify artifacts and commit
+### Step 6: Verify artifacts and commit
 
 ```bash
 MIRALITH_TAKRAM_CLOUD_SCALE_CAPTURE=1 \
 pnpm exec playwright test -c playwright.takram-parity-system-chrome.config.ts \
-  lubirth-takram-cloud-scale.spec.ts --headed --grep "Stage A"
+  lubirth-takram-cloud-scale.spec.ts --headed --grep "Stage A1"
 pnpm exec playwright test -c playwright.unit.config.ts lubirthTakramCloudScaleContract.spec.ts
 git diff --check
 git add docs/lubirth-planetary-cloud-evidence/2026-08-12/takram-cloud-scale \
@@ -700,13 +704,14 @@ git push
 
 ## Conditional Task M: Diagnose and narrowly patch primary-march mip distance
 
-**Do not execute unless Task 6 records all three stock scales failing and the user authorizes continuation into the diagnostic.**
+**Do not execute unless Stage A1 records all three scaled-weather stock scales failing and the user authorizes continuation into the diagnostic.**
 
-1. Add native mip-level readback for cloud-hit pixels at exact matched frames.
-2. Prove or disprove premature mip escalation against the same stock populations.
-3. If disproved, leave state `PUBLIC_PARAMETER_SIMILARITY_VISUAL_FAIL_MIP_UNPROVEN` and stop.
-4. If proved, write a failing package-patch test, introduce only `mipDistanceScale`, replace the one primary-march `rayDistance * 1e-5` coefficient, resolve it as `1e-5 / S`, and fingerprint the patch separately.
-5. Re-run stock-only Stage A. Only after this A/B may the state become `PUBLIC_PARAMETER_SIMILARITY_VISUAL_FAIL_AFTER_MIP_CORRECTION` or `PUBLIC_PARAMETER_SIMILARITY_STOCK_PASS`.
+1. Build a read-only, exact-frame diagnostic matrix with four jointly indexed outputs: rough-weather hit, primary sample/hit, actual primary-march mip, and pre-temporal opacity.
+2. Record the same camera, light, scaled stock weather, coverage, scale, native frame, jitter, STBN slice, history epoch, and renderer/shader identities for all four outputs.
+3. Stop as `MIP_DIAGNOSTIC_INCONCLUSIVE_EMPTY_POPULATION` when rough-weather or primary-hit population is empty; do not infer mip causality from that population.
+4. Prove or disprove premature mip escalation only inside the non-empty joint population. If disproved, leave state `SCALED_STOCK_WEATHER_CONTROL_FAIL_MIP_UNPROVEN` and stop.
+5. If proved, write a failing package-patch test, introduce only `mipDistanceScale`, replace the one primary-march `rayDistance * 1e-5` coefficient, resolve it as `1e-5 / S`, and fingerprint the patch separately.
+6. Re-run scaled-weather stock Stage A1. Only after this A/B may the state become `PUBLIC_PARAMETER_SIMILARITY_VISUAL_FAIL_AFTER_MIP_CORRECTION` or `PUBLIC_PARAMETER_SIMILARITY_STOCK_PASS`.
 
 The conditional patch may not change layers, weather, shape/detail repeats, turbulence, density, sampling budgets, light, BSM, temporal, atmosphere, exposure, or output transform.
 

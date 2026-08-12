@@ -1,6 +1,6 @@
 # LuBirth Takram Cloud Scale Similarity Design
 
-**Status:** Approved architecture; implementation not started
+**Status:** Approved architecture; Stage A0 reclassified after stock-weather control review
 
 **Date:** 2026-08-12
 
@@ -157,13 +157,24 @@ Stock and V3 remain comparable because they use the same scaled layers and atmos
 
 The funnel prevents weather and coverage from hiding a failed scale control.
 
-### Stage A — stock scale control
+### Stage A0 — unscaled stock-weather control
 
-Run stock weather at coverage `0.3` for `S=80/120/160` on opening progress `0.00/0.06/0.12/0.18`. This stage asks only whether a readable enlarged Takram morphology exists in the product camera.
+The historical first matrix kept Takram's local weather repeat at `[100,100]` while scaling the cloud morphology and layer contract. It is retained as `UNSCALED_STOCK_WEATHER_CONTROL`, but it is not a healthy orbital stock control and cannot authorize or reject mip work.
+
+### Stage A1 — scaled stock-weather health control
+
+Run stock weather at coverage `0.3` for `S=80/120/160` on opening progress `0.00/0.06/0.12/0.18`, with an explicit adapter-only weather mode:
+
+```text
+localWeatherRepeat = [100 / S, 100 / S]
+```
+
+This A/B keeps the stock texture, local cube-sphere mapping, offset, renderer contract, camera, light, frame, and scale resolver fixed. It asks whether one coherent scale also exists in the stock weather domain. V3 keeps its own global equirectangular adapter and does not consume this stock-only repeat rule.
 
 - If no stock scale passes, stop before V3.
 - A stock failure does not classify V3.
 - A scale entering a projected-pixel target is not a visual pass by itself.
+- Only Stage A1 may populate `stockPassingScales` or make the mip diagnostic eligible.
 
 ### Stage B — parity coverage
 
@@ -193,9 +204,10 @@ The public API does not expose this coefficient. Therefore the initial resolver 
 
 The first run must keep upstream shader behavior unchanged. A mip patch is authorized only if:
 
-1. all three stock `S` candidates fail the visual control;
-2. a native mip diagnostic demonstrates premature mip escalation within the cloud-hit population as `S` grows;
-3. the diagnostic is captured with the same camera, light, weather, coverage, frame, and resolver contract.
+1. all three Stage A1 scaled-weather stock candidates fail the visual control;
+2. a same-frame diagnostic proves non-empty rough-weather and primary-hit populations;
+3. actual primary-march mip and pre-temporal opacity are read from that same population and demonstrate premature mip escalation as `S` grows;
+4. the diagnostic is captured with the same camera, light, weather, coverage, frame, and resolver contract.
 
 The only permitted follow-up patch introduces `mipDistanceScale`, replaces the one primary-march `1e-5` coefficient, and resolves it as:
 
@@ -207,8 +219,10 @@ It may not change shape, detail, layer, light, temporal, BSM, or sampling fields
 
 Failure of the unpatched candidates can classify the public-parameter implementation, but cannot by itself reject the broader cloud-scale direction. The allowed states are:
 
+- `UNSCALED_STOCK_WEATHER_CONTROL`;
+- `SCALED_STOCK_WEATHER_CONTROL_PASS`;
+- `SCALED_STOCK_WEATHER_CONTROL_FAIL_MIP_UNPROVEN`;
 - `PUBLIC_PARAMETER_SIMILARITY_STOCK_PASS`;
-- `PUBLIC_PARAMETER_SIMILARITY_VISUAL_FAIL_MIP_UNPROVEN`;
 - `MIP_DISTANCE_PATCH_AUTHORIZED`;
 - `PUBLIC_PARAMETER_SIMILARITY_VISUAL_FAIL_AFTER_MIP_CORRECTION`.
 
@@ -221,9 +235,9 @@ Every capture publishes the requested and read-back values for:
 - every scaled Clouds/Shadow field and every required fixed field;
 - adapter weather identity/mapping/repeat/offset;
 - atmosphere bottom/top radii and the list of layers exceeding atmosphere top;
-- package version, patch hash, asset hashes, renderer fingerprint, and mip-patch state.
+- package version, installed package-build/cloud shader SHA-256, pnpm patch-file SHA-256, asset hashes, renderer fingerprint, and mip-patch state.
 
-The renderer fingerprint must include `turbulenceDisplacement`, both `minExtinction` values, the complete layer array, all scaled step/ray fields, scale, coverage, and mip-patch state. It must be built from runtime readback rather than expected constants.
+The renderer fingerprint must include `turbulenceDisplacement`, both `minExtinction` values, the complete layer array, all scaled step/ray fields, scale, coverage, and mip-patch state. Mip state must be inspected from the actual runtime fragment shader and actual uniform/define state. The requested resolver value may be compared with that readback, but may never be copied into it. Audited fixed SHA-256 identities must be validated against installed files in tests and included in the evidence manifest and history epoch.
 
 The temporal history epoch includes scale, coverage mode/value, weather adapter identity, complete runtime renderer hash, resource generations, diagnostic, camera/view, and input. Changing any of them resets cloud, resolve, and shadow frames before capture.
 
@@ -256,11 +270,12 @@ Only after that revalidation may a separate amendment consider Task 0P GPU popul
 
 ## 11. Route and compatibility boundary
 
-The query route adds typed scale and coverage-mode fields that are valid for `view=opening` with stock or V3 input. It rejects:
+The query route adds typed scale and coverage-mode fields that are valid for `view=opening` with stock or V3 input. It also accepts `stockWeather=unscaled|similarity` only for scaled stock opening routes; omission preserves the historical unscaled route for evidence replay. It rejects:
 
 - unknown scales;
 - scale without an explicit coverage mode;
 - simultaneous `cloudScale` and legacy `morphologyCandidate`;
+- a stock-weather mode on V3, control, or unscaled routes;
 - scaled control-view requests;
 - any scale route whose runtime readback fails the resolver invariants.
 
@@ -285,6 +300,9 @@ Implementation must use test-first development.
 - Changing any non-adapter field breaks normalized parity.
 - Invalid or conflicting route fields fail without fallback.
 - Scale/coverage/adapter/runtime changes alter the history epoch.
+- Stock similarity weather resolves to `[100/S,100/S]`; the historical control remains `[100,100]`.
+- Actual runtime shader inspection, not the resolver declaration, determines the mip state.
+- Installed build/shader and package-patch SHA-256 identities match the files used by the workspace.
 - Atmosphere-overflow telemetry identifies the correct layers at every S.
 
 ### Browser contracts
@@ -292,7 +310,7 @@ Implementation must use test-first development.
 - Runtime readback equals the resolver result for both inputs.
 - Stock/V3 normalized renderer fingerprints match at the same S and coverage.
 - Scale and coverage switches reset to the exact first history frame.
-- Minimal Stage A screenshots are generated from one clean commit and fixed System Chrome environment.
+- Minimal Stage A0/A1 screenshots are generated from one clean commit and fixed System Chrome environment.
 - Formal exact-frame evidence is generated only after a visual-pass candidate exists.
 
 ### Negative mip gate

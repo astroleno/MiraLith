@@ -1,10 +1,12 @@
 {
-  "decision": "PUBLIC_PARAMETER_SIMILARITY_VISUAL_FAIL_MIP_UNPROVEN",
+  "decision": "UNSCALED_STOCK_WEATHER_CONTROL",
+  "conditionalTaskMEligible": false,
   "mipDistancePatchAuthorized": false,
   "originalTask0To8Locked": true,
   "stageBRun": false,
   "stageCRun": false,
   "stockPassingScales": [],
+  "nextRequiredStage": "SCALED_STOCK_WEATHER_CONTROL",
   "task0PLocked": true,
   "visualReview": "stage-a-visual-review.json"
 }

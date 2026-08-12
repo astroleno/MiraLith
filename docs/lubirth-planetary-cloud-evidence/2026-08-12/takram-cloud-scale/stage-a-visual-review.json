@@ -1,5 +1,6 @@
 {
-  "decision": "PUBLIC_PARAMETER_SIMILARITY_VISUAL_FAIL_MIP_UNPROVEN",
+  "decision": "UNSCALED_STOCK_WEATHER_CONTROL",
+  "classification": "historical-unscaled-stock-weather",
   "reviewBasis": {
     "contactSheet": "stage-a-stock-contact-sheet.png",
     "fullSizeSourceFramesReviewed": [
@@ -46,8 +47,11 @@
     }
   ],
   "stockPassingScales": [],
+  "promotionUse": "diagnostic-only",
   "causalityBoundary": {
     "mipFailureProven": false,
+    "mipRuntimeReadbackCaptured": false,
+    "scaledStockWeatherTested": false,
     "v3Classified": false,
     "takramRejected": false,
     "broaderScaleDirectionRejected": false
