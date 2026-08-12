@@ -1,0 +1,82 @@
+{
+  "kind": "MiraLith CP1.4 Architecture Ready plan review candidate",
+  "status": "IN REVIEW / IMPLEMENTATION CLOSED",
+  "recordedAt": "2026-08-13",
+  "baseline": {
+    "repositoryHead": "382f02952e2181cbb267b607395d9f164dab894f",
+    "branch": "codex/unit4-cp14-architecture-plan",
+    "isolatedWorktree": "/Users/aitoshuu/.config/superpowers/worktrees/MiraLith/unit4-cp14-architecture-plan"
+  },
+  "planCandidate": {
+    "commit": "706631c0fe14e993c29a3efbdc7d30a173e7375a",
+    "parent": "382f02952e2181cbb267b607395d9f164dab894f",
+    "tree": "449ae105357f76acec0df7e18bb419519ebe22b1",
+    "patchSha256FromBaseline": "75be5d829aa989a20c14235629512d95abce59c9cbce111e4138cf1085e56f72",
+    "planPath": "docs/plans/2026-08-13-001-unit4-coscroll-artbreeze-terminal-bridge-plan.md",
+    "planSha256": "a55f3d0526537829b2cb7baf458da50edbc91982ffff9c53df0c6f267b88b922",
+    "planBytes": 43768,
+    "paths": [
+      "docs/plans/2026-08-13-001-unit4-coscroll-artbreeze-terminal-bridge-plan.md",
+      "docs/post-coscroll/CHECKPOINTS.md"
+    ]
+  },
+  "scope": {
+    "productionCodeChanged": false,
+    "testsChanged": false,
+    "terminalEnabled": false,
+    "routeBehaviorChanged": false,
+    "mediaChanged": false,
+    "checkpointPassClaimed": false
+  },
+  "upstreamBindings": {
+    "cp04FreezeVersion": "cp0.4-b-ring-first-v9-2026-07-25",
+    "cp04FreezeSha256": "d906937cc0b885b12fc942f91ce50e9af919878142cead5c0b36d8bd648140a1",
+    "selectedBLinearSha256": "803219d86089d0141db1694c760897b300555dfb9e4991adfe7bb9753e4b135e",
+    "mediaSourceSpecSha256": "0abfd288738e0197ccea9ec6808d3a23064e177c7a4d72e287cc4a3599b0ebbd",
+    "runtimeMediaId": "artbreeze-first-sequence",
+    "filmOwnerSourceFrame": 355,
+    "filmOwnerStartPts": 1065000,
+    "filmOwnerFirstFrameMd5": "9fb23e4d30cf5d743e46e7ad012a94ca",
+    "sourceOrder": "[n=355,n=556) -> [n=4,n=355)",
+    "letterboxPreserved": true
+  },
+  "architectureDecisions": [
+    "The canonical accessible-next resolver is the only terminal enablement authority; no accessible /artbreeze preserves the exact existing wrapped 48-second CoScroll behavior.",
+    "The single CoScroll input owner drives timeline -> terminal-hold -> terminal-exit -> committing; the event that first reaches progress 1 cannot also advance exit.",
+    "Motion epochs, physical event ids, reverse cancellation, access loss, and a post-transition quiet window reject stale GSAP, timer, input-inertia, and readiness work.",
+    "Rotation signals are generation-aware pending/live/fallback snapshots; matching finite angle/speed must arrive within 500ms or the terminal attempt latches fallback.",
+    "The source GLB remains opaque and retains real negative Y-yaw while surface-sampled pale-jade particles replace its cut-out strokes; the glyph is never flattened into a rotating screen plane.",
+    "Live and fallback paths map into the existing strict chapter-visual-handoff-v1 coscroll-ring union without changing its shape.",
+    "A transition-layer DOM ring is only a transport owner between source-ring completion and verified film ownership; it does not persist into the selected B edit.",
+    "Destination reset receives an explicit coordinator/history/direct/source-recovery reason so CoScroll back restores terminal-hold while direct access and refresh restore 10.2/48.",
+    "Successful takeover requires the real verified ArtBreeze first-sequence MP4 to decode its n=355 first frame; poster-only readiness is fallback evidence, not CP2.3 success.",
+    "The frozen B-v9 media, letterbox, four-frame exposure, text, sound carrier, and DOM/video ownership remain authoritative through CP2.1, CP2.2, CP2.3, and CP2.4."
+  ],
+  "knowledgeGraph": {
+    "graphAvailable": true,
+    "graphReportRead": true,
+    "query": "CoScroll terminal input rotation handoff ArtBreeze readiness",
+    "relevantCommunities": [
+      "chapter transition coordinator",
+      "CoScroll anchor and scene",
+      "typed visual handoff",
+      "post-CoScroll route shell and media"
+    ],
+    "graphUpdated": false,
+    "reasonNotUpdated": "The candidate changes documentation only and introduces no public API or dependency edge."
+  },
+  "verification": {
+    "gitDiffCheck": "PASS",
+    "candidatePathAudit": "PASS — exactly two documentation paths in the plan commit",
+    "requiredContractAudit": "PASS — access boundary, state table, input ownership, 500ms fallback, typed handoff, recovery, n=355 media readiness, and CP2 gates are all present",
+    "runtimeTests": "NOT RUN — plan-only candidate changes no runtime code"
+  },
+  "nextGate": {
+    "required": "Independent plan review",
+    "passLabel": "CP1.4 PASS — TECH / IMPLEMENTATION OPEN",
+    "onPass": "Start Task 1 CoScroll characterization tests only.",
+    "onChangeRequest": "Revise this plan and keep production implementation closed.",
+    "unit4ImplementationOpen": false,
+    "unit5Open": false
+  }
+}

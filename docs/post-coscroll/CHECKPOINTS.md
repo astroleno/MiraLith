@@ -259,6 +259,6 @@ Unit 3 implementation candidate 为 [`95a4cd3`](../../commit/95a4cd3372e31970d29
 
 状态：`IN REVIEW / IMPLEMENTATION CLOSED，2026-08-13`
 
-当前只开放 Unit 4 的规划审查，不开放 production implementation。专项 [Unit 4 implementation plan](../plans/2026-08-13-001-unit4-coscroll-artbreeze-terminal-bridge-plan.md) 基于 `382f02952e2181cbb267b607395d9f164dab894f`，冻结 accessible-next 与现有无限循环的边界、`timeline → terminal-hold → terminal-exit → committing` 状态表、单一 input owner、反向取消与旧惯性隔离、generation-aware rotation signal、500ms 单向 fallback、typed live/fallback ring、destination entry reason、ArtBreeze `n=355` readiness、CP0.4 B-v9 媒体绑定及 `CP2.1 → CP2.4` 门禁。
+当前只开放 Unit 4 的规划审查，不开放 production implementation。专项 [Unit 4 implementation plan](../plans/2026-08-13-001-unit4-coscroll-artbreeze-terminal-bridge-plan.md) 基于 `382f02952e2181cbb267b607395d9f164dab894f`，冻结 accessible-next 与现有无限循环的边界、`timeline → terminal-hold → terminal-exit → committing` 状态表、单一 input owner、反向取消与旧惯性隔离、generation-aware rotation signal、500ms 单向 fallback、typed live/fallback ring、destination entry reason、ArtBreeze `n=355` readiness、CP0.4 B-v9 媒体绑定及 `CP2.1 → CP2.4` 门禁。候选身份和 plan-only 范围见 [CP1.4 status evidence](evidence/cp1.4-architecture-ready-status.json) 及其 [checksum index](evidence/cp1.4-architecture-ready-checksums.sha256)。
 
 此条目不声称计划已通过。独立 plan review 必须确认没有 unresolved architecture branch 后，方可另行把 CP1.4 标为 `PASS — TECH / IMPLEMENTATION OPEN`。在此之前不得启动 characterization tests 或任何 production change，不得启用 CoScroll terminal，也不得进入 Unit 5。
