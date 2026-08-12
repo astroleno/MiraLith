@@ -1,5 +1,13 @@
 # LuBirth Takram Orbital Lookdev Tuning Implementation Plan
 
+**Status:** TERMINATED AFTER STAGE B — historical execution record only; superseded for future authorization
+
+**Terminal evidence:** `BOUNDED_ORBITAL_LOOKDEV_FAIL_ROOT_CAUSE_UNRESOLVED` at
+scope-qualification commit `8dc86740024db2f48cd58a0ecd0a3c9739686285`, with
+`OUTCOME.md` SHA-256
+`723c3b11924adde7b499a9ea33534510227ed11d7f55abadf47b28a8e729a374`.
+Stages C–F may not be resumed from this plan.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build and execute the query-only Takram orbital lookdev funnel, preserving the native renderer while producing one auditable stock winner or an explicit bounded terminal result.

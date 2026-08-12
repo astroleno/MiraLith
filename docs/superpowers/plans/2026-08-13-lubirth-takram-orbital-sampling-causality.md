@@ -1,5 +1,13 @@
 # LuBirth Takram Orbital Sampling Causality Implementation Plan
 
+**Status:** CLOSED — terminal h120 A/B published; no further implementation authorized by this plan
+
+**Terminal evidence:** `ORBITAL_SAMPLING_CAUSALITY_CONFIRMED` at publication
+commit `0976f7df6f4293d709412b7ab3cc62fb5a547a41`, scope-qualification commit
+`8dc86740024db2f48cd58a0ecd0a3c9739686285`, and `OUTCOME.md` SHA-256
+`4fbfcdb18cb385e4aec07686d24482315fb9d55e4ed9ceb16f0ade7fb139b670`.
+This result is limited to `h120 / coverage 0.55 / vertical 1 / optical 1`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Run and publish a clean, exact-frame `perspectiveStepScale=1.01` versus `1.0001` causal A/B with stock `h120 / coverage 0.55 / vertical 1 / optical 1`.

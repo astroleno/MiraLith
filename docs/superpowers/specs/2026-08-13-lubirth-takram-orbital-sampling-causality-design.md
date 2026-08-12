@@ -1,12 +1,31 @@
 # LuBirth Takram Orbital Sampling Causality A/B Design
 
-**Status:** Approved; ready for implementation
+**Status:** CLOSED — `ORBITAL_SAMPLING_CAUSALITY_CONFIRMED` for the frozen h120 experiment; superseded for future authorization
 
 **Date:** 2026-08-13
 
 **Scope:** Query-only Takram parity route; stock `h120 / coverage 0.55 / vertical 1 / optical 1`
 
 **Amends:** `2026-08-12-lubirth-takram-orbital-lookdev-tuning-design.md`
+
+**Terminal amendment (2026-08-13):** The experiment was published by commit
+`0976f7df6f4293d709412b7ab3cc62fb5a547a41` and qualified by
+`8dc86740024db2f48cd58a0ecd0a3c9739686285`. Its authoritative outcome is
+`ORBITAL_SAMPLING_CAUSALITY_CONFIRMED` for stock
+`h120 / coverage 0.55 / vertical 1 / optical 1` only. Evidence identities are:
+
+- `manifest.json`: `6eeb0fd3c5b987f1c775e333101d33dd03e07657e8685886b26bd04f7661d849`;
+- `metrics.json`: `456ecd900464f15d10a9dfe115fa7c83004d4a30a219a8d1b0a5ace33aa396e9`;
+- `review.json`: `ffe78284674a5fb1074e8c35bec4a9ceaaf535cd54b79f4bee2da93e2923cbe9`;
+- `OUTCOME.md`: `4fbfcdb18cb385e4aec07686d24482315fb9d55e4ed9ceb16f0ade7fb139b670`.
+
+This terminal result closes the two-arm A/B and invalidates the old Stage A/B
+captures as authorization evidence because their healthy-sampling assumption no
+longer holds. It does **not** claim that h40, h80, or any other coverage has
+independently reproduced the same mechanism. It does not promote `1.0001` or
+authorize further implementation under this document. Future work is governed by
+`2026-08-13-lubirth-takram-perspective-step-root-cause-design.md`; Stage-B-wide
+wording remains forbidden until its h40/h80 confirmation gate passes.
 
 ## 1. Decision
 

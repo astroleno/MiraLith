@@ -1,12 +1,24 @@
 # LuBirth Takram Orbital Lookdev Parameter Tuning Design
 
-**Status:** Executed through terminal Stage B; sampling assumptions amended by the 2026-08-13 causal A/B design
+**Status:** TERMINATED AFTER STAGE B — superseded for all future authorization
 
 **Date:** 2026-08-12
 
 **Scope:** Query-only Takram parity route; stock-first orbital opening lookdev
 
 **Supersedes:** Further work on `PUBLIC_PARAMETER_SIMILARITY`, the rejected mip hypothesis, and uniform `S=80/120/160` scaling
+
+**Terminal amendment (2026-08-13):** This funnel ended at Stage B with
+`BOUNDED_ORBITAL_LOOKDEV_FAIL_ROOT_CAUSE_UNRESOLVED`; Stages C–F are closed and
+may not be resumed from this document. The authoritative outcome is
+`docs/lubirth-planetary-cloud-evidence/2026-08-12/takram-orbital-lookdev/OUTCOME.md`
+at qualifying commit `8dc86740024db2f48cd58a0ecd0a3c9739686285`, SHA-256
+`723c3b11924adde7b499a9ea33534510227ed11d7f55abadf47b28a8e729a374`.
+The later h120-only sampling A/B invalidated Stage A/B as a basis for future
+authorization, but did not retroactively prove the mechanism for h40, h80, or
+every coverage candidate. Historical evidence remains replayable; all new
+sampling, lookdev, or production authorization must come from the successor
+perspective-step design and its explicit confirmation gates.
 
 ## 1. Decision
 
