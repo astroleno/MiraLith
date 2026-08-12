@@ -1,6 +1,6 @@
 # LuBirth Takram Orbital Lookdev Parameter Tuning Design
 
-**Status:** Revised after second document review; awaiting written-spec approval
+**Status:** Review complete; ready for implementation planning
 
 **Date:** 2026-08-12
 
@@ -52,7 +52,7 @@ This spike must:
 - start with the committed Takram stock weather and shared shape/detail/turbulence/STBN assets;
 - preserve the native `CloudsEffect → temporal resolve → AerialPerspectiveEffect` order;
 - preserve the existing Earth radius, camera path, scene-depth bridge, HDR/output transform, BSM implementation, temporal implementation, and render-target formats;
-- publish requested values, runtime readback, renderer fingerprint, `lookdevMountKey`, and `runtimeEvidenceEpoch` for every candidate.
+- publish requested values, runtime readback, renderer fingerprint, `lookdevBaseKey`, `lookdevMountKey`, `resetNonce`, and `runtimeEvidenceEpoch` for every candidate.
 
 This spike must not:
 
@@ -302,21 +302,22 @@ The route adds explicit `orbitalPreset`, `orbitalCoverage`, `verticalScale`, and
 
 Historical stock/V3 routes remain replayable. Stage authorization is enforced by the evidence runner and checkpoint manifest, not by disabling existing query combinations globally; the runner must refuse an orbital V3 capture until its Stage D input names the committed stock winner.
 
-Identity is split into two one-way layers.
+Identity is split into a pre-mount base/key pair and one post-mount evidence layer.
 
-`lookdevMountKey` is computed before mounting and contains only:
+`lookdevBaseKey` is computed before mounting and contains only:
 
 - normalized query and the pure resolved lookdev contract;
 - adapter manifest ID;
 - normalized progress/view/diagnostic;
-- asset, atmosphere, WebGL-context, viewport/resize generations;
-- an explicit `resetNonce`.
+- asset, atmosphere, WebGL-context, viewport/resize, and visibility generations.
+
+`lookdevMountKey` is the serialized pair `(lookdevBaseKey, resetNonce)`. A new base key initializes its nonce to `0`. The nonce exists only to force one recovery remount; it is not part of the stable base identity used by the drift-attempt ledger.
 
 `runtimeEvidenceEpoch` is computed after mount and records actual shader/build identity, complete renderer fingerprint, camera/projection/Earth matrices, render-target allocation generations, adapter runtime values, and the `lookdevMountKey` that created them. It is first published only after assets, atmosphere, material compilation, runtime readback, and coordinate/HDR gates are stable; pre-ready changes do not count as drift. Runtime evidence never feeds its fingerprint or matrix values directly back into `lookdevMountKey`.
 
 Changing `lookdevMountKey` must `key`-remount the complete `<EffectComposer><Clouds/><AerialPerspective/></EffectComposer>` subtree. Toggling only `clouds.temporalUpscale` is not a valid reset because it rebuilds CloudsPass history but leaves ShadowPass history intact. Capture readiness must prove that cloud current/resolve/history and shadow current/resolve/history allocation generations all changed, and that cloud, resolve, and shadow frame metadata begin from the same new epoch before the 32-frame convergence count starts.
 
-Runtime drift invalidates the current `runtimeEvidenceEpoch` and increments `resetNonce` at most once for each `(lookdevMountKey, driftSignature)` pair. If the same drift persists after the remount, the route stops with `ORBITAL_LOOKDEV_SETUP_BLOCKED`; it must not increment the nonce again or enter a remount loop. Resource load, resize, context restore, or visibility loss changes its pre-mount generation, discards the current epoch, and remounts/rewarms it.
+`driftSignature` is the stable hash of drift entries sorted by path, with each entry containing its canonical expected and actual values. Runtime drift invalidates the current `runtimeEvidenceEpoch` and increments `resetNonce` at most once for each `(lookdevBaseKey, driftSignature)` pair. The recovery remount changes `lookdevMountKey` but not `lookdevBaseKey`, so the same persistent drift still resolves to the same attempt-ledger entry. If that drift persists after the one remount, the route stops with `ORBITAL_LOOKDEV_SETUP_BLOCKED`; it must not increment the nonce again or enter a remount loop. A legitimate query, resource, context, viewport, or visibility-generation change produces a new `lookdevBaseKey`, resets the nonce to `0`, and starts a fresh drift audit for the new configuration.
 
 This remount policy is for deterministic fixed-query lookdev captures. A continuously animated production camera requires a separate camera-cut/history-invalidation contract.
 
@@ -351,9 +352,11 @@ The current deterministic evidence has repeat MAE `0`, so the expected Stage 0 r
 - correct extinction scaling for vertical and optical-depth changes;
 - all active cloud tops remain below atmosphere top;
 - invalid combinations fail without legacy fallback;
-- every pre-mount lookdev parameter/generation changes `lookdevMountKey`;
+- every pre-mount lookdev parameter/generation changes `lookdevBaseKey` and therefore `lookdevMountKey`;
+- incrementing `resetNonce` changes `lookdevMountKey` without changing `lookdevBaseKey`;
+- a new base key resets its nonce to `0`, and drift-entry ordering does not change the canonical `driftSignature`;
 - runtime fingerprint or matrix data changes `runtimeEvidenceEpoch` without directly changing the mount key;
-- persistent drift performs one nonce remount and then blocks without looping;
+- the drift-attempt ledger keys by `(lookdevBaseKey, driftSignature)`, so persistent drift performs one nonce remount and then blocks without looping;
 - identity remount changes all cloud and shadow render-target allocation generations;
 - runtime fingerprint/readback includes every tuned field;
 - baseline normalization removes only wrapper fields and detects drift in uniforms, layers, adapters, shaders, RT formats, or assets;
@@ -362,14 +365,15 @@ The current deterministic evidence has repeat MAE `0`, so the expected Stage 0 r
 ### Browser verification
 
 - native `coverage=0.3` control reproduces the existing unscaled opening fingerprint;
-- sequential changes to preset, coverage, vertical scale, optical depth, progress, resource generation, resize, visibility, and context restoration each change `lookdevMountKey`, remount the composer subtree, and restart cloud/shadow history in one epoch;
+- sequential changes to preset, coverage, vertical scale, optical depth, progress, resource generation, resize, visibility, and context restoration each change `lookdevBaseKey` and `lookdevMountKey`, remount the composer subtree, and restart cloud/shadow history in one epoch;
+- one persistent runtime drift changes only the nonce-bearing mount key on its first recovery attempt and blocks on recurrence under the same base key;
 - post-mount runtime evidence publication does not trigger a second bootstrap remount;
 - one deterministic System Chrome capture generates the bounded funnel contact sheets;
 - rejected stages cannot invoke later capture or GPU tasks.
 
 ### Evidence manifest
 
-Record the clean commit, query, requested contract, runtime readback, renderer fingerprint, `lookdevMountKey`, `runtimeEvidenceEpoch`, package/shader/patch hashes, screenshot hashes, reviewer decision, and exact stop/unlock state. Raw diagnostic populations are generated only for the final winner.
+Record the clean commit, query, requested contract, runtime readback, renderer fingerprint, `lookdevBaseKey`, `lookdevMountKey`, `resetNonce`, `runtimeEvidenceEpoch`, drift-attempt ledger outcome, package/shader/patch hashes, screenshot hashes, reviewer decision, and exact stop/unlock state. Raw diagnostic populations are generated only for the final winner.
 
 Setup failures, missing references, runtime drift, incomplete history reset, unsupported timer queries, and invalid/disjoint populations remain explicit evidence states. They may block the affected stage but may not be converted into a visual or performance failure.
 
