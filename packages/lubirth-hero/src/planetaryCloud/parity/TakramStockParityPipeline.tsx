@@ -1331,13 +1331,15 @@ export function TakramStockParityPipeline({
         delete window.__MiraLithTakramStageReadback;
         delete window.__MiraLithTakramMipDiagnostic;
       }
-      if (clouds && orbitalLookdevContract === null) {
+      if (clouds) {
         // The upstream effect owns the STBN/Bayer frame counter. Reset it with
         // every immutable history epoch so separate diagnostic routes capture
         // the same temporal phase instead of inheriting asset-load timing.
         (clouds as unknown as { frame: number }).frame = 0;
-        clouds.temporalUpscale = false;
-        clouds.temporalUpscale = true;
+        if (orbitalLookdevContract === null) {
+          clouds.temporalUpscale = false;
+          clouds.temporalUpscale = true;
+        }
       }
     }
     if (nativePipelineReady) {
