@@ -116,6 +116,7 @@ import {
   captureTakramMipDiagnosticFrame,
   type TakramMipDiagnosticPass
 } from "./TakramMipDiagnosticReadback";
+import type { TakramOrbitalLookdevInput } from "./TakramOrbitalLookdevContract";
 
 const EARTH_DAY_SRC = "/assets/lubirth/textures/earth-day-nasa-lite-4k.webp";
 const CONTROL_CAMERA_ALTITUDE_M =
@@ -207,6 +208,7 @@ export interface TakramStockParityPipelineProps {
   input: TakramParityInput;
   morphologyCandidate?: TakramV3MorphologyCandidateId;
   morphologyView?: TakramV3MorphologyViewId;
+  orbitalLookdev?: TakramOrbitalLookdevInput;
   onTelemetry?: (telemetry: TakramParityTelemetry) => void;
   progress: number;
   view: TakramParityView;

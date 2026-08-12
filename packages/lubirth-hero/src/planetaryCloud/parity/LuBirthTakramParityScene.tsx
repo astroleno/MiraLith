@@ -14,6 +14,7 @@ import type {
   TakramV3MorphologyCandidateId,
   TakramV3MorphologyViewId
 } from "./TakramV3MorphologyContract";
+import type { TakramOrbitalLookdevInput } from "./TakramOrbitalLookdevContract";
 import { TakramStockParityPipeline } from "./TakramStockParityPipeline";
 
 export interface LuBirthTakramParitySceneProps {
@@ -25,6 +26,7 @@ export interface LuBirthTakramParitySceneProps {
   input: TakramParityInput;
   morphologyCandidate?: TakramV3MorphologyCandidateId;
   morphologyView?: TakramV3MorphologyViewId;
+  orbitalLookdev?: TakramOrbitalLookdevInput;
   onTelemetry?: (telemetry: TakramParityTelemetry) => void;
   progress: number;
 }
@@ -41,6 +43,7 @@ export function LuBirthTakramParityScene({
   input,
   morphologyCandidate,
   morphologyView,
+  orbitalLookdev,
   onTelemetry,
   progress,
   stockWeatherMode
@@ -54,6 +57,7 @@ export function LuBirthTakramParityScene({
       input={input}
       morphologyCandidate={morphologyCandidate}
       morphologyView={morphologyView}
+      orbitalLookdev={orbitalLookdev}
       onTelemetry={onTelemetry}
       progress={progress}
       stockWeatherMode={stockWeatherMode}

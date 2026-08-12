@@ -15,6 +15,16 @@ import type {
   TakramCloudScaleRuntimeReadback
 } from "./TakramCloudScaleRuntime";
 import {
+  parseTakramOrbitalCoverage,
+  parseTakramOrbitalOpticalDepthScale,
+  parseTakramOrbitalPreset,
+  parseTakramOrbitalVerticalScale,
+  type TakramOrbitalCoverage,
+  type TakramOrbitalOpticalDepthScale,
+  type TakramOrbitalPreset,
+  type TakramOrbitalVerticalScale
+} from "./TakramOrbitalLookdevContract";
+import {
   TAKRAM_V3_MORPHOLOGY_BASELINE,
   TAKRAM_V3_MORPHOLOGY_SPHERICAL_UV,
   resolveTakramV3MorphologyCandidate,
@@ -77,6 +87,10 @@ export type TakramParityRouteQuery = {
   altitudeMeters?: number;
   morphologyCandidate?: TakramV3MorphologyCandidateId;
   morphologyView?: TakramV3MorphologyViewId;
+  opticalDepthScale?: TakramOrbitalOpticalDepthScale;
+  orbitalCoverage?: TakramOrbitalCoverage;
+  orbitalPreset?: TakramOrbitalPreset;
+  verticalScale?: TakramOrbitalVerticalScale;
 };
 
 export function isTakramParityAltitudeLadderDiagnostic(
@@ -227,6 +241,7 @@ export type TakramParityRouteQueryResult =
     ok: false;
     reason:
       | "control-requires-stock"
+      | "conflicting-orbital-lookdev-contracts"
       | "cloud-coverage-requires-scale"
       | "cloud-scale-requires-coverage-mode"
       | "cloud-scale-requires-opening"
@@ -234,11 +249,17 @@ export type TakramParityRouteQueryResult =
       | "morphology-candidate-requires-view"
       | "morphology-requires-v3"
       | "mip-diagnostic-requires-stock"
+      | "incomplete-orbital-lookdev"
       | "unknown-cloud-coverage-mode"
       | "unknown-cloud-scale"
       | "unknown-stock-weather-mode"
       | "stock-weather-mode-requires-scale"
       | "stock-weather-mode-requires-stock"
+      | "orbital-lookdev-requires-opening"
+      | "unknown-optical-depth-scale"
+      | "unknown-orbital-coverage"
+      | "unknown-orbital-preset"
+      | "unknown-vertical-scale"
       | "unknown-morphology-candidate"
       | "unknown-morphology-view";
   };
@@ -254,6 +275,10 @@ export function resolveTakramParityRouteQuery(
   const requestedStockWeather = input.get("stockWeather");
   const requestedMorphologyCandidate = input.get("morphologyCandidate");
   const requestedMorphologyView = input.get("morphologyView");
+  const requestedOrbitalPreset = input.get("orbitalPreset");
+  const requestedOrbitalCoverage = input.get("orbitalCoverage");
+  const requestedVerticalScale = input.get("verticalScale");
+  const requestedOpticalDepthScale = input.get("opticalDepthScale");
   const parsedProgress = Number.parseFloat(input.get("progress") ?? "0");
   const parsedAltitudeMeters = Number.parseFloat(input.get("altitudeMeters") ?? "0");
   const diagnostic = requestedDiagnostic === "altitude-ladder" ||
@@ -277,6 +302,51 @@ export function resolveTakramParityRouteQuery(
     progress: Number.isFinite(parsedProgress) ? Math.max(0, Math.min(0.18, parsedProgress)) : 0,
     view: requestedView === "control" ? "control" : "opening"
   };
+
+  const orbitalFields = [
+    requestedOrbitalPreset,
+    requestedOrbitalCoverage,
+    requestedVerticalScale,
+    requestedOpticalDepthScale
+  ];
+  const hasOrbitalLookdevQuery = orbitalFields.some((entry) => entry !== null);
+  if (hasOrbitalLookdevQuery && value.view !== "opening") {
+    return { ok: false, reason: "orbital-lookdev-requires-opening" };
+  }
+  if (requestedOrbitalPreset !== null &&
+    parseTakramOrbitalPreset(requestedOrbitalPreset) === null) {
+    return { ok: false, reason: "unknown-orbital-preset" };
+  }
+  if (requestedOrbitalCoverage !== null &&
+    parseTakramOrbitalCoverage(requestedOrbitalCoverage) === null) {
+    return { ok: false, reason: "unknown-orbital-coverage" };
+  }
+  if (requestedVerticalScale !== null &&
+    parseTakramOrbitalVerticalScale(requestedVerticalScale) === null) {
+    return { ok: false, reason: "unknown-vertical-scale" };
+  }
+  if (requestedOpticalDepthScale !== null &&
+    parseTakramOrbitalOpticalDepthScale(requestedOpticalDepthScale) === null) {
+    return { ok: false, reason: "unknown-optical-depth-scale" };
+  }
+  if (hasOrbitalLookdevQuery && orbitalFields.some((entry) => entry === null)) {
+    return { ok: false, reason: "incomplete-orbital-lookdev" };
+  }
+  if (hasOrbitalLookdevQuery && (
+    requestedCloudScale !== null || requestedCloudCoverage !== null ||
+    requestedMorphologyCandidate !== null || requestedMorphologyView !== null ||
+    requestedStockWeather !== null
+  )) {
+    return { ok: false, reason: "conflicting-orbital-lookdev-contracts" };
+  }
+  if (hasOrbitalLookdevQuery) {
+    value.orbitalPreset = parseTakramOrbitalPreset(requestedOrbitalPreset)!;
+    value.orbitalCoverage = parseTakramOrbitalCoverage(requestedOrbitalCoverage)!;
+    value.verticalScale = parseTakramOrbitalVerticalScale(requestedVerticalScale)!;
+    value.opticalDepthScale = parseTakramOrbitalOpticalDepthScale(
+      requestedOpticalDepthScale
+    )!;
+  }
 
   const stockWeatherMode = parseTakramStockWeatherControlMode(requestedStockWeather);
   if (requestedStockWeather !== null && stockWeatherMode === null) {
@@ -363,9 +433,12 @@ export function resolveTakramParityRouteQuery(
     ["full", "cloud-raw", "cloud-raw-off", "history-reset-first", "bsm-off", "aerial-final", "sample-count-debug", "stage-readback"].includes(value.diagnostic);
   const cloudScaleDiagnostic = value.cloudScale !== undefined &&
     ["full", "cloud-raw", "cloud-raw-off", "history-reset-first", "bsm-off", "aerial-final", "sample-count-debug", "stage-readback", "mip-diagnostic"].includes(value.diagnostic);
+  const orbitalDiagnostic = value.orbitalPreset !== undefined &&
+    ["full", "cloud-raw", "cloud-raw-off", "history-reset-first", "bsm-off", "aerial-final", "sample-count-debug", "stage-readback", "uv-debug"].includes(value.diagnostic);
   return {
     ok: true,
     value: value.view === "opening" && !morphologyDiagnostic && !cloudScaleDiagnostic &&
+      !orbitalDiagnostic &&
       !["altitude-ladder", "altitude-ladder-cloud-off", "cloud-raw", "cloud-raw-off", "depth-off", "density-debug", "uv-debug", "sample-count-debug", "stage-readback", "mip-diagnostic"].includes(value.diagnostic)
       ? { ...value, diagnostic: "full" }
       : value

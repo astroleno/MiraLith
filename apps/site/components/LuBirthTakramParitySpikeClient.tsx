@@ -52,6 +52,17 @@ export function LuBirthTakramParitySpikeClient() {
   }, [telemetry]);
 
   const query = routeResult.ok ? routeResult.value : null;
+  const orbitalLookdev = query?.orbitalPreset !== undefined &&
+    query.orbitalCoverage !== undefined &&
+    query.verticalScale !== undefined &&
+    query.opticalDepthScale !== undefined
+    ? {
+        preset: query.orbitalPreset,
+        coverage: query.orbitalCoverage,
+        verticalScale: query.verticalScale,
+        opticalDepthScale: query.opticalDepthScale
+      }
+    : undefined;
   const runtime = !routeResult.ok
     ? "invalid-query"
     : telemetry?.active
@@ -67,10 +78,14 @@ export function LuBirthTakramParitySpikeClient() {
       data-input={query?.input ?? "pending"}
       data-morphology-candidate={query?.morphologyCandidate ?? "none"}
       data-morphology-view={query?.morphologyView ?? "none"}
+      data-optical-depth-scale={query?.opticalDepthScale ?? "none"}
+      data-orbital-coverage={query?.orbitalCoverage ?? "none"}
+      data-orbital-preset={query?.orbitalPreset ?? "none"}
       data-runtime={runtime}
       data-stock-weather={query?.stockWeatherMode ?? "none"}
       data-takram-parity-route="true"
       data-view={query?.view ?? "pending"}
+      data-vertical-scale={query?.verticalScale ?? "none"}
     >
       {query !== null ? (
         <VisualCanvas
@@ -94,6 +109,7 @@ export function LuBirthTakramParitySpikeClient() {
               input={query.input}
               morphologyCandidate={query.morphologyCandidate}
               morphologyView={query.morphologyView}
+              orbitalLookdev={orbitalLookdev}
               onTelemetry={setTelemetry}
               progress={query.progress}
               stockWeatherMode={query.stockWeatherMode}

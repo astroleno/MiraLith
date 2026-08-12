@@ -312,6 +312,88 @@ async function readTakramParityStockManifest() {
   };
 }
 
+test("accepts only complete opening orbital lookdev queries and rejects legacy conflicts", async () => {
+  const contract = await loadTakramParityContract();
+  expect(contract).not.toBeNull();
+
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=stock&view=opening&progress=0.06&orbitalPreset=h80&orbitalCoverage=0.45&verticalScale=2&opticalDepthScale=1.5"
+  ))).toEqual({
+    ok: true,
+    value: {
+      diagnostic: "full",
+      input: "stock",
+      opticalDepthScale: 1.5,
+      orbitalCoverage: 0.45,
+      orbitalPreset: "h80",
+      progress: 0.06,
+      verticalScale: 2,
+      view: "opening"
+    }
+  });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=v3&view=opening&diagnostic=stage-readback&orbitalPreset=h40&orbitalCoverage=0.3&verticalScale=1&opticalDepthScale=1"
+  ))).toEqual({
+    ok: true,
+    value: {
+      diagnostic: "stage-readback",
+      input: "v3",
+      opticalDepthScale: 1,
+      orbitalCoverage: 0.3,
+      orbitalPreset: "h40",
+      progress: 0,
+      verticalScale: 1,
+      view: "opening"
+    }
+  });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=stock&view=opening&diagnostic=uv-debug&orbitalPreset=h120&orbitalCoverage=0.55&verticalScale=4&opticalDepthScale=0.75"
+  ))).toMatchObject({ ok: true, value: { diagnostic: "uv-debug" } });
+
+  const invalidQueries = [
+    [
+      "input=stock&view=opening&orbitalPreset=h160&orbitalCoverage=0.3&verticalScale=1&opticalDepthScale=1",
+      "unknown-orbital-preset"
+    ],
+    [
+      "input=stock&view=opening&orbitalPreset=h80&orbitalCoverage=0.5&verticalScale=1&opticalDepthScale=1",
+      "unknown-orbital-coverage"
+    ],
+    [
+      "input=stock&view=opening&orbitalPreset=h80&orbitalCoverage=0.3&verticalScale=3&opticalDepthScale=1",
+      "unknown-vertical-scale"
+    ],
+    [
+      "input=stock&view=opening&orbitalPreset=h80&orbitalCoverage=0.3&verticalScale=1&opticalDepthScale=2",
+      "unknown-optical-depth-scale"
+    ],
+    [
+      "input=stock&view=opening&orbitalPreset=h80&orbitalCoverage=0.3&verticalScale=1",
+      "incomplete-orbital-lookdev"
+    ],
+    [
+      "input=stock&view=control&orbitalPreset=native&orbitalCoverage=0.3&verticalScale=1&opticalDepthScale=1",
+      "orbital-lookdev-requires-opening"
+    ],
+    [
+      "input=stock&view=opening&orbitalPreset=h80&orbitalCoverage=0.3&verticalScale=1&opticalDepthScale=1&cloudScale=80&cloudCoverage=parity",
+      "conflicting-orbital-lookdev-contracts"
+    ],
+    [
+      "input=v3&view=opening&orbitalPreset=h80&orbitalCoverage=0.3&verticalScale=1&opticalDepthScale=1&morphologyView=opening-orbit&morphologyCandidate=baseline",
+      "conflicting-orbital-lookdev-contracts"
+    ],
+    [
+      "input=stock&view=opening&orbitalPreset=h80&orbitalCoverage=0.3&verticalScale=1&opticalDepthScale=1&stockWeather=similarity",
+      "conflicting-orbital-lookdev-contracts"
+    ]
+  ] as const;
+  for (const [query, reason] of invalidQueries) {
+    expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(query)))
+      .toEqual({ ok: false, reason });
+  }
+});
+
 test("pins the official stock Takram contract to auditable local assets", async () => {
   const contract = await loadTakramParityContract();
 
