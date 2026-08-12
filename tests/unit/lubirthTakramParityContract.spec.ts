@@ -91,6 +91,7 @@ interface TakramParityContractModule {
     clouds: Record<string, unknown>;
     aerialPerspective: Record<string, unknown>;
     cloudScaleRuntime?: Record<string, unknown>;
+    orbitalLookdevRuntime?: Record<string, unknown>;
     sharedAssets: Record<string, string>;
   }): Record<string, unknown>;
   hashTakramParityRendererFingerprint(fingerprint: Record<string, unknown>): string;
@@ -878,7 +879,10 @@ test("fingerprints resolved native state and rejects non-adapter drift", async (
             minTransmittance: { value: 0.01 },
             opticalDepthTailScale: { value: 2 }
           }
-        }
+        },
+        currentRenderTarget: { width: 512, height: 512, textures: [], texture: { format: 1023, type: 1016 } },
+        resolveRenderTarget: { width: 512, height: 512, textures: [], texture: { format: 1023, type: 1016 } },
+        historyRenderTarget: { width: 512, height: 512, textures: [], texture: { format: 1023, type: 1016 } }
       }
     },
     aerialPerspective: {
@@ -957,4 +961,43 @@ test("fingerprints resolved native state and rejects non-adapter drift", async (
   expect(contract!.hashTakramParityRendererFingerprint(changedScaleFingerprint)).not.toBe(
     contract!.hashTakramParityRendererFingerprint(scaledFingerprint)
   );
+
+  const orbitalLookdevRuntime = {
+    classification: "TAKRAM_ORBITAL_PARAMETER_LOOKDEV",
+    preset: "h80",
+    coverage: 0.45,
+    localWeatherRepeat: [1.25, 1.25],
+    turbulenceRepeat: [20, 20],
+    effectiveTurbulenceRepeat: [25, 25],
+    layers: [{ channel: "r", height: 1300, densityScale: 0.1 }]
+  };
+  const orbitalFingerprint = contract!.buildTakramParityRendererFingerprint({
+    ...runtime,
+    orbitalLookdevRuntime
+  });
+  expect(orbitalFingerprint).toMatchObject({
+    schemaVersion: 6,
+    orbitalLookdev: orbitalLookdevRuntime,
+    orbitalRenderTargets: {
+      clouds: {
+        clouds: { present: true },
+        resolve: { present: true },
+        history: { present: true }
+      },
+      shadow: {
+        clouds: { present: true },
+        resolve: { present: true },
+        history: { present: true }
+      }
+    }
+  });
+  const changedOrbitalFingerprint = contract!.buildTakramParityRendererFingerprint({
+    ...runtime,
+    orbitalLookdevRuntime: {
+      ...orbitalLookdevRuntime,
+      effectiveTurbulenceRepeat: [25, 26]
+    }
+  });
+  expect(contract!.hashTakramParityRendererFingerprint(changedOrbitalFingerprint))
+    .not.toBe(contract!.hashTakramParityRendererFingerprint(orbitalFingerprint));
 });

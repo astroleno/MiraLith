@@ -173,7 +173,9 @@ function countMatches(value: string, expression: RegExp) {
   return Array.from(value.matchAll(expression)).length;
 }
 
-function readMipDistanceRuntime(target: TakramCloudScaleRuntimeTarget) {
+export function readTakramMipDistanceRuntime(
+  target: Pick<TakramCloudScaleRuntimeTarget, "cloudsPass">
+) {
   const material = target.cloudsPass?.currentMaterial;
   const fragmentShader = material?.fragmentShader ?? "";
   const nativeCoefficientOccurrences = countMatches(
@@ -237,7 +239,7 @@ export function readTakramCloudScaleRuntime(
     coverage: target.coverage,
     coverageMode: contract.coverageMode,
     layers: contract.layers.map((_, index) => readLayer(target.cloudLayers[index])),
-    mipDistancePatch: readMipDistanceRuntime(target),
+    mipDistancePatch: readTakramMipDistanceRuntime(target),
     scale: contract.scale,
     schemaVersion: contract.schemaVersion,
     shadow: {

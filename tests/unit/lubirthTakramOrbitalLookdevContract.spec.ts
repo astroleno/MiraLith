@@ -1,14 +1,19 @@
 import { expect, test } from "@playwright/test";
-import {
-  classifyTakramOrbitalCubeFaceDiagnostic,
-  parseTakramOrbitalCoverage,
-  parseTakramOrbitalOpticalDepthScale,
-  parseTakramOrbitalPreset,
-  parseTakramOrbitalVerticalScale,
-  resolveTakramOrbitalLookdevContract
-} from "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalLookdevContract";
 
-test("parses only the bounded orbital lookdev domains", () => {
+const contractModulePath =
+  "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalLookdevContract";
+
+async function loadContract() {
+  return import(contractModulePath);
+}
+
+test("parses only the bounded orbital lookdev domains", async () => {
+  const {
+    parseTakramOrbitalCoverage,
+    parseTakramOrbitalOpticalDepthScale,
+    parseTakramOrbitalPreset,
+    parseTakramOrbitalVerticalScale
+  } = await loadContract();
   expect(["native", "h40", "h80", "h120"].map(parseTakramOrbitalPreset))
     .toEqual(["native", "h40", "h80", "h120"]);
   expect(["h160", "40", "", null].map(parseTakramOrbitalPreset))
@@ -30,7 +35,8 @@ test("parses only the bounded orbital lookdev domains", () => {
     .toEqual([null, null, null, null]);
 });
 
-test("resolves the exact orbital morphology table and effective turbulence domain", () => {
+test("resolves the exact orbital morphology table and effective turbulence domain", async () => {
+  const { resolveTakramOrbitalLookdevContract } = await loadContract();
   const expected = {
     native: {
       presentationScale: 1,
@@ -90,7 +96,8 @@ test("resolves the exact orbital morphology table and effective turbulence domai
   }
 });
 
-test("keeps Stage A ray, step, lighting, turbulence, and layer fields native", () => {
+test("keeps Stage A ray, step, lighting, turbulence, and layer fields native", async () => {
+  const { resolveTakramOrbitalLookdevContract } = await loadContract();
   const contract = resolveTakramOrbitalLookdevContract({
     preset: "h120",
     coverage: 0.3,
@@ -163,7 +170,8 @@ test("keeps Stage A ray, step, lighting, turbulence, and layer fields native", (
   ]);
 });
 
-test("preserves vertical optical depth before applying the bounded optical finish", () => {
+test("preserves vertical optical depth before applying the bounded optical finish", async () => {
+  const { resolveTakramOrbitalLookdevContract } = await loadContract();
   const native = resolveTakramOrbitalLookdevContract({
     preset: "h80",
     coverage: 0.45,
@@ -202,7 +210,11 @@ test("preserves vertical optical depth before applying the bounded optical finis
   expect(finished.shadow.minExtinction).toBeCloseTo(1e-5 / 2 * 1.5, 16);
 });
 
-test("deep-freezes the contract and classifies only confirmed cube-face artifacts as hard failures", () => {
+test("deep-freezes the contract and classifies only confirmed cube-face artifacts as hard failures", async () => {
+  const {
+    classifyTakramOrbitalCubeFaceDiagnostic,
+    resolveTakramOrbitalLookdevContract
+  } = await loadContract();
   const contract = resolveTakramOrbitalLookdevContract({
     preset: "h40",
     coverage: 0.55,

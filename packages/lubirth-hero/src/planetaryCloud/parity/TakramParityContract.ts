@@ -24,6 +24,7 @@ import {
   type TakramOrbitalPreset,
   type TakramOrbitalVerticalScale
 } from "./TakramOrbitalLookdevContract";
+import type { TakramOrbitalLookdevRuntimeReadback } from "./TakramOrbitalLookdevRuntime";
 import {
   TAKRAM_V3_MORPHOLOGY_BASELINE,
   TAKRAM_V3_MORPHOLOGY_SPHERICAL_UV,
@@ -495,8 +496,21 @@ export interface TakramParityRendererFingerprint {
   // Version 3 remains byte-compatible for historical unscaled evidence.
   // Version 4 added declared cloud-scale readback; version 5 proves actual
   // runtime shader identity and mip state.
-  schemaVersion: 3 | 4 | 5;
+  schemaVersion: 3 | 4 | 5 | 6;
   cloudScale?: TakramCloudScaleRuntimeReadback;
+  orbitalLookdev?: TakramOrbitalLookdevRuntimeReadback;
+  orbitalRenderTargets?: {
+    clouds: {
+      clouds: Record<string, unknown>;
+      resolve: Record<string, unknown>;
+      history: Record<string, unknown>;
+    };
+    shadow: {
+      clouds: Record<string, unknown>;
+      resolve: Record<string, unknown>;
+      history: Record<string, unknown>;
+    };
+  };
   packageVersions: typeof TAKRAM_PARITY_NPM_PACKAGES;
   composer: {
     order: readonly ["CloudsEffect", "AerialPerspectiveEffect"];
@@ -678,6 +692,7 @@ export interface TakramParityRendererRuntimeInputs {
   clouds: RuntimeObject;
   aerialPerspective: RuntimeObject;
   cloudScaleRuntime?: TakramCloudScaleRuntimeReadback;
+  orbitalLookdevRuntime?: TakramOrbitalLookdevRuntimeReadback;
   sharedAssets: Record<"shape" | "shapeDetail" | "stbn" | "turbulence", string>;
 }
 
@@ -691,6 +706,7 @@ export function buildTakramParityRendererFingerprint({
   clouds,
   aerialPerspective,
   cloudScaleRuntime,
+  orbitalLookdevRuntime,
   sharedAssets
 }: TakramParityRendererRuntimeInputs): TakramParityRendererFingerprint {
   const cloudsMaterial = clouds.cloudsPass.currentMaterial as RuntimeObject;
@@ -754,6 +770,17 @@ export function buildTakramParityRendererFingerprint({
     renderTargets: readCloudsRenderTargets(cloudsPass),
     sharedAssets: { ...sharedAssets }
   };
+  if (orbitalLookdevRuntime !== undefined) {
+    return {
+      ...fingerprint,
+      orbitalLookdev: orbitalLookdevRuntime,
+      orbitalRenderTargets: {
+        clouds: readCloudsRenderTargets(cloudsPass),
+        shadow: readCloudsRenderTargets(shadowPass)
+      },
+      schemaVersion: 6
+    };
+  }
   return cloudScaleRuntime === undefined
     ? fingerprint
     : {
