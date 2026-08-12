@@ -86,6 +86,7 @@ export function LuBirthTakramParitySpikeClient() {
       data-takram-parity-route="true"
       data-view={query?.view ?? "pending"}
       data-vertical-scale={query?.verticalScale ?? "none"}
+      data-weather-adapter-comparison={query?.weatherAdapterComparison ?? "none"}
     >
       {query !== null ? (
         <VisualCanvas
@@ -113,6 +114,7 @@ export function LuBirthTakramParitySpikeClient() {
               onTelemetry={setTelemetry}
               progress={query.progress}
               stockWeatherMode={query.stockWeatherMode}
+              weatherAdapterComparison={query.weatherAdapterComparison}
             />
           )}
         </VisualCanvas>

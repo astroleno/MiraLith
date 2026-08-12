@@ -348,6 +348,12 @@ test("accepts only complete opening orbital lookdev queries and rejects legacy c
     }
   });
   expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    "input=stock&view=opening&orbitalPreset=h40&orbitalCoverage=0.3&verticalScale=1&opticalDepthScale=1&weatherAdapterComparison=explicit"
+  ))).toMatchObject({
+    ok: true,
+    value: { weatherAdapterComparison: "explicit" }
+  });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
     "input=stock&view=opening&diagnostic=uv-debug&orbitalPreset=h120&orbitalCoverage=0.55&verticalScale=4&opticalDepthScale=0.75"
   ))).toMatchObject({ ok: true, value: { diagnostic: "uv-debug" } });
 
@@ -387,6 +393,14 @@ test("accepts only complete opening orbital lookdev queries and rejects legacy c
     [
       "input=stock&view=opening&orbitalPreset=h80&orbitalCoverage=0.3&verticalScale=1&opticalDepthScale=1&stockWeather=similarity",
       "conflicting-orbital-lookdev-contracts"
+    ],
+    [
+      "input=stock&view=opening&weatherAdapterComparison=explicit",
+      "weather-adapter-comparison-requires-orbital-lookdev"
+    ],
+    [
+      "input=stock&view=opening&orbitalPreset=h80&orbitalCoverage=0.3&verticalScale=1&opticalDepthScale=1&weatherAdapterComparison=implicit",
+      "unknown-weather-adapter-comparison"
     ]
   ] as const;
   for (const [query, reason] of invalidQueries) {

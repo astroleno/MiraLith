@@ -69,7 +69,8 @@ import {
   type TakramParitySampleCountReadback,
   type TakramParityStageReadbackCapture,
   type TakramParityTelemetry,
-  type TakramParityView
+  type TakramParityView,
+  type TakramWeatherAdapterComparison
 } from "./TakramParityContract";
 import {
   resolveTakramV3MorphologyReviewFrame,
@@ -252,6 +253,7 @@ export interface TakramStockParityPipelineProps {
   onTelemetry?: (telemetry: TakramParityTelemetry) => void;
   progress: number;
   view: TakramParityView;
+  weatherAdapterComparison?: TakramWeatherAdapterComparison;
 }
 
 function clampOpeningProgress(value: number) {
@@ -576,7 +578,8 @@ export function TakramStockParityPipeline({
   onTelemetry,
   progress,
   stockWeatherMode,
-  view
+  view,
+  weatherAdapterComparison
 }: TakramStockParityPipelineProps) {
   const { gl, camera } = useThree();
   const earthTexture = useLoader(TextureLoader, EARTH_DAY_SRC);
@@ -668,11 +671,11 @@ export function TakramStockParityPipeline({
     telemetry: createEmptyAltitudeLadderTelemetry(altitudeMeters ?? 2_500)
   });
   const [bridgeReady, setBridgeReady] = useState(false);
-  const orbitalAdapterManifestId = input === "v3"
+  const orbitalAdapterManifestId = `${input === "v3"
     ? `v3:${TAKRAM_PARITY_V3_ADAPTER.localWeatherSha256}`
     : `stock:${TAKRAM_PARITY_STOCK_ASSETS.find(
         (asset) => asset.id === "localWeather"
-      )!.sha256}`;
+      )!.sha256}`}:${weatherAdapterComparison ?? "native-layers"}`;
   const lookdevBaseKey = useMemo(
     () => orbitalLookdevContract === null
       ? null
@@ -690,7 +693,8 @@ export function TakramStockParityPipeline({
             orbitalPreset: orbitalLookdevContract.preset,
             progress: clampOpeningProgress(progress),
             verticalScale: orbitalLookdevContract.verticalScale,
-            view
+            view,
+            weatherAdapterComparison: weatherAdapterComparison ?? null
           },
           progress: clampOpeningProgress(progress),
           resolvedContract: orbitalLookdevContract,
@@ -714,7 +718,8 @@ export function TakramStockParityPipeline({
       progress,
       view,
       viewportState,
-      visibilityGeneration
+      visibilityGeneration,
+      weatherAdapterComparison
     ]
   );
   const resetNonce = lookdevBaseKey !== null &&
@@ -1261,8 +1266,8 @@ export function TakramStockParityPipeline({
       clouds,
       assetsState.assets,
       input,
-      cloudScaleContract !== null || orbitalLookdevContract !== null ||
-        adapter.disableDefaultLayers
+      cloudScaleContract !== null || adapter.disableDefaultLayers ||
+        weatherAdapterComparison === "explicit"
     );
     const nativePipelineReady = runtimePrerequisitesReady && orbitalRuntimeReady;
     if (clouds !== null && !nativePipelineReady) {
@@ -2076,8 +2081,8 @@ export function TakramStockParityPipeline({
                 : input === "v3"
                   ? { coverage: TAKRAM_PARITY_V3_OPENING_PRESET.coverage }
                   : {})}
-              disableDefaultLayers={orbitalLookdevContract !== null ||
-                cloudScaleContract !== null || adapter.disableDefaultLayers}
+              disableDefaultLayers={cloudScaleContract !== null ||
+                adapter.disableDefaultLayers || weatherAdapterComparison === "explicit"}
               globalWeatherMapping={adapter.globalWeatherMapping}
               localWeatherTexture={runtimeAssets.localWeather}
               qualityPreset={TAKRAM_PARITY_DEFAULTS.qualityPreset}

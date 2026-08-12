@@ -8,7 +8,8 @@ import type {
 import type {
   TakramParityDiagnostic,
   TakramParityInput,
-  TakramParityTelemetry
+  TakramParityTelemetry,
+  TakramWeatherAdapterComparison
 } from "./TakramParityContract";
 import type {
   TakramV3MorphologyCandidateId,
@@ -29,6 +30,7 @@ export interface LuBirthTakramParitySceneProps {
   orbitalLookdev?: TakramOrbitalLookdevInput;
   onTelemetry?: (telemetry: TakramParityTelemetry) => void;
   progress: number;
+  weatherAdapterComparison?: TakramWeatherAdapterComparison;
 }
 
 /**
@@ -46,7 +48,8 @@ export function LuBirthTakramParityScene({
   orbitalLookdev,
   onTelemetry,
   progress,
-  stockWeatherMode
+  stockWeatherMode,
+  weatherAdapterComparison
 }: LuBirthTakramParitySceneProps) {
   return (
     <TakramStockParityPipeline
@@ -62,6 +65,7 @@ export function LuBirthTakramParityScene({
       progress={progress}
       stockWeatherMode={stockWeatherMode}
       view="opening"
+      weatherAdapterComparison={weatherAdapterComparison}
     />
   );
 }

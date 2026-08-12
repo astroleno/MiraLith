@@ -52,6 +52,7 @@ export const TAKRAM_PARITY_ELLIPSOID = new Ellipsoid(
 
 export type TakramParityInput = "stock" | "v3";
 export type TakramParityView = "control" | "opening";
+export type TakramWeatherAdapterComparison = "explicit";
 export type TakramParityCoordinateMode = "lubirth-bridge" | "upstream-ecef";
 export type TakramParityDiagnostic =
   | "full"
@@ -99,6 +100,7 @@ export type TakramParityRouteQuery = {
   orbitalCoverage?: TakramOrbitalCoverage;
   orbitalPreset?: TakramOrbitalPreset;
   verticalScale?: TakramOrbitalVerticalScale;
+  weatherAdapterComparison?: TakramWeatherAdapterComparison;
 };
 
 export function isTakramParityAltitudeLadderDiagnostic(
@@ -268,6 +270,8 @@ export type TakramParityRouteQueryResult =
       | "unknown-orbital-coverage"
       | "unknown-orbital-preset"
       | "unknown-vertical-scale"
+      | "unknown-weather-adapter-comparison"
+      | "weather-adapter-comparison-requires-orbital-lookdev"
       | "unknown-morphology-candidate"
       | "unknown-morphology-view";
   };
@@ -287,6 +291,7 @@ export function resolveTakramParityRouteQuery(
   const requestedOrbitalCoverage = input.get("orbitalCoverage");
   const requestedVerticalScale = input.get("verticalScale");
   const requestedOpticalDepthScale = input.get("opticalDepthScale");
+  const requestedWeatherAdapterComparison = input.get("weatherAdapterComparison");
   const parsedProgress = Number.parseFloat(input.get("progress") ?? "0");
   const parsedAltitudeMeters = Number.parseFloat(input.get("altitudeMeters") ?? "0");
   const diagnostic = requestedDiagnostic === "altitude-ladder" ||
@@ -318,6 +323,16 @@ export function resolveTakramParityRouteQuery(
     requestedOpticalDepthScale
   ];
   const hasOrbitalLookdevQuery = orbitalFields.some((entry) => entry !== null);
+  if (requestedWeatherAdapterComparison !== null &&
+    requestedWeatherAdapterComparison !== "explicit") {
+    return { ok: false, reason: "unknown-weather-adapter-comparison" };
+  }
+  if (requestedWeatherAdapterComparison !== null && !hasOrbitalLookdevQuery) {
+    return {
+      ok: false,
+      reason: "weather-adapter-comparison-requires-orbital-lookdev"
+    };
+  }
   if (hasOrbitalLookdevQuery && value.view !== "opening") {
     return { ok: false, reason: "orbital-lookdev-requires-opening" };
   }
@@ -354,6 +369,9 @@ export function resolveTakramParityRouteQuery(
     value.opticalDepthScale = parseTakramOrbitalOpticalDepthScale(
       requestedOpticalDepthScale
     )!;
+    if (requestedWeatherAdapterComparison === "explicit") {
+      value.weatherAdapterComparison = "explicit";
+    }
   }
 
   const stockWeatherMode = parseTakramStockWeatherControlMode(requestedStockWeather);

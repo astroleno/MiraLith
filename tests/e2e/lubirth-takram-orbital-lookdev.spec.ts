@@ -119,14 +119,16 @@ function orbitalRoute(
   candidate: OrbitalCandidate,
   progress: number,
   diagnostic = "full",
-  input: "stock" | "v3" = "stock"
+  input: "stock" | "v3" = "stock",
+  explicitWeatherAdapter = false
 ) {
   return "/lubirth-takram-parity-spike" +
     `?input=${input}&view=opening&progress=${progress}` +
     `&orbitalPreset=${candidate.preset}&orbitalCoverage=${candidate.coverage}` +
     `&verticalScale=${candidate.verticalScale}` +
     `&opticalDepthScale=${candidate.opticalDepthScale}` +
-    `&diagnostic=${diagnostic}&visualTest=pixels`;
+    `&diagnostic=${diagnostic}&visualTest=pixels` +
+    (explicitWeatherAdapter ? "&weatherAdapterComparison=explicit" : "");
 }
 
 function legacyRoute(progress: number, diagnostic = "full") {
@@ -287,6 +289,7 @@ function emptyVisualReview(candidate: {
 async function captureCandidateMatrix(input: {
   candidates: readonly OrbitalCandidate[];
   diagnostics?: readonly string[];
+  explicitWeatherAdapter?: boolean;
   input?: "stock" | "v3";
   page: Page;
 }) {
@@ -303,7 +306,13 @@ async function captureCandidateMatrix(input: {
           input: input.input,
           page: input.page,
           progress,
-          route: orbitalRoute(candidate, progress, diagnostic, input.input)
+          route: orbitalRoute(
+            candidate,
+            progress,
+            diagnostic,
+            input.input,
+            input.explicitWeatherAdapter
+          )
         });
         expect(captured.record.telemetry).toMatchObject({
           driftAttemptLedgerOutcome: "none",
@@ -924,12 +933,14 @@ test("Stage E captures V3 compatibility for the committed stock winner only", as
   const stock = await captureCandidateMatrix({
     candidates: [winner.candidate],
     diagnostics: ["full"],
+    explicitWeatherAdapter: true,
     input: "stock",
     page
   });
   const v3 = await captureCandidateMatrix({
     candidates: [winner.candidate],
     diagnostics: ["full"],
+    explicitWeatherAdapter: true,
     input: "v3",
     page
   });
