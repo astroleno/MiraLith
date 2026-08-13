@@ -738,7 +738,6 @@ export function TakramStockParityPipeline({
   const cloudsRef = useRef<TakramCloudsRef>(null);
   const aerialPerspectiveRef = useRef<AerialPerspectiveEffect>(null);
   const earthGroupRef = useRef<Group>(null);
-  const onTelemetryRef = useRef(onTelemetry);
   const publishedTelemetryRef = useRef("");
   const bridgeReadyRef = useRef(false);
   const transformFallbackRef = useRef<TakramParityTelemetry["transformFallback"]>(null);
@@ -862,7 +861,6 @@ export function TakramStockParityPipeline({
   const lookdevMountKey = lookdevBaseKey === null
     ? null
     : buildTakramLookdevMountKey(lookdevBaseKey, resetNonce);
-  onTelemetryRef.current = onTelemetry;
 
   useEffect(() => {
     const canvas = gl.domElement;
@@ -884,6 +882,9 @@ export function TakramStockParityPipeline({
   }, [gl]);
 
   useEffect(() => {
+    // The immutable base key is derived during render, while the recovery
+    // nonce is intentionally retained across frames until the key changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLookdevMountState((current) => {
       if (lookdevBaseKey === null) {
         return current.lookdevBaseKey === null && current.resetNonce === 0
@@ -1090,7 +1091,7 @@ export function TakramStockParityPipeline({
         TAKRAM_ALTITUDE_LADDER_SHADER_MODES.normal
       );
     }
-  }, [adapter, altitudeMeters, cloudScaleContract, diagnostic, input, morphologyCandidate, morphologyView, orbitalAdapterExpectation, orbitalLookdevContract, resolvedMorphologyCandidate, resolvedOrbitalFeatureState, stockWeatherControl, view]);
+  }, [adapter, cloudScaleContract, diagnostic, input, orbitalAdapterExpectation, orbitalLookdevContract, resolvedMorphologyCandidate, resolvedOrbitalFeatureState, stockWeatherControl, view]);
 
   useEffect(() => {
     ladderCaptureRef.current = {
@@ -1101,6 +1102,8 @@ export function TakramStockParityPipeline({
   }, [altitudeMeters, diagnostic]);
 
   useEffect(() => {
+    // Three.js textures expose mutable renderer configuration by design.
+    // eslint-disable-next-line react-hooks/immutability
     earthTexture.colorSpace = SRGBColorSpace;
     earthTexture.needsUpdate = true;
   }, [earthTexture]);
@@ -1111,6 +1114,8 @@ export function TakramStockParityPipeline({
       toneMapping: gl.toneMapping,
       toneMappingExposure: gl.toneMappingExposure
     };
+    // The R3F renderer is an imperative Three.js resource synchronized here.
+    // eslint-disable-next-line react-hooks/immutability
     gl.toneMapping = NoToneMapping;
     gl.toneMappingExposure = 1;
     gl.outputColorSpace = SRGBColorSpace;
@@ -1812,7 +1817,7 @@ export function TakramStockParityPipeline({
       // Rerendering EffectComposer replaces its combined EffectPass and would
       // detach the exact method that the accepted population just audited.
       if (gpuProfilerRef.current === null) {
-        onTelemetryRef.current?.(telemetry);
+        onTelemetry?.(telemetry);
       }
     }
   }, -1);
