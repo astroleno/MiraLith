@@ -953,9 +953,11 @@ git commit -m "feat(lubirth): resolve orbital V3 compatibility"
 ## Task 9: Integrate feature states, diagnostic readbacks, and submission timing
 
 **Files:**
+- Modify: `packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalLookdevContract.ts`
 - Modify: `packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalLookdevRuntime.ts`
 - Modify: `packages/lubirth-hero/src/planetaryCloud/parity/TakramStockParityPipeline.tsx`
 - Modify: `packages/lubirth-hero/src/planetaryCloud/parity/TakramParityContract.ts`
+- Modify: `tests/unit/lubirthTakramOrbitalLookdevContract.spec.ts`
 - Modify: `tests/unit/lubirthTakramOrbitalLookdevRuntime.spec.ts`
 - Modify: `tests/unit/lubirthTakramParityContract.spec.ts`
 
@@ -1055,9 +1057,11 @@ pnpm --filter @miralith/site typecheck
 - [ ] **Step 9: Commit**
 
 ```bash
-git add packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalLookdevRuntime.ts \
+git add packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalLookdevContract.ts \
+  packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalLookdevRuntime.ts \
   packages/lubirth-hero/src/planetaryCloud/parity/TakramStockParityPipeline.tsx \
   packages/lubirth-hero/src/planetaryCloud/parity/TakramParityContract.ts \
+  tests/unit/lubirthTakramOrbitalLookdevContract.spec.ts \
   tests/unit/lubirthTakramOrbitalLookdevRuntime.spec.ts \
   tests/unit/lubirthTakramParityContract.spec.ts
 git commit -m "feat(lubirth): wire orbital production diagnostics"
@@ -1070,6 +1074,7 @@ git commit -m "feat(lubirth): wire orbital production diagnostics"
 - Create: `tests/unit/lubirthTakramOrbitalProductionEvidence.spec.ts`
 - Create: `tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts`
 - Create: `playwright.takram-orbital-production-system-chrome.config.ts`
+- Modify: `.gitignore`
 - Modify: `package.json`
 
 - [ ] **Step 1: Write RED atomic-publication and authorization tests**
@@ -1091,7 +1096,24 @@ Test that the helper:
 - rejects old Stage B as an authorization input;
 - prevents a terminal stage from publishing any successor directory but permits common Task 16 verification/closure.
 
-- [ ] **Step 2: Implement exact environment collection**
+- [ ] **Step 2: Reserve the exact ignored staging root**
+
+Add this repository-root-anchored rule to `.gitignore`:
+
+```gitignore
+/output/takram-orbital-production-staging/
+```
+
+Do not replace it with a broader `output/` rule. Add a unit assertion for the exact pattern and verify Git applies it before any capture helper can create a staging run:
+
+```bash
+git check-ignore -q output/takram-orbital-production-staging/probe.json
+git check-ignore -v output/takram-orbital-production-staging/probe.json
+```
+
+The first command must exit `0`; the second must identify the new root-anchored `.gitignore` rule. A failed ignore check blocks the harness before it writes a staging pointer or capture artifact.
+
+- [ ] **Step 3: Implement exact environment collection**
 
 Collect and normalize:
 
@@ -1111,7 +1133,7 @@ production asset/build fingerprint
 
 Do not silently substitute a different macOS version, browser, hardware, build, CSS viewport, physical canvas size, DPR, or power state. Return a structured invalid-reason list consumed by the pure environment validator and compare the complete normalized object before every threshold-bearing and confirmation population.
 
-- [ ] **Step 3: Implement reusable exact-frame capture functions**
+- [ ] **Step 4: Implement reusable exact-frame capture functions**
 
 The helper must expose typed functions for:
 
@@ -1148,7 +1170,7 @@ resolveAndPublishStageAtomically(
 
 Every route waits for exact query attributes, `telemetry.active`, runtime/fingerprint parity, frame lock, native frame, fresh allocations, and the expected feature/output identity before reading pixels. Capture functions accept only an `OrbitalStagingRun`; only `resolveAndPublishStageAtomically()` accepts a formal destination. Human review is read from staging, validated, copied into the temporary complete package, and published together with raw captures, machine metrics, resolver checkpoint, and outcome in the one rename.
 
-- [ ] **Step 4: Add a production-server System Chrome config**
+- [ ] **Step 5: Add a production-server System Chrome config**
 
 Configure installed Chrome headed, one worker, `1440x960`, `deviceScaleFactor: 1`, video/tracing off, port `3117` by default, and `reuseExistingServer=false`. The config's web server command is exactly `pnpm --filter @miralith/site exec next start -H 127.0.0.1 -p 3117`; it must not run `pnpm build`. It checks that `apps/site/.next/BUILD_ID` exists before starting and rejects headless execution, so every formal stage reuses the Task 11 production artifact.
 
@@ -1158,11 +1180,11 @@ Add the package script:
 "capture:takram-orbital-production": "playwright test -c playwright.takram-orbital-production-system-chrome.config.ts tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts --workers=1"
 ```
 
-- [ ] **Step 5: Write non-publishing System Chrome contract tests**
+- [ ] **Step 6: Write non-publishing System Chrome contract tests**
 
 Cover all four candidate routes at native frame `32`, candidate/feature/output remount allocation changes, diagnostic source restoration, feature-state primary evidence parity, total/stage mutual exclusion, exact pass identity/order, and rejection of an intentionally mismatched environment fixture. These tests must not create formal evidence.
 
-- [ ] **Step 6: Run RED/GREEN verification**
+- [ ] **Step 7: Run RED/GREEN verification**
 
 ```bash
 pnpm exec playwright test -c playwright.unit.config.ts \
@@ -1176,13 +1198,14 @@ pnpm exec playwright test \
 
 Expected: unit and headed System Chrome contract tests pass without writing `docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-production-step-policy` or `takram-orbital-lookdev-v2`.
 
-- [ ] **Step 7: Commit the harness before any formal capture**
+- [ ] **Step 8: Commit the harness before any formal capture**
 
 ```bash
 git add tests/helpers/takramOrbitalProductionEvidence.ts \
   tests/unit/lubirthTakramOrbitalProductionEvidence.spec.ts \
   tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts \
   playwright.takram-orbital-production-system-chrome.config.ts \
+  .gitignore \
   package.json
 git commit -m "test(lubirth): add orbital production evidence harness"
 ```
