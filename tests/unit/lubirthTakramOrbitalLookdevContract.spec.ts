@@ -194,11 +194,53 @@ test("changes only the named perspective-step arm in the frozen orbital baseline
 
   const normalize = (value: typeof control) => {
     const normalized = structuredClone(value) as any;
+    delete normalized.samplingPolicy;
     delete normalized.stepScaleMode;
     delete normalized.clouds.perspectiveStepScale;
     return normalized;
   };
   expect(normalize(treatment)).toEqual(normalize(control));
+});
+
+test("resolves discriminated causal and production sampling policies", async () => {
+  const { resolveTakramOrbitalLookdevContract } = await loadContract();
+  const frozen = {
+    coverage: 0.55 as const,
+    opticalDepthScale: 1 as const,
+    preset: "h120" as const,
+    verticalScale: 1 as const
+  };
+
+  expect(resolveTakramOrbitalLookdevContract(frozen).samplingPolicy).toEqual({
+    kind: "causal",
+    mode: "control",
+    perspectiveStepScale: 1.01
+  });
+  expect(resolveTakramOrbitalLookdevContract({
+    ...frozen,
+    samplingPolicy: { kind: "causal", mode: "treatment" }
+  }).samplingPolicy).toEqual({
+    kind: "causal",
+    mode: "treatment",
+    perspectiveStepScale: 1.0001
+  });
+  const production = resolveTakramOrbitalLookdevContract({
+    ...frozen,
+    samplingPolicy: { kind: "production", candidate: "confirmed" }
+  });
+  expect(production.samplingPolicy).toEqual({
+    kind: "production",
+    candidate: "confirmed",
+    perspectiveStepScale: 1.0001
+  });
+  expect(production.stepScaleMode).toBe("control");
+  expect(production.clouds.perspectiveStepScale).toBe(1.0001);
+
+  expect(() => resolveTakramOrbitalLookdevContract({
+    ...frozen,
+    samplingPolicy: { kind: "production", candidate: "fine" },
+    stepScaleMode: "treatment"
+  })).toThrow("samplingPolicy cannot be combined with stepScaleMode");
 });
 
 test("preserves vertical optical depth before applying the bounded optical finish", async () => {

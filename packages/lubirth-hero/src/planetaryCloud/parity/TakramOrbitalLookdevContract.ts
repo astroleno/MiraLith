@@ -8,6 +8,10 @@ import {
   resolveTakramOrbitalStepScale,
   type TakramOrbitalStepScaleMode
 } from "./TakramOrbitalSamplingCausality";
+import {
+  resolveTakramOrbitalProductionStepScale,
+  type TakramOrbitalProductionStepCandidate
+} from "./TakramOrbitalProductionSampling";
 
 export const TAKRAM_ORBITAL_PRESETS = Object.freeze([
   "native",
@@ -40,10 +44,34 @@ export type TakramOrbitalCubeFaceDiagnosticDecision =
   | "CUBE_FACE_DIAGNOSTIC_PASS"
   | "HARD_ARTIFACT_FAIL";
 
+export type TakramOrbitalLookdevSamplingPolicyInput =
+  | Readonly<{
+      kind: "causal";
+      mode: TakramOrbitalStepScaleMode;
+    }>
+  | Readonly<{
+      kind: "production";
+      candidate: TakramOrbitalProductionStepCandidate;
+    }>;
+
+export type TakramOrbitalLookdevSamplingPolicy =
+  | Readonly<{
+      kind: "causal";
+      mode: TakramOrbitalStepScaleMode;
+      perspectiveStepScale: number;
+    }>
+  | Readonly<{
+      kind: "production";
+      candidate: TakramOrbitalProductionStepCandidate;
+      perspectiveStepScale: number;
+    }>;
+
 export interface TakramOrbitalLookdevInput {
   coverage: TakramOrbitalCoverage;
   opticalDepthScale: TakramOrbitalOpticalDepthScale;
   preset: TakramOrbitalPreset;
+  samplingPolicy?: TakramOrbitalLookdevSamplingPolicyInput;
+  /** Historical causal compatibility; rejected when samplingPolicy is present. */
   stepScaleMode?: TakramOrbitalStepScaleMode;
   verticalScale: TakramOrbitalVerticalScale;
 }
@@ -123,6 +151,7 @@ export interface TakramOrbitalLookdevContract {
   presentationScale: 1 | 40 | 80 | 120;
   preset: TakramOrbitalPreset;
   renderer: TakramOrbitalRendererContract;
+  samplingPolicy: TakramOrbitalLookdevSamplingPolicy;
   schemaVersion: 1;
   shadow: TakramOrbitalShadowContract;
   shapeDetailRepeat: number;
@@ -234,8 +263,33 @@ export function classifyTakramOrbitalCubeFaceDiagnostic(input: {
 export function resolveTakramOrbitalLookdevContract(
   input: TakramOrbitalLookdevInput
 ): DeepReadonly<TakramOrbitalLookdevContract> {
+  if (input.samplingPolicy !== undefined && input.stepScaleMode !== undefined) {
+    throw new Error("samplingPolicy cannot be combined with stepScaleMode");
+  }
   const morphology = MORPHOLOGY_PRESETS[input.preset];
-  const stepScaleMode = input.stepScaleMode ?? "control";
+  const samplingPolicyInput = input.samplingPolicy ?? {
+    kind: "causal" as const,
+    mode: input.stepScaleMode ?? "control"
+  };
+  const samplingPolicy: TakramOrbitalLookdevSamplingPolicy =
+    samplingPolicyInput.kind === "causal"
+      ? {
+          kind: "causal",
+          mode: samplingPolicyInput.mode,
+          perspectiveStepScale: resolveTakramOrbitalStepScale(
+            samplingPolicyInput.mode
+          )
+        }
+      : {
+          kind: "production",
+          candidate: samplingPolicyInput.candidate,
+          perspectiveStepScale: resolveTakramOrbitalProductionStepScale(
+            samplingPolicyInput.candidate
+          )
+        };
+  const stepScaleMode = samplingPolicy.kind === "causal"
+    ? samplingPolicy.mode
+    : "control";
   const verticalOpticalScale = input.opticalDepthScale / input.verticalScale;
   const layers = TAKRAM_CLOUD_SCALE_DEFAULTS.layers.map((layer) => ({
     ...layer,
@@ -263,7 +317,7 @@ export function resolveTakramOrbitalLookdevContract(
       hazeScatteringCoefficient: 0.9,
       minExtinction: clouds.minExtinction * verticalOpticalScale,
       multiScatteringOctaves: 8,
-      perspectiveStepScale: resolveTakramOrbitalStepScale(stepScaleMode)
+      perspectiveStepScale: samplingPolicy.perspectiveStepScale
     },
     coverage: input.coverage,
     effectiveTurbulenceRepeat: [
@@ -278,6 +332,7 @@ export function resolveTakramOrbitalLookdevContract(
     presentationScale: morphology.presentationScale,
     preset: input.preset,
     renderer: { ...NATIVE_RENDERER },
+    samplingPolicy,
     schemaVersion: 1,
     shadow: {
       ...shadow,
