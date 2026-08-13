@@ -289,28 +289,26 @@ The normative metric definitions are:
 - for candidate `c` and progress `p`, `pairedChange(c,p) = opacityMae(c.base, control.base)` and `repeatNoiseFloor(c,p) = max(opacityMae(c.base,c.repeat), opacityMae(control.base,control.repeat))` from the same progress;
 - `pairedChange` passes only when it is strictly greater than its same-progress repeat floor.
 
-For the frozen `h120 / 0.55 / 1 / 1` screen, a non-control candidate passes an individual progress only when:
+For every capture, evidence validity resolves first: all lossless stages must be finite and both structural audits must pass. For the frozen `h120 / 0.55 / 1 / 1` screen, an evidence-valid non-control candidate passes an individual sampling/signal progress only when:
 
 ```text
-finite pixel fraction for every lossless stage = 1
 native hit pixel fraction                     >= 0.20
 pre-temporal signal pixel fraction            >= 0.20
 small-fragment fraction                       <= 0.10
 resolved/pre-temporal signal retention        within [0.90, 1.10]
 resolved/pre-temporal signal-luma retention   within [0.80, 1.20]
 pairedChange                                  > same-progress repeatNoiseFloor
+entered-primary-march pixel count               > 0
 primary cap-saturation fraction                <= 0.01
-primary-march structural invariants            pass
-sample-count structural invariants             pass
 ```
 
 The capture-only primary-march instrumentation has a separate shader mode and buffer from sample-count debug. It explicitly initializes `enteredPrimaryMarch=false`, `loopIterationCount=0`, and `capReached=false` for every pixel. Rays that call `marchClouds` set entry true on function entry. The loop counter increments as the first statement of every actual `for` body execution. Every early `break` sets a local `terminatedBeforeCap=true` before leaving. After the loop, and not by decoding sample counts, `capReached` becomes true only when entry is true, `loopIterationCount == runtime maxIterationCount`, and no early break terminated the loop. Non-intersecting rays publish `RGBA=(0,0,0,0)`.
 
-The primary-march structural invariants require the audited `RGBA16F` source/encoding/origin, equal native dimensions with sample-count debug, finite integer `R` in `[0,maxIterationCount]`, binary `G/B/A`, `enteredPrimaryMarchPixelCount > 0`, `G=0 -> R=B=A=0`, `G=1 -> R>=1`, `B=1 -> G=1 and R=maxIterationCount`, and `A=1 -> G=1`. The shader-source audit must prove that every `marchClouds` early-break site sets `terminatedBeforeCap` and that no uncaptured exit can produce `B=1`. Any source-anchor/count drift is setup-blocked.
+The primary-march structural invariants require the audited `RGBA16F` source/encoding/origin, equal native dimensions with sample-count debug, finite integer `R` in `[0,maxIterationCount]`, binary `G/B/A`, `G=0 -> R=B=A=0`, `G=1 -> R>=1`, `B=1 -> G=1 and R=maxIterationCount`, and `A=1 -> G=1`. An all-zero, structurally valid buffer therefore passes the instrumentation audit but separately fails sampling health because `enteredPrimaryMarchPixelCount=0`. The shader-source audit must prove that every `marchClouds` early-break site sets `terminatedBeforeCap` and that no uncaptured exit can produce `B=1`. Any source-anchor/count drift is setup-blocked.
 
 The sample-count structural invariants independently require positive native dimensions, the audited source/encoding/precision, finite reconstructed counts within `primary=[0,500]`, `shape=[0,5]`, and `detail=[0,5]`, `primary >= shape >= detail >= 0` for every native texel, `primary>0` for every native-hit texel, and `runtime maxIterationCount=500`. The capture patch must change both the outer `marchClouds` debug counter parameter and the debug `sampleMedia` counter parameter from `out` to `inout`, preserving the caller's explicit `ivec3(0)` initialization; changing only the inner `sampleMedia` parameter is invalid evidence. Unique shader anchors, the upstream source hash, injected-source hash, and restored-source hash are mandatory.
 
-The cap-saturation rule is separate from rough-weather sample-count health. A candidate with more than `1%` explicit `capReached` flags among all entered primary-march rays fails even when those rays take fewer than `500` rough-weather samples, never hit cloud, or all other signal metrics pass.
+Evidence validity resolves before sampling health. Missing or mismatched artifacts, non-finite lossless values, source/encoding/precision/origin mismatch, shader-anchor/hash failure, or either structural-invariant failure produces `ORBITAL_PRODUCTION_SAMPLING_SETUP_BLOCKED`; it is not a candidate-quality result. Only after those audits pass may `enteredPrimaryMarchPixelCount=0` or `primaryCapSaturationFraction>0.01` fail sampling health. The cap-saturation rule is separate from rough-weather sample-count health. A candidate with more than `1%` explicit `capReached` flags among all entered primary-march rays fails even when those rays take fewer than `500` rough-weather samples, never hit cloud, or all other signal metrics pass.
 
 These absolute floors are valid only for the frozen sampling-policy screen. They are anchored below the confirmed treatment's observed `29.29–32.86%` signal while remaining far above the control's sub-`1%` result. They are not reused to judge later coverage or morphology candidates.
 
@@ -425,29 +423,41 @@ ORBITAL_HEALTHY_STOCK_BASELINE_READY
 
 This state alone unlocks the new lookdev. The old Stage B checkpoint never unlocks the successor stages.
 
-### Shared Stage 4 sampling-health gate
+### Shared Stage 4 evidence and sampling-health resolver
 
 Stage 1 proves sampling health only for the frozen `h120 / coverage 0.55 / vertical 1 / optical 1` screen. It does not authorize later candidates by inheritance. Morphology, coverage, vertical scale, and optical depth can change occupied intervals, detailed-media sampling, transmittance early termination, and iteration-cap exhaustion.
 
-Therefore every Stage 4A–4D candidate at every progress must publish fresh `sample-count-debug`, `primary-march-debug`, and lossless `stage-readback` evidence before human review. A candidate/progress passes the shared machine gate only when:
+Therefore every Stage 4A–4D candidate at every progress must publish fresh `sample-count-debug`, `primary-march-debug`, and lossless `stage-readback` evidence before human review. The pure resolver applies this strict precedence:
 
 ```text
-finite pixel fraction for every lossless stage = 1
-entered-primary-march pixel count               > 0
-primary cap-saturation fraction                <= 0.01
-primary-march structural invariants            pass
-sample-count structural invariants             pass
+1. invalid setup, evidence, finite output, or structural audit
+     -> ORBITAL_LOOKDEV_V2_SETUP_BLOCKED
+2. valid evidence + enteredPrimaryMarchPixelCount = 0
+     -> candidate sampling-health fail
+3. valid evidence + primaryCapSaturationFraction > 0.01
+     -> candidate sampling-health fail
+4. valid evidence + enteredPrimaryMarchPixelCount > 0
+                  + primaryCapSaturationFraction <= 0.01
+     -> candidate may enter its phase-specific visual gate
 ```
 
-The definitions, direct-value primary-march buffer, source/hash audit, and pure metric extractor from Stage 1 are reused without modification. The extractor computes the result independently for every candidate/progress; it may not copy the Stage 1 decision, average progresses, or accept a handwritten sampling-health boolean.
+The setup/evidence audit requires complete query/runtime/remount/frame/reference/hash evidence; compatible dimensions/channels/precision/origin; finite lossless buffers; the expected primary-march and sample-count source/encoding; matching upstream, injected, restored, and instrumentation hashes; unique shader anchors; and passing primary-march/sample-count structural invariants. Any required candidate/progress failure stops the entire phase as:
 
-A candidate that fails the shared gate at any progress is removed before visual scoring and cannot enter the next Stage 4 phase. If at least one candidate passes, the phase continues with passing candidates only. If every candidate in a Stage 4 phase is removed by this machine gate, stop with:
+```text
+ORBITAL_LOOKDEV_V2_SETUP_BLOCKED
+```
+
+The checkpoint records `failedStage = 4A | 4B | 4C | 4D`, candidate/progress identity, and exact setup/audit violations. An invalid required candidate may not be silently removed so another candidate can win.
+
+Only evidence-valid candidates reach the sampling-health calculation. The definitions, direct-value primary-march buffer, source/hash audit, and pure metric extractor from Stage 1 are reused without modification. The extractor computes the result independently for every candidate/progress; it may not copy the Stage 1 decision, average progresses, or accept handwritten setup or sampling-health booleans.
+
+An evidence-valid candidate that fails the sampling-health branch at any progress is removed before visual scoring and cannot enter the next Stage 4 phase. If at least one candidate passes sampling health, the phase continues with passing candidates only. If every evidence-valid candidate in a Stage 4 phase is removed by the sampling-health branch, stop with:
 
 ```text
 ORBITAL_LOOKDEV_V2_SAMPLING_HEALTH_FAIL
 ```
 
-The terminal checkpoint records `failedStage = 4A | 4B | 4C | 4D`, candidate IDs, failed progresses, raw cap fractions, and structural violations. It is a sampling-health failure, not a morphology, coverage, vertical, or optical visual failure.
+The terminal checkpoint records `failedStage = 4A | 4B | 4C | 4D`, candidate IDs, failed progresses, entered counts, and raw cap fractions. Structural violations never enter this outcome; they resolve setup-blocked first. The result is a sampling-health failure, not a morphology, coverage, vertical, or optical visual failure.
 
 ### Stage 4A — fresh morphology selection
 
@@ -461,7 +471,7 @@ h120 / coverage 0.3 / vertical 1 / optical 1
 
 All four progress values are required. The old Stage A contact sheets may be displayed only as historical `1.01` controls; they cannot supply a current decision.
 
-After the shared sampling-health gate, Stage 4A uses a morphology-only gate. Identity/remount/hash checks must pass, `nativeHitPixelCount > 0`, and `preTemporalSignalPixelFraction > 0` at every progress. Human review scores only:
+After the shared resolver confirms valid evidence and sampling health, Stage 4A uses a morphology-only gate. `nativeHitPixelCount > 0` and `preTemporalSignalPixelFraction > 0` remain required at every progress. Human review scores only:
 
 ```text
 macro coherence
@@ -469,7 +479,7 @@ opening identity stability
 artifact freedom
 ```
 
-Each dimension is scored `0–2`; every dimension must be at least `1` at every progress and no hard artifact may be present. Hard artifacts are non-finite output, confirmed cube-face seam/wrap discontinuity, unstable identity, or loss of captured signal. Cloud/ground separation, depth layering, and lighting/BSM read are recorded as observations but are not Stage 4A pass conditions.
+Each dimension is scored `0–2`; every dimension must be at least `1` at every progress and no hard artifact may be present. Hard artifacts are confirmed cube-face seam/wrap discontinuity, unstable identity, or loss of captured signal. Non-finite output is never a visual artifact verdict; the shared resolver classifies it as setup-blocked before review. Cloud/ground separation, depth layering, and lighting/BSM read are recorded as observations but are not Stage 4A pass conditions.
 
 `TOPOLOGY_UNOBSERVABLE` is no longer an automatic coverage-stage pass: with a healthy sampling baseline, insufficient visible opacity at native coverage must be accompanied by coherent lossless cloud-raw/pre-temporal structure to enter Stage 4B. A candidate containing only isolated fragments may not enter.
 
@@ -489,7 +499,7 @@ vertical = 1
 optical  = 1
 ```
 
-After the shared sampling-health gate, Stage 4B uses a coverage-only gate. Setup, identity, seam, and signal-presence gates remain mandatory. Human review scores only:
+After the shared resolver confirms valid evidence and sampling health, Stage 4B uses a coverage-only gate. Seam and signal-presence gates remain mandatory. Human review scores only:
 
 ```text
 macro coherence
@@ -517,7 +527,7 @@ verticalScale = 1 / 2 / 4
 opticalDepthScale = 1
 ```
 
-Keep the original layer-altitude, height/density, extinction, and atmosphere-top invariants. After the shared sampling-health gate, Stage 4C scores:
+Keep the original layer-altitude, height/density, extinction, and atmosphere-top invariants. After the shared resolver confirms valid evidence and sampling health, Stage 4C scores:
 
 ```text
 macro coherence
@@ -543,7 +553,7 @@ For the Stage 4C winner, capture:
 opticalDepthScale = 0.75 / 1 / 1.5
 ```
 
-After the shared sampling-health gate, Stage 4D applies the final six-dimension visual gate:
+After the shared resolver confirms valid evidence and sampling health, Stage 4D applies the final six-dimension visual gate:
 
 ```text
 macro coherence
@@ -613,30 +623,30 @@ The V2 winner receives fresh captures for:
 - all four opening progress values;
 - same-route repeat at progress `0.06`.
 
-Before GPU profiling or V3 compatibility, the deterministic extractor recomputes the complete shared Stage 4 sampling-health gate from these fresh final-stock captures at every progress. This final replay decision must have `enteredPrimaryMarchPixelCount > 0`, `primaryCapSaturationFraction <= 0.01`, and passing primary-march/sample-count structural invariants at all four progresses. It may not reuse a Stage 4D metric decision.
+Before GPU profiling or V3 compatibility, the deterministic extractor reruns the complete shared evidence-and-sampling resolver from these fresh final-stock captures at every progress. It may not reuse a Stage 4D setup or metric decision.
 
-If any fresh final-stock progress fails, stop with:
+The final-stock resolver preserves the same precedence:
 
-```text
-ORBITAL_LOOKDEV_V2_SAMPLING_HEALTH_FAIL
-```
+1. any missing/mismatched artifact, query/runtime/remount/frame/reference/hash failure, incompatible readback, non-finite lossless buffer, source/encoding/precision/origin mismatch, shader-anchor/hash failure, or structural-invariant failure stops with `ORBITAL_LOOKDEV_V2_SETUP_BLOCKED` and `failedStage=final-stock`;
+2. only with valid evidence, `enteredPrimaryMarchPixelCount=0` or `primaryCapSaturationFraction>0.01` stops with `ORBITAL_LOOKDEV_V2_SAMPLING_HEALTH_FAIL` and `failedStage=final-stock`;
+3. only valid evidence with `enteredPrimaryMarchPixelCount>0` and `primaryCapSaturationFraction<=0.01` at all four progresses may continue to final GPU profiling and V3 compatibility.
 
-using `failedStage=final-stock`. Do not run final GPU populations, do not classify the winner as production/query-only/over-budget, and do not begin V3 compatibility.
+Either final-stock setup-blocked or sampling-health failure prevents final GPU populations, prevents production/query-only/over-budget classification, and skips V3 compatibility.
 
-Only after the fresh sampling-health replay passes does GPU profiling repeat the authoritative `120 + 120` population for the final winner at every progress. Lookdev can change sample occupancy and early termination, so neither the Stage 1 cap decision nor the Stage 2 policy cost substitutes for final-winner evidence.
+Only after the complete fresh final-stock resolver passes does GPU profiling repeat the authoritative `120 + 120` population for the final winner at every progress. Lookdev can change sample occupancy and early termination, so neither the Stage 1 cap decision nor the Stage 2 policy cost substitutes for final-winner evidence.
 
 Final classifications are:
 
-- visual pass, fresh sampling-health pass, and maximum p95 `<= 3 ms`: `ORBITAL_STOCK_LOOKDEV_V2_PRODUCTION_ELIGIBLE`;
-- visual pass, fresh sampling-health pass, and maximum p95 `> 3 ms` but `<= 4 ms`: `ORBITAL_STOCK_LOOKDEV_V2_QUERY_ONLY`;
-- visual pass, fresh sampling-health pass, and maximum p95 `> 4 ms`: `ORBITAL_STOCK_LOOKDEV_V2_OVER_BUDGET`;
+- visual pass, fresh final-stock resolver pass, and maximum p95 `<= 3 ms`: `ORBITAL_STOCK_LOOKDEV_V2_PRODUCTION_ELIGIBLE`;
+- visual pass, fresh final-stock resolver pass, and maximum p95 `> 3 ms` but `<= 4 ms`: `ORBITAL_STOCK_LOOKDEV_V2_QUERY_ONLY`;
+- visual pass, fresh final-stock resolver pass, and maximum p95 `> 4 ms`: `ORBITAL_STOCK_LOOKDEV_V2_OVER_BUDGET`;
 - invalid timer population: `ORBITAL_STOCK_LOOKDEV_V2_PERF_BLOCKED`.
 
 Only `PRODUCTION_ELIGIBLE` may enter a homepage-promotion amendment.
 
 ## 10. V3 weather-adapter compatibility
 
-V3 testing begins only after a stock V2 winner exists and the Section 9 fresh final-stock sampling-health replay passes. Apply the exact stock winner's renderer, layer, sampling, and lookdev contract to the V3 texture adapter. Stock and V3 may differ only in the already enumerated adapter fields:
+V3 testing begins only after a stock V2 visual winner exists and the Section 9 fresh final-stock setup/evidence and sampling-health replay passes. Apply the exact stock winner's renderer, layer, sampling, and lookdev contract to the V3 texture adapter. Stock and V3 may differ only in the already enumerated adapter fields:
 
 - texture identity and hash;
 - mapping mode;
@@ -669,10 +679,10 @@ Before image interpretation, a machine verifier must prove:
 2. the fresh stock arm re-passes the automatic gates below at all four progresses;
 3. after normalizing only the enumerated adapter fields, stock and V3 have identical query, runtime, layer, sampling, lookdev, camera, renderer/build, output-transform, native-frame, viewport/DPR, and feature-state identities;
 4. both arms use `disableDefaultLayers=true`, the same official R/G/B/A layer array, and their expected texture/adapter hashes;
-5. each arm receives a new complete allocation epoch before frame counting, reaches every required native frame without skipping or reusing history, and has complete dimension/precision/origin-compatible readbacks;
+5. each arm receives a new complete allocation epoch before frame counting, reaches every required native frame without skipping or reusing history, and has complete dimension/channel/precision/origin-compatible readbacks with finite lossless values, audited source/encoding, and passing primary-march/sample-count structural invariants;
 6. every declared artifact exists and matches its manifest hash and byte length.
 
-A missing capture, parity mismatch, stale allocation, load/readback/hash failure, non-reproducible repeat, or failure of the stock replay gate produces:
+A missing capture, parity mismatch, stale allocation, load/readback/hash failure, non-finite buffer, source/encoding/precision/origin mismatch, shader-anchor/hash or structural-audit failure, non-reproducible repeat, or failure of the stock replay gate produces:
 
 ```text
 V3_WEATHER_ADAPTER_SETUP_BLOCKED
@@ -687,7 +697,6 @@ For both inputs at every progress, the deterministic extractor publishes the raw
 An individual input/progress metric decision passes only when:
 
 ```text
-finite pixel fraction for every lossless stage = 1
 cloud pixel fraction                           >= 0.002
 pre-temporal signal pixel fraction             >= 0.002
 largest connected-area fraction                >= 0.25
@@ -700,8 +709,6 @@ resolved/pre-temporal signal retention         within [0.90, 1.10]
 resolved/pre-temporal signal-luma retention    within [0.80, 1.20]
 entered-primary-march pixel count               > 0
 primary cap-saturation fraction                <= 0.01
-primary-march structural invariants            pass
-sample-count structural invariants             pass
 ```
 
 The extractor also publishes, without converting them to manual booleans, raw/final cloud-signal differences, full-versus-BSM-off difference, native-hit fraction, no-hit primary-cap saturation, opacity/luma statistics, and base/repeat comparisons. These remain mandatory diagnostics even where the table above does not assign a universal threshold.
@@ -735,7 +742,7 @@ The pure V3 resolver consumes only the machine-produced setup report, four stock
 
 Neither the capture test nor `visual-review.json` may directly enter an outcome, `metricPass`, or equivalent handwritten quantitative boolean. `metric-decision.json`, `checkpoint.json`, and `OUTCOME.md` are generated from the raw evidence by the extractor and resolver.
 
-A V3 failure does not invalidate the stock renderer or winner. V3 compatibility is mandatory whenever Stage 4D produces `ORBITAL_STOCK_LOOKDEV_V2_WINNER`, irrespective of whether final stock timing later classifies it as `PRODUCTION_ELIGIBLE`, `QUERY_ONLY`, `OVER_BUDGET`, or `PERF_BLOCKED`. It is skipped only when the funnel terminates before a stock V2 visual winner exists. V3 compatibility does not make a new GPU-performance or homepage-eligibility claim.
+A V3 failure does not invalidate the stock renderer or winner. V3 compatibility becomes mandatory only when Stage 4D produces `ORBITAL_STOCK_LOOKDEV_V2_WINNER` and the Section 9 fresh final-stock setup/evidence and sampling-health replay passes. Once that precondition passes, V3 remains mandatory irrespective of whether final stock timing later classifies the stock result as `PRODUCTION_ELIGIBLE`, `QUERY_ONLY`, `OVER_BUDGET`, or `PERF_BLOCKED`. V3 is skipped when the funnel terminates before a stock V2 visual winner or when final-stock replay resolves `ORBITAL_LOOKDEV_V2_SETUP_BLOCKED` or `ORBITAL_LOOKDEV_V2_SAMPLING_HEALTH_FAIL`. V3 compatibility does not make a new GPU-performance or homepage-eligibility claim.
 
 ## 11. Evidence architecture
 
@@ -784,8 +791,9 @@ The production candidate enum, `featureState`, and `output` enter `lookdevBaseKe
 
 Failure rules:
 
-- query, drift, remount, frame, reference, hash, readback, finite-output, or repeat failure is setup-blocked evidence;
-- a sampling-health failure is not a lookdev failure;
+- query, drift, remount, frame, reference, hash, readback, finite-output, source/encoding/precision/origin, shader-anchor/hash, structural-audit, or repeat failure is setup-blocked evidence;
+- during Stage 4 or final-stock replay, those failures resolve `ORBITAL_LOOKDEV_V2_SETUP_BLOCKED` with the exact `failedStage` before any sampling-health or visual outcome;
+- a sampling-health failure is not a visual lookdev failure;
 - a GPU failure is not silently treated as a visual failure;
 - unsupported timing blocks production selection but does not erase completed visual evidence;
 - no visual, quality, instability, general over-budget, or timer failure authorizes shader stepping changes; only `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING` does;
@@ -827,9 +835,10 @@ If and only if Stage 2 produces `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING`, t
 - entered primary rays with zero rough-weather samples remain in the cap-saturation denominator;
 - every primary-loop early-break path clears cap exhaustion, while a loop that exits only through `maxIterationCount` sets it;
 - outer and inner debug sample counters reject uninitialized `out` semantics;
-- every Stage 4A–4D candidate is removed before visual scoring when any progress fails the shared structural/cap gate;
-- a mixed Stage 4 population continues with sampling-healthy candidates only, while an all-sampling-health-failed population resolves `ORBITAL_LOOKDEV_V2_SAMPLING_HEALTH_FAIL` with the correct `failedStage`;
-- final stock GPU classification and V3 compatibility require a fresh four-progress sampling-health replay rather than the Stage 4D decision;
+- any Stage 4 setup/evidence/structural-audit failure resolves `ORBITAL_LOOKDEV_V2_SETUP_BLOCKED` before candidate filtering or visual scoring;
+- with valid evidence, every Stage 4A–4D candidate is removed before visual scoring when any progress has zero entered rays or exceeds the cap threshold;
+- a mixed evidence-valid Stage 4 population continues with sampling-healthy candidates only, while an all-sampling-health-failed population resolves `ORBITAL_LOOKDEV_V2_SAMPLING_HEALTH_FAIL` with the correct `failedStage`;
+- final stock GPU classification and V3 compatibility require a fresh four-progress setup/evidence and sampling-health replay rather than the Stage 4D decisions;
 - all public-policy and V2 terminal outcomes are reachable through the pure resolver;
 - GPU winner ranking uses maximum p95 across all four progresses;
 - values between `3` and `4 ms` remain query-only;
@@ -840,7 +849,8 @@ If and only if Stage 2 produces `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING`, t
 - a priority-`0` to priority-`3` whole-composer query cannot produce a budget classification or decoupling outcome;
 - Stage 4A/4B cannot fail on deferred separation, depth, or lighting dimensions;
 - the V3 resolver derives setup-blocked, metric-fail, visual-fail, and pass outcomes without accepting a handwritten result boolean;
-- every Stage 4D visual winner, including production-eligible, query-only, over-budget, and performance-blocked stock outcomes, requires a terminal V3 pass, fail, or setup-blocked result;
+- a Stage 4D visual winner requires V3 only after final-stock setup/evidence and sampling health pass; final-stock setup-blocked or sampling-health failure skips V3;
+- after final-stock replay passes, production-eligible, query-only, over-budget, and performance-blocked stock outcomes each require a terminal V3 pass, fail, or setup-blocked result;
 - old Stage B checkpoint cannot unlock successor stages.
 
 ### System Chrome verification
@@ -878,7 +888,8 @@ This successor design is complete only when it produces one of:
    - `ORBITAL_PUBLIC_STEP_POLICY_QUALITY_FAIL`;
    - `ORBITAL_PUBLIC_STEP_POLICY_OVER_BUDGET`;
    - `ORBITAL_PUBLIC_STEP_POLICY_PERF_BLOCKED`;
-4. one explicit terminal lookdev/sampling/performance failure:
+4. one explicit terminal lookdev/setup/sampling/performance failure:
+   - `ORBITAL_LOOKDEV_V2_SETUP_BLOCKED`, with `failedStage=4A|4B|4C|4D|final-stock` and complete invalid-evidence diagnostics;
    - `ORBITAL_LOOKDEV_V2_SAMPLING_HEALTH_FAIL`, with `failedStage=4A|4B|4C|4D|final-stock` and complete machine-derived evidence;
    - `ORBITAL_LOOKDEV_V2_MORPHOLOGY_FAIL`;
    - `ORBITAL_LOOKDEV_V2_COVERAGE_FAIL`;
@@ -886,5 +897,7 @@ This successor design is complete only when it produces one of:
    - `ORBITAL_LOOKDEV_V2_OPTICAL_FAIL`;
    - `ORBITAL_STOCK_LOOKDEV_V2_OVER_BUDGET`, plus a terminal `V3_WEATHER_ADAPTER_PASS`, `V3_WEATHER_ADAPTER_FAIL`, or `V3_WEATHER_ADAPTER_SETUP_BLOCKED` result and complete evidence;
    - `ORBITAL_STOCK_LOOKDEV_V2_PERF_BLOCKED`, plus a terminal `V3_WEATHER_ADAPTER_PASS`, `V3_WEATHER_ADAPTER_FAIL`, or `V3_WEATHER_ADAPTER_SETUP_BLOCKED` result and complete evidence;
+
+`ORBITAL_LOOKDEV_V2_SETUP_BLOCKED` and `ORBITAL_LOOKDEV_V2_SAMPLING_HEALTH_FAIL` with `failedStage=final-stock` are complete terminal outcomes without V3 evidence because the V3 precondition was not reached.
 
 No outcome in this design directly changes the homepage. Production integration, camera-cut history behaviour, and final rollout remain a separate amendment after a `PRODUCTION_ELIGIBLE` stock winner exists.
