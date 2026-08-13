@@ -922,7 +922,7 @@ async function deriveStage1ProgressMetrics(input: Readonly<{
       audit: primaryMarch.instrumentationAudit,
       expectedAnchorCounts: {
         caller: 1,
-        earlyBreak: 2,
+        earlyBreak: 3,
         functionEntry: 1,
         loopBody: 1,
         primaryDebugOutput: 1
@@ -933,7 +933,7 @@ async function deriveStage1ProgressMetrics(input: Readonly<{
       audit: primaryRepeat.instrumentationAudit,
       expectedAnchorCounts: {
         caller: 1,
-        earlyBreak: 2,
+        earlyBreak: 3,
         functionEntry: 1,
         loopBody: 1,
         primaryDebugOutput: 1
