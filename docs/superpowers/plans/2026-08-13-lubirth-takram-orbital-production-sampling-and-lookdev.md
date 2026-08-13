@@ -8,7 +8,7 @@
 
 **Goal:** Select one evidence-backed public `perspectiveStepScale` policy for the stock orbital opening, build a healthy sampling baseline, execute a fresh bounded lookdev, and publish one spec-authorized stock/V3 terminal outcome without changing the homepage or production Takram shader API.
 
-**Architecture:** Keep the historical two-arm causal resolver immutable and add a separate production candidate contract. Build capture-only primary-march instrumentation, exact BSM-to-final GPU submission timing, numeric metric extraction, and pure policy/lookdev/V3 resolvers as focused modules; the query-only parity pipeline only applies those contracts and publishes raw telemetry. Formal System Chrome publishers consume that raw evidence stage-by-stage from tracked-clean commits, stop at the first terminal gate, and never infer a later-stage authorization.
+**Architecture:** Keep the historical two-arm causal resolver immutable and add a separate production candidate contract. Build capture-only primary-march instrumentation, exact BSM-to-final GPU submission timing, numeric metric extraction, and pure policy/lookdev/V3 resolvers as focused modules; the query-only parity pipeline only applies those contracts and publishes raw telemetry. Formal System Chrome publishers consume staging evidence stage-by-stage from tracked-clean commits, skip every downstream capture after the first terminal gate, and route all outcomes through the common verification/closure task.
 
 **Tech Stack:** TypeScript, React Three Fiber, Three.js, `@takram/three-clouds@0.7.6`, `postprocessing@6.39.1`, WebGL2 `EXT_disjoint_timer_query_webgl2`, Playwright with headed installed System Chrome, Sharp, Node crypto/zlib, macOS `system_profiler`/`pmset`.
 
@@ -24,7 +24,8 @@
 - No Stage 4 capture is authorized until `ORBITAL_HEALTHY_STOCK_BASELINE_READY` exists in the new production-policy evidence root.
 - No V3 capture is authorized until a Stage 4D visual winner passes a fresh final-stock setup/evidence and sampling-health replay.
 - A formal publisher may run only from a tracked-clean commit. Each completed stage is committed before the next formal capture begins.
-- Any terminal outcome stops the remaining funnel. Only `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING` authorizes a separate shader-policy design; this plan does not implement that fallback.
+- Capture commands write only to an ignored, run-specific `output/takram-orbital-production-staging/<run-id>/<stage>/` tree. Human review edits only the staging `visual-review.json`. A resolve command validates the complete staging package and performs the stage's one and only atomic rename into the formal evidence root; formal directories are never partially created or overwritten.
+- Any terminal outcome skips the remaining capture tasks, records them as `not-authorized-after-terminal`, and jumps to the outcome-aware Task 16 for final evidence verification and plan closure. Only `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING` authorizes a separate shader-policy design; this plan does not implement that fallback.
 
 ## File structure
 
@@ -75,7 +76,7 @@ expect(TAKRAM_ORBITAL_PRODUCTION_STEP_VALUES).toEqual({
 
 Assert `estimateTakramOrbitalInitialStepMeters()` uses `50 + (scale - 1) * rayNearMeters`, returns the four documented near-nadir and `2x-height` estimates within `1 m`, and labels every value as an estimate rather than measured ray data.
 
-Add contract tests for the discriminated sampling input:
+Add contract tests for the new discriminated sampling input while retaining the current causal compatibility fields:
 
 ```ts
 resolveTakramOrbitalLookdevContract({
@@ -136,9 +137,9 @@ export function estimateTakramOrbitalInitialStepMeters(input: Readonly<{
 
 Use frozen exact tables; do not accept numeric strings or clamp unknown values.
 
-- [ ] **Step 4: Add the discriminated sampling policy without changing the causal resolver**
+- [ ] **Step 4: Add the discriminated sampling policy as a backward-compatible extension**
 
-Replace the optional `stepScaleMode` input with:
+Add `samplingPolicy` alongside the existing optional `stepScaleMode` input:
 
 ```ts
 export type TakramOrbitalLookdevSamplingPolicyInput =
@@ -153,11 +154,13 @@ export interface TakramOrbitalLookdevInput {
   opticalDepthScale: TakramOrbitalOpticalDepthScale;
   preset: TakramOrbitalPreset;
   samplingPolicy?: TakramOrbitalLookdevSamplingPolicyInput;
+  /** Historical causal compatibility; rejected when samplingPolicy is present. */
+  stepScaleMode?: TakramOrbitalStepScaleMode;
   verticalScale: TakramOrbitalVerticalScale;
 }
 ```
 
-The default is `{ kind: "causal", mode: "control" }`. Publish the resolved discriminated object as `contract.samplingPolicy`, and source `clouds.perspectiveStepScale` only from that object. Keep all morphology, layer, renderer, and lighting values byte-equivalent to the current contract.
+Resolution precedence is exact: simultaneous `samplingPolicy` and `stepScaleMode` throws a contract conflict; `samplingPolicy` resolves directly; otherwise `stepScaleMode` maps to `{ kind: "causal", mode }`; absence of both maps to causal control. Publish `contract.samplingPolicy` but retain the current resolved `contract.stepScaleMode` causal alias through Task 8 so `TakramStockParityPipeline.tsx` and historical consumers still typecheck unchanged. A production policy sets the compatibility alias to `"control"` only as a deprecated field that no production identity or runtime decision may consume. Task 9 migrates all consumers to `samplingPolicy` and then removes that resolved alias in the same commit. Keep all morphology, layer, renderer, and lighting values byte-equivalent to the current contract.
 
 - [ ] **Step 5: Run tests and both package typechecks**
 
@@ -169,7 +172,7 @@ pnpm --filter @miralith/lubirth-hero typecheck
 pnpm --filter @miralith/site typecheck
 ```
 
-Expected: all pass; the historical causal module has no diff.
+Expected: all pass; existing pipeline/site consumers typecheck without modification and the historical causal module has no diff.
 
 - [ ] **Step 6: Commit**
 
@@ -337,9 +340,9 @@ pnpm exec playwright test -c playwright.unit.config.ts \
   tests/unit/lubirthTakramPrimaryMarchInstrumentation.spec.ts
 ```
 
-- [ ] **Step 4: Repair the two sample-count parameter levels**
+- [ ] **Step 4: Add an audited installer without changing the existing callback API**
 
-Expose an audit result rather than only a teardown callback:
+Keep `installTakramSampleCountInstrumentation(material): () => void` byte-compatible for the existing pipeline and historical tests. Add a new API for successor diagnostics:
 
 ```ts
 export interface TakramShaderInstrumentationInstallation {
@@ -351,9 +354,13 @@ export interface TakramShaderInstrumentationInstallation {
   }>;
   restore(): Readonly<{ restoredSourceFnv1a64: string }>;
 }
+
+export function installAuditedTakramSampleCountInstrumentation(
+  material: TakramSampleCountMaterial
+): TakramShaderInstrumentationInstallation;
 ```
 
-The sample-count installer must patch the `marchClouds` outer parameter and the debug `sampleMedia` parameter independently. Never use a broad global `out ivec3` replacement.
+Both installers use the same two-anchor patch implementation. The audited installer publishes hashes; the compatibility installer returns only `() => installation.restore()` so Task 3's focused tests and `@miralith/lubirth-hero` typecheck pass before Task 9 migrates the pipeline. Patch the `marchClouds` outer parameter and the debug `sampleMedia` parameter independently. Never use a broad global `out ivec3` replacement.
 
 - [ ] **Step 5: Implement primary-march injection with exact anchors**
 
@@ -392,6 +399,8 @@ git add packages/lubirth-hero/src/planetaryCloud/parity/TakramSampleCountInstrum
 git commit -m "feat(lubirth): instrument orbital primary march health"
 ```
 
+Expected: the new audited APIs and readback types are available, while the unchanged stock pipeline still compiles against the legacy callback installer. Task 9 performs the consumer migration.
+
 ## Task 4: Derive structural and sampling metrics from raw buffers
 
 **Files:**
@@ -419,11 +428,23 @@ sample count:
   native hit -> primary > 0
 ```
 
-Prove an all-zero primary-march buffer passes the structural audit but produces `enteredPrimaryMarchPixelCount=0`. Prove `primary=499` plus `capReached=1` contributes to cap saturation, while an entered ray with `primary=0` remains in the denominator.
+Prove an all-zero primary-march buffer passes the structural audit but produces `enteredPrimaryMarchPixelCount=0`. Prove a primary-march texel with `R=500,G=1,B=1,A=0` contributes to both cap metrics even when its separate rough-weather sample-count `R` decodes below `500`; an entered ray with rough-weather primary count `0` remains in the denominator.
+
+Assert both formulas directly:
+
+```text
+primaryCapSaturationFraction =
+  count(G >= 0.5 and B >= 0.5) / count(G >= 0.5)
+
+noHitPrimaryCapSaturationFraction =
+  count(G >= 0.5 and B >= 0.5 and A < 0.5) / count(G >= 0.5)
+```
+
+`noHitPrimaryCapSaturationFraction` is always published as a diagnostic and never changes a terminal decision independently of `primaryCapSaturationFraction`.
 
 - [ ] **Step 2: Write RED Stage 1 threshold-boundary tests**
 
-Exercise exact pass/fail boundaries for native hit `0.20`, pre-temporal signal `0.20`, small fragments `0.10`, signal retention `[0.90,1.10]`, luma retention `[0.80,1.20]`, paired change strictly above the same-progress repeat floor, entry count `>0`, and cap saturation `<=0.01`.
+Exercise exact pass/fail boundaries for native hit `0.20`, pre-temporal signal `0.20`, small fragments `0.10`, signal retention `[0.90,1.10]`, luma retention `[0.80,1.20]`, paired change strictly above the same-progress repeat floor, entry count `>0`, and cap saturation `<=0.01`. Add explicit no-hit fixtures for `0`, exactly `0.01`, and above `0.01` to prove the value is derived and serialized while only the overall cap fraction controls health.
 
 Also test `cloudMask` uses max absolute RGB byte delta `>8`, ignores alpha, and four-neighbour components of size `<=3` feed `smallFragmentFraction`.
 
@@ -466,7 +487,9 @@ export function resolveTakramOrbitalSamplingProgressDecision(
 }>;
 ```
 
-Validate unclamped decoded values before rounding. Reject dimension/channel/precision/origin mismatches and every non-finite lossless value as setup evidence. Never read cap or entry from sample-count channels.
+`TakramPrimaryMarchMetrics` contains at minimum `enteredPrimaryMarchPixelCount`, `primaryCapSaturationFraction`, `noHitPrimaryCapSaturationFraction`, direct loop-count summary statistics, cap count, no-hit cap count, and hit count.
+
+Validate unclamped decoded values before rounding. Reject dimension/channel/precision/origin mismatches and every non-finite lossless value as setup evidence. Never read cap, entry, or `noHitPrimaryCapSaturationFraction` from sample-count channels.
 
 - [ ] **Step 5: Reuse morphology primitives without changing old V3 outcomes**
 
@@ -548,12 +571,12 @@ pnpm exec playwright test -c playwright.unit.config.ts \
   tests/unit/lubirthTakramOrbitalGpuSubmissionInstrumentation.spec.ts
 ```
 
-- [ ] **Step 4: Refactor the timer driver around explicit intervals**
+- [ ] **Step 4: Add an explicit-submission profiler without breaking the current frame profiler**
 
-Expose one mode-bound profiler:
+Keep the existing `TakramOrbitalWebGl2TimerProfiler` and `createTakramOrbitalWebGl2TimerProfiler()` signatures unchanged through Task 8 so the current pipeline typechecks. Add the successor mode-bound API under distinct names:
 
 ```ts
-export interface TakramOrbitalWebGl2TimerProfiler {
+export interface TakramOrbitalSubmissionTimerProfiler {
   beginFrame(): Readonly<{ frameId: number; measure: boolean }>;
   beginTotal(frameId: number): void;
   endTotal(frameId: number): void;
@@ -564,6 +587,11 @@ export interface TakramOrbitalWebGl2TimerProfiler {
   snapshot(): DeepReadonly<TakramOrbitalGpuProfileSnapshot>;
   dispose(): void;
 }
+
+export function createTakramOrbitalSubmissionTimerProfiler(
+  gl: WebGL2RenderingContext,
+  options: TakramOrbitalSubmissionTimerProfilerOptions
+): TakramOrbitalSubmissionTimerProfiler;
 ```
 
 `finishFrame` emits no-op/copy baselines for total-only and one empty-query baseline for stage-only. It does not subtract baselines. A disjoint event drops the complete epoch and continues until the configured valid-frame target is reached.
@@ -577,7 +605,7 @@ export function installTakramOrbitalGpuSubmissionInstrumentation(input: Readonly
   aerialPerspectiveEffect: object;
   cloudsEffect: object;
   composer: object;
-  profiler: TakramOrbitalWebGl2TimerProfiler;
+  profiler: TakramOrbitalSubmissionTimerProfiler;
 }>): Readonly<{
   audit: TakramOrbitalGpuSubmissionAudit;
   restore(): void;
@@ -587,6 +615,8 @@ export function installTakramOrbitalGpuSubmissionInstrumentation(input: Readonly
 Discover exactly one combined `EffectPass` whose effect order is Clouds then AerialPerspective. Wrap the four native pass submissions. Scope a temporary `renderer.render` interceptor only during that exact combined pass and wrap only the pass's own fullscreen `scene/camera` draw as `final-effect`. In total-only mode, arm when the combined pass enters the expected Clouds update, begin immediately before BSM current, and close after the combined pass returns in `finally`.
 
 The audit records pass identities/order, installed package hashes, original/wrapped method hashes, and hook source hash. `restore()` restores every method identity exactly.
+
+The legacy frame-priority profiler remains covered by its historical tests but is labelled non-authoritative and cannot be consumed by the new production-policy resolver. Task 9 migrates the pipeline to `TakramOrbitalSubmissionTimerProfiler` and removes the old priority wrapper in the same commit.
 
 - [ ] **Step 6: Verify GREEN**
 
@@ -607,6 +637,8 @@ git add packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalGpuProfiler
 git commit -m "feat(lubirth): time exact orbital GPU submissions"
 ```
 
+Expected: the new submission profiler tests pass and the existing pipeline continues to typecheck against the legacy profiler until Task 9.
+
 ## Task 6: Implement the production-policy environment gate and pure resolver
 
 **Files:**
@@ -625,7 +657,14 @@ export interface TakramOrbitalPerformanceEnvironment {
   readonly chip: string;
   readonly gpuRenderer: string;
   readonly gpuVendor: string;
-  readonly viewport: Readonly<{ cssWidth: 1440; cssHeight: 960; dpr: 1 }>;
+  readonly macOSVersion: string;
+  readonly viewport: Readonly<{
+    cssWidth: 1440;
+    cssHeight: 960;
+    physicalWidth: 1440;
+    physicalHeight: 960;
+    dpr: 1;
+  }>;
   readonly visible: boolean;
   readonly focused: boolean;
   readonly acPower: boolean;
@@ -635,7 +674,7 @@ export interface TakramOrbitalPerformanceEnvironment {
 }
 ```
 
-Require Apple M4, ANGLE Metal identity, production build, headed System Chrome, exact viewport/DPR, visible/focused page, AC power, and Low Power Mode disabled. A missing or mismatched field fails Stage 0. Also require exactly `93` verified causal artifacts, causal outcome, causal contract/commit readability, query/runtime/fingerprint/camera parity, and independent `8+8` total/stage smoke populations.
+Require Apple M4, one exact recorded macOS version, ANGLE Metal identity, production build, headed System Chrome, `1440x960` CSS pixels, `1440x960` physical canvas pixels, DPR `1`, visible/focused page, AC power, and Low Power Mode disabled. A missing or mismatched field fails Stage 0. Initial, ranking, final-winner, and confirmation populations compare every environment field—including macOS and physical dimensions—for exact equality. Also require exactly `93` verified causal artifacts, causal outcome, causal contract/commit readability, query/runtime/fingerprint/camera parity, and independent `8+8` total/stage smoke populations.
 
 - [ ] **Step 2: Write RED Stage 1 and Stage 2 outcome tests**
 
@@ -733,6 +772,16 @@ An invalid required candidate stops the whole stage and cannot be removed to let
 
 The stage-specific no-winner terminals are exact: `ORBITAL_LOOKDEV_V2_MORPHOLOGY_FAIL`, `ORBITAL_LOOKDEV_V2_COVERAGE_FAIL`, `ORBITAL_LOOKDEV_V2_VERTICAL_FAIL`, and `ORBITAL_LOOKDEV_V2_OPTICAL_FAIL`.
 
+Add separate Stage 4A/4B machine signal-presence fixtures after the shared setup/sampling resolver:
+
+```text
+Stage 4A and Stage 4B, every candidate/progress:
+  nativeHitPixelCount > 0
+  preTemporalSignalPixelFraction > 0
+```
+
+Test exact zero and smallest-positive boundaries independently for both fields. A sampling-healthy candidate with either value equal to zero is rejected by the stage-specific machine gate before human review and records `native-hit-absent` or `pre-temporal-signal-absent`; it is not relabelled as sampling-health or setup failure. If no candidate remains after this stage-specific gate, resolve the corresponding `MORPHOLOGY_FAIL` or `COVERAGE_FAIL` with machine reasons and no fabricated visual scores.
+
 - [ ] **Step 2: Write RED stage-specific visual and ranking tests**
 
 Define V2 visual reviews with no PASS/FAIL field and these dimensions:
@@ -783,6 +832,9 @@ evaluateTakramOrbitalV2VisualReview(
 resolveTakramOrbitalV2SharedGate(
   input: TakramOrbitalV2SharedGateInput
 ): TakramOrbitalV2SharedGateDecision;
+resolveTakramOrbitalV2SignalPresenceGate(
+  input: TakramOrbitalV2SignalPresenceInput
+): TakramOrbitalV2SignalPresenceDecision;
 resolveTakramOrbitalV2Stage4A(
   input: TakramOrbitalV2StageInput<"4A">
 ): TakramOrbitalV2StageDecision;
@@ -803,7 +855,7 @@ resolveTakramOrbitalV2FinalClassification(
 ): TakramOrbitalV2FinalClassificationDecision;
 ```
 
-Every resolver consumes raw machine decisions plus bounded score/flag records. None accepts `setupPass`, `samplingPass`, `visualPass`, `metricPass`, or another handwritten verdict boolean.
+Every resolver consumes raw machine decisions plus bounded score/flag records. Stage 4A and 4B invoke `resolveTakramOrbitalV2SignalPresenceGate()` after the shared resolver and before visual evaluation. None accepts `setupPass`, `samplingPass`, `signalPass`, `visualPass`, `metricPass`, or another handwritten verdict boolean.
 
 - [ ] **Step 6: Verify GREEN and commit**
 
@@ -849,6 +901,8 @@ cap saturation <= 0.01
 
 Prove that averaging cannot hide a failed progress and that stock metric failure is setup-blocked while V3 metric failure is `V3_WEATHER_ADAPTER_FAIL`.
 
+Require every stock/V3 progress metric record to serialize `noHitPrimaryCapSaturationFraction` from the direct primary-march buffer. Test `0`, `0.01`, and `>0.01` fixtures and prove that this value remains a required diagnostic: it is preserved in metric decisions and evidence publication but does not independently change PASS/FAIL beyond `cap saturation <= 0.01`.
+
 - [ ] **Step 3: Write RED visual-schema and scope tests**
 
 The review records six per-progress `0|1|2` dimensions, one sequence-level opening stability score, enumerated hard flags, identity, commit, winner, contact-sheet hashes, viewport/DPR, progress, and references. It contains no result boolean. Require every score `>=1` and no hard flag.
@@ -883,7 +937,7 @@ resolveTakramOrbitalV3Compatibility(
 ): TakramOrbitalV3ResolverDecision;
 ```
 
-The terminal resolver consumes only the machine setup report, four stock decisions, four V3 decisions, and bounded visual scores/flags. It returns only `V3_WEATHER_ADAPTER_SETUP_BLOCKED`, `V3_WEATHER_ADAPTER_FAIL`, or `V3_WEATHER_ADAPTER_PASS`.
+The terminal resolver consumes only the machine setup report, four stock decisions, four V3 decisions, and bounded visual scores/flags. Each progress decision retains both `primaryCapSaturationFraction` and diagnostic `noHitPrimaryCapSaturationFraction` for publication. It returns only `V3_WEATHER_ADAPTER_SETUP_BLOCKED`, `V3_WEATHER_ADAPTER_FAIL`, or `V3_WEATHER_ADAPTER_PASS`.
 
 - [ ] **Step 6: Verify GREEN and commit**
 
@@ -962,17 +1016,19 @@ pnpm exec playwright test -c playwright.unit.config.ts \
 
 - [ ] **Step 4: Apply feature state as part of the immutable runtime contract**
 
+Migrate every pipeline/client/runtime consumer from the temporary resolved `contract.stepScaleMode` alias to `contract.samplingPolicy`; include the complete discriminated policy in normalized query identity and read `clouds.perspectiveStepScale` from its resolved value. Remove the resolved compatibility alias from `TakramOrbitalLookdevContract` in this same commit, while retaining the historical `TakramOrbitalLookdevInput.stepScaleMode` adapter for causal callers.
+
 Pass the normalized feature state to `apply/read/diffTakramOrbitalLookdevRuntime()`. Record it in requested contract, readback, drift signature, base/mount identity, runtime evidence epoch, and renderer fingerprint. A feature/output change must remount all six cloud/shadow/resolve allocations before frame counting.
 
 - [ ] **Step 5: Mount the two capture-only shader modes**
 
-For `sample-count-debug`, install the repaired sample-count instrumentation and publish its lossless readback/audit. For `primary-march-debug`, install only primary-march instrumentation, define `DEBUG_SHOW_PRIMARY_MARCH`, read the native current target as direct-value `RGBA16F`, and publish `window.__MiraLithTakramPrimaryMarch`. Reject either diagnostic if `featureState` or output is unsupported.
+For `sample-count-debug`, migrate the pipeline from the compatibility callback to `installAuditedTakramSampleCountInstrumentation()` and publish its lossless readback/audit. For `primary-march-debug`, install only primary-march instrumentation, define `DEBUG_SHOW_PRIMARY_MARCH`, read the native current target as direct-value `RGBA16F`, and publish `window.__MiraLithTakramPrimaryMarch`. Reject either diagnostic if `featureState` or output is unsupported.
 
 On teardown, remove the exact define, restore source byte-for-byte, mark the material dirty, and publish the restored hash. Neither mode may coexist with GPU profiling.
 
 - [ ] **Step 6: Replace the priority `0 -> 3` whole-composer timer**
 
-Remove the existing `useFrame` begin at priority `0` and end at priority `3`. Hold a ref to the actual composer, install `TakramOrbitalGpuSubmissionInstrumentation` only after the exact combined Clouds/AerialPerspective pass is available, and drive polling after submission without opening another query.
+Migrate the pipeline from `createTakramOrbitalWebGl2TimerProfiler()` to `createTakramOrbitalSubmissionTimerProfiler()`. Remove the existing `useFrame` begin at priority `0` and end at priority `3` in the same edit. Hold a ref to the actual composer, install `TakramOrbitalGpuSubmissionInstrumentation` only after the exact combined Clouds/AerialPerspective pass is available, and drive polling after submission without opening another query.
 
 Expose the raw snapshot plus submission audit on `window.__MiraLithTakramGpuProfile`. The renderer fingerprint must include combined pass identity/order, hook source hash, installed build hash, and measurement mode. No R3F frame-priority interval may populate a `3/4 ms` decision.
 
@@ -1022,12 +1078,18 @@ Test that the helper:
 
 - does nothing when `MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE` is absent;
 - rejects a dirty tracked worktree but ignores the user's untracked `.superpowers/` directory;
-- hashes every artifact and verifies byte length before publication;
-- writes to a sibling temporary directory, fsyncs files, and renames only after verification;
+- creates one run-specific ignored staging root at `output/takram-orbital-production-staging/<run-id>/<stage>/` and records its clean capture commit/build/environment;
+- writes an ignored `output/takram-orbital-production-staging/active-<stage>.json` pointer containing only that immutable run ID; every follow-up command reads the pointer and the resolver rejects a run/stage mismatch;
+- allows a capture command to populate only that staging root and never create the corresponding formal stage directory;
+- writes a schema-valid blank review template into staging, then requires a human-edited review with reviewer identity and no result boolean before resolve;
+- rejects resolve when staging capture hashes, capture commit/build/environment, review schema, contact-sheet hashes, or resolver inputs mismatch;
+- hashes every artifact and verifies byte length before formal publication;
+- has the resolve command assemble a complete sibling temporary formal directory, fsync files, verify it, and rename exactly once;
 - refuses to overwrite an existing formal stage directory;
+- permits retry by creating a new run ID only while no formal stage exists; it never mutates or reuses a failed staging run;
 - requires the immediately preceding checkpoint state for Stage 1, Stage 2, Stage 4A–D, final-stock, and V3;
 - rejects old Stage B as an authorization input;
-- prevents a terminal stage from publishing any successor directory.
+- prevents a terminal stage from publishing any successor directory but permits common Task 16 verification/closure.
 
 - [ ] **Step 2: Implement exact environment collection**
 
@@ -1037,16 +1099,17 @@ Collect and normalize:
 git rev-parse HEAD
 git status --porcelain --untracked-files=no
 system_profiler SPHardwareDataType -json   -> chip must be Apple M4
+sw_vers -productVersion                   -> exact macOS version
 pmset -g batt                             -> AC Power
 pmset -g custom                           -> lowpowermode 0
 Google Chrome --version
 WEBGL_debug_renderer_info                 -> ANGLE Metal renderer/vendor
-window.innerWidth/innerHeight, canvas physical size, devicePixelRatio
+window.innerWidth/innerHeight, exact 1440x960 canvas width/height, devicePixelRatio
 document.visibilityState, document.hasFocus()
 production asset/build fingerprint
 ```
 
-Do not silently substitute a different browser, hardware, build, viewport, or power state. Return a structured invalid-reason list consumed by the pure environment validator.
+Do not silently substitute a different macOS version, browser, hardware, build, CSS viewport, physical canvas size, DPR, or power state. Return a structured invalid-reason list consumed by the pure environment validator and compare the complete normalized object before every threshold-bearing and confirmation population.
 
 - [ ] **Step 3: Implement reusable exact-frame capture functions**
 
@@ -1067,15 +1130,23 @@ captureTemporalFrames(
   input: OrbitalCaptureRequest & { nativeFrames: readonly [1, 2, 4, 8, 16, 32] }
 ): Promise<readonly OrbitalPngCapture[]>;
 runGpuPopulation(input: OrbitalGpuPopulationRequest): Promise<TakramOrbitalGpuProfileSnapshot>;
+createOrbitalStagingRun(
+  input: OrbitalStagingRunInput
+): Promise<OrbitalStagingRun>;
+writeOrbitalReviewTemplate(
+  input: OrbitalReviewTemplateInput
+): Promise<string>;
 verifyFreshCompleteRemount(
   before: TakramOrbitalAllocationGenerations,
   after: TakramOrbitalAllocationGenerations
 ): void;
 verifyArtifactManifest(root: string): Promise<void>;
-publishStageAtomically(input: OrbitalStagePublicationInput): Promise<void>;
+resolveAndPublishStageAtomically(
+  input: OrbitalStageResolutionInput
+): Promise<OrbitalStagePublicationResult>;
 ```
 
-Every route waits for exact query attributes, `telemetry.active`, runtime/fingerprint parity, frame lock, native frame, fresh allocations, and the expected feature/output identity before reading pixels.
+Every route waits for exact query attributes, `telemetry.active`, runtime/fingerprint parity, frame lock, native frame, fresh allocations, and the expected feature/output identity before reading pixels. Capture functions accept only an `OrbitalStagingRun`; only `resolveAndPublishStageAtomically()` accepts a formal destination. Human review is read from staging, validated, copied into the temporary complete package, and published together with raw captures, machine metrics, resolver checkpoint, and outcome in the one rename.
 
 - [ ] **Step 4: Add a production-server System Chrome config**
 
@@ -1237,14 +1308,16 @@ pnpm exec playwright test -c playwright.unit.config.ts \
 git diff --check
 ```
 
-If the checkpoint is `ORBITAL_PRODUCTION_SAMPLING_SETUP_BLOCKED`, generate root `OUTCOME.md`, commit the terminal evidence, and stop this plan. Do not interpret candidate images.
+If the checkpoint is `ORBITAL_PRODUCTION_SAMPLING_SETUP_BLOCKED`, generate root `OUTCOME.md`, do not interpret candidate images, and proceed to Step 4 only to verify/commit the terminal package. Mark Tasks 13–15 `not-authorized-after-terminal`, then jump to Task 16.
 
-- [ ] **Step 4: Commit a passed Stage 0 checkpoint**
+- [ ] **Step 4: Verify and commit the Stage 0 checkpoint or terminal**
 
 ```bash
 git add docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-production-step-policy
 git commit -m "docs(lubirth): publish orbital production Stage 0"
 ```
+
+For a passed checkpoint continue to Task 13. For a setup-blocked terminal jump to Task 16 after this commit; Task 16 remains mandatory in both paths.
 
 ## Task 13: Execute Stage 1/2 and lock the healthy stock baseline
 
@@ -1264,17 +1337,18 @@ pnpm exec playwright test \
   --workers=1 --grep "formal Stage 1 capture"
 ```
 
-For `control/fine/confirmed/coarse` at `0/0.06/0.12/0.18`, publish base and fresh-mount repeat cloud-raw/off, sample-count PNG/lossless, primary-march PNG/lossless, lossless pre-temporal/resolved/final, stage-readback PNG, identities, camera height, labelled step estimates, and artifact hashes/lengths.
+For `control/fine/confirmed/coarse` at `0/0.06/0.12/0.18`, write base and fresh-mount repeat cloud-raw/off, sample-count PNG/lossless, primary-march PNG/lossless, lossless pre-temporal/resolved/final, stage-readback PNG, identities, camera height, labelled step estimates, and artifact hashes/lengths only to one new `stage-1` staging run. The capture command writes machine metrics—including `primaryCapSaturationFraction` and required diagnostic `noHitPrimaryCapSaturationFraction`—plus a blank review template and contact sheets; it must assert that the formal `stage-1` directory does not exist before and after capture.
 
 - [ ] **Step 2: Derive Stage 1 metrics and create the bounded visual review**
 
-The machine extractor writes `metrics.json` and `metric-decision.json`. Generate fixed candidate/progress contact sheets. Fill `visual-review.json` with reviewer identity and only `coherentDensityField: 0|1|2`, `isolatedFragments: boolean`, and notes for each evidence-valid non-control progress; it must not contain sampling or outcome booleans.
+The machine extractor writes staging `metrics.json` and `metric-decision.json`. Inspect the fixed candidate/progress contact sheets, then fill the staging `visual-review.json` with reviewer identity and only `coherentDensityField: 0|1|2`, `isolatedFragments: boolean`, and notes for each evidence-valid non-control progress; it must not contain sampling or outcome booleans. Set `MIRALITH_TAKRAM_ORBITAL_STAGING_RUN` to that exact run ID when resolving.
 
 The sheets include the frozen NASA comparison board and Takram upstream reference using the hashes already locked by the old plan; a hash mismatch is setup-blocked.
 
 Run:
 
 ```bash
+MIRALITH_TAKRAM_ORBITAL_STAGING_RUN="$(node -p 'require("./output/takram-orbital-production-staging/active-stage-1.json").runId')" \
 MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=stage-1-resolve \
 pnpm exec playwright test \
   -c playwright.takram-orbital-production-system-chrome.config.ts \
@@ -1282,16 +1356,20 @@ pnpm exec playwright test \
   --workers=1 --grep "formal Stage 1 resolve"
 ```
 
-Expected: either an explicit setup/quality terminal or at least one sampling-healthy non-control candidate authorized for Stage 2. The `control` remains non-winning.
+The resolve command rehashes the immutable staging capture, validates the review/contact sheets, runs the pure resolver, and performs the sole atomic publication of the complete formal Stage 1 directory. Expected: either an explicit setup/quality terminal or at least one sampling-healthy non-control candidate authorized for Stage 2. The `control` remains non-winning.
 
 - [ ] **Step 3: Commit Stage 1 before GPU capture**
 
 ```bash
+pnpm exec playwright test -c playwright.unit.config.ts \
+  tests/unit/lubirthTakramOrbitalProductionEvidence.spec.ts \
+  --grep "Stage 1|verifies published manifest"
+git diff --check
 git add docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-production-step-policy
 git commit -m "docs(lubirth): publish orbital production Stage 1"
 ```
 
-If Stage 1 is terminal, stop. Otherwise confirm the original Task 11 production build ID still exists and matches; do not rebuild.
+If Stage 1 is terminal, mark Tasks 13 Steps 4–8 and Tasks 14–15 `not-authorized-after-terminal`, then jump to Task 16 after committing the terminal Stage 1 package. Otherwise confirm the original Task 11 production build ID still exists and matches; do not rebuild.
 
 - [ ] **Step 4: Capture all required Stage 2 visual/readback states**
 
@@ -1303,11 +1381,12 @@ pnpm exec playwright test \
   --workers=1 --grep "formal Stage 2 diagnostics"
 ```
 
-At every progress for every healthy candidate, capture required outputs under native and light-shafts-off, the four required outputs under bsm-off, and aerial-final under native. Derive primary-signal parity from primary-march bytes, native-hit masks, and pre-temporal opacity using the Stage 1 same-candidate/same-progress repeat floors.
+At every progress for every healthy candidate, capture required outputs under native and light-shafts-off, the four required outputs under bsm-off, and aerial-final under native into one Stage 2 staging run. Derive primary-signal parity from primary-march bytes, native-hit masks, and pre-temporal opacity using the Stage 1 same-candidate/same-progress repeat floors. Do not create the formal Stage 2 directory until the Stage 2 resolve command.
 
 - [ ] **Step 5: Run the four independent `120+120` GPU populations**
 
 ```bash
+MIRALITH_TAKRAM_ORBITAL_STAGING_RUN="$(node -p 'require("./output/takram-orbital-production-staging/active-stage-2.json").runId')" \
 MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=stage-2-gpu \
 pnpm exec playwright test \
   -c playwright.takram-orbital-production-system-chrome.config.ts \
@@ -1322,6 +1401,7 @@ For each healthy candidate/progress run native total-only, light-shafts-off tota
 If the initial machine decision marks a candidate as a possible decoupling authorization, run:
 
 ```bash
+MIRALITH_TAKRAM_ORBITAL_STAGING_RUN="$(node -p 'require("./output/takram-orbital-production-staging/active-stage-2.json").runId')" \
 MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=stage-2-confirmation \
 pnpm exec playwright test \
   -c playwright.takram-orbital-production-system-chrome.config.ts \
@@ -1334,6 +1414,7 @@ This performs a second independent native/full and light-shafts-off/full `120+12
 - [ ] **Step 7: Resolve Stage 2 and Stage 3**
 
 ```bash
+MIRALITH_TAKRAM_ORBITAL_STAGING_RUN="$(node -p 'require("./output/takram-orbital-production-staging/active-stage-2.json").runId')" \
 MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=stage-2-resolve \
 pnpm exec playwright test \
   -c playwright.takram-orbital-production-system-chrome.config.ts \
@@ -1341,7 +1422,7 @@ pnpm exec playwright test \
   --workers=1 --grep "formal Stage 2 resolve"
 ```
 
-If the pure resolver returns a Stage 2 terminal, publish root `OUTCOME.md`, commit, and stop. If it returns `ORBITAL_PUBLIC_STEP_POLICY_WINNER`, publish the immutable Stage 3 baseline and require `ORBITAL_HEALTHY_STOCK_BASELINE_READY` before any lookdev-v2 directory can be created.
+The resolve command consumes the exact Stage 2 staging run, verifies all diagnostic/GPU/confirmation artifacts, and performs one atomic formal publication. If the pure resolver returns a Stage 2 terminal, publish root `OUTCOME.md` and proceed to Step 8 to verify/commit the terminal policy package; after that commit mark Tasks 14–15 `not-authorized-after-terminal` and jump to Task 16. If it returns `ORBITAL_PUBLIC_STEP_POLICY_WINNER`, publish the immutable Stage 3 baseline in the same atomic package and require `ORBITAL_HEALTHY_STOCK_BASELINE_READY` before any lookdev-v2 staging or formal directory can be created.
 
 - [ ] **Step 8: Verify and commit the policy result**
 
@@ -1362,89 +1443,165 @@ git commit -m "docs(lubirth): publish orbital production policy"
 - Create conditionally: `docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-lookdev-v2/stage-4c/**`
 - Create conditionally: `docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-lookdev-v2/stage-4d/**`
 
-- [ ] **Step 1: Capture and resolve Stage 4A**
+- [ ] **Step 1: Capture Stage 4A into a new staging run**
 
 ```bash
-MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=stage-4a \
+MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=stage-4a-capture \
 pnpm exec playwright test \
   -c playwright.takram-orbital-production-system-chrome.config.ts \
   tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts \
-  --workers=1 --grep "formal Stage 4A"
+  --workers=1 --grep "formal Stage 4A capture"
 ```
 
-Capture `h40/h80/h120`, coverage `0.3`, vertical/optical `1`, all progresses, and fresh sample-count/primary-march/stage readbacks before review. The machine resolver first publishes setup or sampling decisions. Only healthy candidates receive the 4A three-dimension visual review. Old Stage A images appear only as labelled historical controls.
+Capture `h40/h80/h120`, coverage `0.3`, vertical/optical `1`, all progresses, and fresh sample-count/primary-march/stage readbacks into staging. Derive setup/sampling evidence, `nativeHitPixelCount`, `preTemporalSignalPixelFraction`, both cap fractions, contact sheets, and a blank 4A review template. Assert the formal `stage-4a` directory still does not exist. Old Stage A images appear only as labelled historical controls.
 
-If setup-blocked, all-sampling-failed, or no visually passing morphology occurs, publish the exact terminal, commit, and stop. Otherwise commit Stage 4A survivors.
+- [ ] **Step 2: Complete the Stage 4A review and resolve once**
 
-- [ ] **Step 2: Capture and resolve Stage 4B**
+Edit only the staging `visual-review.json` named by `active-stage-4a.json`. Only candidates passing shared setup/sampling and the machine `nativeHitPixelCount>0` plus `preTemporalSignalPixelFraction>0` gate receive macro-coherence, opening-identity, and artifact-freedom scores.
 
 ```bash
-MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=stage-4b \
+MIRALITH_TAKRAM_ORBITAL_STAGING_RUN="$(node -p 'require("./output/takram-orbital-production-staging/active-stage-4a.json").runId')" \
+MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=stage-4a-resolve \
 pnpm exec playwright test \
   -c playwright.takram-orbital-production-system-chrome.config.ts \
   tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts \
-  --workers=1 --grep "formal Stage 4B"
+  --workers=1 --grep "formal Stage 4A resolve"
 ```
 
-For each 4A survivor capture coverage `0.3/0.4/0.45/0.55`, vertical/optical `1`, all progresses, and the shared machine evidence. Review only macro coherence, coverage usability, opening identity, and artifact freedom. The pure resolver keeps at most one coverage per morphology and two overall survivors using the exact tie-breaks.
+The resolve command validates immutable capture hashes and the bounded review, then atomically publishes formal Stage 4A exactly once. It cannot overwrite a formal directory.
 
-Publish/commit the stage or its terminal before continuing.
-
-- [ ] **Step 3: Capture and resolve Stage 4C**
-
-```bash
-MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=stage-4c \
-pnpm exec playwright test \
-  -c playwright.takram-orbital-production-system-chrome.config.ts \
-  tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts \
-  --workers=1 --grep "formal Stage 4C"
-```
-
-For each 4B survivor capture vertical `1/2/4`, optical `1`, all progresses, and shared machine evidence. Review the five Stage 4C dimensions; lighting/BSM is observation-only. Resolve one winner or the exact terminal, then publish/commit.
-
-- [ ] **Step 4: Capture and resolve Stage 4D**
-
-```bash
-MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=stage-4d \
-pnpm exec playwright test \
-  -c playwright.takram-orbital-production-system-chrome.config.ts \
-  tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts \
-  --workers=1 --grep "formal Stage 4D"
-```
-
-For the 4C winner capture optical `0.75/1/1.5`, all progresses, and shared machine evidence. Apply the final six-dimension visual review and exact tie-breaks. Publish either `ORBITAL_LOOKDEV_V2_OPTICAL_FAIL` or one `ORBITAL_STOCK_LOOKDEV_V2_WINNER`; never average parameters or add exposure/lighting compensation.
-
-- [ ] **Step 5: Verify stage-chain authorization and commit**
-
-After every non-terminal stage:
+- [ ] **Step 3: Verify and commit Stage 4A**
 
 ```bash
 pnpm exec playwright test -c playwright.unit.config.ts \
   tests/unit/lubirthTakramOrbitalProductionEvidence.spec.ts \
-  --grep "stage chain"
+  --grep "stage chain|verifies published manifest"
 git diff --check
 git add docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-lookdev-v2
-```
-
-Then run exactly one command matching the completed stage:
-
-```bash
 git commit -m "docs(lubirth): publish orbital lookdev Stage 4A"
 ```
 
+A terminal marks Steps 4–12 and Task 15 `not-authorized-after-terminal` and jumps to Task 16 after this commit. Otherwise continue only with the committed 4A survivors.
+
+- [ ] **Step 4: Capture Stage 4B into a new staging run**
+
 ```bash
+MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=stage-4b-capture \
+pnpm exec playwright test \
+  -c playwright.takram-orbital-production-system-chrome.config.ts \
+  tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts \
+  --workers=1 --grep "formal Stage 4B capture"
+```
+
+For each committed 4A survivor, capture coverage `0.3/0.4/0.45/0.55`, vertical/optical `1`, all progresses, shared evidence, both cap diagnostics, and the machine signal-presence fields into staging. Assert no formal Stage 4B directory exists.
+
+- [ ] **Step 5: Complete the Stage 4B review and resolve once**
+
+Review only machine-eligible candidates for macro coherence, coverage usability, opening identity, and artifact freedom; separation, depth, and lighting remain non-failing observations.
+
+```bash
+MIRALITH_TAKRAM_ORBITAL_STAGING_RUN="$(node -p 'require("./output/takram-orbital-production-staging/active-stage-4b.json").runId')" \
+MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=stage-4b-resolve \
+pnpm exec playwright test \
+  -c playwright.takram-orbital-production-system-chrome.config.ts \
+  tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts \
+  --workers=1 --grep "formal Stage 4B resolve"
+```
+
+The pure resolver keeps at most one coverage per morphology and two overall survivors, then atomically publishes once. It cannot overwrite a formal directory.
+
+- [ ] **Step 6: Verify and commit Stage 4B**
+
+```bash
+pnpm exec playwright test -c playwright.unit.config.ts \
+  tests/unit/lubirthTakramOrbitalProductionEvidence.spec.ts \
+  --grep "stage chain|verifies published manifest"
+git diff --check
+git add docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-lookdev-v2
 git commit -m "docs(lubirth): publish orbital lookdev Stage 4B"
 ```
 
+A terminal marks Steps 7–12 and Task 15 `not-authorized-after-terminal` and jumps to Task 16 after this commit. Otherwise continue only with the committed 4B survivors.
+
+- [ ] **Step 7: Capture Stage 4C into a new staging run**
+
 ```bash
+MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=stage-4c-capture \
+pnpm exec playwright test \
+  -c playwright.takram-orbital-production-system-chrome.config.ts \
+  tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts \
+  --workers=1 --grep "formal Stage 4C capture"
+```
+
+Capture vertical `1/2/4`, optical `1`, all progresses, shared machine evidence, both cap diagnostics, contact sheets, and a blank five-dimension review into staging. Assert no formal Stage 4C directory exists.
+
+- [ ] **Step 8: Complete the Stage 4C review and resolve once**
+
+Edit only the staging review named by `active-stage-4c.json`, then run:
+
+```bash
+MIRALITH_TAKRAM_ORBITAL_STAGING_RUN="$(node -p 'require("./output/takram-orbital-production-staging/active-stage-4c.json").runId')" \
+MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=stage-4c-resolve \
+pnpm exec playwright test \
+  -c playwright.takram-orbital-production-system-chrome.config.ts \
+  tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts \
+  --workers=1 --grep "formal Stage 4C resolve"
+```
+
+The resolver atomically publishes Stage 4C exactly once; lighting/BSM is observation-only. It cannot overwrite a formal directory.
+
+- [ ] **Step 9: Verify and commit Stage 4C**
+
+```bash
+pnpm exec playwright test -c playwright.unit.config.ts \
+  tests/unit/lubirthTakramOrbitalProductionEvidence.spec.ts \
+  --grep "stage chain|verifies published manifest"
+git diff --check
+git add docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-lookdev-v2
 git commit -m "docs(lubirth): publish orbital lookdev Stage 4C"
 ```
 
+A terminal marks Steps 10–12 and Task 15 `not-authorized-after-terminal` and jumps to Task 16 after this commit. Otherwise continue only with the committed 4C survivor.
+
+- [ ] **Step 10: Capture Stage 4D into a new staging run**
+
 ```bash
+MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=stage-4d-capture \
+pnpm exec playwright test \
+  -c playwright.takram-orbital-production-system-chrome.config.ts \
+  tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts \
+  --workers=1 --grep "formal Stage 4D capture"
+```
+
+Capture optical `0.75/1/1.5`, all progresses, shared evidence, both cap diagnostics, contact sheets, and the blank final six-dimension review into staging. Assert no formal Stage 4D directory exists.
+
+- [ ] **Step 11: Complete the Stage 4D review and resolve once**
+
+Edit only the staging review named by `active-stage-4d.json`, then run:
+
+```bash
+MIRALITH_TAKRAM_ORBITAL_STAGING_RUN="$(node -p 'require("./output/takram-orbital-production-staging/active-stage-4d.json").runId')" \
+MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=stage-4d-resolve \
+pnpm exec playwright test \
+  -c playwright.takram-orbital-production-system-chrome.config.ts \
+  tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts \
+  --workers=1 --grep "formal Stage 4D resolve"
+```
+
+Atomically publish Stage 4D exactly once. Publish either `ORBITAL_LOOKDEV_V2_OPTICAL_FAIL` or one exact `ORBITAL_STOCK_LOOKDEV_V2_WINNER`; never average parameters or add lighting/exposure compensation.
+
+- [ ] **Step 12: Verify and commit Stage 4D**
+
+```bash
+pnpm exec playwright test -c playwright.unit.config.ts \
+  tests/unit/lubirthTakramOrbitalProductionEvidence.spec.ts \
+  --grep "stage chain|verifies published manifest"
+git diff --check
+git add docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-lookdev-v2
 git commit -m "docs(lubirth): publish orbital lookdev Stage 4D"
 ```
 
-Do not combine multiple formal Stage 4 publications in one dirty worktree.
+An optical terminal marks Task 15 `not-authorized-after-terminal` and jumps to Task 16 after this commit. A committed stock winner authorizes Task 15. Every Stage 4 capture starts tracked-clean; no two formal Stage 4 packages share a dirty worktree, and no resolve reruns against an existing formal stage.
 
 ## Task 15: Replay final stock, classify cost, and resolve V3 compatibility
 
@@ -1454,25 +1611,52 @@ Do not combine multiple formal Stage 4 publications in one dirty worktree.
 - Create conditionally: `docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-lookdev-v2/v3-compatibility/v3/**`
 - Modify atomically: lookdev-v2 root `manifest.json`, `checkpoint.json`, and `OUTCOME.md`
 
-- [ ] **Step 1: Capture fresh final-stock evidence**
+- [ ] **Step 1: Capture fresh final-stock evidence into staging**
 
 ```bash
-MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=final-stock \
+MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=final-stock-capture \
 pnpm exec playwright test \
   -c playwright.takram-orbital-production-system-chrome.config.ts \
   tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts \
-  --workers=1 --grep "formal final stock"
+  --workers=1 --grep "formal final stock capture"
 ```
 
-Capture full, cloud raw/off, sample-count, primary-march, pre-temporal, resolved, bsm-off, light-shafts-off, aerial-final, all progresses, and progress-`0.06` repeat. Recompute setup/evidence and sampling decisions from these fresh buffers; do not reuse Stage 4D decisions.
+Capture full, cloud raw/off, sample-count, primary-march, pre-temporal, resolved, bsm-off, light-shafts-off, aerial-final, all progresses, and progress-`0.06` repeat into one staging run. Recompute setup/evidence, sampling decisions, `primaryCapSaturationFraction`, and `noHitPrimaryCapSaturationFraction` from fresh buffers; do not reuse Stage 4D decisions and do not create formal final-stock evidence yet.
 
-- [ ] **Step 2: Stop before GPU/V3 on final-stock replay failure**
-
-Run the pure final-stock resolver. If it emits `ORBITAL_LOOKDEV_V2_SETUP_BLOCKED` or `ORBITAL_LOOKDEV_V2_SAMPLING_HEALTH_FAIL` with `failedStage=final-stock`, publish that complete terminal without GPU or V3 evidence, commit, and stop.
-
-- [ ] **Step 3: Run the final winner GPU population only after replay passes**
+- [ ] **Step 2: Resolve the non-publishing final-stock replay gate**
 
 ```bash
+MIRALITH_TAKRAM_ORBITAL_STAGING_RUN="$(node -p 'require("./output/takram-orbital-production-staging/active-final-stock.json").runId')" \
+MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=final-stock-replay \
+pnpm exec playwright test \
+  -c playwright.takram-orbital-production-system-chrome.config.ts \
+  tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts \
+  --workers=1 --grep "formal final stock replay"
+```
+
+This command writes only the machine replay decision into staging. On setup/sampling failure, run:
+
+```bash
+MIRALITH_TAKRAM_ORBITAL_STAGING_RUN="$(node -p 'require("./output/takram-orbital-production-staging/active-final-stock.json").runId')" \
+MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=final-stock-resolve-terminal \
+pnpm exec playwright test \
+  -c playwright.takram-orbital-production-system-chrome.config.ts \
+  tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts \
+  --workers=1 --grep "formal final stock terminal resolve"
+pnpm exec playwright test -c playwright.unit.config.ts \
+  tests/unit/lubirthTakramOrbitalProductionEvidence.spec.ts \
+  --grep "final stock|verifies published manifest"
+git diff --check
+git add docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-lookdev-v2
+git commit -m "docs(lubirth): publish orbital final-stock terminal"
+```
+
+That atomically publishes the complete terminal, after which Steps 3–9 are marked `not-authorized-after-terminal` and execution jumps to Task 16. On pass, the replay authorizes GPU capture but still creates no formal directory.
+
+- [ ] **Step 3: Run final GPU populations in the passed staging run**
+
+```bash
+MIRALITH_TAKRAM_ORBITAL_STAGING_RUN="$(node -p 'require("./output/takram-orbital-production-staging/active-final-stock.json").runId')" \
 MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=final-stock-gpu \
 pnpm exec playwright test \
   -c playwright.takram-orbital-production-system-chrome.config.ts \
@@ -1480,27 +1664,62 @@ pnpm exec playwright test \
   --workers=1 --grep "formal final stock GPU"
 ```
 
-Reuse the Task 11 production artifact and exact environment. Run native/full authoritative `120+120` total-only populations at all four progresses and classify maximum p95 as production-eligible, query-only, over-budget, or performance-blocked.
+Reuse the Task 11 production artifact and exact environment, including macOS version and CSS/physical dimensions. Run native/full authoritative `120+120` total-only populations at all four progresses and derive the maximum-p95 classification in staging.
 
-- [ ] **Step 4: Capture the complete V3 stock/control matrix**
-
-Because final-stock replay passed, V3 is now mandatory even if GPU classification is over-budget or performance-blocked:
+- [ ] **Step 4: Resolve and publish final-stock exactly once**
 
 ```bash
-MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=v3-compatibility \
+MIRALITH_TAKRAM_ORBITAL_STAGING_RUN="$(node -p 'require("./output/takram-orbital-production-staging/active-final-stock.json").runId')" \
+MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=final-stock-resolve \
 pnpm exec playwright test \
   -c playwright.takram-orbital-production-system-chrome.config.ts \
   tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts \
-  --workers=1 --grep "formal V3 compatibility"
+  --workers=1 --grep "formal final stock resolve"
 ```
 
-For stock and V3, every progress gets fresh mounts, frames `1/2/4/8/16/32`, native-frame-32 full/cloud-raw/off/sample-count/primary-march/stage-readback/bsm-off/aerial-final, complete identities, adapter/texture hashes, and a second byte-identical fresh-mount repeat.
+Verify the complete staging package and atomically publish formal final-stock evidence. Before starting V3, run:
 
-- [ ] **Step 5: Derive V3 metrics, complete the bounded review, and resolve**
+```bash
+pnpm exec playwright test -c playwright.unit.config.ts \
+  tests/unit/lubirthTakramOrbitalProductionEvidence.spec.ts \
+  --grep "final stock|verifies published manifest"
+git diff --check
+git add docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-lookdev-v2
+git commit -m "docs(lubirth): publish orbital final-stock evidence"
+```
 
-Generate fixed stock/V3 contact sheets and convergence strips. Fill only the six per-progress scores, one sequence stability score, enumerated flags, notes, and reviewer identity. Then run the pure resolver to produce exactly one V3 terminal and generate machine-owned `metric-decision.json`, `checkpoint.json`, and `OUTCOME.md`.
+Because replay passed, V3 is mandatory even if GPU classification is over-budget or performance-blocked. V3 capture must start from this tracked-clean commit.
 
-- [ ] **Step 6: Verify every final artifact and completion-boundary combination**
+- [ ] **Step 5: Capture the complete V3 stock/control matrix into staging**
+
+```bash
+MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=v3-compatibility-capture \
+pnpm exec playwright test \
+  -c playwright.takram-orbital-production-system-chrome.config.ts \
+  tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts \
+  --workers=1 --grep "formal V3 compatibility capture"
+```
+
+For stock and V3, every progress gets fresh mounts, frames `1/2/4/8/16/32`, native-frame-32 full/cloud-raw/off/sample-count/primary-march/stage-readback/bsm-off/aerial-final, complete identities, adapter/texture hashes, both cap diagnostics, and a second byte-identical fresh-mount repeat. Write machine metrics, contact sheets, convergence strips, and a blank bounded review only to staging; assert no formal V3 compatibility directory exists.
+
+- [ ] **Step 6: Complete the bounded V3 review**
+
+Edit only the staging `visual-review.json` named by `active-v3-compatibility.json`. Fill the six per-progress scores, one sequence-stability score, enumerated flags/required notes, reviewer identity, clean capture commit, winner ID, viewport/DPR, progress, references, and contact-sheet hashes. Do not add PASS/FAIL or quantitative booleans.
+
+- [ ] **Step 7: Resolve and atomically publish V3 compatibility once**
+
+```bash
+MIRALITH_TAKRAM_ORBITAL_STAGING_RUN="$(node -p 'require("./output/takram-orbital-production-staging/active-v3-compatibility.json").runId')" \
+MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE=v3-compatibility-resolve \
+pnpm exec playwright test \
+  -c playwright.takram-orbital-production-system-chrome.config.ts \
+  tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts \
+  --workers=1 --grep "formal V3 compatibility resolve"
+```
+
+The resolver rehashes staging, validates the review, derives one V3 terminal, and publishes the complete formal V3 directory plus machine-owned root `checkpoint.json` and `OUTCOME.md` in one atomic transaction.
+
+- [ ] **Step 8: Verify every final artifact and completion-boundary combination**
 
 ```bash
 pnpm exec playwright test -c playwright.unit.config.ts \
@@ -1513,12 +1732,14 @@ git diff --check
 
 The root outcome must match one and only one Section 15 completion case. Production/query-only/over-budget/perf-blocked require a V3 terminal only after final-stock replay passed. Final-stock setup/sampling terminals require no V3 directory.
 
-- [ ] **Step 7: Commit terminal evidence**
+- [ ] **Step 9: Commit terminal evidence and continue to common closure**
 
 ```bash
 git add docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-lookdev-v2
 git commit -m "docs(lubirth): publish orbital production lookdev outcome"
 ```
+
+After this commit, jump to Task 16. Do not treat the terminal publication itself as plan closure.
 
 ## Task 16: Run final regression verification and close the plan
 
@@ -1526,7 +1747,17 @@ git commit -m "docs(lubirth): publish orbital production lookdev outcome"
 - Modify only if verification exposes a defect
 - Do not modify historical evidence roots
 
-- [ ] **Step 1: Run all orbital unit tests**
+- [ ] **Step 1: Resolve and verify the outcome-aware closure topology**
+
+```bash
+pnpm exec playwright test -c playwright.unit.config.ts \
+  tests/unit/lubirthTakramOrbitalProductionEvidence.spec.ts \
+  --grep "outcome-aware closure"
+```
+
+The test locates the earliest committed terminal checkpoint in the production-policy or lookdev-v2 root, proves it is one of the spec completion outcomes, verifies every required artifact hash/length, and asserts that all downstream formal directories are absent unless authorized by that checkpoint. It accepts Stage 0/1/2/4/final-stock/V3 terminals, requires a V3 terminal only after final-stock replay passed, and emits the normalized terminal outcome plus the list of `not-authorized-after-terminal` tasks. Failure here blocks plan closure.
+
+- [ ] **Step 2: Run all orbital unit tests**
 
 ```bash
 pnpm exec playwright test -c playwright.unit.config.ts tests/unit/lubirthTakram*.spec.ts
@@ -1534,7 +1765,7 @@ pnpm exec playwright test -c playwright.unit.config.ts tests/unit/lubirthTakram*
 
 Expected: zero failures.
 
-- [ ] **Step 2: Run relevant headed System Chrome suites**
+- [ ] **Step 3: Run relevant headed System Chrome suites**
 
 ```bash
 pnpm exec playwright test -c playwright.takram-parity-system-chrome.config.ts \
@@ -1548,7 +1779,7 @@ pnpm exec playwright test \
   --workers=1 --grep "route contract|remount|diagnostic teardown|GPU boundaries"
 ```
 
-- [ ] **Step 3: Run typecheck, production build, targeted lint, and evidence verification**
+- [ ] **Step 4: Run typecheck, production build, targeted lint, and evidence verification**
 
 ```bash
 pnpm --filter @miralith/lubirth-hero typecheck
@@ -1568,11 +1799,11 @@ pnpm exec eslint \
   tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts
 pnpm exec playwright test -c playwright.unit.config.ts \
   tests/unit/lubirthTakramOrbitalProductionEvidence.spec.ts \
-  --grep "verifies published manifest"
+  --grep "verifies published manifest|outcome-aware closure"
 git diff --check
 ```
 
-- [ ] **Step 4: Verify scope preservation**
+- [ ] **Step 5: Verify scope preservation**
 
 ```bash
 git diff --name-only cfa815c..HEAD
@@ -1581,11 +1812,11 @@ git status --short
 
 Confirm no production `EarthMoonScene`, on-disk Takram shader, patch artifact, homepage route, or historical evidence root changed. Confirm only the user's original untracked `.superpowers/` remains outside tracked files.
 
-- [ ] **Step 5: Record the final state**
+- [ ] **Step 6: Record the final state**
 
 Update the plan status only after all commands above pass and the outcome evidence exists. Record the terminal outcome, final commit, `OUTCOME.md` SHA-256, test counts, build/typecheck/lint results, and any explicitly out-of-scope follow-up. Do not start homepage promotion or shader decoupling in this plan.
 
-- [ ] **Step 6: Commit the closed execution record**
+- [ ] **Step 7: Commit the closed execution record**
 
 ```bash
 git add docs/superpowers/plans/2026-08-13-lubirth-takram-orbital-production-sampling-and-lookdev.md
