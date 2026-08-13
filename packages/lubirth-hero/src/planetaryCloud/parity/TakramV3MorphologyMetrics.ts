@@ -149,6 +149,28 @@ function pixelDifference(
   ) / 255;
 }
 
+export function buildTakramV3CloudMask(input: Readonly<{
+  width: number;
+  height: number;
+  cloudRaw: Uint8Array | Uint8ClampedArray;
+  cloudRawOff: Uint8Array | Uint8ClampedArray;
+  differenceThreshold?: number;
+}>): Uint8Array {
+  validateRgbaFrames(input.width, input.height, [
+    input.cloudRaw,
+    input.cloudRawOff
+  ]);
+  const pixelCount = input.width * input.height;
+  const threshold = input.differenceThreshold ?? DEFAULT_DIFFERENCE_THRESHOLD;
+  const mask = new Uint8Array(pixelCount);
+  for (let index = 0; index < pixelCount; index += 1) {
+    if (pixelDifference(input.cloudRaw, input.cloudRawOff, index) > threshold) {
+      mask[index] = 1;
+    }
+  }
+  return mask;
+}
+
 function quantile(sortedValues: readonly number[], percentile: number) {
   if (sortedValues.length === 0) return 0;
   const position = Math.max(0, Math.min(1, percentile)) * (sortedValues.length - 1);
@@ -519,7 +541,15 @@ function neighbors4(index: number, width: number, height: number) {
   return neighbors;
 }
 
-function resolveComponentSizes(mask: Uint8Array, width: number, height: number) {
+export function resolveTakramV3CloudMaskComponents(
+  mask: Uint8Array,
+  width: number,
+  height: number
+) {
+  if (!Number.isInteger(width) || width <= 0 ||
+    !Number.isInteger(height) || height <= 0 || mask.length !== width * height) {
+    throw new Error("Cloud mask dimensions must match its pixel buffer.");
+  }
   const visited = new Uint8Array(mask.length);
   const componentSizes: number[] = [];
   for (let start = 0; start < mask.length; start += 1) {
@@ -541,6 +571,8 @@ function resolveComponentSizes(mask: Uint8Array, width: number, height: number) 
   }
   return componentSizes;
 }
+
+const resolveComponentSizes = resolveTakramV3CloudMaskComponents;
 
 function dilateMask(mask: Uint8Array, width: number, height: number) {
   const dilated = mask.slice();

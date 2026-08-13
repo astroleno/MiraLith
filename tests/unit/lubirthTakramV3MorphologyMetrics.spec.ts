@@ -398,3 +398,23 @@ test("summarizes native stage radiance and opacity without screen-space masks", 
     peakLuma: 0.7152
   });
 });
+
+test("exports reusable four-neighbour cloud-mask primitives", async () => {
+  const metrics = await import(metricsModulePath);
+  const off = new Uint8Array(3 * 2 * 4);
+  const raw = off.slice();
+  raw[0] = 9;
+  raw[4] = 9;
+  raw[8 + 3] = 255;
+  expect(Array.from(metrics.buildTakramV3CloudMask({
+    width: 3,
+    height: 2,
+    cloudRaw: raw,
+    cloudRawOff: off
+  }))).toEqual([1, 1, 0, 0, 0, 0]);
+  expect(metrics.resolveTakramV3CloudMaskComponents(
+    new Uint8Array([1, 0, 0, 0, 1, 0]),
+    3,
+    2
+  )).toEqual([1, 1]);
+});
