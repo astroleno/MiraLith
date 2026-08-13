@@ -175,7 +175,10 @@ async function captureSamplingDiagnostic(input: {
         coverage: 0.55,
         opticalDepthScale: 1,
         preset: "h120",
-        stepScaleMode: input.mode,
+        samplingPolicy: {
+          kind: "causal",
+          mode: input.mode
+        },
         verticalScale: 1
       },
       readback: {

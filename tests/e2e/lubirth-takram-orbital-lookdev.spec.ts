@@ -505,7 +505,10 @@ test("sampling treatment remounts all six native allocations in the same documen
 
   expect(treatment.lookdevBaseKey).not.toBe(control.lookdevBaseKey);
   expect(treatment.lookdevMountKey).not.toBe(control.lookdevMountKey);
-  expect(treatment.orbitalLookdev.requested.stepScaleMode).toBe("treatment");
+  expect(treatment.orbitalLookdev.requested.samplingPolicy).toMatchObject({
+    kind: "causal",
+    mode: "treatment"
+  });
   expect(treatment.orbitalLookdev.readback.clouds.perspectiveStepScale)
     .toBe(1.0001);
   expect(treatment.orbitalLookdev.drift).toEqual([]);
@@ -565,14 +568,28 @@ test("Stage 0 baseline transition retains full runtime evidence and changes all 
 test("winner-only profiler collects a non-nested total population or explicit unsupported state", async ({
   page
 }) => {
-  await openReadyRoute(page, openingQuery());
+  const candidate: OrbitalCandidate = {
+    coverage: 0.3,
+    opticalDepthScale: 1,
+    preset: "native",
+    verticalScale: 1
+  };
+  await openReadyRoute(
+    page,
+    `${orbitalRoute(candidate, 0.06)}&orbitalProductionStep=confirmed`
+  );
   const rejected = await page.evaluate(() => {
     const telemetry = Reflect.get(window, "__MiraLithTakramParity");
     return Reflect.get(window, "__MiraLithStartTakramGpuProfile")({
       candidateId: "loser",
-      committedWinnerId: "winner",
+      committedWinnerId: "confirmed",
+      featureState: "native",
       lookdevMountKey: telemetry.lookdevMountKey,
-      runtimeEvidenceEpoch: telemetry.runtimeEvidenceEpoch
+      measurementMode: "total-only-time-elapsed",
+      output: "full",
+      runtimeEvidenceEpoch: telemetry.runtimeEvidenceEpoch,
+      targetSampleCount: 120,
+      warmupFrameCount: 120
     });
   });
   expect(rejected).toEqual({
@@ -583,10 +600,15 @@ test("winner-only profiler collects a non-nested total population or explicit un
   const accepted = await page.evaluate(() => {
     const telemetry = Reflect.get(window, "__MiraLithTakramParity");
     return Reflect.get(window, "__MiraLithStartTakramGpuProfile")({
-      candidateId: "winner",
-      committedWinnerId: "winner",
+      candidateId: "confirmed",
+      committedWinnerId: "confirmed",
+      featureState: "native",
       lookdevMountKey: telemetry.lookdevMountKey,
-      runtimeEvidenceEpoch: telemetry.runtimeEvidenceEpoch
+      measurementMode: "total-only-time-elapsed",
+      output: "full",
+      runtimeEvidenceEpoch: telemetry.runtimeEvidenceEpoch,
+      targetSampleCount: 120,
+      warmupFrameCount: 120
     });
   });
   expect(accepted).toEqual({ accepted: true, reason: null });
