@@ -269,7 +269,7 @@ test("hashes every artifact, verifies lengths, and detects capture tampering", a
   );
 });
 
-test("publishes a verified complete package by one non-overwriting rename", async () => {
+test("verifies published manifest and uses one non-overwriting rename", async () => {
   const { root, environment } = initializeRepository();
   const run = await createRun({ root, environment, runId: "publish-run" });
   const capture = resolveOrbitalStagingArtifactPath(run, "captures/frame.bin");

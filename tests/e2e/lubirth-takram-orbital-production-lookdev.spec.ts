@@ -1,9 +1,29 @@
 import { expect, test, type Page } from "@playwright/test";
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync
+} from "node:fs";
 import path from "node:path";
-import type { TakramOrbitalGpuProfileSnapshot } from
+import {
+  TAKRAM_ORBITAL_GPU_STAGE_NAMES,
+  type TakramOrbitalGpuProfileSnapshot
+} from
   "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalGpuProfiler";
+import {
+  resolveTakramOrbitalProductionStage0,
+  type TakramOrbitalGpuPolicyPopulation,
+  type TakramOrbitalPerformanceEnvironment,
+  type TakramOrbitalProductionStage0Input
+} from "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalProductionPolicy";
+import {
+  resolveTakramOrbitalSamplingOutcome,
+  resolveTakramOrbitalStepScale
+} from "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalSamplingCausality";
 import type {
   TakramOrbitalFeatureState,
   TakramOrbitalOutput,
@@ -11,8 +31,15 @@ import type {
   TakramParityTelemetry
 } from "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramParityContract";
 import {
+  collectOrbitalEvidenceEnvironment,
+  createOrbitalStagingRun,
+  hashOrbitalFile,
+  resolveAndPublishStageAtomically,
+  resolveOrbitalStagingArtifactPath,
+  runGpuPopulation,
   validateOrbitalEvidenceEnvironment,
   verifyFreshCompleteRemount,
+  writeOrbitalArtifactManifest,
   type OrbitalEvidenceEnvironment
 } from "../helpers/takramOrbitalProductionEvidence";
 
@@ -29,6 +56,27 @@ const lookdevRoot = path.resolve(
   "docs/lubirth-planetary-cloud-evidence/2026-08-13/" +
     "takram-orbital-lookdev-v2"
 );
+const causalEvidenceRoot = path.resolve(
+  process.cwd(),
+  "docs/lubirth-planetary-cloud-evidence/2026-08-13/" +
+    "takram-orbital-sampling-causality"
+);
+const formalCaptureCommand =
+  process.env.MIRALITH_TAKRAM_ORBITAL_PRODUCTION_CAPTURE ?? "";
+
+function stableJson(value: unknown) {
+  return `${JSON.stringify(value, null, 2)}\n`;
+}
+
+function writeRunJson(
+  run: NonNullable<Awaited<ReturnType<typeof createOrbitalStagingRun>>>,
+  relativePath: string,
+  value: unknown
+) {
+  const filePath = resolveOrbitalStagingArtifactPath(run, relativePath);
+  mkdirSync(path.dirname(filePath), { recursive: true });
+  writeFileSync(filePath, stableJson(value));
+}
 
 function route(input: Readonly<{
   candidate: typeof candidates[number];
@@ -45,6 +93,22 @@ function route(input: Readonly<{
     orbitalPreset: "h120",
     orbitalProductionStep: input.candidate,
     progress: String(input.progress ?? 0.06),
+    verticalScale: "1",
+    view: "opening",
+    visualTest: "pixels"
+  });
+  return `/lubirth-takram-parity-spike?${params.toString()}`;
+}
+
+function causalRoute(mode: "control" | "treatment") {
+  const params = new URLSearchParams({
+    diagnostic: "full",
+    input: "stock",
+    opticalDepthScale: "1",
+    orbitalCoverage: "0.55",
+    orbitalPreset: "h120",
+    orbitalStepScale: mode,
+    progress: "0.06",
     verticalScale: "1",
     view: "opening",
     visualTest: "pixels"
@@ -211,13 +275,288 @@ async function startGpuPopulation(input: Readonly<{
 }
 
 test.beforeEach(() => {
-  expect(existsSync(policyRoot)).toBe(false);
-  expect(existsSync(lookdevRoot)).toBe(false);
+  if (formalCaptureCommand === "") {
+    expect(existsSync(policyRoot)).toBe(false);
+    expect(existsSync(lookdevRoot)).toBe(false);
+  }
 });
 
 test.afterEach(() => {
+  if (formalCaptureCommand === "") {
+    expect(existsSync(policyRoot)).toBe(false);
+    expect(existsSync(lookdevRoot)).toBe(false);
+  }
+});
+
+test("formal Stage 0 publishes the capability gate", async ({ page }) => {
+  test.skip(formalCaptureCommand !== "stage-0");
   expect(existsSync(policyRoot)).toBe(false);
-  expect(existsSync(lookdevRoot)).toBe(false);
+
+  const mounted = await openReady(page, route({ candidate: "confirmed" }));
+  expect(mounted.orbitalLookdev?.requested.samplingPolicy).toMatchObject({
+    candidate: "confirmed",
+    kind: "production"
+  });
+  const environment = await collectOrbitalEvidenceEnvironment({ page });
+  expect(validateOrbitalEvidenceEnvironment(environment)).toEqual([]);
+  const run = await createOrbitalStagingRun({
+    captureCommand: formalCaptureCommand,
+    environment,
+    formalDirectory: policyRoot,
+    stage: "stage-0"
+  });
+  expect(run).not.toBeNull();
+  if (run === null) throw new Error("stage-0-staging-run-not-created");
+
+  const causalManifest = JSON.parse(readFileSync(
+    path.join(causalEvidenceRoot, "manifest.json"),
+    "utf8"
+  )) as {
+    artifacts: readonly Readonly<{
+      byteLength: number;
+      path: string;
+      sha256: string;
+    }>[];
+    cleanCommit: string;
+    modes: Readonly<Record<string, number>>;
+    records: readonly unknown[];
+    schema: string;
+  };
+  const causalReview = JSON.parse(readFileSync(
+    path.join(causalEvidenceRoot, "review.json"),
+    "utf8"
+  )) as {
+    cleanCommit: string;
+    frames: Parameters<typeof resolveTakramOrbitalSamplingOutcome>[0]["frames"];
+    outcome: string;
+    setupPass: boolean;
+  };
+  let verifiedArtifactCount = 0;
+  for (const artifact of causalManifest.artifacts) {
+    const artifactPath = path.resolve(causalEvidenceRoot, artifact.path);
+    const inRoot = path.relative(causalEvidenceRoot, artifactPath);
+    if (inRoot.startsWith("..") || path.isAbsolute(inRoot) ||
+      !existsSync(artifactPath)) continue;
+    if (statSync(artifactPath).size === artifact.byteLength &&
+      await hashOrbitalFile(artifactPath) === artifact.sha256) {
+      verifiedArtifactCount += 1;
+    }
+  }
+  let commitReadable = true;
+  try {
+    execFileSync("git", [
+      "cat-file",
+      "-e",
+      `${causalManifest.cleanCommit}^{commit}`
+    ], { cwd: process.cwd() });
+  } catch {
+    commitReadable = false;
+  }
+  const causalEvidence = {
+    artifactCount: causalManifest.artifacts.length,
+    commitReadable: commitReadable &&
+      causalReview.cleanCommit === causalManifest.cleanCommit,
+    contractReadable: causalManifest.schema ===
+      "takram-orbital-sampling-causality-manifest/v1" &&
+      causalManifest.records.length > 0,
+    exactStepValuesReproduced:
+      causalManifest.modes.control === resolveTakramOrbitalStepScale("control") &&
+      causalManifest.modes.treatment ===
+        resolveTakramOrbitalStepScale("treatment"),
+    outcomeReadable: causalReview.outcome ===
+      "ORBITAL_SAMPLING_CAUSALITY_CONFIRMED",
+    resolverReproduced: resolveTakramOrbitalSamplingOutcome({
+      frames: causalReview.frames,
+      setupPass: causalReview.setupPass
+    }) === causalReview.outcome,
+    verifiedArtifactCount
+  };
+
+  const readCausal = async (mode: "control" | "treatment") => {
+    const response = await page.goto(causalRoute(mode));
+    expect(response?.status()).toBe(200);
+    const root = page.locator("[data-takram-parity-route='true']");
+    await expect(root).toHaveAttribute("data-orbital-step-scale", mode);
+    await expect(root).toHaveAttribute("data-runtime", "ready", {
+      timeout: 180_000
+    });
+    return await page.evaluate(() => structuredClone(Reflect.get(
+      window,
+      "__MiraLithTakramParity"
+    )) as TakramParityTelemetry);
+  };
+  const control = await readCausal("control");
+  const treatment = await readCausal("treatment");
+  const normalizeFingerprint = (telemetry: TakramParityTelemetry) => {
+    const value = structuredClone(telemetry.rendererFingerprint) as any;
+    delete value.clouds?.uniforms?.perspectiveStepScale;
+    delete value.orbitalBaseline?.clouds?.perspectiveStepScale;
+    return value;
+  };
+  const routeParity = {
+    camera: JSON.stringify(control.cameraMatrixWorld) ===
+        JSON.stringify(treatment.cameraMatrixWorld) &&
+      JSON.stringify(control.earthMatrixWorld) ===
+        JSON.stringify(treatment.earthMatrixWorld),
+    fingerprint: JSON.stringify(normalizeFingerprint(control)) ===
+      JSON.stringify(normalizeFingerprint(treatment)),
+    query: control.orbitalLookdev?.requested.samplingPolicy.kind === "causal" &&
+      control.orbitalLookdev.requested.samplingPolicy.mode === "control" &&
+      treatment.orbitalLookdev?.requested.samplingPolicy.kind === "causal" &&
+      treatment.orbitalLookdev.requested.samplingPolicy.mode === "treatment",
+    runtime: control.orbitalLookdev?.drift.length === 0 &&
+      treatment.orbitalLookdev?.drift.length === 0 &&
+      control.orbitalLookdev?.readback.clouds.perspectiveStepScale === 1.01 &&
+      treatment.orbitalLookdev?.readback.clouds.perspectiveStepScale === 1.0001
+  };
+
+  const toPolicyEnvironment = (
+    value: OrbitalEvidenceEnvironment
+  ): TakramOrbitalPerformanceEnvironment => ({
+    acPower: value.power.source === "AC Power",
+    browser: "headed-system-chrome",
+    browserVersion: value.browser.chromeVersion.replace(
+      /^Google Chrome /,
+      "Chrome/"
+    ),
+    build: "production",
+    chip: value.hardware.chip,
+    commit: value.captureCommit,
+    focused: value.browser.focused,
+    gpuRenderer: value.gpu.renderer,
+    gpuVendor: value.gpu.vendor,
+    lowPowerMode: false,
+    macOSVersion: value.macOSVersion,
+    productionAssetFingerprint: `sha256:${value.build.fingerprintSha256}`,
+    viewport: {
+      cssHeight: value.display.innerHeight,
+      cssWidth: value.display.innerWidth,
+      dpr: value.display.devicePixelRatio,
+      physicalHeight: value.display.canvasHeight,
+      physicalWidth: value.display.canvasWidth
+    } as TakramOrbitalPerformanceEnvironment["viewport"],
+    visible: value.browser.visibilityState === "visible"
+  });
+  const productionRoute = route({ candidate: "confirmed" });
+  const totalProfile = await runGpuPopulation({
+    artifactPath: "stage-0/smoke-total.json",
+    candidateId: "confirmed",
+    committedWinnerId: "confirmed",
+    expectedFeatureState: "native",
+    expectedOutput: "full",
+    expectedProductionStep: "confirmed",
+    measurementMode: "total-only-time-elapsed",
+    page,
+    route: productionRoute,
+    run,
+    targetSampleCount: 8,
+    warmupFrameCount: 8
+  });
+  const stageProfile = await runGpuPopulation({
+    artifactPath: "stage-0/smoke-stage.json",
+    candidateId: "confirmed",
+    committedWinnerId: "confirmed",
+    expectedFeatureState: "native",
+    expectedOutput: "full",
+    expectedProductionStep: "confirmed",
+    measurementMode: "stage-only-sequential-time-elapsed",
+    page,
+    route: productionRoute,
+    run,
+    targetSampleCount: 8,
+    warmupFrameCount: 8
+  });
+  const toPolicyPopulation = (
+    profile: TakramOrbitalGpuProfileSnapshot,
+    populationId: string
+  ): TakramOrbitalGpuPolicyPopulation => ({
+    invalidReasons: profile.invalidReasons,
+    measurementMode: profile.measurementMode,
+    p95Milliseconds: profile.p95Milliseconds,
+    populationId,
+    stageNames: profile.measurementMode ===
+        "stage-only-sequential-time-elapsed"
+      ? TAKRAM_ORBITAL_GPU_STAGE_NAMES
+      : undefined,
+    state: profile.state,
+    targetSampleCount: profile.targetSampleCount,
+    timestampBits: profile.timestampBits,
+    validSampleCount: profile.validSampleCount,
+    warmupFrameCount: profile.warmupFrameCount
+  });
+  const policyEnvironment = toPolicyEnvironment(environment);
+  const resolverInputs: TakramOrbitalProductionStage0Input = {
+    causalEvidence,
+    environment: policyEnvironment,
+    populationEnvironments: [
+      "initial",
+      "ranking",
+      "final-winner",
+      "confirmation"
+    ].map((populationId) => ({
+      environment: policyEnvironment,
+      populationId
+    })),
+    routeParity,
+    smoke: {
+      stageOnly: toPolicyPopulation(stageProfile, "smoke-stage"),
+      totalOnly: toPolicyPopulation(totalProfile, "smoke-total")
+    }
+  };
+  const decision = resolveTakramOrbitalProductionStage0(resolverInputs);
+  const checkpoint = {
+    authorizedNextStage: decision.state === "ORBITAL_PRODUCTION_STAGE_1_READY"
+      ? 1
+      : null,
+    invalidReasons: decision.invalidReasons,
+    outcome: decision.state,
+    stage: 0
+  };
+  writeRunJson(run, "resolver-inputs.json", resolverInputs);
+  writeRunJson(run, "stage-0/causal-evidence.json", causalEvidence);
+  writeRunJson(run, "stage-0/checkpoint.json", checkpoint);
+  writeRunJson(run, "stage-0/environment.json", environment);
+  writeRunJson(run, "stage-0/route-parity.json", routeParity);
+  const captureManifest = await writeOrbitalArtifactManifest(run);
+  const captureManifestSha256 = await hashOrbitalFile(path.join(
+    run.root,
+    "artifact-manifest.json"
+  ));
+  const currentEnvironment = await collectOrbitalEvidenceEnvironment({ page });
+  await resolveAndPublishStageAtomically({
+    currentEnvironment,
+    expectedArtifactManifestSha256: captureManifestSha256,
+    expectedContactSheetHashes: {},
+    formalDirectory: policyRoot,
+    publicationFiles: {
+      "checkpoint.json": checkpoint,
+      "manifest.json": {
+        captureArtifactCount: captureManifest.artifacts.length,
+        captureManifestSha256,
+        evidenceCommit: environment.captureCommit,
+        productionArtifactCommit: environment.build.productionArtifactCommit,
+        runId: run.runId,
+        schemaVersion: 1,
+        stage: 0
+      },
+      ...(decision.state === "ORBITAL_PRODUCTION_SAMPLING_SETUP_BLOCKED"
+        ? {
+            "OUTCOME.md": "# Orbital production sampling\n\n" +
+              `State: ${decision.state}\n\n` +
+              decision.invalidReasons.map((reason) => `- ${reason}`).join("\n") +
+              "\n"
+          }
+        : {})
+    },
+    requireHumanReview: false,
+    resolverInputs,
+    run
+  });
+  expect(existsSync(path.join(policyRoot, "stage-0/checkpoint.json"))).toBe(true);
+  expect(JSON.parse(readFileSync(
+    path.join(policyRoot, "checkpoint.json"),
+    "utf8"
+  ))).toEqual(checkpoint);
 });
 
 test("route contract reaches exact native frame 32 for all production candidates", async ({
