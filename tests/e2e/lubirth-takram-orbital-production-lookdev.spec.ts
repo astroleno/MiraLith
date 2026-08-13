@@ -654,6 +654,14 @@ async function captureStage1Progress(input: Readonly<{
   progress: (typeof TAKRAM_ORBITAL_PRODUCTION_PROGRESSES)[number];
   run: OrbitalStagingRun;
 }>) {
+  // Bound renderer/WebGL lifetime per matrix cell. The ten diagnostic mounts
+  // still share one document so allocation generations prove each remount,
+  // while the next candidate/progress releases the large lossless readbacks.
+  await openReady(input.page, route({
+    candidate: input.candidate,
+    output: "full",
+    progress: input.progress
+  }));
   const captures = new Map<string, Stage1MountedCapture>();
   let previousAllocations: NonNullable<
     TakramParityTelemetry["orbitalLookdev"]
