@@ -133,3 +133,35 @@ test("rejects absent or duplicated primary-march anchors", async () => {
   expect(() => installTakramPrimaryMarchInstrumentation(duplicated))
     .toThrow("primary-march loop body anchor count was 2; expected 1");
 });
+
+test("instruments only the primary termination when shadow length shares the break", async () => {
+  const { installTakramPrimaryMarchInstrumentation } = await import(modulePath);
+  const originalShader = [
+    createShader(),
+    "void marchShadowLength() {",
+    "  for (int i = 0; i < maxShadowLengthIterationCount; ++i) {",
+    "    if (rayDistance > maxRayDistance) {",
+    "      break; // Termination",
+    "    }",
+    "  }",
+    "}"
+  ].join("\n");
+  const material = {
+    defines: {},
+    fragmentShader: originalShader,
+    needsUpdate: false
+  };
+
+  const installation = installTakramPrimaryMarchInstrumentation(material);
+  expect(material.fragmentShader.match(
+    /primaryMarchTerminatedBeforeCap = true;/g
+  )).toHaveLength(2);
+  expect(material.fragmentShader).toContain(
+    "  for (int i = 0; i < maxShadowLengthIterationCount; ++i) {\n" +
+    "    if (rayDistance > maxRayDistance) {\n" +
+    "      break; // Termination"
+  );
+  expect(installation.restore().restoredSourceFnv1a64)
+    .toBe(installation.audit.upstreamSourceFnv1a64);
+  expect(material.fragmentShader).toBe(originalShader);
+});

@@ -31,15 +31,21 @@ const FUNCTION_INJECTION = [
   "  vec3 radianceIntegral = vec3(0.0);"
 ].join("\n");
 const LOOP_ANCHOR = "  for (int i = 0; i < maxIterationCount; ++i) {";
-const LOOP_INJECTION = [
-  LOOP_ANCHOR,
-  "    primaryMarchLoopIterationCount += 1;"
-].join("\n");
 const TERMINATION_BREAK = "      break; // Termination";
 const EARLY_TERMINATION_BREAK = "      break; // Early termination";
-const TERMINATION_BREAK_INJECTION = [
+const PRIMARY_LOOP_TERMINATION_ANCHOR = [
+  LOOP_ANCHOR,
+  "    if (rayDistance > maxRayDistance) {",
+  TERMINATION_BREAK,
+  "    }"
+].join("\n");
+const PRIMARY_LOOP_TERMINATION_INJECTION = [
+  LOOP_ANCHOR,
+  "    primaryMarchLoopIterationCount += 1;",
+  "    if (rayDistance > maxRayDistance) {",
   "      primaryMarchTerminatedBeforeCap = true;",
-  TERMINATION_BREAK
+  TERMINATION_BREAK,
+  "    }"
 ].join("\n");
 const EARLY_TERMINATION_BREAK_INJECTION = [
   "      primaryMarchTerminatedBeforeCap = true;",
@@ -150,7 +156,7 @@ export function installTakramPrimaryMarchInstrumentation(
   requireOne("primary-march loop body", anchorCounts.loopBody);
   requireOne("primary-march termination break", countExact(
     originalShader,
-    TERMINATION_BREAK
+    PRIMARY_LOOP_TERMINATION_ANCHOR
   ));
   requireOne("primary-march early-termination break", countExact(
     originalShader,
@@ -166,8 +172,7 @@ export function installTakramPrimaryMarchInstrumentation(
 
   const replacements = [
     [FUNCTION_ANCHOR, FUNCTION_INJECTION],
-    [LOOP_ANCHOR, LOOP_INJECTION],
-    [TERMINATION_BREAK, TERMINATION_BREAK_INJECTION],
+    [PRIMARY_LOOP_TERMINATION_ANCHOR, PRIMARY_LOOP_TERMINATION_INJECTION],
     [EARLY_TERMINATION_BREAK, EARLY_TERMINATION_BREAK_INJECTION],
     [CAP_ANCHOR, CAP_INJECTION],
     [MAIN_STATE_ANCHOR, MAIN_STATE_INJECTION],

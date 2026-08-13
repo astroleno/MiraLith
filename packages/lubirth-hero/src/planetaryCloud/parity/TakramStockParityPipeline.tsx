@@ -260,6 +260,11 @@ declare global {
       upstreamSourceFnv1a64: string;
       restored: boolean;
     }>;
+    __MiraLithTakramGpuProfileStartAudit?: Readonly<{
+      requestRuntimeEvidenceEpoch: string;
+      mountedRuntimeEvidenceEpoch: string | null;
+      reason: string | null;
+    }>;
     __MiraLithStartTakramGpuProfile?: (input: Readonly<{
       candidateId: string;
       committedWinnerId: string;
@@ -623,17 +628,55 @@ export function TakramStockParityPipeline({
   const { gl, camera } = useThree();
   const earthTexture = useLoader(TextureLoader, EARTH_DAY_SRC);
   const adapter = resolveTakramParityAdapter(input);
+  const orbitalCoverage = orbitalLookdev?.coverage;
+  const orbitalOpticalDepthScale = orbitalLookdev?.opticalDepthScale;
+  const orbitalPreset = orbitalLookdev?.preset;
+  const orbitalSamplingPolicy = orbitalLookdev?.samplingPolicy;
+  const orbitalCausalMode = orbitalSamplingPolicy?.kind === "causal"
+    ? orbitalSamplingPolicy.mode
+    : undefined;
+  const orbitalProductionCandidate = orbitalSamplingPolicy?.kind === "production"
+    ? orbitalSamplingPolicy.candidate
+    : undefined;
+  const orbitalStepScaleMode = orbitalLookdev?.stepScaleMode;
+  const orbitalVerticalScale = orbitalLookdev?.verticalScale;
   const orbitalLookdevContract = useMemo(
-    () => orbitalLookdev === undefined
+    () => orbitalCoverage === undefined ||
+      orbitalOpticalDepthScale === undefined || orbitalPreset === undefined ||
+      orbitalVerticalScale === undefined
       ? null
-      : resolveTakramOrbitalLookdevContract(orbitalLookdev),
+      : resolveTakramOrbitalLookdevContract({
+          coverage: orbitalCoverage,
+          opticalDepthScale: orbitalOpticalDepthScale,
+          preset: orbitalPreset,
+          ...(orbitalProductionCandidate === undefined
+            ? orbitalCausalMode === undefined
+              ? {}
+              : {
+                  samplingPolicy: {
+                    kind: "causal" as const,
+                    mode: orbitalCausalMode
+                  }
+                }
+            : {
+                samplingPolicy: {
+                  kind: "production" as const,
+                  candidate: orbitalProductionCandidate
+                }
+              }),
+          ...(orbitalStepScaleMode === undefined
+            ? {}
+            : { stepScaleMode: orbitalStepScaleMode }),
+          verticalScale: orbitalVerticalScale
+        }),
     [
-      orbitalLookdev?.coverage,
-      orbitalLookdev?.opticalDepthScale,
-      orbitalLookdev?.preset,
-      orbitalLookdev?.samplingPolicy,
-      orbitalLookdev?.stepScaleMode,
-      orbitalLookdev?.verticalScale
+      orbitalCausalMode,
+      orbitalCoverage,
+      orbitalOpticalDepthScale,
+      orbitalPreset,
+      orbitalProductionCandidate,
+      orbitalStepScaleMode,
+      orbitalVerticalScale
     ]
   );
   const orbitalAdapterExpectation = useMemo(
@@ -881,6 +924,7 @@ export function TakramStockParityPipeline({
           pass.effects[0] === clouds &&
           pass.effects[1] === aerialPerspective
         ).length ?? 0;
+        const runtimeEvidenceEpoch = runtimeEvidenceEpochRef.current;
         const authorization = authorizeTakramOrbitalProductionProfilerStart({
           request,
           runtime: {
@@ -895,9 +939,14 @@ export function TakramStockParityPipeline({
                 "production"
               ? orbitalLookdevContract.samplingPolicy.candidate
               : null,
-            runtimeEvidenceEpoch: runtimeEvidenceEpochRef.current
+            runtimeEvidenceEpoch
           }
         });
+        window.__MiraLithTakramGpuProfileStartAudit = {
+          requestRuntimeEvidenceEpoch: request.runtimeEvidenceEpoch,
+          mountedRuntimeEvidenceEpoch: runtimeEvidenceEpoch,
+          reason: authorization.authorized ? null : authorization.reason
+        };
         if (!authorization.authorized) {
           return { accepted: false, reason: authorization.reason };
         }
@@ -914,6 +963,10 @@ export function TakramStockParityPipeline({
           gl.domElement.width,
           gl.domElement.height
         );
+        // Avoid allocating the copy-baseline texture reentrantly from inside
+        // EffectPass.render. The measured callback must issue only the copy;
+        // texture setup mutates renderer state and can detach the active pass.
+        gl.initTexture(copyBaselineTexture);
         let installation: ReturnType<
           typeof installTakramOrbitalGpuSubmissionInstrumentation
         >;
@@ -949,6 +1002,7 @@ export function TakramStockParityPipeline({
         delete window.__MiraLithStartTakramGpuProfile;
       }
       delete window.__MiraLithTakramGpuProfile;
+      delete window.__MiraLithTakramGpuProfileStartAudit;
       gpuSubmissionInstallationRef.current?.restore();
       gpuSubmissionInstallationRef.current = null;
       gpuProfilerRef.current?.dispose();
@@ -1435,7 +1489,14 @@ export function TakramStockParityPipeline({
       cloudScaleContract !== null || adapter.disableDefaultLayers ||
         weatherAdapterComparison === "explicit"
     );
-    const nativePipelineReady = runtimePrerequisitesReady && orbitalRuntimeReady;
+    // A base-key change renders the new keyed composer before the passive
+    // mount-state effect records that key. Do not publish an active capture
+    // epoch during that intermediate commit: the follow-up state render can
+    // replace EffectComposer's combined pass after a profiler has wrapped it.
+    const lookdevMountStateReady = lookdevBaseKey === null ||
+      lookdevMountState.lookdevBaseKey === lookdevBaseKey;
+    const nativePipelineReady = runtimePrerequisitesReady && orbitalRuntimeReady &&
+      lookdevMountStateReady;
     if (clouds !== null && !nativePipelineReady) {
       // Assets/materials/diagnostics can settle a few RAFs after the effect is
       // allocated. Keep those bootstrap submissions at frame 0 so the first
@@ -1747,7 +1808,12 @@ export function TakramStockParityPipeline({
       if (typeof window !== "undefined") {
         window.__MiraLithTakramParity = telemetry;
       }
-      onTelemetryRef.current?.(telemetry);
+      // The installed submission hook is itself part of the evidence.
+      // Rerendering EffectComposer replaces its combined EffectPass and would
+      // detach the exact method that the accepted population just audited.
+      if (gpuProfilerRef.current === null) {
+        onTelemetryRef.current?.(telemetry);
+      }
     }
   }, -1);
 
@@ -2315,6 +2381,11 @@ export function TakramStockParityPipeline({
                   key={layer.channel}
                   index={index}
                   {...layer}
+                  shadow={resolvedOrbitalFeatureState === "bsm-off"
+                    ? false
+                    : "shadow" in layer
+                      ? layer.shadow
+                      : undefined}
                 />
               ))}
             </Clouds>
