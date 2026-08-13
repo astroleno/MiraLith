@@ -237,9 +237,12 @@ test("derives progress metrics from raw buffers and direct primary cap state", a
       values: new Float32Array([
         0.2, 0.2, 0.2, 0.5,
         0.4, 0.4, 0.4, 0.5,
+        0, 0, 0, 0,
+        0.2, 0.2, 0.2, 0.5,
+        0.4, 0.4, 0.4, 0.5,
         0, 0, 0, 0
       ]),
-      width: 3
+      width: 6
     }
   });
   expect(result).toMatchObject({

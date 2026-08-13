@@ -338,9 +338,7 @@ function validateLosslessPair(
       }
     }
   }
-  if (preTemporal.width !== resolvedHistory.width ||
-    preTemporal.height !== resolvedHistory.height ||
-    preTemporal.channels !== resolvedHistory.channels ||
+  if (preTemporal.channels !== resolvedHistory.channels ||
     preTemporal.precision !== resolvedHistory.precision ||
     preTemporal.origin !== resolvedHistory.origin) {
     reasons.push("lossless-stage-mismatch");
