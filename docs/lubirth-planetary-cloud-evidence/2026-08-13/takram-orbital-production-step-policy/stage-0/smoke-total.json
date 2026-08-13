@@ -1,0 +1,71 @@
+{
+  "bsmCombinedP95Milliseconds": null,
+  "classification": "ORBITAL_LOOKDEV_OVER_BUDGET",
+  "copyOnlySamplesMilliseconds": [
+    10.685708,
+    10.742916,
+    11.395791,
+    11.253958,
+    11.036875,
+    11.05625,
+    11.200458,
+    11.579583
+  ],
+  "disjointEpochCount": 0,
+  "eligibleForPromotionAmendment": false,
+  "emptyStageBaselineSamplesMilliseconds": [],
+  "invalidReasons": [],
+  "measurementMode": "total-only-time-elapsed",
+  "noopSamplesMilliseconds": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "p95Milliseconds": 11.690749,
+  "rawSamplesMilliseconds": [
+    10.965416,
+    10.788791,
+    11.485333,
+    11.358499,
+    11.109874,
+    11.179,
+    11.318,
+    11.690749
+  ],
+  "rawStageSamples": [],
+  "stageP95Milliseconds": null,
+  "state": "complete",
+  "submissionAudit": {
+    "combinedPassName": "EffectPass",
+    "effectOrder": [
+      "CloudsEffect",
+      "AerialPerspectiveEffect"
+    ],
+    "hookSourceFnv1a64": "fnv1a-64:9052ea75989317e3",
+    "installedBuildFnv1a64": "fnv1a-64:5d45757bb3323c89",
+    "originalMethodFnv1a64": {
+      "bsm-current": "fnv1a-64:137134c28065ce71",
+      "bsm-resolve": "fnv1a-64:137134c28065ce71",
+      "cloud-current": "fnv1a-64:5264999c7905be1e",
+      "cloud-resolve": "fnv1a-64:5264999c7905be1e",
+      "combined-effect-pass": "fnv1a-64:f745d80e9204a641"
+    },
+    "wrappedMethodFnv1a64": {
+      "bsm-current": "fnv1a-64:0d6e88a5f8276774",
+      "bsm-resolve": "fnv1a-64:0d6e88a5f8276774",
+      "cloud-current": "fnv1a-64:0d6e88a5f8276774",
+      "cloud-resolve": "fnv1a-64:0d6e88a5f8276774",
+      "combined-effect-pass": "fnv1a-64:72686f8f1a88ad2b"
+    }
+  },
+  "targetSampleCount": 8,
+  "timestampBits": 64,
+  "validSampleCount": 8,
+  "warmupFrameCount": 8,
+  "warmupFramesCompleted": 8
+}

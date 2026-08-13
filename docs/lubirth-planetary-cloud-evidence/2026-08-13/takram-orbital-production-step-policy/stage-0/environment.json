@@ -1,0 +1,34 @@
+{
+  "browser": {
+    "chromeVersion": "Google Chrome 151.0.7922.137",
+    "focused": true,
+    "visibilityState": "visible"
+  },
+  "build": {
+    "buildId": "av_HzDwMGoWOCzu_hFIE4",
+    "buildIdSha256": "02a9350a2ed233f2e3338032eaad6410f3595423a074f162b401bca09e7b4ef9",
+    "fingerprintSha256": "2cb19ac3369e32cc7dba1152971ae5bb653d563bd4574b5f1536f323e9208066",
+    "mode": "production",
+    "productionArtifactCommit": "6c9135de46d2b5e8774f260a4fd21678d859ae46"
+  },
+  "captureCommit": "6c9135de46d2b5e8774f260a4fd21678d859ae46",
+  "display": {
+    "canvasHeight": 960,
+    "canvasWidth": 1440,
+    "devicePixelRatio": 1,
+    "innerHeight": 960,
+    "innerWidth": 1440
+  },
+  "gpu": {
+    "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+    "vendor": "Google Inc. (Apple)"
+  },
+  "hardware": {
+    "chip": "Apple M4"
+  },
+  "macOSVersion": "15.6.1",
+  "power": {
+    "lowPowerMode": 0,
+    "source": "AC Power"
+  }
+}

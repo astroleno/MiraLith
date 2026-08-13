@@ -1,0 +1,157 @@
+{
+  "bsmCombinedP95Milliseconds": 18.816207,
+  "classification": "ORBITAL_LOOKDEV_OVER_BUDGET",
+  "copyOnlySamplesMilliseconds": [],
+  "disjointEpochCount": 0,
+  "eligibleForPromotionAmendment": false,
+  "emptyStageBaselineSamplesMilliseconds": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "invalidReasons": [],
+  "measurementMode": "stage-only-sequential-time-elapsed",
+  "noopSamplesMilliseconds": [],
+  "p95Milliseconds": 55.581955,
+  "rawSamplesMilliseconds": [
+    45.108039,
+    46.700748,
+    44.612623,
+    45.715746,
+    45.56008,
+    53.376371,
+    53.902496,
+    55.581955
+  ],
+  "rawStageSamples": [
+    {
+      "frameId": 9,
+      "stages": {
+        "bsm-current": 6.7585,
+        "bsm-resolve": 8.256,
+        "cloud-current": 9.379624,
+        "cloud-resolve": 9.922249,
+        "final-effect": 10.791666
+      },
+      "totalMilliseconds": 45.108039
+    },
+    {
+      "frameId": 10,
+      "stages": {
+        "bsm-current": 6.908625,
+        "bsm-resolve": 8.498875,
+        "cloud-current": 9.810958,
+        "cloud-resolve": 10.313916,
+        "final-effect": 11.168374
+      },
+      "totalMilliseconds": 46.700748
+    },
+    {
+      "frameId": 11,
+      "stages": {
+        "bsm-current": 6.862291,
+        "bsm-resolve": 7.818375,
+        "cloud-current": 9.241499,
+        "cloud-resolve": 9.835333,
+        "final-effect": 10.855125
+      },
+      "totalMilliseconds": 44.612623
+    },
+    {
+      "frameId": 12,
+      "stages": {
+        "bsm-current": 6.935624,
+        "bsm-resolve": 8.166374,
+        "cloud-current": 9.446749,
+        "cloud-resolve": 10.077958,
+        "final-effect": 11.089041
+      },
+      "totalMilliseconds": 45.715746
+    },
+    {
+      "frameId": 13,
+      "stages": {
+        "bsm-current": 7.049666,
+        "bsm-resolve": 8.077374,
+        "cloud-current": 9.395958,
+        "cloud-resolve": 10.028208,
+        "final-effect": 11.008874
+      },
+      "totalMilliseconds": 45.56008
+    },
+    {
+      "frameId": 14,
+      "stages": {
+        "bsm-current": 9.222999,
+        "bsm-resolve": 9.593208,
+        "cloud-current": 10.781416,
+        "cloud-resolve": 11.414124,
+        "final-effect": 12.364624
+      },
+      "totalMilliseconds": 53.376371
+    },
+    {
+      "frameId": 15,
+      "stages": {
+        "bsm-current": 8.536624,
+        "bsm-resolve": 9.73975,
+        "cloud-current": 11.110874,
+        "cloud-resolve": 11.754749,
+        "final-effect": 12.760499
+      },
+      "totalMilliseconds": 53.902496
+    },
+    {
+      "frameId": 16,
+      "stages": {
+        "bsm-current": 8.564333,
+        "bsm-resolve": 9.755124,
+        "cloud-current": 11.517416,
+        "cloud-resolve": 12.344291,
+        "final-effect": 13.400791
+      },
+      "totalMilliseconds": 55.581955
+    }
+  ],
+  "stageP95Milliseconds": {
+    "bsm-current": 9.222999,
+    "bsm-resolve": 9.755124,
+    "cloud-current": 11.517416,
+    "cloud-resolve": 12.344291,
+    "final-effect": 13.400791
+  },
+  "state": "complete",
+  "submissionAudit": {
+    "combinedPassName": "EffectPass",
+    "effectOrder": [
+      "CloudsEffect",
+      "AerialPerspectiveEffect"
+    ],
+    "hookSourceFnv1a64": "fnv1a-64:9052ea75989317e3",
+    "installedBuildFnv1a64": "fnv1a-64:5d45757bb3323c89",
+    "originalMethodFnv1a64": {
+      "bsm-current": "fnv1a-64:137134c28065ce71",
+      "bsm-resolve": "fnv1a-64:137134c28065ce71",
+      "cloud-current": "fnv1a-64:5264999c7905be1e",
+      "cloud-resolve": "fnv1a-64:5264999c7905be1e",
+      "combined-effect-pass": "fnv1a-64:f745d80e9204a641"
+    },
+    "wrappedMethodFnv1a64": {
+      "bsm-current": "fnv1a-64:0d6e88a5f8276774",
+      "bsm-resolve": "fnv1a-64:0d6e88a5f8276774",
+      "cloud-current": "fnv1a-64:0d6e88a5f8276774",
+      "cloud-resolve": "fnv1a-64:0d6e88a5f8276774",
+      "combined-effect-pass": "fnv1a-64:72686f8f1a88ad2b"
+    }
+  },
+  "targetSampleCount": 8,
+  "timestampBits": 64,
+  "validSampleCount": 8,
+  "warmupFrameCount": 8,
+  "warmupFramesCompleted": 8
+}

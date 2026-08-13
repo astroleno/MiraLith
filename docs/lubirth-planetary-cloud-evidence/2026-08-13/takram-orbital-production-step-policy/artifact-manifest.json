@@ -1,0 +1,58 @@
+{
+  "artifacts": [
+    {
+      "byteLength": 118,
+      "path": "checkpoint.json",
+      "sha256": "b0a984a436f0ff81469a95a2e311193b64e45687a41400afd6f8e41af2771f23"
+    },
+    {
+      "byteLength": 366,
+      "path": "manifest.json",
+      "sha256": "be3543e68965a86fa806d879158bc992c39f453e84db08b55f6e4537bd15d8ba"
+    },
+    {
+      "byteLength": 5357,
+      "path": "resolver-inputs.json",
+      "sha256": "ae4f4ad3aa27b772afb16550c8534041b0baafaa263d07ccde4753336bad7c5c"
+    },
+    {
+      "byteLength": 2006,
+      "path": "run.json",
+      "sha256": "aaa757d7d746948f552cca6f21ef18b8a10bc814a9d518400fbc41ac25ed1b64"
+    },
+    {
+      "byteLength": 205,
+      "path": "stage-0/causal-evidence.json",
+      "sha256": "c0e9ae4079ee652a099b9a2244af34d0d875bcf5f9cf45a28fa6de5a02a6c12f"
+    },
+    {
+      "byteLength": 118,
+      "path": "stage-0/checkpoint.json",
+      "sha256": "b0a984a436f0ff81469a95a2e311193b64e45687a41400afd6f8e41af2771f23"
+    },
+    {
+      "byteLength": 954,
+      "path": "stage-0/environment.json",
+      "sha256": "a4b2507e27b3b2d975558e0dc7e33f385cb6e5fd755364b38bafeb395c4fe39a"
+    },
+    {
+      "byteLength": 80,
+      "path": "stage-0/route-parity.json",
+      "sha256": "860e101d84ddb013cf74a6fdc5dfac91201922d5a734e3aa541c64842937e9f7"
+    },
+    {
+      "byteLength": 3976,
+      "path": "stage-0/smoke-stage.json",
+      "sha256": "9e33aa68ba9c2ac37c6661769a516a1330e61501b293cfd5639aebda36d1a44e"
+    },
+    {
+      "byteLength": 1776,
+      "path": "stage-0/smoke-total.json",
+      "sha256": "398f66500bba949d72f431b9a8ddcfbec39ffb0d2e2a10fb8604efd376928371"
+    }
+  ],
+  "purpose": "publication",
+  "runId": "1786637563063-5b222177-adfb-4ea5-81b9-5c65c0e38b6c",
+  "schemaVersion": 1,
+  "stage": "stage-0"
+}

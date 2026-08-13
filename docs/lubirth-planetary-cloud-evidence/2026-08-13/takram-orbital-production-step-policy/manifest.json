@@ -1,0 +1,9 @@
+{
+  "captureArtifactCount": 8,
+  "captureManifestSha256": "216f322e62db6b7ab54b0f04abdd0c6f0329ccb89a628a25869f73f20b7ff13e",
+  "evidenceCommit": "6c9135de46d2b5e8774f260a4fd21678d859ae46",
+  "productionArtifactCommit": "6c9135de46d2b5e8774f260a4fd21678d859ae46",
+  "runId": "1786637563063-5b222177-adfb-4ea5-81b9-5c65c0e38b6c",
+  "schemaVersion": 1,
+  "stage": 0
+}

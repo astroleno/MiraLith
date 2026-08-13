@@ -1,0 +1,172 @@
+{
+  "causalEvidence": {
+    "artifactCount": 93,
+    "commitReadable": true,
+    "contractReadable": true,
+    "exactStepValuesReproduced": true,
+    "outcomeReadable": true,
+    "resolverReproduced": true,
+    "verifiedArtifactCount": 93
+  },
+  "environment": {
+    "acPower": true,
+    "browser": "headed-system-chrome",
+    "browserVersion": "Chrome/151.0.7922.137",
+    "build": "production",
+    "chip": "Apple M4",
+    "commit": "6c9135de46d2b5e8774f260a4fd21678d859ae46",
+    "focused": true,
+    "gpuRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+    "gpuVendor": "Google Inc. (Apple)",
+    "lowPowerMode": false,
+    "macOSVersion": "15.6.1",
+    "productionAssetFingerprint": "sha256:2cb19ac3369e32cc7dba1152971ae5bb653d563bd4574b5f1536f323e9208066",
+    "viewport": {
+      "cssHeight": 960,
+      "cssWidth": 1440,
+      "dpr": 1,
+      "physicalHeight": 960,
+      "physicalWidth": 1440
+    },
+    "visible": true
+  },
+  "populationEnvironments": [
+    {
+      "environment": {
+        "acPower": true,
+        "browser": "headed-system-chrome",
+        "browserVersion": "Chrome/151.0.7922.137",
+        "build": "production",
+        "chip": "Apple M4",
+        "commit": "6c9135de46d2b5e8774f260a4fd21678d859ae46",
+        "focused": true,
+        "gpuRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+        "gpuVendor": "Google Inc. (Apple)",
+        "lowPowerMode": false,
+        "macOSVersion": "15.6.1",
+        "productionAssetFingerprint": "sha256:2cb19ac3369e32cc7dba1152971ae5bb653d563bd4574b5f1536f323e9208066",
+        "viewport": {
+          "cssHeight": 960,
+          "cssWidth": 1440,
+          "dpr": 1,
+          "physicalHeight": 960,
+          "physicalWidth": 1440
+        },
+        "visible": true
+      },
+      "populationId": "initial"
+    },
+    {
+      "environment": {
+        "acPower": true,
+        "browser": "headed-system-chrome",
+        "browserVersion": "Chrome/151.0.7922.137",
+        "build": "production",
+        "chip": "Apple M4",
+        "commit": "6c9135de46d2b5e8774f260a4fd21678d859ae46",
+        "focused": true,
+        "gpuRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+        "gpuVendor": "Google Inc. (Apple)",
+        "lowPowerMode": false,
+        "macOSVersion": "15.6.1",
+        "productionAssetFingerprint": "sha256:2cb19ac3369e32cc7dba1152971ae5bb653d563bd4574b5f1536f323e9208066",
+        "viewport": {
+          "cssHeight": 960,
+          "cssWidth": 1440,
+          "dpr": 1,
+          "physicalHeight": 960,
+          "physicalWidth": 1440
+        },
+        "visible": true
+      },
+      "populationId": "ranking"
+    },
+    {
+      "environment": {
+        "acPower": true,
+        "browser": "headed-system-chrome",
+        "browserVersion": "Chrome/151.0.7922.137",
+        "build": "production",
+        "chip": "Apple M4",
+        "commit": "6c9135de46d2b5e8774f260a4fd21678d859ae46",
+        "focused": true,
+        "gpuRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+        "gpuVendor": "Google Inc. (Apple)",
+        "lowPowerMode": false,
+        "macOSVersion": "15.6.1",
+        "productionAssetFingerprint": "sha256:2cb19ac3369e32cc7dba1152971ae5bb653d563bd4574b5f1536f323e9208066",
+        "viewport": {
+          "cssHeight": 960,
+          "cssWidth": 1440,
+          "dpr": 1,
+          "physicalHeight": 960,
+          "physicalWidth": 1440
+        },
+        "visible": true
+      },
+      "populationId": "final-winner"
+    },
+    {
+      "environment": {
+        "acPower": true,
+        "browser": "headed-system-chrome",
+        "browserVersion": "Chrome/151.0.7922.137",
+        "build": "production",
+        "chip": "Apple M4",
+        "commit": "6c9135de46d2b5e8774f260a4fd21678d859ae46",
+        "focused": true,
+        "gpuRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+        "gpuVendor": "Google Inc. (Apple)",
+        "lowPowerMode": false,
+        "macOSVersion": "15.6.1",
+        "productionAssetFingerprint": "sha256:2cb19ac3369e32cc7dba1152971ae5bb653d563bd4574b5f1536f323e9208066",
+        "viewport": {
+          "cssHeight": 960,
+          "cssWidth": 1440,
+          "dpr": 1,
+          "physicalHeight": 960,
+          "physicalWidth": 1440
+        },
+        "visible": true
+      },
+      "populationId": "confirmation"
+    }
+  ],
+  "routeParity": {
+    "camera": true,
+    "fingerprint": true,
+    "query": true,
+    "runtime": true
+  },
+  "smoke": {
+    "stageOnly": {
+      "invalidReasons": [],
+      "measurementMode": "stage-only-sequential-time-elapsed",
+      "p95Milliseconds": 55.581955,
+      "populationId": "smoke-stage",
+      "stageNames": [
+        "bsm-current",
+        "bsm-resolve",
+        "cloud-current",
+        "cloud-resolve",
+        "final-effect"
+      ],
+      "state": "complete",
+      "targetSampleCount": 8,
+      "timestampBits": 64,
+      "validSampleCount": 8,
+      "warmupFrameCount": 8
+    },
+    "totalOnly": {
+      "invalidReasons": [],
+      "measurementMode": "total-only-time-elapsed",
+      "p95Milliseconds": 11.690749,
+      "populationId": "smoke-total",
+      "state": "complete",
+      "targetSampleCount": 8,
+      "timestampBits": 64,
+      "validSampleCount": 8,
+      "warmupFrameCount": 8
+    }
+  }
+}
