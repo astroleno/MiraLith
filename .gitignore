@@ -11,6 +11,7 @@ playwright-report/
 test-results/
 .playwright-cli/
 output/playwright/
+/output/takram-orbital-production-staging/
 
 .env
 .env.*

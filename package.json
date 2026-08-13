@@ -36,6 +36,7 @@
     "lint": "pnpm --filter @miralith/site lint",
     "typecheck": "pnpm -r typecheck",
     "test:e2e": "playwright test",
+    "capture:takram-orbital-production": "playwright test -c playwright.takram-orbital-production-system-chrome.config.ts tests/e2e/lubirth-takram-orbital-production-lookdev.spec.ts --workers=1",
     "test:lubirth-hybrid-phase1:system-chrome": "playwright test -c playwright.phase1-system-chrome.config.ts",
     "verify": "pnpm lint && pnpm typecheck && pnpm build"
   },
