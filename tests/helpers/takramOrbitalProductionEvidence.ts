@@ -416,8 +416,11 @@ export function validateOrbitalEvidenceEnvironment(
   if (!SHA256_PATTERN.test(environment.build.fingerprintSha256)) {
     reasons.push("production-fingerprint-invalid");
   }
-  if (environment.captureCommit !== environment.build.productionArtifactCommit) {
-    reasons.push("capture-build-commit-mismatch");
+  if (!/^[0-9a-f]{40}$/.test(environment.captureCommit)) {
+    reasons.push("capture-commit-invalid");
+  }
+  if (!/^[0-9a-f]{40}$/.test(environment.build.productionArtifactCommit)) {
+    reasons.push("production-artifact-commit-invalid");
   }
   return reasons;
 }
@@ -483,6 +486,7 @@ function collectPowerState() {
 export async function collectOrbitalEvidenceEnvironment(input: Readonly<{
   chromeExecutable?: string;
   page: Page;
+  productionArtifactCommit?: string;
   repositoryRoot?: string;
 }>): Promise<OrbitalEvidenceEnvironment> {
   const repositoryRoot = path.resolve(input.repositoryRoot ?? process.cwd());
@@ -533,7 +537,7 @@ export async function collectOrbitalEvidenceEnvironment(input: Readonly<{
     build: Object.freeze({
       ...build,
       mode: "production" as const,
-      productionArtifactCommit: captureCommit
+      productionArtifactCommit: input.productionArtifactCommit ?? captureCommit
     }),
     captureCommit,
     display: Object.freeze({
@@ -627,11 +631,12 @@ export async function createOrbitalStagingRun(
   if (environmentReasons.length > 0) {
     throw new Error(`capture-environment-invalid:${environmentReasons.join(",")}`);
   }
-  if (environment.captureCommit !== captureCommit ||
-    environment.build.productionArtifactCommit !== captureCommit) {
+  if (environment.captureCommit !== captureCommit) {
     throw new Error("capture-commit-mismatch");
   }
-  if (environment.build.buildId !== build.buildId) {
+  if (environment.build.buildId !== build.buildId ||
+    environment.build.buildIdSha256 !== build.buildIdSha256 ||
+    environment.build.fingerprintSha256 !== build.fingerprintSha256) {
     throw new Error("capture-build-id-mismatch");
   }
   const runId = input.runId ?? `${Date.now()}-${randomUUID()}`;

@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -67,9 +68,22 @@ function initializeRepository() {
     cwd: root,
     encoding: "utf8"
   }).trim();
+  const buildIdBytes = Buffer.from("production-build-id\n");
+  const buildIdSha256 = createHash("sha256").update(buildIdBytes).digest("hex");
+  const fingerprint = createHash("sha256");
+  fingerprint.update("BUILD_ID");
+  fingerprint.update("\0");
+  fingerprint.update(String(buildIdBytes.byteLength));
+  fingerprint.update("\0");
+  fingerprint.update(buildIdBytes);
   return { root, environment: {
     ...VALID_ENVIRONMENT,
-    build: { ...VALID_ENVIRONMENT.build, productionArtifactCommit: commit },
+    build: {
+      ...VALID_ENVIRONMENT.build,
+      buildIdSha256,
+      fingerprintSha256: fingerprint.digest("hex"),
+      productionArtifactCommit: commit
+    },
     captureCommit: commit
   } };
 }
@@ -219,6 +233,28 @@ test("creates one immutable run root and a pointer containing only its run ID", 
     .toBe(path.join(run.root, "captures/frame.png"));
   expect(() => resolveOrbitalStagingArtifactPath(run, "../formal/frame.png"))
     .toThrow("artifact-path-escapes-staging-root");
+});
+
+test("keeps the clean evidence commit separate from the reused production artifact", async () => {
+  const { root, environment } = initializeRepository();
+  writeFileSync(path.join(root, "tracked.txt"), "evidence commit\n");
+  execFileSync("git", ["add", "tracked.txt"], { cwd: root });
+  execFileSync("git", ["commit", "-qm", "publish evidence"], { cwd: root });
+  const evidenceCommit = execFileSync("git", ["rev-parse", "HEAD"], {
+    cwd: root,
+    encoding: "utf8"
+  }).trim();
+  const run = await createRun({
+    root,
+    environment: {
+      ...environment,
+      captureCommit: evidenceCommit
+    },
+    runId: "separate-build-commit"
+  });
+  expect(run.captureCommit).toBe(evidenceCommit);
+  expect(run.environment.build.productionArtifactCommit)
+    .toBe(environment.build.productionArtifactCommit);
 });
 
 test("writes a blank bounded review and requires human identity without verdict keys", async () => {
