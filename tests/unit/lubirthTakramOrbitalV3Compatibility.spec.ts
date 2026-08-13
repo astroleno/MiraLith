@@ -1,16 +1,35 @@
 import { expect, test } from "@playwright/test";
 
-import {
-  deriveTakramOrbitalV3ProgressDecision,
-  evaluateTakramOrbitalV3VisualReview,
-  resolveTakramOrbitalV3Compatibility,
-  validateTakramOrbitalV3Setup,
-  type TakramOrbitalV3ProgressMetrics,
-  type TakramOrbitalV3SetupInput,
-  type TakramOrbitalV3VisualReview
+import type {
+  TakramOrbitalV3ProgressMetrics,
+  TakramOrbitalV3SetupInput,
+  TakramOrbitalV3VisualReview
 } from "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalV3Compatibility";
 import type { TakramOrbitalV2FinalStockReplayDecision } from
   "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalLookdevEvidence";
+
+const compatibilityModulePath =
+  "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalV3Compatibility";
+type CompatibilityModule = typeof import(
+  "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalV3Compatibility"
+);
+let deriveTakramOrbitalV3ProgressDecision:
+  CompatibilityModule["deriveTakramOrbitalV3ProgressDecision"];
+let evaluateTakramOrbitalV3VisualReview:
+  CompatibilityModule["evaluateTakramOrbitalV3VisualReview"];
+let resolveTakramOrbitalV3Compatibility:
+  CompatibilityModule["resolveTakramOrbitalV3Compatibility"];
+let validateTakramOrbitalV3Setup:
+  CompatibilityModule["validateTakramOrbitalV3Setup"];
+
+test.beforeAll(async () => {
+  ({
+    deriveTakramOrbitalV3ProgressDecision,
+    evaluateTakramOrbitalV3VisualReview,
+    resolveTakramOrbitalV3Compatibility,
+    validateTakramOrbitalV3Setup
+  } = await import(compatibilityModulePath));
+});
 
 const PROGRESSES = [0, 0.06, 0.12, 0.18] as const;
 const TEMPORAL_FRAMES = [1, 2, 4, 8, 16, 32] as const;

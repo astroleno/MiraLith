@@ -1,26 +1,58 @@
 import { expect, test } from "@playwright/test";
 
-import {
-  createTakramOrbitalHealthyBaselineContract,
-  resolveTakramOrbitalPrimarySignalParity,
-  resolveTakramOrbitalProductionPolicy,
-  resolveTakramOrbitalProductionStage0,
-  resolveTakramOrbitalProductionStage1,
-  validateTakramOrbitalPerformanceEnvironment,
-  type TakramOrbitalGpuPolicyPopulation,
-  type TakramOrbitalPerformanceEnvironment,
-  type TakramOrbitalPrimarySignalParityInput,
-  type TakramOrbitalProductionPolicyInput,
-  type TakramOrbitalProductionStage0Input,
-  type TakramOrbitalProductionStage1Input,
-  type TakramOrbitalStage2CandidateInput
+import type {
+  TakramOrbitalGpuPolicyPopulation,
+  TakramOrbitalPerformanceEnvironment,
+  TakramOrbitalPrimarySignalParityInput,
+  TakramOrbitalProductionPolicyInput,
+  TakramOrbitalProductionStage0Input,
+  TakramOrbitalProductionStage1Input,
+  TakramOrbitalStage2CandidateInput
 } from "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalProductionPolicy";
 import type { TakramOrbitalSamplingProgressMetrics } from
   "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalSamplingMetrics";
-import {
-  TAKRAM_ORBITAL_PRODUCTION_STEP_CANDIDATES,
-  type TakramOrbitalProductionStepCandidate
+import type {
+  TakramOrbitalProductionStepCandidate
 } from "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalProductionSampling";
+
+const policyModulePath =
+  "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalProductionPolicy";
+const samplingModulePath =
+  "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalProductionSampling";
+type PolicyModule = typeof import(
+  "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalProductionPolicy"
+);
+type SamplingModule = typeof import(
+  "../../packages/lubirth-hero/src/planetaryCloud/parity/TakramOrbitalProductionSampling"
+);
+let createTakramOrbitalHealthyBaselineContract:
+  PolicyModule["createTakramOrbitalHealthyBaselineContract"];
+let resolveTakramOrbitalPrimarySignalParity:
+  PolicyModule["resolveTakramOrbitalPrimarySignalParity"];
+let resolveTakramOrbitalProductionPolicy:
+  PolicyModule["resolveTakramOrbitalProductionPolicy"];
+let resolveTakramOrbitalProductionStage0:
+  PolicyModule["resolveTakramOrbitalProductionStage0"];
+let resolveTakramOrbitalProductionStage1:
+  PolicyModule["resolveTakramOrbitalProductionStage1"];
+let validateTakramOrbitalPerformanceEnvironment:
+  PolicyModule["validateTakramOrbitalPerformanceEnvironment"];
+let TAKRAM_ORBITAL_PRODUCTION_STEP_CANDIDATES:
+  SamplingModule["TAKRAM_ORBITAL_PRODUCTION_STEP_CANDIDATES"];
+
+test.beforeAll(async () => {
+  const policy = await import(policyModulePath);
+  const sampling = await import(samplingModulePath);
+  ({
+    createTakramOrbitalHealthyBaselineContract,
+    resolveTakramOrbitalPrimarySignalParity,
+    resolveTakramOrbitalProductionPolicy,
+    resolveTakramOrbitalProductionStage0,
+    resolveTakramOrbitalProductionStage1,
+    validateTakramOrbitalPerformanceEnvironment
+  } = policy);
+  ({ TAKRAM_ORBITAL_PRODUCTION_STEP_CANDIDATES } = sampling);
+});
 
 const PROGRESSES = [0, 0.06, 0.12, 0.18] as const;
 
