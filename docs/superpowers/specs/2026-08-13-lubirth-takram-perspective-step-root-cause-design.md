@@ -92,15 +92,20 @@ must select candidates through the Section 6 thresholds, attribute the effect
 through the Section 7 five-case isolation matrix, and record actual primary loop,
 termination, and shadow evidence.
 
-After one mechanism case passes for h120, repeat the winning three-owner case for
-h40 and h80 at `progress=0.00/0.06/0.12/0.18`, both clean repeats, using the same
-candidate-level recovery rules. Until both presets pass, the only permitted
-wording is `h120-local sampling causality`; a failed confirmation is preserved as
-`morphology-preset-localized`, and Stage-B-wide wording remains prohibited.
+After h120 isolation, the Section 7.4 pure resolver emits an ordered, immutable
+set of zero or more canonical three-owner policy candidates. Every emitted
+candidate—not one informal "winning case"—is independently repeated for h40 and
+h80 at `progress=0.00/0.06/0.12/0.18`, both clean repeats, using the same
+candidate-level recovery rules. A candidate enters Stage 2 only if it passes
+h120, h40, and h80. Failed candidates remain durable
+`morphology-preset-localized` evidence; if none remain, Stage 1 terminates with
+`PERSPECTIVE_STEP_POLICY_SET_EMPTY_AFTER_PRESET_CONFIRMATION`. Until at least one
+candidate passes all three presets, Stage-B-wide wording remains prohibited.
 
 #### Stage 2 — healthy-sampling stability validation
 
-The initial Stage-2 invocation validates each Stage-1 policy candidate at
+The initial Stage-2 invocation validates exactly the ordered, preset-confirmed
+Stage-1 `policyCandidates` at
 `coverage=0.55 / verticalScale=1 / opticalDepthScale=1` on h40, h80, and h120.
 A Stage-4 feedback invocation substitutes the exact proposed
 morphology/coverage/vertical/optical tuple and holds it fixed while sampling
@@ -188,10 +193,11 @@ hard-flag review must pass before the candidate may be called time-stable.
 #### Stage 3 — production sampling-policy selection and cost
 
 The initial Stage-3 invocation may compare only Stage-2 `TEMPORALLY_HEALTHY`
-three-owner policies at `vertical=1 / optical=1`. A Stage-4 feedback invocation
-may compare only policies that passed both Stage-2 rails for that exact proposed
-vertical/optical tuple. Stage 3 freezes the existing production-cost protocol
-rather than using an informal GPU check:
+three-owner policies at `coverage=0.55 / vertical=1 / optical=1` across all three
+presets. A Stage-4 feedback invocation may compare only policies that passed both
+Stage-2 rails for that exact proposed morphology/coverage/vertical/optical tuple.
+Stage 3 freezes the existing production-cost protocol rather than using an
+informal GPU check:
 
 ```text
 hardware: Apple M4 reference machine
@@ -208,6 +214,32 @@ nested queries are forbidden. Derived totals sum same-frame raw stage samples
 before percentile calculation; stage p95 values are never added. Persist raw
 samples, no-op/copy baselines, invalid/disjoint reasons, timestamp bits, query
 mode, BSM current/resolve, cloud current/resolve, and total intervals.
+
+Every timer result is validated as a finite, non-negative integer nanosecond
+count below `2^53` and serialized immediately as a base-10 integer string.
+Resolvers parse those strings as exact integers; they never round-trip through a
+JSON floating-point millisecond value. For any valid population of `N` samples,
+freeze nearest-rank p95 without interpolation:
+
+```text
+ordered = stable numeric ascending sort of integer nanoseconds
+rank    = ceil(95 * N / 100) = floor((95 * N + 99) / 100)
+p95Ns   = ordered[rank - 1]
+```
+
+For the required `N=120`, `rank=114` and the selected zero-based index is `113`.
+Equal values retain capture order only for provenance; equality cannot affect the
+selected numeric value. Same-frame stage sums are performed as exact integer
+nanoseconds before sorting. Budget comparisons use `p95Ns` directly against
+`3_000_000` and `4_000_000`; decimal milliseconds are display-only, serialized
+from the integer result with enough digits to round-trip to the same nanosecond.
+Threshold equality follows the classifications below and no epsilon is applied.
+
+Golden tests use 120-element populations with the rank-114 sample at
+`2_999_999 / 3_000_000 / 3_000_001` and
+`3_999_999 / 4_000_000 / 4_000_001` nanoseconds, plus outliers above rank 114,
+duplicate values, reversed capture order, same-frame BSM sums, malformed decimal
+strings, non-integers, negative values, and values at/above `2^53`.
 
 The initial cost matrix contains all `3 presets × 4 progress` cells for every
 policy. A Stage-4 feedback matrix contains the exact proposed combined tuple at
@@ -279,27 +311,46 @@ Passing candidates are ordered independently within each substage:
 ```
 
 Every comparison is descending except the explicitly named absolute departures,
-`H`, and canonical ID, which are ascending. Exact ties therefore remain total.
+`H`, and canonical tuple ID, which are ascending. The tuple ID includes the
+Section 7.4 policy ID, so exact ties remain total.
 
-Each substage uses the same authorization state machine:
+Stage 4 is one bounded deterministic depth-first search, not four greedy commits.
+The logical domain of 4B contains every passing 4A morphology; 4C contains every
+passing morphology/coverage prefix; and 4D contains every passing
+morphology/coverage/vertical prefix. A provisional pass never deletes its
+siblings merely because it is ranked first.
 
-1. machine and visual gates produce a deterministic ordered list of passing
-   provisional candidates using the substage ordering above;
-2. in that order, each provisional candidate reruns the complete Stage-2
-   exact-frame and continuous rails for its exact combined tuple;
-3. policies that pass Stage 2 enter the complete four-progress Stage-3 feedback
-   cost matrix for that tuple; the first production-eligible combined tuple is
-   the only substage winner and unlocks the next substage;
-4. a stability or cost failure rejects the combined tuple, not the visual
-   observation. The resolver tries the next ordered provisional candidate and,
-   where Stage-1 policy candidates remain, may reselect a sampling policy for the
-   same geometry through Stage 2 then Stage 3;
-5. if no combined tuple survives, emit the exact terminal
-   `STAGE4A_MORPHOLOGY_NO_HEALTHY_TUPLE`,
-   `STAGE4B_COVERAGE_NO_HEALTHY_TUPLE`,
-   `STAGE4C_VERTICAL_NO_HEALTHY_TUPLE`, or
-   `STAGE4D_OPTICAL_NO_HEALTHY_TUPLE` and stop. A failed substage cannot be
-   skipped or relabelled as a later-stage failure.
+For each geometry value under the current prefix, evaluate every ordered Section
+7.4 policy as a distinct combined tuple. The tuple must pass the cumulative
+machine and human dimensions for the current substage, then the complete Stage-2
+rails and Stage-3 feedback cost matrix. This rescores inherited visual dimensions
+when a child tuple uses a different policy; a parent score is never borrowed.
+Order surviving sibling tuples by the substage ordering above and recurse into
+the first child. If every descendant of that child fails, backtrack to the next
+surviving tuple at the current substage, including another policy for the same
+geometry, then another geometry/prefix. Only the first complete 4D leaf in this
+normative depth-first order emits `LOOKDEV_BASELINE_FROZEN`.
+
+The resolver preserves an immutable search trace containing every attempted
+tuple, sibling rank, gate result, descent, backtrack, and terminal reason. It
+derives a scoped no-healthy-tuple result only after the relevant bounded subtree
+is exhausted:
+
+- `STAGE4A_MORPHOLOGY_NO_HEALTHY_TUPLE` only when no 4A tuple survives;
+- `STAGE4B_COVERAGE_NO_HEALTHY_TUPLE` when at least one 4A tuple survives but
+  every coverage subtree under all such 4A tuples is exhausted;
+- `STAGE4C_VERTICAL_NO_HEALTHY_TUPLE` when at least one 4B tuple survives but
+  every vertical subtree under all such prefixes is exhausted;
+- `STAGE4D_OPTICAL_NO_HEALTHY_TUPLE` when at least one 4C tuple survives but
+  every optical leaf under all such prefixes is exhausted.
+
+A failed substage cannot be skipped, a later dead end cannot discard an untried
+upstream sibling, and a no-healthy terminal cannot be emitted from the first
+failed branch. Golden state-machine tests include first-morphology/second-
+morphology recovery, first-coverage/second-coverage recovery, vertical failure
+backtracking into a different coverage and morphology, optical failure
+backtracking through all three upstream levels, alternate-policy recovery for
+the same geometry, and complete-tree exhaustion for each scoped terminal.
 
 This feedback is mandatory after morphology and coverage as well as vertical and
 optical changes: all four can change primary occupancy, early termination, BSM,
@@ -346,11 +397,39 @@ resolver emits exactly one of `V3_WEATHER_ADAPTER_PASS`,
 `V3_WEATHER_ADAPTER_FAIL`, or `V3_WEATHER_ADAPTER_SETUP_BLOCKED`; no parameter is
 retuned after observing V3.
 
-Stage 5B is a default-off production-route candidate, never an implicit homepage
-change. With `MIRALITH_LUBIRTH_ORBITAL_V2` enabled in an isolated production
-build, it must reproduce the frozen query-route lossless buffers byte-for-byte at
-the four exact frames and keep the full-traversal metric trajectories within the
-Stage-2 repeat envelopes. It must also prove:
+`V3_WEATHER_ADAPTER_PASS` opens a fresh paired stock/V3 GPU audit for the final
+tuple; it is not itself a performance verdict. Both inputs rerun the complete
+Stage-3 timing protocol in the same authoritative production environment. The
+matrix contains all four progress cells for the exact frozen morphology,
+coverage, vertical, optical, and three-owner policy. Every input/progress cell
+gets independent total-only and stage-only `120`-warm-up + `120`-valid
+populations, no-op/copy baselines, disjoint handling, integer-nanosecond p95, and
+source-cell persistence. A missing or identity-mismatched cell blocks the V3
+cost verdict; Stage-4 stock timing cannot fill it.
+
+Derive `v3WorstTotalP95`, `v3WorstCloudP95`, and `v3WorstBSMP95` as the maximum
+of the four V3 cell p95 values using the Stage-3 formulas. The paired fresh stock
+matrix is an environment/replay diagnostic and records adapter deltas, but only
+the V3 aggregate classifies homepage eligibility:
+
+```text
+v3WorstTotalP95 <= 3 ms       -> V3_GPU_PRODUCTION_ELIGIBLE
+3 ms < v3WorstTotalP95 <= 4 ms -> V3_GPU_QUERY_ONLY
+v3WorstTotalP95 > 4 ms         -> V3_GPU_OVER_BUDGET
+invalid/incomplete population  -> V3_GPU_PERF_BLOCKED
+```
+
+No V3 timing result authorizes retuning the adapter or frozen tuple. Golden tests
+cover stock below `3 ms` while V3 exceeds `4 ms`, a V3-only threshold crossing
+at one progress, an invalid V3 cell with all stock cells valid, and different
+worst cells for total/cloud/BSM.
+
+Stage 5B opens only after `V3_WEATHER_ADAPTER_PASS` and
+`V3_GPU_PRODUCTION_ELIGIBLE`. It is a default-off production-route candidate,
+never an implicit homepage change. With `MIRALITH_LUBIRTH_ORBITAL_V2` enabled in
+an isolated production build, it must reproduce the frozen query-route lossless
+buffers byte-for-byte at the four exact frames and keep the full-traversal metric
+trajectories within the Stage-2 repeat envelopes. It must also prove:
 
 - destination readiness never reveals a partial old/new cloud composition;
 - forced texture, shader-install, context, and readiness failures select the
@@ -362,9 +441,11 @@ Stage-2 repeat envelopes. It must also prove:
 - production build, asset, renderer, policy, and evidence hashes match the
   reviewed candidate.
 
-Only `LOOKDEV_BASELINE_FROZEN` with Stage-4 worst-cell total p95 `<=3 ms`,
-`V3_WEATHER_ADAPTER_PASS`, production-route parity, fallback/rollback tests, and
-a clean evidence resolver may emit `HOMEPAGE_PROMOTION_READY_FOR_AUTHOR_GO`.
+Only `LOOKDEV_BASELINE_FROZEN` with `V3_WEATHER_ADAPTER_PASS`,
+`V3_GPU_PRODUCTION_ELIGIBLE` derived from `v3WorstTotalP95`, production-route
+parity, fallback/rollback tests, and a clean evidence resolver may emit
+`HOMEPAGE_PROMOTION_READY_FOR_AUTHOR_GO`. Stage-4 stock p95 is necessary for the
+stock baseline but can never substitute for the V3 promotion-cost gate.
 That state opens a separate author checkpoint and deployment amendment; it does
 not itself enable the flag. Any Stage-5 failure preserves the query-only
 `LOOKDEV_BASELINE_FROZEN` result and emits a scoped blocked/fail outcome. There is
@@ -384,11 +465,13 @@ The downstream implementation plan must include pure resolver/state-machine
 tests for every `Stage 0 → 1 → 2 → 3 → 4A → 4B → 4C → 4D → 5A → 5B`
 advance and every scoped terminal. Required boundary cases include: h40 below
 `3 ms` while h120 exceeds `4 ms`; the same policy crossing a threshold at only
-one progress; one invalid cost cell; a middle traversal frame below every
-absolute signal floor; three consecutive negative causal effects; each 4A–4D
-provisional winner failing feedback before the next candidate succeeds; V3 stock
-replay failure; V3 metric and visual failure; production parity failure;
-fallback failure; and an attempted direct promotion from every pre-5B state.
+one progress; nearest-rank p95 at one nanosecond below/equal/above both budget
+thresholds; one invalid cost cell; a middle traversal frame below every absolute
+signal floor; three consecutive negative causal effects; every mechanism/shadow
+result mapped to its exact ordered policy set; cross-substage 4A–4D backtracking;
+V3 stock replay failure; V3 metric and visual failure; stock GPU pass with V3 GPU
+over-budget/perf-blocked; production parity failure; fallback failure; and an
+attempted direct promotion from every pre-5B state.
 
 ## 2. Existing evidence and hypothesis
 
@@ -893,7 +976,61 @@ The shadow resolver is total and uses this precedence:
 
 `INITIAL_PRIMARY_OVERSTEP_SUPPORTED` is evidence for the first-sample mechanism, not proof that it is the only rendering defect. BSM, AerialPerspective, and temporal resolve remain separate downstream gates.
 
-Before any Stage-B-wide wording, the selected mechanism case is repeated for `h40` and `h80`. A failed confirmation is reported as morphology-preset-localized evidence.
+### 7.4 Canonical Stage-2 policy-set resolver
+
+The mechanism resolver returns one primary-mechanism result, one shadow finding,
+and `policyCandidates`. It may not expose raw eligible-case booleans for a caller
+to reinterpret. Every policy contains the same immutable Section 6.1 sweep
+winner `s` and is identified only by this exact record:
+
+| Canonical ID | Initial primary | Subsequent primary | Shadow length |
+| --- | ---: | ---: | ---: |
+| `initial-only@s` | `s` | `1.01` | `1.01` |
+| `subsequent-only@s` | `1.01` | `s` | `1.01` |
+| `primary-both@s` | `s` | `s` | `1.01` |
+| `all-small@s` | `s` | `s` | `s` |
+
+The suffix `s` is the canonical decimal candidate token from Section 4, never a
+free-form float. The resolver constructs the primary prefix from the mechanism
+result:
+
+```text
+INITIAL_PRIMARY_OVERSTEP_SUPPORTED
+  -> [initial-only@s, primary-both@s]
+SUBSEQUENT_PRIMARY_STEPPING_CAUSAL
+  -> [subsequent-only@s, primary-both@s]
+INDEPENDENT_PRIMARY_FACTORS_CAUSAL
+  -> [initial-only@s, subsequent-only@s, primary-both@s]
+COUPLED_PRIMARY_STEPPING_CAUSAL
+  -> [primary-both@s]
+PERSPECTIVE_STEP_CAUSAL_MECHANISM_UNRESOLVED
+  -> []
+```
+
+Each listed primary policy must itself be Section 6.1 isolation-eligible; a
+mechanism label/policy mismatch is resolver-invalid, not permission to drop one
+entry. Append `all-small@s` after the prefix only when all of these are true:
+
+1. `primary-both@s` is present;
+2. `all-small` independently passes the complete Section 6.1
+   recovery/repeat/progress gate against native;
+3. `rawEquivalent=true` at every progress/repeat;
+4. the shadow finding is `NO_DETECTABLE_SHADOW_LENGTH_EFFECT` or
+   `SHADOW_LENGTH_DOWNSTREAM_CONFOUNDER`.
+
+`SHADOW_LENGTH_EFFECT_UNRESOLVED` always excludes `all-small@s`; a downstream
+confounder permits Stage 2 to measure that explicit policy but never proves it
+healthy. Remove duplicates by canonical ID without reordering. The order above
+is normative and is preserved in JSON and hashes.
+
+The preset-confirmation resolver evaluates every emitted policy independently at
+h40 and h80. It returns the ordered subset that passes h120/h40/h80 plus a
+per-policy rejection record. Stage 2 receives exactly that subset. It may not
+reconstruct candidates from the mechanism enum, add a mixed shadow policy that
+was not captured, or choose only the cheapest h120 case. Pure golden tests cover
+all five primary outcomes crossed with all three shadow findings, every
+`all-small` predicate, order/deduplication, one-policy preset rejection, and the
+empty-after-confirmation terminal.
 
 ## 8. Instrumentation boundary
 
@@ -973,6 +1110,10 @@ docs/lubirth-planetary-cloud-evidence/2026-08-13/
   takram-orbital-v3-compatibility/
     stock/
     v3/
+    gpu-cost/
+      stock-cell-populations/
+      v3-cell-populations/
+      aggregates.json
     metrics.json
     visual-review.json
     OUTCOME.md
@@ -1005,6 +1146,9 @@ repository-root-relative paths and verifies from the repository root.
 - Do not retain a sampling winner after changing morphology, coverage, vertical,
   or optical values unless the combined tuple passes the complete Stage-2
   stability and Stage-3 worst-cell cost loop.
+- Do not substitute Stage-4 stock cost for V3 cost, and do not open Stage 5B
+  unless the frozen V3 tuple independently emits
+  `V3_GPU_PRODUCTION_ELIGIBLE`.
 - Do not use the superseded public-scalar production draft as implementation
   authorization, and do not enable the homepage flag before
   `HOMEPAGE_PROMOTION_READY_FOR_AUTHOR_GO` receives the separate author GO.
@@ -1041,20 +1185,22 @@ The design is ready for implementation planning only when review confirms:
 - non-winning shadow metrics have an explicit ambiguity/inconsistency veto;
 - non-monotonic or localized recovery cannot be mislabeled as hypothesis rejection;
 - initial, subsequent, and shadow-length stepping have separate owners in the isolation stage;
-- h40 and h80 confirmation is mandatory before Stage-B-wide wording;
+- the pure mechanism resolver emits the only ordered canonical Stage-2 policy
+  set, applies the explicit `all-small` rule, and confirms every emitted policy
+  on h40 and h80 before Stage-B-wide wording;
 - temporal health requires both the exact-frame matrix and the no-remount full
   7.2-second opening traversal, with computable intermediate absolute-health
   floors and matched native-reference diagnostics rather than an undefined
   inherited four-progress gate;
 - production selection uses the frozen Apple M4/Chrome/1440×960/120+120 timing
-  protocol, hard `4 ms` ceiling, `3 ms` promotion ceiling, and deterministic
-  worst-cell aggregation and tie-breaking order across every authorized
-  preset/progress cell;
-- fresh morphology, coverage, vertical, and optical substages each feed their
-  provisional winners through the complete stability and GPU gates, producing
-  one jointly frozen combined tuple or an exact scoped terminal outcome;
-- Stage 5 freezes V3 stock-replay/adapter compatibility, production-route parity,
-  fallback/rollback, and the only route to
+  protocol, exact-integer nearest-rank p95, hard `4 ms` ceiling, `3 ms`
+  promotion ceiling, and deterministic worst-cell aggregation and tie-breaking
+  order across every authorized preset/progress cell;
+- fresh morphology, coverage, vertical, and optical substages form one
+  deterministic nested search that backtracks across every untried upstream
+  sibling and policy before emitting a scoped terminal;
+- Stage 5 freezes V3 stock-replay/adapter compatibility, a fresh V3 worst-cell
+  GPU matrix, production-route parity, fallback/rollback, and the only route to
   `HOMEPAGE_PROMOTION_READY_FOR_AUTHOR_GO`;
 - all quantitative booleans and terminal results come from raw metrics through
   one versioned final resolver, while human review supplies only visual judgment;
