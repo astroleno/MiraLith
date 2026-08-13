@@ -49,6 +49,7 @@ import {
   type TakramV3MorphologyViewId
 } from "./TakramV3MorphologyContract";
 import type { TakramV3MorphologyScaleAudit } from "./TakramV3MorphologyScaleAudit";
+import type { TakramShaderInstrumentationAudit } from "./TakramSampleCountInstrumentation";
 
 export const TAKRAM_PARITY_BOTTOM_RADIUS_M = 6_360_000;
 export const TAKRAM_PARITY_ALTITUDE_LADDER_MAX_M = 20_000_000;
@@ -1113,6 +1114,18 @@ export interface TakramParitySampleCountReadback {
   encoding: "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask";
   /** Packed normalized RGBA copied from the native pre-temporal cloud target. */
   values: number[];
+}
+
+export interface TakramParityPrimaryMarchReadback {
+  width: number;
+  height: number;
+  precision: "half-float";
+  source: "native-cloud-current-render-target-primary-march-v1";
+  origin: "bottom-left";
+  encoding: "rgba16f-loop-entry-cap-hit-direct";
+  maxIterationCount: 500;
+  values: readonly number[];
+  instrumentationAudit: TakramShaderInstrumentationAudit;
 }
 
 export interface TakramParityTelemetry {
