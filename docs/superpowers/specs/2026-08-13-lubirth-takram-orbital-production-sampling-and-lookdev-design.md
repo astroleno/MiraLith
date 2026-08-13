@@ -57,17 +57,15 @@ The causal conclusion remains scoped to the stock opening camera and frozen expe
 
 Test a small exact enum around the confirmed point using the existing public uniform. Select a stock-opening production value only if it passes signal, temporal, visual, and GPU gates. This is the smallest change consistent with the evidence and preserves upstream Takram rendering.
 
-If no public value simultaneously passes quality and cost, stop and authorize one focused shader-policy design. Do not compensate with unrelated density, exposure, weather, or layer changes.
+Shader-policy work is authorized if and only if the Stage 2 pure resolver emits `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING` after the required confirmation populations reproduce the exact full-to-light-shafts-off `4 ms` budget crossing. Every other non-winner terminal stops this design without authorizing GLSL or Takram API changes. Do not compensate with unrelated density, exposure, weather, or layer changes.
 
 ### 3.2 Rejected as the first move: immediate shader decoupling
 
 Adding separate primary and shadow-length scale uniforms would improve control, but it would expand the patch surface across Takram shader source, runtime uniforms, package patch artifacts, fingerprints, and public typings before proving that the existing public control is insufficient.
 
-This remains the fallback when the public-scalar funnel produces a specific conflict:
+This remains the fallback only when the public-scalar funnel proves all of the Stage 2 decoupling predicates: at least one sampling-healthy candidate, unchanged primary-density evidence within the same-progress repeat floors, `full > 4 ms` at one or more progresses, `light-shafts-off <= 4 ms` at every progress, and a second independent four-progress population that reproduces the complete budget predicate used by the resolver.
 
-- healthy primary sampling but a repeatable full-versus-light-shafts-off budget crossing or quality conflict;
-- acceptable quality only at a value that exceeds the GPU budget; or
-- no fixed public scalar remains stable across all four opening progress values.
+A quality failure, an unstable candidate, a general over-budget result, an invalid timer population, or the absence of a public winner does not authorize shader decoupling. Those conditions resolve to their own Stage 2 terminal outcomes.
 
 ### 3.3 Rejected: promote `1.0001` directly
 
@@ -190,6 +188,20 @@ The stage-only population reports each raw stage sample, same-frame sums, and p9
 
 The capture runtime may wrap the existing pass `render()` methods or add one instrumentation-only timer hook where a public reference is unavailable. The hook may not change GLSL, defines, uniforms, pass order, render targets, or output. Its source hash enters the renderer fingerprint, and enabled-versus-disabled captures must remain within the applicable same-route repeat floor.
 
+Every GPU population used by a `3 ms` or `4 ms` gate has one authoritative execution environment:
+
+```text
+build                production build from the tracked-clean evidence commit
+browser              headed installed System Chrome
+reference hardware   Apple M4 with the recorded ANGLE Metal renderer/vendor
+viewport             1440x960 CSS pixels and 1440x960 physical pixels
+DPR                  1
+page state           visible and focused, with DevTools/tracing/recording closed
+power state          AC power connected and Low Power Mode disabled
+```
+
+The manifest records the build/commit hash, production asset fingerprint, Chrome version, macOS version, unmasked GPU renderer/vendor, viewport, DPR, visibility/focus state, power-source state, and Low Power Mode state. All initial, ranking, final-winner, and confirmation populations run from the same production artifact in the same browser/machine environment. A confirmation population may be a later independent window, but every recorded environment field above must equal the population it confirms. A missing field, identity mismatch, dev-server result, alternate browser, or result from other hardware is exploratory only and resolves the affected performance decision to the applicable setup/performance-blocked outcome; it cannot select a winner or authorize decoupling.
+
 ## 7. Successor stage funnel
 
 ### Stage 0 — provenance, replay, and profiler readiness
@@ -200,6 +212,7 @@ Before new captures, verify:
 - the causal clean commit, browser/GPU identity, frozen contract, and final outcome are readable;
 - the current implementation reproduces the causal resolver and exact step values;
 - the current route still passes query/runtime/fingerprint/camera parity;
+- the formal performance-environment manifest matches the production-build, System Chrome, Apple M4, viewport/DPR, browser/GPU, and power-state contract in Section 6;
 - System Chrome exposes usable `EXT_disjoint_timer_query_webgl2` total-only and stage-only profilers;
 - an `8`-warmup / `8`-sample smoke run completes independently for both modes without a nested-query error, missing stage, duplicate stage, incomplete same-frame stage set, or permanent disjoint epoch.
 
@@ -250,8 +263,10 @@ The normative metric definitions are:
 - a native hit is a native sample-count texel whose decoded alpha is `>=0.5`;
 - `nativeHitPixelFraction = nativeHitPixelCount / (nativeWidth * nativeHeight)` using the sample-count render-target dimensions, not the full-resolution cloud mask;
 - `nativeHitMaskMismatch(A,B) = count(hitA != hitB) / (nativeWidth * nativeHeight)` for equally sized native hit masks;
-- primary/shape/detail counts are reconstructed by rounding normalized RGB values multiplied by `500 / 5 / 5` respectively;
-- `primaryCapHitFraction = count(native-hit texels with primary >= runtime maxIterationCount) / nativeHitPixelCount`;
+- primary/shape/detail counts are reconstructed by rounding normalized RGB values multiplied by `500 / 5 / 5` respectively; the extractor must validate the unclamped decoded values and may not hide an invalid negative or over-range value with `max`, `min`, or saturation;
+- a primary-march texel is any native sample-count texel whose reconstructed `primary > 0`, irrespective of the hit-mask alpha; `primaryMarchTexelCount` counts this complete population;
+- `primaryCapSaturationFraction = count(all native texels with primary >= runtime maxIterationCount) / primaryMarchTexelCount`;
+- `noHitPrimaryCapSaturationFraction = count(all native texels with alpha < 0.5 and primary >= runtime maxIterationCount) / primaryMarchTexelCount` is published as a required diagnostic so exhausted rays that never establish `marchedFrontDepth` remain visible in the evidence;
 - a pre-temporal signal pixel has finite alpha strictly greater than `1/255`; `preTemporalSignalPixelFraction` uses the complete pre-temporal native pixel population as its denominator;
 - `signalRetention = resolvedHistory.signalPixelFraction / preTemporal.signalPixelFraction` and `signalLumaRetention = resolvedHistory.signalMeanLuma / preTemporal.signalMeanLuma`; a zero denominator or non-finite quotient fails the candidate;
 - `opacityMae(A,B)` is the arithmetic mean of `abs(A.alpha - B.alpha)` over every pixel in the two lossless pre-temporal buffers;
@@ -268,11 +283,11 @@ small-fragment fraction                       <= 0.10
 resolved/pre-temporal signal retention        within [0.90, 1.10]
 resolved/pre-temporal signal-luma retention   within [0.80, 1.20]
 pairedChange                                  > same-progress repeatNoiseFloor
-primary cap-hit fraction                       <= 0.01
+primary cap-saturation fraction                <= 0.01
 sample-count structural invariants             pass
 ```
 
-The sample-count structural invariants require positive native dimensions, the audited source/encoding/precision, finite reconstructed counts, `primary >= shape >= detail >= 0` for every native hit, `nonZeroPrimaryPixelFraction=1`, and `runtime maxIterationCount=500`. The cap-hit rule is separate: reaching `500` is structurally valid but indicates iteration-budget saturation. A candidate with more than `1%` saturated native-hit texels fails even if all other signal metrics pass.
+The sample-count structural invariants require positive native dimensions, the audited source/encoding/precision, finite reconstructed counts within `primary=[0,500]`, `shape=[0,5]`, and `detail=[0,5]` for every native texel, `primaryMarchTexelCount > 0`, `primary >= shape >= detail >= 0` for every primary-march texel, `shape=detail=0` whenever `primary=0`, `primary>0` for every native-hit texel, and `runtime maxIterationCount=500`. The cap-saturation rule is separate: reaching `500` is structurally valid but indicates iteration-budget exhaustion. Its denominator includes both hit and no-hit primary-march texels. A candidate with more than `1%` saturated primary-march texels therefore fails even when the exhausted population never sets the hit-mask alpha and all other signal metrics pass.
 
 These absolute floors are valid only for the frozen sampling-policy screen. They are anchored below the confirmed treatment's observed `29.29–32.86%` signal while remaining far above the control's sub-`1%` result. They are not reused to judge later coverage or morphology candidates.
 
@@ -318,7 +333,7 @@ The authoritative candidate cost is the maximum directly measured `full` total-o
 - `3 ms < p95 <= 4 ms`: query-only lookdev viable but not homepage-promotion eligible;
 - `p95 > 4 ms`: over budget.
 
-Any native/full versus light-shafts-off/full comparison that would authorize `NEEDS_DECOUPLING` must be repeated with a second independent `120 + 120` total-only population for both feature states at every progress participating in the threshold crossing. The decoupling condition must reproduce in the confirmation populations; otherwise stop with `ORBITAL_PUBLIC_STEP_POLICY_PERF_BLOCKED` and record the non-reproducible classification boundary.
+Any candidate that could authorize `NEEDS_DECOUPLING` must be repeated with a second independent `120 + 120` total-only population for both feature states at all four progresses. The confirmation set must reproduce both sides of the complete predicate: `full > 4 ms` at one or more matching progresses and `light-shafts-off <= 4 ms` at every progress. Otherwise stop with `ORBITAL_PUBLIC_STEP_POLICY_PERF_BLOCKED` and record the non-reproducible classification boundary.
 
 Select one public step policy using this order:
 
@@ -570,14 +585,95 @@ V3 testing begins only after a stock V2 winner exists. Apply the exact stock win
 
 Do not reintroduce the prior V3 semantic-layer tuple, change turbulence to compensate for adapter repeat, or reopen step-policy selection.
 
-The outcomes remain:
+This is one frozen compatibility test, not another tuning stage. No parameter may be adjusted after observing V3.
 
-- `V3_WEATHER_ADAPTER_PASS`;
-- `V3_WEATHER_ADAPTER_FAIL`.
+### 10.1 Capture matrix and setup gate
 
-A V3 failure does not invalidate the stock renderer or winner.
+At progress `0.00 / 0.06 / 0.12 / 0.18`, capture both `stock` and `v3` from a fresh complete composer mount. Each input/progress pair publishes:
 
-V3 compatibility is mandatory whenever Stage 4D produces `ORBITAL_STOCK_LOOKDEV_V2_WINNER`, irrespective of whether final stock timing later classifies it as `PRODUCTION_ELIGIBLE`, `QUERY_ONLY`, `OVER_BUDGET`, or `PERF_BLOCKED`. It is skipped only when the funnel terminates before a stock V2 visual winner exists.
+- full outputs at native frames `1 / 2 / 4 / 8 / 16 / 32` as one temporal-convergence strip;
+- native-frame-`32` full-output PNG;
+- native-frame-`32` cloud-raw and cloud-raw-off PNGs;
+- native-frame-`32` sample-count-debug PNG and lossless native sample-count buffer;
+- native-frame-`32` stage-readback diagnostic with lossless pre-temporal cloud current, resolved history, and final output;
+- native-frame-`32` BSM-off final output;
+- native-frame-`32` AerialPerspective/cloud-off final output;
+- requested/runtime contract, layer readback, effective turbulence repeat, camera matrices, renderer/build fingerprint, allocation epoch, adapter fields, texture hashes, viewport/DPR, and artifact hashes/byte lengths.
+
+Repeat the complete matrix from another fresh mount for every input/progress pair. Base and repeat PNGs and lossless buffers must be byte-identical. Non-identical repeats are invalid evidence and produce setup-blocked rather than a compatibility verdict; repeat noise from one input or progress is never borrowed by another.
+
+Before image interpretation, a machine verifier must prove:
+
+1. the committed Stage 4D winner ID and complete frozen contract equal the Section 9 final-stock winner;
+2. the fresh stock arm re-passes the automatic gates below at all four progresses;
+3. after normalizing only the enumerated adapter fields, stock and V3 have identical query, runtime, layer, sampling, lookdev, camera, renderer/build, output-transform, native-frame, viewport/DPR, and feature-state identities;
+4. both arms use `disableDefaultLayers=true`, the same official R/G/B/A layer array, and their expected texture/adapter hashes;
+5. each arm receives a new complete allocation epoch before frame counting, reaches every required native frame without skipping or reusing history, and has complete dimension/precision/origin-compatible readbacks;
+6. every declared artifact exists and matches its manifest hash and byte length.
+
+A missing capture, parity mismatch, stale allocation, load/readback/hash failure, non-reproducible repeat, or failure of the stock replay gate produces:
+
+```text
+V3_WEATHER_ADAPTER_SETUP_BLOCKED
+```
+
+It must not be relabelled as a V3 visual failure.
+
+### 10.2 Machine-derived metric decision
+
+For both inputs at every progress, the deterministic extractor publishes the raw numeric values and derives a per-frame metric decision. It uses the Section 7 sample-count and temporal formulas plus the existing V3 morphology definitions: RGB max-channel cloud-mask threshold `>8/255`, four-neighbour components, and the cloud-off/first-frame/converged comparisons.
+
+An individual input/progress metric decision passes only when:
+
+```text
+finite pixel fraction for every lossless stage = 1
+cloud pixel fraction                           >= 0.002
+pre-temporal signal pixel fraction             >= 0.002
+largest connected-area fraction                >= 0.25
+single-pixel fragment fraction                 <= 0.02
+small-fragment fraction                        <= 0.08
+edge density                                   <= 0.65
+clear-air leakage                              <= 0.05
+first-frame/converged luma delta                <= 0.08
+resolved/pre-temporal signal retention         within [0.90, 1.10]
+resolved/pre-temporal signal-luma retention    within [0.80, 1.20]
+primary-march texel count                       > 0
+primary cap-saturation fraction                <= 0.01
+sample-count structural invariants             pass
+```
+
+The extractor also publishes, without converting them to manual booleans, raw/final cloud-signal differences, full-versus-BSM-off difference, native-hit fraction, no-hit primary-cap saturation, opacity/luma statistics, and base/repeat comparisons. These remain mandatory diagnostics even where the table above does not assign a universal threshold.
+
+The stock arm is a replay control. If any valid stock frame fails this metric decision, the test is setup-blocked because the committed stock winner did not reproduce. If stock replays but any valid V3 frame fails, the V3 metric decision fails. Thresholds apply independently at all four progresses; averaging cannot hide a failed frame.
+
+### 10.3 Bounded visual rubric
+
+The human reviewer sees fixed stock/V3 contact sheets containing all four progresses, the `1 / 2 / 4 / 8 / 16 / 32` temporal-convergence strips, cloud-raw/cloud-off controls, BSM-off controls, and the frozen NASA/Takram references. Stock and V3 are not required to have identical weather morphology. The question is whether the frozen renderer/lookdev contract remains usable with the V3 adapter.
+
+At each V3 progress, score `0 / 1 / 2` for:
+
+```text
+macro coherence
+coverage usability
+cloud/ground separation
+depth layering
+lighting/BSM read
+artifact freedom
+```
+
+Score `opening identity stability` once across the complete four-progress and six-frame sequence. `0` means unusable or absent, `1` means the property is clearly present at an acceptable baseline, and `2` means strong. The review also records only enumerated hard-artifact flags: `tiling-repeat`, `isolated-speckle`, `march-band`, `temporal-ghost`, `frame-pop`, `ground-intersection`, `clipped-solid-fill`, and `other-with-required-note`. Every per-progress dimension and the sequence-level stability dimension must score at least `1`, and no hard-artifact flag may be present. Reviewer identity, clean commit, winner ID, contact-sheet hashes, viewport/DPR, progress, and reference hashes are mandatory. The review schema contains scores, flags, and notes only; it has no PASS/FAIL field.
+
+### 10.4 Pure resolver and scope
+
+The pure V3 resolver consumes only the machine-produced setup report, four stock replay metric decisions, four V3 metric decisions, and the bounded visual scores/flags:
+
+1. invalid or incomplete setup, repeat, or stock replay evidence resolves `V3_WEATHER_ADAPTER_SETUP_BLOCKED`;
+2. valid setup plus any failed V3 progress metric, any per-progress or sequence-level visual score below `1`, or any hard-artifact flag resolves `V3_WEATHER_ADAPTER_FAIL`;
+3. valid setup plus all four V3 metric passes, every per-progress visual pass, and the sequence-level stability pass resolves `V3_WEATHER_ADAPTER_PASS`.
+
+Neither the capture test nor `visual-review.json` may directly enter an outcome, `metricPass`, or equivalent handwritten quantitative boolean. `metric-decision.json`, `checkpoint.json`, and `OUTCOME.md` are generated from the raw evidence by the extractor and resolver.
+
+A V3 failure does not invalidate the stock renderer or winner. V3 compatibility is mandatory whenever Stage 4D produces `ORBITAL_STOCK_LOOKDEV_V2_WINNER`, irrespective of whether final stock timing later classifies it as `PRODUCTION_ELIGIBLE`, `QUERY_ONLY`, `OVER_BUDGET`, or `PERF_BLOCKED`. It is skipped only when the funnel terminates before a stock V2 visual winner exists. V3 compatibility does not make a new GPU-performance or homepage-eligibility claim.
 
 ## 11. Evidence architecture
 
@@ -603,7 +699,7 @@ raw/
 gpu/
 ```
 
-The lookdev-v2 root uses stage subdirectories plus a final winner directory. Every publisher write remains atomic and requires a tracked-clean implementation commit.
+The lookdev-v2 root uses stage subdirectories plus a final winner directory. Its V3 compatibility directory must contain separate `stock/` and `v3/` capture/raw trees plus `manifest.json`, `metrics.json`, machine-generated `metric-decision.json`, bounded `visual-review.json`, resolver-generated `checkpoint.json`, and `OUTCOME.md`. Every publisher write remains atomic and requires a tracked-clean implementation commit.
 
 Decision flow:
 
@@ -630,7 +726,7 @@ Failure rules:
 - a sampling-health failure is not a lookdev failure;
 - a GPU failure is not silently treated as a visual failure;
 - unsupported timing blocks production selection but does not erase completed visual evidence;
-- a visual failure does not authorize shader stepping changes unless Stage 2 identified the sampling policy as the cause;
+- no visual, quality, instability, general over-budget, or timer failure authorizes shader stepping changes; only `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING` does;
 - no failed stage authorizes homepage work.
 
 ## 13. Implementation boundaries
@@ -643,9 +739,10 @@ The initial public-policy path is expected to extend these existing responsibili
 - `TakramOrbitalLookdevIdentity.ts`: include candidate, feature state, and output diagnostic in pre-mount identity;
 - `TakramOrbitalLookdevRuntime.ts`: apply and audit the exact runtime value and capture-only light-shafts state;
 - `TakramStockParityPipeline.tsx`: expose the narrow query/diagnostic path and reuse existing remount, readback, and profiler controls;
-- `TakramOrbitalLookdevEvidence.ts`: add machine-derived production-policy and V2 checkpoint transitions;
+- `TakramV3MorphologyMetrics.ts`: preserve native-hit statistics while adding the complete `primary>0` march population and cap-saturation metrics;
+- `TakramOrbitalLookdevEvidence.ts`: add machine-derived production-policy, V2, and V3 metric decisions and pure checkpoint transitions;
 - `TakramOrbitalGpuProfiler.ts`: preserve total-only measurement as the production authority and implement independent sequential stage-only populations with complete same-frame stage sets;
-- existing E2E publishers: reuse capture and hashing helpers while writing to new evidence roots.
+- existing E2E publishers: replace the hand-entered Stage E result with the complete V3 matrix, metric extractor, bounded review input, and pure resolver while reusing capture and hashing helpers.
 
 The initial path must not change `@takram/three-clouds` shader source or package patch artifacts.
 
@@ -663,6 +760,7 @@ If and only if Stage 2 produces `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING`, t
 - runtime drift detects the wrong step or light-shafts state;
 - metric extraction derives every quantitative gate from numeric evidence;
 - each Stage 1 threshold boundary has pass/fail coverage;
+- primary-cap saturation includes `primary>0` no-hit texels and fails when those exhausted rays push the complete primary-march population above `1%`;
 - all public-policy and V2 terminal outcomes are reachable through the pure resolver;
 - GPU winner ranking uses maximum p95 across all four progresses;
 - values between `3` and `4 ms` remain query-only;
@@ -670,7 +768,8 @@ If and only if Stage 2 produces `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING`, t
 - full and light-shafts-off total/stage populations remain separate and non-nested;
 - BSM combined p95 is derived from same-frame current-plus-resolve sums;
 - Stage 4A/4B cannot fail on deferred separation, depth, or lighting dimensions;
-- every Stage 4D visual winner, including production-eligible, query-only, over-budget, and performance-blocked stock outcomes, requires a V3 terminal result;
+- the V3 resolver derives setup-blocked, metric-fail, visual-fail, and pass outcomes without accepting a handwritten result boolean;
+- every Stage 4D visual winner, including production-eligible, query-only, over-budget, and performance-blocked stock outcomes, requires a terminal V3 pass, fail, or setup-blocked result;
 - old Stage B checkpoint cannot unlock successor stages.
 
 ### System Chrome verification
@@ -680,6 +779,8 @@ If and only if Stage 2 produces `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING`, t
 - `full`, `light-shafts-off`, and `bsm-off` preserve the primary hit mask within repeat noise;
 - diagnostic teardown restores native high-preset features;
 - total-only and stage-only queries remain mutually exclusive, non-nested, and complete valid populations;
+- every threshold-bearing and confirmation population rejects a dev build, non-System-Chrome browser, non-Apple-M4 renderer, viewport/DPR drift, browser/GPU drift, or power-state drift;
+- V3 captures both inputs, all four progresses, all six required native frames, every diagnostic/readback, and fresh-mount byte-identical repeats before resolving compatibility;
 - formal capture writes atomically only from a tracked-clean commit;
 - rejected stages cannot invoke lookdev-v2 or homepage work.
 
@@ -697,8 +798,8 @@ If and only if Stage 2 produces `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING`, t
 
 This successor design is complete only when it produces one of:
 
-1. `ORBITAL_STOCK_LOOKDEV_V2_PRODUCTION_ELIGIBLE`, plus a terminal `V3_WEATHER_ADAPTER_PASS/FAIL` result and complete evidence;
-2. `ORBITAL_STOCK_LOOKDEV_V2_QUERY_ONLY`, plus a terminal `V3_WEATHER_ADAPTER_PASS/FAIL` result and complete evidence, preserving a valid stock visual winner while explicitly blocking homepage promotion;
+1. `ORBITAL_STOCK_LOOKDEV_V2_PRODUCTION_ELIGIBLE`, plus a terminal `V3_WEATHER_ADAPTER_PASS`, `V3_WEATHER_ADAPTER_FAIL`, or `V3_WEATHER_ADAPTER_SETUP_BLOCKED` result and complete evidence;
+2. `ORBITAL_STOCK_LOOKDEV_V2_QUERY_ONLY`, plus a terminal `V3_WEATHER_ADAPTER_PASS`, `V3_WEATHER_ADAPTER_FAIL`, or `V3_WEATHER_ADAPTER_SETUP_BLOCKED` result and complete evidence, preserving a valid stock visual winner while explicitly blocking homepage promotion;
 3. one explicit terminal sampling-policy failure:
    - `ORBITAL_PRODUCTION_SAMPLING_SETUP_BLOCKED`;
    - `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING`;
@@ -710,7 +811,7 @@ This successor design is complete only when it produces one of:
    - `ORBITAL_LOOKDEV_V2_COVERAGE_FAIL`;
    - `ORBITAL_LOOKDEV_V2_VERTICAL_FAIL`;
    - `ORBITAL_LOOKDEV_V2_OPTICAL_FAIL`;
-   - `ORBITAL_STOCK_LOOKDEV_V2_OVER_BUDGET`, plus a terminal `V3_WEATHER_ADAPTER_PASS/FAIL` result and complete evidence;
-   - `ORBITAL_STOCK_LOOKDEV_V2_PERF_BLOCKED`, plus a terminal `V3_WEATHER_ADAPTER_PASS/FAIL` result and complete evidence;
+   - `ORBITAL_STOCK_LOOKDEV_V2_OVER_BUDGET`, plus a terminal `V3_WEATHER_ADAPTER_PASS`, `V3_WEATHER_ADAPTER_FAIL`, or `V3_WEATHER_ADAPTER_SETUP_BLOCKED` result and complete evidence;
+   - `ORBITAL_STOCK_LOOKDEV_V2_PERF_BLOCKED`, plus a terminal `V3_WEATHER_ADAPTER_PASS`, `V3_WEATHER_ADAPTER_FAIL`, or `V3_WEATHER_ADAPTER_SETUP_BLOCKED` result and complete evidence;
 
 No outcome in this design directly changes the homepage. Production integration, camera-cut history behaviour, and final rollout remain a separate amendment after a `PRODUCTION_ELIGIBLE` stock winner exists.
