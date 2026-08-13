@@ -99,7 +99,7 @@ This design must not:
 - add adaptive per-pixel stepping, binary refinement, a new raymarcher, a new weather asset, cloud cards, or an impostor;
 - claim near-ground or arbitrary-camera support;
 - infer exact stage time by subtracting unrelated GPU populations;
-- patch Takram GLSL unless the public-policy terminal outcome explicitly authorizes the fallback.
+- change production Takram GLSL/API or package patch artifacts unless the public-policy terminal outcome explicitly authorizes the fallback; the two audited, teardown-restored diagnostic shader modes in Sections 6–7 are the only capture-only exception.
 
 ## 5. Production step-policy contract
 
@@ -163,10 +163,10 @@ Stage 2 models rendering feature state and captured output as orthogonal exact e
 
 ```text
 featureState = native | light-shafts-off | bsm-off
-output       = full | cloud-raw | cloud-raw-off | sample-count-debug | stage-readback | aerial-final
+output       = full | cloud-raw | cloud-raw-off | sample-count-debug | primary-march-debug | stage-readback | aerial-final
 ```
 
-`cloud-raw/cloud-raw-off` isolates the raw cloud signal, `sample-count-debug` instruments native primary hits/counts, `stage-readback` publishes lossless stages plus final output, and `aerial-final` is the existing cloud-off final baseline. The route may serialize feature/output pairs into one combined exact diagnostic enum, but it must reject unsupported combinations and free-form values. GPU timing is valid only for `output=full`. Primary-signal invariants compare `sample-count-debug` and lossless `stage-readback` outputs across feature states. `aerial-final` is valid only with `featureState=native`.
+`cloud-raw/cloud-raw-off` isolates the raw cloud signal. `sample-count-debug` preserves Takram's rough-weather/shape/detail counters and hit mask; those counters are sampling diagnostics, not loop counters. `primary-march-debug` is an independent capture-only encoding of actual loop execution, entry, cap exhaustion, and hit state. `stage-readback` publishes lossless stages plus final output, and `aerial-final` is the existing cloud-off final baseline. The route may serialize feature/output pairs into one combined exact diagnostic enum, but it must reject unsupported combinations and free-form values. GPU timing is valid only for `output=full`. Primary-signal invariants compare both debug readbacks and lossless `stage-readback` outputs across feature states. `aerial-final` is valid only with `featureState=native`.
 
 `light-shafts-off` is a capture-only exact enum that sets Takram's existing public `lightShafts` feature to `false`. It must restore the immutable high-preset value on remount and may never leak into a normal stock route.
 
@@ -176,13 +176,26 @@ Cross-route GPU deltas are directional attribution evidence only. Production via
 
 GPU timing uses two mutually exclusive modes. No frame may contain a total query and a stage query at the same time:
 
-1. `total-only-time-elapsed` opens one query around the existing full submission interval and records separate no-op and copy-only baselines;
+1. `total-only-time-elapsed` opens one query immediately before `ShadowPass.currentPass.render` and closes it immediately after the containing combined `EffectPass.render` returns, then records separate no-op and copy-only baselines outside that query;
 2. `stage-only-sequential-time-elapsed` opens and closes five sequential, non-nested queries around the existing submissions:
    - `bsm-current`: `ShadowPass.currentPass.render`;
    - `bsm-resolve`: `ShadowPass.resolvePass.render`;
    - `cloud-current`: `CloudsPass.currentPass.render`, including primary, secondary, and optional shadow-length shader work;
    - `cloud-resolve`: `CloudsPass.resolvePass.render`;
-   - `final-effect`: the combined final `EffectPass` containing Clouds composition and AerialPerspective/final composition.
+   - `final-effect`: only the combined fullscreen submission executed after the `CloudsEffect` and `AerialPerspectiveEffect` update hooks, containing Clouds composition and AerialPerspective/final composition; it must not wrap the entire `EffectPass.render` method.
+
+The total-only interval is normative and means exactly:
+
+```text
+begin: immediately before ShadowPass.currentPass.render
+end:   immediately after the same frame's combined Clouds + AerialPerspective EffectPass.render returns
+```
+
+It includes BSM current/resolve, cloud current/resolve, and the combined final effect submission. It excludes the composer RenderPass, NormalPass, any depth/downsampling pass, procedural-texture preparation before BSM current, and work after the combined final EffectPass. The current R3F priority-`0` to priority-`3` whole-composer wrapper is not an authoritative interval and must be replaced for every `3 ms`/`4 ms` decision; its samples may not select a winner or authorize decoupling.
+
+The instrumentation must identify one exact combined `EffectPass` containing the expected `CloudsEffect` followed by `AerialPerspectiveEffect`, arm the total query only when that pass invokes the expected `CloudsEffect.update`, begin at the first BSM-current submission, and close in a `finally` path only after that same pass returns. A frame with a missing begin/end, a second begin, the wrong pass/effect order, an intervening nested query, or an exception is invalid. The renderer/build fingerprint records the pass identities, pass order, hook source hash, and installed-build hash.
+
+In stage-only mode, the first four queries wrap the four native pass submissions inside the effect update. The fifth query wraps only the combined fullscreen draw after those updates. Wrapping `EffectPass.render` as the fifth query would nest the first four queries and is invalid.
 
 The stage-only population reports each raw stage sample, same-frame sums, and p95 values derived from same-frame populations. It must never add independent stage p95 values. BSM cost is reported as the p95 of each frame's `bsm-current + bsm-resolve` sum. `cloud-current` must retain that name because its single draw cannot provide an absolute primary-only timing.
 
@@ -214,7 +227,7 @@ Before new captures, verify:
 - the current route still passes query/runtime/fingerprint/camera parity;
 - the formal performance-environment manifest matches the production-build, System Chrome, Apple M4, viewport/DPR, browser/GPU, and power-state contract in Section 6;
 - System Chrome exposes usable `EXT_disjoint_timer_query_webgl2` total-only and stage-only profilers;
-- an `8`-warmup / `8`-sample smoke run completes independently for both modes without a nested-query error, missing stage, duplicate stage, incomplete same-frame stage set, or permanent disjoint epoch.
+- an `8`-warmup / `8`-sample smoke run completes independently for both modes without a whole-composer interval, wrong combined-pass identity/order, missing exact total begin/end, nested-query error, missing stage, duplicate stage, incomplete same-frame stage set, or permanent disjoint epoch.
 
 The smoke run is a capability gate, not a cost verdict. Failure produces:
 
@@ -248,6 +261,7 @@ For every base capture, publish:
 
 - cloud-raw and cloud-raw-off PNGs;
 - sample-count-debug PNG and lossless native sample-count buffer;
+- primary-march-debug PNG and lossless native primary-march buffer; the PNG is a derived visualization with `R=loopIterationCount/maxIterationCount`, while metric extraction reads only the direct-value lossless buffer;
 - lossless pre-temporal, resolved-history, and final-output buffers;
 - stage-readback final PNG;
 - complete requested/runtime/fingerprint/camera identity;
@@ -264,9 +278,11 @@ The normative metric definitions are:
 - `nativeHitPixelFraction = nativeHitPixelCount / (nativeWidth * nativeHeight)` using the sample-count render-target dimensions, not the full-resolution cloud mask;
 - `nativeHitMaskMismatch(A,B) = count(hitA != hitB) / (nativeWidth * nativeHeight)` for equally sized native hit masks;
 - primary/shape/detail counts are reconstructed by rounding normalized RGB values multiplied by `500 / 5 / 5` respectively; the extractor must validate the unclamped decoded values and may not hide an invalid negative or over-range value with `max`, `min`, or saturation;
-- a primary-march texel is any native sample-count texel whose reconstructed `primary > 0`, irrespective of the hit-mask alpha; `primaryMarchTexelCount` counts this complete population;
-- `primaryCapSaturationFraction = count(all native texels with primary >= runtime maxIterationCount) / primaryMarchTexelCount`;
-- `noHitPrimaryCapSaturationFraction = count(all native texels with alpha < 0.5 and primary >= runtime maxIterationCount) / primaryMarchTexelCount` is published as a required diagnostic so exhausted rays that never establish `marchedFrontDepth` remain visible in the evidence;
+- `sampleCount.x` is the number of rough-weather samples taken after the layer-interval skip, not the number of `marchClouds` loop iterations; no cap or march-entry decision may be derived from any sample-count channel;
+- the primary-march buffer is native-size `RGBA16F`, bottom-left-origin, and encodes exact values as `R=loopIterationCount`, `G=enteredPrimaryMarch ? 1 : 0`, `B=capReached ? 1 : 0`, and `A=marchedFrontDepth >= 0 ? 1 : 0`; integers `0..500` are stored directly rather than normalized;
+- `enteredPrimaryMarchPixelCount = count(primary-march texels with G >= 0.5)` and includes entered rays even when rough-weather `sampleCount.x=0`;
+- `primaryCapSaturationFraction = count(primary-march texels with G >= 0.5 and B >= 0.5) / enteredPrimaryMarchPixelCount`;
+- `noHitPrimaryCapSaturationFraction = count(primary-march texels with G >= 0.5, B >= 0.5, and A < 0.5) / enteredPrimaryMarchPixelCount` is a required diagnostic;
 - a pre-temporal signal pixel has finite alpha strictly greater than `1/255`; `preTemporalSignalPixelFraction` uses the complete pre-temporal native pixel population as its denominator;
 - `signalRetention = resolvedHistory.signalPixelFraction / preTemporal.signalPixelFraction` and `signalLumaRetention = resolvedHistory.signalMeanLuma / preTemporal.signalMeanLuma`; a zero denominator or non-finite quotient fails the candidate;
 - `opacityMae(A,B)` is the arithmetic mean of `abs(A.alpha - B.alpha)` over every pixel in the two lossless pre-temporal buffers;
@@ -284,10 +300,17 @@ resolved/pre-temporal signal retention        within [0.90, 1.10]
 resolved/pre-temporal signal-luma retention   within [0.80, 1.20]
 pairedChange                                  > same-progress repeatNoiseFloor
 primary cap-saturation fraction                <= 0.01
+primary-march structural invariants            pass
 sample-count structural invariants             pass
 ```
 
-The sample-count structural invariants require positive native dimensions, the audited source/encoding/precision, finite reconstructed counts within `primary=[0,500]`, `shape=[0,5]`, and `detail=[0,5]` for every native texel, `primaryMarchTexelCount > 0`, `primary >= shape >= detail >= 0` for every primary-march texel, `shape=detail=0` whenever `primary=0`, `primary>0` for every native-hit texel, and `runtime maxIterationCount=500`. The cap-saturation rule is separate: reaching `500` is structurally valid but indicates iteration-budget exhaustion. Its denominator includes both hit and no-hit primary-march texels. A candidate with more than `1%` saturated primary-march texels therefore fails even when the exhausted population never sets the hit-mask alpha and all other signal metrics pass.
+The capture-only primary-march instrumentation has a separate shader mode and buffer from sample-count debug. It explicitly initializes `enteredPrimaryMarch=false`, `loopIterationCount=0`, and `capReached=false` for every pixel. Rays that call `marchClouds` set entry true on function entry. The loop counter increments as the first statement of every actual `for` body execution. Every early `break` sets a local `terminatedBeforeCap=true` before leaving. After the loop, and not by decoding sample counts, `capReached` becomes true only when entry is true, `loopIterationCount == runtime maxIterationCount`, and no early break terminated the loop. Non-intersecting rays publish `RGBA=(0,0,0,0)`.
+
+The primary-march structural invariants require the audited `RGBA16F` source/encoding/origin, equal native dimensions with sample-count debug, finite integer `R` in `[0,maxIterationCount]`, binary `G/B/A`, `enteredPrimaryMarchPixelCount > 0`, `G=0 -> R=B=A=0`, `G=1 -> R>=1`, `B=1 -> G=1 and R=maxIterationCount`, and `A=1 -> G=1`. The shader-source audit must prove that every `marchClouds` early-break site sets `terminatedBeforeCap` and that no uncaptured exit can produce `B=1`. Any source-anchor/count drift is setup-blocked.
+
+The sample-count structural invariants independently require positive native dimensions, the audited source/encoding/precision, finite reconstructed counts within `primary=[0,500]`, `shape=[0,5]`, and `detail=[0,5]`, `primary >= shape >= detail >= 0` for every native texel, `primary>0` for every native-hit texel, and `runtime maxIterationCount=500`. The capture patch must change both the outer `marchClouds` debug counter parameter and the debug `sampleMedia` counter parameter from `out` to `inout`, preserving the caller's explicit `ivec3(0)` initialization; changing only the inner `sampleMedia` parameter is invalid evidence. Unique shader anchors, the upstream source hash, injected-source hash, and restored-source hash are mandatory.
+
+The cap-saturation rule is separate from rough-weather sample-count health. A candidate with more than `1%` explicit `capReached` flags among all entered primary-march rays fails even when those rays take fewer than `500` rough-weather samples, never hit cloud, or all other signal metrics pass.
 
 These absolute floors are valid only for the frozen sampling-policy screen. They are anchored below the confirmed treatment's observed `29.29–32.86%` signal while remaining far above the control's sub-`1%` result. They are not reused to judge later coverage or morphology candidates.
 
@@ -295,11 +318,12 @@ A step candidate is sampling-healthy only when all four progresses pass the quan
 
 ### Stage 2 — feature isolation and GPU policy selection
 
-Only sampling-healthy candidates enter Stage 2. At all four progress values, capture `full`, `cloud-raw`, `cloud-raw-off`, `sample-count-debug`, and lossless `stage-readback` under both `native` and `light-shafts-off` feature states. Under `bsm-off`, capture `full`, `sample-count-debug`, and lossless `stage-readback`. Retain the existing `aerial-final` cloud-off control. GPU populations run only for native/full and light-shafts-off/full.
+Only sampling-healthy candidates enter Stage 2. At all four progress values, capture `full`, `cloud-raw`, `cloud-raw-off`, `sample-count-debug`, `primary-march-debug`, and lossless `stage-readback` under both `native` and `light-shafts-off` feature states. Under `bsm-off`, capture `full`, `sample-count-debug`, `primary-march-debug`, and lossless `stage-readback`. Retain the existing `aerial-final` cloud-off control. GPU populations run only for native/full and light-shafts-off/full.
 
 Primary-signal invariants:
 
 - for each candidate/progress, the Stage 1 base-versus-repeat `nativeHitMaskMismatch` and `opacityMae` are the only applicable primary-signal noise floors;
+- the primary-march entry, loop-iteration, cap-reached, and hit channels must be byte-identical across `full`, `light-shafts-off`, and `bsm-off` for the same candidate/progress;
 - `full` versus `light-shafts-off`, and `full` versus `bsm-off`, must each have native-hit-mask mismatch and pre-temporal opacity MAE less than or equal to those same-candidate, same-progress floors;
 - lighting variants may change radiance but may not create or remove primary cloud density;
 - any variant change must force a complete composer remount and fresh cloud/shadow/resolve allocation epoch.
@@ -555,6 +579,7 @@ The V2 winner receives fresh captures for:
 - full final output;
 - cloud raw and cloud raw off;
 - sample-count debug and lossless native sample counts;
+- primary-march debug and lossless entry/loop/cap/hit values;
 - pre-temporal cloud current;
 - resolved history;
 - BSM off;
@@ -595,6 +620,7 @@ At progress `0.00 / 0.06 / 0.12 / 0.18`, capture both `stock` and `v3` from a fr
 - native-frame-`32` full-output PNG;
 - native-frame-`32` cloud-raw and cloud-raw-off PNGs;
 - native-frame-`32` sample-count-debug PNG and lossless native sample-count buffer;
+- native-frame-`32` primary-march-debug PNG and lossless native primary-march buffer;
 - native-frame-`32` stage-readback diagnostic with lossless pre-temporal cloud current, resolved history, and final output;
 - native-frame-`32` BSM-off final output;
 - native-frame-`32` AerialPerspective/cloud-off final output;
@@ -637,8 +663,9 @@ clear-air leakage                              <= 0.05
 first-frame/converged luma delta                <= 0.08
 resolved/pre-temporal signal retention         within [0.90, 1.10]
 resolved/pre-temporal signal-luma retention    within [0.80, 1.20]
-primary-march texel count                       > 0
+entered-primary-march pixel count               > 0
 primary cap-saturation fraction                <= 0.01
+primary-march structural invariants            pass
 sample-count structural invariants             pass
 ```
 
@@ -739,12 +766,13 @@ The initial public-policy path is expected to extend these existing responsibili
 - `TakramOrbitalLookdevIdentity.ts`: include candidate, feature state, and output diagnostic in pre-mount identity;
 - `TakramOrbitalLookdevRuntime.ts`: apply and audit the exact runtime value and capture-only light-shafts state;
 - `TakramStockParityPipeline.tsx`: expose the narrow query/diagnostic path and reuse existing remount, readback, and profiler controls;
-- `TakramV3MorphologyMetrics.ts`: preserve native-hit statistics while adding the complete `primary>0` march population and cap-saturation metrics;
+- `TakramSampleCountInstrumentation.ts`: repair both outer and inner debug-counter `out` semantics and add a separate audited primary-march loop/cap instrumentation mode without changing production GLSL;
+- `TakramV3MorphologyMetrics.ts`: preserve rough-weather/native-hit statistics while deriving march entry and cap saturation only from the independent primary-march buffer;
 - `TakramOrbitalLookdevEvidence.ts`: add machine-derived production-policy, V2, and V3 metric decisions and pure checkpoint transitions;
-- `TakramOrbitalGpuProfiler.ts`: preserve total-only measurement as the production authority and implement independent sequential stage-only populations with complete same-frame stage sets;
+- `TakramOrbitalGpuProfiler.ts`: move authoritative total-only begin/end to the exact BSM-current-through-combined-EffectPass interval and implement independent sequential stage-only populations with complete same-frame stage sets;
 - existing E2E publishers: replace the hand-entered Stage E result with the complete V3 matrix, metric extractor, bounded review input, and pure resolver while reusing capture and hashing helpers.
 
-The initial path must not change `@takram/three-clouds` shader source or package patch artifacts.
+The initial path must not change the on-disk production `@takram/three-clouds` shader source or package patch artifacts. The two exact capture-only runtime instrumentation modes above are permitted only on diagnostic mounts, must restore the original shader byte-for-byte on teardown, and may never enter `output=full` or a GPU timing population.
 
 If and only if Stage 2 produces `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING`, the follow-up design may specify a patched Takram API such as separate primary and shadow-length scale controls. That work requires a new shader/build fingerprint, patch hash, compatibility default preserving `1.01`, and dedicated source/build/type audits.
 
@@ -760,13 +788,18 @@ If and only if Stage 2 produces `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING`, t
 - runtime drift detects the wrong step or light-shafts state;
 - metric extraction derives every quantitative gate from numeric evidence;
 - each Stage 1 threshold boundary has pass/fail coverage;
-- primary-cap saturation includes `primary>0` no-hit texels and fails when those exhausted rays push the complete primary-march population above `1%`;
+- rough-weather `sampleCount.x < 500` cannot conceal an explicit `capReached` flag;
+- entered primary rays with zero rough-weather samples remain in the cap-saturation denominator;
+- every primary-loop early-break path clears cap exhaustion, while a loop that exits only through `maxIterationCount` sets it;
+- outer and inner debug sample counters reject uninitialized `out` semantics;
 - all public-policy and V2 terminal outcomes are reachable through the pure resolver;
 - GPU winner ranking uses maximum p95 across all four progresses;
 - values between `3` and `4 ms` remain query-only;
 - unsupported/disjoint timer populations cannot produce a winner;
 - full and light-shafts-off total/stage populations remain separate and non-nested;
 - BSM combined p95 is derived from same-frame current-plus-resolve sums;
+- the authoritative total-only query begins immediately before BSM current and ends after the combined final EffectPass, excluding RenderPass and NormalPass;
+- a priority-`0` to priority-`3` whole-composer query cannot produce a budget classification or decoupling outcome;
 - Stage 4A/4B cannot fail on deferred separation, depth, or lighting dimensions;
 - the V3 resolver derives setup-blocked, metric-fail, visual-fail, and pass outcomes without accepting a handwritten result boolean;
 - every Stage 4D visual winner, including production-eligible, query-only, over-budget, and performance-blocked stock outcomes, requires a terminal V3 pass, fail, or setup-blocked result;
@@ -779,6 +812,7 @@ If and only if Stage 2 produces `ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING`, t
 - `full`, `light-shafts-off`, and `bsm-off` preserve the primary hit mask within repeat noise;
 - diagnostic teardown restores native high-preset features;
 - total-only and stage-only queries remain mutually exclusive, non-nested, and complete valid populations;
+- total-only frames fail when the expected combined Clouds/AerialPerspective pass identity or exact begin/end submission order drifts;
 - every threshold-bearing and confirmation population rejects a dev build, non-System-Chrome browser, non-Apple-M4 renderer, viewport/DPR drift, browser/GPU drift, or power-state drift;
 - V3 captures both inputs, all four progresses, all six required native frames, every diagnostic/readback, and fresh-mount byte-identical repeats before resolving compatibility;
 - formal capture writes atomically only from a tracked-clean commit;
