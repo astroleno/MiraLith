@@ -20,6 +20,9 @@ function baseInput() {
       progress: 0.06,
       orbitalPreset: "h80",
       orbitalCoverage: 0.45,
+      orbitalFeatureState: "native",
+      orbitalOutput: "full",
+      orbitalProductionStep: "confirmed",
       verticalScale: 2,
       opticalDepthScale: 1
     },
@@ -66,6 +69,27 @@ test("builds a canonical base key from every pre-mount query and generation fiel
     {
       ...baseline,
       normalizedQuery: { ...baseline.normalizedQuery, orbitalCoverage: 0.55 }
+    },
+    {
+      ...baseline,
+      normalizedQuery: {
+        ...baseline.normalizedQuery,
+        orbitalProductionStep: "coarse"
+      }
+    },
+    {
+      ...baseline,
+      normalizedQuery: {
+        ...baseline.normalizedQuery,
+        orbitalFeatureState: "light-shafts-off"
+      }
+    },
+    {
+      ...baseline,
+      normalizedQuery: {
+        ...baseline.normalizedQuery,
+        orbitalOutput: "stage-readback"
+      }
     },
     {
       ...baseline,

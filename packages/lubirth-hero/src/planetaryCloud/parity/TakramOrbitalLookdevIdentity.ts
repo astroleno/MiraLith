@@ -14,6 +14,12 @@ export type TakramLookdevSetupState =
   | "ORBITAL_LOOKDEV_RECOVERY_REMOUNT"
   | "ORBITAL_LOOKDEV_SETUP_BLOCKED";
 
+export interface TakramLookdevProductionRouteIdentity {
+  readonly candidate: string;
+  readonly featureState: string;
+  readonly output: string;
+}
+
 function canonicalize(value: unknown): unknown {
   if (value === undefined) return { $type: "undefined" };
   if (typeof value === "number" && !Number.isFinite(value)) {
@@ -52,6 +58,7 @@ export function buildTakramLookdevBaseKey(input: {
   diagnostic: string;
   normalizedQuery: unknown;
   progress: number;
+  productionRoute?: TakramLookdevProductionRouteIdentity;
   resolvedContract: unknown;
   view: string;
   viewport: { dpr: number; height: number; width: number };

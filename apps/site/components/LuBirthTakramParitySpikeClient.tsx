@@ -70,7 +70,12 @@ export function LuBirthTakramParitySpikeClient() {
         coverage: query.orbitalCoverage,
         verticalScale: query.verticalScale,
         opticalDepthScale: query.opticalDepthScale,
-        stepScaleMode: query.orbitalStepScale ?? "control"
+        samplingPolicy: query.orbitalProductionStep === undefined
+          ? { kind: "causal" as const, mode: query.orbitalStepScale ?? "control" }
+          : {
+              kind: "production" as const,
+              candidate: query.orbitalProductionStep
+            }
       }
     : undefined;
   const runtime = !routeResult.ok
@@ -90,7 +95,10 @@ export function LuBirthTakramParitySpikeClient() {
       data-morphology-view={query?.morphologyView ?? "none"}
       data-optical-depth-scale={query?.opticalDepthScale ?? "none"}
       data-orbital-coverage={query?.orbitalCoverage ?? "none"}
+      data-orbital-feature-state={query?.orbitalFeatureState ?? "none"}
+      data-orbital-output={query?.orbitalOutput ?? "none"}
       data-orbital-preset={query?.orbitalPreset ?? "none"}
+      data-orbital-production-step={query?.orbitalProductionStep ?? "none"}
       data-orbital-step-scale={query?.orbitalStepScale ?? "none"}
       data-runtime={runtime}
       data-stock-weather={query?.stockWeatherMode ?? "none"}
@@ -122,6 +130,7 @@ export function LuBirthTakramParitySpikeClient() {
               morphologyCandidate={query.morphologyCandidate}
               morphologyView={query.morphologyView}
               orbitalLookdev={orbitalLookdev}
+              orbitalFeatureState={query.orbitalFeatureState}
               onTelemetry={handleTelemetry}
               progress={query.progress}
               stockWeatherMode={query.stockWeatherMode}

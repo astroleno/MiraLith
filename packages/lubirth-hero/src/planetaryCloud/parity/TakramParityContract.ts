@@ -33,6 +33,10 @@ import {
   parseTakramOrbitalStepScaleMode,
   type TakramOrbitalStepScaleMode
 } from "./TakramOrbitalSamplingCausality";
+import {
+  parseTakramOrbitalProductionStepCandidate,
+  type TakramOrbitalProductionStepCandidate
+} from "./TakramOrbitalProductionSampling";
 import type {
   TakramLookdevSetupState
 } from "./TakramOrbitalLookdevIdentity";
@@ -70,9 +74,27 @@ export type TakramParityDiagnostic =
   | "cloud-raw"
   | "cloud-raw-off"
   | "sample-count-debug"
+  | "primary-march-debug"
   | "stage-readback"
   | "aerial-final"
   | "mip-diagnostic";
+export const TAKRAM_ORBITAL_FEATURE_STATES = Object.freeze([
+  "native",
+  "light-shafts-off",
+  "bsm-off"
+] as const);
+export const TAKRAM_ORBITAL_OUTPUTS = Object.freeze([
+  "full",
+  "cloud-raw",
+  "cloud-raw-off",
+  "sample-count-debug",
+  "primary-march-debug",
+  "stage-readback",
+  "aerial-final"
+] as const);
+export type TakramOrbitalFeatureState =
+  (typeof TAKRAM_ORBITAL_FEATURE_STATES)[number];
+export type TakramOrbitalOutput = (typeof TAKRAM_ORBITAL_OUTPUTS)[number];
 export type UpstreamControlDecision = "PASS" | "UPSTREAM_CONTROL_FAIL";
 export type StockOpeningDecision =
   | "PASS"
@@ -103,6 +125,9 @@ export type TakramParityRouteQuery = {
   opticalDepthScale?: TakramOrbitalOpticalDepthScale;
   orbitalCoverage?: TakramOrbitalCoverage;
   orbitalPreset?: TakramOrbitalPreset;
+  orbitalFeatureState?: TakramOrbitalFeatureState;
+  orbitalOutput?: TakramOrbitalOutput;
+  orbitalProductionStep?: TakramOrbitalProductionStepCandidate;
   orbitalStepScale?: TakramOrbitalStepScaleMode;
   verticalScale?: TakramOrbitalVerticalScale;
   weatherAdapterComparison?: TakramWeatherAdapterComparison;
@@ -113,6 +138,48 @@ export function isTakramParityAltitudeLadderDiagnostic(
 ) {
   return diagnostic === "altitude-ladder" ||
     diagnostic === "altitude-ladder-cloud-off";
+}
+
+export function parseTakramOrbitalFeatureState(
+  value: string | null
+): TakramOrbitalFeatureState | null {
+  return value !== null && TAKRAM_ORBITAL_FEATURE_STATES.includes(
+    value as TakramOrbitalFeatureState
+  )
+    ? value as TakramOrbitalFeatureState
+    : null;
+}
+
+export function parseTakramOrbitalOutput(
+  value: string | null
+): TakramOrbitalOutput | null {
+  return value !== null && TAKRAM_ORBITAL_OUTPUTS.includes(
+    value as TakramOrbitalOutput
+  )
+    ? value as TakramOrbitalOutput
+    : null;
+}
+
+export function isTakramOrbitalFeatureOutputSupported(input: Readonly<{
+  featureState: TakramOrbitalFeatureState;
+  output: TakramOrbitalOutput;
+}>): boolean {
+  if (input.output === "aerial-final") return input.featureState === "native";
+  if (input.featureState === "bsm-off") {
+    return [
+      "full",
+      "sample-count-debug",
+      "primary-march-debug",
+      "stage-readback"
+    ].includes(input.output);
+  }
+  return true;
+}
+
+export function isTakramOrbitalGpuOutputAuthorized(
+  output: TakramOrbitalOutput
+): boolean {
+  return output === "full";
 }
 
 export function shouldCaptureTakramHistoryFirstFrame(input: {
@@ -256,6 +323,7 @@ export type TakramParityRouteQueryResult =
     ok: false;
     reason:
       | "control-requires-stock"
+      | "conflicting-orbital-sampling-policies"
       | "conflicting-orbital-lookdev-contracts"
       | "cloud-coverage-requires-scale"
       | "cloud-scale-requires-coverage-mode"
@@ -271,9 +339,12 @@ export type TakramParityRouteQueryResult =
       | "stock-weather-mode-requires-scale"
       | "stock-weather-mode-requires-stock"
       | "orbital-lookdev-requires-opening"
+      | "unsupported-orbital-feature-output"
       | "unknown-optical-depth-scale"
       | "unknown-orbital-coverage"
+      | "unknown-orbital-feature-state"
       | "unknown-orbital-preset"
+      | "unknown-orbital-production-step"
       | "unknown-orbital-step-scale"
       | "unknown-vertical-scale"
       | "unknown-weather-adapter-comparison"
@@ -295,6 +366,8 @@ export function resolveTakramParityRouteQuery(
   const requestedMorphologyView = input.get("morphologyView");
   const requestedOrbitalPreset = input.get("orbitalPreset");
   const requestedOrbitalCoverage = input.get("orbitalCoverage");
+  const requestedOrbitalFeatureState = input.get("orbitalFeatureState");
+  const requestedOrbitalProductionStep = input.get("orbitalProductionStep");
   const requestedOrbitalStepScale = input.get("orbitalStepScale");
   const requestedVerticalScale = input.get("verticalScale");
   const requestedOpticalDepthScale = input.get("opticalDepthScale");
@@ -329,8 +402,10 @@ export function resolveTakramParityRouteQuery(
     requestedVerticalScale,
     requestedOpticalDepthScale
   ];
+  const hasProductionRoute = requestedOrbitalProductionStep !== null;
   const hasOrbitalLookdevQuery = orbitalFields.some((entry) => entry !== null) ||
-    requestedOrbitalStepScale !== null;
+    requestedOrbitalStepScale !== null || requestedOrbitalProductionStep !== null ||
+    requestedOrbitalFeatureState !== null;
   if (requestedWeatherAdapterComparison !== null &&
     requestedWeatherAdapterComparison !== "explicit") {
     return { ok: false, reason: "unknown-weather-adapter-comparison" };
@@ -360,9 +435,27 @@ export function resolveTakramParityRouteQuery(
     parseTakramOrbitalOpticalDepthScale(requestedOpticalDepthScale) === null) {
     return { ok: false, reason: "unknown-optical-depth-scale" };
   }
+  const orbitalProductionStep = parseTakramOrbitalProductionStepCandidate(
+    requestedOrbitalProductionStep
+  );
+  if (requestedOrbitalProductionStep !== null && orbitalProductionStep === null) {
+    return { ok: false, reason: "unknown-orbital-production-step" };
+  }
+  const orbitalFeatureState = parseTakramOrbitalFeatureState(
+    requestedOrbitalFeatureState
+  );
+  if (requestedOrbitalFeatureState !== null && orbitalFeatureState === null) {
+    return { ok: false, reason: "unknown-orbital-feature-state" };
+  }
   if (requestedOrbitalStepScale !== null &&
     parseTakramOrbitalStepScaleMode(requestedOrbitalStepScale) === null) {
     return { ok: false, reason: "unknown-orbital-step-scale" };
+  }
+  if (hasProductionRoute && requestedOrbitalStepScale !== null) {
+    return { ok: false, reason: "conflicting-orbital-sampling-policies" };
+  }
+  if (requestedOrbitalFeatureState !== null && !hasProductionRoute) {
+    return { ok: false, reason: "incomplete-orbital-lookdev" };
   }
   if (hasOrbitalLookdevQuery && orbitalFields.some((entry) => entry === null)) {
     return { ok: false, reason: "incomplete-orbital-lookdev" };
@@ -377,9 +470,26 @@ export function resolveTakramParityRouteQuery(
   if (hasOrbitalLookdevQuery) {
     value.orbitalPreset = parseTakramOrbitalPreset(requestedOrbitalPreset)!;
     value.orbitalCoverage = parseTakramOrbitalCoverage(requestedOrbitalCoverage)!;
-    value.orbitalStepScale = requestedOrbitalStepScale === null
-      ? "control"
-      : parseTakramOrbitalStepScaleMode(requestedOrbitalStepScale)!;
+    if (orbitalProductionStep !== null) {
+      const output = requestedDiagnostic === null
+        ? "full"
+        : parseTakramOrbitalOutput(requestedDiagnostic);
+      const featureState = orbitalFeatureState ?? "native";
+      if (output === null || !isTakramOrbitalFeatureOutputSupported({
+        featureState,
+        output
+      })) {
+        return { ok: false, reason: "unsupported-orbital-feature-output" };
+      }
+      value.diagnostic = output;
+      value.orbitalFeatureState = featureState;
+      value.orbitalOutput = output;
+      value.orbitalProductionStep = orbitalProductionStep;
+    } else {
+      value.orbitalStepScale = requestedOrbitalStepScale === null
+        ? "control"
+        : parseTakramOrbitalStepScaleMode(requestedOrbitalStepScale)!;
+    }
     value.verticalScale = parseTakramOrbitalVerticalScale(requestedVerticalScale)!;
     value.opticalDepthScale = parseTakramOrbitalOpticalDepthScale(
       requestedOpticalDepthScale
@@ -475,7 +585,7 @@ export function resolveTakramParityRouteQuery(
   const cloudScaleDiagnostic = value.cloudScale !== undefined &&
     ["full", "cloud-raw", "cloud-raw-off", "history-reset-first", "bsm-off", "aerial-final", "sample-count-debug", "stage-readback", "mip-diagnostic"].includes(value.diagnostic);
   const orbitalDiagnostic = value.orbitalPreset !== undefined &&
-    ["full", "cloud-raw", "cloud-raw-off", "history-reset-first", "bsm-off", "aerial-final", "sample-count-debug", "stage-readback", "uv-debug"].includes(value.diagnostic);
+    ["full", "cloud-raw", "cloud-raw-off", "history-reset-first", "bsm-off", "aerial-final", "sample-count-debug", "primary-march-debug", "stage-readback", "uv-debug"].includes(value.diagnostic);
   return {
     ok: true,
     value: value.view === "opening" && !morphologyDiagnostic && !cloudScaleDiagnostic &&

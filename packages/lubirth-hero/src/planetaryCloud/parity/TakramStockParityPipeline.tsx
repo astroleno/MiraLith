@@ -69,6 +69,7 @@ import {
   type TakramParitySampleCountReadback,
   type TakramParityStageReadbackCapture,
   type TakramParityTelemetry,
+  type TakramOrbitalFeatureState,
   type TakramParityView,
   type TakramWeatherAdapterComparison
 } from "./TakramParityContract";
@@ -256,6 +257,7 @@ export interface TakramStockParityPipelineProps {
   morphologyCandidate?: TakramV3MorphologyCandidateId;
   morphologyView?: TakramV3MorphologyViewId;
   orbitalLookdev?: TakramOrbitalLookdevInput;
+  orbitalFeatureState?: TakramOrbitalFeatureState;
   onTelemetry?: (telemetry: TakramParityTelemetry) => void;
   progress: number;
   view: TakramParityView;
@@ -581,6 +583,7 @@ export function TakramStockParityPipeline({
   morphologyCandidate,
   morphologyView,
   orbitalLookdev,
+  orbitalFeatureState,
   onTelemetry,
   progress,
   stockWeatherMode,
@@ -598,6 +601,7 @@ export function TakramStockParityPipeline({
       orbitalLookdev?.coverage,
       orbitalLookdev?.opticalDepthScale,
       orbitalLookdev?.preset,
+      orbitalLookdev?.samplingPolicy,
       orbitalLookdev?.stepScaleMode,
       orbitalLookdev?.verticalScale
     ]
@@ -705,6 +709,18 @@ export function TakramStockParityPipeline({
             opticalDepthScale: orbitalLookdevContract.opticalDepthScale,
             orbitalCoverage: orbitalLookdevContract.coverage,
             orbitalPreset: orbitalLookdevContract.preset,
+            orbitalFeatureState: orbitalLookdevContract.samplingPolicy.kind ===
+                "production"
+              ? orbitalFeatureState ?? "native"
+              : null,
+            orbitalOutput: orbitalLookdevContract.samplingPolicy.kind ===
+                "production"
+              ? diagnostic
+              : null,
+            orbitalProductionStep: orbitalLookdevContract.samplingPolicy.kind ===
+                "production"
+              ? orbitalLookdevContract.samplingPolicy.candidate
+              : null,
             orbitalStepScale: orbitalLookdevContract.stepScaleMode,
             progress: clampOpeningProgress(progress),
             verticalScale: orbitalLookdevContract.verticalScale,
@@ -712,6 +728,14 @@ export function TakramStockParityPipeline({
             weatherAdapterComparison: weatherAdapterComparison ?? null
           },
           progress: clampOpeningProgress(progress),
+          productionRoute: orbitalLookdevContract.samplingPolicy.kind ===
+              "production"
+            ? {
+                candidate: orbitalLookdevContract.samplingPolicy.candidate,
+                featureState: orbitalFeatureState ?? "native",
+                output: diagnostic
+              }
+            : undefined,
           resolvedContract: orbitalLookdevContract,
           view,
           viewport: {
@@ -729,6 +753,7 @@ export function TakramStockParityPipeline({
       diagnostic,
       input,
       orbitalAdapterManifestId,
+      orbitalFeatureState,
       orbitalLookdevContract,
       progress,
       view,

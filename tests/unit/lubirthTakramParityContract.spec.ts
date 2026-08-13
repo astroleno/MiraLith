@@ -15,6 +15,7 @@ import {
 } from "three";
 
 interface TakramParityContractModule {
+  isTakramOrbitalGpuOutputAuthorized(output: string): boolean;
   resolveTakramParityRouteQuery(input: { get(name: string): string | null }):
     | {
       ok: true;
@@ -22,8 +23,11 @@ interface TakramParityContractModule {
         cloudCoverageMode?: "parity" | "presentation";
         cloudScale?: 80 | 120 | 160;
         stockWeatherMode?: "unscaled" | "similarity";
-        diagnostic: "altitude-ladder" | "altitude-ladder-cloud-off" | "aerial-final" | "bsm-off" | "cloud-raw" | "cloud-raw-off" | "depth-off" | "density-debug" | "full" | "history-reset-first" | "mip-diagnostic" | "sample-count-debug" | "stage-readback" | "uv-debug";
+        diagnostic: "altitude-ladder" | "altitude-ladder-cloud-off" | "aerial-final" | "bsm-off" | "cloud-raw" | "cloud-raw-off" | "depth-off" | "density-debug" | "full" | "history-reset-first" | "mip-diagnostic" | "primary-march-debug" | "sample-count-debug" | "stage-readback" | "uv-debug";
         input: "stock" | "v3";
+        orbitalFeatureState?: "native" | "light-shafts-off" | "bsm-off";
+        orbitalOutput?: "full" | "cloud-raw" | "cloud-raw-off" | "sample-count-debug" | "primary-march-debug" | "stage-readback" | "aerial-final";
+        orbitalProductionStep?: "control" | "fine" | "confirmed" | "coarse";
         progress: number;
         view: "control" | "opening";
       };
@@ -37,6 +41,10 @@ interface TakramParityContractModule {
         | "conflicting-scale-contracts"
         | "control-requires-stock"
         | "mip-diagnostic-requires-stock"
+        | "conflicting-orbital-sampling-policies"
+        | "unsupported-orbital-feature-output"
+        | "unknown-orbital-feature-state"
+        | "unknown-orbital-production-step"
         | "unknown-cloud-coverage-mode"
         | "unknown-cloud-scale"
         | "unknown-stock-weather-mode"
@@ -423,6 +431,122 @@ test("accepts only complete opening orbital lookdev queries and rejects legacy c
     expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(query)))
       .toEqual({ ok: false, reason });
   }
+});
+
+test("parses exact production step, feature state, and output identity", async () => {
+  const contract = await loadTakramParityContract();
+  expect(contract).not.toBeNull();
+  const frozen =
+    "input=stock&view=opening&progress=0.06" +
+    "&orbitalPreset=h120&orbitalCoverage=0.55" +
+    "&verticalScale=1&opticalDepthScale=1";
+
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    `${frozen}&orbitalProductionStep=confirmed` +
+    "&orbitalFeatureState=light-shafts-off&diagnostic=stage-readback"
+  ))).toEqual({
+    ok: true,
+    value: {
+      diagnostic: "stage-readback",
+      input: "stock",
+      opticalDepthScale: 1,
+      orbitalCoverage: 0.55,
+      orbitalFeatureState: "light-shafts-off",
+      orbitalOutput: "stage-readback",
+      orbitalPreset: "h120",
+      orbitalProductionStep: "confirmed",
+      progress: 0.06,
+      verticalScale: 1,
+      view: "opening"
+    }
+  });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    `${frozen}&orbitalProductionStep=fine&diagnostic=primary-march-debug`
+  ))).toMatchObject({
+    ok: true,
+    value: {
+      diagnostic: "primary-march-debug",
+      orbitalFeatureState: "native",
+      orbitalOutput: "primary-march-debug",
+      orbitalProductionStep: "fine"
+    }
+  });
+
+  const invalidQueries = [
+    [
+      `${frozen}&orbitalProductionStep=1.0001`,
+      "unknown-orbital-production-step"
+    ],
+    [
+      `${frozen}&orbitalProductionStep=confirmed&orbitalFeatureState=off`,
+      "unknown-orbital-feature-state"
+    ],
+    [
+      `${frozen}&orbitalProductionStep=confirmed&orbitalStepScale=treatment`,
+      "conflicting-orbital-sampling-policies"
+    ],
+    [
+      "input=stock&view=opening&orbitalProductionStep=confirmed",
+      "incomplete-orbital-lookdev"
+    ],
+    [
+      `${frozen}&orbitalProductionStep=confirmed&cloudScale=120&cloudCoverage=parity`,
+      "conflicting-orbital-lookdev-contracts"
+    ],
+    [
+      `${frozen}&orbitalProductionStep=confirmed&orbitalFeatureState=light-shafts-off&diagnostic=aerial-final`,
+      "unsupported-orbital-feature-output"
+    ],
+    [
+      `${frozen}&orbitalProductionStep=confirmed&orbitalFeatureState=bsm-off&diagnostic=cloud-raw`,
+      "unsupported-orbital-feature-output"
+    ],
+    [
+      `${frozen}&orbitalProductionStep=confirmed&diagnostic=arbitrary-output`,
+      "unsupported-orbital-feature-output"
+    ]
+  ] as const;
+  for (const [query, reason] of invalidQueries) {
+    expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(query)))
+      .toEqual({ ok: false, reason });
+  }
+
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    `${frozen}&diagnostic=bsm-off`
+  ))).toMatchObject({
+    ok: true,
+    value: {
+      diagnostic: "bsm-off",
+      orbitalStepScale: "control"
+    }
+  });
+  expect(contract?.resolveTakramParityRouteQuery(new URLSearchParams(
+    `${frozen}&diagnostic=primary-march-debug`
+  ))).toMatchObject({
+    ok: true,
+    value: {
+      diagnostic: "full",
+      orbitalStepScale: "control"
+    }
+  });
+
+  expect([
+    "full",
+    "cloud-raw",
+    "cloud-raw-off",
+    "sample-count-debug",
+    "primary-march-debug",
+    "stage-readback",
+    "aerial-final"
+  ].map(contract!.isTakramOrbitalGpuOutputAuthorized)).toEqual([
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+  ]);
 });
 
 test("pins the official stock Takram contract to auditable local assets", async () => {
