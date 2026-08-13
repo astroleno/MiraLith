@@ -339,3 +339,79 @@ test("reports canonical drift for every tuned or frozen renderer field", async (
   expect(drift.find((entry) => entry.path === "clouds.maxRayDistance"))
     .toEqual({ actual: 200_001, expected: 200_000, path: "clouds.maxRayDistance" });
 });
+
+test("applies exact production feature state and restores native flags", async () => {
+  const { contract: contractModule, runtime: runtimeModule } = await loadModules();
+  const { resolveTakramOrbitalLookdevContract } = contractModule;
+  const {
+    applyTakramOrbitalLookdevRuntime,
+    diffTakramOrbitalLookdevRuntime,
+    readTakramOrbitalLookdevRuntime
+  } = runtimeModule;
+  const contract = resolveTakramOrbitalLookdevContract({
+    preset: "h80",
+    coverage: 0.4,
+    verticalScale: 2,
+    opticalDepthScale: 1,
+    samplingPolicy: { kind: "production", candidate: "confirmed" }
+  });
+  const officialShadows = contract.layers.map((layer: any) => layer.shadow);
+
+  for (const [featureState, lightShafts, shadows] of [
+    ["native", true, officialShadows],
+    ["light-shafts-off", false, officialShadows],
+    ["bsm-off", true, officialShadows.map(() => false)]
+  ] as const) {
+    const runtime = createRuntime(resolveTakramOrbitalLookdevContract);
+    applyTakramOrbitalLookdevRuntime(runtime, contract, undefined, featureState);
+    const readback = readTakramOrbitalLookdevRuntime(
+      runtime,
+      contract,
+      featureState
+    );
+    expect(readback.featureState).toBe(featureState);
+    expect(readback.renderer.lightShafts).toBe(lightShafts);
+    expect(readback.layers.map((layer: any) => layer.shadow)).toEqual(shadows);
+    expect(Object.values(readback.allocations.shadow).every(
+      (generation) => typeof generation === "number"
+    )).toBe(true);
+    expect(diffTakramOrbitalLookdevRuntime(
+      contract,
+      readback,
+      undefined,
+      featureState
+    )).toEqual([]);
+  }
+
+  const runtime = createRuntime(resolveTakramOrbitalLookdevContract);
+  applyTakramOrbitalLookdevRuntime(runtime, contract, undefined, "light-shafts-off");
+  runtime.lightShafts = true;
+  expect(diffTakramOrbitalLookdevRuntime(
+    contract,
+    readTakramOrbitalLookdevRuntime(runtime, contract, "light-shafts-off"),
+    undefined,
+    "light-shafts-off"
+  )).toContainEqual({
+    actual: true,
+    expected: false,
+    path: "renderer.lightShafts"
+  });
+
+  applyTakramOrbitalLookdevRuntime(runtime, contract, undefined, "bsm-off");
+  runtime.cloudLayers[0].shadow = true;
+  expect(diffTakramOrbitalLookdevRuntime(
+    contract,
+    readTakramOrbitalLookdevRuntime(runtime, contract, "bsm-off"),
+    undefined,
+    "bsm-off"
+  )).toContainEqual({
+    actual: true,
+    expected: false,
+    path: "layers.0.shadow"
+  });
+
+  applyTakramOrbitalLookdevRuntime(runtime, contract, undefined, "native");
+  const restored = readTakramOrbitalLookdevRuntime(runtime, contract, "native");
+  expect(restored.renderer.lightShafts).toBe(true);
+  expect(restored.layers.map((layer: any) => layer.shadow)).toEqual(officialShadows);
+});

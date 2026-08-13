@@ -158,7 +158,6 @@ export interface TakramOrbitalLookdevContract {
   shapeDetailWavelengthMeters: number;
   shapeRepeat: number;
   shapeWavelengthMeters: number;
-  stepScaleMode: TakramOrbitalStepScaleMode;
   turbulenceDisplacement: number;
   turbulenceRepeat: readonly [20, 20];
   verticalScale: TakramOrbitalVerticalScale;
@@ -287,9 +286,6 @@ export function resolveTakramOrbitalLookdevContract(
             samplingPolicyInput.candidate
           )
         };
-  const stepScaleMode = samplingPolicy.kind === "causal"
-    ? samplingPolicy.mode
-    : "control";
   const verticalOpticalScale = input.opticalDepthScale / input.verticalScale;
   const layers = TAKRAM_CLOUD_SCALE_DEFAULTS.layers.map((layer) => ({
     ...layer,
@@ -343,7 +339,6 @@ export function resolveTakramOrbitalLookdevContract(
     shapeDetailWavelengthMeters: 1 / morphology.shapeDetailRepeat,
     shapeRepeat: morphology.shapeRepeat,
     shapeWavelengthMeters: 1 / morphology.shapeRepeat,
-    stepScaleMode,
     turbulenceDisplacement: TAKRAM_CLOUD_SCALE_DEFAULTS.turbulenceDisplacement,
     turbulenceRepeat,
     verticalScale: input.verticalScale

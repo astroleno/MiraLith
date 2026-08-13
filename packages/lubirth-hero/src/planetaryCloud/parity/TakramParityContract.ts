@@ -50,6 +50,10 @@ import {
 } from "./TakramV3MorphologyContract";
 import type { TakramV3MorphologyScaleAudit } from "./TakramV3MorphologyScaleAudit";
 import type { TakramShaderInstrumentationAudit } from "./TakramSampleCountInstrumentation";
+import type { TakramOrbitalGpuSubmissionAudit } from
+  "./TakramOrbitalGpuSubmissionInstrumentation";
+import type { TakramOrbitalGpuMeasurementMode } from
+  "./TakramOrbitalGpuProfiler";
 
 export const TAKRAM_PARITY_BOTTOM_RADIUS_M = 6_360_000;
 export const TAKRAM_PARITY_ALTITUDE_LADDER_MAX_M = 20_000_000;
@@ -181,6 +185,78 @@ export function isTakramOrbitalGpuOutputAuthorized(
   output: TakramOrbitalOutput
 ): boolean {
   return output === "full";
+}
+
+export interface TakramOrbitalProductionProfilerStartRequest {
+  readonly candidateId: string;
+  readonly committedWinnerId: string;
+  readonly featureState: "native" | "light-shafts-off";
+  readonly lookdevMountKey: string;
+  readonly measurementMode:
+    | "total-only-time-elapsed"
+    | "stage-only-sequential-time-elapsed";
+  readonly runtimeEvidenceEpoch: string;
+  readonly targetSampleCount: 8 | 120;
+  readonly warmupFrameCount: 8 | 120;
+}
+
+export interface TakramOrbitalProductionProfilerRuntimeState {
+  readonly activePopulation: boolean;
+  readonly combinedPassAuditValid: boolean;
+  readonly featureState: TakramOrbitalFeatureState;
+  readonly lookdevMountKey: string;
+  readonly output: TakramOrbitalOutput;
+  readonly productionCandidate: TakramOrbitalProductionStepCandidate | null;
+  readonly runtimeEvidenceEpoch: string | null;
+}
+
+export type TakramOrbitalProductionProfilerAuthorizationReason =
+  | "candidate-is-not-committed-stock-winner"
+  | "candidate-is-not-mounted-policy"
+  | "lookdev-mount-key-mismatch"
+  | "runtime-evidence-epoch-mismatch"
+  | "gpu-output-not-full"
+  | "feature-state-mismatch"
+  | "unsupported-measurement-mode"
+  | "gpu-population-already-active"
+  | "combined-pass-audit-failed"
+  | "invalid-profiler-population-shape";
+
+export function authorizeTakramOrbitalProductionProfilerStart(input: Readonly<{
+  request: TakramOrbitalProductionProfilerStartRequest;
+  runtime: TakramOrbitalProductionProfilerRuntimeState;
+}>): Readonly<{
+  authorized: boolean;
+  reason: TakramOrbitalProductionProfilerAuthorizationReason | null;
+}> {
+  const { request, runtime } = input;
+  let reason: TakramOrbitalProductionProfilerAuthorizationReason | null = null;
+  if (request.candidateId !== request.committedWinnerId) {
+    reason = "candidate-is-not-committed-stock-winner";
+  } else if (request.candidateId !== runtime.productionCandidate) {
+    reason = "candidate-is-not-mounted-policy";
+  } else if (request.lookdevMountKey !== runtime.lookdevMountKey) {
+    reason = "lookdev-mount-key-mismatch";
+  } else if (!request.runtimeEvidenceEpoch ||
+    request.runtimeEvidenceEpoch !== runtime.runtimeEvidenceEpoch) {
+    reason = "runtime-evidence-epoch-mismatch";
+  } else if (runtime.output !== "full") {
+    reason = "gpu-output-not-full";
+  } else if (request.featureState !== runtime.featureState) {
+    reason = "feature-state-mismatch";
+  } else if (request.measurementMode !== "total-only-time-elapsed" &&
+    request.measurementMode !== "stage-only-sequential-time-elapsed") {
+    reason = "unsupported-measurement-mode";
+  } else if (runtime.activePopulation) {
+    reason = "gpu-population-already-active";
+  } else if (!runtime.combinedPassAuditValid) {
+    reason = "combined-pass-audit-failed";
+  } else if ((request.targetSampleCount !== 8 &&
+      request.targetSampleCount !== 120) ||
+    request.targetSampleCount !== request.warmupFrameCount) {
+    reason = "invalid-profiler-population-shape";
+  }
+  return Object.freeze({ authorized: reason === null, reason });
 }
 
 export function shouldCaptureTakramHistoryFirstFrame(input: {
@@ -647,9 +723,13 @@ export interface TakramParityRendererFingerprint {
   // Version 3 remains byte-compatible for historical unscaled evidence.
   // Version 4 added declared cloud-scale readback; version 5 proves actual
   // runtime shader identity and mip state.
-  schemaVersion: 3 | 4 | 5 | 6;
+  schemaVersion: 3 | 4 | 5 | 6 | 7;
   cloudScale?: TakramCloudScaleRuntimeReadback;
   orbitalBaseline?: Omit<TakramOrbitalLookdevRuntimeReadback, "allocations">;
+  orbitalGpuSubmission?: Readonly<{
+    audit: TakramOrbitalGpuSubmissionAudit;
+    measurementMode: TakramOrbitalGpuMeasurementMode;
+  }>;
   orbitalRenderTargets?: {
     clouds: {
       clouds: Record<string, unknown>;
@@ -845,6 +925,10 @@ export interface TakramParityRendererRuntimeInputs {
   cloudScaleRuntime?: TakramCloudScaleRuntimeReadback;
   orbitalBaselineRuntime?: TakramOrbitalLookdevRuntimeReadback;
   orbitalLookdevRuntime?: TakramOrbitalLookdevRuntimeReadback;
+  orbitalGpuSubmission?: Readonly<{
+    audit: TakramOrbitalGpuSubmissionAudit;
+    measurementMode: TakramOrbitalGpuMeasurementMode;
+  }>;
   sharedAssets: Record<"shape" | "shapeDetail" | "stbn" | "turbulence", string>;
 }
 
@@ -860,6 +944,7 @@ export function buildTakramParityRendererFingerprint({
   cloudScaleRuntime,
   orbitalBaselineRuntime,
   orbitalLookdevRuntime,
+  orbitalGpuSubmission,
   sharedAssets
 }: TakramParityRendererRuntimeInputs): TakramParityRendererFingerprint {
   const cloudsMaterial = clouds.cloudsPass.currentMaterial as RuntimeObject;
@@ -953,7 +1038,10 @@ export function buildTakramParityRendererFingerprint({
         clouds: readCloudsRenderTargets(cloudsPass),
         shadow: readCloudsRenderTargets(shadowPass)
       },
-      schemaVersion: 6
+      ...(orbitalGpuSubmission === undefined
+        ? {}
+        : { orbitalGpuSubmission }),
+      schemaVersion: orbitalGpuSubmission === undefined ? 6 : 7
     };
   }
   return cloudScaleRuntime === undefined
@@ -1055,6 +1143,7 @@ export interface TakramParityDiagnosticState {
   uvDebug: boolean;
   sceneDepthClamp: boolean;
   sampleCountDebug: boolean;
+  primaryMarchDebug: boolean;
   stageReadback: boolean;
   historyResetFirstFrame: boolean;
   mipDiagnostic: boolean;
@@ -1114,6 +1203,7 @@ export interface TakramParitySampleCountReadback {
   encoding: "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask";
   /** Packed normalized RGBA copied from the native pre-temporal cloud target. */
   values: number[];
+  instrumentationAudit: TakramShaderInstrumentationAudit;
 }
 
 export interface TakramParityPrimaryMarchReadback {
@@ -1171,6 +1261,7 @@ export interface TakramParityTelemetry {
   morphologyView: TakramV3MorphologyViewId | null;
   morphologyScaleAudit: TakramV3MorphologyScaleAudit | null;
   sampleCountReadback: TakramParitySampleCountReadback | null;
+  primaryMarchReadback: TakramParityPrimaryMarchReadback | null;
   progress: number;
   resetNonce: number;
   rendererFingerprint: TakramParityRendererFingerprint | null;

@@ -7,6 +7,7 @@ import type {
   TakramOrbitalLookdevContract,
   TakramOrbitalRendererContract
 } from "./TakramOrbitalLookdevContract";
+import type { TakramOrbitalFeatureState } from "./TakramParityContract";
 
 interface RuntimeVector2 {
   set(x: number, y: number): void;
@@ -94,6 +95,7 @@ export interface TakramOrbitalLookdevRuntimeReadback {
   readonly clouds: Readonly<Record<string, boolean | number | string | undefined>>;
   readonly coverage: number;
   readonly effectiveTurbulenceRepeat: readonly [number, number];
+  readonly featureState: TakramOrbitalFeatureState;
   readonly globalWeatherMapping: boolean | undefined;
   readonly layers: TakramOrbitalLookdevContract["layers"];
   readonly lighting: TakramOrbitalLightingContract;
@@ -102,7 +104,8 @@ export interface TakramOrbitalLookdevRuntimeReadback {
   readonly mipDistancePatch: ReturnType<typeof readTakramMipDistanceRuntime>;
   readonly opticalDepthScale: TakramOrbitalLookdevContract["opticalDepthScale"];
   readonly preset: TakramOrbitalLookdevContract["preset"];
-  readonly renderer: TakramOrbitalRendererContract;
+  readonly renderer: Omit<TakramOrbitalRendererContract, "lightShafts"> &
+    Readonly<{ lightShafts: boolean }>;
   readonly schemaVersion: TakramOrbitalLookdevContract["schemaVersion"];
   readonly shadow: Readonly<Record<
     string,
@@ -247,7 +250,8 @@ export function readTakramOrbitalAllocationGenerations(
 export function applyTakramOrbitalLookdevRuntime(
   clouds: CloudsEffect | TakramOrbitalRuntimeTarget,
   contract: TakramOrbitalLookdevContract,
-  adapter: TakramOrbitalRuntimeAdapterExpectation = nativeAdapterExpectation(contract)
+  adapter: TakramOrbitalRuntimeAdapterExpectation = nativeAdapterExpectation(contract),
+  featureState: TakramOrbitalFeatureState = "native"
 ): void {
   const target = asRuntimeTarget(clouds);
   target.coverage = contract.coverage;
@@ -260,6 +264,8 @@ export function applyTakramOrbitalLookdevRuntime(
   target.turbulenceDisplacement = contract.turbulenceDisplacement;
 
   Object.assign(target, contract.lighting, contract.renderer);
+  (target as unknown as { lightShafts: boolean }).lightShafts =
+    featureState !== "light-shafts-off";
   appliedQualityPresets.set(target, contract.renderer.qualityPreset);
   // Takram's qualityPreset setter reapplies its stock clouds/shadow values.
   // Apply the resolved experiment contract after that macro setter so bounded
@@ -280,13 +286,16 @@ export function applyTakramOrbitalLookdevRuntime(
     if (!targetLayer) continue;
     const { densityProfile, ...properties } = source;
     Object.assign(targetLayer, properties);
+    (targetLayer as unknown as { shadow: boolean }).shadow =
+      featureState === "bsm-off" ? false : source.shadow;
     assignDensityProfile(targetLayer, densityProfile);
   }
 }
 
 export function readTakramOrbitalLookdevRuntime(
   clouds: CloudsEffect | TakramOrbitalRuntimeTarget,
-  contract: TakramOrbitalLookdevContract
+  contract: TakramOrbitalLookdevContract,
+  featureState: TakramOrbitalFeatureState = "native"
 ): DeepReadonly<TakramOrbitalLookdevRuntimeReadback> {
   const target = asRuntimeTarget(clouds);
   const mapSize = target.shadow.mapSize;
@@ -313,6 +322,7 @@ export function readTakramOrbitalLookdevRuntime(
       localWeatherRepeat[0] * turbulenceRepeat[0],
       localWeatherRepeat[1] * turbulenceRepeat[1]
     ],
+    featureState,
     globalWeatherMapping: target.globalWeatherMapping,
     layers: target.cloudLayers.map(readLayer),
     lighting: readLighting(target),
@@ -377,7 +387,8 @@ function collectDrift(
 export function diffTakramOrbitalLookdevRuntime(
   contract: TakramOrbitalLookdevContract,
   readback: TakramOrbitalLookdevRuntimeReadback,
-  adapter: TakramOrbitalRuntimeAdapterExpectation = nativeAdapterExpectation(contract)
+  adapter: TakramOrbitalRuntimeAdapterExpectation = nativeAdapterExpectation(contract),
+  featureState: TakramOrbitalFeatureState = "native"
 ): DeepReadonly<readonly TakramOrbitalLookdevRuntimeDrift[]> {
   const expected = {
     classification: contract.classification,
@@ -387,8 +398,12 @@ export function diffTakramOrbitalLookdevRuntime(
       adapter.localWeatherRepeat[0] * contract.turbulenceRepeat[0],
       adapter.localWeatherRepeat[1] * contract.turbulenceRepeat[1]
     ],
+    featureState,
     globalWeatherMapping: adapter.globalWeatherMapping,
-    layers: contract.layers,
+    layers: contract.layers.map((layer) => ({
+      ...layer,
+      shadow: featureState === "bsm-off" ? false : layer.shadow
+    })),
     lighting: contract.lighting,
     localWeatherOffset: adapter.localWeatherOffset,
     localWeatherRepeat: adapter.localWeatherRepeat,
@@ -399,7 +414,10 @@ export function diffTakramOrbitalLookdevRuntime(
     },
     opticalDepthScale: contract.opticalDepthScale,
     preset: contract.preset,
-    renderer: contract.renderer,
+    renderer: {
+      ...contract.renderer,
+      lightShafts: featureState !== "light-shafts-off"
+    },
     schemaVersion: contract.schemaVersion,
     shadow: contract.shadow,
     shapeDetailRepeat: [

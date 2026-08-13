@@ -68,7 +68,9 @@ function createFixture(mode: Mode) {
     endStage(_frameId: number, stage: string) {
       events.push(`end-${stage}`);
     },
-    finishFrame() {},
+    finishFrame(_frameId: number, copyOnlySubmission?: () => void) {
+      copyOnlySubmission?.();
+    },
     measurementMode: mode,
     snapshot() { return { measurementMode: mode }; }
   };
@@ -94,6 +96,7 @@ test("times the exact total interval without RenderPass or NormalPass", async ()
     aerialPerspectiveEffect: fixture.aerialPerspectiveEffect,
     cloudsEffect: fixture.cloudsEffect,
     composer: fixture.composer,
+    copyOnlySubmission: () => fixture.events.push("copy-only-baseline"),
     profiler: fixture.profiler as any
   });
   fixture.unrelated.render();
@@ -106,7 +109,8 @@ test("times the exact total interval without RenderPass or NormalPass", async ()
     "cloud-current",
     "cloud-resolve",
     "combined-final-render",
-    "end-total"
+    "end-total",
+    "copy-only-baseline"
   ]);
   expect(installation.audit.effectOrder).toEqual([
     "CloudsEffect",

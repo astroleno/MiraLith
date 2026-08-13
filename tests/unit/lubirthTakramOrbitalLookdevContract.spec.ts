@@ -187,15 +187,14 @@ test("changes only the named perspective-step arm in the frozen orbital baseline
     stepScaleMode: "treatment"
   });
 
-  expect(control.stepScaleMode).toBe("control");
+  expect("stepScaleMode" in control).toBe(false);
   expect(control.clouds.perspectiveStepScale).toBe(1.01);
-  expect(treatment.stepScaleMode).toBe("treatment");
+  expect("stepScaleMode" in treatment).toBe(false);
   expect(treatment.clouds.perspectiveStepScale).toBe(1.0001);
 
   const normalize = (value: typeof control) => {
     const normalized = structuredClone(value) as any;
     delete normalized.samplingPolicy;
-    delete normalized.stepScaleMode;
     delete normalized.clouds.perspectiveStepScale;
     return normalized;
   };
@@ -233,7 +232,7 @@ test("resolves discriminated causal and production sampling policies", async () 
     candidate: "confirmed",
     perspectiveStepScale: 1.0001
   });
-  expect(production.stepScaleMode).toBe("control");
+  expect("stepScaleMode" in production).toBe(false);
   expect(production.clouds.perspectiveStepScale).toBe(1.0001);
 
   expect(() => resolveTakramOrbitalLookdevContract({

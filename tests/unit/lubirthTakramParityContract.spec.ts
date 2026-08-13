@@ -15,6 +15,27 @@ import {
 } from "three";
 
 interface TakramParityContractModule {
+  authorizeTakramOrbitalProductionProfilerStart(input: {
+    request: {
+      candidateId: string;
+      committedWinnerId: string;
+      featureState: "native" | "light-shafts-off";
+      lookdevMountKey: string;
+      measurementMode: string;
+      runtimeEvidenceEpoch: string;
+      targetSampleCount: number;
+      warmupFrameCount: number;
+    };
+    runtime: {
+      activePopulation: boolean;
+      combinedPassAuditValid: boolean;
+      featureState: "native" | "light-shafts-off" | "bsm-off";
+      lookdevMountKey: string;
+      output: string;
+      productionCandidate: string | null;
+      runtimeEvidenceEpoch: string | null;
+    };
+  }): { authorized: boolean; reason: string | null };
   isTakramOrbitalGpuOutputAuthorized(output: string): boolean;
   resolveTakramParityRouteQuery(input: { get(name: string): string | null }):
     | {
@@ -150,6 +171,75 @@ interface TakramParityContractModule {
     frameLockPass: boolean;
   };
 }
+
+test("authorizes only an exact production profiler population", async () => {
+  const contract = await loadTakramParityContract();
+  expect(contract).not.toBeNull();
+  const request = {
+    candidateId: "confirmed",
+    committedWinnerId: "confirmed",
+    featureState: "native" as const,
+    lookdevMountKey: "mount",
+    measurementMode: "total-only-time-elapsed",
+    runtimeEvidenceEpoch: "epoch",
+    targetSampleCount: 8,
+    warmupFrameCount: 8
+  };
+  const runtime = {
+    activePopulation: false,
+    combinedPassAuditValid: true,
+    featureState: "native" as const,
+    lookdevMountKey: "mount",
+    output: "full",
+    productionCandidate: "confirmed",
+    runtimeEvidenceEpoch: "epoch"
+  };
+  const authorize = (overrides: Record<string, unknown> = {},
+    runtimeOverrides: Record<string, unknown> = {}) =>
+    contract!.authorizeTakramOrbitalProductionProfilerStart({
+      request: { ...request, ...overrides } as typeof request,
+      runtime: { ...runtime, ...runtimeOverrides } as typeof runtime
+    });
+
+  expect(authorize()).toEqual({ authorized: true, reason: null });
+  expect(authorize({ candidateId: "fine" })).toEqual({
+    authorized: false,
+    reason: "candidate-is-not-committed-stock-winner"
+  });
+  expect(authorize({ lookdevMountKey: "stale" })).toMatchObject({
+    authorized: false,
+    reason: "lookdev-mount-key-mismatch"
+  });
+  expect(authorize({ runtimeEvidenceEpoch: "stale" })).toMatchObject({
+    authorized: false,
+    reason: "runtime-evidence-epoch-mismatch"
+  });
+  expect(authorize({}, { output: "stage-readback" })).toMatchObject({
+    authorized: false,
+    reason: "gpu-output-not-full"
+  });
+  expect(authorize({ featureState: "light-shafts-off" })).toMatchObject({
+    authorized: false,
+    reason: "feature-state-mismatch"
+  });
+  expect(authorize({ measurementMode: "whole-composer" })).toMatchObject({
+    authorized: false,
+    reason: "unsupported-measurement-mode"
+  });
+  expect(authorize({}, { activePopulation: true })).toMatchObject({
+    authorized: false,
+    reason: "gpu-population-already-active"
+  });
+  expect(authorize({}, { combinedPassAuditValid: false })).toMatchObject({
+    authorized: false,
+    reason: "combined-pass-audit-failed"
+  });
+  expect(authorize({ targetSampleCount: 120, warmupFrameCount: 8 }))
+    .toMatchObject({
+      authorized: false,
+      reason: "invalid-profiler-population-shape"
+    });
+});
 
 test("captures one immutable matched temporal frame and hashes its epoch", async () => {
   const contract = await loadTakramParityContract();

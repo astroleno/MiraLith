@@ -2,7 +2,10 @@
 
 import { useFrame, useLoader, useThree } from "@react-three/fiber";
 import { EffectComposer } from "@react-three/postprocessing";
-import { BlendFunction } from "postprocessing";
+import {
+  BlendFunction,
+  type EffectComposer as PostprocessingEffectComposer
+} from "postprocessing";
 import {
   AerialPerspective,
   Atmosphere,
@@ -50,6 +53,7 @@ import {
   TAKRAM_PARITY_STOCK_ASSETS,
   TAKRAM_PARITY_V3_LADDER_SPHERICAL_UV,
   TAKRAM_PARITY_V3_OPENING_PRESET,
+  authorizeTakramOrbitalProductionProfilerStart,
   buildTakramParityHistoryEpoch,
   buildTakramParityRendererFingerprint,
   hashTakramParityCameraEarthTransform,
@@ -70,6 +74,8 @@ import {
   type TakramParityStageReadbackCapture,
   type TakramParityTelemetry,
   type TakramOrbitalFeatureState,
+  type TakramOrbitalOutput,
+  type TakramParityPrimaryMarchReadback,
   type TakramParityView,
   type TakramWeatherAdapterComparison
 } from "./TakramParityContract";
@@ -106,7 +112,13 @@ import {
   TAKRAM_PARITY_V3_ADAPTER
 } from "./TakramParityV3Adapter";
 import { TAKRAM_PARITY_V3_LAYERS } from "./TakramParityV3Layers";
-import { installTakramSampleCountInstrumentation } from "./TakramSampleCountInstrumentation";
+import {
+  installAuditedTakramSampleCountInstrumentation,
+  type TakramShaderInstrumentationAudit,
+  type TakramShaderInstrumentationInstallation
+} from "./TakramSampleCountInstrumentation";
+import { installTakramPrimaryMarchInstrumentation } from
+  "./TakramPrimaryMarchInstrumentation";
 import { encodeTakramStageReadbackValues } from "./TakramStageReadbackEncoding";
 import {
   TAKRAM_MIP_DIAGNOSTIC_RECORD_STRIDE,
@@ -144,11 +156,15 @@ import {
   type TakramLookdevSetupState
 } from "./TakramOrbitalLookdevIdentity";
 import {
-  createTakramOrbitalWebGl2TimerProfiler,
-  createUnsupportedTakramOrbitalGpuProfile,
+  createTakramOrbitalSubmissionTimerProfiler,
   type TakramOrbitalGpuProfileSnapshot,
-  type TakramOrbitalWebGl2TimerProfiler
+  type TakramOrbitalGpuMeasurementMode,
+  type TakramOrbitalSubmissionTimerProfiler
 } from "./TakramOrbitalGpuProfiler";
+import {
+  installTakramOrbitalGpuSubmissionInstrumentation,
+  type TakramOrbitalGpuSubmissionAudit
+} from "./TakramOrbitalGpuSubmissionInstrumentation";
 
 const EARTH_DAY_SRC = "/assets/lubirth/textures/earth-day-nasa-lite-4k.webp";
 const CONTROL_CAMERA_ALTITUDE_M =
@@ -234,12 +250,25 @@ declare global {
     __MiraLithTakramMatchedTemporalFrame?: TakramParityMatchedTemporalFrameCapture;
     __MiraLithTakramStageReadback?: TakramParityStageReadbackCapture;
     __MiraLithTakramMipDiagnostic?: TakramMipDiagnosticCapture;
-    __MiraLithTakramGpuProfile?: TakramOrbitalGpuProfileSnapshot;
+    __MiraLithTakramGpuProfile?: TakramOrbitalGpuProfileSnapshot & Readonly<{
+      submissionAudit: TakramOrbitalGpuSubmissionAudit;
+    }>;
+    __MiraLithTakramPrimaryMarch?: TakramParityPrimaryMarchReadback;
+    __MiraLithTakramDiagnosticRestoration?: Readonly<{
+      mode: "sample-count-debug" | "primary-march-debug";
+      restoredSourceFnv1a64: string;
+      upstreamSourceFnv1a64: string;
+      restored: boolean;
+    }>;
     __MiraLithStartTakramGpuProfile?: (input: Readonly<{
       candidateId: string;
       committedWinnerId: string;
+      featureState: "native" | "light-shafts-off";
       lookdevMountKey: string;
+      measurementMode: TakramOrbitalGpuMeasurementMode;
       runtimeEvidenceEpoch: string;
+      targetSampleCount: 8 | 120;
+      warmupFrameCount: 8 | 120;
     }>) => Readonly<{
       accepted: boolean;
       reason: string | null;
@@ -556,13 +585,14 @@ function resolveDiagnosticState(diagnostic: TakramParityDiagnostic) {
   return {
     altitudeLadder: isTakramParityAltitudeLadderDiagnostic(diagnostic),
     cloudOff: ["altitude-ladder-cloud-off", "aerial-final", "cloud-raw-off"].includes(diagnostic),
-    aerialPerspectiveComposite: !["cloud-raw", "cloud-raw-off", "density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic),
+    aerialPerspectiveComposite: !["cloud-raw", "cloud-raw-off", "density-debug", "uv-debug", "sample-count-debug", "primary-march-debug"].includes(diagnostic),
     beerShadowOcclusion: diagnostic !== "bsm-off",
-    cloudRawOutput: ["cloud-raw", "cloud-raw-off", "density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic),
+    cloudRawOutput: ["cloud-raw", "cloud-raw-off", "density-debug", "uv-debug", "sample-count-debug", "primary-march-debug"].includes(diagnostic),
     densityDebug: diagnostic === "density-debug",
     uvDebug: diagnostic === "uv-debug",
     sceneDepthClamp: diagnostic !== "depth-off",
     sampleCountDebug: diagnostic === "sample-count-debug",
+    primaryMarchDebug: diagnostic === "primary-march-debug",
     stageReadback: diagnostic === "stage-readback",
     historyResetFirstFrame: diagnostic === "history-reset-first",
     mipDiagnostic: diagnostic === "mip-diagnostic"
@@ -629,6 +659,12 @@ export function TakramStockParityPipeline({
       ? TAKRAM_ORBITAL_NATIVE_BASELINE_CONTRACT
       : null
   );
+  const resolvedOrbitalFeatureState: TakramOrbitalFeatureState =
+    orbitalLookdevContract?.samplingPolicy.kind === "production"
+      ? orbitalFeatureState ?? "native"
+      : orbitalLookdevContract !== null && diagnostic === "bsm-off"
+        ? "bsm-off"
+        : "native";
   const stockWeatherControl = useMemo(
     () => input === "stock" && cloudScale !== undefined
       ? resolveTakramStockWeatherControl({
@@ -667,6 +703,10 @@ export function TakramStockParityPipeline({
   const historyFirstFrameCaptureRef = useRef<TakramParityHistoryFirstFrameCapture | null>(null);
   const matchedTemporalFrameCaptureRef = useRef<TakramParityMatchedTemporalFrameCapture | null>(null);
   const sampleCountReadbackRef = useRef<TakramParitySampleCountReadback | null>(null);
+  const primaryMarchReadbackRef =
+    useRef<TakramParityPrimaryMarchReadback | null>(null);
+  const diagnosticInstrumentationAuditRef =
+    useRef<TakramShaderInstrumentationAudit | null>(null);
   const stageReadbackRef = useRef<TakramParityStageReadbackCapture | null>(null);
   const mipDiagnosticCaptureRef = useRef<TakramMipDiagnosticCapture | null>(null);
   const appliedDiagnosticRef = useRef<TakramParityDiagnostic | null>(null);
@@ -680,9 +720,16 @@ export function TakramStockParityPipeline({
   const observedLookdevMountKeyRef = useRef<string | null>(null);
   const pendingRecoveryMountKeyRef = useRef<string | null>(null);
   const runtimeEvidenceEpochRef = useRef<string | null>(null);
-  const gpuProfilerRef = useRef<TakramOrbitalWebGl2TimerProfiler | null>(null);
+  const composerRef = useRef<PostprocessingEffectComposer>(null);
+  const gpuProfilerRef =
+    useRef<TakramOrbitalSubmissionTimerProfiler | null>(null);
+  const gpuSubmissionInstallationRef = useRef<Readonly<{
+    audit: TakramOrbitalGpuSubmissionAudit;
+    restore(): void;
+  }> | null>(null);
+  const gpuSubmissionAuditRef = useRef<TakramOrbitalGpuSubmissionAudit | null>(null);
+  const gpuMeasurementModeRef = useRef<TakramOrbitalGpuMeasurementMode | null>(null);
   const gpuCopyBaselineTextureRef = useRef<FramebufferTexture | null>(null);
-  const gpuQueryActiveRef = useRef(false);
   const ladderCaptureRef = useRef<TakramAltitudeLadderCapture>({
     phase: "normal",
     cloudOnFinalReadback: null,
@@ -721,7 +768,10 @@ export function TakramStockParityPipeline({
                 "production"
               ? orbitalLookdevContract.samplingPolicy.candidate
               : null,
-            orbitalStepScale: orbitalLookdevContract.stepScaleMode,
+            orbitalStepScale: orbitalLookdevContract.samplingPolicy.kind ===
+                "causal"
+              ? orbitalLookdevContract.samplingPolicy.mode
+              : null,
             progress: clampOpeningProgress(progress),
             verticalScale: orbitalLookdevContract.verticalScale,
             view,
@@ -821,35 +871,76 @@ export function TakramStockParityPipeline({
     }
     const startProfiler: NonNullable<Window["__MiraLithStartTakramGpuProfile"]> =
       (request) => {
-        if (request.candidateId !== request.committedWinnerId) {
-          return {
-            accepted: false,
-            reason: "candidate-is-not-committed-stock-winner"
-          };
+        const composer = composerRef.current as unknown as {
+          passes?: readonly Readonly<{ effects?: readonly object[] }>[];
+        } | null;
+        const clouds = cloudsRef.current;
+        const aerialPerspective = aerialPerspectiveRef.current;
+        const matchingCombinedPassCount = composer?.passes?.filter((pass) =>
+          pass.effects?.length === 2 &&
+          pass.effects[0] === clouds &&
+          pass.effects[1] === aerialPerspective
+        ).length ?? 0;
+        const authorization = authorizeTakramOrbitalProductionProfilerStart({
+          request,
+          runtime: {
+            activePopulation: gpuProfilerRef.current !== null ||
+              gpuSubmissionInstallationRef.current !== null,
+            combinedPassAuditValid: matchingCombinedPassCount === 1 &&
+              clouds !== null && aerialPerspective !== null,
+            featureState: resolvedOrbitalFeatureState,
+            lookdevMountKey,
+            output: diagnostic as TakramOrbitalOutput,
+            productionCandidate: orbitalLookdevContract.samplingPolicy.kind ===
+                "production"
+              ? orbitalLookdevContract.samplingPolicy.candidate
+              : null,
+            runtimeEvidenceEpoch: runtimeEvidenceEpochRef.current
+          }
+        });
+        if (!authorization.authorized) {
+          return { accepted: false, reason: authorization.reason };
         }
-        if (request.lookdevMountKey !== lookdevMountKey ||
-          request.runtimeEvidenceEpoch !== runtimeEvidenceEpochRef.current) {
-          return { accepted: false, reason: "runtime-evidence-epoch-mismatch" };
-        }
-        gpuProfilerRef.current?.dispose();
-        gpuCopyBaselineTextureRef.current?.dispose();
-        gpuQueryActiveRef.current = false;
         const context = gl.getContext();
         if (!(context instanceof WebGL2RenderingContext)) {
-          const unsupported = createUnsupportedTakramOrbitalGpuProfile({
-            invalidReason: "webgl2-context-unavailable",
-            timestampBits: 0
-          });
-          window.__MiraLithTakramGpuProfile = unsupported;
-          return { accepted: true, reason: null };
+          return { accepted: false, reason: "webgl2-context-unavailable" };
         }
-        const profiler = createTakramOrbitalWebGl2TimerProfiler(context);
-        gpuProfilerRef.current = profiler;
-        gpuCopyBaselineTextureRef.current = new FramebufferTexture(
+        const profiler = createTakramOrbitalSubmissionTimerProfiler(context, {
+          measurementMode: request.measurementMode,
+          targetSampleCount: request.targetSampleCount,
+          warmupFrameCount: request.warmupFrameCount
+        });
+        const copyBaselineTexture = new FramebufferTexture(
           gl.domElement.width,
           gl.domElement.height
         );
-        window.__MiraLithTakramGpuProfile = profiler.snapshot();
+        let installation: ReturnType<
+          typeof installTakramOrbitalGpuSubmissionInstrumentation
+        >;
+        try {
+          installation = installTakramOrbitalGpuSubmissionInstrumentation({
+            aerialPerspectiveEffect: aerialPerspective!,
+            cloudsEffect: clouds!,
+            composer: composerRef.current!,
+            copyOnlySubmission: () => {
+              gl.copyFramebufferToTexture(copyBaselineTexture);
+            },
+            profiler
+          });
+        } catch {
+          profiler.dispose();
+          copyBaselineTexture.dispose();
+          return { accepted: false, reason: "combined-pass-audit-failed" };
+        }
+        gpuProfilerRef.current = profiler;
+        gpuCopyBaselineTextureRef.current = copyBaselineTexture;
+        gpuSubmissionInstallationRef.current = installation;
+        gpuSubmissionAuditRef.current = installation.audit;
+        gpuMeasurementModeRef.current = request.measurementMode;
+        window.__MiraLithTakramGpuProfile = {
+          ...profiler.snapshot(),
+          submissionAudit: installation.audit
+        };
         return { accepted: true, reason: null };
       };
     window.__MiraLithStartTakramGpuProfile = startProfiler;
@@ -858,13 +949,16 @@ export function TakramStockParityPipeline({
         delete window.__MiraLithStartTakramGpuProfile;
       }
       delete window.__MiraLithTakramGpuProfile;
+      gpuSubmissionInstallationRef.current?.restore();
+      gpuSubmissionInstallationRef.current = null;
       gpuProfilerRef.current?.dispose();
       gpuProfilerRef.current = null;
       gpuCopyBaselineTextureRef.current?.dispose();
       gpuCopyBaselineTextureRef.current = null;
-      gpuQueryActiveRef.current = false;
+      gpuSubmissionAuditRef.current = null;
+      gpuMeasurementModeRef.current = null;
     };
-  }, [gl, lookdevMountKey, orbitalLookdevContract]);
+  }, [diagnostic, gl, lookdevMountKey, orbitalLookdevContract, resolvedOrbitalFeatureState]);
 
   useFrame(() => {
     const width = gl.domElement.width;
@@ -881,25 +975,17 @@ export function TakramStockParityPipeline({
         });
   }, -3);
 
-  // The total-only timer is deliberately non-nesting. It opens immediately
-  // before the native EffectComposer priority and closes after all native
-  // submissions; the profiler then emits a separate empty-query baseline.
-  useFrame(() => {
-    gpuQueryActiveRef.current = gpuProfilerRef.current?.beginFrame() ?? false;
-  }, 0);
-
+  // Submission hooks own every query boundary. This callback only polls after
+  // the combined effect pass has completed and never opens another query.
   useFrame(() => {
     const profiler = gpuProfilerRef.current;
     if (profiler === null) return;
-    if (gpuQueryActiveRef.current) {
-      profiler.endFrame(() => {
-        const texture = gpuCopyBaselineTextureRef.current;
-        if (texture !== null) gl.copyFramebufferToTexture(texture);
-      });
-      gpuQueryActiveRef.current = false;
-    }
-    if (typeof window !== "undefined") {
-      window.__MiraLithTakramGpuProfile = profiler.poll();
+    const audit = gpuSubmissionAuditRef.current;
+    if (typeof window !== "undefined" && audit !== null) {
+      window.__MiraLithTakramGpuProfile = {
+        ...profiler.poll(),
+        submissionAudit: audit
+      };
     }
   }, 3);
 
@@ -937,7 +1023,8 @@ export function TakramStockParityPipeline({
       applyTakramOrbitalLookdevRuntime(
         clouds,
         orbitalLookdevContract,
-        orbitalAdapterExpectation
+        orbitalAdapterExpectation,
+        resolvedOrbitalFeatureState
       );
     }
     if (isTakramParityAltitudeLadderDiagnostic(diagnostic)) {
@@ -949,7 +1036,7 @@ export function TakramStockParityPipeline({
         TAKRAM_ALTITUDE_LADDER_SHADER_MODES.normal
       );
     }
-  }, [adapter, altitudeMeters, cloudScaleContract, diagnostic, input, morphologyCandidate, morphologyView, orbitalAdapterExpectation, orbitalLookdevContract, resolvedMorphologyCandidate, stockWeatherControl, view]);
+  }, [adapter, altitudeMeters, cloudScaleContract, diagnostic, input, morphologyCandidate, morphologyView, orbitalAdapterExpectation, orbitalLookdevContract, resolvedMorphologyCandidate, resolvedOrbitalFeatureState, stockWeatherControl, view]);
 
   useEffect(() => {
     ladderCaptureRef.current = {
@@ -1003,14 +1090,16 @@ export function TakramStockParityPipeline({
       clouds.cloudLayers,
       (layer) => layer.shadow
     );
-    let restoreSampleCountInstrumentation: (() => void) | null = null;
+    let diagnosticInstrumentation:
+      TakramShaderInstrumentationInstallation | null = null;
     let restoreMipDiagnosticInstrumentation: (() => void) | null = null;
+    diagnosticInstrumentationAuditRef.current = null;
     if (diagnostic === "bsm-off") {
       clouds.cloudLayers.forEach((layer) => {
         layer.shadow = false;
       });
     }
-    const cloudRawDiagnostic = ["cloud-raw", "cloud-raw-off", "density-debug", "uv-debug", "sample-count-debug"].includes(diagnostic);
+    const cloudRawDiagnostic = ["cloud-raw", "cloud-raw-off", "density-debug", "uv-debug", "sample-count-debug", "primary-march-debug"].includes(diagnostic);
     // The native Clouds pass must remain enabled for the normal full frame and
     // every cloud-side diagnostic. `aerial-final` and the explicit
     // altitude-ladder cloud-off probe are the only intentional cloud-disabled
@@ -1023,11 +1112,18 @@ export function TakramStockParityPipeline({
       ? BlendFunction.SKIP
       : BlendFunction.NORMAL;
     if (diagnostic === "sample-count-debug") {
-      restoreSampleCountInstrumentation = installTakramSampleCountInstrumentation(
+      diagnosticInstrumentation = installAuditedTakramSampleCountInstrumentation(
         clouds.cloudsPass.currentMaterial
       );
+      diagnosticInstrumentationAuditRef.current = diagnosticInstrumentation.audit;
       clouds.cloudsPass.currentMaterial.defines.DEBUG_SHOW_SAMPLE_COUNT = "1";
       clouds.cloudsPass.currentMaterial.needsUpdate = true;
+    }
+    if (diagnostic === "primary-march-debug") {
+      diagnosticInstrumentation = installTakramPrimaryMarchInstrumentation(
+        clouds.cloudsPass.currentMaterial
+      );
+      diagnosticInstrumentationAuditRef.current = diagnosticInstrumentation.audit;
     }
     if (diagnostic === "mip-diagnostic") {
       restoreMipDiagnosticInstrumentation = installTakramMipDiagnosticInstrumentation(
@@ -1060,7 +1156,22 @@ export function TakramStockParityPipeline({
       aerialPerspective.blendMode.blendFunction = BlendFunction.NORMAL;
       if (diagnostic === "sample-count-debug") {
         delete clouds.cloudsPass.currentMaterial.defines.DEBUG_SHOW_SAMPLE_COUNT;
-        restoreSampleCountInstrumentation?.();
+      }
+      if (diagnostic === "sample-count-debug" ||
+        diagnostic === "primary-march-debug") {
+        const audit = diagnosticInstrumentationAuditRef.current;
+        const restoration = diagnosticInstrumentation?.restore();
+        if (typeof window !== "undefined" && audit !== null &&
+          restoration !== undefined) {
+          window.__MiraLithTakramDiagnosticRestoration = {
+            mode: diagnostic,
+            restoredSourceFnv1a64: restoration.restoredSourceFnv1a64,
+            upstreamSourceFnv1a64: audit.upstreamSourceFnv1a64,
+            restored: restoration.restoredSourceFnv1a64 ===
+              audit.upstreamSourceFnv1a64
+          };
+        }
+        diagnosticInstrumentationAuditRef.current = null;
         clouds.cloudsPass.currentMaterial.needsUpdate = true;
       }
       if (diagnostic === "uv-debug") {
@@ -1197,7 +1308,11 @@ export function TakramStockParityPipeline({
         cloudScaleAtmosphereDomain !== null);
     const orbitalBaselineReadback = clouds !== null &&
       orbitalBaselineContract !== null
-      ? readTakramOrbitalLookdevRuntime(clouds, orbitalBaselineContract)
+      ? readTakramOrbitalLookdevRuntime(
+          clouds,
+          orbitalBaselineContract,
+          resolvedOrbitalFeatureState
+        )
       : null;
     const orbitalLookdevReadback = orbitalLookdevContract !== null
       ? orbitalBaselineReadback
@@ -1207,12 +1322,11 @@ export function TakramStockParityPipeline({
       ? diffTakramOrbitalLookdevRuntime(
           orbitalLookdevContract,
           orbitalLookdevReadback,
-          orbitalAdapterExpectation
+          orbitalAdapterExpectation,
+          resolvedOrbitalFeatureState
         )
       : [];
-    const blockingOrbitalLookdevDrift = orbitalLookdevDrift.filter((entry) =>
-      diagnostic !== "bsm-off" || !/^layers\.\d+\.shadow$/.test(entry.path)
-    );
+    const blockingOrbitalLookdevDrift = orbitalLookdevDrift;
     let orbitalHistoryEpochReady = orbitalLookdevContract === null;
     if (orbitalLookdevReadback !== null && lookdevMountKey !== null) {
       if (observedLookdevMountKeyRef.current !== lookdevMountKey) {
@@ -1298,6 +1412,15 @@ export function TakramStockParityPipeline({
         ...(orbitalBaselineReadback === null
           ? {}
           : { orbitalBaselineRuntime: orbitalBaselineReadback }),
+        ...(gpuSubmissionAuditRef.current === null ||
+          gpuMeasurementModeRef.current === null
+          ? {}
+          : {
+              orbitalGpuSubmission: {
+                audit: gpuSubmissionAuditRef.current,
+                measurementMode: gpuMeasurementModeRef.current
+              }
+            }),
         sharedAssets: TAKRAM_PARITY_SHARED_ASSET_HASHES
       })
       : null;
@@ -1371,6 +1494,7 @@ export function TakramStockParityPipeline({
       historyFirstFrameCaptureRef.current = null;
       matchedTemporalFrameCaptureRef.current = null;
       sampleCountReadbackRef.current = null;
+      primaryMarchReadbackRef.current = null;
       stageReadbackRef.current = null;
       mipDiagnosticCaptureRef.current = null;
       if (typeof window !== "undefined") {
@@ -1378,6 +1502,7 @@ export function TakramStockParityPipeline({
         delete window.__MiraLithTakramMatchedTemporalFrame;
         delete window.__MiraLithTakramStageReadback;
         delete window.__MiraLithTakramMipDiagnostic;
+        delete window.__MiraLithTakramPrimaryMarch;
       }
       if (clouds) {
         // The upstream effect owns the STBN/Bayer frame counter. Reset it with
@@ -1413,6 +1538,8 @@ export function TakramStockParityPipeline({
       : null;
     const sampleCountReadbackReady = diagnostic !== "sample-count-debug" ||
       sampleCountReadbackRef.current !== null;
+    const primaryMarchReadbackReady = diagnostic !== "primary-march-debug" ||
+      primaryMarchReadbackRef.current !== null;
     const matchedTemporalFrameReady = diagnostic === "history-reset-first" ||
       matchedTemporalFrameCaptureRef.current !== null;
     const stageReadbackReady = diagnostic !== "stage-readback" ||
@@ -1420,7 +1547,8 @@ export function TakramStockParityPipeline({
     const mipDiagnosticReady = diagnostic !== "mip-diagnostic" ||
       mipDiagnosticCaptureRef.current?.completed === true;
     const telemetry: TakramParityTelemetry = {
-      active: nativePipelineReady && sampleCountReadbackReady && matchedTemporalFrameReady &&
+      active: nativePipelineReady && sampleCountReadbackReady &&
+        primaryMarchReadbackReady && matchedTemporalFrameReady &&
         stageReadbackReady && mipDiagnosticReady &&
         ((diagnostic === "history-reset-first" &&
           historyFirstFrameCaptureRef.current !== null) ||
@@ -1562,6 +1690,7 @@ export function TakramStockParityPipeline({
       morphologyView: morphologyView ?? null,
       morphologyScaleAudit,
       sampleCountReadback: sampleCountReadbackRef.current,
+      primaryMarchReadback: primaryMarchReadbackRef.current,
       altitudeLadder: isTakramParityAltitudeLadderDiagnostic(diagnostic)
         ? ladderCaptureRef.current.telemetry
         : null
@@ -1848,11 +1977,12 @@ export function TakramStockParityPipeline({
   useFrame(() => {
     if (diagnostic !== "sample-count-debug" ||
       sampleCountReadbackRef.current !== null ||
-      nativeFrameCountRef.current < TEMPORAL_CONVERGENCE_FRAME_COUNT) {
+      nativeFrameCountRef.current !== TEMPORAL_CONVERGENCE_FRAME_COUNT) {
       return;
     }
     const clouds = cloudsRef.current;
-    if (!clouds) return;
+    const instrumentationAudit = diagnosticInstrumentationAuditRef.current;
+    if (!clouds || instrumentationAudit === null) return;
     const pass = clouds.cloudsPass as unknown as {
       currentRenderTarget?: Parameters<typeof readTakramAltitudeLadderRenderTarget>[1];
     };
@@ -1876,8 +2006,51 @@ export function TakramStockParityPipeline({
       source: "native-cloud-current-render-target-v1",
       origin: "bottom-left",
       encoding: "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask",
-      values
+      values,
+      instrumentationAudit
     };
+  }, 2);
+
+  // Primary-march diagnostics use a separate audited shader mode and direct
+  // RGBA16F values. The readback is published only at the same locked native
+  // frame as the screenshot and never participates in GPU timing routes.
+  useFrame(() => {
+    if (diagnostic !== "primary-march-debug" ||
+      primaryMarchReadbackRef.current !== null ||
+      nativeFrameCountRef.current !== TEMPORAL_CONVERGENCE_FRAME_COUNT) {
+      return;
+    }
+    const clouds = cloudsRef.current;
+    const instrumentationAudit = diagnosticInstrumentationAuditRef.current;
+    const temporalFrame = matchedTemporalFrameCaptureRef.current;
+    if (!clouds || instrumentationAudit === null || temporalFrame === null ||
+      !temporalFrame.frameLockPass) {
+      return;
+    }
+    const pass = clouds.cloudsPass as unknown as {
+      currentRenderTarget?: Parameters<
+        typeof readTakramAltitudeLadderRenderTarget
+      >[1];
+    };
+    const readback = pass.currentRenderTarget
+      ? readTakramAltitudeLadderRenderTarget(gl, pass.currentRenderTarget)
+      : null;
+    if (readback === null || readback.precision !== "half-float") return;
+    const capture: TakramParityPrimaryMarchReadback = {
+      width: readback.width,
+      height: readback.height,
+      precision: "half-float",
+      source: "native-cloud-current-render-target-primary-march-v1",
+      origin: "bottom-left",
+      encoding: "rgba16f-loop-entry-cap-hit-direct",
+      maxIterationCount: 500,
+      values: Array.from(readback.values),
+      instrumentationAudit
+    };
+    primaryMarchReadbackRef.current = capture;
+    if (typeof window !== "undefined") {
+      window.__MiraLithTakramPrimaryMarch = capture;
+    }
   }, 2);
 
   // Read the native cloud targets only for the altitude ladder. The first
@@ -2111,6 +2284,7 @@ export function TakramStockParityPipeline({
           textures={atmosphereTextures}
         >
           <EffectComposer
+            ref={composerRef}
             key={lookdevMountKey ?? "legacy-parity-composer"}
             enableNormalPass
           >

@@ -70,6 +70,7 @@ export function installTakramOrbitalGpuSubmissionInstrumentation(
     aerialPerspectiveEffect: object;
     cloudsEffect: object;
     composer: object;
+    copyOnlySubmission?: () => void;
     profiler: TakramOrbitalSubmissionTimerProfiler;
   }>
 ): Readonly<{
@@ -216,7 +217,7 @@ export function installTakramOrbitalGpuSubmissionInstrumentation(
         }
         input.profiler.endTotal(context.frameId);
       }
-      input.profiler.finishFrame(context.frameId);
+      input.profiler.finishFrame(context.frameId, input.copyOnlySubmission);
     } catch (cleanupError) {
       if (thrown === undefined) thrown = cleanupError;
     } finally {
