@@ -72,10 +72,20 @@ test("invalidates an entire disjoint epoch and disposes its pending queries", as
 });
 
 test("sums same-frame stage samples before percentile calculation", async () => {
-  const { createTakramOrbitalGpuPopulation } = await loadProfiler();
+  const {
+    createTakramOrbitalGpuPopulation,
+    TAKRAM_ORBITAL_GPU_STAGE_NAMES
+  } = await loadProfiler();
+  expect(TAKRAM_ORBITAL_GPU_STAGE_NAMES).toEqual([
+    "bsm-current",
+    "bsm-resolve",
+    "cloud-current",
+    "cloud-resolve",
+    "final-effect"
+  ]);
   const population = createTakramOrbitalGpuPopulation({
     measurementMode: "stage-only-sequential-time-elapsed",
-    stageNames: ["bsm-current", "bsm-resolve", "cloud-current", "cloud-resolve", "effect-pass"],
+    stageNames: TAKRAM_ORBITAL_GPU_STAGE_NAMES,
     targetSampleCount: 2,
     warmupFrameCount: 0,
     timestampBits: 64
@@ -84,16 +94,22 @@ test("sums same-frame stage samples before percentile calculation", async () => 
   population.recordStageSample({ frameId: 1, stage: "bsm-resolve", milliseconds: 0.1 });
   population.recordStageSample({ frameId: 1, stage: "cloud-current", milliseconds: 1 });
   population.recordStageSample({ frameId: 1, stage: "cloud-resolve", milliseconds: 0.4 });
-  population.recordStageSample({ frameId: 1, stage: "effect-pass", milliseconds: 0.5 });
+  population.recordStageSample({ frameId: 1, stage: "final-effect", milliseconds: 0.5 });
+  population.recordStageBaseline({ frameId: 1, milliseconds: 0.05 });
+  population.finishStageFrame(1);
   population.recordStageSample({ frameId: 2, stage: "bsm-current", milliseconds: 0.3 });
   population.recordStageSample({ frameId: 2, stage: "bsm-resolve", milliseconds: 0.2 });
   population.recordStageSample({ frameId: 2, stage: "cloud-current", milliseconds: 1.2 });
   population.recordStageSample({ frameId: 2, stage: "cloud-resolve", milliseconds: 0.3 });
-  population.recordStageSample({ frameId: 2, stage: "effect-pass", milliseconds: 0.8 });
+  population.recordStageSample({ frameId: 2, stage: "final-effect", milliseconds: 0.8 });
+  population.recordStageBaseline({ frameId: 2, milliseconds: 0.06 });
+  population.finishStageFrame(2);
 
   expect(population.snapshot()).toMatchObject({
     classification: "SPIKE_VIABLE",
     p95Milliseconds: 2.8,
+    bsmCombinedP95Milliseconds: 0.5,
+    emptyStageBaselineSamplesMilliseconds: [0.05, 0.06],
     rawSamplesMilliseconds: [2.2, 2.8],
     rawStageSamples: [
       expect.objectContaining({ frameId: 1, totalMilliseconds: 2.2 }),
@@ -101,6 +117,100 @@ test("sums same-frame stage samples before percentile calculation", async () => 
     ],
     state: "complete"
   });
+});
+
+test("retains only complete unique five-stage frames with an empty baseline", async () => {
+  const {
+    createTakramOrbitalGpuPopulation,
+    TAKRAM_ORBITAL_GPU_STAGE_NAMES
+  } = await loadProfiler();
+  const population = createTakramOrbitalGpuPopulation({
+    measurementMode: "stage-only-sequential-time-elapsed",
+    stageNames: TAKRAM_ORBITAL_GPU_STAGE_NAMES,
+    targetSampleCount: 1,
+    warmupFrameCount: 0,
+    timestampBits: 64
+  });
+  for (const stage of TAKRAM_ORBITAL_GPU_STAGE_NAMES.slice(0, 4)) {
+    population.recordStageSample({ frameId: 1, stage, milliseconds: 1 });
+  }
+  population.recordStageBaseline({ frameId: 1, milliseconds: 0.1 });
+  population.finishStageFrame(1);
+  expect(population.snapshot()).toMatchObject({
+    invalidReasons: ["incomplete-stage-frame-1"],
+    rawStageSamples: [],
+    validSampleCount: 0
+  });
+
+  for (const stage of TAKRAM_ORBITAL_GPU_STAGE_NAMES) {
+    population.recordStageSample({ frameId: 2, stage, milliseconds: 1 });
+  }
+  expect(() => population.recordStageSample({
+    frameId: 2,
+    stage: "bsm-current",
+    milliseconds: 1
+  })).toThrow("Duplicate GPU stage bsm-current for frame 2");
+  expect(() => population.recordStageSample({
+    frameId: 2,
+    stage: "unknown",
+    milliseconds: 1
+  })).toThrow("Unknown GPU stage: unknown");
+  expect(() => population.recordStageBaseline({
+    frameId: 2,
+    milliseconds: -1
+  })).toThrow("milliseconds must be a non-negative finite number");
+  population.recordStageBaseline({ frameId: 2, milliseconds: 0.1 });
+  expect(() => population.recordStageBaseline({ frameId: 2, milliseconds: 0.1 }))
+    .toThrow("Duplicate GPU stage baseline for frame 2");
+  population.finishStageFrame(2);
+  expect(population.snapshot()).toMatchObject({ validSampleCount: 1 });
+});
+
+test("rejects nested or mixed submission query modes", async () => {
+  const { createTakramOrbitalSubmissionTimerProfiler } = await loadProfiler();
+  const extension = {
+    GPU_DISJOINT_EXT: 0x8fbb,
+    QUERY_COUNTER_BITS_EXT: 0x8864,
+    TIME_ELAPSED_EXT: 0x88bf
+  };
+  let active: object | null = null;
+  let next = 0;
+  const gl = {
+    QUERY_RESULT: 0x8866,
+    QUERY_RESULT_AVAILABLE: 0x8867,
+    beginQuery(_target: number, query: object) {
+      if (active !== null) throw new Error("nested-webgl-query");
+      active = query;
+    },
+    createQuery() { return { id: ++next }; },
+    deleteQuery() {},
+    endQuery() { active = null; },
+    getExtension() { return extension; },
+    getParameter() { return false; },
+    getQuery() { return 64; },
+    getQueryParameter(_query: object, parameter: number) {
+      return parameter === this.QUERY_RESULT_AVAILABLE ? false : 0;
+    }
+  };
+  const total = createTakramOrbitalSubmissionTimerProfiler(gl as any, {
+    measurementMode: "total-only-time-elapsed",
+    targetSampleCount: 1,
+    warmupFrameCount: 0
+  });
+  const totalFrame = total.beginFrame();
+  total.beginTotal(totalFrame.frameId);
+  expect(() => total.beginTotal(totalFrame.frameId)).toThrow(
+    "GPU submission query already active"
+  );
+  expect(() => total.beginStage(totalFrame.frameId, "bsm-current")).toThrow(
+    "Stage queries cannot run in total-only mode"
+  );
+  total.endTotal(totalFrame.frameId);
+  expect(() => total.endTotal(totalFrame.frameId)).toThrow(
+    "No matching GPU total query is active"
+  );
+  total.finishFrame(totalFrame.frameId);
+  total.dispose();
 });
 
 test("reports unsupported/incomplete timing without turning it into a visual failure", async () => {
