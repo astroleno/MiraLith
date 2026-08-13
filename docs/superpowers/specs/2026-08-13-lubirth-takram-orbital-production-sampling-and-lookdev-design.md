@@ -1,6 +1,6 @@
 # LuBirth Takram Orbital Production Sampling and Lookdev Successor Design
 
-**Status:** Draft for review
+**Status:** SUPERSEDED FOR AUTHORIZATION — historical draft; implementation closed
 
 **Date:** 2026-08-13
 
@@ -13,6 +13,16 @@
 - `2026-08-12-lubirth-takram-orbital-lookdev-tuning-design.md`
 - `2026-08-13-lubirth-takram-orbital-sampling-causality-design.md`
 - `docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-sampling-causality/OUTCOME.md`
+
+**Status amendment (2026-08-13):** The sole successor architecture candidate is
+`2026-08-13-lubirth-takram-perspective-step-root-cause-design.md` on the unified
+evidence lineage. Until that candidate passes review, all successor
+implementation remains closed. This draft's public-scalar-first policy and its
+stage resolver must not authorize implementation. Its bounded morphology,
+coverage, V3, and evidence ideas remain historical inputs only; the candidate
+re-states the accepted contracts with three independently owned stepping values,
+continuous-traversal validation, feedback cost gates, and a terminal homepage
+promotion-readiness state.
 
 ## 1. Decision
 
