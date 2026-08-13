@@ -329,3 +329,496 @@ test("publishes orbital evidence atomically and stays inert outside capture mode
     rmSync(root, { force: true, recursive: true });
   }
 });
+
+const v2HealthyMetrics = {
+  evidenceValid: true,
+  setupInvalidReasons: [],
+  nativeHitPixelFraction: 0.25,
+  preTemporalSignalPixelFraction: 0.25,
+  smallFragmentFraction: 0.05,
+  signalRetention: 1,
+  signalLumaRetention: 1,
+  pairedChange: 0.02,
+  repeatNoiseFloor: 0.005,
+  enteredPrimaryMarchPixelCount: 12,
+  primaryCapSaturationFraction: 0.01,
+  noHitPrimaryCapSaturationFraction: 0
+};
+
+const v2StageDimensions = {
+  "4A": [
+    "macroCoherence",
+    "openingIdentityStability",
+    "artifactFreedom"
+  ],
+  "4B": [
+    "macroCoherence",
+    "coverageUsability",
+    "openingIdentityStability",
+    "artifactFreedom"
+  ],
+  "4C": [
+    "macroCoherence",
+    "cloudGroundSeparation",
+    "depthLayering",
+    "openingIdentityStability",
+    "artifactFreedom"
+  ],
+  "4D": [
+    "macroCoherence",
+    "cloudGroundSeparation",
+    "depthLayering",
+    "lightingBsmRead",
+    "openingIdentityStability",
+    "artifactFreedom"
+  ]
+} as const;
+
+function v2Review(input: Readonly<{
+  candidateId: string;
+  stage: keyof typeof v2StageDimensions;
+  lowDimension?: string;
+  hardFlag?: string;
+  scoreOverrides?: Readonly<Record<string, number>>;
+  deferredScores?: Readonly<Record<string, number>>;
+}>) {
+  const required = Object.fromEntries(
+    v2StageDimensions[input.stage].map((dimension) => [dimension, 1])
+  );
+  return {
+    schema: "takram-orbital-lookdev-visual-review/v2",
+    reviewer: "human:aitoshuu",
+    cleanCommit: "0123456789abcdef0123456789abcdef01234567",
+    candidateId: input.candidateId,
+    stage: input.stage,
+    nativeFrame: 32,
+    viewport: { width: 1440, height: 960, dpr: 1 },
+    referenceHashes: { nasa: "nasa-hash", takram: "takram-hash" },
+    frames: progressValues.map((progress, index) => ({
+      progress,
+      hardFlags: index === 0 && input.hardFlag ? [input.hardFlag] : [],
+      scores: {
+        ...required,
+        ...input.deferredScores,
+        ...input.scoreOverrides,
+        ...(index === 0 && input.lowDimension
+          ? { [input.lowDimension]: 0 }
+          : {})
+      }
+    }))
+  };
+}
+
+function v2Candidate(input: Readonly<{
+  candidateId: string;
+  morphologyH?: 40 | 80 | 120;
+  coverage?: 0.3 | 0.4 | 0.45 | 0.55;
+  verticalScale?: 1 | 2 | 4;
+  opticalDepthScale?: 0.75 | 1 | 1.5;
+  stage: keyof typeof v2StageDimensions | "final-stock";
+  metrics?: typeof v2HealthyMetrics;
+  nativeHitPixelCount?: number;
+  preTemporalSignalPixelFraction?: number;
+  setupInvalidReasons?: readonly string[];
+  review?: ReturnType<typeof v2Review> | null;
+}>) {
+  const metrics = input.metrics ?? v2HealthyMetrics;
+  return {
+    candidateId: input.candidateId,
+    morphologyH: input.morphologyH ?? 80,
+    coverage: input.coverage ?? 0.3,
+    verticalScale: input.verticalScale ?? 1,
+    opticalDepthScale: input.opticalDepthScale ?? 1,
+    progresses: progressValues.map((progress) => ({
+      progress,
+      setupInvalidReasons: input.setupInvalidReasons ?? [],
+      metrics: {
+        ...metrics,
+        preTemporalSignalPixelFraction:
+          input.preTemporalSignalPixelFraction ??
+          metrics.preTemporalSignalPixelFraction
+      },
+      nativeHitPixelCount: input.nativeHitPixelCount ?? 1
+    })),
+    review: input.stage === "final-stock"
+      ? undefined
+      : input.review === null
+        ? undefined
+        : input.review ?? v2Review({
+            candidateId: input.candidateId,
+            stage: input.stage
+          })
+  };
+}
+
+test("V2 shared gate resolves setup before per-candidate sampling health", async () => {
+  const { resolveTakramOrbitalV2SharedGate } = await loadEvidence();
+  const healthy = v2Candidate({ candidateId: "healthy", stage: "4A" });
+  const invalid = v2Candidate({
+    candidateId: "invalid",
+    stage: "4A",
+    setupInvalidReasons: ["shader-anchor-drift"],
+    metrics: {
+      ...v2HealthyMetrics,
+      enteredPrimaryMarchPixelCount: 0,
+      primaryCapSaturationFraction: 0.5
+    }
+  });
+  const blocked = resolveTakramOrbitalV2SharedGate({
+    stage: "4A",
+    candidates: [healthy, invalid]
+  });
+  expect(blocked).toMatchObject({
+    state: "ORBITAL_LOOKDEV_V2_SETUP_BLOCKED",
+    failedStage: "4A",
+    survivorIds: []
+  });
+  expect(blocked.setupFailures).toEqual(expect.arrayContaining([
+    expect.objectContaining({
+      candidateId: "invalid",
+      progress: 0,
+      reasons: ["shader-anchor-drift"]
+    })
+  ]));
+
+  const noEntry = v2Candidate({
+    candidateId: "no-entry",
+    stage: "4A",
+    metrics: { ...v2HealthyMetrics, enteredPrimaryMarchPixelCount: 0 }
+  });
+  const capped = v2Candidate({
+    candidateId: "capped",
+    stage: "4A",
+    metrics: { ...v2HealthyMetrics, primaryCapSaturationFraction: 0.010001 }
+  });
+  const failed = resolveTakramOrbitalV2SharedGate({
+    stage: "4A",
+    candidates: [noEntry, capped]
+  });
+  expect(failed).toMatchObject({
+    state: "ORBITAL_LOOKDEV_V2_SAMPLING_HEALTH_FAIL",
+    failedStage: "4A",
+    survivorIds: []
+  });
+  expect(failed.samplingFailures).toEqual(expect.arrayContaining([
+    expect.objectContaining({
+      candidateId: "no-entry",
+      progress: 0,
+      enteredPrimaryMarchPixelCount: 0,
+      primaryCapSaturationFraction: 0.01
+    }),
+    expect.objectContaining({
+      candidateId: "capped",
+      progress: 0,
+      enteredPrimaryMarchPixelCount: 12,
+      primaryCapSaturationFraction: 0.010001
+    })
+  ]));
+
+  const mixed = resolveTakramOrbitalV2SharedGate({
+    stage: "4A",
+    candidates: [healthy, noEntry]
+  });
+  expect(mixed).toMatchObject({ state: "V2_SHARED_GATE_READY" });
+  expect(mixed.survivorIds).toEqual(["healthy"]);
+});
+
+test("V2 4A/4B signal gate enforces exact zero and accepts smallest positive", async () => {
+  const { resolveTakramOrbitalV2SignalPresenceGate } = await loadEvidence();
+  for (const stage of ["4A", "4B"] as const) {
+    const nativeZero = v2Candidate({
+      candidateId: `${stage}-native-zero`,
+      stage,
+      nativeHitPixelCount: 0
+    });
+    const signalZero = v2Candidate({
+      candidateId: `${stage}-signal-zero`,
+      stage,
+      preTemporalSignalPixelFraction: 0
+    });
+    const smallestPositive = v2Candidate({
+      candidateId: `${stage}-positive`,
+      stage,
+      nativeHitPixelCount: 1,
+      preTemporalSignalPixelFraction: Number.MIN_VALUE
+    });
+    const decision = resolveTakramOrbitalV2SignalPresenceGate({
+      stage,
+      candidates: [nativeZero, signalZero, smallestPositive]
+    });
+    expect(decision.survivorIds).toEqual([`${stage}-positive`]);
+    expect(decision.machineFailures).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        candidateId: `${stage}-native-zero`,
+        reasons: ["native-hit-absent"]
+      }),
+      expect.objectContaining({
+        candidateId: `${stage}-signal-zero`,
+        reasons: ["pre-temporal-signal-absent"]
+      })
+    ]));
+  }
+});
+
+test("V2 reviews use exact stage dimensions and enumerated hard flags", async () => {
+  const { evaluateTakramOrbitalV2VisualReview } = await loadEvidence();
+  const deferredZeros = v2Review({
+    candidateId: "morphology",
+    stage: "4A",
+    deferredScores: {
+      cloudGroundSeparation: 0,
+      depthLayering: 0,
+      lightingBsmRead: 0
+    }
+  });
+  expect(evaluateTakramOrbitalV2VisualReview(deferredZeros)).toMatchObject({
+    valid: true,
+    pass: true
+  });
+  expect(evaluateTakramOrbitalV2VisualReview(v2Review({
+    candidateId: "coverage",
+    stage: "4B",
+    lowDimension: "coverageUsability"
+  }))).toMatchObject({ pass: false });
+  expect(evaluateTakramOrbitalV2VisualReview(v2Review({
+    candidateId: "hard",
+    stage: "4D",
+    hardFlag: "cube-face-seam"
+  }))).toMatchObject({ pass: false });
+  expect(evaluateTakramOrbitalV2VisualReview(v2Review({
+    candidateId: "invalid-hard",
+    stage: "4D",
+    hardFlag: "non-finite-output"
+  }))).toMatchObject({
+    valid: false,
+    invalidReasons: expect.arrayContaining([
+      "frame-0:invalid-hard-flag:non-finite-output"
+    ])
+  });
+});
+
+test("V2 stage resolvers apply exact bounded ranking and no-winner terminals", async () => {
+  const {
+    resolveTakramOrbitalV2Stage4A,
+    resolveTakramOrbitalV2Stage4B,
+    resolveTakramOrbitalV2Stage4C,
+    resolveTakramOrbitalV2Stage4D
+  } = await loadEvidence();
+  const stageA = resolveTakramOrbitalV2Stage4A({
+    stage: "4A",
+    candidates: [40, 80, 120].map((morphologyH) => v2Candidate({
+      candidateId: `h${morphologyH}`,
+      morphologyH: morphologyH as 40 | 80 | 120,
+      stage: "4A"
+    }))
+  });
+  expect(stageA).toMatchObject({ state: "ORBITAL_LOOKDEV_V2_STAGE_4B_READY" });
+  expect(stageA.survivorIds).toEqual(["h40", "h80", "h120"]);
+
+  const stageB = resolveTakramOrbitalV2Stage4B({
+    stage: "4B",
+    candidates: ([40, 80, 120] as const).flatMap((morphologyH) =>
+      ([0.3, 0.4, 0.45, 0.55] as const).map((coverage) => v2Candidate({
+        candidateId: `h${morphologyH}-c${coverage}`,
+        morphologyH,
+        coverage,
+        stage: "4B"
+      }))
+    )
+  });
+  expect(stageB).toMatchObject({ state: "ORBITAL_LOOKDEV_V2_STAGE_4C_READY" });
+  expect(stageB.survivorIds).toEqual(["h40-c0.3", "h80-c0.3"]);
+
+  expect(resolveTakramOrbitalV2Stage4B({
+    stage: "4B",
+    candidates: [v2Candidate({
+      candidateId: "incomplete",
+      morphologyH: 40,
+      coverage: 0.3,
+      stage: "4B"
+    })]
+  })).toMatchObject({
+    state: "ORBITAL_LOOKDEV_V2_SETUP_BLOCKED",
+    setupFailures: expect.arrayContaining([
+      expect.objectContaining({ reasons: ["invalid-stage-capture-matrix"] })
+    ])
+  });
+
+  const stageC = resolveTakramOrbitalV2Stage4C({
+    stage: "4C",
+    candidates: ([1, 2, 4] as const).map((verticalScale) => v2Candidate({
+      candidateId: `vertical-${verticalScale}`,
+      morphologyH: 40,
+      coverage: 0.3,
+      verticalScale,
+      stage: "4C"
+    }))
+  });
+  expect(stageC).toMatchObject({
+    state: "ORBITAL_LOOKDEV_V2_STAGE_4D_READY",
+    winnerId: "vertical-1"
+  });
+
+  const stageD = resolveTakramOrbitalV2Stage4D({
+    stage: "4D",
+    candidates: ([0.75, 1, 1.5] as const).map((opticalDepthScale) =>
+      v2Candidate({
+        candidateId: `optical-${opticalDepthScale}`,
+        opticalDepthScale,
+        stage: "4D"
+      })
+    )
+  });
+  expect(stageD).toMatchObject({
+    state: "ORBITAL_STOCK_LOOKDEV_V2_WINNER",
+    winnerId: "optical-1"
+  });
+
+  const machineFail = resolveTakramOrbitalV2Stage4A({
+    stage: "4A",
+    candidates: ([40, 80, 120] as const).map((morphologyH) => v2Candidate({
+      candidateId: `no-signal-h${morphologyH}`,
+      morphologyH,
+      nativeHitPixelCount: 0,
+      review: null,
+      stage: "4A"
+    }))
+  });
+  expect(machineFail).toMatchObject({
+    state: "ORBITAL_LOOKDEV_V2_MORPHOLOGY_FAIL",
+    visualEvaluations: [],
+    machineFailures: expect.arrayContaining([
+      expect.objectContaining({ reasons: ["native-hit-absent"] })
+    ])
+  });
+});
+
+test("V2 invalid required review blocks the stage instead of dropping its candidate", async () => {
+  const { resolveTakramOrbitalV2Stage4C } = await loadEvidence();
+  const invalid = v2Candidate({
+    candidateId: "invalid-review",
+    verticalScale: 2,
+    stage: "4C"
+  });
+  const decision = resolveTakramOrbitalV2Stage4C({
+    stage: "4C",
+    candidates: [
+      v2Candidate({ candidateId: "valid-1", verticalScale: 1, stage: "4C" }),
+      {
+        ...invalid,
+        review: { ...invalid.review, cleanCommit: "dirty" }
+      },
+      v2Candidate({ candidateId: "valid-4", verticalScale: 4, stage: "4C" })
+    ]
+  });
+  expect(decision).toMatchObject({
+    state: "ORBITAL_LOOKDEV_V2_SETUP_BLOCKED",
+    failedStage: "4C",
+    winnerId: null
+  });
+});
+
+function finalStockCandidate(input: Readonly<{
+  setupInvalidReasons?: readonly string[];
+  entered?: number;
+  cap?: number;
+}> = {}) {
+  return v2Candidate({
+    candidateId: "stock-winner",
+    stage: "final-stock",
+    setupInvalidReasons: input.setupInvalidReasons,
+    metrics: {
+      ...v2HealthyMetrics,
+      enteredPrimaryMarchPixelCount: input.entered ?? 12,
+      primaryCapSaturationFraction: input.cap ?? 0.01
+    }
+  });
+}
+
+function finalPopulation(progress: number, p95: number) {
+  return {
+    populationId: `final-${progress}`,
+    measurementMode: "total-only-time-elapsed",
+    warmupFrameCount: 120,
+    targetSampleCount: 120,
+    validSampleCount: 120,
+    state: "complete",
+    timestampBits: 64,
+    p95Milliseconds: p95,
+    invalidReasons: []
+  };
+}
+
+test("V2 final stock replay gates GPU and V3 before exact p95 classification", async () => {
+  const {
+    resolveTakramOrbitalV2FinalStockReplay,
+    resolveTakramOrbitalV2FinalClassification
+  } = await loadEvidence();
+  const setupBlocked = resolveTakramOrbitalV2FinalStockReplay({
+    winnerId: "stock-winner",
+    candidate: finalStockCandidate({ setupInvalidReasons: ["hash-mismatch"] })
+  });
+  expect(setupBlocked).toMatchObject({
+    state: "ORBITAL_LOOKDEV_V2_SETUP_BLOCKED",
+    failedStage: "final-stock",
+    gpuAuthorized: false,
+    v3Authorized: false
+  });
+
+  const samplingFailed = resolveTakramOrbitalV2FinalStockReplay({
+    winnerId: "stock-winner",
+    candidate: finalStockCandidate({ cap: 0.010001 })
+  });
+  expect(samplingFailed).toMatchObject({
+    state: "ORBITAL_LOOKDEV_V2_SAMPLING_HEALTH_FAIL",
+    failedStage: "final-stock",
+    gpuAuthorized: false,
+    v3Authorized: false
+  });
+
+  const replay = resolveTakramOrbitalV2FinalStockReplay({
+    winnerId: "stock-winner",
+    candidate: finalStockCandidate()
+  });
+  expect(replay).toMatchObject({
+    state: "ORBITAL_LOOKDEV_V2_FINAL_STOCK_READY",
+    gpuAuthorized: true,
+    v3Authorized: true
+  });
+
+  const classify = (values: readonly number[]) =>
+    resolveTakramOrbitalV2FinalClassification({
+      replay,
+      winnerId: "stock-winner",
+      populations: progressValues.map((progress, index) => ({
+        progress,
+        population: finalPopulation(progress, values[index]!)
+      }))
+    });
+  expect(classify([2.8, 3, 2.9, 2.7])).toMatchObject({
+    state: "ORBITAL_STOCK_LOOKDEV_V2_PRODUCTION_ELIGIBLE",
+    maxP95Milliseconds: 3,
+    v3Authorized: true
+  });
+  expect(classify([3.1, 4, 3.5, 3.8]).state)
+    .toBe("ORBITAL_STOCK_LOOKDEV_V2_QUERY_ONLY");
+  expect(classify([4.01, 3, 3, 3]).state)
+    .toBe("ORBITAL_STOCK_LOOKDEV_V2_OVER_BUDGET");
+
+  const invalidTimer = classify([2.8, 3, 2.9, 2.7]);
+  const perfBlocked = resolveTakramOrbitalV2FinalClassification({
+    replay,
+    winnerId: "stock-winner",
+    populations: progressValues.map((progress, index) => ({
+      progress,
+      population: index === 2
+        ? { ...finalPopulation(progress, 2.9), state: "unsupported" }
+        : finalPopulation(progress, 2.8)
+    }))
+  });
+  expect(invalidTimer.state).toBe("ORBITAL_STOCK_LOOKDEV_V2_PRODUCTION_ELIGIBLE");
+  expect(perfBlocked).toMatchObject({
+    state: "ORBITAL_STOCK_LOOKDEV_V2_PERF_BLOCKED",
+    v3Authorized: true
+  });
+});
