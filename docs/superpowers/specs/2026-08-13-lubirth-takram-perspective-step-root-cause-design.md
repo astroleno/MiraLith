@@ -98,9 +98,22 @@ candidate—not one informal "winning case"—is independently repeated for h40 
 h80 at `progress=0.00/0.06/0.12/0.18`, both clean repeats, using the same
 candidate-level recovery rules. A candidate enters Stage 2 only if it passes
 h120, h40, and h80. Failed candidates remain durable
-`morphology-preset-localized` evidence; if none remain, Stage 1 terminates with
-`PERSPECTIVE_STEP_POLICY_SET_EMPTY_AFTER_PRESET_CONFIRMATION`. Until at least one
-candidate passes all three presets, Stage-B-wide wording remains prohibited.
+`morphology-preset-localized` evidence.
+
+Terminal resolution is ordered and must not infer a preset-confirmation failure
+from an empty mechanism result:
+
+1. `PERSPECTIVE_STEP_CAUSAL_MECHANISM_UNRESOLVED` terminates Stage 1 with that
+   exact outcome; the preset-confirmation resolver is not invoked.
+2. Any resolved primary mechanism must produce the non-empty canonical prefix
+   required by Section 7.4. An empty or label-ineligible prefix is
+   `PERSPECTIVE_STEP_POLICY_RESOLVER_INVALID`, not a preset result.
+3. Only a non-empty valid h120 policy set enters h40/h80 confirmation. If that
+   input set is non-empty and its confirmed subset is empty, Stage 1 terminates
+   with `PERSPECTIVE_STEP_POLICY_SET_EMPTY_AFTER_PRESET_CONFIRMATION`.
+
+Until at least one candidate passes all three presets, Stage-B-wide wording
+remains prohibited.
 
 #### Stage 2 — healthy-sampling stability validation
 
@@ -371,6 +384,45 @@ sample/termination buffers, pre-temporal, resolved-history, BSM-off, and final
 output. Query, runtime, camera, output, viewport, allocation, and artifact hashes
 must otherwise match.
 
+Static progress captures do not authorize production traversal parity. After
+the static machine gate passes, and before Stage 5A may emit
+`V3_WEATHER_ADAPTER_PASS`, run two additional clean V3 query-route continuous
+traversals, `v3-query-a` and `v3-query-b`, on the exact frozen tuple. Each owns a
+fresh document, mount/runtime identity, composer/history epoch, and document-
+local allocation generations. Both use the Stage-2 schedule verbatim: 32 warm-
+up frames at `progress=0`, followed by 433 endpoint-inclusive frames over the
+7.2-second opening, without remount, seek, reseed, history reset, allocation
+change, missing frame, or context/visibility generation change. Their viewport,
+camera/projection/Earth matrices, progress sequence, first STBN slice, and
+jitter schedule are identical. The `v3-query-a` shell-intersection mask is the
+fixed per-frame population for both V3 query repeats; any identity, dimension,
+origin, or projection mismatch is setup-blocked.
+
+Both V3 query repeats independently satisfy the Stage-2 per-frame absolute-
+health table and the automated ghosting/popping/BSM-shimmer rules. They do not
+use the stock Stage-2 candidate-minus-native causal gate: V3 compatibility is an
+absolute-health and repeatability claim, not a stock-weather effect estimate.
+For every persisted scalar trajectory `M` and frame index `f`, derive the
+matched V3 query envelope only from those two V3 runs:
+
+```text
+v3QueryRepeatDifference(M, f) =
+  abs(M(v3-query-a, f) - M(v3-query-b, f))
+v3QueryRepeatEnvelope(M, f) = max(
+  numericQuantizationFloor(M(v3-query-a, f) - M(v3-query-b, f)),
+  v3QueryRepeatDifference(M, f)
+)
+```
+
+Persist both source values, their encodings/populations, the computed floor,
+and the envelope for every cell. The V3 human gate receives the full-speed and
+half-speed V3 query traversals plus flagged-frame strips in addition to the
+convergence strips. A traversal setup/identity failure emits
+`V3_WEATHER_ADAPTER_SETUP_BLOCKED`; an absolute-health, automated-stability, or
+visual failure emits `V3_WEATHER_ADAPTER_FAIL`. The hashes of both clean V3
+query traversals and `v3QueryRepeatEnvelope` become part of the immutable
+`V3_WEATHER_ADAPTER_PASS` identity.
+
 The stock arm is a replay control. A missing capture, identity mismatch,
 non-reproducible repeat, or stock replay failure emits
 `V3_WEATHER_ADAPTER_SETUP_BLOCKED`. V3 passes its machine gate only when every
@@ -389,7 +441,7 @@ iterationCapPixelFraction                        <= 0.01
 sample-count structural invariants               pass
 ```
 
-The V3 human gate uses the complete convergence strips and scores macro
+The V3 human gate uses the complete convergence and traversal strips and scores macro
 coherence, coverage usability, cloud/ground separation, depth layering,
 lighting/BSM read, artifact freedom, and sequence-level identity stability.
 Every score must be at least `1` and no hard artifact may be flagged. The pure
@@ -427,9 +479,23 @@ worst cells for total/cloud/BSM.
 Stage 5B opens only after `V3_WEATHER_ADAPTER_PASS` and
 `V3_GPU_PRODUCTION_ELIGIBLE`. It is a default-off production-route candidate,
 never an implicit homepage change. With `MIRALITH_LUBIRTH_ORBITAL_V2` enabled in
-an isolated production build, it must reproduce the frozen query-route lossless
-buffers byte-for-byte at the four exact frames and keep the full-traversal metric
-trajectories within the Stage-2 repeat envelopes. It must also prove:
+an isolated production build, run two clean production V3 traversals,
+`v3-production-a` and `v3-production-b`. Each production repeat uses the exact
+frozen V3 tuple and the corresponding Stage-5A query repeat's frame schedule,
+camera, progress, first STBN slice, jitter sequence, viewport, and fresh document/
+history ownership. At the four exact progress frames, each production repeat
+must reproduce its matched V3 query-route lossless buffers byte-for-byte. At
+every traversal frame, both production repeats must pass the V3 absolute-health
+contract and, for every scalar trajectory `M`, satisfy:
+
+```text
+abs(M(v3-production-r, f) - M(v3-query-r, f))
+  <= v3QueryRepeatEnvelope(M, f)  for r in {a, b}
+```
+
+The matched Stage-5A V3 query envelope is the only traversal-parity reference.
+The stock Stage-2 repeat envelope, the Stage-5A stock replay arm, or a newly
+captured post-hoc baseline may not substitute for it. Stage 5B must also prove:
 
 - destination readiness never reveals a partial old/new cloud composition;
 - forced texture, shader-install, context, and readiness failures select the
@@ -470,7 +536,12 @@ thresholds; one invalid cost cell; a middle traversal frame below every absolute
 signal floor; three consecutive negative causal effects; every mechanism/shadow
 result mapped to its exact ordered policy set; cross-substage 4A–4D backtracking;
 V3 stock replay failure; V3 metric and visual failure; stock GPU pass with V3 GPU
-over-budget/perf-blocked; production parity failure; fallback failure; and an
+over-budget/perf-blocked; an unresolved h120 mechanism that preserves its own
+terminal without invoking preset confirmation; a non-empty h120 policy set that
+is fully filtered by h40/h80 and emits the distinct empty-after-confirmation
+terminal; V3 query traversal setup/absolute-health/repeat-envelope failure;
+production V3 inside and outside its matched query envelope while the stock
+Stage-2 envelope gives the opposite classification; fallback failure; and an
 attempted direct promotion from every pre-5B state.
 
 ## 2. Existing evidence and hypothesis
@@ -1030,7 +1101,28 @@ reconstruct candidates from the mechanism enum, add a mixed shadow policy that
 was not captured, or choose only the cheapest h120 case. Pure golden tests cover
 all five primary outcomes crossed with all three shadow findings, every
 `all-small` predicate, order/deduplication, one-policy preset rejection, and the
-empty-after-confirmation terminal.
+terminal precedence below:
+
+```text
+primary mechanism = PERSPECTIVE_STEP_CAUSAL_MECHANISM_UNRESOLVED
+  -> preserve PERSPECTIVE_STEP_CAUSAL_MECHANISM_UNRESOLVED
+  -> policyCandidates = []
+  -> do not invoke preset confirmation
+
+resolved primary mechanism + invalid/empty canonical h120 prefix
+  -> PERSPECTIVE_STEP_POLICY_RESOLVER_INVALID
+  -> do not invoke preset confirmation
+
+non-empty valid h120 prefix + non-empty confirmed subset
+  -> continue with the confirmed ordered subset
+
+non-empty valid h120 prefix + empty confirmed subset
+  -> PERSPECTIVE_STEP_POLICY_SET_EMPTY_AFTER_PRESET_CONFIRMATION
+```
+
+Golden tests must spy on the preset-confirmation boundary and prove that the
+first two branches never call it. They separately cover one-policy rejection
+with survivors and complete h40/h80 filtering of a previously non-empty input.
 
 ## 8. Instrumentation boundary
 
@@ -1110,6 +1202,9 @@ docs/lubirth-planetary-cloud-evidence/2026-08-13/
   takram-orbital-v3-compatibility/
     stock/
     v3/
+      continuous-query-a/
+      continuous-query-b/
+      query-repeat-envelopes.json
     gpu-cost/
       stock-cell-populations/
       v3-cell-populations/
@@ -1119,7 +1214,9 @@ docs/lubirth-planetary-cloud-evidence/2026-08-13/
     OUTCOME.md
   takram-orbital-production-parity/
     exact-frame/
-    continuous/
+    continuous-production-a/
+    continuous-production-b/
+    v3-query-parity.json
     fallback-rollback/
     OUTCOME.md
 ```
@@ -1148,7 +1245,12 @@ repository-root-relative paths and verifies from the repository root.
   stability and Stage-3 worst-cell cost loop.
 - Do not substitute Stage-4 stock cost for V3 cost, and do not open Stage 5B
   unless the frozen V3 tuple independently emits
-  `V3_GPU_PRODUCTION_ELIGIBLE`.
+  `V3_GPU_PRODUCTION_ELIGIBLE` and has two clean continuous query traversals
+  with a durable matched V3 repeat envelope.
+- Do not compare a production V3 traversal with a stock-weather envelope. The
+  only valid Stage-5B continuous reference is the immutable Stage-5A V3 query
+  A/B baseline with the same tuple, schedule, STBN/jitter identity, and frame
+  index.
 - Do not use the superseded public-scalar production draft as implementation
   authorization, and do not enable the homepage flag before
   `HOMEPAGE_PROMOTION_READY_FOR_AUTHOR_GO` receives the separate author GO.
@@ -1187,7 +1289,9 @@ The design is ready for implementation planning only when review confirms:
 - initial, subsequent, and shadow-length stepping have separate owners in the isolation stage;
 - the pure mechanism resolver emits the only ordered canonical Stage-2 policy
   set, applies the explicit `all-small` rule, and confirms every emitted policy
-  on h40 and h80 before Stage-B-wide wording;
+  on h40 and h80 before Stage-B-wide wording; mechanism-unresolved bypasses
+  preset confirmation, while only a previously non-empty set can emit the
+  empty-after-preset-confirmation terminal;
 - temporal health requires both the exact-frame matrix and the no-remount full
   7.2-second opening traversal, with computable intermediate absolute-health
   floors and matched native-reference diagnostics rather than an undefined
@@ -1199,8 +1303,10 @@ The design is ready for implementation planning only when review confirms:
 - fresh morphology, coverage, vertical, and optical substages form one
   deterministic nested search that backtracks across every untried upstream
   sibling and policy before emitting a scoped terminal;
-- Stage 5 freezes V3 stock-replay/adapter compatibility, a fresh V3 worst-cell
-  GPU matrix, production-route parity, fallback/rollback, and the only route to
+- Stage 5 freezes V3 stock-replay/adapter compatibility, two clean V3 query
+  traversals and their per-frame repeat envelope, a fresh V3 worst-cell GPU
+  matrix, production-route parity against that matched V3 query baseline,
+  fallback/rollback, and the only route to
   `HOMEPAGE_PROMOTION_READY_FOR_AUTHOR_GO`;
 - all quantitative booleans and terminal results come from raw metrics through
   one versioned final resolver, while human review supplies only visual judgment;
