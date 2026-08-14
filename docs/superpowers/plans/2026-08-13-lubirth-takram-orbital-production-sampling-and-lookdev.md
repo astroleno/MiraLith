@@ -423,8 +423,8 @@ primary march:
   A=1 -> G=1
 
 sample count:
-  decoded primary/shape/detail in [0,500]/[0,5]/[0,5]
-  primary >= shape >= detail >= 0
+  finite reconstructed counts satisfy 0 <= detail <= shape <= primary <= 500
+  shape/detail encoded values may exceed 1 because 5/5 are scale factors, not accumulated-count ceilings
   native hit -> primary > 0
 ```
 

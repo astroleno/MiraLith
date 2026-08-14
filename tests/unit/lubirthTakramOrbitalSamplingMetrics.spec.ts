@@ -86,7 +86,7 @@ test("audits sample counts without clamping invalid decoded values", async () =>
     values: new Float32Array([
       12 / 500, 2 / 5, 1 / 5, 1,
       0, 0, 0, 0,
-      1, 1, 1, 1
+      319 / 500, 243 / 5, 34 / 5, 1
     ])
   })).toEqual({ valid: true, reasons: [] });
 

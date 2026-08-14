@@ -257,8 +257,7 @@ export function auditTakramSampleCountReadback(
     const decodedShape = encodedShape * 5;
     const decodedDetail = encodedDetail * 5;
     if (decodedPrimary < 0 || decodedPrimary > 500 ||
-      decodedShape < 0 || decodedShape > 5 ||
-      decodedDetail < 0 || decodedDetail > 5) {
+      decodedShape < 0 || decodedDetail < 0) {
       reasons.push(`pixel-${pixel}:decoded-out-of-range`);
       continue;
     }
