@@ -17,6 +17,13 @@ function normalizePresentationFingerprint(
 ) {
   if (!fingerprint) return null;
   const normalized = JSON.parse(JSON.stringify(fingerprint)) as Record<string, unknown>;
+  // Production orbital evidence extends the stock fingerprint with audited
+  // baseline/target diagnostics. They are not emitted by the V3 adapter and
+  // do not change the native renderer fields this assertion compares.
+  delete normalized.schemaVersion;
+  delete normalized.orbitalBaseline;
+  delete normalized.orbitalRenderTargets;
+  delete normalized.orbitalGpuSubmission;
   const clouds = normalized.clouds as Record<string, unknown> | undefined;
   const uniforms = clouds?.uniforms as Record<string, unknown> | undefined;
   if (uniforms) {
