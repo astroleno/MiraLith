@@ -226,6 +226,13 @@ function exactJsonEqual(left: unknown, right: unknown): boolean {
   return stableJson(left) === stableJson(right);
 }
 
+export function equalOrbitalEvidenceIdentity(
+  left: unknown,
+  right: unknown
+): boolean {
+  return exactJsonEqual(left, right);
+}
+
 function writeDurableFile(filePath: string, value: Buffer | string): void {
   mkdirSync(path.dirname(filePath), { recursive: true });
   writeFileSync(filePath, value);

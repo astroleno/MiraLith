@@ -53,6 +53,7 @@ import type {
 import {
   collectOrbitalEvidenceEnvironment,
   createOrbitalStagingRun,
+  equalOrbitalEvidenceIdentity,
   hashOrbitalFile,
   readActiveOrbitalStagingRun,
   resolveAndPublishStageAtomically,
@@ -1088,12 +1089,18 @@ function validateAndBuildStage1ResolverInput(
       throw new Error("stage-1-human-review-entry-order-mismatch");
     }
     if (entry.captureCommit !== run.captureCommit ||
-      JSON.stringify(entry.contactSheetHashes) !==
-        JSON.stringify(machine.contactSheetHashes) ||
-      JSON.stringify(entry.referenceHashes) !== JSON.stringify(Object.fromEntries(
+      !equalOrbitalEvidenceIdentity(
+        entry.contactSheetHashes,
+        machine.contactSheetHashes
+      ) || !equalOrbitalEvidenceIdentity(
+        entry.referenceHashes,
+        Object.fromEntries(
         Object.entries(machine.references).map(([name, value]) => [name, value.sha256])
-      )) || JSON.stringify(entry.viewport) !==
-        JSON.stringify(machine.environment.display)) {
+        )
+      ) || !equalOrbitalEvidenceIdentity(
+        entry.viewport,
+        machine.environment.display
+      )) {
       throw new Error("stage-1-human-review-identity-mismatch");
     }
     if ((entry.coherentDensityField !== 0 &&

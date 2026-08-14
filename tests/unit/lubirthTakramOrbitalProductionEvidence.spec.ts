@@ -7,6 +7,7 @@ import path from "node:path";
 import {
   assertOrbitalStageAuthorization,
   createOrbitalStagingRun,
+  equalOrbitalEvidenceIdentity,
   hashOrbitalFile,
   readActiveOrbitalStagingRun,
   resolveAndPublishStageAtomically,
@@ -141,6 +142,17 @@ async function prepareResolvableRun(runId: string) {
     contactSha256: await hashOrbitalFile(contact)
   };
 }
+
+test("compares evidence identity independently of JSON object key order", async () => {
+  expect(equalOrbitalEvidenceIdentity(
+    { "cloud-raw-off": "off", "cloud-raw": "raw" },
+    { "cloud-raw": "raw", "cloud-raw-off": "off" }
+  )).toBe(true);
+  expect(equalOrbitalEvidenceIdentity(
+    { "cloud-raw": "raw" },
+    { "cloud-raw": "changed" }
+  )).toBe(false);
+});
 
 test("capture is inert without the production capture variable", async () => {
   const { root, environment } = initializeRepository();
