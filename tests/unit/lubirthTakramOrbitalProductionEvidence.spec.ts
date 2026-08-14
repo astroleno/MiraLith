@@ -1,7 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import {
@@ -531,4 +537,137 @@ test("requires all six allocation generations to change", () => {
     clouds: { ...before.clouds, current: 7 }
   }))
     .toThrow("incomplete-composer-remount");
+});
+
+test("verifies the outcome-aware closure topology", async () => {
+  const evidenceRoot = path.resolve(
+    process.cwd(),
+    "docs/lubirth-planetary-cloud-evidence/2026-08-13"
+  );
+  const policyRoot = path.join(
+    evidenceRoot,
+    "takram-orbital-production-step-policy"
+  );
+  const lookdevRoot = path.join(evidenceRoot, "takram-orbital-lookdev-v2");
+  const terminalOutcomes = new Set([
+    "ORBITAL_PRODUCTION_SAMPLING_SETUP_BLOCKED",
+    "ORBITAL_PUBLIC_STEP_POLICY_NEEDS_DECOUPLING",
+    "ORBITAL_PUBLIC_STEP_POLICY_QUALITY_FAIL",
+    "ORBITAL_PUBLIC_STEP_POLICY_OVER_BUDGET",
+    "ORBITAL_PUBLIC_STEP_POLICY_PERF_BLOCKED",
+    "ORBITAL_LOOKDEV_V2_SETUP_BLOCKED",
+    "ORBITAL_LOOKDEV_V2_SAMPLING_HEALTH_FAIL",
+    "ORBITAL_LOOKDEV_V2_MORPHOLOGY_FAIL",
+    "ORBITAL_LOOKDEV_V2_COVERAGE_FAIL",
+    "ORBITAL_LOOKDEV_V2_VERTICAL_FAIL",
+    "ORBITAL_LOOKDEV_V2_OPTICAL_FAIL",
+    "V3_WEATHER_ADAPTER_PASS",
+    "V3_WEATHER_ADAPTER_FAIL",
+    "V3_WEATHER_ADAPTER_SETUP_BLOCKED"
+  ]);
+  const stages = [
+    {
+      checkpoint: path.join(policyRoot, "stage-0/checkpoint.json"),
+      downstream: [
+        path.join(policyRoot, "stage-1"),
+        path.join(policyRoot, "stage-2"),
+        path.join(policyRoot, "baseline"),
+        lookdevRoot
+      ],
+      notAuthorizedAfterTerminal: ["Task 13", "Task 14", "Task 15"],
+      root: policyRoot,
+      stage: "stage-0"
+    },
+    {
+      checkpoint: path.join(policyRoot, "stage-1/checkpoint.json"),
+      downstream: [
+        path.join(policyRoot, "stage-2"),
+        path.join(policyRoot, "baseline"),
+        lookdevRoot
+      ],
+      notAuthorizedAfterTerminal: [
+        "Task 13 Steps 4-8",
+        "Task 14",
+        "Task 15"
+      ],
+      root: policyRoot,
+      stage: "stage-1"
+    },
+    {
+      checkpoint: path.join(policyRoot, "stage-2/checkpoint.json"),
+      downstream: [path.join(policyRoot, "baseline"), lookdevRoot],
+      notAuthorizedAfterTerminal: ["Task 14", "Task 15"],
+      root: policyRoot,
+      stage: "stage-2"
+    },
+    ...(["4a", "4b", "4c", "4d"] as const).map((suffix, index, all) => ({
+      checkpoint: path.join(lookdevRoot, `stage-${suffix}/checkpoint.json`),
+      downstream: [
+        ...all.slice(index + 1).map((later) =>
+          path.join(lookdevRoot, `stage-${later}`)
+        ),
+        path.join(lookdevRoot, "final-stock"),
+        path.join(lookdevRoot, "v3-compatibility")
+      ],
+      notAuthorizedAfterTerminal: [
+        ...all.slice(index + 1).map((later) => `Task 14 Stage ${later.toUpperCase()}`),
+        "Task 15"
+      ],
+      root: lookdevRoot,
+      stage: `stage-${suffix}`
+    })),
+    {
+      checkpoint: path.join(lookdevRoot, "final-stock/checkpoint.json"),
+      downstream: [path.join(lookdevRoot, "v3-compatibility")],
+      notAuthorizedAfterTerminal: ["Task 15 V3"],
+      root: lookdevRoot,
+      stage: "final-stock"
+    },
+    {
+      checkpoint: path.join(
+        lookdevRoot,
+        "v3-compatibility/checkpoint.json"
+      ),
+      downstream: [],
+      notAuthorizedAfterTerminal: [],
+      root: lookdevRoot,
+      stage: "v3-compatibility"
+    }
+  ];
+  const terminal = stages.flatMap((stage) => {
+    if (!existsSync(stage.checkpoint)) return [];
+    const checkpointData = JSON.parse(readFileSync(stage.checkpoint, "utf8")) as
+      Readonly<{ outcome?: unknown }>;
+    return typeof checkpointData.outcome === "string" &&
+      terminalOutcomes.has(checkpointData.outcome)
+      ? [{ ...stage, checkpointData }]
+      : [];
+  })[0];
+
+  expect(terminal, "committed terminal checkpoint").toBeDefined();
+  if (terminal === undefined || typeof terminal.checkpointData.outcome !== "string") {
+    throw new Error("orbital-terminal-checkpoint-missing");
+  }
+  const checkpointRelative = path.relative(process.cwd(), terminal.checkpoint);
+  expect(() => execFileSync(
+    "git",
+    ["ls-files", "--error-unmatch", checkpointRelative],
+    { cwd: process.cwd(), stdio: "ignore" }
+  )).not.toThrow();
+  await verifyArtifactManifest(terminal.root);
+  const rootCheckpoint = JSON.parse(readFileSync(
+    path.join(terminal.root, "checkpoint.json"),
+    "utf8"
+  ));
+  expect(rootCheckpoint).toEqual(terminal.checkpointData);
+  expect(readFileSync(path.join(terminal.root, "OUTCOME.md"), "utf8"))
+    .toContain(terminal.checkpointData.outcome);
+  for (const downstream of terminal.downstream) {
+    expect(existsSync(downstream), `not authorized: ${downstream}`).toBe(false);
+  }
+  console.log(JSON.stringify({
+    notAuthorizedAfterTerminal: terminal.notAuthorizedAfterTerminal,
+    outcome: terminal.checkpointData.outcome,
+    terminalStage: terminal.stage
+  }));
 });
