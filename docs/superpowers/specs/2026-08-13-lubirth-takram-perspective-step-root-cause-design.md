@@ -396,7 +396,15 @@ change, missing frame, or context/visibility generation change. Their viewport,
 camera/projection/Earth matrices, progress sequence, first STBN slice, and
 jitter schedule are identical. The `v3-query-a` shell-intersection mask is the
 fixed per-frame population for both V3 query repeats; any identity, dimension,
-origin, or projection mismatch is setup-blocked.
+origin, or projection mismatch is setup-blocked. `v3-query-b` must rederive a
+byte-identical source mask and full-resolution projection at every frame before
+either query repeat is scored. For every one of the 433 frame indices, persist
+the source mask, its deterministic full-resolution projection, both file
+SHA-256 values, source/target dimensions and bottom-left origins, projection
+factor, source/projected true-pixel counts, and the camera/projection/Earth
+matrices that generated it. These committed `v3-query-a` masks are the immutable
+population contract for the corresponding query and production continuous
+frames in Stage 5B; no later run may choose its own denominator.
 
 Both V3 query repeats independently satisfy the Stage-2 per-frame absolute-
 health table and the automated ghosting/popping/BSM-shimmer rules. They do not
@@ -478,24 +486,73 @@ worst cells for total/cloud/BSM.
 
 Stage 5B opens only after `V3_WEATHER_ADAPTER_PASS` and
 `V3_GPU_PRODUCTION_ELIGIBLE`. It is a default-off production-route candidate,
-never an implicit homepage change. With `MIRALITH_LUBIRTH_ORBITAL_V2` enabled in
-an isolated production build, run two clean production V3 traversals,
+never an implicit homepage change. The production parity resolver has two
+independent rails. A result from one rail cannot stand in for the other.
+
+**Exact-frame production rail.** With `MIRALITH_LUBIRTH_ORBITAL_V2` enabled in
+an isolated production build, run two fresh production mounts for each exact
+`progress=0.00/0.06/0.12/0.18`. Repeat `r` uses the corresponding Stage-5A V3
+static repeat's camera, progress, viewport, first STBN slice, jitter sequence,
+renderer tuple, and frame contract. Hold the exact progress from mount readiness
+and capture native frames `1/2/4/8/16/32`; do not derive these captures by
+rounding or interpolating a continuous frame index. At frame 32, every lossless
+full/cloud-raw/cloud-raw-off, sample/termination, pre-temporal,
+resolved-history, BSM-off, and final-output buffer must reproduce the matched
+Stage-5A V3 static capture byte-for-byte. Mount/runtime, route, build, and
+document identities remain separately recorded rather than falsely required to
+equal their query identities.
+
+The separation is normative because the 433-frame continuous schedule uses
+`progress=i/432` for integer `i in [0,432]`; `0.06`, `0.12`, and `0.18` are not
+members of that set. Only `progress=0` overlaps. An implementation may not label
+nearest continuous frames as exact anchors.
+
+**Continuous production rail.** Run two clean production V3 traversals,
 `v3-production-a` and `v3-production-b`. Each production repeat uses the exact
-frozen V3 tuple and the corresponding Stage-5A query repeat's frame schedule,
-camera, progress, first STBN slice, jitter sequence, viewport, and fresh document/
-history ownership. At the four exact progress frames, each production repeat
-must reproduce its matched V3 query-route lossless buffers byte-for-byte. At
-every traversal frame, both production repeats must pass the V3 absolute-health
-contract and, for every scalar trajectory `M`, satisfy:
+frozen V3 tuple and the corresponding Stage-5A query repeat's 433-frame
+schedule, camera, progress, first STBN slice, jitter sequence, viewport, and
+fresh document/history ownership. Before any scalar is compared, the production
+run must rederive every frame's source mask and projection metadata and match
+the committed `v3-query-a` mask contract byte-for-byte: source and projected
+file SHA-256, source/target dimensions, bottom-left origins, projection factor,
+source/projected true-pixel counts, and camera/projection/Earth matrices. Any
+mismatch is `PRODUCTION_V3_PARITY_SETUP_BLOCKED`. All query and production
+scalar trajectories are then recomputed over the committed `v3-query-a` source
+mask or its committed full-resolution projection; a production-derived mask may
+never become the metric denominator.
+
+At every traversal frame, both production repeats independently pass the full
+V3 automated-stability gate: finite/setup checks, per-frame absolute health,
+ghosting, popping, and BSM-shimmer rules. For every scalar trajectory `M`, both
+matched-route differences and the production self-repeat difference satisfy:
 
 ```text
 abs(M(v3-production-r, f) - M(v3-query-r, f))
   <= v3QueryRepeatEnvelope(M, f)  for r in {a, b}
+
+productionRepeatDifference(M, f) =
+  abs(M(v3-production-a, f) - M(v3-production-b, f))
+productionRepeatDifference(M, f)
+  <= v3QueryRepeatEnvelope(M, f)
 ```
 
-The matched Stage-5A V3 query envelope is the only traversal-parity reference.
-The stock Stage-2 repeat envelope, the Stage-5A stock replay arm, or a newly
-captured post-hoc baseline may not substitute for it. Stage 5B must also prove:
+For this production gate, “independently” is stricter than the Stage-2 discovery
+rule. Recompute non-finite/setup events, every absolute-health field, ghosting
+population, and cloud-current/resolved/final/BSM second differences separately
+for `v3-production-a` and `v3-production-b`. A three-frame ghosting excursion or
+a popping/BSM-shimmer excursion above both `median + 8 × MAD` and `3 ×` the
+frozen V3 query envelope in either one production traversal fails parity; the
+Stage-2 phrase “in both traversals” is not inherited here. The stock-native
+`CAUSAL_SIGNAL_COLLAPSE` test remains inapplicable because production V3 parity
+has no stock-weather causal arm.
+
+Either production traversal failing the automated-stability gate, either
+matched comparison failing, or the production A/B comparison failing blocks
+parity. Thus a wide query envelope cannot allow production A and B to drift in
+opposite directions while each remains close to its matched query repeat. The
+matched Stage-5A V3 query envelope is the only traversal-parity reference. The
+stock Stage-2 repeat envelope, the Stage-5A stock replay arm, or a newly captured
+post-hoc baseline may not substitute for it. Stage 5B must also prove:
 
 - destination readiness never reveals a partial old/new cloud composition;
 - forced texture, shader-install, context, and readiness failures select the
@@ -540,9 +597,16 @@ over-budget/perf-blocked; an unresolved h120 mechanism that preserves its own
 terminal without invoking preset confirmation; a non-empty h120 policy set that
 is fully filtered by h40/h80 and emits the distinct empty-after-confirmation
 terminal; V3 query traversal setup/absolute-health/repeat-envelope failure;
-production V3 inside and outside its matched query envelope while the stock
-Stage-2 envelope gives the opposite classification; fallback failure; and an
-attempted direct promotion from every pre-5B state.
+proof that the 433-frame schedule contains `0` but not `0.06/0.12/0.18` and that
+the latter three can pass only through the separate exact-frame rail; production
+V3 inside and outside its matched query envelope while the stock Stage-2
+envelope gives the opposite classification; query values `0/10` and production
+values `-10/20`, where both matched comparisons pass an envelope of `10` but the
+production A/B distance `30` fails; production mask SHA, dimension, origin,
+projection, true-pixel-count, or camera-matrix mismatch before scalar
+comparison; either production traversal failing an automated ghosting/popping/
+BSM-shimmer gate; fallback failure; and an attempted direct promotion from every
+pre-5B state.
 
 ## 2. Existing evidence and hypothesis
 
@@ -1204,6 +1268,7 @@ docs/lubirth-planetary-cloud-evidence/2026-08-13/
     v3/
       continuous-query-a/
       continuous-query-b/
+      continuous-fixed-masks/
       query-repeat-envelopes.json
     gpu-cost/
       stock-cell-populations/
@@ -1213,9 +1278,11 @@ docs/lubirth-planetary-cloud-evidence/2026-08-13/
     visual-review.json
     OUTCOME.md
   takram-orbital-production-parity/
-    exact-frame/
+    exact-frame-a/
+    exact-frame-b/
     continuous-production-a/
     continuous-production-b/
+    continuous-mask-verification.json
     v3-query-parity.json
     fallback-rollback/
     OUTCOME.md
@@ -1251,6 +1318,14 @@ repository-root-relative paths and verifies from the repository root.
   only valid Stage-5B continuous reference is the immutable Stage-5A V3 query
   A/B baseline with the same tuple, schedule, STBN/jitter identity, and frame
   index.
+- Do not source `progress=0.06/0.12/0.18` parity from the 433-frame continuous
+  schedule. They require independent exact-frame production mounts matching the
+  Stage-5A V3 static mount/frame contract.
+- Do not recompute continuous parity over a production-selected population or
+  accept matched A/B comparisons without also bounding production A/B repeat
+  distance. All four query/production traversals use the committed per-frame
+  `v3-query-a` masks, and each production traversal independently passes the
+  complete V3 automated-stability gate.
 - Do not use the superseded public-scalar production draft as implementation
   authorization, and do not enable the homepage flag before
   `HOMEPAGE_PROMOTION_READY_FOR_AUTHOR_GO` receives the separate author GO.
@@ -1305,8 +1380,10 @@ The design is ready for implementation planning only when review confirms:
   sibling and policy before emitting a scoped terminal;
 - Stage 5 freezes V3 stock-replay/adapter compatibility, two clean V3 query
   traversals and their per-frame repeat envelope, a fresh V3 worst-cell GPU
-  matrix, production-route parity against that matched V3 query baseline,
-  fallback/rollback, and the only route to
+  matrix, a separate four-progress production exact-frame rail, and continuous
+  production-route parity against that matched V3 query baseline using one
+  committed mask population plus matched and production-self-repeat bounds;
+  it also freezes fallback/rollback and the only route to
   `HOMEPAGE_PROMOTION_READY_FOR_AUTHOR_GO`;
 - all quantitative booleans and terminal results come from raw metrics through
   one versioned final resolver, while human review supplies only visual judgment;
