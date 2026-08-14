@@ -1,6 +1,6 @@
 # LuBirth Takram Orbital Production Sampling and Lookdev Implementation Plan
 
-**Status:** Ready for implementation
+**Status:** Closed — Stage 1 terminal `ORBITAL_PUBLIC_STEP_POLICY_QUALITY_FAIL`
 
 **Source spec:** `docs/superpowers/specs/2026-08-13-lubirth-takram-orbital-production-sampling-and-lookdev-design.md` at approved content commit `cfa815c`
 
@@ -9,6 +9,30 @@
 **Goal:** Select one evidence-backed public `perspectiveStepScale` policy for the stock orbital opening, build a healthy sampling baseline, execute a fresh bounded lookdev, and publish one spec-authorized stock/V3 terminal outcome without changing the homepage or production Takram shader API.
 
 **Architecture:** Keep the historical two-arm causal resolver immutable and add a separate production candidate contract. Build capture-only primary-march instrumentation, exact BSM-to-final GPU submission timing, numeric metric extraction, and pure policy/lookdev/V3 resolvers as focused modules; the query-only parity pipeline only applies those contracts and publishes raw telemetry. Formal System Chrome publishers consume staging evidence stage-by-stage from tracked-clean commits, skip every downstream capture after the first terminal gate, and route all outcomes through the common verification/closure task.
+
+## Execution record — 2026-08-14
+
+The detailed checkboxes below are retained as the implementation recipe. This
+record is the authoritative execution state after the first terminal gate.
+
+| Field | Final state |
+| --- | --- |
+| Terminal stage | `stage-1` |
+| Terminal outcome | `ORBITAL_PUBLIC_STEP_POLICY_QUALITY_FAIL` |
+| Authorized next stage | `null` |
+| Healthy candidates | none; `fine` and `confirmed` fail `cloud-field-not-coherent`, while `coarse` also fails `signal-retention` |
+| Human review | Reviewer `Codex`; every eligible candidate/progress has `coherentDensityField=1` and `isolatedFragments=true` because the visible cloud field is split by a regular checker/dot grid |
+| Formal run | `1786704345023-a801af2d-b370-491d-931e-d08f090e0eca` |
+| Capture commit | `f41a85bb68c88b520d97ddfa84bf918029094703` |
+| Production artifact | commit `6c9135de46d2b5e8774f260a4fd21678d859ae46`, build ID `av_HzDwMGoWOCzu_hFIE4` |
+| Terminal evidence commit | `e4ac5b46a7ffa68c98356759fbf8f02c38963af0` |
+| Final verified code commit | `974dd27ac52737e9f4c2d23c08117c20adffd364` |
+| `OUTCOME.md` SHA-256 | `43be53b9a188c28ac715cea0cdf895c255e3462af2d4b163bf2f1e8a250c7941` |
+| Evidence integrity | 673 root manifest artifacts independently rehashed with zero SHA-256/length failures; 32 sample-count buffers / 2,764,800 texels have maxima `319/243/34` and zero structural violations |
+| Verification | 137/137 orbital unit tests; headed parity/orbital suite 8 passed and 8 terminal-authorized skips; production headed focus 4/4; closure/manifest focus 2/2; both package typechecks, production build, targeted ESLint, and `git diff --check` passed |
+| Scope audit | no production `EarthMoonScene`, installed Takram shader, patch artifact, homepage route, or historical evidence root changed |
+| Not authorized after terminal | Task 13 Steps 4–8, Task 14, and Task 15 |
+| Out of scope follow-up | checker/dot-grid fragmentation needs a separate visual-remediation design; homepage promotion was not started; shader-policy decoupling is not authorized by this quality-fail outcome |
 
 **Tech Stack:** TypeScript, React Three Fiber, Three.js, `@takram/three-clouds@0.7.6`, `postprocessing@6.39.1`, WebGL2 `EXT_disjoint_timer_query_webgl2`, Playwright with headed installed System Chrome, Sharp, Node crypto/zlib, macOS `system_profiler`/`pmset`.
 
@@ -1344,6 +1368,10 @@ For a passed checkpoint continue to Task 13. For a setup-blocked terminal jump t
 
 ## Task 13: Execute Stage 1/2 and lock the healthy stock baseline
 
+**Execution:** Steps 1–3 completed. Steps 4–8 are
+`not-authorized-after-terminal` because Stage 1 published
+`ORBITAL_PUBLIC_STEP_POLICY_QUALITY_FAIL`.
+
 **Files:**
 - Create conditionally: `docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-production-step-policy/stage-1/**`
 - Create conditionally: `docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-production-step-policy/stage-2/**`
@@ -1459,6 +1487,8 @@ git commit -m "docs(lubirth): publish orbital production policy"
 ```
 
 ## Task 14: Execute the fresh Stage 4A–4D lookdev funnel
+
+**Execution:** `not-authorized-after-terminal`.
 
 **Files:**
 - Create conditionally: `docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-lookdev-v2/stage-4a/**`
@@ -1628,6 +1658,8 @@ An optical terminal marks Task 15 `not-authorized-after-terminal` and jumps to T
 
 ## Task 15: Replay final stock, classify cost, and resolve V3 compatibility
 
+**Execution:** `not-authorized-after-terminal`.
+
 **Files:**
 - Create conditionally: `docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-lookdev-v2/final-stock/**`
 - Create conditionally: `docs/lubirth-planetary-cloud-evidence/2026-08-13/takram-orbital-lookdev-v2/v3-compatibility/stock/**`
@@ -1766,11 +1798,14 @@ After this commit, jump to Task 16. Do not treat the terminal publication itself
 
 ## Task 16: Run final regression verification and close the plan
 
+**Execution:** Completed against terminal Stage 1 evidence; results are recorded
+in the execution table above.
+
 **Files:**
 - Modify only if verification exposes a defect
 - Do not modify historical evidence roots
 
-- [ ] **Step 1: Resolve and verify the outcome-aware closure topology**
+- [x] **Step 1: Resolve and verify the outcome-aware closure topology**
 
 ```bash
 pnpm exec playwright test -c playwright.unit.config.ts \
@@ -1780,7 +1815,7 @@ pnpm exec playwright test -c playwright.unit.config.ts \
 
 The test locates the earliest committed terminal checkpoint in the production-policy or lookdev-v2 root, proves it is one of the spec completion outcomes, verifies every required artifact hash/length, and asserts that all downstream formal directories are absent unless authorized by that checkpoint. It accepts Stage 0/1/2/4/final-stock/V3 terminals, requires a V3 terminal only after final-stock replay passed, and emits the normalized terminal outcome plus the list of `not-authorized-after-terminal` tasks. Failure here blocks plan closure.
 
-- [ ] **Step 2: Run all orbital unit tests**
+- [x] **Step 2: Run all orbital unit tests**
 
 ```bash
 pnpm exec playwright test -c playwright.unit.config.ts tests/unit/lubirthTakram*.spec.ts
@@ -1788,7 +1823,7 @@ pnpm exec playwright test -c playwright.unit.config.ts tests/unit/lubirthTakram*
 
 Expected: zero failures.
 
-- [ ] **Step 3: Run relevant headed System Chrome suites**
+- [x] **Step 3: Run relevant headed System Chrome suites**
 
 ```bash
 pnpm exec playwright test -c playwright.takram-parity-system-chrome.config.ts \
@@ -1802,7 +1837,7 @@ pnpm exec playwright test \
   --workers=1 --grep "route contract|remount|diagnostic teardown|GPU boundaries"
 ```
 
-- [ ] **Step 4: Run typecheck, production build, targeted lint, and evidence verification**
+- [x] **Step 4: Run typecheck, production build, targeted lint, and evidence verification**
 
 ```bash
 pnpm --filter @miralith/lubirth-hero typecheck
@@ -1826,7 +1861,7 @@ pnpm exec playwright test -c playwright.unit.config.ts \
 git diff --check
 ```
 
-- [ ] **Step 5: Verify scope preservation**
+- [x] **Step 5: Verify scope preservation**
 
 ```bash
 git diff --name-only cfa815c..HEAD
@@ -1835,11 +1870,11 @@ git status --short
 
 Confirm no production `EarthMoonScene`, on-disk Takram shader, patch artifact, homepage route, or historical evidence root changed. Confirm only the user's original untracked `.superpowers/` remains outside tracked files.
 
-- [ ] **Step 6: Record the final state**
+- [x] **Step 6: Record the final state**
 
 Update the plan status only after all commands above pass and the outcome evidence exists. Record the terminal outcome, final commit, `OUTCOME.md` SHA-256, test counts, build/typecheck/lint results, and any explicitly out-of-scope follow-up. Do not start homepage promotion or shader decoupling in this plan.
 
-- [ ] **Step 7: Commit the closed execution record**
+- [x] **Step 7: Commit the closed execution record**
 
 ```bash
 git add docs/superpowers/plans/2026-08-13-lubirth-takram-orbital-production-sampling-and-lookdev.md
