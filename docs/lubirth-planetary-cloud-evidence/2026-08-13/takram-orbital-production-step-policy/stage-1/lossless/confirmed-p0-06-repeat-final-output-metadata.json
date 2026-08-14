@@ -1,0 +1,15 @@
+{
+  "artifact": {
+    "byteLength": 409008,
+    "path": "lossless/confirmed-p0-06-repeat-final-output-uint8.gz",
+    "sha256": "1f537bff7f1aa8d32ed19abcd81bebc78436e4d6f2fecacb108deb612752697c"
+  },
+  "width": 1440,
+  "height": 960,
+  "precision": "unorm8",
+  "source": "default-framebuffer-after-aerial-perspective",
+  "origin": "bottom-left",
+  "encoding": "srgb-output-rgba",
+  "scalar": "uint8",
+  "byteLength": 5529600
+}

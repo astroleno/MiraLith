@@ -1,0 +1,12 @@
+{
+  "nasa": {
+    "expectedSha256": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+    "sha256": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+    "stagingPath": "references/nasa.png"
+  },
+  "takram": {
+    "expectedSha256": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5",
+    "sha256": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5",
+    "stagingPath": "references/takram.jpg"
+  }
+}

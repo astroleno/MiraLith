@@ -1,0 +1,26 @@
+{
+  "artifact": {
+    "byteLength": 5408,
+    "path": "lossless/control-p0-18-base-sample-count-rgba-f32le.gz",
+    "sha256": "12dbc75f1feb5966c2a1eb94c8e146aa2a13b96981dbefabbbf3170ff1ee0d0a"
+  },
+  "width": 360,
+  "height": 240,
+  "precision": "half-float",
+  "source": "native-cloud-current-render-target-v1",
+  "origin": "bottom-left",
+  "encoding": "linear-rgba-primary-over-500-shape-over-5-detail-over-5-hit-mask",
+  "instrumentationAudit": {
+    "injectedSourceFnv1a64": "fnv1a-64:e37540a51e6dab6c",
+    "instrumentationFnv1a64": "fnv1a-64:2e5daa7a9d9d81a1",
+    "sourceAnchorCounts": {
+      "marchCloudsSampleCountParameter": 1,
+      "sampleMediaSampleCountParameter": 1,
+      "sampleCountDebugOutput": 1
+    },
+    "upstreamSourceFnv1a64": "fnv1a-64:18ce66a2f661eca8"
+  },
+  "channels": 4,
+  "maxIterationCount": 500,
+  "valueCount": 345600
+}

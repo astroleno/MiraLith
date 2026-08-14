@@ -1,0 +1,1162 @@
+{
+  "identity": {
+    "allocations": {
+      "clouds": {
+        "current": 55,
+        "history": 57,
+        "resolve": 56
+      },
+      "shadow": {
+        "current": 58,
+        "history": 60,
+        "resolve": 59
+      }
+    },
+    "camera": {
+      "cameraHeightMeters": 3716320.852783883,
+      "cameraMatrixWorld": [
+        0.03239014777291915,
+        5.551115123125783e-17,
+        -0.9994753015093711,
+        0,
+        0.7971597040144991,
+        0.6032155729965563,
+        0.025833675502189513,
+        0,
+        0.6028990666958811,
+        -0.7975781920880463,
+        0.01953824154828454,
+        0,
+        14.99212952264057,
+        -4.093238293845921,
+        0.48585221659378586,
+        1
+      ],
+      "cameraPosition": [
+        14.99212952264057,
+        -4.093238293845921,
+        0.48585221659378586
+      ],
+      "earthMatrixWorld": [
+        -2.3743010557198336,
+        -5.329952387014724e-16,
+        9.303397163733289,
+        0,
+        4.32325994534708,
+        8.50191683238565,
+        1.1033303718778136,
+        0,
+        -8.237877289151507,
+        4.461828600983061,
+        -2.102371897092493,
+        0,
+        0,
+        -1.56209166040571,
+        0,
+        1
+      ]
+    },
+    "candidate": "confirmed",
+    "featureState": "native",
+    "frame": {
+      "height": 960,
+      "nativeFrameCount": 32,
+      "width": 1440,
+      "cloudsFrame": 32,
+      "resolveFrame": 32,
+      "shadowFrame": 32,
+      "temporalJitterIndex": 0,
+      "stbnSliceIndex": 32,
+      "historyEpochHash": "fnv1a-64:031495ffdfddad7e",
+      "frameLockPass": true
+    },
+    "historyEpochHash": "fnv1a-64:031495ffdfddad7e",
+    "lookdevBaseKey": "takram-lookdev-base:fnv1a-64:3cd7debdf7d9882d",
+    "lookdevMountKey": "[\"takram-lookdev-base:fnv1a-64:3cd7debdf7d9882d\",0]",
+    "output": "primary-march-debug",
+    "progress": 0.12,
+    "rendererFingerprint": {
+      "schemaVersion": 6,
+      "packageVersions": {
+        "@react-three/postprocessing": "3.0.4",
+        "@takram/three-atmosphere": "0.19.1",
+        "@takram/three-clouds": "0.7.6",
+        "@takram/three-geospatial": "0.9.1",
+        "postprocessing": "6.39.1"
+      },
+      "composer": {
+        "order": [
+          "CloudsEffect",
+          "AerialPerspectiveEffect"
+        ],
+        "normalPass": true
+      },
+      "clouds": {
+        "defines": {
+          "ACCURATE_SUN_SKY_LIGHT": "1",
+          "COMBINED_SCATTERING_TEXTURES": "1",
+          "DEBUG_SHOW_PRIMARY_MARCH": "1",
+          "DEPTH_PACKING": "3200",
+          "FRAMEBUFFER_PRECISION_HIGH": "1",
+          "GROUND_BOUNCE": "1",
+          "HAS_HIGHER_ORDER_SCATTERING_TEXTURE": "1",
+          "HAZE": "1",
+          "IRRADIANCE_TEXTURE_HEIGHT": "16",
+          "IRRADIANCE_TEXTURE_WIDTH": "64",
+          "LOCAL_WEATHER_CHANNELS": "rgba",
+          "METER_TO_LENGTH_UNIT": "0.0010000",
+          "MULTI_SCATTERING_OCTAVES": "8",
+          "PERSPECTIVE_CAMERA": "1",
+          "PI": "3.141592653589793",
+          "POWDER": "1",
+          "SCATTER_ANISOTROPY_1": "0.7000000",
+          "SCATTER_ANISOTROPY_2": "-0.2000000",
+          "SCATTER_ANISOTROPY_MIX": "0.5000000",
+          "SCATTERING_TEXTURE_MU_S_SIZE": "32",
+          "SCATTERING_TEXTURE_MU_SIZE": "128",
+          "SCATTERING_TEXTURE_NU_SIZE": "8",
+          "SCATTERING_TEXTURE_R_SIZE": "32",
+          "SHADOW_CASCADE_COUNT": "3",
+          "SHADOW_LENGTH": "1",
+          "SHADOW_SAMPLE_COUNT": "8",
+          "SHAPE_DETAIL": "1",
+          "TRANSMITTANCE_TEXTURE_HEIGHT": "64",
+          "TRANSMITTANCE_TEXTURE_WIDTH": "256",
+          "TURBULENCE": "1"
+        },
+        "properties": {
+          "temporalUpscale": true,
+          "shapeDetail": true,
+          "turbulence": true,
+          "shadowLength": true,
+          "haze": true,
+          "multiScatteringOctaves": 8,
+          "accurateSunSkyLight": true,
+          "accuratePhaseFunction": false,
+          "shadowCascadeCount": 3,
+          "shadowSampleCount": 8,
+          "scatterAnisotropy1": 0.7,
+          "scatterAnisotropy2": -0.2,
+          "scatterAnisotropyMix": 0.5
+        },
+        "uniforms": {
+          "maxIterationCount": 500,
+          "minStepSize": 50,
+          "maxStepSize": 1000,
+          "maxRayDistance": 200000,
+          "perspectiveStepScale": 1.0001,
+          "minDensity": 0.00001,
+          "minExtinction": 0.00001,
+          "minTransmittance": 0.01,
+          "maxIterationCountToSun": 2,
+          "maxIterationCountToGround": 3,
+          "minSecondaryStepSize": 100,
+          "secondaryStepScale": 2,
+          "maxShadowFilterRadius": 6,
+          "maxShadowLengthIterationCount": 500,
+          "minShadowLengthStepSize": 50,
+          "maxShadowLengthRayDistance": 200000,
+          "hazeDensityScale": 0.00003,
+          "hazeExponent": 0.001,
+          "hazeScatteringCoefficient": 0.9,
+          "hazeAbsorptionCoefficient": 0.5,
+          "skyLightScale": 1,
+          "groundBounceScale": 1,
+          "powderScale": 0.8,
+          "powderExponent": 150,
+          "scatteringCoefficient": 1,
+          "absorptionCoefficient": 0,
+          "coverage": 0.55,
+          "shapeRepeat": {
+            "x": 0.0000025,
+            "y": 0.0000025,
+            "z": 0.0000025
+          },
+          "shapeDetailRepeat": {
+            "x": 0.00005,
+            "y": 0.00005,
+            "z": 0.00005
+          }
+        }
+      },
+      "shadow": {
+        "defines": {
+          "CASCADE_COUNT": "3",
+          "FRAMEBUFFER_PRECISION_HIGH": "1",
+          "LOCAL_WEATHER_CHANNELS": "rgba",
+          "SHADOW": "1",
+          "SHAPE_DETAIL": "1",
+          "TEMPORAL_JITTER": "1",
+          "TEMPORAL_PASS": "1",
+          "TURBULENCE": "1"
+        },
+        "properties": {
+          "temporalPass": true,
+          "temporalJitter": true,
+          "shapeDetail": true,
+          "turbulence": true,
+          "cascadeCount": 3
+        },
+        "uniforms": {
+          "maxIterationCount": 50,
+          "minStepSize": 100,
+          "maxStepSize": 1000,
+          "minDensity": 0.00001,
+          "minExtinction": 0.00001,
+          "minTransmittance": 0.0001,
+          "opticalDepthTailScale": 2
+        }
+      },
+      "aerialPerspective": {
+        "defines": {
+          "COMBINED_SCATTERING_TEXTURES": "1",
+          "CORRECT_GEOMETRIC_ERROR": "1",
+          "GROUND": "1",
+          "HAS_HIGHER_ORDER_SCATTERING_TEXTURE": "1",
+          "HAS_NORMALS": "1",
+          "HAS_OVERLAY": "1",
+          "HAS_SHADOW": "1",
+          "HAS_SHADOW_LENGTH": "1",
+          "INSCATTER": "1",
+          "IRRADIANCE_TEXTURE_HEIGHT": "16",
+          "IRRADIANCE_TEXTURE_WIDTH": "64",
+          "METER_TO_LENGTH_UNIT": "0.0010000",
+          "MOON": "1",
+          "SCATTERING_TEXTURE_MU_S_SIZE": "32",
+          "SCATTERING_TEXTURE_MU_SIZE": "128",
+          "SCATTERING_TEXTURE_NU_SIZE": "8",
+          "SCATTERING_TEXTURE_R_SIZE": "32",
+          "SHADOW_CASCADE_COUNT": "3",
+          "SHADOW_SAMPLE_COUNT": "8",
+          "SKY": "1",
+          "SKY_LIGHT": "1",
+          "SUN": "1",
+          "SUN_LIGHT": "1",
+          "TRANSMITTANCE": "1",
+          "TRANSMITTANCE_TEXTURE_HEIGHT": "64",
+          "TRANSMITTANCE_TEXTURE_WIDTH": "256"
+        },
+        "properties": {
+          "correctGeometricError": true,
+          "sunLight": true,
+          "skyLight": true,
+          "transmittance": true,
+          "inscatter": true,
+          "sky": true,
+          "sun": true,
+          "moon": true,
+          "ground": true,
+          "octEncodedNormal": false,
+          "reconstructNormal": false
+        },
+        "uniforms": {
+          "albedoScale": 1,
+          "geometricErrorCorrectionAmount": 1,
+          "shadowRadius": 3,
+          "lunarRadianceScale": 1
+        }
+      },
+      "renderTargets": {
+        "clouds": {
+          "present": true,
+          "width": 360,
+          "height": 240,
+          "depthBuffer": false,
+          "stencilBuffer": false,
+          "attachments": [
+            {
+              "colorSpace": "",
+              "format": 1023,
+              "isRenderTargetTexture": true,
+              "isTexture": true,
+              "magFilter": 1006,
+              "minFilter": 1006,
+              "type": 1016
+            },
+            {
+              "colorSpace": "",
+              "format": 1023,
+              "isRenderTargetTexture": true,
+              "isTexture": true,
+              "magFilter": 1006,
+              "minFilter": 1006,
+              "type": 1016
+            },
+            {
+              "colorSpace": "",
+              "format": 1028,
+              "isRenderTargetTexture": true,
+              "isTexture": true,
+              "magFilter": 1006,
+              "minFilter": 1006,
+              "type": 1016
+            }
+          ],
+          "texture": {
+            "colorSpace": "",
+            "format": 1023,
+            "isRenderTargetTexture": true,
+            "isTexture": true,
+            "magFilter": 1006,
+            "minFilter": 1006,
+            "type": 1016
+          }
+        },
+        "resolve": {
+          "present": true,
+          "width": 1440,
+          "height": 960,
+          "depthBuffer": false,
+          "stencilBuffer": false,
+          "attachments": [
+            {
+              "colorSpace": "",
+              "format": 1023,
+              "isRenderTargetTexture": true,
+              "isTexture": true,
+              "magFilter": 1006,
+              "minFilter": 1006,
+              "type": 1016
+            },
+            {
+              "colorSpace": "",
+              "format": 1028,
+              "isRenderTargetTexture": true,
+              "isTexture": true,
+              "magFilter": 1006,
+              "minFilter": 1006,
+              "type": 1016
+            }
+          ],
+          "texture": {
+            "colorSpace": "",
+            "format": 1023,
+            "isRenderTargetTexture": true,
+            "isTexture": true,
+            "magFilter": 1006,
+            "minFilter": 1006,
+            "type": 1016
+          }
+        },
+        "history": {
+          "present": true,
+          "width": 1440,
+          "height": 960,
+          "depthBuffer": false,
+          "stencilBuffer": false,
+          "attachments": [
+            {
+              "colorSpace": "",
+              "format": 1023,
+              "isRenderTargetTexture": true,
+              "isTexture": true,
+              "magFilter": 1006,
+              "minFilter": 1006,
+              "type": 1016
+            },
+            {
+              "colorSpace": "",
+              "format": 1028,
+              "isRenderTargetTexture": true,
+              "isTexture": true,
+              "magFilter": 1006,
+              "minFilter": 1006,
+              "type": 1016
+            }
+          ],
+          "texture": {
+            "colorSpace": "",
+            "format": 1023,
+            "isRenderTargetTexture": true,
+            "isTexture": true,
+            "magFilter": 1006,
+            "minFilter": 1006,
+            "type": 1016
+          }
+        }
+      },
+      "sharedAssets": {
+        "shape": "ef65cf6156894720c00bf572c49e3e254f8899c4b5158246e5a35a1922e2519c",
+        "shapeDetail": "c09112199c6e0281b74ff5283c11c2943ae082650b9b67978cf5d59ed2956e4f",
+        "stbn": "51f52f21e5578384585050390821a0a486dcb81e11a716fa7b92fbb6515ba852",
+        "turbulence": "ec2b1b0af4a6a6104102b21e58beb300b0a3d334c0281d84fde8c91d322910f9"
+      },
+      "orbitalBaseline": {
+        "classification": "TAKRAM_ORBITAL_PARAMETER_LOOKDEV",
+        "clouds": {
+          "maxIterationCount": 500,
+          "minStepSize": 50,
+          "maxStepSize": 1000,
+          "maxRayDistance": 200000,
+          "perspectiveStepScale": 1.0001,
+          "minDensity": 0.00001,
+          "minExtinction": 0.00001,
+          "minTransmittance": 0.01,
+          "maxIterationCountToGround": 3,
+          "maxIterationCountToSun": 2,
+          "minSecondaryStepSize": 100,
+          "secondaryStepScale": 2,
+          "maxShadowFilterRadius": 6,
+          "maxShadowLengthIterationCount": 500,
+          "minShadowLengthStepSize": 50,
+          "maxShadowLengthRayDistance": 200000,
+          "accuratePhaseFunction": false,
+          "accurateSunSkyLight": true,
+          "hazeAbsorptionCoefficient": 0.5,
+          "hazeDensityScale": 0.00003,
+          "hazeExponent": 0.001,
+          "hazeScatteringCoefficient": 0.9,
+          "multiScatteringOctaves": 8
+        },
+        "coverage": 0.55,
+        "effectiveTurbulenceRepeat": [
+          16.666666666666668,
+          16.666666666666668
+        ],
+        "featureState": "native",
+        "globalWeatherMapping": false,
+        "layers": [
+          {
+            "altitude": 750,
+            "channel": "r",
+            "coverageFilterWidth": 0.6,
+            "densityProfile": {
+              "constantTerm": 0.25,
+              "exponent": 0,
+              "expTerm": 0,
+              "linearTerm": 0.75
+            },
+            "densityScale": 0.2,
+            "height": 650,
+            "shadow": true,
+            "shapeAlteringBias": 0.35,
+            "shapeAmount": 1,
+            "shapeDetailAmount": 1,
+            "weatherExponent": 1
+          },
+          {
+            "altitude": 1000,
+            "channel": "g",
+            "coverageFilterWidth": 0.6,
+            "densityProfile": {
+              "constantTerm": 0.25,
+              "exponent": 0,
+              "expTerm": 0,
+              "linearTerm": 0.75
+            },
+            "densityScale": 0.2,
+            "height": 1200,
+            "shadow": true,
+            "shapeAlteringBias": 0.35,
+            "shapeAmount": 1,
+            "shapeDetailAmount": 1,
+            "weatherExponent": 1
+          },
+          {
+            "altitude": 7500,
+            "channel": "b",
+            "coverageFilterWidth": 0.5,
+            "densityProfile": {
+              "constantTerm": 0.25,
+              "exponent": 0,
+              "expTerm": 0,
+              "linearTerm": 0.75
+            },
+            "densityScale": 0.003,
+            "height": 500,
+            "shadow": false,
+            "shapeAlteringBias": 0.35,
+            "shapeAmount": 0.4,
+            "shapeDetailAmount": 0,
+            "weatherExponent": 1
+          },
+          {
+            "altitude": 0,
+            "channel": "a",
+            "coverageFilterWidth": 0.6,
+            "densityProfile": {
+              "constantTerm": 0.25,
+              "exponent": 0,
+              "expTerm": 0,
+              "linearTerm": 0.75
+            },
+            "densityScale": 0.2,
+            "height": 0,
+            "shadow": false,
+            "shapeAlteringBias": 0.35,
+            "shapeAmount": 1,
+            "shapeDetailAmount": 1,
+            "weatherExponent": 1
+          }
+        ],
+        "lighting": {
+          "absorptionCoefficient": 0,
+          "groundBounceScale": 1,
+          "powderExponent": 150,
+          "powderScale": 0.8,
+          "scatterAnisotropy1": 0.7,
+          "scatterAnisotropy2": -0.2,
+          "scatterAnisotropyMix": 0.5,
+          "scatteringCoefficient": 1,
+          "skyLightScale": 1
+        },
+        "localWeatherOffset": [
+          0,
+          0
+        ],
+        "localWeatherRepeat": [
+          0.8333333333333334,
+          0.8333333333333334
+        ],
+        "mipDistancePatch": {
+          "active": false,
+          "auditedArtifacts": {
+            "installedBuildSharedSha256": "c2115702324e01760429187faf6203c2a118812c508429edbebe37e2e1d7c018",
+            "installedCloudsFragmentSha256": "b29eeac1f5edc205cc578edf2a711aa2ffc8b50e1ea835e8b1abb50de68b77ff",
+            "packagePatchSha256": "2bfa2dd78d4e9ac82c82eddba1273f9d2f95e932b7021584ce840f497b4f745c"
+          },
+          "classification": "native-hardcoded",
+          "nativeCoefficientOccurrences": 1,
+          "patchedCoefficientOccurrences": 0,
+          "runtimeFragmentShaderFnv1a64": "fnv1a-64:816009c0909230f6",
+          "scale": 1
+        },
+        "opticalDepthScale": 1,
+        "preset": "h120",
+        "renderer": {
+          "accuratePhaseFunction": false,
+          "accurateSunSkyLight": true,
+          "haze": true,
+          "lightShafts": true,
+          "multiScatteringOctaves": 8,
+          "resolutionScale": 1,
+          "shapeDetail": true,
+          "temporalUpscale": true,
+          "turbulence": true,
+          "qualityPreset": "high"
+        },
+        "schemaVersion": 1,
+        "shadow": {
+          "cascadeCount": 3,
+          "maxIterationCount": 50,
+          "minStepSize": 100,
+          "maxStepSize": 1000,
+          "minDensity": 0.00001,
+          "minExtinction": 0.00001,
+          "minTransmittance": 0.0001,
+          "mapSize": [
+            512,
+            512
+          ]
+        },
+        "shapeDetailRepeat": [
+          0.00005,
+          0.00005,
+          0.00005
+        ],
+        "shapeRepeat": [
+          0.0000025,
+          0.0000025,
+          0.0000025
+        ],
+        "turbulenceDisplacement": 350,
+        "turbulenceRepeat": [
+          20,
+          20
+        ],
+        "verticalScale": 1
+      },
+      "orbitalRenderTargets": {
+        "clouds": {
+          "clouds": {
+            "present": true,
+            "width": 360,
+            "height": 240,
+            "depthBuffer": false,
+            "stencilBuffer": false,
+            "attachments": [
+              {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              },
+              {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              },
+              {
+                "colorSpace": "",
+                "format": 1028,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              }
+            ],
+            "texture": {
+              "colorSpace": "",
+              "format": 1023,
+              "isRenderTargetTexture": true,
+              "isTexture": true,
+              "magFilter": 1006,
+              "minFilter": 1006,
+              "type": 1016
+            }
+          },
+          "resolve": {
+            "present": true,
+            "width": 1440,
+            "height": 960,
+            "depthBuffer": false,
+            "stencilBuffer": false,
+            "attachments": [
+              {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              },
+              {
+                "colorSpace": "",
+                "format": 1028,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              }
+            ],
+            "texture": {
+              "colorSpace": "",
+              "format": 1023,
+              "isRenderTargetTexture": true,
+              "isTexture": true,
+              "magFilter": 1006,
+              "minFilter": 1006,
+              "type": 1016
+            }
+          },
+          "history": {
+            "present": true,
+            "width": 1440,
+            "height": 960,
+            "depthBuffer": false,
+            "stencilBuffer": false,
+            "attachments": [
+              {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              },
+              {
+                "colorSpace": "",
+                "format": 1028,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              }
+            ],
+            "texture": {
+              "colorSpace": "",
+              "format": 1023,
+              "isRenderTargetTexture": true,
+              "isTexture": true,
+              "magFilter": 1006,
+              "minFilter": 1006,
+              "type": 1016
+            }
+          }
+        },
+        "shadow": {
+          "clouds": {
+            "present": true,
+            "width": 512,
+            "height": 512,
+            "depthBuffer": false,
+            "stencilBuffer": false,
+            "attachments": [
+              {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              }
+            ],
+            "texture": {
+              "colorSpace": "",
+              "format": 1023,
+              "isRenderTargetTexture": true,
+              "isTexture": true,
+              "magFilter": 1006,
+              "minFilter": 1006,
+              "type": 1016
+            }
+          },
+          "resolve": {
+            "present": true,
+            "width": 512,
+            "height": 512,
+            "depthBuffer": false,
+            "stencilBuffer": false,
+            "attachments": [
+              {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              }
+            ],
+            "texture": {
+              "colorSpace": "",
+              "format": 1023,
+              "isRenderTargetTexture": true,
+              "isTexture": true,
+              "magFilter": 1006,
+              "minFilter": 1006,
+              "type": 1016
+            }
+          },
+          "history": {
+            "present": true,
+            "width": 512,
+            "height": 512,
+            "depthBuffer": false,
+            "stencilBuffer": false,
+            "attachments": [
+              {
+                "colorSpace": "",
+                "format": 1023,
+                "isRenderTargetTexture": true,
+                "isTexture": true,
+                "magFilter": 1006,
+                "minFilter": 1006,
+                "type": 1016
+              }
+            ],
+            "texture": {
+              "colorSpace": "",
+              "format": 1023,
+              "isRenderTargetTexture": true,
+              "isTexture": true,
+              "magFilter": 1006,
+              "minFilter": 1006,
+              "type": 1016
+            }
+          }
+        }
+      }
+    },
+    "rendererFingerprintHash": "fnv1a-64:2caf4509312da69e",
+    "repeat": "repeat",
+    "requested": {
+      "classification": "TAKRAM_ORBITAL_PARAMETER_LOOKDEV",
+      "clouds": {
+        "maxIterationCount": 500,
+        "minStepSize": 50,
+        "maxStepSize": 1000,
+        "maxRayDistance": 200000,
+        "perspectiveStepScale": 1.0001,
+        "minDensity": 0.00001,
+        "minExtinction": 0.00001,
+        "minTransmittance": 0.01,
+        "maxIterationCountToGround": 3,
+        "maxIterationCountToSun": 2,
+        "minSecondaryStepSize": 100,
+        "secondaryStepScale": 2,
+        "maxShadowFilterRadius": 6,
+        "maxShadowLengthIterationCount": 500,
+        "minShadowLengthStepSize": 50,
+        "maxShadowLengthRayDistance": 200000,
+        "accuratePhaseFunction": false,
+        "accurateSunSkyLight": true,
+        "hazeAbsorptionCoefficient": 0.5,
+        "hazeDensityScale": 0.00003,
+        "hazeExponent": 0.001,
+        "hazeScatteringCoefficient": 0.9,
+        "multiScatteringOctaves": 8
+      },
+      "coverage": 0.55,
+      "effectiveTurbulenceRepeat": [
+        16.666666666666668,
+        16.666666666666668
+      ],
+      "layers": [
+        {
+          "altitude": 750,
+          "channel": "r",
+          "coverageFilterWidth": 0.6,
+          "densityProfile": {
+            "constantTerm": 0.25,
+            "exponent": 0,
+            "expTerm": 0,
+            "linearTerm": 0.75
+          },
+          "densityScale": 0.2,
+          "height": 650,
+          "shadow": true,
+          "shapeAlteringBias": 0.35,
+          "shapeAmount": 1,
+          "shapeDetailAmount": 1,
+          "weatherExponent": 1
+        },
+        {
+          "altitude": 1000,
+          "channel": "g",
+          "coverageFilterWidth": 0.6,
+          "densityProfile": {
+            "constantTerm": 0.25,
+            "exponent": 0,
+            "expTerm": 0,
+            "linearTerm": 0.75
+          },
+          "densityScale": 0.2,
+          "height": 1200,
+          "shadow": true,
+          "shapeAlteringBias": 0.35,
+          "shapeAmount": 1,
+          "shapeDetailAmount": 1,
+          "weatherExponent": 1
+        },
+        {
+          "altitude": 7500,
+          "channel": "b",
+          "coverageFilterWidth": 0.5,
+          "densityProfile": {
+            "constantTerm": 0.25,
+            "exponent": 0,
+            "expTerm": 0,
+            "linearTerm": 0.75
+          },
+          "densityScale": 0.003,
+          "height": 500,
+          "shadow": false,
+          "shapeAlteringBias": 0.35,
+          "shapeAmount": 0.4,
+          "shapeDetailAmount": 0,
+          "weatherExponent": 1
+        },
+        {
+          "altitude": 0,
+          "channel": "a",
+          "coverageFilterWidth": 0.6,
+          "densityProfile": {
+            "constantTerm": 0.25,
+            "exponent": 0,
+            "expTerm": 0,
+            "linearTerm": 0.75
+          },
+          "densityScale": 0.2,
+          "height": 0,
+          "shadow": false,
+          "shapeAlteringBias": 0.35,
+          "shapeAmount": 1,
+          "shapeDetailAmount": 1,
+          "weatherExponent": 1
+        }
+      ],
+      "lighting": {
+        "absorptionCoefficient": 0,
+        "groundBounceScale": 1,
+        "powderExponent": 150,
+        "powderScale": 0.8,
+        "scatterAnisotropy1": 0.7,
+        "scatterAnisotropy2": -0.2,
+        "scatterAnisotropyMix": 0.5,
+        "scatteringCoefficient": 1,
+        "skyLightScale": 1
+      },
+      "localWeatherRepeat": [
+        0.8333333333333334,
+        0.8333333333333334
+      ],
+      "mipDistancePatch": {
+        "active": false,
+        "scale": 1
+      },
+      "opticalDepthScale": 1,
+      "presentationScale": 120,
+      "preset": "h120",
+      "renderer": {
+        "accuratePhaseFunction": false,
+        "accurateSunSkyLight": true,
+        "haze": true,
+        "lightShafts": true,
+        "multiScatteringOctaves": 8,
+        "qualityPreset": "high",
+        "resolutionScale": 1,
+        "shapeDetail": true,
+        "temporalUpscale": true,
+        "turbulence": true
+      },
+      "samplingPolicy": {
+        "kind": "production",
+        "candidate": "confirmed",
+        "perspectiveStepScale": 1.0001
+      },
+      "schemaVersion": 1,
+      "shadow": {
+        "cascadeCount": 3,
+        "mapSize": [
+          512,
+          512
+        ],
+        "maxIterationCount": 50,
+        "minStepSize": 100,
+        "maxStepSize": 1000,
+        "minDensity": 0.00001,
+        "minExtinction": 0.00001,
+        "minTransmittance": 0.0001
+      },
+      "shapeDetailRepeat": 0.00005,
+      "shapeDetailWavelengthMeters": 20000,
+      "shapeRepeat": 0.0000025,
+      "shapeWavelengthMeters": 399999.99999999994,
+      "turbulenceDisplacement": 350,
+      "turbulenceRepeat": [
+        20,
+        20
+      ],
+      "verticalScale": 1
+    },
+    "runtimeEvidenceEpoch": "takram-runtime-evidence:fnv1a-64:24ceede3e3796daf",
+    "runtimeReadback": {
+      "allocations": {
+        "clouds": {
+          "current": 55,
+          "history": 57,
+          "resolve": 56
+        },
+        "shadow": {
+          "current": 58,
+          "history": 60,
+          "resolve": 59
+        }
+      },
+      "classification": "TAKRAM_ORBITAL_PARAMETER_LOOKDEV",
+      "clouds": {
+        "maxIterationCount": 500,
+        "minStepSize": 50,
+        "maxStepSize": 1000,
+        "maxRayDistance": 200000,
+        "perspectiveStepScale": 1.0001,
+        "minDensity": 0.00001,
+        "minExtinction": 0.00001,
+        "minTransmittance": 0.01,
+        "maxIterationCountToGround": 3,
+        "maxIterationCountToSun": 2,
+        "minSecondaryStepSize": 100,
+        "secondaryStepScale": 2,
+        "maxShadowFilterRadius": 6,
+        "maxShadowLengthIterationCount": 500,
+        "minShadowLengthStepSize": 50,
+        "maxShadowLengthRayDistance": 200000,
+        "accuratePhaseFunction": false,
+        "accurateSunSkyLight": true,
+        "hazeAbsorptionCoefficient": 0.5,
+        "hazeDensityScale": 0.00003,
+        "hazeExponent": 0.001,
+        "hazeScatteringCoefficient": 0.9,
+        "multiScatteringOctaves": 8
+      },
+      "coverage": 0.55,
+      "effectiveTurbulenceRepeat": [
+        16.666666666666668,
+        16.666666666666668
+      ],
+      "featureState": "native",
+      "globalWeatherMapping": false,
+      "layers": [
+        {
+          "altitude": 750,
+          "channel": "r",
+          "coverageFilterWidth": 0.6,
+          "densityProfile": {
+            "constantTerm": 0.25,
+            "exponent": 0,
+            "expTerm": 0,
+            "linearTerm": 0.75
+          },
+          "densityScale": 0.2,
+          "height": 650,
+          "shadow": true,
+          "shapeAlteringBias": 0.35,
+          "shapeAmount": 1,
+          "shapeDetailAmount": 1,
+          "weatherExponent": 1
+        },
+        {
+          "altitude": 1000,
+          "channel": "g",
+          "coverageFilterWidth": 0.6,
+          "densityProfile": {
+            "constantTerm": 0.25,
+            "exponent": 0,
+            "expTerm": 0,
+            "linearTerm": 0.75
+          },
+          "densityScale": 0.2,
+          "height": 1200,
+          "shadow": true,
+          "shapeAlteringBias": 0.35,
+          "shapeAmount": 1,
+          "shapeDetailAmount": 1,
+          "weatherExponent": 1
+        },
+        {
+          "altitude": 7500,
+          "channel": "b",
+          "coverageFilterWidth": 0.5,
+          "densityProfile": {
+            "constantTerm": 0.25,
+            "exponent": 0,
+            "expTerm": 0,
+            "linearTerm": 0.75
+          },
+          "densityScale": 0.003,
+          "height": 500,
+          "shadow": false,
+          "shapeAlteringBias": 0.35,
+          "shapeAmount": 0.4,
+          "shapeDetailAmount": 0,
+          "weatherExponent": 1
+        },
+        {
+          "altitude": 0,
+          "channel": "a",
+          "coverageFilterWidth": 0.6,
+          "densityProfile": {
+            "constantTerm": 0.25,
+            "exponent": 0,
+            "expTerm": 0,
+            "linearTerm": 0.75
+          },
+          "densityScale": 0.2,
+          "height": 0,
+          "shadow": false,
+          "shapeAlteringBias": 0.35,
+          "shapeAmount": 1,
+          "shapeDetailAmount": 1,
+          "weatherExponent": 1
+        }
+      ],
+      "lighting": {
+        "absorptionCoefficient": 0,
+        "groundBounceScale": 1,
+        "powderExponent": 150,
+        "powderScale": 0.8,
+        "scatterAnisotropy1": 0.7,
+        "scatterAnisotropy2": -0.2,
+        "scatterAnisotropyMix": 0.5,
+        "scatteringCoefficient": 1,
+        "skyLightScale": 1
+      },
+      "localWeatherOffset": [
+        0,
+        0
+      ],
+      "localWeatherRepeat": [
+        0.8333333333333334,
+        0.8333333333333334
+      ],
+      "mipDistancePatch": {
+        "active": false,
+        "auditedArtifacts": {
+          "installedBuildSharedSha256": "c2115702324e01760429187faf6203c2a118812c508429edbebe37e2e1d7c018",
+          "installedCloudsFragmentSha256": "b29eeac1f5edc205cc578edf2a711aa2ffc8b50e1ea835e8b1abb50de68b77ff",
+          "packagePatchSha256": "2bfa2dd78d4e9ac82c82eddba1273f9d2f95e932b7021584ce840f497b4f745c"
+        },
+        "classification": "native-hardcoded",
+        "nativeCoefficientOccurrences": 1,
+        "patchedCoefficientOccurrences": 0,
+        "runtimeFragmentShaderFnv1a64": "fnv1a-64:816009c0909230f6",
+        "scale": 1
+      },
+      "opticalDepthScale": 1,
+      "preset": "h120",
+      "renderer": {
+        "accuratePhaseFunction": false,
+        "accurateSunSkyLight": true,
+        "haze": true,
+        "lightShafts": true,
+        "multiScatteringOctaves": 8,
+        "resolutionScale": 1,
+        "shapeDetail": true,
+        "temporalUpscale": true,
+        "turbulence": true,
+        "qualityPreset": "high"
+      },
+      "schemaVersion": 1,
+      "shadow": {
+        "cascadeCount": 3,
+        "maxIterationCount": 50,
+        "minStepSize": 100,
+        "maxStepSize": 1000,
+        "minDensity": 0.00001,
+        "minExtinction": 0.00001,
+        "minTransmittance": 0.0001,
+        "mapSize": [
+          512,
+          512
+        ]
+      },
+      "shapeDetailRepeat": [
+        0.00005,
+        0.00005,
+        0.00005
+      ],
+      "shapeRepeat": [
+        0.0000025,
+        0.0000025,
+        0.0000025
+      ],
+      "turbulenceDisplacement": 350,
+      "turbulenceRepeat": [
+        20,
+        20
+      ],
+      "verticalScale": 1
+    },
+    "stepEstimates": {
+      "approximateLimbMeters": 793.2641705566947,
+      "label": "diagnostic estimate; limb rayNear approximated as 2x camera height",
+      "nearNadirMeters": 421.63208527834735,
+      "perspectiveStepScale": 1.0001
+    },
+    "precedingDiagnosticRestoration": {
+      "mode": "sample-count-debug",
+      "restoredSourceFnv1a64": "fnv1a-64:18ce66a2f661eca8",
+      "upstreamSourceFnv1a64": "fnv1a-64:18ce66a2f661eca8",
+      "restored": true
+    }
+  },
+  "screenshot": {
+    "byteLength": 273283,
+    "path": "captures/confirmed-p0-12-repeat-primary-march-debug.png",
+    "sha256": "b3dd394d64da4cd47e4cf2b457b7ee003f36ae4f1ace8ba9f90ac16f01e2a7d5"
+  }
+}

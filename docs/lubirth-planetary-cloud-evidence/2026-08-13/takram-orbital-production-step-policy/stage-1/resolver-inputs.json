@@ -1,0 +1,579 @@
+{
+  "candidates": [
+    {
+      "candidate": "control",
+      "progresses": [
+        {
+          "metricDecision": {
+            "evidenceValid": true,
+            "samplingHealthy": false,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": [
+              "native-hit-fraction",
+              "pre-temporal-signal-fraction",
+              "small-fragments",
+              "signal-retention",
+              "signal-luma-retention",
+              "paired-change-repeat-floor"
+            ]
+          },
+          "metrics": {
+            "evidenceValid": true,
+            "setupInvalidReasons": [],
+            "nativeHitPixelFraction": 0.002766203703703704,
+            "preTemporalSignalPixelFraction": 0.0071643518518518514,
+            "smallFragmentFraction": 0.9471910112359551,
+            "signalRetention": 0.6100565428109854,
+            "signalLumaRetention": 0.12854275776148136,
+            "pairedChange": 0,
+            "repeatNoiseFloor": 0,
+            "enteredPrimaryMarchPixelCount": 29163,
+            "primaryCapSaturationFraction": 0.000034290025031718274,
+            "noHitPrimaryCapSaturationFraction": 0.000034290025031718274
+          },
+          "repeatEvidence": {
+            "candidateOpacityMae": 0,
+            "controlOpacityMae": 0,
+            "nativeHitMaskMismatch": 0,
+            "opacityMae": 0
+          },
+          "progress": 0
+        },
+        {
+          "metricDecision": {
+            "evidenceValid": true,
+            "samplingHealthy": false,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": [
+              "native-hit-fraction",
+              "pre-temporal-signal-fraction",
+              "small-fragments",
+              "signal-retention",
+              "signal-luma-retention",
+              "paired-change-repeat-floor"
+            ]
+          },
+          "metrics": {
+            "evidenceValid": true,
+            "setupInvalidReasons": [],
+            "nativeHitPixelFraction": 0.0025462962962962965,
+            "preTemporalSignalPixelFraction": 0.006921296296296296,
+            "smallFragmentFraction": 0.9484878048780487,
+            "signalRetention": 0.6080685618729097,
+            "signalLumaRetention": 0.13445151621187007,
+            "pairedChange": 0,
+            "repeatNoiseFloor": 0,
+            "enteredPrimaryMarchPixelCount": 28600,
+            "primaryCapSaturationFraction": 0.000034965034965034965,
+            "noHitPrimaryCapSaturationFraction": 0.000034965034965034965
+          },
+          "repeatEvidence": {
+            "candidateOpacityMae": 0,
+            "controlOpacityMae": 0,
+            "nativeHitMaskMismatch": 0,
+            "opacityMae": 0
+          },
+          "progress": 0.06
+        },
+        {
+          "metricDecision": {
+            "evidenceValid": true,
+            "samplingHealthy": false,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": [
+              "native-hit-fraction",
+              "pre-temporal-signal-fraction",
+              "small-fragments",
+              "signal-retention",
+              "signal-luma-retention",
+              "paired-change-repeat-floor"
+            ]
+          },
+          "metrics": {
+            "evidenceValid": true,
+            "setupInvalidReasons": [],
+            "nativeHitPixelFraction": 0.0025694444444444445,
+            "preTemporalSignalPixelFraction": 0.006053240740740741,
+            "smallFragmentFraction": 0.9348343797358736,
+            "signalRetention": 0.627151051625239,
+            "signalLumaRetention": 0.13481715499882302,
+            "pairedChange": 0,
+            "repeatNoiseFloor": 0,
+            "enteredPrimaryMarchPixelCount": 27416,
+            "primaryCapSaturationFraction": 0.00003647505106507149,
+            "noHitPrimaryCapSaturationFraction": 0.00003647505106507149
+          },
+          "repeatEvidence": {
+            "candidateOpacityMae": 0,
+            "controlOpacityMae": 0,
+            "nativeHitMaskMismatch": 0,
+            "opacityMae": 0
+          },
+          "progress": 0.12
+        },
+        {
+          "metricDecision": {
+            "evidenceValid": true,
+            "samplingHealthy": false,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": [
+              "native-hit-fraction",
+              "pre-temporal-signal-fraction",
+              "small-fragments",
+              "signal-retention",
+              "signal-luma-retention",
+              "paired-change-repeat-floor"
+            ]
+          },
+          "metrics": {
+            "evidenceValid": true,
+            "setupInvalidReasons": [],
+            "nativeHitPixelFraction": 0.002210648148148148,
+            "preTemporalSignalPixelFraction": 0.005613425925925926,
+            "smallFragmentFraction": 0.9410531220876048,
+            "signalRetention": 0.6264175257731959,
+            "signalLumaRetention": 0.1219966218644815,
+            "pairedChange": 0,
+            "repeatNoiseFloor": 0,
+            "enteredPrimaryMarchPixelCount": 26387,
+            "primaryCapSaturationFraction": 0.00003789744950164854,
+            "noHitPrimaryCapSaturationFraction": 0.00003789744950164854
+          },
+          "repeatEvidence": {
+            "candidateOpacityMae": 0,
+            "controlOpacityMae": 0,
+            "nativeHitMaskMismatch": 0,
+            "opacityMae": 0
+          },
+          "progress": 0.18
+        }
+      ]
+    },
+    {
+      "candidate": "fine",
+      "progresses": [
+        {
+          "metricDecision": {
+            "evidenceValid": true,
+            "samplingHealthy": true,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": []
+          },
+          "metrics": {
+            "evidenceValid": true,
+            "setupInvalidReasons": [],
+            "nativeHitPixelFraction": 0.33708333333333335,
+            "preTemporalSignalPixelFraction": 0.33707175925925925,
+            "smallFragmentFraction": 0.0002869446696766873,
+            "signalRetention": 0.9967444116334169,
+            "signalLumaRetention": 1.0024282304696395,
+            "pairedChange": 0.30164559721946715,
+            "repeatNoiseFloor": 0,
+            "enteredPrimaryMarchPixelCount": 29163,
+            "primaryCapSaturationFraction": 0.0004800603504440558,
+            "noHitPrimaryCapSaturationFraction": 0
+          },
+          "repeatEvidence": {
+            "candidateOpacityMae": 0,
+            "controlOpacityMae": 0,
+            "nativeHitMaskMismatch": 0,
+            "opacityMae": 0
+          },
+          "progress": 0
+        },
+        {
+          "metricDecision": {
+            "evidenceValid": true,
+            "samplingHealthy": true,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": []
+          },
+          "metrics": {
+            "evidenceValid": true,
+            "setupInvalidReasons": [],
+            "nativeHitPixelFraction": 0.33055555555555555,
+            "preTemporalSignalPixelFraction": 0.3305439814814815,
+            "smallFragmentFraction": 0.000345821325648415,
+            "signalRetention": 0.9966254070520676,
+            "signalLumaRetention": 0.9977570656576773,
+            "pairedChange": 0.29476999777334706,
+            "repeatNoiseFloor": 0,
+            "enteredPrimaryMarchPixelCount": 28600,
+            "primaryCapSaturationFraction": 0.0003846153846153846,
+            "noHitPrimaryCapSaturationFraction": 0
+          },
+          "repeatEvidence": {
+            "candidateOpacityMae": 0,
+            "controlOpacityMae": 0,
+            "nativeHitMaskMismatch": 0,
+            "opacityMae": 0
+          },
+          "progress": 0.06
+        },
+        {
+          "metricDecision": {
+            "evidenceValid": true,
+            "samplingHealthy": true,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": []
+          },
+          "metrics": {
+            "evidenceValid": true,
+            "setupInvalidReasons": [],
+            "nativeHitPixelFraction": 0.31657407407407406,
+            "preTemporalSignalPixelFraction": 0.31657407407407406,
+            "smallFragmentFraction": 0.000356731689124548,
+            "signalRetention": 0.9970934483767184,
+            "signalLumaRetention": 1.0011105948978996,
+            "pairedChange": 0.27820792458675525,
+            "repeatNoiseFloor": 0,
+            "enteredPrimaryMarchPixelCount": 27416,
+            "primaryCapSaturationFraction": 0.0004012255617157864,
+            "noHitPrimaryCapSaturationFraction": 0
+          },
+          "repeatEvidence": {
+            "candidateOpacityMae": 0,
+            "controlOpacityMae": 0,
+            "nativeHitMaskMismatch": 0,
+            "opacityMae": 0
+          },
+          "progress": 0.12
+        },
+        {
+          "metricDecision": {
+            "evidenceValid": true,
+            "samplingHealthy": true,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": []
+          },
+          "metrics": {
+            "evidenceValid": true,
+            "setupInvalidReasons": [],
+            "nativeHitPixelFraction": 0.3049189814814815,
+            "preTemporalSignalPixelFraction": 0.3049074074074074,
+            "smallFragmentFraction": 0.0003948562747236608,
+            "signalRetention": 0.9961091709687215,
+            "signalLumaRetention": 0.9967649003986865,
+            "pairedChange": 0.2647666272189882,
+            "repeatNoiseFloor": 0,
+            "enteredPrimaryMarchPixelCount": 26387,
+            "primaryCapSaturationFraction": 0.00045476939401978245,
+            "noHitPrimaryCapSaturationFraction": 0
+          },
+          "repeatEvidence": {
+            "candidateOpacityMae": 0,
+            "controlOpacityMae": 0,
+            "nativeHitMaskMismatch": 0,
+            "opacityMae": 0
+          },
+          "progress": 0.18
+        }
+      ]
+    },
+    {
+      "candidate": "confirmed",
+      "progresses": [
+        {
+          "metricDecision": {
+            "evidenceValid": true,
+            "samplingHealthy": true,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": []
+          },
+          "metrics": {
+            "evidenceValid": true,
+            "setupInvalidReasons": [],
+            "nativeHitPixelFraction": 0.32861111111111113,
+            "preTemporalSignalPixelFraction": 0.32861111111111113,
+            "smallFragmentFraction": 0.0010296531301015133,
+            "signalRetention": 1.0094943117779656,
+            "signalLumaRetention": 0.987747586837321,
+            "pairedChange": 0.2902073993506255,
+            "repeatNoiseFloor": 0,
+            "enteredPrimaryMarchPixelCount": 29163,
+            "primaryCapSaturationFraction": 0.00044577032541233755,
+            "noHitPrimaryCapSaturationFraction": 0
+          },
+          "repeatEvidence": {
+            "candidateOpacityMae": 0,
+            "controlOpacityMae": 0,
+            "nativeHitMaskMismatch": 0,
+            "opacityMae": 0
+          },
+          "progress": 0
+        },
+        {
+          "metricDecision": {
+            "evidenceValid": true,
+            "samplingHealthy": true,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": []
+          },
+          "metrics": {
+            "evidenceValid": true,
+            "setupInvalidReasons": [],
+            "nativeHitPixelFraction": 0.32113425925925926,
+            "preTemporalSignalPixelFraction": 0.32113425925925926,
+            "smallFragmentFraction": 0.0011856216429841737,
+            "signalRetention": 1.0123463742521444,
+            "signalLumaRetention": 0.9811052062070373,
+            "pairedChange": 0.2827235895616037,
+            "repeatNoiseFloor": 0,
+            "enteredPrimaryMarchPixelCount": 28600,
+            "primaryCapSaturationFraction": 0.0003846153846153846,
+            "noHitPrimaryCapSaturationFraction": 0
+          },
+          "repeatEvidence": {
+            "candidateOpacityMae": 0,
+            "controlOpacityMae": 0,
+            "nativeHitMaskMismatch": 0,
+            "opacityMae": 0
+          },
+          "progress": 0.06
+        },
+        {
+          "metricDecision": {
+            "evidenceValid": true,
+            "samplingHealthy": true,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": []
+          },
+          "metrics": {
+            "evidenceValid": true,
+            "setupInvalidReasons": [],
+            "nativeHitPixelFraction": 0.30600694444444443,
+            "preTemporalSignalPixelFraction": 0.30600694444444443,
+            "smallFragmentFraction": 0.0013852011599001903,
+            "signalRetention": 1.016133836378078,
+            "signalLumaRetention": 0.9785532728400124,
+            "pairedChange": 0.2658980229165819,
+            "repeatNoiseFloor": 0,
+            "enteredPrimaryMarchPixelCount": 27416,
+            "primaryCapSaturationFraction": 0.0003647505106507149,
+            "noHitPrimaryCapSaturationFraction": 0
+          },
+          "repeatEvidence": {
+            "candidateOpacityMae": 0,
+            "controlOpacityMae": 0,
+            "nativeHitMaskMismatch": 0,
+            "opacityMae": 0
+          },
+          "progress": 0.12
+        },
+        {
+          "metricDecision": {
+            "evidenceValid": true,
+            "samplingHealthy": true,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": []
+          },
+          "metrics": {
+            "evidenceValid": true,
+            "setupInvalidReasons": [],
+            "nativeHitPixelFraction": 0.29288194444444443,
+            "preTemporalSignalPixelFraction": 0.29288194444444443,
+            "smallFragmentFraction": 0.0014241557403771438,
+            "signalRetention": 1.0194106895870383,
+            "signalLumaRetention": 0.9743519869388082,
+            "pairedChange": 0.2518961782367141,
+            "repeatNoiseFloor": 0,
+            "enteredPrimaryMarchPixelCount": 26387,
+            "primaryCapSaturationFraction": 0.00034107704551483687,
+            "noHitPrimaryCapSaturationFraction": 0
+          },
+          "repeatEvidence": {
+            "candidateOpacityMae": 0,
+            "controlOpacityMae": 0,
+            "nativeHitMaskMismatch": 0,
+            "opacityMae": 0
+          },
+          "progress": 0.18
+        }
+      ]
+    },
+    {
+      "candidate": "coarse",
+      "progresses": [
+        {
+          "metricDecision": {
+            "evidenceValid": true,
+            "samplingHealthy": false,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": [
+              "signal-retention"
+            ]
+          },
+          "metrics": {
+            "evidenceValid": true,
+            "setupInvalidReasons": [],
+            "nativeHitPixelFraction": 0.26297453703703705,
+            "preTemporalSignalPixelFraction": 0.27738425925925925,
+            "smallFragmentFraction": 0.008705309511338726,
+            "signalRetention": 1.1034277726779604,
+            "signalLumaRetention": 0.9406464915300022,
+            "pairedChange": 0.2518478857146369,
+            "repeatNoiseFloor": 0,
+            "enteredPrimaryMarchPixelCount": 29163,
+            "primaryCapSaturationFraction": 0.0002743202002537462,
+            "noHitPrimaryCapSaturationFraction": 0
+          },
+          "repeatEvidence": {
+            "candidateOpacityMae": 0,
+            "controlOpacityMae": 0,
+            "nativeHitMaskMismatch": 0,
+            "opacityMae": 0
+          },
+          "progress": 0
+        },
+        {
+          "metricDecision": {
+            "evidenceValid": true,
+            "samplingHealthy": false,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": [
+              "signal-retention"
+            ]
+          },
+          "metrics": {
+            "evidenceValid": true,
+            "setupInvalidReasons": [],
+            "nativeHitPixelFraction": 0.25438657407407406,
+            "preTemporalSignalPixelFraction": 0.2688773148148148,
+            "smallFragmentFraction": 0.009730737137689306,
+            "signalRetention": 1.1084380784296846,
+            "signalLumaRetention": 0.9311952893948645,
+            "pairedChange": 0.24326466110017564,
+            "repeatNoiseFloor": 0,
+            "enteredPrimaryMarchPixelCount": 28600,
+            "primaryCapSaturationFraction": 0.0003846153846153846,
+            "noHitPrimaryCapSaturationFraction": 0
+          },
+          "repeatEvidence": {
+            "candidateOpacityMae": 0,
+            "controlOpacityMae": 0,
+            "nativeHitMaskMismatch": 0,
+            "opacityMae": 0
+          },
+          "progress": 0.06
+        },
+        {
+          "metricDecision": {
+            "evidenceValid": true,
+            "samplingHealthy": false,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": [
+              "signal-retention"
+            ]
+          },
+          "metrics": {
+            "evidenceValid": true,
+            "setupInvalidReasons": [],
+            "nativeHitPixelFraction": 0.23355324074074074,
+            "preTemporalSignalPixelFraction": 0.24840277777777778,
+            "smallFragmentFraction": 0.013529513066689628,
+            "signalRetention": 1.124289441804119,
+            "signalLumaRetention": 0.910925488196468,
+            "pairedChange": 0.22395829271387171,
+            "repeatNoiseFloor": 0,
+            "enteredPrimaryMarchPixelCount": 27416,
+            "primaryCapSaturationFraction": 0.0003647505106507149,
+            "noHitPrimaryCapSaturationFraction": 0
+          },
+          "repeatEvidence": {
+            "candidateOpacityMae": 0,
+            "controlOpacityMae": 0,
+            "nativeHitMaskMismatch": 0,
+            "opacityMae": 0
+          },
+          "progress": 0.12
+        },
+        {
+          "metricDecision": {
+            "evidenceValid": true,
+            "samplingHealthy": false,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": [
+              "signal-retention"
+            ]
+          },
+          "metrics": {
+            "evidenceValid": true,
+            "setupInvalidReasons": [],
+            "nativeHitPixelFraction": 0.21609953703703705,
+            "preTemporalSignalPixelFraction": 0.23137731481481483,
+            "smallFragmentFraction": 0.017321470072619912,
+            "signalRetention": 1.1395284127857535,
+            "signalLumaRetention": 0.8859058700039535,
+            "pairedChange": 0.20826995107862684,
+            "repeatNoiseFloor": 0,
+            "enteredPrimaryMarchPixelCount": 26387,
+            "primaryCapSaturationFraction": 0.00026528214651153976,
+            "noHitPrimaryCapSaturationFraction": 0
+          },
+          "repeatEvidence": {
+            "candidateOpacityMae": 0,
+            "controlOpacityMae": 0,
+            "nativeHitMaskMismatch": 0,
+            "opacityMae": 0
+          },
+          "progress": 0.18
+        }
+      ]
+    }
+  ],
+  "contactSheetHashes": {
+    "contact-sheets/cloud-raw.png": "581c41903a88c8839ab08c391cbb1c98b6abc14413d19f754fc643f582387856",
+    "contact-sheets/cloud-raw-off.png": "d26ab5966636f3a7028b170d57ba9d5be16e175d5349826bcd5c8f221db95dbf",
+    "contact-sheets/sample-count-debug.png": "4792fff4267a581504ad743318062c7f63641862ecf4ee2605948978f19781a1",
+    "contact-sheets/primary-march-debug.png": "cc2685deb5605357de4c9d4ae63d7120bec33432f791bc1a26c8504cef60bd8f",
+    "contact-sheets/stage-readback.png": "ba5de12fdaae22f0a78525f5d95072842c948063dbf95c8a521e3e8651b4319e",
+    "contact-sheets/frozen-references.png": "b87b43c74295228f6fd360635bbb5ba5b5c5966323ae1d1a467c1759e02d3f03"
+  },
+  "environment": {
+    "browser": {
+      "chromeVersion": "Google Chrome 151.0.7922.138",
+      "focused": true,
+      "visibilityState": "visible"
+    },
+    "build": {
+      "buildId": "av_HzDwMGoWOCzu_hFIE4",
+      "buildIdSha256": "02a9350a2ed233f2e3338032eaad6410f3595423a074f162b401bca09e7b4ef9",
+      "fingerprintSha256": "2cb19ac3369e32cc7dba1152971ae5bb653d563bd4574b5f1536f323e9208066",
+      "mode": "production",
+      "productionArtifactCommit": "6c9135de46d2b5e8774f260a4fd21678d859ae46"
+    },
+    "captureCommit": "f41a85bb68c88b520d97ddfa84bf918029094703",
+    "display": {
+      "canvasHeight": 960,
+      "canvasWidth": 1440,
+      "devicePixelRatio": 1,
+      "innerHeight": 960,
+      "innerWidth": 1440
+    },
+    "gpu": {
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+      "vendor": "Google Inc. (Apple)"
+    },
+    "hardware": {
+      "chip": "Apple M4"
+    },
+    "macOSVersion": "15.6.1",
+    "power": {
+      "lowPowerMode": 0,
+      "source": "AC Power"
+    }
+  },
+  "references": {
+    "nasa": {
+      "expectedSha256": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+      "sha256": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+      "stagingPath": "references/nasa.png"
+    },
+    "takram": {
+      "expectedSha256": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5",
+      "sha256": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5",
+      "stagingPath": "references/takram.jpg"
+    }
+  },
+  "schema": "takram-orbital-production-stage-1-machine/v1"
+}

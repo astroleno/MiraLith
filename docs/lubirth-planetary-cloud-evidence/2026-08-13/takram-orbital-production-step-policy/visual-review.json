@@ -1,0 +1,340 @@
+{
+  "entries": [
+    {
+      "candidateId": "fine",
+      "captureCommit": "f41a85bb68c88b520d97ddfa84bf918029094703",
+      "coherentDensityField": 1,
+      "contactSheetHashes": {
+        "contact-sheets/cloud-raw-off.png": "d26ab5966636f3a7028b170d57ba9d5be16e175d5349826bcd5c8f221db95dbf",
+        "contact-sheets/cloud-raw.png": "581c41903a88c8839ab08c391cbb1c98b6abc14413d19f754fc643f582387856",
+        "contact-sheets/frozen-references.png": "b87b43c74295228f6fd360635bbb5ba5b5c5966323ae1d1a467c1759e02d3f03",
+        "contact-sheets/primary-march-debug.png": "cc2685deb5605357de4c9d4ae63d7120bec33432f791bc1a26c8504cef60bd8f",
+        "contact-sheets/sample-count-debug.png": "4792fff4267a581504ad743318062c7f63641862ecf4ee2605948978f19781a1",
+        "contact-sheets/stage-readback.png": "ba5de12fdaae22f0a78525f5d95072842c948063dbf95c8a521e3e8651b4319e"
+      },
+      "isolatedFragments": true,
+      "notes": "宏观云量分布可辨认，但全部候选和进度都呈现规则的棋盘/点阵式断裂，云块之间存在明显黑色间隔，属于 visibly disconnected fragments。暗色、偏红和贴地未参与本阶段否决。",
+      "progress": 0,
+      "referenceHashes": {
+        "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+        "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+      },
+      "viewport": {
+        "canvasHeight": 960,
+        "canvasWidth": 1440,
+        "devicePixelRatio": 1,
+        "innerHeight": 960,
+        "innerWidth": 1440
+      }
+    },
+    {
+      "candidateId": "fine",
+      "captureCommit": "f41a85bb68c88b520d97ddfa84bf918029094703",
+      "coherentDensityField": 1,
+      "contactSheetHashes": {
+        "contact-sheets/cloud-raw-off.png": "d26ab5966636f3a7028b170d57ba9d5be16e175d5349826bcd5c8f221db95dbf",
+        "contact-sheets/cloud-raw.png": "581c41903a88c8839ab08c391cbb1c98b6abc14413d19f754fc643f582387856",
+        "contact-sheets/frozen-references.png": "b87b43c74295228f6fd360635bbb5ba5b5c5966323ae1d1a467c1759e02d3f03",
+        "contact-sheets/primary-march-debug.png": "cc2685deb5605357de4c9d4ae63d7120bec33432f791bc1a26c8504cef60bd8f",
+        "contact-sheets/sample-count-debug.png": "4792fff4267a581504ad743318062c7f63641862ecf4ee2605948978f19781a1",
+        "contact-sheets/stage-readback.png": "ba5de12fdaae22f0a78525f5d95072842c948063dbf95c8a521e3e8651b4319e"
+      },
+      "isolatedFragments": true,
+      "notes": "宏观云量分布可辨认，但全部候选和进度都呈现规则的棋盘/点阵式断裂，云块之间存在明显黑色间隔，属于 visibly disconnected fragments。暗色、偏红和贴地未参与本阶段否决。",
+      "progress": 0.06,
+      "referenceHashes": {
+        "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+        "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+      },
+      "viewport": {
+        "canvasHeight": 960,
+        "canvasWidth": 1440,
+        "devicePixelRatio": 1,
+        "innerHeight": 960,
+        "innerWidth": 1440
+      }
+    },
+    {
+      "candidateId": "fine",
+      "captureCommit": "f41a85bb68c88b520d97ddfa84bf918029094703",
+      "coherentDensityField": 1,
+      "contactSheetHashes": {
+        "contact-sheets/cloud-raw-off.png": "d26ab5966636f3a7028b170d57ba9d5be16e175d5349826bcd5c8f221db95dbf",
+        "contact-sheets/cloud-raw.png": "581c41903a88c8839ab08c391cbb1c98b6abc14413d19f754fc643f582387856",
+        "contact-sheets/frozen-references.png": "b87b43c74295228f6fd360635bbb5ba5b5c5966323ae1d1a467c1759e02d3f03",
+        "contact-sheets/primary-march-debug.png": "cc2685deb5605357de4c9d4ae63d7120bec33432f791bc1a26c8504cef60bd8f",
+        "contact-sheets/sample-count-debug.png": "4792fff4267a581504ad743318062c7f63641862ecf4ee2605948978f19781a1",
+        "contact-sheets/stage-readback.png": "ba5de12fdaae22f0a78525f5d95072842c948063dbf95c8a521e3e8651b4319e"
+      },
+      "isolatedFragments": true,
+      "notes": "宏观云量分布可辨认，但全部候选和进度都呈现规则的棋盘/点阵式断裂，云块之间存在明显黑色间隔，属于 visibly disconnected fragments。暗色、偏红和贴地未参与本阶段否决。",
+      "progress": 0.12,
+      "referenceHashes": {
+        "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+        "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+      },
+      "viewport": {
+        "canvasHeight": 960,
+        "canvasWidth": 1440,
+        "devicePixelRatio": 1,
+        "innerHeight": 960,
+        "innerWidth": 1440
+      }
+    },
+    {
+      "candidateId": "fine",
+      "captureCommit": "f41a85bb68c88b520d97ddfa84bf918029094703",
+      "coherentDensityField": 1,
+      "contactSheetHashes": {
+        "contact-sheets/cloud-raw-off.png": "d26ab5966636f3a7028b170d57ba9d5be16e175d5349826bcd5c8f221db95dbf",
+        "contact-sheets/cloud-raw.png": "581c41903a88c8839ab08c391cbb1c98b6abc14413d19f754fc643f582387856",
+        "contact-sheets/frozen-references.png": "b87b43c74295228f6fd360635bbb5ba5b5c5966323ae1d1a467c1759e02d3f03",
+        "contact-sheets/primary-march-debug.png": "cc2685deb5605357de4c9d4ae63d7120bec33432f791bc1a26c8504cef60bd8f",
+        "contact-sheets/sample-count-debug.png": "4792fff4267a581504ad743318062c7f63641862ecf4ee2605948978f19781a1",
+        "contact-sheets/stage-readback.png": "ba5de12fdaae22f0a78525f5d95072842c948063dbf95c8a521e3e8651b4319e"
+      },
+      "isolatedFragments": true,
+      "notes": "宏观云量分布可辨认，但全部候选和进度都呈现规则的棋盘/点阵式断裂，云块之间存在明显黑色间隔，属于 visibly disconnected fragments。暗色、偏红和贴地未参与本阶段否决。",
+      "progress": 0.18,
+      "referenceHashes": {
+        "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+        "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+      },
+      "viewport": {
+        "canvasHeight": 960,
+        "canvasWidth": 1440,
+        "devicePixelRatio": 1,
+        "innerHeight": 960,
+        "innerWidth": 1440
+      }
+    },
+    {
+      "candidateId": "confirmed",
+      "captureCommit": "f41a85bb68c88b520d97ddfa84bf918029094703",
+      "coherentDensityField": 1,
+      "contactSheetHashes": {
+        "contact-sheets/cloud-raw-off.png": "d26ab5966636f3a7028b170d57ba9d5be16e175d5349826bcd5c8f221db95dbf",
+        "contact-sheets/cloud-raw.png": "581c41903a88c8839ab08c391cbb1c98b6abc14413d19f754fc643f582387856",
+        "contact-sheets/frozen-references.png": "b87b43c74295228f6fd360635bbb5ba5b5c5966323ae1d1a467c1759e02d3f03",
+        "contact-sheets/primary-march-debug.png": "cc2685deb5605357de4c9d4ae63d7120bec33432f791bc1a26c8504cef60bd8f",
+        "contact-sheets/sample-count-debug.png": "4792fff4267a581504ad743318062c7f63641862ecf4ee2605948978f19781a1",
+        "contact-sheets/stage-readback.png": "ba5de12fdaae22f0a78525f5d95072842c948063dbf95c8a521e3e8651b4319e"
+      },
+      "isolatedFragments": true,
+      "notes": "宏观云量分布可辨认，但全部候选和进度都呈现规则的棋盘/点阵式断裂，云块之间存在明显黑色间隔，属于 visibly disconnected fragments。暗色、偏红和贴地未参与本阶段否决。",
+      "progress": 0,
+      "referenceHashes": {
+        "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+        "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+      },
+      "viewport": {
+        "canvasHeight": 960,
+        "canvasWidth": 1440,
+        "devicePixelRatio": 1,
+        "innerHeight": 960,
+        "innerWidth": 1440
+      }
+    },
+    {
+      "candidateId": "confirmed",
+      "captureCommit": "f41a85bb68c88b520d97ddfa84bf918029094703",
+      "coherentDensityField": 1,
+      "contactSheetHashes": {
+        "contact-sheets/cloud-raw-off.png": "d26ab5966636f3a7028b170d57ba9d5be16e175d5349826bcd5c8f221db95dbf",
+        "contact-sheets/cloud-raw.png": "581c41903a88c8839ab08c391cbb1c98b6abc14413d19f754fc643f582387856",
+        "contact-sheets/frozen-references.png": "b87b43c74295228f6fd360635bbb5ba5b5c5966323ae1d1a467c1759e02d3f03",
+        "contact-sheets/primary-march-debug.png": "cc2685deb5605357de4c9d4ae63d7120bec33432f791bc1a26c8504cef60bd8f",
+        "contact-sheets/sample-count-debug.png": "4792fff4267a581504ad743318062c7f63641862ecf4ee2605948978f19781a1",
+        "contact-sheets/stage-readback.png": "ba5de12fdaae22f0a78525f5d95072842c948063dbf95c8a521e3e8651b4319e"
+      },
+      "isolatedFragments": true,
+      "notes": "宏观云量分布可辨认，但全部候选和进度都呈现规则的棋盘/点阵式断裂，云块之间存在明显黑色间隔，属于 visibly disconnected fragments。暗色、偏红和贴地未参与本阶段否决。",
+      "progress": 0.06,
+      "referenceHashes": {
+        "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+        "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+      },
+      "viewport": {
+        "canvasHeight": 960,
+        "canvasWidth": 1440,
+        "devicePixelRatio": 1,
+        "innerHeight": 960,
+        "innerWidth": 1440
+      }
+    },
+    {
+      "candidateId": "confirmed",
+      "captureCommit": "f41a85bb68c88b520d97ddfa84bf918029094703",
+      "coherentDensityField": 1,
+      "contactSheetHashes": {
+        "contact-sheets/cloud-raw-off.png": "d26ab5966636f3a7028b170d57ba9d5be16e175d5349826bcd5c8f221db95dbf",
+        "contact-sheets/cloud-raw.png": "581c41903a88c8839ab08c391cbb1c98b6abc14413d19f754fc643f582387856",
+        "contact-sheets/frozen-references.png": "b87b43c74295228f6fd360635bbb5ba5b5c5966323ae1d1a467c1759e02d3f03",
+        "contact-sheets/primary-march-debug.png": "cc2685deb5605357de4c9d4ae63d7120bec33432f791bc1a26c8504cef60bd8f",
+        "contact-sheets/sample-count-debug.png": "4792fff4267a581504ad743318062c7f63641862ecf4ee2605948978f19781a1",
+        "contact-sheets/stage-readback.png": "ba5de12fdaae22f0a78525f5d95072842c948063dbf95c8a521e3e8651b4319e"
+      },
+      "isolatedFragments": true,
+      "notes": "宏观云量分布可辨认，但全部候选和进度都呈现规则的棋盘/点阵式断裂，云块之间存在明显黑色间隔，属于 visibly disconnected fragments。暗色、偏红和贴地未参与本阶段否决。",
+      "progress": 0.12,
+      "referenceHashes": {
+        "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+        "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+      },
+      "viewport": {
+        "canvasHeight": 960,
+        "canvasWidth": 1440,
+        "devicePixelRatio": 1,
+        "innerHeight": 960,
+        "innerWidth": 1440
+      }
+    },
+    {
+      "candidateId": "confirmed",
+      "captureCommit": "f41a85bb68c88b520d97ddfa84bf918029094703",
+      "coherentDensityField": 1,
+      "contactSheetHashes": {
+        "contact-sheets/cloud-raw-off.png": "d26ab5966636f3a7028b170d57ba9d5be16e175d5349826bcd5c8f221db95dbf",
+        "contact-sheets/cloud-raw.png": "581c41903a88c8839ab08c391cbb1c98b6abc14413d19f754fc643f582387856",
+        "contact-sheets/frozen-references.png": "b87b43c74295228f6fd360635bbb5ba5b5c5966323ae1d1a467c1759e02d3f03",
+        "contact-sheets/primary-march-debug.png": "cc2685deb5605357de4c9d4ae63d7120bec33432f791bc1a26c8504cef60bd8f",
+        "contact-sheets/sample-count-debug.png": "4792fff4267a581504ad743318062c7f63641862ecf4ee2605948978f19781a1",
+        "contact-sheets/stage-readback.png": "ba5de12fdaae22f0a78525f5d95072842c948063dbf95c8a521e3e8651b4319e"
+      },
+      "isolatedFragments": true,
+      "notes": "宏观云量分布可辨认，但全部候选和进度都呈现规则的棋盘/点阵式断裂，云块之间存在明显黑色间隔，属于 visibly disconnected fragments。暗色、偏红和贴地未参与本阶段否决。",
+      "progress": 0.18,
+      "referenceHashes": {
+        "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+        "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+      },
+      "viewport": {
+        "canvasHeight": 960,
+        "canvasWidth": 1440,
+        "devicePixelRatio": 1,
+        "innerHeight": 960,
+        "innerWidth": 1440
+      }
+    },
+    {
+      "candidateId": "coarse",
+      "captureCommit": "f41a85bb68c88b520d97ddfa84bf918029094703",
+      "coherentDensityField": 1,
+      "contactSheetHashes": {
+        "contact-sheets/cloud-raw-off.png": "d26ab5966636f3a7028b170d57ba9d5be16e175d5349826bcd5c8f221db95dbf",
+        "contact-sheets/cloud-raw.png": "581c41903a88c8839ab08c391cbb1c98b6abc14413d19f754fc643f582387856",
+        "contact-sheets/frozen-references.png": "b87b43c74295228f6fd360635bbb5ba5b5c5966323ae1d1a467c1759e02d3f03",
+        "contact-sheets/primary-march-debug.png": "cc2685deb5605357de4c9d4ae63d7120bec33432f791bc1a26c8504cef60bd8f",
+        "contact-sheets/sample-count-debug.png": "4792fff4267a581504ad743318062c7f63641862ecf4ee2605948978f19781a1",
+        "contact-sheets/stage-readback.png": "ba5de12fdaae22f0a78525f5d95072842c948063dbf95c8a521e3e8651b4319e"
+      },
+      "isolatedFragments": true,
+      "notes": "宏观云量分布可辨认，但全部候选和进度都呈现规则的棋盘/点阵式断裂，云块之间存在明显黑色间隔，属于 visibly disconnected fragments。暗色、偏红和贴地未参与本阶段否决。",
+      "progress": 0,
+      "referenceHashes": {
+        "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+        "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+      },
+      "viewport": {
+        "canvasHeight": 960,
+        "canvasWidth": 1440,
+        "devicePixelRatio": 1,
+        "innerHeight": 960,
+        "innerWidth": 1440
+      }
+    },
+    {
+      "candidateId": "coarse",
+      "captureCommit": "f41a85bb68c88b520d97ddfa84bf918029094703",
+      "coherentDensityField": 1,
+      "contactSheetHashes": {
+        "contact-sheets/cloud-raw-off.png": "d26ab5966636f3a7028b170d57ba9d5be16e175d5349826bcd5c8f221db95dbf",
+        "contact-sheets/cloud-raw.png": "581c41903a88c8839ab08c391cbb1c98b6abc14413d19f754fc643f582387856",
+        "contact-sheets/frozen-references.png": "b87b43c74295228f6fd360635bbb5ba5b5c5966323ae1d1a467c1759e02d3f03",
+        "contact-sheets/primary-march-debug.png": "cc2685deb5605357de4c9d4ae63d7120bec33432f791bc1a26c8504cef60bd8f",
+        "contact-sheets/sample-count-debug.png": "4792fff4267a581504ad743318062c7f63641862ecf4ee2605948978f19781a1",
+        "contact-sheets/stage-readback.png": "ba5de12fdaae22f0a78525f5d95072842c948063dbf95c8a521e3e8651b4319e"
+      },
+      "isolatedFragments": true,
+      "notes": "宏观云量分布可辨认，但全部候选和进度都呈现规则的棋盘/点阵式断裂，云块之间存在明显黑色间隔，属于 visibly disconnected fragments。暗色、偏红和贴地未参与本阶段否决。",
+      "progress": 0.06,
+      "referenceHashes": {
+        "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+        "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+      },
+      "viewport": {
+        "canvasHeight": 960,
+        "canvasWidth": 1440,
+        "devicePixelRatio": 1,
+        "innerHeight": 960,
+        "innerWidth": 1440
+      }
+    },
+    {
+      "candidateId": "coarse",
+      "captureCommit": "f41a85bb68c88b520d97ddfa84bf918029094703",
+      "coherentDensityField": 1,
+      "contactSheetHashes": {
+        "contact-sheets/cloud-raw-off.png": "d26ab5966636f3a7028b170d57ba9d5be16e175d5349826bcd5c8f221db95dbf",
+        "contact-sheets/cloud-raw.png": "581c41903a88c8839ab08c391cbb1c98b6abc14413d19f754fc643f582387856",
+        "contact-sheets/frozen-references.png": "b87b43c74295228f6fd360635bbb5ba5b5c5966323ae1d1a467c1759e02d3f03",
+        "contact-sheets/primary-march-debug.png": "cc2685deb5605357de4c9d4ae63d7120bec33432f791bc1a26c8504cef60bd8f",
+        "contact-sheets/sample-count-debug.png": "4792fff4267a581504ad743318062c7f63641862ecf4ee2605948978f19781a1",
+        "contact-sheets/stage-readback.png": "ba5de12fdaae22f0a78525f5d95072842c948063dbf95c8a521e3e8651b4319e"
+      },
+      "isolatedFragments": true,
+      "notes": "宏观云量分布可辨认，但全部候选和进度都呈现规则的棋盘/点阵式断裂，云块之间存在明显黑色间隔，属于 visibly disconnected fragments。暗色、偏红和贴地未参与本阶段否决。",
+      "progress": 0.12,
+      "referenceHashes": {
+        "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+        "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+      },
+      "viewport": {
+        "canvasHeight": 960,
+        "canvasWidth": 1440,
+        "devicePixelRatio": 1,
+        "innerHeight": 960,
+        "innerWidth": 1440
+      }
+    },
+    {
+      "candidateId": "coarse",
+      "captureCommit": "f41a85bb68c88b520d97ddfa84bf918029094703",
+      "coherentDensityField": 1,
+      "contactSheetHashes": {
+        "contact-sheets/cloud-raw-off.png": "d26ab5966636f3a7028b170d57ba9d5be16e175d5349826bcd5c8f221db95dbf",
+        "contact-sheets/cloud-raw.png": "581c41903a88c8839ab08c391cbb1c98b6abc14413d19f754fc643f582387856",
+        "contact-sheets/frozen-references.png": "b87b43c74295228f6fd360635bbb5ba5b5c5966323ae1d1a467c1759e02d3f03",
+        "contact-sheets/primary-march-debug.png": "cc2685deb5605357de4c9d4ae63d7120bec33432f791bc1a26c8504cef60bd8f",
+        "contact-sheets/sample-count-debug.png": "4792fff4267a581504ad743318062c7f63641862ecf4ee2605948978f19781a1",
+        "contact-sheets/stage-readback.png": "ba5de12fdaae22f0a78525f5d95072842c948063dbf95c8a521e3e8651b4319e"
+      },
+      "isolatedFragments": true,
+      "notes": "宏观云量分布可辨认，但全部候选和进度都呈现规则的棋盘/点阵式断裂，云块之间存在明显黑色间隔，属于 visibly disconnected fragments。暗色、偏红和贴地未参与本阶段否决。",
+      "progress": 0.18,
+      "referenceHashes": {
+        "nasa": "d1bf3d7478969acf7910ccb0688554a8074650df60f528ca91b84d91a04120eb",
+        "takram": "843ea3876bf9fc24a3c4ee9ddc17c61c0e453ad3baa4a5562a3563b4af24c4a5"
+      },
+      "viewport": {
+        "canvasHeight": 960,
+        "canvasWidth": 1440,
+        "devicePixelRatio": 1,
+        "innerHeight": 960,
+        "innerWidth": 1440
+      }
+    }
+  ],
+  "reviewer": {
+    "name": "Codex",
+    "reviewedAt": "2026-08-14T10:39:25Z"
+  },
+  "rubric": [
+    "Set coherentDensityField to 0, 1, or 2 from cloud-raw only.",
+    "Set isolatedFragments to true only for visibly disconnected fragments.",
+    "Record aesthetic observations in notes; do not add result or outcome fields."
+  ],
+  "runId": "1786704345023-a801af2d-b370-491d-931e-d08f090e0eca",
+  "schemaVersion": 1,
+  "stage": "stage-1"
+}

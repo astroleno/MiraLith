@@ -1,0 +1,317 @@
+{
+  "captureManifestSha256": "03f8ac3114087e65bd033d073882fa0be7de1a490b51111be55574d25898bc25",
+  "resolver": "resolveTakramOrbitalProductionStage1",
+  "resolverInput": {
+    "candidates": [
+      {
+        "candidate": "control",
+        "progresses": [
+          {
+            "metrics": {
+              "enteredPrimaryMarchPixelCount": 29163,
+              "evidenceValid": true,
+              "nativeHitPixelFraction": 0.002766203703703704,
+              "noHitPrimaryCapSaturationFraction": 0.000034290025031718274,
+              "pairedChange": 0,
+              "preTemporalSignalPixelFraction": 0.0071643518518518514,
+              "primaryCapSaturationFraction": 0.000034290025031718274,
+              "repeatNoiseFloor": 0,
+              "setupInvalidReasons": [],
+              "signalLumaRetention": 0.12854275776148136,
+              "signalRetention": 0.6100565428109854,
+              "smallFragmentFraction": 0.9471910112359551
+            },
+            "progress": 0,
+            "visualReview": "debug-color"
+          },
+          {
+            "metrics": {
+              "enteredPrimaryMarchPixelCount": 28600,
+              "evidenceValid": true,
+              "nativeHitPixelFraction": 0.0025462962962962965,
+              "noHitPrimaryCapSaturationFraction": 0.000034965034965034965,
+              "pairedChange": 0,
+              "preTemporalSignalPixelFraction": 0.006921296296296296,
+              "primaryCapSaturationFraction": 0.000034965034965034965,
+              "repeatNoiseFloor": 0,
+              "setupInvalidReasons": [],
+              "signalLumaRetention": 0.13445151621187007,
+              "signalRetention": 0.6080685618729097,
+              "smallFragmentFraction": 0.9484878048780487
+            },
+            "progress": 0.06,
+            "visualReview": "debug-color"
+          },
+          {
+            "metrics": {
+              "enteredPrimaryMarchPixelCount": 27416,
+              "evidenceValid": true,
+              "nativeHitPixelFraction": 0.0025694444444444445,
+              "noHitPrimaryCapSaturationFraction": 0.00003647505106507149,
+              "pairedChange": 0,
+              "preTemporalSignalPixelFraction": 0.006053240740740741,
+              "primaryCapSaturationFraction": 0.00003647505106507149,
+              "repeatNoiseFloor": 0,
+              "setupInvalidReasons": [],
+              "signalLumaRetention": 0.13481715499882302,
+              "signalRetention": 0.627151051625239,
+              "smallFragmentFraction": 0.9348343797358736
+            },
+            "progress": 0.12,
+            "visualReview": "debug-color"
+          },
+          {
+            "metrics": {
+              "enteredPrimaryMarchPixelCount": 26387,
+              "evidenceValid": true,
+              "nativeHitPixelFraction": 0.002210648148148148,
+              "noHitPrimaryCapSaturationFraction": 0.00003789744950164854,
+              "pairedChange": 0,
+              "preTemporalSignalPixelFraction": 0.005613425925925926,
+              "primaryCapSaturationFraction": 0.00003789744950164854,
+              "repeatNoiseFloor": 0,
+              "setupInvalidReasons": [],
+              "signalLumaRetention": 0.1219966218644815,
+              "signalRetention": 0.6264175257731959,
+              "smallFragmentFraction": 0.9410531220876048
+            },
+            "progress": 0.18,
+            "visualReview": "debug-color"
+          }
+        ]
+      },
+      {
+        "candidate": "fine",
+        "progresses": [
+          {
+            "metrics": {
+              "enteredPrimaryMarchPixelCount": 29163,
+              "evidenceValid": true,
+              "nativeHitPixelFraction": 0.33708333333333335,
+              "noHitPrimaryCapSaturationFraction": 0,
+              "pairedChange": 0.30164559721946715,
+              "preTemporalSignalPixelFraction": 0.33707175925925925,
+              "primaryCapSaturationFraction": 0.0004800603504440558,
+              "repeatNoiseFloor": 0,
+              "setupInvalidReasons": [],
+              "signalLumaRetention": 1.0024282304696395,
+              "signalRetention": 0.9967444116334169,
+              "smallFragmentFraction": 0.0002869446696766873
+            },
+            "progress": 0,
+            "visualReview": "isolated-fragments"
+          },
+          {
+            "metrics": {
+              "enteredPrimaryMarchPixelCount": 28600,
+              "evidenceValid": true,
+              "nativeHitPixelFraction": 0.33055555555555555,
+              "noHitPrimaryCapSaturationFraction": 0,
+              "pairedChange": 0.29476999777334706,
+              "preTemporalSignalPixelFraction": 0.3305439814814815,
+              "primaryCapSaturationFraction": 0.0003846153846153846,
+              "repeatNoiseFloor": 0,
+              "setupInvalidReasons": [],
+              "signalLumaRetention": 0.9977570656576773,
+              "signalRetention": 0.9966254070520676,
+              "smallFragmentFraction": 0.000345821325648415
+            },
+            "progress": 0.06,
+            "visualReview": "isolated-fragments"
+          },
+          {
+            "metrics": {
+              "enteredPrimaryMarchPixelCount": 27416,
+              "evidenceValid": true,
+              "nativeHitPixelFraction": 0.31657407407407406,
+              "noHitPrimaryCapSaturationFraction": 0,
+              "pairedChange": 0.27820792458675525,
+              "preTemporalSignalPixelFraction": 0.31657407407407406,
+              "primaryCapSaturationFraction": 0.0004012255617157864,
+              "repeatNoiseFloor": 0,
+              "setupInvalidReasons": [],
+              "signalLumaRetention": 1.0011105948978996,
+              "signalRetention": 0.9970934483767184,
+              "smallFragmentFraction": 0.000356731689124548
+            },
+            "progress": 0.12,
+            "visualReview": "isolated-fragments"
+          },
+          {
+            "metrics": {
+              "enteredPrimaryMarchPixelCount": 26387,
+              "evidenceValid": true,
+              "nativeHitPixelFraction": 0.3049189814814815,
+              "noHitPrimaryCapSaturationFraction": 0,
+              "pairedChange": 0.2647666272189882,
+              "preTemporalSignalPixelFraction": 0.3049074074074074,
+              "primaryCapSaturationFraction": 0.00045476939401978245,
+              "repeatNoiseFloor": 0,
+              "setupInvalidReasons": [],
+              "signalLumaRetention": 0.9967649003986865,
+              "signalRetention": 0.9961091709687215,
+              "smallFragmentFraction": 0.0003948562747236608
+            },
+            "progress": 0.18,
+            "visualReview": "isolated-fragments"
+          }
+        ]
+      },
+      {
+        "candidate": "confirmed",
+        "progresses": [
+          {
+            "metrics": {
+              "enteredPrimaryMarchPixelCount": 29163,
+              "evidenceValid": true,
+              "nativeHitPixelFraction": 0.32861111111111113,
+              "noHitPrimaryCapSaturationFraction": 0,
+              "pairedChange": 0.2902073993506255,
+              "preTemporalSignalPixelFraction": 0.32861111111111113,
+              "primaryCapSaturationFraction": 0.00044577032541233755,
+              "repeatNoiseFloor": 0,
+              "setupInvalidReasons": [],
+              "signalLumaRetention": 0.987747586837321,
+              "signalRetention": 1.0094943117779656,
+              "smallFragmentFraction": 0.0010296531301015133
+            },
+            "progress": 0,
+            "visualReview": "isolated-fragments"
+          },
+          {
+            "metrics": {
+              "enteredPrimaryMarchPixelCount": 28600,
+              "evidenceValid": true,
+              "nativeHitPixelFraction": 0.32113425925925926,
+              "noHitPrimaryCapSaturationFraction": 0,
+              "pairedChange": 0.2827235895616037,
+              "preTemporalSignalPixelFraction": 0.32113425925925926,
+              "primaryCapSaturationFraction": 0.0003846153846153846,
+              "repeatNoiseFloor": 0,
+              "setupInvalidReasons": [],
+              "signalLumaRetention": 0.9811052062070373,
+              "signalRetention": 1.0123463742521444,
+              "smallFragmentFraction": 0.0011856216429841737
+            },
+            "progress": 0.06,
+            "visualReview": "isolated-fragments"
+          },
+          {
+            "metrics": {
+              "enteredPrimaryMarchPixelCount": 27416,
+              "evidenceValid": true,
+              "nativeHitPixelFraction": 0.30600694444444443,
+              "noHitPrimaryCapSaturationFraction": 0,
+              "pairedChange": 0.2658980229165819,
+              "preTemporalSignalPixelFraction": 0.30600694444444443,
+              "primaryCapSaturationFraction": 0.0003647505106507149,
+              "repeatNoiseFloor": 0,
+              "setupInvalidReasons": [],
+              "signalLumaRetention": 0.9785532728400124,
+              "signalRetention": 1.016133836378078,
+              "smallFragmentFraction": 0.0013852011599001903
+            },
+            "progress": 0.12,
+            "visualReview": "isolated-fragments"
+          },
+          {
+            "metrics": {
+              "enteredPrimaryMarchPixelCount": 26387,
+              "evidenceValid": true,
+              "nativeHitPixelFraction": 0.29288194444444443,
+              "noHitPrimaryCapSaturationFraction": 0,
+              "pairedChange": 0.2518961782367141,
+              "preTemporalSignalPixelFraction": 0.29288194444444443,
+              "primaryCapSaturationFraction": 0.00034107704551483687,
+              "repeatNoiseFloor": 0,
+              "setupInvalidReasons": [],
+              "signalLumaRetention": 0.9743519869388082,
+              "signalRetention": 1.0194106895870383,
+              "smallFragmentFraction": 0.0014241557403771438
+            },
+            "progress": 0.18,
+            "visualReview": "isolated-fragments"
+          }
+        ]
+      },
+      {
+        "candidate": "coarse",
+        "progresses": [
+          {
+            "metrics": {
+              "enteredPrimaryMarchPixelCount": 29163,
+              "evidenceValid": true,
+              "nativeHitPixelFraction": 0.26297453703703705,
+              "noHitPrimaryCapSaturationFraction": 0,
+              "pairedChange": 0.2518478857146369,
+              "preTemporalSignalPixelFraction": 0.27738425925925925,
+              "primaryCapSaturationFraction": 0.0002743202002537462,
+              "repeatNoiseFloor": 0,
+              "setupInvalidReasons": [],
+              "signalLumaRetention": 0.9406464915300022,
+              "signalRetention": 1.1034277726779604,
+              "smallFragmentFraction": 0.008705309511338726
+            },
+            "progress": 0,
+            "visualReview": "isolated-fragments"
+          },
+          {
+            "metrics": {
+              "enteredPrimaryMarchPixelCount": 28600,
+              "evidenceValid": true,
+              "nativeHitPixelFraction": 0.25438657407407406,
+              "noHitPrimaryCapSaturationFraction": 0,
+              "pairedChange": 0.24326466110017564,
+              "preTemporalSignalPixelFraction": 0.2688773148148148,
+              "primaryCapSaturationFraction": 0.0003846153846153846,
+              "repeatNoiseFloor": 0,
+              "setupInvalidReasons": [],
+              "signalLumaRetention": 0.9311952893948645,
+              "signalRetention": 1.1084380784296846,
+              "smallFragmentFraction": 0.009730737137689306
+            },
+            "progress": 0.06,
+            "visualReview": "isolated-fragments"
+          },
+          {
+            "metrics": {
+              "enteredPrimaryMarchPixelCount": 27416,
+              "evidenceValid": true,
+              "nativeHitPixelFraction": 0.23355324074074074,
+              "noHitPrimaryCapSaturationFraction": 0,
+              "pairedChange": 0.22395829271387171,
+              "preTemporalSignalPixelFraction": 0.24840277777777778,
+              "primaryCapSaturationFraction": 0.0003647505106507149,
+              "repeatNoiseFloor": 0,
+              "setupInvalidReasons": [],
+              "signalLumaRetention": 0.910925488196468,
+              "signalRetention": 1.124289441804119,
+              "smallFragmentFraction": 0.013529513066689628
+            },
+            "progress": 0.12,
+            "visualReview": "isolated-fragments"
+          },
+          {
+            "metrics": {
+              "enteredPrimaryMarchPixelCount": 26387,
+              "evidenceValid": true,
+              "nativeHitPixelFraction": 0.21609953703703705,
+              "noHitPrimaryCapSaturationFraction": 0,
+              "pairedChange": 0.20826995107862684,
+              "preTemporalSignalPixelFraction": 0.23137731481481483,
+              "primaryCapSaturationFraction": 0.00026528214651153976,
+              "repeatNoiseFloor": 0,
+              "setupInvalidReasons": [],
+              "signalLumaRetention": 0.8859058700039535,
+              "signalRetention": 1.1395284127857535,
+              "smallFragmentFraction": 0.017321470072619912
+            },
+            "progress": 0.18,
+            "visualReview": "isolated-fragments"
+          }
+        ]
+      }
+    ]
+  },
+  "state": "ORBITAL_PUBLIC_STEP_POLICY_QUALITY_FAIL"
+}

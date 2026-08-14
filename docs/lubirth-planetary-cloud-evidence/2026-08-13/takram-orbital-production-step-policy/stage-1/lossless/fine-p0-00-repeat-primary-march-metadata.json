@@ -1,0 +1,28 @@
+{
+  "artifact": {
+    "byteLength": 25647,
+    "path": "lossless/fine-p0-00-repeat-primary-march-rgba-f32le.gz",
+    "sha256": "61df8ff04b11d56a466acae5ff470cc41d9ea0f6087a94ebbc6ae8e6ba628798"
+  },
+  "width": 360,
+  "height": 240,
+  "precision": "half-float",
+  "source": "native-cloud-current-render-target-primary-march-v1",
+  "origin": "bottom-left",
+  "encoding": "rgba16f-loop-entry-cap-hit-direct",
+  "maxIterationCount": 500,
+  "instrumentationAudit": {
+    "injectedSourceFnv1a64": "fnv1a-64:816009c0909230f6",
+    "instrumentationFnv1a64": "fnv1a-64:ae93ef02ebb2b241",
+    "sourceAnchorCounts": {
+      "caller": 1,
+      "earlyBreak": 3,
+      "functionEntry": 1,
+      "loopBody": 1,
+      "primaryDebugOutput": 1
+    },
+    "upstreamSourceFnv1a64": "fnv1a-64:18ce66a2f661eca8"
+  },
+  "channels": 4,
+  "valueCount": 345600
+}

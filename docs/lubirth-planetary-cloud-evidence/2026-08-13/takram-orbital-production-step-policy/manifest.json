@@ -1,9 +1,17 @@
 {
-  "captureArtifactCount": 8,
-  "captureManifestSha256": "216f322e62db6b7ab54b0f04abdd0c6f0329ccb89a628a25869f73f20b7ff13e",
-  "evidenceCommit": "6c9135de46d2b5e8774f260a4fd21678d859ae46",
+  "captureManifestSha256": "03f8ac3114087e65bd033d073882fa0be7de1a490b51111be55574d25898bc25",
+  "contactSheetHashes": {
+    "contact-sheets/cloud-raw.png": "581c41903a88c8839ab08c391cbb1c98b6abc14413d19f754fc643f582387856",
+    "contact-sheets/cloud-raw-off.png": "d26ab5966636f3a7028b170d57ba9d5be16e175d5349826bcd5c8f221db95dbf",
+    "contact-sheets/sample-count-debug.png": "4792fff4267a581504ad743318062c7f63641862ecf4ee2605948978f19781a1",
+    "contact-sheets/primary-march-debug.png": "cc2685deb5605357de4c9d4ae63d7120bec33432f791bc1a26c8504cef60bd8f",
+    "contact-sheets/stage-readback.png": "ba5de12fdaae22f0a78525f5d95072842c948063dbf95c8a521e3e8651b4319e",
+    "contact-sheets/frozen-references.png": "b87b43c74295228f6fd360635bbb5ba5b5c5966323ae1d1a467c1759e02d3f03"
+  },
+  "evidenceCommit": "f41a85bb68c88b520d97ddfa84bf918029094703",
   "productionArtifactCommit": "6c9135de46d2b5e8774f260a4fd21678d859ae46",
-  "runId": "1786637563063-5b222177-adfb-4ea5-81b9-5c65c0e38b6c",
+  "runId": "1786704345023-a801af2d-b370-491d-931e-d08f090e0eca",
   "schemaVersion": 1,
-  "stage": 0
+  "stage": 1,
+  "stage1Outcome": "ORBITAL_PUBLIC_STEP_POLICY_QUALITY_FAIL"
 }

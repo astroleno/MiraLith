@@ -1,0 +1,15 @@
+{
+  "artifact": {
+    "byteLength": 59911,
+    "path": "lossless/control-p0-18-base-resolved-history-float32-le.gz",
+    "sha256": "88f67189268882e97271462bdb0e5e4fe09dfa410fab3e0944356d2fd9367928"
+  },
+  "width": 1440,
+  "height": 960,
+  "precision": "half-float",
+  "source": "native-cloud-resolved-history-render-target",
+  "origin": "bottom-left",
+  "encoding": "linear-rgba",
+  "scalar": "float32-le",
+  "byteLength": 22118400
+}

@@ -1,0 +1,15 @@
+{
+  "artifact": {
+    "byteLength": 450912,
+    "path": "lossless/coarse-p0-12-base-final-output-uint8.gz",
+    "sha256": "fbd8fe78e0db3571dd50ca03c7a1cd2abc35a82eecc9a4bc0e7addc9b1f2d46b"
+  },
+  "width": 1440,
+  "height": 960,
+  "precision": "unorm8",
+  "source": "default-framebuffer-after-aerial-perspective",
+  "origin": "bottom-left",
+  "encoding": "srgb-output-rgba",
+  "scalar": "uint8",
+  "byteLength": 5529600
+}

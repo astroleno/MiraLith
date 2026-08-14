@@ -1,0 +1,15 @@
+{
+  "artifact": {
+    "byteLength": 139405,
+    "path": "lossless/confirmed-p0-06-base-pre-temporal-float32-le.gz",
+    "sha256": "257da60d2803f72f482805bcfd9f60309c25f207592f60fcf5246ede2d8a8014"
+  },
+  "width": 360,
+  "height": 240,
+  "precision": "half-float",
+  "source": "native-cloud-current-render-target",
+  "origin": "bottom-left",
+  "encoding": "linear-rgba",
+  "scalar": "float32-le",
+  "byteLength": 1382400
+}

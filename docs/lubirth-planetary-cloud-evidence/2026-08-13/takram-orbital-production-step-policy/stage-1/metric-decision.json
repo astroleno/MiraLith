@@ -1,0 +1,205 @@
+{
+  "candidates": [
+    {
+      "candidate": "control",
+      "progresses": [
+        {
+          "decision": {
+            "evidenceValid": true,
+            "samplingHealthy": false,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": [
+              "native-hit-fraction",
+              "pre-temporal-signal-fraction",
+              "small-fragments",
+              "signal-retention",
+              "signal-luma-retention",
+              "paired-change-repeat-floor"
+            ]
+          },
+          "progress": 0
+        },
+        {
+          "decision": {
+            "evidenceValid": true,
+            "samplingHealthy": false,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": [
+              "native-hit-fraction",
+              "pre-temporal-signal-fraction",
+              "small-fragments",
+              "signal-retention",
+              "signal-luma-retention",
+              "paired-change-repeat-floor"
+            ]
+          },
+          "progress": 0.06
+        },
+        {
+          "decision": {
+            "evidenceValid": true,
+            "samplingHealthy": false,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": [
+              "native-hit-fraction",
+              "pre-temporal-signal-fraction",
+              "small-fragments",
+              "signal-retention",
+              "signal-luma-retention",
+              "paired-change-repeat-floor"
+            ]
+          },
+          "progress": 0.12
+        },
+        {
+          "decision": {
+            "evidenceValid": true,
+            "samplingHealthy": false,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": [
+              "native-hit-fraction",
+              "pre-temporal-signal-fraction",
+              "small-fragments",
+              "signal-retention",
+              "signal-luma-retention",
+              "paired-change-repeat-floor"
+            ]
+          },
+          "progress": 0.18
+        }
+      ]
+    },
+    {
+      "candidate": "fine",
+      "progresses": [
+        {
+          "decision": {
+            "evidenceValid": true,
+            "samplingHealthy": true,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": []
+          },
+          "progress": 0
+        },
+        {
+          "decision": {
+            "evidenceValid": true,
+            "samplingHealthy": true,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": []
+          },
+          "progress": 0.06
+        },
+        {
+          "decision": {
+            "evidenceValid": true,
+            "samplingHealthy": true,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": []
+          },
+          "progress": 0.12
+        },
+        {
+          "decision": {
+            "evidenceValid": true,
+            "samplingHealthy": true,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": []
+          },
+          "progress": 0.18
+        }
+      ]
+    },
+    {
+      "candidate": "confirmed",
+      "progresses": [
+        {
+          "decision": {
+            "evidenceValid": true,
+            "samplingHealthy": true,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": []
+          },
+          "progress": 0
+        },
+        {
+          "decision": {
+            "evidenceValid": true,
+            "samplingHealthy": true,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": []
+          },
+          "progress": 0.06
+        },
+        {
+          "decision": {
+            "evidenceValid": true,
+            "samplingHealthy": true,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": []
+          },
+          "progress": 0.12
+        },
+        {
+          "decision": {
+            "evidenceValid": true,
+            "samplingHealthy": true,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": []
+          },
+          "progress": 0.18
+        }
+      ]
+    },
+    {
+      "candidate": "coarse",
+      "progresses": [
+        {
+          "decision": {
+            "evidenceValid": true,
+            "samplingHealthy": false,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": [
+              "signal-retention"
+            ]
+          },
+          "progress": 0
+        },
+        {
+          "decision": {
+            "evidenceValid": true,
+            "samplingHealthy": false,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": [
+              "signal-retention"
+            ]
+          },
+          "progress": 0.06
+        },
+        {
+          "decision": {
+            "evidenceValid": true,
+            "samplingHealthy": false,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": [
+              "signal-retention"
+            ]
+          },
+          "progress": 0.12
+        },
+        {
+          "decision": {
+            "evidenceValid": true,
+            "samplingHealthy": false,
+            "setupInvalidReasons": [],
+            "samplingFailureReasons": [
+              "signal-retention"
+            ]
+          },
+          "progress": 0.18
+        }
+      ]
+    }
+  ],
+  "schema": "takram-orbital-production-stage-1-metric-decision/v1"
+}
