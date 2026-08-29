@@ -41,6 +41,19 @@ import {
   useQualityTier,
   useReducedMotionPreference
 } from "@miralith/visual-core";
+import {
+  resolveVolumetricEarthCloudLook,
+  resolveVolumetricEarthCloudTuning,
+  type VolumetricEarthCloudLook,
+  type VolumetricEarthCloudTuning
+} from "./volumetricEarthCloudLook";
+
+declare global {
+  interface Window {
+    __MiraLithVolumetricEarthCloudLook?: string;
+    __MiraLithVolumetricEarthCloudFbmEnabled?: boolean;
+  }
+}
 
 const EARTH_RADIUS = 1;
 const CLOUD_BOTTOM_RADIUS = 1.008;
@@ -157,6 +170,14 @@ function readRequestedQuality(): LandingQuality {
     : "auto";
 }
 
+function readRequestedCloudLook(): VolumetricEarthCloudLook {
+  if (typeof window === "undefined") {
+    return "baseline";
+  }
+
+  return resolveVolumetricEarthCloudLook(new URLSearchParams(window.location.search).get("cloudLook"));
+}
+
 function readPreserveDrawingBuffer() {
   if (typeof window === "undefined") {
     return false;
@@ -171,6 +192,10 @@ function subscribeRuntimeSnapshot() {
 
 function serverRequestedQualitySnapshot(): LandingQuality {
   return "auto";
+}
+
+function serverRequestedCloudLookSnapshot(): VolumetricEarthCloudLook {
+  return "baseline";
 }
 
 function serverPreserveDrawingBufferSnapshot() {
@@ -413,12 +438,25 @@ function createSurfaceMaterial(textures: ReturnType<typeof useVolumetricEarthTex
   });
 }
 
-function createCloudMaterial(cloudTexture: Texture, cloudDeckTexture: Texture, budget: RayBudget, tier: ResolvedQualityTier) {
+function createCloudMaterial(
+  cloudTexture: Texture,
+  cloudDeckTexture: Texture,
+  budget: RayBudget,
+  tier: ResolvedQualityTier,
+  cloudLook: VolumetricEarthCloudLook,
+  tuning: VolumetricEarthCloudTuning
+) {
   return new ShaderMaterial({
     name: "MiraLithIndependentVolumetricClouds",
     defines: {
       CLOUD_LIGHT_STEPS: String(budget.cloudLightSteps),
-      CLOUD_STEPS: String(budget.cloudSteps)
+      CLOUD_STEPS: String(budget.cloudSteps),
+      ...(cloudLook === "fbm"
+        ? {
+            CLOUD_FBM_DETAIL: "1",
+            CLOUD_FBM_OCTAVES: String(tuning.detailOctaves)
+          }
+        : {})
     },
     uniforms: {
       cloudMap: { value: cloudTexture },
@@ -427,7 +465,14 @@ function createCloudMaterial(cloudTexture: Texture, cloudDeckTexture: Texture, b
       yaw: { value: INITIAL_YAW },
       cloudOffset: { value: new Vector2(0, 0) },
       opacity: { value: tier === "low" ? 0.72 : 0.92 },
-      atmosphereTint: { value: new Color(0.13, 0.36, 0.78) }
+      atmosphereTint: { value: new Color(0.13, 0.36, 0.78) },
+      detailStrength: { value: tuning.detailStrength },
+      detailScale: { value: tuning.detailScale },
+      absorptionCoefficient: { value: tuning.absorptionCoefficient },
+      phaseAnisotropy: { value: tuning.phaseAnisotropy },
+      forwardScatterStrength: { value: tuning.forwardScatterStrength },
+      silverPower: { value: tuning.silverPower },
+      silverStrength: { value: tuning.silverStrength }
     },
     vertexShader: `
       varying vec3 vWorldPosition;
@@ -446,6 +491,13 @@ function createCloudMaterial(cloudTexture: Texture, cloudDeckTexture: Texture, b
       uniform vec2 cloudOffset;
       uniform float opacity;
       uniform vec3 atmosphereTint;
+      uniform float detailStrength;
+      uniform float detailScale;
+      uniform float absorptionCoefficient;
+      uniform float phaseAnisotropy;
+      uniform float forwardScatterStrength;
+      uniform float silverPower;
+      uniform float silverStrength;
 
       varying vec3 vWorldPosition;
 
@@ -479,6 +531,48 @@ function createCloudMaterial(cloudTexture: Texture, cloudDeckTexture: Texture, b
         float d = hash21(i + vec2(1.0, 1.0));
         return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
       }
+
+      #ifdef CLOUD_FBM_DETAIL
+      float hash31(vec3 p) {
+        p = fract(p * 0.1031);
+        p += dot(p, p.yzx + 33.33);
+        return fract((p.x + p.y) * p.z);
+      }
+
+      float noise3(vec3 p) {
+        vec3 i = floor(p);
+        vec3 f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        float n000 = hash31(i + vec3(0.0, 0.0, 0.0));
+        float n100 = hash31(i + vec3(1.0, 0.0, 0.0));
+        float n010 = hash31(i + vec3(0.0, 1.0, 0.0));
+        float n110 = hash31(i + vec3(1.0, 1.0, 0.0));
+        float n001 = hash31(i + vec3(0.0, 0.0, 1.0));
+        float n101 = hash31(i + vec3(1.0, 0.0, 1.0));
+        float n011 = hash31(i + vec3(0.0, 1.0, 1.0));
+        float n111 = hash31(i + vec3(1.0, 1.0, 1.0));
+        float x00 = mix(n000, n100, f.x);
+        float x10 = mix(n010, n110, f.x);
+        float x01 = mix(n001, n101, f.x);
+        float x11 = mix(n011, n111, f.x);
+        return mix(mix(x00, x10, f.y), mix(x01, x11, f.y), f.z);
+      }
+
+      float fbm3(vec3 p) {
+        float value = 0.0;
+        float amplitude = 0.5;
+        float weight = 0.0;
+
+        for (int octave = 0; octave < CLOUD_FBM_OCTAVES; octave += 1) {
+          value += noise3(p) * amplitude;
+          weight += amplitude;
+          p = p * 2.03 + vec3(11.2, 7.1, 5.8);
+          amplitude *= 0.5;
+        }
+
+        return value / max(weight, 0.0001);
+      }
+      #endif
 
       bool raySphere(vec3 origin, vec3 direction, float radius, out float t0, out float t1) {
         float b = dot(origin, direction);
@@ -521,7 +615,24 @@ function createCloudMaterial(cloudTexture: Texture, cloudDeckTexture: Texture, b
         float detail = noise2(uv * vec2(96.0, 48.0) + radius * 27.0) * 0.5 +
           noise2(uv * vec2(221.0, 93.0) - radius * 61.0) * 0.5;
         float cellularBreak = noise2(uv * vec2(17.0, 8.0) + vec2(2.1, 7.4));
-        float density = base * 0.62 + weather * 0.58 + detail * 0.16;
+        float sourceDensity = base * 0.62 + weather * 0.58 + detail * 0.16;
+
+        #ifdef CLOUD_FBM_DETAIL
+        float localYaw = yaw + cloudOffset.x * TAU;
+        float localCos = cos(localYaw);
+        float localSin = sin(localYaw);
+        vec3 localPoint = vec3(
+          point.x * localCos - point.z * localSin,
+          point.y,
+          point.x * localSin + point.z * localCos
+        );
+        float height01 = clamp01((radius - CLOUD_BOTTOM) / max(CLOUD_TOP - CLOUD_BOTTOM, 0.001));
+        float fbmValue = fbm3(localPoint * detailScale + vec3(0.0, height01 * 1.7, -height01 * 1.1));
+        float detailEnvelope = smoothstep(0.28, 0.84, sourceDensity);
+        sourceDensity *= 1.0 + (fbmValue * 2.0 - 1.0) * detailStrength * detailEnvelope;
+        #endif
+
+        float density = sourceDensity;
         density = smoothstep(0.30, 0.86, density);
         density *= mix(0.72, 1.16, cellularBreak);
         density *= shell;
@@ -544,7 +655,7 @@ function createCloudMaterial(cloudTexture: Texture, cloudDeckTexture: Texture, b
           lightDensity += cloudDensityAt(samplePoint) * stepSize;
         }
 
-        return exp(-lightDensity * 4.8);
+        return exp(-lightDensity * absorptionCoefficient);
       }
 
       void main() {
@@ -585,16 +696,16 @@ function createCloudMaterial(cloudTexture: Texture, cloudDeckTexture: Texture, b
             float day = smoothstep(-0.28, 0.34, sunDot);
             float twilight = smoothstep(-0.36, 0.04, sunDot) * (1.0 - smoothstep(0.12, 0.58, sunDot));
             float lightThroughCloud = lightTransmittance(samplePoint, lightDirection);
-            float forward = cloudPhase(0.42, clamp(dot(rayDirection, lightDirection), -1.0, 1.0));
-            float silver = pow(clamp01(1.0 - dot(normal, -rayDirection)), 4.0) * smoothstep(-0.1, 0.58, sunDot);
+            float forward = cloudPhase(phaseAnisotropy, clamp(dot(rayDirection, lightDirection), -1.0, 1.0));
+            float silver = pow(clamp01(1.0 - dot(normal, -rayDirection)), silverPower) * smoothstep(-0.1, 0.58, sunDot);
 
             vec3 coldBase = vec3(0.28, 0.34, 0.43);
             vec3 litTop = vec3(0.95, 0.985, 1.0);
             vec3 warmEdge = vec3(1.0, 0.58, 0.24);
             vec3 color = mix(coldBase, litTop, day * (0.42 + lightThroughCloud * 0.58));
             color = mix(color, warmEdge, twilight * 0.26);
-            color += atmosphereTint * silver * lightThroughCloud * 0.26;
-            color += vec3(0.85, 0.93, 1.0) * forward * density * day * 0.11;
+            color += atmosphereTint * silver * lightThroughCloud * silverStrength;
+            color += vec3(0.85, 0.93, 1.0) * forward * density * day * forwardScatterStrength;
             color *= mix(0.46, 1.0, day + twilight * 0.4);
 
             float alpha = density * stepSize * opacity * 5.2;
@@ -774,14 +885,17 @@ function createAtmosphereMaterial(budget: RayBudget) {
 function VolumetricEarthMaterials({
   quality,
   reducedMotion,
-  textureMode
+  textureMode,
+  cloudLook
 }: {
   quality: QualityProfile;
   reducedMotion: boolean;
   textureMode: VolumetricTextureMode;
+  cloudLook: VolumetricEarthCloudLook;
 }) {
   const textures = useVolumetricEarthTextures(textureMode);
   const { cloudDeck, clouds, day, night, specular } = textures;
+  const cloudTuning = resolveVolumetricEarthCloudTuning(cloudLook);
   const planetGroup = useRef<Group>(null);
   const yaw = useRef(INITIAL_YAW);
   const cloudOffset = useRef(new Vector2(0.018, 0.0));
@@ -792,8 +906,8 @@ function VolumetricEarthMaterials({
     [cloudDeck, clouds, day, night, specular]
   );
   const cloudMaterial = useMemo(
-    () => createCloudMaterial(clouds, cloudDeck, budget, quality.tier),
-    [budget, cloudDeck, clouds, quality.tier]
+    () => createCloudMaterial(clouds, cloudDeck, budget, quality.tier, cloudLook, cloudTuning),
+    [budget, cloudDeck, cloudLook, cloudTuning, clouds, quality.tier]
   );
   const atmosphereMaterial = useMemo(() => createAtmosphereMaterial(budget), [budget]);
 
@@ -889,11 +1003,13 @@ function seededUnit(index: number, salt: number) {
 function VolumetricEarthScene({
   quality,
   reducedMotion,
-  textureMode
+  textureMode,
+  cloudLook
 }: {
   quality: QualityProfile;
   reducedMotion: boolean;
   textureMode: VolumetricTextureMode;
+  cloudLook: VolumetricEarthCloudLook;
 }) {
   const sunPosition = useMemo(() => SUN_DIRECTION.clone().multiplyScalar(8), []);
   const { size } = useThree();
@@ -906,7 +1022,12 @@ function VolumetricEarthScene({
       <ambientLight intensity={0.012} />
       <directionalLight position={sunPosition.toArray()} intensity={1.86} color="#ffe4bd" />
       <StarField count={starCountForQuality(quality, textureMode)} />
-      <VolumetricEarthMaterials quality={quality} reducedMotion={reducedMotion} textureMode={textureMode} />
+      <VolumetricEarthMaterials
+        quality={quality}
+        reducedMotion={reducedMotion}
+        textureMode={textureMode}
+        cloudLook={cloudLook}
+      />
       <OrbitControls
         enableDamping
         dampingFactor={0.075}
@@ -937,7 +1058,15 @@ function VolumetricEarthFallback() {
   );
 }
 
-function VolumetricEarthHud({ quality, textureMode }: { quality: QualityProfile; textureMode: VolumetricTextureMode }) {
+function VolumetricEarthHud({
+  quality,
+  textureMode,
+  cloudLook
+}: {
+  quality: QualityProfile;
+  textureMode: VolumetricTextureMode;
+  cloudLook: VolumetricEarthCloudLook;
+}) {
   const budget = budgetForQuality(quality.tier);
   const textureTier = textureMode === "high"
     ? "8K surface + cloud"
@@ -949,7 +1078,7 @@ function VolumetricEarthHud({ quality, textureMode }: { quality: QualityProfile;
     <section className="volumetric-earth__hud" aria-label="Volumetric Earth render telemetry">
       <div className="volumetric-earth__hud-heading">
         <p>Volumetric Earth</p>
-        <span>route spike</span>
+        <span>{cloudLook} A/B</span>
       </div>
       <dl className="volumetric-earth__hud-grid">
         <div>
@@ -976,6 +1105,10 @@ function VolumetricEarthHud({ quality, textureMode }: { quality: QualityProfile;
           <dt>Mode</dt>
           <dd>independent</dd>
         </div>
+        <div>
+          <dt>Detail</dt>
+          <dd>{cloudLook === "fbm" ? "4-octave FBM" : "baseline map"}</dd>
+        </div>
       </dl>
     </section>
   );
@@ -987,6 +1120,11 @@ export function VolumetricEarthRoute() {
     subscribeRuntimeSnapshot,
     readRequestedQuality,
     serverRequestedQualitySnapshot
+  );
+  const cloudLook = useSyncExternalStore(
+    subscribeRuntimeSnapshot,
+    readRequestedCloudLook,
+    serverRequestedCloudLookSnapshot
   );
   const preserveDrawingBuffer = useSyncExternalStore(
     subscribeRuntimeSnapshot,
@@ -1004,8 +1142,22 @@ export function VolumetricEarthRoute() {
   const textureMode = textureModeForQuality(quality, requestedQuality);
   const showFallback = !webglAvailable || contextLost || quality.tier === "fallback";
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    window.__MiraLithVolumetricEarthCloudLook = cloudLook;
+    window.__MiraLithVolumetricEarthCloudFbmEnabled = cloudLook === "fbm";
+
+    return () => {
+      window.__MiraLithVolumetricEarthCloudLook = undefined;
+      window.__MiraLithVolumetricEarthCloudFbmEnabled = undefined;
+    };
+  }, [cloudLook]);
+
   return (
-    <main className="volumetric-earth">
+    <main className="volumetric-earth" data-cloud-look={cloudLook}>
       {showFallback ? (
         <VolumetricEarthFallback />
       ) : (
@@ -1026,13 +1178,18 @@ export function VolumetricEarthRoute() {
               }}
             >
               <Suspense fallback={null}>
-                <VolumetricEarthScene quality={quality} reducedMotion={reducedMotion} textureMode={textureMode} />
+                <VolumetricEarthScene
+                  quality={quality}
+                  reducedMotion={reducedMotion}
+                  textureMode={textureMode}
+                  cloudLook={cloudLook}
+                />
               </Suspense>
             </Canvas>
           </VolumetricEarthErrorBoundary>
         </div>
       )}
-      <VolumetricEarthHud quality={quality} textureMode={textureMode} />
+      <VolumetricEarthHud quality={quality} textureMode={textureMode} cloudLook={cloudLook} />
       <div className="volumetric-earth__shade" aria-hidden="true" />
       <style>{`
         .volumetric-earth {
